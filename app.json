@@ -4,7 +4,7 @@
     "slug": "bestie-book-battle",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/app_icon.png",
     "scheme": "bestie-book-battle",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
