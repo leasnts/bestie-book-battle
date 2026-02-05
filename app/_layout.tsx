@@ -15,7 +15,7 @@ import { Stack, useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
-import { Platform, View } from 'react-native';
+import { Platform, View, Linking } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { MD3LightTheme, PaperProvider } from 'react-native-paper';
 import 'react-native-reanimated';
@@ -24,6 +24,7 @@ import { scheduleDailyReminder } from '../services/notifications';
 import { useAuthStore } from '../stores/authStore';
 import { useProjectStore } from '../stores/projectStore';
 import { colors } from '../utils/constants';
+import { supabase } from '../supabaseConfig';
 
 // Empêche l'écran de splash de se cacher automatiquement
 SplashScreen.preventAutoHideAsync();
@@ -69,7 +70,12 @@ export default function RootLayout() {
   // Cache le splash screen quand les polices sont chargées
   useEffect(() => {
     if (fontsLoaded) {
-      SplashScreen.hideAsync();
+      // Petit délai pour éviter l'erreur de timing
+      setTimeout(() => {
+        SplashScreen.hideAsync().catch(() => {
+          // Ignore l'erreur si le splash screen n'existe pas
+        });
+      }, 100);
     }
   }, [fontsLoaded]);
 
@@ -115,6 +121,53 @@ function RootLayoutNav() {
       unsubAuth();
     };
   }, [initAuth]);
+
+  // Gérer les deep links pour l'authentification
+  useEffect(() => {
+    // Écouter les deep links
+    const handleDeepLink = async (event: { url: string }) => {
+      const url = event.url;
+      console.log('Deep link reçu:', url);
+
+      // Vérifier si c'est un lien d'authentification
+      if (url.includes('auth/callback')) {
+        try {
+          // Extraire les params de l'URL
+          const urlObj = new URL(url.replace('bestie-book-battle://', 'http://'));
+          const fragment = urlObj.hash.substring(1); // Retire le #
+          const params = new URLSearchParams(fragment);
+          
+          const access_token = params.get('access_token');
+          const refresh_token = params.get('refresh_token');
+
+          if (access_token && refresh_token) {
+            // Établir la session avec Supabase
+            await supabase.auth.setSession({
+              access_token,
+              refresh_token,
+            });
+            console.log('Session établie avec succès !');
+          }
+        } catch (error) {
+          console.error('Erreur lors du traitement du deep link:', error);
+        }
+      }
+    };
+
+    // Écouter les nouveaux liens
+    const subscription = Linking.addEventListener('url', handleDeepLink);
+
+    // Vérifier s'il y a déjà un lien au démarrage
+    Linking.getInitialURL().then((url) => {
+      if (url) {
+        handleDeepLink({ url });
+      }
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, []);
 
   // Redirection Logic - Protège les routes selon l'état d'authentification
   useEffect(() => {

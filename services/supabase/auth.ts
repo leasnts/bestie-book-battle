@@ -308,23 +308,66 @@ export async function isAppleAuthAvailable(): Promise<boolean> {
  * @param email - L'adresse email de l'utilisateur
  * @returns Success si l'email a été envoyé
  */
-export async function signInWithEmail(email: string): Promise<{ success: boolean; message: string }> {
+/**
+ * S'inscrire avec email et mot de passe
+ * 
+ * @param email - L'adresse email
+ * @param password - Le mot de passe (min 6 caractères)
+ * @returns L'utilisateur créé avec son profil
+ */
+export async function signUpWithPassword(email: string, password: string): Promise<User> {
   try {
-    const { error } = await supabase.auth.signInWithOtp({
+    const { data: authData, error: authError } = await supabase.auth.signUp({
       email,
-      options: {
-        emailRedirectTo: 'bestiebookbattle://auth/callback', // Deep link pour revenir à l'app
-      },
+      password,
     });
 
-    if (error) throw error;
+    if (authError || !authData.user) {
+      throw authError || new Error('Échec de l\'inscription');
+    }
 
-    return {
-      success: true,
-      message: 'Email envoyé ! Vérifie ta boîte mail et clique sur le lien.',
-    };
+    // Créer le profil utilisateur
+    const userProfile = await createOrUpdateUserProfile({
+      id: authData.user.id,
+      email: authData.user.email!,
+      first_name: authData.user.email!.split('@')[0],
+    });
+
+    return userProfile;
   } catch (error: any) {
-    console.error('Erreur lors du sign in avec email:', error);
+    console.error('Erreur lors de l\'inscription:', error);
+    throw error;
+  }
+}
+
+/**
+ * Se connecter avec email et mot de passe
+ * 
+ * @param email - L'adresse email
+ * @param password - Le mot de passe
+ * @returns L'utilisateur connecté avec son profil
+ */
+export async function signInWithPassword(email: string, password: string): Promise<User> {
+  try {
+    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (authError || !authData.user) {
+      throw authError || new Error('Email ou mot de passe incorrect');
+    }
+
+    // Récupérer ou créer le profil utilisateur
+    const userProfile = await createOrUpdateUserProfile({
+      id: authData.user.id,
+      email: authData.user.email!,
+      first_name: authData.user.email!.split('@')[0],
+    });
+
+    return userProfile;
+  } catch (error: any) {
+    console.error('Erreur lors de la connexion:', error);
     throw error;
   }
 }
@@ -350,5 +393,86 @@ export async function createEmailUserProfile(
     email,
     first_name: firstName || 'Utilisateur',
   });
+}
+
+/**
+ * Envoyer un code OTP par email
+ * 
+ * Flow :
+ * 1. L'utilisateur entre son email
+ * 2. Supabase envoie un code à 8 chiffres par email (configuré dans Supabase)
+ * 3. L'utilisateur entre le code dans l'app pour se connecter
+ * 
+ * Cette méthode est compatible avec Expo Go car elle ne nécessite pas de deep link.
+ * Le code est valide pendant 1 heure (3600 secondes, configuré dans Supabase).
+ * 
+ * @param email - L'adresse email de l'utilisateur
+ * @throws Error si l'envoi échoue
+ */
+export async function sendOTP(email: string): Promise<void> {
+  try {
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: {
+        // Crée automatiquement l'utilisateur s'il n'existe pas
+        shouldCreateUser: true,
+      },
+    });
+
+    if (error) {
+      console.error('Erreur lors de l\'envoi du code OTP:', error);
+      throw error;
+    }
+
+    console.log('Code OTP envoyé à', email);
+  } catch (error: any) {
+    console.error('Erreur sendOTP:', error);
+    throw error;
+  }
+}
+
+/**
+ * Vérifier le code OTP et connecter l'utilisateur
+ * 
+ * Flow :
+ * 1. L'utilisateur entre le code reçu par email
+ * 2. Supabase vérifie le code
+ * 3. Si valide, l'utilisateur est connecté et son profil est créé/mis à jour
+ * 
+ * @param email - L'adresse email de l'utilisateur
+ * @param token - Le code à 8 chiffres reçu par email
+ * @returns L'utilisateur connecté avec son profil complet
+ * @throws Error si le code est invalide ou expiré
+ */
+export async function verifyOTP(email: string, token: string): Promise<User> {
+  try {
+    const { data, error } = await supabase.auth.verifyOtp({
+      email,
+      token,
+      type: 'email', // Type 'email' pour les codes OTP envoyés par email
+    });
+
+    if (error) {
+      console.error('Erreur lors de la vérification du code OTP:', error);
+      throw error;
+    }
+
+    if (!data.user) {
+      throw new Error('Aucun utilisateur retourné après vérification');
+    }
+
+    // Créer ou mettre à jour le profil utilisateur
+    const userProfile = await createOrUpdateUserProfile({
+      id: data.user.id,
+      email: data.user.email!,
+      first_name: data.user.email!.split('@')[0], // Utilise la partie avant @ comme prénom temporaire
+    });
+
+    console.log('Utilisateur connecté avec succès:', userProfile.email);
+    return userProfile;
+  } catch (error: any) {
+    console.error('Erreur verifyOTP:', error);
+    throw error;
+  }
 }
 
