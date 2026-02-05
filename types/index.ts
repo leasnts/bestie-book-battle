@@ -1,5 +1,5 @@
 /**
- * Types TypeScript pour l'application Reading Buddy
+ * Types TypeScript pour l'application Bestie Book Battle
  * 
  * Ces interfaces définissent la structure des données utilisées dans l'app :
  * - User : les informations d'un utilisateur

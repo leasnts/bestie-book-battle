@@ -198,7 +198,7 @@ export default function ProfileScreen() {
         </View>
 
         {/* Version */}
-        <Text style={styles.version}>Reading Buddy v1.0</Text>
+        <Text style={styles.version}>Bestie Book Battle v1.0</Text>
       </ScrollView>
     </View>
   );

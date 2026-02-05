@@ -1,5 +1,5 @@
 /**
- * Constantes de l'application Reading Buddy
+ * Constantes de l'application Bestie Book Battle
  * 
  * Ce fichier centralise toutes les valeurs constantes :
  * - Couleurs du thème
@@ -138,9 +138,9 @@ export const celebrationMessages = [
 
 // Clés AsyncStorage
 export const storageKeys = {
-  USER: '@reading_buddy/user',
-  PROJECTS: '@reading_buddy/projects',
-  PROGRESS: '@reading_buddy/progress',
-  NOTIFICATIONS: '@reading_buddy/notifications',
+  USER: '@bestie_book_battle/user',
+  PROJECTS: '@bestie_book_battle/projects',
+  PROGRESS: '@bestie_book_battle/progress',
+  NOTIFICATIONS: '@bestie_book_battle/notifications',
 };
 

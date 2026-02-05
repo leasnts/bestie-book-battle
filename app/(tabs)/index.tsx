@@ -1,5 +1,5 @@
 /**
- * 📚 READING BUDDY - Écran principal
+ * 📚 BESTIE BOOK BATTLE - Écran principal
  * 
  * Light mode avec bleu Klein + vert
  * Lignes de cahier en fond

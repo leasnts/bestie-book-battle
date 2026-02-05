@@ -79,7 +79,7 @@ export default function OnboardingIndex() {
                         />
                     </Animated.View>
                     <Animated.View style={titleAnimatedStyle}>
-                        <Text variant="headlineLarge" style={styles.appName}>Reading Buddy</Text>
+                        <Text variant="headlineLarge" style={styles.appName}>Bestie Book Battle</Text>
                         <Text variant="bodyMedium" style={styles.tagline}>
                             Lisez ensemble, progressez ensemble
                         </Text>

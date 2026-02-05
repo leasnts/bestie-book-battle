@@ -1,5 +1,5 @@
 /**
- * Service de notifications pour Reading Buddy
+ * Service de notifications pour Bestie Book Battle
  * 
  * Ce fichier gère les notifications push avec Expo :
  * - Demande de permission

@@ -1,4 +1,4 @@
-# Reading Buddy 📚
+# Bestie Book Battle 📚
 
 Une application React Native (Expo) pour suivre une lecture commune entre amis. Chaque personne met à jour sa progression quotidienne et voit l'avancée des autres.
 
@@ -17,7 +17,7 @@ Une application React Native (Expo) pour suivre une lecture commune entre amis. 
 - **Language:** TypeScript
 - **Navigation:** Expo Router
 - **State:** Zustand
-- **Backend:** Firebase (Firestore, Auth, Storage)
+- **Backend:** Supabase (PostgreSQL, Auth, Storage)
 - **UI:** React Native Paper
 - **Charts:** react-native-chart-kit
 
@@ -26,7 +26,7 @@ Une application React Native (Expo) pour suivre une lecture commune entre amis. 
 ### 1. Cloner le projet
 
 ```bash
-cd reading
+cd bestie-book-battle
 npm install
 ```
 
@@ -50,7 +50,7 @@ npm run ios
 ## Structure du Projet
 
 ```
-reading/
+bestie-book-battle/
 ├── app/                      # Écrans (Expo Router)
 │   ├── (tabs)/               # Navigation par onglets
 │   │   ├── index.tsx         # Home - Liste des projets

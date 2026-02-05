@@ -13,8 +13,8 @@ import { Project } from '../types';
 
 // URL de base pour les deep links
 // À remplacer par ton URL de production ou scheme personnalisé
-const APP_SCHEME = 'readingbuddy';
-const WEB_URL = 'https://reading-buddy.app'; // URL fictive pour le moment
+const APP_SCHEME = 'bestie-book-battle';
+const WEB_URL = 'https://bestie-book-battle.app'; // URL fictive pour le moment
 
 /**
  * Génère un lien d'invitation pour un projet
@@ -44,7 +44,7 @@ export function generateInviteLink(project: Project): string {
 export function generateShareMessage(project: Project): string {
   return `📚 Rejoins-moi pour lire "${project.bookTitle}" ensemble !\n\n` +
     `Code d'invitation : ${project.inviteCode}\n\n` +
-    `Télécharge Reading Buddy et utilise ce code pour nous rejoindre !`;
+    `Télécharge Bestie Book Battle et utilise ce code pour nous rejoindre !`;
 }
 
 /**
@@ -112,7 +112,7 @@ export async function copyInviteLink(project: Project): Promise<void> {
  */
 export function parseInviteLink(url: string): string | null {
   try {
-    // Format attendu: readingbuddy://join/CODE ou https://reading-buddy.app/join/CODE
+    // Format attendu: bestie-book-battle://join/CODE ou https://bestie-book-battle.app/join/CODE
     const regex = /join\/([A-Z0-9]{6})/i;
     const match = url.match(regex);
     

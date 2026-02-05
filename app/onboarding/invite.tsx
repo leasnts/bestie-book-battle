@@ -85,7 +85,7 @@ export default function InviteScreen() {
     const handleShare = async () => {
         try {
             await Share.share({
-                message: `Rejoins mon projet de lecture sur Reading Buddy avec le code : ${project.invitationCode}`,
+                message: `Rejoins mon projet de lecture sur Bestie Book Battle avec le code : ${project.invitationCode}`,
             });
         } catch (error) {
             console.error(error);
