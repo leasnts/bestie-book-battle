@@ -224,6 +224,12 @@ export default function LoginScreen() {
 
   /**
    * Gérer la connexion avec Apple Sign In
+   * 
+   * Le flow est maintenant en 2 temps :
+   * 1. Authentifier avec Apple + vérifier si le profil existe
+   * 2. Rediriger selon le résultat :
+   *    → Utilisateur existant = home page (avec ses challenges)
+   *    → Nouvel utilisateur = onboarding (pour créer son profil)
    */
   const handleAppleLogin = async () => {
     try {
@@ -240,28 +246,46 @@ export default function LoginScreen() {
       }
 
       // Se connecter avec Apple via Supabase
-      const user = await login();
+      // login() retourne maintenant un objet { isNewUser, user, ... }
+      const result = await login();
 
-      // Charger les challenges de l'utilisateur
-      await loadUserChallenges(user.id);
-
-      // Obtenir les challenges
-      const { challenges } = useProjectStore.getState();
-
-      // Rediriger selon si l'utilisateur a des challenges ou non
-      if (challenges && challenges.length > 0) {
-        router.replace('/(tabs)');
+      if (result.isNewUser) {
+        // Nouvel utilisateur : direction l'onboarding !
+        // Les données Apple (email, nom) sont stockées dans le authStore
+        // via pendingUserData, l'onboarding pourra les utiliser
+        router.replace('/onboarding');
       } else {
-        router.replace({
-          pathname: '/project/create',
-          params: { isFirstProject: 'true' },
-        });
+        // Utilisateur existant : charger ses challenges et aller à la home
+        if (result.user) {
+          await loadUserChallenges(result.user.id);
+        }
+
+        const { challenges } = useProjectStore.getState();
+
+        if (challenges && challenges.length > 0) {
+          router.replace('/(tabs)');
+        } else {
+          // L'utilisateur existe mais n'a pas de challenge
+          router.replace({
+            pathname: '/project/create',
+            params: { isFirstProject: 'true' },
+          });
+        }
       }
     } catch (error: any) {
       console.error('Login error:', error);
       
       if (error.code === 'ERR_REQUEST_CANCELED') {
         return; // L'utilisateur a annulé
+      }
+
+      // Détecter l'erreur d'audience Expo Go
+      if (error.message?.includes('Unacceptable audience')) {
+        Alert.alert(
+          'Configuration requise',
+          'Pour utiliser Apple Sign In avec Expo Go, ajoute "host.exp.Exponent" dans les Authorized Client IDs du provider Apple dans ton Dashboard Supabase.\n\nOu utilise un Development Build (npx eas build --profile development --platform ios).'
+        );
+        return;
       }
 
       Alert.alert('Erreur', error.message || 'Une erreur est survenue lors de la connexion');

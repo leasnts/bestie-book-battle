@@ -46,7 +46,7 @@ export default function CoverPickerSimple({ onCoverSelected, initialCover }: Cov
         }
 
         const result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            mediaTypes: ['images'],
             allowsEditing: true,
             aspect: [7, 10],
             quality: 1,

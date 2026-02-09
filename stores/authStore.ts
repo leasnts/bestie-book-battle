@@ -18,7 +18,26 @@ import {
   getCurrentUser,
   subscribeToAuthChanges,
   updateUserProfile,
+  AppleSignInResult,
 } from '../services/supabase/auth';
+
+/**
+ * Données du nouvel utilisateur en attente d'onboarding
+ * 
+ * Ces données sont stockées temporairement dans le store après le sign-in Apple.
+ * Elles seront utilisées par l'écran d'onboarding pour créer le profil.
+ * 
+ * Pourquoi stocker ça ? Parce qu'Apple ne donne le email et le nom
+ * qu'au TOUT PREMIER sign-in. Si on ne les capture pas maintenant,
+ * on les perd pour toujours !
+ */
+interface PendingUserData {
+  authId: string;
+  appleUserId: string;
+  email: string;
+  firstName: string | null;
+  lastName: string | null;
+}
 
 /**
  * Interface du store d'authentification
@@ -29,12 +48,14 @@ interface AuthStore {
   isLoading: boolean;
   isInitialized: boolean;
   error: string | null;
+  pendingUserData: PendingUserData | null;
 
   // Actions
-  login: () => Promise<SupabaseUser>;
+  login: () => Promise<AppleSignInResult>;
   logout: () => Promise<void>;
   setUser: (user: SupabaseUser | null) => void;
   setError: (error: string | null) => void;
+  setPendingUserData: (data: PendingUserData | null) => void;
   updateProfile: (updates: Partial<SupabaseUser>) => Promise<SupabaseUser>;
   initialize: () => () => void;
 }
@@ -54,26 +75,55 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   isLoading: true,
   isInitialized: false,
   error: null,
+  pendingUserData: null,
 
   // ===== Action : Connexion =====
   /**
    * Connecter l'utilisateur avec Apple Sign In
    * 
-   * Process :
+   * Nouveau flow :
    * 1. Demande les credentials Apple
    * 2. Authentifie avec Supabase
-   * 3. Récupère ou crée le profil utilisateur
-   * 4. Met à jour le store
+   * 3. Vérifie si un profil existe dans notre table users
+   * 4. Retourne le résultat avec isNewUser
    * 
-   * @returns Le profil utilisateur complet
+   * Si isNewUser = true :
+   *   → On stocke les données dans pendingUserData
+   *   → L'écran de login redirige vers l'onboarding
+   * 
+   * Si isNewUser = false :
+   *   → On met à jour le store avec le profil existant
+   *   → L'écran de login redirige vers la home
+   * 
+   * @returns AppleSignInResult avec isNewUser et les données
    * @throws Erreur si la connexion échoue
    */
   login: async () => {
     set({ isLoading: true, error: null });
     try {
-      const user = await signInWithApple();
-      set({ user, isLoading: false, isInitialized: true });
-      return user;
+      const result = await signInWithApple();
+
+      if (result.isNewUser) {
+        // Nouveau user : stocker les données Apple pour l'onboarding
+        // On ne crée PAS de profil maintenant, l'onboarding s'en charge
+        set({
+          user: null,
+          pendingUserData: {
+            authId: result.authId,
+            appleUserId: result.appleUserId,
+            email: result.email,
+            firstName: result.firstName,
+            lastName: result.lastName,
+          },
+          isLoading: false,
+          isInitialized: true,
+        });
+      } else {
+        // User existant : mettre à jour le store avec le profil
+        set({ user: result.user, isLoading: false, isInitialized: true });
+      }
+
+      return result;
     } catch (error: any) {
       console.error('Login error:', error);
       const errorMessage = error.message || 'Erreur lors de la connexion';
@@ -121,6 +171,19 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
    */
   setError: (error: string | null) => {
     set({ error });
+  },
+
+  // ===== Action : Stocker les données en attente d'onboarding =====
+  /**
+   * Sauvegarder ou effacer les données du nouvel utilisateur
+   * 
+   * Utilisé par l'onboarding une fois le profil créé :
+   * setPendingUserData(null) pour nettoyer
+   * 
+   * @param data - Les données Apple, ou null pour effacer
+   */
+  setPendingUserData: (data: PendingUserData | null) => {
+    set({ pendingUserData: data });
   },
 
   // ===== Action : Mettre à jour le profil =====

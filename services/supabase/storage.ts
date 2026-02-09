@@ -56,7 +56,7 @@ export async function pickImage(
     }
 
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: ['images'],
       allowsEditing,
       aspect,
       quality,

@@ -20,6 +20,7 @@ import CoverPicker3D from '../../components/CoverPicker3D';
 import { useAuthStore } from '../../stores/authStore';
 import { useProjectStore } from '../../stores/projectStore';
 import { uploadBookCover } from '../../services/supabase/storage';
+import { updateChallenge } from '../../services/supabase/database';
 
 // Random covers imports - assume they exist in assets/images
 const RANDOM_COVERS = [
@@ -94,11 +95,18 @@ export default function CreateProjectScreen() {
 
       console.log('Challenge créé:', challenge);
 
-      // 2. Upload de la cover si nécessaire
+      // 2. Upload de la cover si nécessaire et sauvegarde en BDD
       let coverUrl = challenge.cover_url;
       if (coverUri) {
         coverUrl = await processCover(challenge.id);
         console.log('Cover uploadée:', coverUrl);
+
+        // Sauvegarder l'URL de la cover dans la base de données
+        // Sans ça, l'URL serait perdue au prochain chargement
+        if (coverUrl) {
+          await updateChallenge(challenge.id, { cover_url: coverUrl });
+          console.log('Cover URL sauvegardée en BDD');
+        }
       }
 
       // 3. Rediriger vers l'écran d'invitation

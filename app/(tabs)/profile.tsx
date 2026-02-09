@@ -10,6 +10,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
+  ActivityIndicator,
   Alert,
   Image,
   Pressable,
@@ -22,6 +23,7 @@ import {
 import { useAuthStore } from '../../stores/authStore';
 import { useProgressStore } from '../../stores/progressStore';
 import { useDemoStore, DemoMode } from '../../stores/demoStore';
+import { pickImage, uploadProfilePhoto } from '../../services/supabase/storage';
 
 // 🎨 Noir & Blanc + Bleu Klein + Orange flamme
 const COLORS = {
@@ -39,15 +41,54 @@ const COLORS = {
 
 export default function ProfileScreen() {
   const router = useRouter();
-  const { user, logout } = useAuthStore();
+  const { user, logout, updateProfile } = useAuthStore();
   const { participants } = useProgressStore();
   const { mode, setMode } = useDemoStore();
-
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
 
   // Stats (simplifiées)
   const totalPagesRead = 145;
   const currentStreak = 5;
+
+  /**
+   * Changer la photo de profil
+   * 
+   * Process :
+   * 1. Ouvre la galerie photo de l'iPhone via expo-image-picker
+   * 2. Upload l'image sélectionnée vers Supabase Storage (bucket profile-photos)
+   * 3. Sauvegarde l'URL publique dans la table users (colonne profile_photo_url)
+   * 4. Met à jour le store Zustand pour que l'UI se rafraîchisse immédiatement
+   */
+  const handleChangeProfilePhoto = async () => {
+    if (!user) return;
+
+    try {
+      // Étape 1 : Ouvrir la galerie et laisser l'utilisateur choisir une photo
+      // pickImage() gère automatiquement la demande de permission
+      const imageUri = await pickImage(true, [1, 1], 0.8);
+
+      // L'utilisateur a annulé la sélection
+      if (!imageUri) return;
+
+      setIsUploadingPhoto(true);
+
+      // Étape 2 : Upload vers Supabase Storage
+      const { url } = await uploadProfilePhoto(user.id, imageUri);
+
+      // Étape 3 : Sauvegarder l'URL dans la base de données et mettre à jour le store
+      await updateProfile({ profile_photo_url: url });
+
+    } catch (error: any) {
+      console.error('Erreur changement photo de profil:', error);
+      Alert.alert(
+        'Erreur',
+        'Impossible de changer ta photo de profil. Vérifie ta connexion et réessaie.'
+      );
+    } finally {
+      setIsUploadingPhoto(false);
+    }
+  };
 
   const handleLogout = () => {
     Alert.alert(
@@ -88,15 +129,30 @@ export default function ProfileScreen() {
             <View style={{ width: 40 }} />
           </View>
           <View style={styles.headerContent}>
-            <Image
-              source={
-                typeof user?.profilePhotoUrl === 'string'
-                  ? { uri: user.profilePhotoUrl }
-                  : user?.profilePhotoUrl || require('../../assets/images/lea.png')
-              }
-              style={styles.avatar}
-            />
-            <Text style={styles.name}>{user?.name || 'Lecteur'}</Text>
+            {/* Avatar cliquable pour changer la photo de profil */}
+            <Pressable onPress={handleChangeProfilePhoto} disabled={isUploadingPhoto}>
+              <View style={styles.avatarContainer}>
+                <Image
+                  source={
+                    typeof user?.profile_photo_url === 'string'
+                      ? { uri: user.profile_photo_url }
+                      : require('../../assets/images/lea.png')
+                  }
+                  style={styles.avatar}
+                />
+                {/* Overlay de chargement pendant l'upload */}
+                {isUploadingPhoto && (
+                  <View style={styles.avatarLoadingOverlay}>
+                    <ActivityIndicator size="small" color="#FFFFFF" />
+                  </View>
+                )}
+                {/* Petit bouton camera en bas à droite de l'avatar */}
+                <View style={styles.cameraButton}>
+                  <Ionicons name="camera" size={14} color="#FFFFFF" />
+                </View>
+              </View>
+            </Pressable>
+            <Text style={styles.name}>{user?.first_name || 'Lecteur'}</Text>
             <Text style={styles.email}>{user?.email}</Text>
           </View>
         </View>
@@ -259,13 +315,40 @@ const styles = StyleSheet.create({
   headerContent: {
     alignItems: 'center',
   },
+  avatarContainer: {
+    position: 'relative',
+    marginBottom: 12,
+  },
   avatar: {
     width: 90,
     height: 90,
     borderRadius: 45,
-    marginBottom: 12,
     borderWidth: 3,
     borderColor: COLORS.primary,
+  },
+  avatarLoadingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: 90,
+    height: 90,
+    borderRadius: 45,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  cameraButton: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: COLORS.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: COLORS.card,
   },
   name: {
     fontSize: 22,

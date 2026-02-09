@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
-import React, { useEffect } from 'react';
-import { Image, StyleSheet, View } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { ActivityIndicator, Image, StyleSheet, View } from 'react-native';
 import { Button, Text } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { 
@@ -12,9 +12,20 @@ import Animated, {
     withTiming,
 } from 'react-native-reanimated';
 import { colors } from '../../utils/constants';
+import { useAuthStore } from '../../stores/authStore';
+import { createOrUpdateUserProfile } from '../../services/supabase/auth';
 
 export default function OnboardingIndex() {
     const router = useRouter();
+    
+    // État pour suivre la création du profil
+    const [isCreatingProfile, setIsCreatingProfile] = useState(true);
+    const [profileError, setProfileError] = useState<string | null>(null);
+
+    // Récupérer les données Apple stockées temporairement après le sign-in
+    const pendingUserData = useAuthStore((state) => state.pendingUserData);
+    const setUser = useAuthStore((state) => state.setUser);
+    const setPendingUserData = useAuthStore((state) => state.setPendingUserData);
 
     // Valeurs d'animation
     const logoScale = useSharedValue(0);
@@ -23,6 +34,47 @@ export default function OnboardingIndex() {
     const titleTranslateY = useSharedValue(20);
     const buttonsOpacity = useSharedValue(0);
     const buttonsTranslateY = useSharedValue(30);
+
+    // Au montage : créer le profil utilisateur dans la base de données
+    // C'est ici qu'on transforme le "Supabase Auth user" en "profil utilisateur"
+    // dans notre table personnalisée "users"
+    useEffect(() => {
+        const createProfile = async () => {
+            if (!pendingUserData) {
+                // Pas de données en attente = le profil existe peut-être déjà
+                // (cas où l'utilisateur revient sur l'onboarding)
+                setIsCreatingProfile(false);
+                return;
+            }
+
+            try {
+                // Créer le profil dans notre table "users" avec les données Apple
+                // Apple donne le prénom/nom UNIQUEMENT au premier sign-in,
+                // c'est pour ça qu'on les a stockés dans pendingUserData
+                const newUser = await createOrUpdateUserProfile({
+                    id: pendingUserData.authId,
+                    apple_user_id: pendingUserData.appleUserId,
+                    email: pendingUserData.email,
+                    first_name: pendingUserData.firstName || 'Utilisateur',
+                    last_name: pendingUserData.lastName || null,
+                });
+
+                // Mettre à jour le store avec le nouveau profil
+                // Maintenant l'app sait que l'utilisateur est connecté ET a un profil
+                setUser(newUser);
+
+                // Nettoyer les données temporaires (plus besoin)
+                setPendingUserData(null);
+            } catch (error: any) {
+                console.error('Erreur création profil onboarding:', error);
+                setProfileError(error.message || 'Erreur lors de la création du profil');
+            } finally {
+                setIsCreatingProfile(false);
+            }
+        };
+
+        createProfile();
+    }, []);
 
     // Lancer les animations au montage du composant
     useEffect(() => {
@@ -66,6 +118,40 @@ export default function OnboardingIndex() {
         opacity: buttonsOpacity.value,
         transform: [{ translateY: buttonsTranslateY.value }],
     }));
+
+    // Pendant la création du profil, afficher un loader
+    if (isCreatingProfile) {
+        return (
+            <SafeAreaView style={styles.container}>
+                <View style={styles.loadingContainer}>
+                    <ActivityIndicator size="large" color={colors.primary} />
+                    <Text variant="bodyLarge" style={styles.loadingText}>
+                        Création de ton compte...
+                    </Text>
+                </View>
+            </SafeAreaView>
+        );
+    }
+
+    // En cas d'erreur lors de la création du profil
+    if (profileError) {
+        return (
+            <SafeAreaView style={styles.container}>
+                <View style={styles.loadingContainer}>
+                    <Text variant="bodyLarge" style={styles.errorText}>
+                        {profileError}
+                    </Text>
+                    <Button
+                        mode="contained"
+                        onPress={() => router.replace('/auth/login')}
+                        style={styles.button}
+                    >
+                        Réessayer
+                    </Button>
+                </View>
+            </SafeAreaView>
+        );
+    }
 
     return (
         <SafeAreaView style={styles.container}>
@@ -116,6 +202,23 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: colors.background,
+    },
+    // État de chargement pendant la création du profil
+    loadingContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        gap: 16,
+        padding: 24,
+    },
+    loadingText: {
+        color: colors.textSecondary,
+        textAlign: 'center',
+    },
+    errorText: {
+        color: '#DC2626',
+        textAlign: 'center',
+        marginBottom: 16,
     },
     content: {
         flex: 1,

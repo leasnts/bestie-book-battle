@@ -27,7 +27,13 @@
       "expo-font",
       "expo-web-browser",
       "expo-apple-authentication",
-      "expo-notifications"
+      "expo-notifications",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Bestie Book Battle a besoin d'accéder à tes photos pour ta photo de profil et les couvertures de livres."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

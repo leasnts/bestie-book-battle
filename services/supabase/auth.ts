@@ -13,32 +13,47 @@ import { supabase } from '../../supabaseConfig';
 import { User, UserInsert, UserUpdate } from '../../types/supabase';
 
 /**
- * Interface pour les données renvoyées par Apple Sign In
+ * Résultat de l'authentification Apple
+ * 
+ * Contient toutes les infos nécessaires pour savoir si c'est un
+ * nouvel utilisateur ou un utilisateur existant, et pour créer
+ * le profil plus tard (pendant l'onboarding) si besoin.
+ * 
+ * - isNewUser : true si aucun profil n'existe dans notre table users
+ * - user : le profil complet si l'utilisateur existe, null sinon
+ * - authId : l'ID Supabase Auth (toujours présent après authentification)
+ * - appleUserId : l'ID Apple unique de l'utilisateur
+ * - email : l'email (attention : Apple ne le donne qu'au PREMIER sign-in !)
+ * - firstName / lastName : idem, uniquement au premier sign-in
  */
-interface AppleAuthResponse {
-  identityToken: string;
-  email?: string | null;
-  fullName?: {
-    givenName?: string | null;
-    familyName?: string | null;
-  } | null;
-  user: string; // Apple User ID
+export interface AppleSignInResult {
+  isNewUser: boolean;
+  user: User | null;
+  authId: string;
+  appleUserId: string;
+  email: string;
+  firstName: string | null;
+  lastName: string | null;
 }
 
 /**
  * Connecter un utilisateur avec Apple Sign In
  * 
- * Flow :
+ * Flow SÉPARÉ en 2 étapes (auth ≠ création de profil) :
  * 1. Obtenir le token d'identité d'Apple
- * 2. Authentifier avec Supabase en utilisant ce token
- * 3. Créer ou mettre à jour le profil utilisateur dans la table users
- * 4. Retourner l'utilisateur authentifié
+ * 2. Authentifier avec Supabase (crée un user dans Supabase Auth, PAS dans notre table)
+ * 3. Vérifier si un profil existe dans notre table users
+ * 4. Retourner le résultat avec isNewUser pour que l'écran de login décide
+ *    → utilisateur existant = redirection vers la home
+ *    → nouvel utilisateur = redirection vers l'onboarding
  * 
- * @returns L'utilisateur authentifié avec son profil complet
+ * @returns Un objet AppleSignInResult avec isNewUser et les données Apple
  */
-export async function signInWithApple(): Promise<User> {
+export async function signInWithApple(): Promise<AppleSignInResult> {
   try {
     // Étape 1 : Demander les credentials Apple
+    // Apple donne le email et fullName UNIQUEMENT au premier sign-in !
+    // C'est pour ça qu'on les capture ici et on les passe à l'onboarding
     const credential = await AppleAuthentication.signInAsync({
       requestedScopes: [
         AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
@@ -51,6 +66,8 @@ export async function signInWithApple(): Promise<User> {
     }
 
     // Étape 2 : Authentifier avec Supabase
+    // Ceci crée un utilisateur dans Supabase Auth (table auth.users)
+    // mais PAS dans notre table "users" personnalisée
     const { data: authData, error: authError } = await supabase.auth.signInWithIdToken({
       provider: 'apple',
       token: credential.identityToken,
@@ -60,16 +77,45 @@ export async function signInWithApple(): Promise<User> {
       throw authError || new Error('Échec de l\'authentification');
     }
 
-    // Étape 3 : Créer ou mettre à jour le profil utilisateur
-    const userProfile = await createOrUpdateUserProfile({
-      id: authData.user.id,
-      apple_user_id: credential.user,
-      email: authData.user.email || credential.email || '',
-      first_name: credential.fullName?.givenName || 'Utilisateur',
-      last_name: credential.fullName?.familyName || null,
-    });
+    // Étape 3 : Vérifier si un profil existe dans notre table users
+    // On utilise .maybeSingle() au lieu de .single() pour éviter l'erreur PGRST116
+    // quand il n'y a aucun résultat (nouveau user)
+    const { data: existingProfile } = await supabase
+      .from('users')
+      .select('*')
+      .eq('id', authData.user.id)
+      .maybeSingle();
 
-    return userProfile;
+    // Si le profil existe, mettre à jour last_login_at
+    if (existingProfile) {
+      const { data: updatedUser } = await supabase
+        .from('users')
+        .update({ last_login_at: new Date().toISOString() })
+        .eq('id', authData.user.id)
+        .select()
+        .single();
+
+      return {
+        isNewUser: false,
+        user: updatedUser || existingProfile,
+        authId: authData.user.id,
+        appleUserId: credential.user,
+        email: authData.user.email || credential.email || '',
+        firstName: credential.fullName?.givenName || null,
+        lastName: credential.fullName?.familyName || null,
+      };
+    }
+
+    // Nouveau user : pas de profil, on retourne les données pour l'onboarding
+    return {
+      isNewUser: true,
+      user: null,
+      authId: authData.user.id,
+      appleUserId: credential.user,
+      email: authData.user.email || credential.email || '',
+      firstName: credential.fullName?.givenName || null,
+      lastName: credential.fullName?.familyName || null,
+    };
   } catch (error: any) {
     console.error('Erreur lors du sign in avec Apple:', error);
     throw error;
@@ -97,11 +143,13 @@ export async function createOrUpdateUserProfile(
 ): Promise<User> {
   try {
     // Vérifier si l'utilisateur existe déjà
+    // .maybeSingle() retourne null proprement si aucun résultat,
+    // contrairement à .single() qui lève une erreur PGRST116
     const { data: existingUser, error: fetchError } = await supabase
       .from('users')
       .select('*')
       .eq('id', userData.id)
-      .single();
+      .maybeSingle();
 
     const now = new Date().toISOString();
 
@@ -165,17 +213,21 @@ export async function getCurrentUser(): Promise<User | null> {
     }
 
     // Récupérer le profil complet depuis la table users
+    // On utilise .maybeSingle() au lieu de .single() pour éviter l'erreur PGRST116
+    // .single() plante si 0 résultats, .maybeSingle() retourne null proprement
     const { data: userProfile, error: profileError } = await supabase
       .from('users')
       .select('*')
       .eq('id', session.user.id)
-      .single();
+      .maybeSingle();
 
     if (profileError) {
       console.error('Erreur lors de la récupération du profil:', profileError);
       return null;
     }
 
+    // Peut retourner null si l'user est authentifié mais n'a pas encore de profil
+    // (cas d'un nouvel utilisateur qui n'a pas fini l'onboarding)
     return userProfile;
   } catch (error) {
     console.error('Erreur lors de la récupération de l\'utilisateur:', error);
@@ -252,19 +304,10 @@ export function subscribeToAuthChanges(
       console.log('Auth state changed:', event);
 
       if (session?.user) {
-        // Récupérer le profil complet
-        let userProfile = await getCurrentUser();
-        
-        // Si le profil n'existe pas (premier login par email), le créer
-        if (!userProfile && session.user.email) {
-          console.log('Création du profil utilisateur pour', session.user.email);
-          userProfile = await createOrUpdateUserProfile({
-            id: session.user.id,
-            email: session.user.email,
-            first_name: session.user.email.split('@')[0], // Utiliser la partie avant @ comme prénom temporaire
-          });
-        }
-        
+        // Récupérer le profil complet (peut être null si nouvel utilisateur)
+        // On ne crée PAS automatiquement le profil ici
+        // C'est l'onboarding qui s'en charge pour les nouveaux utilisateurs
+        const userProfile = await getCurrentUser();
         callback(userProfile);
       } else {
         callback(null);
