@@ -4,7 +4,7 @@ import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, Platform, Share, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, Share, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { getChallengeByInviteCode } from '../../services/supabase/database';
 import { Challenge } from '../../types/supabase';
@@ -200,7 +200,7 @@ const styles = StyleSheet.create({
     codeText: {
         fontSize: 32,
         fontWeight: '700',
-        fontFamily: Platform.OS === 'ios' ? 'Courier New' : 'monospace',
+        fontFamily: 'Courier New',
         color: '#1A1A1A',
         letterSpacing: 2,
     },

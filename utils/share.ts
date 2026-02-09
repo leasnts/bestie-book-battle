@@ -64,7 +64,7 @@ export async function shareProject(project: Project): Promise<boolean> {
     const result = await Share.share({
       message: message,
       // iOS permet de spécifier URL séparément
-      url: Platform.OS === 'ios' ? link : undefined,
+      url: link,
       title: `Invitation à lire "${project.bookTitle}"`,
     });
     

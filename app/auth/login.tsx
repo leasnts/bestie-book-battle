@@ -23,7 +23,6 @@ import {
   TextInput,
   Pressable,
   KeyboardAvoidingView,
-  Platform,
   Modal,
   TouchableWithoutFeedback,
 } from 'react-native';
@@ -355,7 +354,7 @@ export default function LoginScreen() {
           </TouchableWithoutFeedback>
           
           <KeyboardAvoidingView
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            behavior="padding"
             style={styles.modalKeyboardView}
           >
             <View style={[styles.modalBottomSheet, { paddingBottom: Math.max(insets.bottom, 24) }]}>

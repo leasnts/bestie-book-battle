@@ -7,7 +7,6 @@ import {
   ActivityIndicator,
   Alert,
   KeyboardAvoidingView,
-  Platform,
   ScrollView,
   StyleSheet,
   Text,
@@ -133,7 +132,7 @@ export default function CreateProjectScreen() {
       <StatusBar style="dark" />
       <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
         <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          behavior="padding"
           style={{ flex: 1 }}
         >
           <ScrollView 

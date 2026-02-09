@@ -11,7 +11,6 @@ import {
   ScrollView,
   Text,
   KeyboardAvoidingView,
-  Platform,
   Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -77,7 +76,7 @@ export default function JoinProjectScreen() {
   return (
     <SafeAreaView style={styles.container} edges={['left', 'right', 'bottom']}>
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior="padding"
         style={styles.keyboardView}
       >
         <ScrollView

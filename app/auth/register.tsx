@@ -10,7 +10,6 @@ import {
   View,
   StyleSheet,
   KeyboardAvoidingView,
-  Platform,
   ScrollView,
   Text,
   Pressable,
@@ -99,7 +98,7 @@ export default function RegisterScreen() {
     >
       <SafeAreaView style={styles.container}>
         <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          behavior="padding"
           style={styles.keyboardView}
         >
           <ScrollView
