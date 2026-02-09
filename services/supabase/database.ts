@@ -342,25 +342,38 @@ export async function getChallengeParticipants(
     const challenge = await getChallengeById(challengeId);
     if (!challenge) throw new Error('Challenge non trouvé');
 
-    // Récupérer tous les participants avec leur progression
+    // Récupérer les progressions avec les infos utilisateur.
+    // On interroge directement user_progress (qui a des FK vers users et challenges)
+    // au lieu de passer par challenge_participants (qui n'a pas de FK vers user_progress).
+    // Chaque participant a une entrée user_progress créée automatiquement par le trigger
+    // create_initial_progress() quand il rejoint le challenge.
     const { data, error } = await supabase
-      .from('challenge_participants')
+      .from('user_progress')
       .select(`
-        user_id,
-        users!inner(*),
-        user_progress!inner(*)
+        *,
+        users!inner(*)
       `)
       .eq('challenge_id', challengeId);
 
     if (error) throw error;
-    if (!data) return [];
+    if (!data || data.length === 0) return [];
 
     // Transformer les données et calculer les classements
     const participants: ParticipantWithProgress[] = data.map((item: any) => ({
       user: item.users,
-      progress: item.user_progress[0], // Il y a toujours exactement 1 progression par participant
+      progress: {
+        id: item.id,
+        challenge_id: item.challenge_id,
+        user_id: item.user_id,
+        current_page: item.current_page,
+        progress_percentage: item.progress_percentage,
+        streak_count: item.streak_count,
+        last_streak_date: item.last_streak_date,
+        last_updated_at: item.last_updated_at,
+        created_at: item.created_at,
+      },
       history: [], // L'historique sera chargé séparément si nécessaire
-      percentage: item.user_progress[0]?.progress_percentage || 0,
+      percentage: item.progress_percentage || 0,
       isLeader: false, // Sera calculé après
       rank: 0, // Sera calculé après
     }));

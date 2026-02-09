@@ -108,7 +108,7 @@ export default function RootLayout() {
  */
 function RootLayoutNav() {
   const { user, isInitialized, initialize: initAuth } = useAuthStore();
-  const { project } = useProjectStore();
+  const { challenges } = useProjectStore();
   const router = useRouter();
   const segments = useSegments();
   const [isMounted, setIsMounted] = useState(false);
@@ -179,7 +179,7 @@ function RootLayoutNav() {
     if (!user && !inAuthGroup) {
       router.replace('/auth/login');
     }
-  }, [user, isInitialized, project, segments, isMounted, router]);
+  }, [user, isInitialized, challenges, segments, isMounted, router]);
 
   // Initialise les notifications quand l'utilisateur est connecté
   // Seulement sur mobile - les notifications ne sont pas bien supportées sur web

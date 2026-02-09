@@ -29,7 +29,8 @@ import {
 interface ProjectStore {
   // État
   challenges: Challenge[]; // Liste de tous les challenges de l'utilisateur
-  currentChallenge: ChallengeWithParticipants | null; // Challenge actuellement affiché
+  activeChallenge: Challenge | null; // Challenge affiché sur la homepage
+  currentChallenge: ChallengeWithParticipants | null; // Challenge actuellement affiché (page détail)
   isLoading: boolean;
   error: string | null;
 
@@ -52,6 +53,7 @@ interface ProjectStore {
   refreshCurrentChallenge: () => Promise<void>;
 
   // Actions - Sélection
+  setActiveChallenge: (challenge: Challenge | null) => void;
   setCurrentChallenge: (challenge: ChallengeWithParticipants | null) => void;
 
   // Actions - Modification
@@ -71,6 +73,7 @@ interface ProjectStore {
 export const useProjectStore = create<ProjectStore>((set, get) => ({
   // ===== État initial =====
   challenges: [],
+  activeChallenge: null,
   currentChallenge: null,
   isLoading: false,
   error: null,
@@ -112,9 +115,11 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
         target_end_date: targetEndDate,
       });
 
-      // Ajouter le challenge à la liste
+      // Ajouter le challenge à la liste et le définir comme actif
+      // (le dernier créé est le plus pertinent à afficher)
       set((state) => ({
         challenges: [challenge, ...state.challenges],
+        activeChallenge: challenge,
         isLoading: false,
       }));
 
@@ -181,7 +186,28 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
     set({ isLoading: true, error: null });
     try {
       const challenges = await getUserChallenges(userId);
-      set({ challenges, isLoading: false });
+
+      // Auto-sélectionner le challenge actif :
+      // On prend le plus récemment mis à jour (updated_at desc)
+      // pour afficher le projet sur lequel l'utilisateur était actif en dernier
+      const { activeChallenge } = get();
+      let newActive = activeChallenge;
+
+      if (challenges.length > 0) {
+        // Si pas de challenge actif, ou s'il n'existe plus dans la liste
+        const activeStillExists = activeChallenge && challenges.some(c => c.id === activeChallenge.id);
+        if (!activeStillExists) {
+          // Trier par updated_at desc pour prendre le plus récent
+          const sorted = [...challenges].sort(
+            (a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+          );
+          newActive = sorted[0];
+        }
+      } else {
+        newActive = null;
+      }
+
+      set({ challenges, activeChallenge: newActive, isLoading: false });
     } catch (error: any) {
       console.error('Load challenges error:', error);
       set({ error: error.message, isLoading: false });
@@ -225,7 +251,18 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
     }
   },
 
-  // ===== Action : Définir le challenge actuel =====
+  // ===== Action : Définir le challenge actif (homepage) =====
+  /**
+   * Changer le challenge affiché sur la homepage
+   * Appelé quand l'utilisateur sélectionne un autre projet dans le dropdown
+   * 
+   * @param challenge - Le challenge à afficher, ou null pour réinitialiser
+   */
+  setActiveChallenge: (challenge) => {
+    set({ activeChallenge: challenge });
+  },
+
+  // ===== Action : Définir le challenge actuel (page détail) =====
   /**
    * Définir manuellement le challenge actuellement affiché
    * 
@@ -307,6 +344,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
   reset: () => {
     set({
       challenges: [],
+      activeChallenge: null,
       currentChallenge: null,
       isLoading: false,
       error: null,

@@ -22,7 +22,6 @@ import {
 } from 'react-native';
 import { useAuthStore } from '../../stores/authStore';
 import { useProgressStore } from '../../stores/progressStore';
-import { useDemoStore, DemoMode } from '../../stores/demoStore';
 import { pickImage, uploadProfilePhoto } from '../../services/supabase/storage';
 
 // 🎨 Noir & Blanc + Bleu Klein + Orange flamme
@@ -43,7 +42,6 @@ export default function ProfileScreen() {
   const router = useRouter();
   const { user, logout, updateProfile } = useAuthStore();
   const { participants } = useProgressStore();
-  const { mode, setMode } = useDemoStore();
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
 
@@ -175,51 +173,6 @@ export default function ProfileScreen() {
               <Text style={styles.statLabel}>Streak actuel</Text>
             </View>
           </View>
-        </View>
-
-        {/* Mode Démo */}
-        <View style={styles.demoCard}>
-          <Text style={styles.demoTitle}>🧪 Mode Démo</Text>
-          <Text style={styles.demoSubtitle}>Teste différents états de l'app</Text>
-
-          <Pressable 
-            style={[styles.demoOption, mode === 'with_friend' && styles.demoOptionActive]}
-            onPress={() => setMode('with_friend')}
-          >
-            <View style={styles.demoRadio}>
-              {mode === 'with_friend' && <View style={styles.demoRadioInner} />}
-            </View>
-            <View style={styles.demoOptionText}>
-              <Text style={styles.demoOptionLabel}>Avec données</Text>
-              <Text style={styles.demoOptionDesc}>Toi + Zoé lisez ensemble</Text>
-            </View>
-          </Pressable>
-
-          <Pressable 
-            style={[styles.demoOption, mode === 'solo' && styles.demoOptionActive]}
-            onPress={() => setMode('solo')}
-          >
-            <View style={styles.demoRadio}>
-              {mode === 'solo' && <View style={styles.demoRadioInner} />}
-            </View>
-            <View style={styles.demoOptionText}>
-              <Text style={styles.demoOptionLabel}>Solo</Text>
-              <Text style={styles.demoOptionDesc}>Projet créé, personne n'a rejoint</Text>
-            </View>
-          </Pressable>
-
-          <Pressable 
-            style={[styles.demoOption, mode === 'empty' && styles.demoOptionActive]}
-            onPress={() => setMode('empty')}
-          >
-            <View style={styles.demoRadio}>
-              {mode === 'empty' && <View style={styles.demoRadioInner} />}
-            </View>
-            <View style={styles.demoOptionText}>
-              <Text style={styles.demoOptionLabel}>Vide</Text>
-              <Text style={styles.demoOptionDesc}>Aucun projet créé ou rejoint</Text>
-            </View>
-          </Pressable>
         </View>
 
         {/* Actions */}
@@ -459,68 +412,4 @@ const styles = StyleSheet.create({
     marginTop: 24,
   },
 
-  // Demo Mode
-  demoCard: {
-    backgroundColor: COLORS.card,
-    marginHorizontal: 16,
-    marginBottom: 16,
-    padding: 16,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: COLORS.cardBorder,
-  },
-  demoTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: COLORS.text,
-    marginBottom: 4,
-  },
-  demoSubtitle: {
-    fontSize: 13,
-    color: COLORS.textDim,
-    marginBottom: 16,
-  },
-  demoOption: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 12,
-    borderRadius: 12,
-    marginBottom: 8,
-    backgroundColor: COLORS.bg,
-    borderWidth: 2,
-    borderColor: 'transparent',
-  },
-  demoOptionActive: {
-    backgroundColor: COLORS.primary + '08',
-    borderColor: COLORS.primary,
-  },
-  demoRadio: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    borderWidth: 2,
-    borderColor: COLORS.textMuted,
-    marginRight: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  demoRadioInner: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: COLORS.primary,
-  },
-  demoOptionText: {
-    flex: 1,
-  },
-  demoOptionLabel: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: COLORS.text,
-    marginBottom: 2,
-  },
-  demoOptionDesc: {
-    fontSize: 12,
-    color: COLORS.textDim,
-  },
 });
