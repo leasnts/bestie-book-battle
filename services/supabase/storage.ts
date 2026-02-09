@@ -8,7 +8,7 @@
 
 import { supabase, STORAGE_BUCKETS, getProfilePhotoUrl, getBookCoverUrl } from '../../supabaseConfig';
 import * as ImagePicker from 'expo-image-picker';
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/legacy';
 import { decode } from 'base64-arraybuffer';
 
 /**
@@ -93,9 +93,11 @@ export async function uploadProfilePhoto(
   imageUri: string
 ): Promise<UploadResult> {
   try {
-    // Lire le fichier depuis l'URI
+    // Lire le fichier en base64 depuis son URI locale
+    // On utilise la chaîne 'base64' directement au lieu de FileSystem.EncodingType.Base64
+    // car l'enum EncodingType n'est plus exporté dans les nouvelles versions d'expo-file-system
     const base64 = await FileSystem.readAsStringAsync(imageUri, {
-      encoding: FileSystem.EncodingType.Base64,
+      encoding: 'base64' as any,
     });
 
     // Déterminer le type MIME de l'image
@@ -106,7 +108,8 @@ export async function uploadProfilePhoto(
     const fileName = `avatar.${ext}`;
     const filePath = `${userId}/${fileName}`;
 
-    // Convertir base64 en ArrayBuffer
+    // Convertir la chaîne base64 en ArrayBuffer (format binaire)
+    // C'est ce format que Supabase Storage attend pour l'upload
     const arrayBuffer = decode(base64);
 
     // Upload vers Supabase Storage
@@ -114,7 +117,7 @@ export async function uploadProfilePhoto(
       .from(STORAGE_BUCKETS.PROFILE_PHOTOS)
       .upload(filePath, arrayBuffer, {
         contentType: mimeType,
-        upsert: true, // Écraser si le fichier existe déjà
+        upsert: true,
       });
 
     if (uploadError) throw uploadError;
@@ -184,23 +187,31 @@ export async function uploadBookCover(
   imageUri: string
 ): Promise<UploadResult> {
   try {
-    // Lire le fichier depuis l'URI
+    console.log('[Cover Upload] Début - challengeId:', challengeId);
+    console.log('[Cover Upload] Image URI:', imageUri);
+
+    // Lire le fichier en base64 depuis son URI locale
+    // C'est la méthode la plus fiable en React Native pour lire un fichier image
+    // On utilise 'base64' en string au lieu de FileSystem.EncodingType.Base64
     const base64 = await FileSystem.readAsStringAsync(imageUri, {
-      encoding: FileSystem.EncodingType.Base64,
+      encoding: 'base64' as any,
     });
 
-    // Déterminer le type MIME de l'image
-    const ext = imageUri.split('.').pop()?.toLowerCase() || 'jpg';
-    const mimeType = ext === 'png' ? 'image/png' : ext === 'webp' ? 'image/webp' : 'image/jpeg';
+    console.log('[Cover Upload] Base64 lu, taille:', Math.round(base64.length / 1024), 'Ko');
 
-    // Construire le chemin du fichier
-    const fileName = `cover.${ext}`;
+    // Toujours uploader en JPEG : c'est 3-5x plus léger que PNG
+    // et la qualité est largement suffisante pour une couverture de livre
+    const mimeType = 'image/jpeg';
+    const fileName = 'cover.jpg';
     const filePath = `${challengeId}/${fileName}`;
 
-    // Convertir base64 en ArrayBuffer
+    console.log('[Cover Upload] Upload vers:', filePath, '(type:', mimeType, ')');
+
+    // Convertir la chaîne base64 en ArrayBuffer
+    // C'est le format binaire que Supabase Storage attend
     const arrayBuffer = decode(base64);
 
-    // Upload vers Supabase Storage
+    // Upload vers Supabase Storage dans le bucket "book-covers"
     const { error: uploadError } = await supabase.storage
       .from(STORAGE_BUCKETS.BOOK_COVERS)
       .upload(filePath, arrayBuffer, {
@@ -208,17 +219,21 @@ export async function uploadBookCover(
         upsert: true, // Écraser si le fichier existe déjà
       });
 
-    if (uploadError) throw uploadError;
+    if (uploadError) {
+      console.error('[Cover Upload] Erreur Supabase Storage:', uploadError);
+      throw uploadError;
+    }
 
-    // Obtenir l'URL publique
+    // Obtenir l'URL publique permanente
     const publicUrl = getBookCoverUrl(challengeId, fileName);
+    console.log('[Cover Upload] Succès ! URL publique:', publicUrl);
 
     return {
       url: publicUrl,
       path: filePath,
     };
   } catch (error: any) {
-    console.error('Erreur lors de l\'upload de la couverture:', error);
+    console.error('[Cover Upload] Échec complet:', error);
     throw error;
   }
 }

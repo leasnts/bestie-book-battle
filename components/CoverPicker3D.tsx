@@ -109,7 +109,8 @@ export default function CoverPicker3D({ onCoverSelected, initialCover }: CoverPi
             mediaTypes: ['images'],
             allowsEditing: true,
             aspect: [1, 1],
-            quality: 0.8,
+            quality: 0.5, // 0.5 suffit largement pour une couverture de livre
+            // Ça réduit la taille du fichier d'environ 60% vs 0.8
         });
 
         if (!result.canceled) {

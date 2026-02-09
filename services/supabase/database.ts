@@ -8,6 +8,7 @@
  * - Historique de lecture
  */
 
+import { randomUUID } from 'expo-crypto';
 import { supabase } from '../../supabaseConfig';
 import {
   Challenge,
@@ -36,6 +37,10 @@ import {
  * - Ajoute le créateur comme premier participant
  * - Crée la progression initiale du créateur
  * 
+ * IMPORTANT : Cette fonction vérifie d'abord que l'utilisateur a une session 
+ * Supabase active, et utilise l'ID de cette session comme admin_id.
+ * Cela garantit que la politique RLS (auth.uid() = admin_id) est satisfaite.
+ * 
  * @param challengeData - Les données du challenge
  * @returns Le challenge créé avec toutes ses informations
  */
@@ -43,17 +48,66 @@ export async function createChallenge(
   challengeData: Omit<ChallengeInsert, 'invite_code' | 'invite_url'>
 ): Promise<Challenge> {
   try {
-    // Créer le challenge
-    const { data: challenge, error: challengeError } = await supabase
+    // Étape 0 : Vérifier que la session Supabase est active
+    // auth.uid() côté PostgreSQL correspond à session.user.id côté client
+    // Si ces deux valeurs ne matchent pas, la politique RLS rejettera l'insertion
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    
+    if (sessionError) {
+      console.error('Erreur session Supabase:', sessionError);
+      throw new Error('Session invalide. Veuillez vous reconnecter.');
+    }
+    
+    if (!session?.user) {
+      console.error('Pas de session active. auth.uid() sera NULL côté Supabase.');
+      throw new Error('Vous n\'êtes pas connecté. Veuillez vous reconnecter.');
+    }
+
+    // Debug : vérifier la correspondance entre les IDs
+    // auth.uid() côté PostgreSQL = session.user.id côté client
+    console.log('Session Supabase active:');
+    console.log('  - session.user.id (= auth.uid()):', session.user.id);
+    console.log('  - admin_id envoyé:', challengeData.admin_id);
+    console.log('  - Match:', session.user.id === challengeData.admin_id);
+
+    // Sécurité : utiliser l'ID de la session comme admin_id
+    // Même si challengeData.admin_id est différent (ex: bug dans le store),
+    // on force l'utilisation de l'ID de la session pour que la RLS passe
+    const safeAdminId = session.user.id;
+
+    // Générer un ID côté client pour pouvoir référencer le challenge
+    // après l'insertion (sans dépendre de .select() qui nécessite la policy SELECT)
+    const challengeId = randomUUID();
+
+    const safeData = {
+      ...challengeData,
+      id: challengeId,
+      admin_id: safeAdminId,
+    };
+
+    // Étape 1 : Insérer le challenge SANS .select()
+    // Pourquoi ? La policy SELECT sur challenges exige que l'utilisateur soit 
+    // PARTICIPANT du challenge. Or il ne l'est pas encore à ce stade.
+    // Faire .insert().select() échouerait car la row ne serait pas visible.
+    const { error: challengeError } = await supabase
       .from('challenges')
-      .insert(challengeData)
-      .select()
-      .single();
+      .insert(safeData);
 
     if (challengeError) throw challengeError;
 
-    // Ajouter le créateur comme premier participant
-    await joinChallenge(challenge.id, challengeData.admin_id);
+    // Étape 2 : Ajouter le créateur comme premier participant
+    // Le trigger SQL crée automatiquement la progression initiale
+    await joinChallenge(challengeId, safeAdminId);
+
+    // Étape 3 : Maintenant que l'utilisateur est participant,
+    // la policy SELECT le laisse voir le challenge → on peut le lire
+    const { data: challenge, error: fetchError } = await supabase
+      .from('challenges')
+      .select()
+      .eq('id', challengeId)
+      .single();
+
+    if (fetchError) throw fetchError;
 
     return challenge;
   } catch (error: any) {

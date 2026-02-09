@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import * as Clipboard from 'expo-clipboard';
-import { useRouter } from 'expo-router';
+import { Image } from 'expo-image';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { Share, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { Button, Surface, Text } from 'react-native-paper';
@@ -13,15 +14,27 @@ import Animated, {
     withSequence,
     withTiming,
 } from 'react-native-reanimated';
-import { useProjectStore } from '../../stores/projectStore';
 import { colors } from '../../utils/constants';
 
 export default function InviteScreen() {
     const router = useRouter();
-    const { project } = useProjectStore();
+    
+    // On récupère les données passées en paramètres de route depuis create.tsx
+    // code = le code d'invitation généré par Supabase
+    // bookTitle = le titre du livre
+    // coverUrl = l'URL de la cover (Supabase Storage ou URI locale en fallback)
+    const { code, bookTitle, coverUrl } = useLocalSearchParams<{ 
+        code: string; 
+        challengeId: string; 
+        bookTitle: string;
+        coverUrl: string;
+    }>();
+    
     const [copied, setCopied] = useState(false);
     
     // Valeurs d'animation
+    const coverScale = useSharedValue(0.5);
+    const coverOpacity = useSharedValue(0);
     const titleScale = useSharedValue(0);
     const titleOpacity = useSharedValue(0);
     const cardScale = useSharedValue(0.8);
@@ -31,26 +44,35 @@ export default function InviteScreen() {
     
     // Lancer les animations au montage
     useEffect(() => {
-        // Titre avec effet de celebration
-        titleScale.value = withSequence(
+        // Cover apparait en premier avec un bounce
+        coverScale.value = withSpring(1, { damping: 12, stiffness: 100 });
+        coverOpacity.value = withTiming(1, { duration: 400 });
+        
+        // Titre avec effet de celebration (léger délai)
+        titleScale.value = withDelay(150, withSequence(
             withTiming(1.2, { duration: 300 }),
             withSpring(1, { damping: 10 })
-        );
-        titleOpacity.value = withTiming(1, { duration: 400 });
+        ));
+        titleOpacity.value = withDelay(150, withTiming(1, { duration: 400 }));
         
         // Card du code avec bounce
-        cardScale.value = withDelay(200, withSpring(1, {
+        cardScale.value = withDelay(350, withSpring(1, {
             damping: 12,
             stiffness: 100,
         }));
-        cardOpacity.value = withDelay(200, withTiming(1, { duration: 400 }));
+        cardOpacity.value = withDelay(350, withTiming(1, { duration: 400 }));
         
         // Boutons slide up
-        buttonsOpacity.value = withDelay(500, withTiming(1, { duration: 500 }));
-        buttonsTranslateY.value = withDelay(500, withSpring(0, { damping: 15 }));
+        buttonsOpacity.value = withDelay(600, withTiming(1, { duration: 500 }));
+        buttonsTranslateY.value = withDelay(600, withSpring(0, { damping: 15 }));
     }, []);
     
     // Styles animés
+    const coverAnimatedStyle = useAnimatedStyle(() => ({
+        transform: [{ scale: coverScale.value }],
+        opacity: coverOpacity.value,
+    }));
+    
     const titleAnimatedStyle = useAnimatedStyle(() => ({
         transform: [{ scale: titleScale.value }],
         opacity: titleOpacity.value,
@@ -66,8 +88,8 @@ export default function InviteScreen() {
         transform: [{ translateY: buttonsTranslateY.value }],
     }));
 
-    if (!project) {
-        // Should not happen, but safe fallback
+    // Si les paramètres ne sont pas disponibles (ne devrait pas arriver)
+    if (!code) {
         return (
             <SafeAreaView style={styles.container}>
                 <Text>Aucun projet créé.</Text>
@@ -77,7 +99,8 @@ export default function InviteScreen() {
     }
 
     const handleCopy = async () => {
-        await Clipboard.setStringAsync(project.invitationCode);
+        // On copie le code d'invitation dans le presse-papier
+        await Clipboard.setStringAsync(code);
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
     };
@@ -85,7 +108,7 @@ export default function InviteScreen() {
     const handleShare = async () => {
         try {
             await Share.share({
-                message: `Rejoins mon projet de lecture sur Bestie Book Battle avec le code : ${project.invitationCode}`,
+                message: `Rejoins mon projet de lecture sur Bestie Book Battle avec le code : ${code}`,
             });
         } catch (error) {
             console.error(error);
@@ -100,10 +123,29 @@ export default function InviteScreen() {
     return (
         <SafeAreaView style={styles.container}>
             <View style={styles.content}>
+                {/* Cover du livre avec animation bounce */}
+                {coverUrl ? (
+                    <Animated.View style={[styles.coverContainer, coverAnimatedStyle]}>
+                        <Image
+                            source={{ uri: coverUrl }}
+                            style={styles.coverImage}
+                            contentFit="cover"
+                            transition={200}
+                            // Le cache garde l'image en mémoire + sur le disque
+                            // La prochaine fois qu'on affiche cette URL, c'est instantané
+                            cachePolicy="memory-disk"
+                            // Couleur de fond affichée pendant le chargement
+                            // pour éviter un "flash" blanc
+                            placeholderContentFit="cover"
+                            placeholder={{ blurhash: 'LKO2:N%2Tw=w]~RBVZRi};RPxuwH' }}
+                        />
+                    </Animated.View>
+                ) : null}
+
                 <Animated.View style={[styles.textContainer, titleAnimatedStyle]}>
                     <Text variant="headlineMedium" style={styles.title}>C'est tout bon ! 🎉</Text>
                     <Text variant="bodyLarge" style={styles.subtitle}>
-                        Ton projet "{project.bookTitle}" est créé. Invite tes amis à te rejoindre !
+                        Ton projet "{bookTitle}" est créé. Invite tes amis à te rejoindre !
                     </Text>
                 </Animated.View>
 
@@ -111,7 +153,7 @@ export default function InviteScreen() {
                     <Surface style={styles.codeCard} elevation={2}>
                         <Text style={styles.codeLabel}>Ton code d'invitation</Text>
                         <TouchableOpacity onPress={handleCopy} style={styles.codeContainer}>
-                            <Text style={styles.codeText}>{project.invitationCode}</Text>
+                            <Text style={styles.codeText}>{code}</Text>
                             <Ionicons name={copied ? "checkmark-circle" : "copy-outline"} size={24} color={copied ? colors.success : colors.primary} />
                         </TouchableOpacity>
                         {copied && <Text style={styles.copiedText}>Copié !</Text>}
@@ -153,7 +195,24 @@ const styles = StyleSheet.create({
         flex: 1,
         padding: 24,
         justifyContent: 'center',
-        gap: 40,
+        alignItems: 'center',
+        gap: 28,
+    },
+    coverContainer: {
+        width: 120,
+        height: 120,
+        borderRadius: 20,
+        overflow: 'hidden',
+        // Ombre pour donner de la profondeur à la cover
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.2,
+        shadowRadius: 16,
+        elevation: 8,
+    },
+    coverImage: {
+        width: '100%',
+        height: '100%',
     },
     textContainer: {
         alignItems: 'center',
