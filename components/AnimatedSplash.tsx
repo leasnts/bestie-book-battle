@@ -10,20 +10,18 @@
  */
 
 import { Image } from 'expo-image';
-import React, { useEffect } from 'react';
-import { StyleSheet, View, Text } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { StyleSheet, Text, View } from 'react-native';
 import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withTiming,
-  withDelay,
   Easing,
+  useAnimatedStyle,
+  useSharedValue,
+  withDelay,
+  withTiming,
 } from 'react-native-reanimated';
-import { colors, fontSize, fontWeight } from '../utils/constants';
+import { colors, fontSize } from '../utils/constants';
 import PopEyes from './PopEyes';
-
-// Asset texture de fond
-const TEXTURE_IMAGE = require('../assets/images/61ea1e0c638b5b9c8100383a37a5b488848db623.png');
+import TEXTURE_IMAGE from '../assets/images/61ea1e0c638b5b9c8100383a37a5b488848db623.png';
 
 interface AnimatedSplashProps {
   onFinish: () => void;
@@ -40,6 +38,10 @@ export default function AnimatedSplash({ onFinish }: AnimatedSplashProps) {
   // Fade out global à la fin
   const screenOpacity = useSharedValue(1);
 
+  // Ref pour accéder à la dernière version de onFinish sans re-déclencher l'effet
+  const onFinishRef = useRef(onFinish);
+  onFinishRef.current = onFinish;
+
   useEffect(() => {
     // Timeline :
     // 0ms       → Fade in du texte (700ms)
@@ -50,7 +52,7 @@ export default function AnimatedSplash({ onFinish }: AnimatedSplashProps) {
     // 3700ms    → onFinish → écran de sign in
 
     // 1. Fade in du texte
-    textOpacity.value = withTiming(1, { duration: 700 });
+    textOpacity.value = withTiming(1, { duration: 1000 });
     
     // 2. Les yeux arrivent : opacity 0→1 + scale 3→1
     eyesOpacity.value = withDelay(
@@ -73,7 +75,7 @@ export default function AnimatedSplash({ onFinish }: AnimatedSplashProps) {
 
     // 4. Quand le fade out est fini, on passe à l'écran suivant
     const timer = setTimeout(() => {
-      onFinish();
+      onFinishRef.current();
     }, 3700);
     
     return () => clearTimeout(timer);
@@ -154,7 +156,7 @@ const styles = StyleSheet.create({
   text: {
     fontFamily: 'Rokkitt_Bold',
     fontSize: fontSize['6xl'], // 72px
-    fontWeight: fontWeight.bold as any,
+    fontWeight: '700',
     color: colors.white,
     letterSpacing: -1.44,
     lineHeight: 86,
