@@ -273,10 +273,13 @@ export async function updateUserProfile(
  * 
  * Supprime la session Supabase et nettoie le stockage local.
  * L'utilisateur devra se reconnecter pour accéder à l'application.
+ * 
+ * On utilise scope: 'local' pour React Native/Expo car le scope par défaut (global)
+ * peut provoquer AuthSessionMissingError quand la session côté serveur est déjà invalide.
  */
 export async function signOut(): Promise<void> {
   try {
-    const { error } = await supabase.auth.signOut();
+    const { error } = await supabase.auth.signOut({ scope: 'local' });
     if (error) throw error;
   } catch (error: any) {
     console.error('Erreur lors de la déconnexion:', error);

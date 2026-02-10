@@ -20,6 +20,8 @@ import {
   updateUserProfile,
   AppleSignInResult,
 } from '../services/supabase/auth';
+import { useProjectStore } from './projectStore';
+import { useProgressStore } from './progressStore';
 
 /**
  * Données du nouvel utilisateur en attente d'onboarding
@@ -136,14 +138,18 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   /**
    * Déconnecter l'utilisateur
    * 
-   * Supprime la session Supabase et nettoie le store.
-   * L'utilisateur devra se reconnecter pour accéder à l'app.
+   * Supprime la session Supabase, nettoie le store d'auth,
+   * et réinitialise les stores project et progress pour éviter
+   * d'afficher des données d'un autre utilisateur.
    */
   logout: async () => {
     set({ isLoading: true });
     try {
       await signOut();
-      set({ user: null, isLoading: false, error: null });
+      // Réinitialiser tous les stores liés à l'utilisateur
+      useProjectStore.getState().reset();
+      useProgressStore.getState().clearProgress();
+      set({ user: null, pendingUserData: null, isLoading: false, error: null });
     } catch (error: any) {
       console.error('Logout error:', error);
       set({ error: error.message, isLoading: false });

@@ -9,6 +9,8 @@ import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { 
+  KeyboardAvoidingView,
+  Platform,
   StyleSheet, 
   View, 
   Text, 
@@ -43,6 +45,11 @@ export default function OnboardingNameScreen() {
 
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
+            <KeyboardAvoidingView
+                style={styles.keyboardAvoid}
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+            >
             <View style={styles.content}>
                 {/* Background texture */}
                 <Image
@@ -94,6 +101,7 @@ export default function OnboardingNameScreen() {
                     </Button3D>
                 </View>
             </View>
+            </KeyboardAvoidingView>
         </SafeAreaView>
     );
 }
@@ -102,6 +110,9 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: colors.white,
+    },
+    keyboardAvoid: {
+        flex: 1,
     },
     content: {
         flex: 1,
@@ -155,11 +166,11 @@ const styles = StyleSheet.create({
     input: {
         fontFamily: 'Rokkitt_Bold',
         fontSize: fontSize['5xl'], // 60px pour l'input géant
-        fontWeight: fontWeight.bold,
+        fontWeight: fontWeight.bold as any,
         color: colors.textPrimary,
         letterSpacing: -1.2,
-        lineHeight: 72,
         textAlign: 'center',
+        textAlignVertical: 'center', // Centre vertical sur Android
         width: '100%',
         // Pas de border, juste le texte
         backgroundColor: 'transparent',

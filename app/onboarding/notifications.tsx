@@ -29,7 +29,7 @@ import Button3D from '../../components/Button3D';
 
 // Assets
 const TEXTURE_IMAGE = require('../../assets/images/61ea1e0c638b5b9c8100383a37a5b488848db623.png');
-const IPHONE_ILLUSTRATION = require('../../assets/images/84bd85b42834b15804c0e33cc47f128fb1f5fe4c.png');
+const NOTIFICATION_ILLUSTRATION = require('../../assets/images/notification-illustration.png');
 
 type OnboardingFlow = 'create' | 'join';
 
@@ -66,7 +66,6 @@ export default function OnboardingNotificationsScreen() {
                 );
             }
 
-            // Passer à l'écran suivant selon le flow
             navigateToNextScreen();
         } catch (error: any) {
             console.error('Erreur demande notifications:', error);
@@ -88,7 +87,6 @@ export default function OnboardingNotificationsScreen() {
      */
     const navigateToNextScreen = () => {
         if (params.flow === 'create') {
-            // Branche Créer → Écran "C'est terminé !" avec la carte du livre + code invite
             router.push({
                 pathname: '/onboarding/complete',
                 params: {
@@ -100,7 +98,6 @@ export default function OnboardingNotificationsScreen() {
                 },
             });
         } else {
-            // Branche Rejoindre → Écran "Bienvenue !" avec la carte du challenge
             router.push({
                 pathname: '/onboarding/welcome',
                 params: {
@@ -137,14 +134,16 @@ export default function OnboardingNotificationsScreen() {
                     </TouchableOpacity>
                 </View>
 
-                {/* Contenu principal */}
+                {/* Contenu principal centré verticalement */}
                 <View style={styles.mainContent}>
-                    {/* Illustration iPhone */}
-                    <Image
-                        source={IPHONE_ILLUSTRATION}
-                        style={styles.illustration}
-                        contentFit="contain"
-                    />
+                    {/* Illustration iPhone centrée */}
+                    <View style={styles.illustrationContainer}>
+                        <Image
+                            source={NOTIFICATION_ILLUSTRATION}
+                            style={styles.illustration}
+                            contentFit="contain"
+                        />
+                    </View>
 
                     {/* Texte centré */}
                     <View style={styles.textContainer}>
@@ -159,7 +158,6 @@ export default function OnboardingNotificationsScreen() {
 
                 {/* Boutons en bas */}
                 <View style={styles.footer}>
-                    {/* Bouton principal : Autoriser */}
                     <Button3D
                         onPress={handleAllowNotifications}
                         variant="primary"
@@ -169,7 +167,6 @@ export default function OnboardingNotificationsScreen() {
                         Autoriser les notifications
                     </Button3D>
 
-                    {/* Bouton secondaire : Pas maintenant */}
                     <Button3D
                         onPress={handleSkipNotifications}
                         variant="secondary"
@@ -220,24 +217,28 @@ const styles = StyleSheet.create({
     },
     mainContent: {
         flex: 1,
-        paddingHorizontal: spacing.xl,
-        paddingTop: spacing['3xl'],
+        justifyContent: 'center', // Centre verticalement le contenu
         alignItems: 'center',
-        gap: spacing['4xl'], // 48px entre l'illustration et le texte
+        paddingHorizontal: spacing.xl,
+        gap: spacing['3xl'], // 32px entre illustration et texte
+    },
+    illustrationContainer: {
+        alignItems: 'center',
+        justifyContent: 'center',
     },
     illustration: {
-        width: 393,
-        height: 331,
-        maxWidth: '100%',
+        width: 300,
+        height: 280,
     },
     textContainer: {
         alignItems: 'center',
         gap: spacing.sm, // 8px entre les deux textes
+        paddingHorizontal: spacing.lg,
     },
     mainText: {
         fontFamily: 'Rokkitt_SemiBold',
         fontSize: fontSize['2xl'], // 24px
-        fontWeight: fontWeight.semibold,
+        fontWeight: fontWeight.semibold as any,
         color: colors.textPrimary,
         textAlign: 'center',
         lineHeight: 32,
@@ -245,7 +246,7 @@ const styles = StyleSheet.create({
     subText: {
         fontFamily: 'WorkSans',
         fontSize: fontSize.sm, // 14px
-        fontWeight: fontWeight.regular,
+        fontWeight: fontWeight.regular as any,
         color: colors.textTertiary,
         textAlign: 'center',
         lineHeight: 20,

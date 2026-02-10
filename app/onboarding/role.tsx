@@ -6,6 +6,7 @@
  * - Rejoindre un bbb (challenge existant avec code)
  * 
  * Ce choix détermine la branche du flow d'onboarding.
+ * Animation de sélection avec react-native-reanimated.
  */
 
 import { Image } from 'expo-image';
@@ -20,14 +21,30 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import Animated, {
+  useAnimatedStyle,
+  withSpring,
+  useSharedValue,
+  withTiming,
+  interpolate,
+} from 'react-native-reanimated';
 import { colors, fontSize, fontWeight, spacing, buttonStyles, borderRadius, shadows } from '../../utils/constants';
 import Button3D from '../../components/Button3D';
 
 // Asset : texture de fond
 const TEXTURE_IMAGE = require('../../assets/images/61ea1e0c638b5b9c8100383a37a5b488848db623.png');
 
-// Assets SVG pour les illustrations (déjà exportés par Figma)
-// TODO: Identifier les bons SVGs dans assets/images/
+// Images des rôles (active/disabled pour chaque)
+const ROLE_IMAGES = {
+    create: {
+        active: require('../../assets/images/role-create-active.png'),
+        disabled: require('../../assets/images/role-create-disabled.png'),
+    },
+    join: {
+        active: require('../../assets/images/role-join-active.png'),
+        disabled: require('../../assets/images/role-join-disabled.png'),
+    },
+};
 
 type RoleType = 'create' | 'join';
 
@@ -38,11 +55,41 @@ export default function OnboardingRoleScreen() {
     // Rôle sélectionné (par défaut "create")
     const [selectedRole, setSelectedRole] = useState<RoleType>('create');
 
-    /**
-     * Continuer vers la branche appropriée selon le rôle choisi
-     * - create → formulaire livre (create.tsx)
-     * - join → saisie code (join.tsx)
-     */
+    // Valeurs animées pour la sélection (0 = create, 1 = join)
+    const selectionProgress = useSharedValue(0);
+
+    const handleSelectRole = (role: RoleType) => {
+        setSelectedRole(role);
+        selectionProgress.value = withSpring(role === 'create' ? 0 : 1, {
+            damping: 15,
+            stiffness: 120,
+        });
+    };
+
+    // Animation carte "Créer" : scale + border + shadow
+    const createCardStyle = useAnimatedStyle(() => {
+        const scale = interpolate(selectionProgress.value, [0, 1], [1, 0.97]);
+        const borderWidth = interpolate(selectionProgress.value, [0, 1], [2, 1]);
+        const opacity = interpolate(selectionProgress.value, [0, 1], [1, 0.7]);
+        return {
+            transform: [{ scale }],
+            borderWidth,
+            opacity,
+        };
+    });
+
+    // Animation carte "Rejoindre" : scale + border + shadow
+    const joinCardStyle = useAnimatedStyle(() => {
+        const scale = interpolate(selectionProgress.value, [0, 1], [0.97, 1]);
+        const borderWidth = interpolate(selectionProgress.value, [0, 1], [1, 2]);
+        const opacity = interpolate(selectionProgress.value, [0, 1], [0.7, 1]);
+        return {
+            transform: [{ scale }],
+            borderWidth,
+            opacity,
+        };
+    });
+
     const handleContinue = () => {
         if (selectedRole === 'create') {
             router.push({
@@ -81,75 +128,73 @@ export default function OnboardingRoleScreen() {
                 {/* Contenu principal */}
                 <View style={styles.mainContent}>
                     <Text style={styles.title}>
-                        {firstName}, Quel est ton rôle ?
+                        {firstName}, quel est ton rôle ?
                     </Text>
                     
-                    {/* Deux cartes de sélection */}
+                    {/* Deux cartes de sélection animées */}
                     <View style={styles.cardsContainer}>
                         {/* Carte "Créer un bbb" */}
-                        <Pressable
-                            style={[
+                        <Pressable onPress={() => handleSelectRole('create')}>
+                            <Animated.View style={[
                                 styles.card,
-                                selectedRole === 'create' && styles.cardSelected,
-                            ]}
-                            onPress={() => setSelectedRole('create')}
-                        >
-                            {/* Illustration SVG - placeholder pour l'instant */}
-                            <View style={styles.cardIllustration}>
-                                <Ionicons 
-                                    name="book" 
-                                    size={40} 
-                                    color={selectedRole === 'create' ? colors.textPrimary : colors.textPlaceholder} 
+                                selectedRole === 'create' ? styles.cardSelected : styles.cardInactive,
+                                createCardStyle,
+                            ]}>
+                                <Image
+                                    source={selectedRole === 'create' 
+                                        ? ROLE_IMAGES.create.active 
+                                        : ROLE_IMAGES.create.disabled}
+                                    style={styles.cardIllustration}
+                                    contentFit="contain"
                                 />
-                            </View>
-                            
-                            <View style={styles.cardTextContent}>
-                                <Text style={[
-                                    styles.cardTitle,
-                                    selectedRole !== 'create' && styles.cardTitleInactive,
-                                ]}>
-                                    Créer un bbb
-                                </Text>
-                                <Text style={[
-                                    styles.cardDescription,
-                                    selectedRole !== 'create' && styles.cardDescriptionInactive,
-                                ]}>
-                                    Choisis le livre à lire en lecture commune avec un.e/des ami.e.s
-                                </Text>
-                            </View>
+                                
+                                <View style={styles.cardTextContent}>
+                                    <Text style={[
+                                        styles.cardTitle,
+                                        selectedRole !== 'create' && styles.cardTitleInactive,
+                                    ]}>
+                                        Créer un bbb
+                                    </Text>
+                                    <Text style={[
+                                        styles.cardDescription,
+                                        selectedRole !== 'create' && styles.cardDescriptionInactive,
+                                    ]}>
+                                        Choisis le livre à lire en lecture commune avec un.e/des ami.e.s
+                                    </Text>
+                                </View>
+                            </Animated.View>
                         </Pressable>
 
                         {/* Carte "Rejoindre un bbb" */}
-                        <Pressable
-                            style={[
+                        <Pressable onPress={() => handleSelectRole('join')}>
+                            <Animated.View style={[
                                 styles.card,
-                                selectedRole === 'join' && styles.cardSelected,
-                            ]}
-                            onPress={() => setSelectedRole('join')}
-                        >
-                            {/* Illustration SVG - placeholder pour l'instant */}
-                            <View style={styles.cardIllustration}>
-                                <Ionicons 
-                                    name="people" 
-                                    size={40} 
-                                    color={selectedRole === 'join' ? colors.textPrimary : colors.textPlaceholder} 
+                                selectedRole === 'join' ? styles.cardSelected : styles.cardInactive,
+                                joinCardStyle,
+                            ]}>
+                                <Image
+                                    source={selectedRole === 'join' 
+                                        ? ROLE_IMAGES.join.active 
+                                        : ROLE_IMAGES.join.disabled}
+                                    style={styles.cardIllustration}
+                                    contentFit="contain"
                                 />
-                            </View>
-                            
-                            <View style={styles.cardTextContent}>
-                                <Text style={[
-                                    styles.cardTitle,
-                                    selectedRole !== 'join' && styles.cardTitleInactive,
-                                ]}>
-                                    Rejoindre un bbb
-                                </Text>
-                                <Text style={[
-                                    styles.cardDescription,
-                                    selectedRole !== 'join' && styles.cardDescriptionInactive,
-                                ]}>
-                                    Tu veux rejoindre une lecture commune créer par un.e ami.e
-                                </Text>
-                            </View>
+                                
+                                <View style={styles.cardTextContent}>
+                                    <Text style={[
+                                        styles.cardTitle,
+                                        selectedRole !== 'join' && styles.cardTitleInactive,
+                                    ]}>
+                                        Rejoindre un bbb
+                                    </Text>
+                                    <Text style={[
+                                        styles.cardDescription,
+                                        selectedRole !== 'join' && styles.cardDescriptionInactive,
+                                    ]}>
+                                        Tu veux rejoindre une lecture commune créée par un.e ami.e
+                                    </Text>
+                                </View>
+                            </Animated.View>
                         </Pressable>
                     </View>
                 </View>
@@ -208,41 +253,38 @@ const styles = StyleSheet.create({
         paddingHorizontal: spacing.xl,
         paddingBottom: spacing.sm,
         paddingTop: spacing['3xl'],
-        gap: spacing['6xl'], // 64px entre titre et cartes
+        gap: spacing['4xl'], // 48px entre titre et cartes
     },
     title: {
         fontFamily: 'Rokkitt_Medium',
         fontSize: fontSize['3xl'], // 36px
-        fontWeight: fontWeight.medium,
+        fontWeight: fontWeight.medium as any,
         color: colors.textPrimary,
         letterSpacing: -0.72,
         lineHeight: 44,
     },
     cardsContainer: {
-        gap: spacing['3xl'], // 32px entre les deux cartes
+        gap: spacing.lg, // 16px entre les deux cartes
     },
     card: {
         flexDirection: 'row',
         gap: spacing.md, // 12px
         padding: spacing.md, // 12px
         borderRadius: borderRadius.xl, // 24px
-        borderWidth: 1,
-        borderColor: colors.alphaBlack10,
-        backgroundColor: colors.bgSecondary, // #fafafa par défaut
+        alignItems: 'center',
     },
     cardSelected: {
         backgroundColor: colors.white,
-        borderWidth: 2,
         borderColor: colors.dark900,
         ...shadows.cardSelected,
+    },
+    cardInactive: {
+        backgroundColor: colors.bgSecondary, // #fafafa
+        borderColor: colors.alphaBlack10,
     },
     cardIllustration: {
         width: 70,
         height: 70,
-        justifyContent: 'center',
-        alignItems: 'center',
-        borderRadius: 12,
-        backgroundColor: colors.alphaBlack10,
     },
     cardTextContent: {
         flex: 1,
@@ -250,8 +292,8 @@ const styles = StyleSheet.create({
     },
     cardTitle: {
         fontFamily: 'Rokkitt_Bold',
-        fontSize: fontSize['2xl'], // 24px = display-xs
-        fontWeight: fontWeight.bold,
+        fontSize: fontSize['2xl'], // 24px
+        fontWeight: fontWeight.bold as any,
         color: colors.textPrimary,
         lineHeight: 32,
     },
@@ -261,7 +303,7 @@ const styles = StyleSheet.create({
     cardDescription: {
         fontFamily: 'WorkSans_Medium',
         fontSize: fontSize.sm, // 14px
-        fontWeight: fontWeight.medium,
+        fontWeight: fontWeight.medium as any,
         color: colors.textTertiary,
         lineHeight: 20,
     },

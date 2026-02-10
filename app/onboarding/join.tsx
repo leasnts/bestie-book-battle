@@ -11,6 +11,8 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { 
   Alert, 
+  KeyboardAvoidingView,
+  Platform,
   StyleSheet, 
   TouchableOpacity, 
   View, 
@@ -91,6 +93,11 @@ export default function OnboardingJoinScreen() {
 
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
+            <KeyboardAvoidingView
+                style={styles.keyboardAvoid}
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+            >
             <View style={styles.content}>
                 {/* Background texture */}
                 <Image
@@ -145,6 +152,7 @@ export default function OnboardingJoinScreen() {
                     </Button3D>
                 </View>
             </View>
+            </KeyboardAvoidingView>
         </SafeAreaView>
     );
 }
@@ -153,6 +161,9 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: colors.white,
+    },
+    keyboardAvoid: {
+        flex: 1,
     },
     content: {
         flex: 1,
@@ -203,7 +214,7 @@ const styles = StyleSheet.create({
     input: {
         fontFamily: 'WorkSans',
         fontSize: fontSize.md, // 16px
-        fontWeight: fontWeight.regular,
+        fontWeight: fontWeight.regular as any,
         color: colors.textPrimary,
         backgroundColor: colors.white,
         borderWidth: 1,
@@ -212,8 +223,8 @@ const styles = StyleSheet.create({
         paddingHorizontal: spacing['2xl'], // 24px
         paddingVertical: spacing.xl, // 20px
         ...shadows.xs,
-        lineHeight: 24,
         textAlign: 'center',
+        textAlignVertical: 'center', // Centre vertical sur Android
     },
     footer: {
         paddingHorizontal: spacing.xl,
