@@ -10,6 +10,17 @@
  */
 
 import { useFonts } from 'expo-font';
+import {
+  Rokkitt_400Regular,
+  Rokkitt_500Medium,
+  Rokkitt_600SemiBold,
+  Rokkitt_700Bold,
+} from '@expo-google-fonts/rokkitt';
+import {
+  WorkSans_400Regular,
+  WorkSans_500Medium,
+  WorkSans_600SemiBold,
+} from '@expo-google-fonts/work-sans';
 import * as Notifications from 'expo-notifications';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
@@ -25,6 +36,7 @@ import { useAuthStore } from '../stores/authStore';
 import { useProjectStore } from '../stores/projectStore';
 import { colors } from '../utils/constants';
 import { supabase } from '../supabaseConfig';
+import AnimatedSplash from '../components/AnimatedSplash';
 
 // Empêche l'écran de splash de se cacher automatiquement
 SplashScreen.preventAutoHideAsync();
@@ -57,9 +69,16 @@ export const unstable_settings = {
 };
 
 export default function RootLayout() {
-  // Charge les polices personnalisées
+  // Charge les polices personnalisées (Rokkitt pour display, Work Sans pour body)
   const [fontsLoaded, fontError] = useFonts({
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
+    Rokkitt: Rokkitt_400Regular,
+    Rokkitt_Medium: Rokkitt_500Medium,
+    Rokkitt_SemiBold: Rokkitt_600SemiBold,
+    Rokkitt_Bold: Rokkitt_700Bold,
+    WorkSans: WorkSans_400Regular,
+    WorkSans_Medium: WorkSans_500Medium,
+    WorkSans_SemiBold: WorkSans_600SemiBold,
   });
 
   // Si erreur de chargement des polices, on la propage
@@ -112,6 +131,7 @@ function RootLayoutNav() {
   const router = useRouter();
   const segments = useSegments();
   const [isMounted, setIsMounted] = useState(false);
+  const [showSplash, setShowSplash] = useState(true);
 
   // Initialise l'auth
   useEffect(() => {
@@ -174,9 +194,11 @@ function RootLayoutNav() {
     if (!isMounted || !isInitialized) return;
 
     const inAuthGroup = segments[0] === 'auth';
+    const inOnboarding = segments[0] === 'onboarding';
     
     // Si pas d'utilisateur connecté et pas déjà sur les pages d'auth → rediriger vers login
-    if (!user && !inAuthGroup) {
+    // Mais ne pas interférer si on est déjà en onboarding (pour les nouveaux users)
+    if (!user && !inAuthGroup && !inOnboarding) {
       router.replace('/auth/login');
     }
   }, [user, isInitialized, challenges, segments, isMounted, router]);
@@ -199,6 +221,17 @@ function RootLayoutNav() {
 
     setupNotifications();
   }, [user?.id]);
+
+  // Callback quand le splash screen se termine
+  const handleSplashFinish = () => {
+    setShowSplash(false);
+  };
+
+  // Afficher le splash screen pendant l'animation
+  // Ce return est placé APRÈS tous les hooks pour respecter les règles des hooks React
+  if (showSplash) {
+    return <AnimatedSplash onFinish={handleSplashFinish} />;
+  }
 
   return (
     <Stack screenOptions={{ headerShown: false }}>

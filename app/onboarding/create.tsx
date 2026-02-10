@@ -1,248 +1,154 @@
-import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
-import React, { useEffect, useState } from 'react';
-import { Alert, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
-import { Button, HelperText, Text, TextInput } from 'react-native-paper';
+/**
+ * Écran 3a de l'onboarding (branche Créer) : Formulaire livre
+ * 
+ * L'utilisateur décrit son premier bbb :
+ * - Titre du livre
+ * - Auteur du livre
+ * - Nombre de pages
+ * 
+ * Ces données seront utilisées pour créer le challenge.
+ */
+
+import { Image } from 'expo-image';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import React, { useState } from 'react';
+import { 
+  Alert, 
+  ScrollView, 
+  StyleSheet, 
+  TouchableOpacity, 
+  View, 
+  Text, 
+  TextInput 
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Animated, { 
-    useSharedValue, 
-    useAnimatedStyle, 
-    withSpring, 
-    withDelay,
-    withTiming,
-} from 'react-native-reanimated';
-import CoverPicker3D from '../../components/CoverPicker3D';
-import { useAuthStore } from '../../stores/authStore';
-import { useProjectStore } from '../../stores/projectStore';
-import { uploadBookCover } from '../../services/supabase/storage';
-import { updateChallenge } from '../../services/supabase/database';
-import { colors } from '../../utils/constants';
+import { Ionicons } from '@expo/vector-icons';
+import { colors, fontSize, fontWeight, spacing, buttonStyles, borderRadius, shadows } from '../../utils/constants';
+import Button3D from '../../components/Button3D';
 
-export default function CreateProjectScreen() {
+// Asset : texture de fond
+const TEXTURE_IMAGE = require('../../assets/images/61ea1e0c638b5b9c8100383a37a5b488848db623.png');
+
+export default function OnboardingBookFormScreen() {
     const router = useRouter();
+    const { firstName } = useLocalSearchParams<{ firstName: string }>();
     
-    // On récupère l'utilisateur connecté depuis le authStore
-    // Son ID est nécessaire pour être défini comme admin du challenge (admin_id)
-    // C'est ce qui permet à la politique RLS de vérifier que auth.uid() = admin_id
-    const user = useAuthStore((state) => state.user);
-    
-    // On utilise createChallenge (et non createProject qui n'existe plus)
-    const createChallenge = useProjectStore((state) => state.createChallenge);
-
     const [bookTitle, setBookTitle] = useState('');
     const [author, setAuthor] = useState('');
     const [totalPages, setTotalPages] = useState('');
-    const [coverUri, setCoverUri] = useState<string | null>(null);
-    const [loading, setLoading] = useState(false);
-    
-    // Valeurs d'animation
-    const headerOpacity = useSharedValue(0);
-    const coverOpacity = useSharedValue(0);
-    const coverTranslateY = useSharedValue(30);
-    const formOpacity = useSharedValue(0);
-    const formTranslateY = useSharedValue(40);
-    const buttonOpacity = useSharedValue(0);
-    
-    // Lancer les animations au montage
-    useEffect(() => {
-        // Header fade in
-        headerOpacity.value = withTiming(1, { duration: 400 });
-        
-        // Cover picker slide up + fade in
-        coverOpacity.value = withDelay(100, withTiming(1, { duration: 500 }));
-        coverTranslateY.value = withDelay(100, withSpring(0, { damping: 15 }));
-        
-        // Form slide up + fade in
-        formOpacity.value = withDelay(300, withTiming(1, { duration: 500 }));
-        formTranslateY.value = withDelay(300, withSpring(0, { damping: 15 }));
-        
-        // Button fade in
-        buttonOpacity.value = withDelay(500, withTiming(1, { duration: 400 }));
-    }, []);
-    
-    // Styles animés
-    const headerAnimatedStyle = useAnimatedStyle(() => ({
-        opacity: headerOpacity.value,
-    }));
-    
-    const coverAnimatedStyle = useAnimatedStyle(() => ({
-        opacity: coverOpacity.value,
-        transform: [{ translateY: coverTranslateY.value }],
-    }));
-    
-    const formAnimatedStyle = useAnimatedStyle(() => ({
-        opacity: formOpacity.value,
-        transform: [{ translateY: formTranslateY.value }],
-    }));
-    
-    const buttonAnimatedStyle = useAnimatedStyle(() => ({
-        opacity: buttonOpacity.value,
-    }));
 
-    const [errors, setErrors] = useState({
-        bookTitle: false,
-        author: false,
-        totalPages: false,
-    });
-
-    const handleCreate = async () => {
-        // Validation des champs du formulaire
-        const newErrors = {
-            bookTitle: !bookTitle.trim(),
-            author: !author.trim(),
-            totalPages: !totalPages.trim() || isNaN(Number(totalPages)),
-        };
-
-        setErrors(newErrors);
-
-        if (Object.values(newErrors).some(v => v)) {
+    /**
+     * Passer à l'écran suivant (import couverture)
+     * Les données du livre sont passées en paramètres de route
+     */
+    const handleContinue = () => {
+        // Validation simple
+        if (!bookTitle.trim() || !author.trim() || !totalPages.trim()) {
+            Alert.alert('Champs manquants', 'Merci de remplir tous les champs');
             return;
         }
 
-        // Vérifier que l'utilisateur est bien connecté
-        // Sans user.id, la politique RLS de Supabase rejettera l'insertion
-        if (!user) {
-            Alert.alert('Erreur', 'Utilisateur non identifié. Veuillez vous reconnecter.');
-            router.replace('/auth/login');
+        if (isNaN(Number(totalPages)) || Number(totalPages) <= 0) {
+            Alert.alert('Nombre invalide', 'Le nombre de pages doit être un chiffre valide');
             return;
         }
 
-        setLoading(true);
-        try {
-            // 1. Créer le challenge dans Supabase
-            // On passe user.id comme admin_id — c'est ce qui satisfait la politique RLS :
-            // WITH CHECK (auth.uid() = admin_id)
-            const challenge = await createChallenge(
-                user.id,           // userId : l'ID de l'utilisateur connecté
-                bookTitle,         // titre du livre
-                author || undefined, // auteur (optionnel)
-                Number(totalPages),  // nombre total de pages
-                undefined,         // coverUrl : on l'uploade après
-                undefined          // targetEndDate : pas défini pour l'instant
-            );
-
-            // 2. Upload de la cover si l'utilisateur en a sélectionné une
-            // On le fait APRÈS la création du challenge car on a besoin de l'ID
-            // du challenge pour stocker le fichier dans le bon dossier Supabase Storage
-            let finalCoverUrl: string | undefined;
-            if (coverUri) {
-                try {
-                    const { url } = await uploadBookCover(challenge.id, coverUri);
-                    // Sauvegarder l'URL permanente dans la base de données
-                    await updateChallenge(challenge.id, { cover_url: url });
-                    finalCoverUrl = url;
-                    console.log('Cover sauvegardée avec succès:', url);
-                } catch (coverError: any) {
-                    // Rendre l'erreur VISIBLE pour pouvoir la debugger
-                    console.error('Échec upload cover:', coverError);
-                    Alert.alert(
-                        'Cover non sauvegardée',
-                        `L'image n'a pas pu être uploadée : ${coverError.message || coverError}. Le projet a été créé sans cover.`
-                    );
-                    // On continue sans cover -- le projet existe quand même
-                }
-            }
-
-            // 3. Naviguer vers l'écran d'invitation
-            // On passe le code d'invitation, le titre et la cover en paramètres de route
-            router.push({
-                pathname: '/onboarding/invite',
-                params: {
-                    code: challenge.invite_code,
-                    challengeId: challenge.id,
-                    bookTitle: challenge.book_title,
-                    coverUrl: finalCoverUrl || '',
-                },
-            });
-        } catch (error: any) {
-            console.error('Erreur lors de la création du challenge:', error);
-            Alert.alert('Erreur', error.message || 'Une erreur est survenue lors de la création.');
-        } finally {
-            setLoading(false);
-        }
+        router.push({
+            pathname: '/onboarding/cover',
+            params: {
+                firstName,
+                bookTitle: bookTitle.trim(),
+                author: author.trim(),
+                totalPages: totalPages.trim(),
+            },
+        });
     };
 
     return (
-        <SafeAreaView style={styles.container}>
-            <ScrollView 
-                contentContainerStyle={styles.content}
-                style={{ overflow: 'visible' }} // Permet aux ombres de sortir
-            >
-                <Animated.View style={[styles.header, headerAnimatedStyle]}>
-                    <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-                        <Ionicons name="arrow-back" size={24} color={colors.text} />
-                    </TouchableOpacity>
-                    <Text variant="headlineMedium" style={styles.title}>Créer un projet</Text>
-                </Animated.View>
+        <SafeAreaView style={styles.container} edges={['top']}>
+            <View style={styles.content}>
+                {/* Background texture */}
+                <Image
+                    source={TEXTURE_IMAGE}
+                    style={styles.backgroundTexture}
+                    contentFit="cover"
+                />
 
-                {/* Cover Picker 3D Component */}
-                <Animated.View style={[styles.coverPickerContainer, coverAnimatedStyle]}>
-                    <CoverPicker3D
-                        onCoverSelected={(uri) => setCoverUri(uri)}
-                        initialCover={coverUri || undefined}
-                    />
-                </Animated.View>
-
-                <Animated.View style={[styles.form, formAnimatedStyle]}>
-                    {/* Form Fields */}
-                    <View style={styles.inputGroup}>
-                        <TextInput
-                            label="Titre du livre"
-                            value={bookTitle}
-                            onChangeText={(t) => {
-                                setBookTitle(t);
-                                setErrors(prev => ({ ...prev, bookTitle: false }));
-                            }}
-                            mode="outlined"
-                            error={errors.bookTitle}
-                        />
-                        {errors.bookTitle && <HelperText type="error">Le titre est requis.</HelperText>}
-                    </View>
-
-                    <View style={styles.inputGroup}>
-                        <TextInput
-                            label="Auteur"
-                            value={author}
-                            onChangeText={(t) => {
-                                setAuthor(t);
-                                setErrors(prev => ({ ...prev, author: false }));
-                            }}
-                            mode="outlined"
-                            error={errors.author}
-                        />
-                        {errors.author && <HelperText type="error">L'auteur est requis.</HelperText>}
-                    </View>
-
-                    <View style={styles.inputGroup}>
-                        <TextInput
-                            label="Nombre de pages"
-                            value={totalPages}
-                            onChangeText={(t) => {
-                                setTotalPages(t.replace(/[^0-9]/g, ''));
-                                setErrors(prev => ({ ...prev, totalPages: false }));
-                            }}
-                            mode="outlined"
-                            keyboardType="number-pad"
-                            error={errors.totalPages}
-                        />
-                        {errors.totalPages && <HelperText type="error">Nombre de pages invalide.</HelperText>}
-                    </View>
-                </Animated.View>
-
-                <Animated.View style={buttonAnimatedStyle}>
-                    <Button
-                        mode="contained"
-                        onPress={handleCreate}
-                        style={styles.button}
-                        contentStyle={styles.buttonContent}
-                        icon="check"
-                        loading={loading}
-                        disabled={loading}
+                {/* Bouton back en haut à gauche */}
+                <View style={styles.header}>
+                    <TouchableOpacity 
+                        style={styles.backButton} 
+                        onPress={() => router.back()}
                     >
-                        {loading ? 'Création...' : 'Créer le projet'}
-                    </Button>
-                </Animated.View>
-            </ScrollView>
+                        <View style={styles.backButtonInnerShadow} />
+                        <Ionicons name="chevron-back" size={24} color={colors.textPrimary} />
+                    </TouchableOpacity>
+                </View>
+
+                {/* ScrollView pour le contenu */}
+                <ScrollView 
+                    style={styles.scrollContent} 
+                    showsVerticalScrollIndicator={false}
+                    contentContainerStyle={styles.scrollContentContainer}
+                >
+                    <Text style={styles.title}>Décris ton premier bbb !</Text>
+                    
+                    {/* Formulaire avec 3 inputs */}
+                    <View style={styles.formContainer}>
+                        {/* Input: Titre du livre */}
+                        <View style={styles.inputWrapper}>
+                            <TextInput
+                                style={styles.input}
+                                placeholder="Titre du livre"
+                                placeholderTextColor={colors.textPlaceholder}
+                                value={bookTitle}
+                                onChangeText={setBookTitle}
+                                autoCapitalize="words"
+                                returnKeyType="next"
+                            />
+                        </View>
+
+                        {/* Input: Auteur du livre */}
+                        <View style={styles.inputWrapper}>
+                            <TextInput
+                                style={styles.input}
+                                placeholder="Auteur du livre"
+                                placeholderTextColor={colors.textPlaceholder}
+                                value={author}
+                                onChangeText={setAuthor}
+                                autoCapitalize="words"
+                                returnKeyType="next"
+                            />
+                        </View>
+
+                        {/* Input: Nombre de pages */}
+                        <View style={styles.inputWrapper}>
+                            <TextInput
+                                style={styles.input}
+                                placeholder="Nombre de pages"
+                                placeholderTextColor={colors.textPlaceholder}
+                                value={totalPages}
+                                onChangeText={setTotalPages}
+                                keyboardType="number-pad"
+                                returnKeyType="done"
+                                onSubmitEditing={handleContinue}
+                            />
+                        </View>
+                    </View>
+                </ScrollView>
+
+                {/* Bouton "Continuer" fixé en bas */}
+                <View style={styles.footer}>
+                    <Button3D
+                        onPress={handleContinue}
+                        variant="primary"
+                        disabled={!bookTitle.trim() || !author.trim() || !totalPages.trim()}
+                        style={{ width: '100%' }}
+                    >
+                        Continuer
+                    </Button3D>
+                </View>
+            </View>
         </SafeAreaView>
     );
 }
@@ -250,42 +156,76 @@ export default function CreateProjectScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: colors.background,
+        backgroundColor: colors.white,
     },
     content: {
-        padding: 24,
-        gap: 24,
+        flex: 1,
+    },
+    backgroundTexture: {
+        ...StyleSheet.absoluteFillObject,
+        opacity: 0.05,
     },
     header: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 16,
-        marginBottom: 8,
+        paddingTop: spacing['6xl'],
+        paddingBottom: spacing.xl,
+        paddingHorizontal: spacing.xl,
     },
     backButton: {
-        padding: 8,
-        marginLeft: -8,
+        ...buttonStyles.back,
+        width: 40,
+        height: 40,
+        justifyContent: 'center',
+        alignItems: 'center',
+        position: 'relative',
+        overflow: 'hidden',
+    },
+    backButtonInnerShadow: {
+        ...StyleSheet.absoluteFillObject,
+        borderRadius: borderRadius.md,
+        shadowColor: 'rgba(30,30,30,0.25)',
+        shadowOffset: { width: 0, height: -4 },
+        shadowOpacity: 1,
+        shadowRadius: 4,
+    },
+    scrollContent: {
+        flex: 1,
+        paddingHorizontal: spacing.xl,
+    },
+    scrollContentContainer: {
+        paddingTop: spacing['3xl'],
+        gap: spacing['6xl'], // 64px entre titre et formulaire
     },
     title: {
-        fontWeight: 'bold',
-        color: colors.text,
+        fontFamily: 'Rokkitt_Medium',
+        fontSize: fontSize['3xl'], // 36px
+        fontWeight: fontWeight.medium,
+        color: colors.textPrimary,
+        letterSpacing: -0.72,
+        lineHeight: 44,
     },
-    coverPickerContainer: {
-        marginBottom: 16,
-        overflow: 'visible', // Permet à l'ombre du CoverPicker de sortir
+    formContainer: {
+        gap: spacing['3xl'], // 32px entre les inputs (24px selon Figma)
     },
-    form: {
-        gap: 16,
-        paddingTop: 16,
+    inputWrapper: {
+        // Container pour les inputs
     },
-    inputGroup: {
-        marginBottom: 4,
+    input: {
+        fontFamily: 'WorkSans',
+        fontSize: fontSize.md, // 16px
+        fontWeight: fontWeight.regular,
+        color: colors.textPrimary,
+        backgroundColor: colors.white,
+        borderWidth: 1,
+        borderColor: colors.border, // #d5d7da
+        borderRadius: borderRadius.lg, // 20px
+        paddingHorizontal: spacing['2xl'], // 24px
+        paddingVertical: spacing.xl, // 20px
+        ...shadows.xs,
+        lineHeight: 24,
     },
-    button: {
-        marginTop: 16,
-        borderRadius: 12,
-    },
-    buttonContent: {
-        paddingVertical: 8,
+    footer: {
+        paddingHorizontal: spacing.xl,
+        paddingTop: spacing.xl,
+        paddingBottom: spacing['6xl'],
     },
 });

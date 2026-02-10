@@ -1,8 +1,8 @@
 /**
  * Layout pour les écrans d'authentification
  * 
- * Ce layout enveloppe les écrans login et register.
- * Il n'affiche pas de header car ces écrans ont leur propre design.
+ * Ce layout enveloppe l'écran de login (welcome screen).
+ * Il n'affiche pas de header car cet écran a son propre design.
  */
 
 import { Stack } from 'expo-router';
@@ -16,7 +16,6 @@ export default function AuthLayout() {
       }}
     >
       <Stack.Screen name="login" />
-      <Stack.Screen name="register" />
     </Stack>
   );
 }

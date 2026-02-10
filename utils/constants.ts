@@ -2,85 +2,101 @@
  * Constantes de l'application Bestie Book Battle
  * 
  * Ce fichier centralise toutes les valeurs constantes :
- * - Couleurs du thème
- * - Espacements
- * - Tailles de police
- * - Autres constantes utiles
+ * - Couleurs du thème (design system Figma)
+ * - Espacements alignés avec Figma
+ * - Tailles de police et polices personnalisées
+ * - Styles de boutons réutilisables
  */
 
-// Palette de couleurs principale
-// Inspirée d'un design moderne avec indigo comme couleur primaire
+// Palette de couleurs depuis le design system Figma
 export const colors = {
-  // Couleurs principales
-  primary: '#6366F1',           // Indigo - couleur principale de l'app
-  primaryDark: '#4F46E5',       // Indigo plus foncé pour les états pressés
-  primaryLight: '#A5B4FC',      // Indigo clair pour les backgrounds
+  // Dark colors (onboarding, boutons principaux)
+  dark950: '#0a0d12',          // Fond splash screen
+  dark900: '#181d27',          // Boutons principaux, texte principal
+  dark800: '#13161b',          // Fond carte livre
   
-  // Couleurs secondaires
-  secondary: '#EC4899',         // Pink - accent pour les éléments importants
-  secondaryDark: '#DB2777',
-  secondaryLight: '#F9A8D4',
+  // Light colors (backgrounds)
+  white: '#ffffff',            // Background inputs, cartes
+  bgSecondary: '#fafafa',      // Background cartes non-sélectionnées
+  bgLight: '#f5f5f5',          // Bouton back, bouton secondaire
   
-  // Couleurs sémantiques
-  success: '#10B981',           // Vert - succès, progression positive
+  // Text colors
+  textPrimary: '#181d27',      // Texte principal (900)
+  textSecondary: '#414651',    // Texte secondaire (700)
+  textTertiary: '#535862',     // Texte tertiaire (600)
+  textPlaceholder: '#717680',  // Placeholders (500)
+  textSubtle: '#d5d7da',       // Texte subtle (300)
+  
+  // Border colors
+  border: '#d5d7da',           // Bordure inputs (gray-300)
+  borderLight: '#e9eaeb',      // Bordure secondaire
+  
+  // Alpha colors (pour les ombres et overlays)
+  alphaBlack10: 'rgba(0,0,0,0.1)',
+  alphaBlack02: 'rgba(0,0,0,0.02)',
+  alphaWhite10: 'rgba(255,255,255,0.1)',
+  alphaWhite20: 'rgba(255,255,255,0.2)',
+  alphaWhite30: 'rgba(255,255,255,0.3)',
+  alphaWhite90: 'rgba(255,255,255,0.9)',
+  
+  // Couleurs sémantiques (conservées de l'ancien)
+  success: '#10B981',
   successLight: '#D1FAE5',
-  warning: '#F59E0B',           // Orange - avertissements
+  warning: '#F59E0B',
   warningLight: '#FEF3C7',
-  error: '#EF4444',             // Rouge - erreurs
+  error: '#EF4444',
   errorLight: '#FEE2E2',
   
   // Couleurs spéciales
-  crown: '#FCD34D',             // Or - pour la couronne du leader
+  crown: '#FCD34D',
   crownDark: '#F59E0B',
-  streak: '#F97316',            // Orange vif - pour le streak 🔥
-  
-  // Neutres
-  background: '#F9FAFB',        // Fond de l'application
-  surface: '#FFFFFF',           // Cartes et surfaces
-  surfaceVariant: '#F3F4F6',    // Surfaces alternatives
-  
-  // Textes
-  text: '#111827',              // Texte principal
-  textSecondary: '#6B7280',     // Texte secondaire
-  textTertiary: '#9CA3AF',      // Texte tertiaire
-  textOnPrimary: '#FFFFFF',     // Texte sur fond primaire
-  
-  // Bordures
-  border: '#E5E7EB',
-  borderLight: '#F3F4F6',
+  streak: '#F97316',
   
   // Overlay
   overlay: 'rgba(0, 0, 0, 0.5)',
 };
 
-// Espacements (basés sur un système de 4px)
+// Espacements alignés avec Figma (tokens spacing-*)
 export const spacing = {
   xs: 4,
   sm: 8,
-  md: 16,
-  lg: 24,
-  xl: 32,
-  xxl: 48,
+  md: 12,
+  lg: 16,
+  xl: 20,
+  '2xl': 24,
+  '3xl': 32,
+  '4xl': 48,
+  '6xl': 64,   // Pour les paddings top
 };
 
-// Rayons de bordure
+// Rayons de bordure alignés avec Figma (tokens radius-*)
 export const borderRadius = {
-  sm: 4,
-  md: 8,
-  lg: 12,
-  xl: 16,
+  xs: 2,       // Radius pour cover image
+  sm: 8,
+  md: 12,      // Bouton back, bouton upload
+  lg: 20,      // Inputs
+  xl: 24,      // Boutons principaux, cartes
   full: 9999,
 };
 
-// Tailles de police
+// Polices personnalisées (Google Fonts)
+export const fonts = {
+  display: 'Rokkitt',   // Pour les titres et le texte impactant
+  body: 'WorkSans',     // Pour le texte courant
+};
+
+// Tailles de police Figma
 export const fontSize = {
-  xs: 12,
-  sm: 14,
-  md: 16,
-  lg: 18,
+  xs: 12,        // text-xs
+  sm: 14,        // text-sm
+  md: 16,        // text-md
+  lg: 18,        
   xl: 20,
-  xxl: 24,
-  xxxl: 32,
+  '2xl': 24,     // display-xs
+  '3xl': 36,     // display-md
+  '4xl': 48,     // display-lg
+  '5xl': 60,     // display-xl
+  '6xl': 72,     // display-2xl (splash)
 };
 
 // Poids de police
@@ -91,28 +107,73 @@ export const fontWeight = {
   bold: '700' as const,
 };
 
-// Ombres
+// Ombres Figma
 export const shadows = {
-  sm: {
-    shadowColor: '#000',
+  // Shadow-xs (inputs)
+  xs: {
+    shadowColor: 'rgba(10,13,18,0.05)',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
+    shadowOpacity: 1,
     shadowRadius: 2,
     elevation: 1,
   },
-  md: {
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+  // Ombre bouton principal
+  button: {
+    shadowColor: 'rgba(0,0,0,0.25)',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 1,
+    shadowRadius: 6,
     elevation: 3,
   },
-  lg: {
-    shadowColor: '#000',
+  // Ombre bouton secondaire
+  buttonLight: {
+    shadowColor: 'rgba(0,0,0,0.1)',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 1,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  // Ombre carte sélectionnée
+  cardSelected: {
+    shadowColor: 'rgba(0,0,0,0.09)',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 5,
+    shadowOpacity: 1,
+    shadowRadius: 20,
+    elevation: 4,
+  },
+};
+
+// Styles de boutons réutilisables (depuis Figma)
+export const buttonStyles = {
+  // Bouton principal dark avec inner shadows
+  primary: {
+    backgroundColor: colors.dark900,
+    borderWidth: 1,
+    borderColor: colors.alphaWhite30,
+    borderRadius: borderRadius.xl,
+    paddingHorizontal: spacing['2xl'],
+    paddingVertical: spacing.xl,
+    ...shadows.button,
+    // Les inner shadows doivent être ajoutés via un View absolu
+  },
+  // Bouton secondaire light
+  secondary: {
+    backgroundColor: colors.bgLight,
+    borderWidth: 1,
+    borderColor: colors.alphaWhite30,
+    borderRadius: borderRadius.xl,
+    paddingHorizontal: spacing['2xl'],
+    paddingVertical: spacing.xl,
+    ...shadows.buttonLight,
+  },
+  // Bouton back
+  back: {
+    backgroundColor: colors.bgLight,
+    borderWidth: 1,
+    borderColor: colors.alphaBlack10,
+    borderRadius: borderRadius.md,
+    padding: spacing.sm,
+    ...shadows.xs,
   },
 };
 
