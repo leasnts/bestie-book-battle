@@ -28,6 +28,7 @@ import { createOrUpdateUserProfile } from '../../services/supabase/auth';
 import { updateChallenge } from '../../services/supabase/database';
 import { uploadBookCover } from '../../services/supabase/storage';
 import { useAuthStore } from '../../stores/authStore';
+import { useOnboardingStore } from '../../stores/onboardingStore';
 import { useProjectStore } from '../../stores/projectStore';
 import { borderRadius, colors, fontSize, fontWeight, spacing } from '../../utils/constants';
 
@@ -43,8 +44,9 @@ export default function OnboardingCompleteScreen() {
         bookTitle: string;
         author: string;
         totalPages: string;
-        coverUri?: string;
     }>();
+    // coverUri : lu depuis le store (évite troncature des params URL pour les chemins fichiers longs)
+    const coverUri = useOnboardingStore((s) => s.coverUri);
     
     const [isLoading, setIsLoading] = useState(false);
     const [inviteCode, setInviteCode] = useState<string | null>(null);
@@ -100,10 +102,24 @@ export default function OnboardingCompleteScreen() {
                 );
 
                 // 3. Upload de la cover si présente
-                if (params.coverUri) {
+                if (coverUri) {
                     try {
-                        const { url } = await uploadBookCover(challenge.id, params.coverUri);
+                        const { url } = await uploadBookCover(challenge.id, coverUri);
                         await updateChallenge(challenge.id, { cover_url: url });
+                        // Mettre à jour le store local pour que la homepage affiche la bonne cover
+                        // sans attendre loadUserChallenges
+                        useProjectStore.setState((state) => {
+                            const updated = { ...challenge, cover_url: url };
+                            return {
+                                challenges: state.challenges.map((c) =>
+                                    c.id === challenge.id ? updated : c
+                                ),
+                                activeChallenge:
+                                    state.activeChallenge?.id === challenge.id
+                                        ? updated
+                                        : state.activeChallenge,
+                            };
+                        });
                     } catch (coverError) {
                         console.error('Échec upload cover:', coverError);
                     }
@@ -151,6 +167,7 @@ export default function OnboardingCompleteScreen() {
      * Terminer l'onboarding et aller à la home
      */
     const handleFinish = () => {
+        useOnboardingStore.getState().reset();
         router.replace('/(tabs)');
     };
 
@@ -208,9 +225,9 @@ export default function OnboardingCompleteScreen() {
 
                             <View style={styles.bookCardContent}>
                                 {/* Cover image — hauteur = bloc texte, ratio conservé (gauche) */}
-                                {params.coverUri ? (
+                                {coverUri ? (
                                     <Image
-                                        source={{ uri: params.coverUri }}
+                                        source={{ uri: coverUri }}
                                         style={[
                                             styles.coverImage,
                                             {

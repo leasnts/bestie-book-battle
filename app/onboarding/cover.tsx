@@ -12,6 +12,7 @@ import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
+import { useOnboardingStore } from '../../stores/onboardingStore';
 import {
     Alert,
     Pressable,
@@ -89,7 +90,11 @@ export default function OnboardingCoverScreen() {
             });
 
             if (!result.canceled && result.assets[0]) {
-                setCoverUri(result.assets[0].uri);
+                const uri = result.assets[0].uri;
+                setCoverUri(uri);
+                // Stocker dans le store pour éviter la perte via les params de route
+                // (les URIs fichier peuvent être longs et tronqués dans l'URL)
+                useOnboardingStore.getState().setCoverUri(uri);
             }
         } catch (error: any) {
             console.error('Erreur sélection image:', error);
@@ -104,6 +109,8 @@ export default function OnboardingCoverScreen() {
      * Toutes les données du livre + cover sont passées en paramètres
      */
     const handleContinue = () => {
+        // Mettre à jour le store (null si pas de cover, pour éviter une valeur obsolète)
+        useOnboardingStore.getState().setCoverUri(coverUri);
         router.push({
             pathname: '/onboarding/notifications',
             params: {
@@ -111,8 +118,9 @@ export default function OnboardingCoverScreen() {
                 bookTitle,
                 author,
                 totalPages,
-                coverUri: coverUri || '',
                 flow: 'create', // Indique qu'on vient de la branche Créer
+                // coverUri n'est plus passé ici : stocké dans onboardingStore
+                // pour éviter troncature des params URL (URIs fichier longs)
             },
         });
     };

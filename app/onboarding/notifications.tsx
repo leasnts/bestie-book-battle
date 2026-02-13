@@ -98,7 +98,7 @@ export default function OnboardingNotificationsScreen() {
                     bookTitle: params.bookTitle || '',
                     author: params.author || '',
                     totalPages: params.totalPages || '',
-                    coverUri: params.coverUri || '',
+                    // coverUri : lu depuis onboardingStore (évite troncature params URL)
                 },
             });
         } else {
