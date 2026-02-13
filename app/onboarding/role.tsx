@@ -18,7 +18,7 @@ import {
   Text, 
   Pressable,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
   useAnimatedStyle,
   withSpring,
@@ -47,6 +47,7 @@ const ROLE_IMAGES = {
 type RoleType = 'create' | 'join';
 
 export default function OnboardingRoleScreen() {
+    const insets = useSafeAreaInsets();
     const router = useRouter();
     const { firstName } = useLocalSearchParams<{ firstName: string }>();
     
@@ -197,8 +198,8 @@ export default function OnboardingRoleScreen() {
                     </View>
                 </View>
 
-                {/* Bouton "Continuer" fixé en bas */}
-                <View style={styles.footer}>
+                {/* Bouton "Continuer" fixé en bas - safe area comme le login */}
+                <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 16) + 16 }]}>
                     <Button3D
                         onPress={handleContinue}
                         variant="primary"
@@ -294,6 +295,6 @@ const styles = StyleSheet.create({
     footer: {
         paddingHorizontal: spacing.xl,
         paddingTop: spacing.xl,
-        paddingBottom: spacing['6xl'],
+        // paddingBottom appliqué dynamiquement avec useSafeAreaInsets (comme login)
     },
 });

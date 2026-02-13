@@ -21,7 +21,7 @@ import {
   View, 
   Text,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, fontSize, fontWeight, spacing } from '../../utils/constants';
 import Button3D from '../../components/Button3D';
 
@@ -32,6 +32,7 @@ const NOTIFICATION_ILLUSTRATION = require('../../assets/images/notification-illu
 type OnboardingFlow = 'create' | 'join';
 
 export default function OnboardingNotificationsScreen() {
+    const insets = useSafeAreaInsets();
     const router = useRouter();
     const params = useLocalSearchParams<{
         firstName: string;
@@ -154,8 +155,8 @@ export default function OnboardingNotificationsScreen() {
                     </View>
                 </View>
 
-                {/* Boutons en bas */}
-                <View style={styles.footer}>
+                {/* Boutons en bas - safe area comme le login */}
+                <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 16) + 16 }]}>
                     <Button3D
                         onPress={handleAllowNotifications}
                         variant="primary"
@@ -235,7 +236,7 @@ const styles = StyleSheet.create({
     footer: {
         paddingHorizontal: spacing.xl,
         paddingTop: spacing.xl,
-        paddingBottom: spacing['6xl'],
         gap: spacing.md, // 12px entre les deux boutons
+        // paddingBottom appliqué dynamiquement avec useSafeAreaInsets (comme login)
     },
 });

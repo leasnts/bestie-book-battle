@@ -17,7 +17,7 @@ import {
   Text, 
   Pressable,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, fontSize, fontWeight, spacing, borderRadius } from '../../utils/constants';
 import Button3D from '../../components/Button3D';
@@ -26,6 +26,7 @@ import Button3D from '../../components/Button3D';
 const TEXTURE_IMAGE = require('../../assets/images/61ea1e0c638b5b9c8100383a37a5b488848db623.png');
 
 export default function OnboardingCoverScreen() {
+    const insets = useSafeAreaInsets();
     const router = useRouter();
     const { 
         firstName, 
@@ -149,8 +150,8 @@ export default function OnboardingCoverScreen() {
                     </View>
                 </View>
 
-                {/* Bouton "Continuer" fixé en bas */}
-                <View style={styles.footer}>
+                {/* Bouton "Continuer" fixé en bas - safe area comme le login */}
+                <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 16) + 16 }]}>
                     <Button3D
                         onPress={handleContinue}
                         variant="primary"
@@ -237,6 +238,6 @@ const styles = StyleSheet.create({
     footer: {
         paddingHorizontal: spacing.xl,
         paddingTop: spacing.xl,
-        paddingBottom: spacing['6xl'],
+        // paddingBottom appliqué dynamiquement avec useSafeAreaInsets (comme login)
     },
 });

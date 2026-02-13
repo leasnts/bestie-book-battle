@@ -20,7 +20,7 @@ import {
   Text, 
   ActivityIndicator
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, fontSize, fontWeight, spacing, borderRadius } from '../../utils/constants';
 import Button3D from '../../components/Button3D';
@@ -35,6 +35,7 @@ const TEXTURE_IMAGE = require('../../assets/images/61ea1e0c638b5b9c8100383a37a5b
 const TEXTURE_DARK = require('../../assets/images/61ea1e0c638b5b9c8100383a37a5b488848db623.png');
 
 export default function OnboardingCompleteScreen() {
+    const insets = useSafeAreaInsets();
     const router = useRouter();
     const params = useLocalSearchParams<{
         firstName: string;
@@ -231,8 +232,8 @@ export default function OnboardingCompleteScreen() {
                     </View>
                 </View>
 
-                {/* Boutons en bas */}
-                <View style={styles.footer}>
+                {/* Boutons en bas - safe area comme le login */}
+                <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 16) + 16 }]}>
                     {/* Bouton principal : Inviter un.e ami.e */}
                     <Button3D
                         onPress={handleShareInvite}
@@ -268,7 +269,6 @@ const styles = StyleSheet.create({
     },
     scrollContent: {
         flexGrow: 1,
-        paddingBottom: spacing['6xl'],
     },
     backgroundTexture: {
         ...StyleSheet.absoluteFillObject,
@@ -425,5 +425,6 @@ const styles = StyleSheet.create({
         paddingHorizontal: spacing.xl,
         paddingTop: spacing['2xl'],
         gap: spacing.md, // 12px entre les deux boutons
+        // paddingBottom appliqué dynamiquement avec useSafeAreaInsets (comme login)
     },
 });
