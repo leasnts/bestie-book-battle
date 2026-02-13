@@ -51,16 +51,20 @@ const COLORS = {
   crown: '#F59E0B',
 };
 
+// Random cover 1 utilisé comme fallback quand aucune cover n'est fournie
+// (cohérent avec le CoverPicker qui propose random_cover_1/2/3 comme designs génériques)
+const DEFAULT_BOOK_COVER = require('../../assets/images/random_cover_1.png');
+
 /**
  * Résout la source d'une image : gère les URLs Supabase (http/https)
  * et les images locales embarquées dans l'app.
  * 
  * - Si c'est une URL http(s) → retourne { uri: url }
  * - Si c'est une ref locale connue ('lea', 'zoe', 'cover') → retourne le require()
- * - Sinon → fallback sur l'image par défaut
+ * - Sinon / pas de cover → fallback sur random_cover_1 (design générique, pas un vrai livre)
  */
 const resolveImageSource = (ref: string | null | undefined) => {
-  if (!ref) return require('../../assets/images/cover.jpg');
+  if (!ref) return DEFAULT_BOOK_COVER;
   if (ref.startsWith('http://') || ref.startsWith('https://')) {
     return { uri: ref };
   }
@@ -70,9 +74,9 @@ const resolveImageSource = (ref: string | null | undefined) => {
     case 'zoe':
       return require('../../assets/images/zoe.png');
     case 'cover':
-      return require('../../assets/images/cover.jpg');
+      return DEFAULT_BOOK_COVER;
     default:
-      return require('../../assets/images/cover.jpg');
+      return DEFAULT_BOOK_COVER;
   }
 };
 
