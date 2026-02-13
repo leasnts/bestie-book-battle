@@ -211,6 +211,7 @@ const styles = StyleSheet.create({
         borderRadius: borderRadius.lg,
         paddingHorizontal: spacing['2xl'],
         paddingVertical: spacing.xl,
+        letterSpacing: -0.3,
         ...shadows.xs,
         textAlignVertical: 'center',
     },
