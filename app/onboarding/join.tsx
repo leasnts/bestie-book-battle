@@ -11,6 +11,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { 
   Alert, 
+  InputAccessoryView,
   Keyboard,
   KeyboardAvoidingView,
   Platform,
@@ -20,7 +21,7 @@ import {
   TextInput,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, fontSize, fontWeight, spacing, borderRadius, shadows } from '../../utils/constants';
+import { colors, fontSize, fontWeight, spacing } from '../../utils/constants';
 import Button3D from '../../components/Button3D';
 import { supabase } from '../../supabaseConfig';
 
@@ -57,25 +58,20 @@ export default function OnboardingJoinScreen() {
      */
     const handleContinue = async () => {
         if (inviteCode.trim().length !== 6) {
-            Alert.alert('Code invalide', 'Le code doit contenir 6 caractères');
+            Alert.alert('Code invalide', 'Le code doit contenir 6 chiffres');
             return;
         }
 
         setIsLoading(true);
         try {
-            // Chercher le challenge avec ce code d'invitation
-            const { data: challenge, error } = await supabase
-                .from('challenges')
-                .select(`
-                    *,
-                    admin:users!challenges_admin_id_fkey(
-                        id,
-                        first_name,
-                        last_name
-                    )
-                `)
-                .eq('invite_code', inviteCode.toUpperCase())
-                .single();
+            // Chercher le challenge via RPC (contourne RLS : l'utilisateur
+            // n'est pas encore participant, donc une requête directe serait bloquée)
+            const { data: rows, error } = await supabase
+                .rpc('get_challenge_by_invite_code', {
+                    p_code: inviteCode.trim(),
+                });
+
+            const challenge = Array.isArray(rows) && rows.length > 0 ? rows[0] : null;
 
             if (error || !challenge) {
                 Alert.alert(
@@ -93,10 +89,10 @@ export default function OnboardingJoinScreen() {
                     flow: 'join',
                     challengeId: challenge.id,
                     bookTitle: challenge.book_title,
-                    author: challenge.author || '',
+                    author: challenge.book_author || '',
                     totalPages: challenge.total_pages?.toString() || '',
                     coverUrl: challenge.cover_url || '',
-                    adminFirstName: challenge.admin?.first_name || 'L\'admin',
+                    adminFirstName: challenge.admin_first_name || 'L\'admin',
                 },
             });
         } catch (error: any) {
@@ -109,6 +105,12 @@ export default function OnboardingJoinScreen() {
 
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
+            {/* InputAccessoryView vide : supprime la toolbar "Done" native d'iOS */}
+            {Platform.OS === 'ios' && (
+                <InputAccessoryView nativeID="join-code-empty">
+                    <View />
+                </InputAccessoryView>
+            )}
             <KeyboardAvoidingView
                 style={styles.keyboardAvoid}
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -137,17 +139,19 @@ export default function OnboardingJoinScreen() {
                 <View style={styles.mainContent}>
                     <Text style={styles.title}>Quel est ton code d'accès ?</Text>
                     
-                    {/* Input pour le code */}
-                    <View style={styles.inputWrapper}>
+                    {/* Input géant centré — même style que la saisie du prénom */}
+                    <View style={styles.inputContainer}>
                         <TextInput
                             style={styles.input}
-                            placeholder="Ex : A1B2C3"
-                            placeholderTextColor={colors.textPlaceholder}
+                            placeholder="000000"
+                            placeholderTextColor={colors.alphaBlack10}
                             value={inviteCode}
-                            onChangeText={(text) => setInviteCode(text.toUpperCase())}
-                            autoCapitalize="characters"
+                            onChangeText={(text) => setInviteCode(text.replace(/[^0-9]/g, ''))}
+                            keyboardType="number-pad"
+                            inputAccessoryViewID="join-code-empty"
                             autoCorrect={false}
                             maxLength={6}
+                            autoFocus
                             returnKeyType="done"
                             onSubmitEditing={handleContinue}
                             editable={!isLoading}
@@ -191,7 +195,7 @@ const styles = StyleSheet.create({
         opacity: 0.05,
     },
     header: {
-        paddingTop: spacing['6xl'],
+        paddingTop: spacing.lg,
         paddingBottom: spacing.xl,
         paddingHorizontal: spacing.xl,
     },
@@ -209,23 +213,23 @@ const styles = StyleSheet.create({
         letterSpacing: -0.72,
         lineHeight: 44,
     },
-    inputWrapper: {
-        // Container pour l'input
+    inputContainer: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingHorizontal: spacing['4xl'],
+        paddingVertical: spacing['2xl'],
     },
     input: {
-        fontFamily: 'WorkSans',
-        fontSize: fontSize.md, // 16px
-        fontWeight: fontWeight.regular as any,
+        fontFamily: 'Rokkitt_Bold',
+        fontSize: fontSize['5xl'], // 60px — input géant comme le prénom
+        fontWeight: fontWeight.bold as any,
         color: colors.textPrimary,
-        backgroundColor: colors.white,
-        borderWidth: 1,
-        borderColor: colors.border,
-        borderRadius: borderRadius.lg, // 20px
-        paddingHorizontal: spacing['2xl'], // 24px
-        paddingVertical: spacing.xl, // 20px
-        ...shadows.xs,
+        letterSpacing: 4, // espacement entre les caractères du code
         textAlign: 'center',
-        textAlignVertical: 'center', // Centre vertical sur Android
+        textAlignVertical: 'center',
+        width: '100%',
+        backgroundColor: 'transparent',
+        padding: 0,
     },
     footer: {
         paddingHorizontal: spacing.xl,

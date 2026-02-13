@@ -147,12 +147,12 @@ CREATE INDEX IF NOT EXISTS idx_progress_history_created_date ON progress_history
 -- 3. FONCTIONS UTILITAIRES
 -- =====================================================
 
--- Fonction pour générer un code d'invitation aléatoire de 6 caractères
--- Utilise uniquement des caractères facilement lisibles (pas de O, I, 0, 1)
+-- Fonction pour générer un code d'invitation aléatoire de 6 chiffres
+-- Uniquement des chiffres pour une saisie facile sur clavier numérique
 CREATE OR REPLACE FUNCTION generate_invite_code()
 RETURNS TEXT AS $$
 DECLARE
-  chars TEXT := 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  chars TEXT := '0123456789';
   result TEXT := '';
   i INTEGER;
   max_attempts INTEGER := 10;

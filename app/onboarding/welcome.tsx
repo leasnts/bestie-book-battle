@@ -4,22 +4,29 @@
  * Écran final pour la branche "Rejoindre un bbb".
  * Affiche la carte du challenge à rejoindre.
  * L'utilisateur peut rejoindre le challenge et démarrer.
+ * 
+ * Structure identique à complete.tsx :
+ * - Header avec bouton retour
+ * - Titre + description
+ * - Carte livre avec PopEyes overlay + cover dynamique
+ * - Footer fixé en bas (hors ScrollView)
  */
 
+import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useState } from 'react';
+import Button3D from '../../components/Button3D';
+import PopEyes from '../../components/PopEyes';
 import { 
-  Alert, 
-  ScrollView,
-  StyleSheet, 
-  View, 
-  Text 
+    Alert, 
+    ScrollView,
+    StyleSheet, 
+    View, 
+    Text 
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
 import { colors, fontSize, fontWeight, spacing, borderRadius } from '../../utils/constants';
-import Button3D from '../../components/Button3D';
 import { useAuthStore } from '../../stores/authStore';
 import { useProjectStore } from '../../stores/projectStore';
 import { createOrUpdateUserProfile } from '../../services/supabase/auth';
@@ -42,6 +49,10 @@ export default function OnboardingWelcomeScreen() {
     }>();
     
     const [isLoading, setIsLoading] = useState(false);
+    const [bookInfoHeight, setBookInfoHeight] = useState<number>(80);
+
+    /** Ratio standard couverture livre (largeur / hauteur) */
+    const COVER_ASPECT_RATIO = 2 / 3;
 
     const user = useAuthStore((state) => state.user);
     const pendingUserData = useAuthStore((state) => state.pendingUserData);
@@ -90,7 +101,7 @@ export default function OnboardingWelcomeScreen() {
 
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
-            <ScrollView style={styles.content} contentContainerStyle={styles.scrollContent}>
+            <View style={styles.content}>
                 {/* Background texture */}
                 <Image
                     source={TEXTURE_IMAGE}
@@ -98,55 +109,92 @@ export default function OnboardingWelcomeScreen() {
                     contentFit="cover"
                 />
 
-                {/* Contenu principal */}
-                <View style={styles.mainContent}>
-                    <Text style={styles.title}>Bienvenue !</Text>
-                    <Text style={styles.description}>
-                        {params.adminFirstName} est ravi.e que tu participes à ce bbb
-                    </Text>
-                    
-                    {/* Carte du livre */}
-                    <View style={styles.bookCard}>
-                        {/* Texture de fond */}
-                        <Image
-                            source={TEXTURE_DARK}
-                            style={styles.cardTexture}
-                            contentFit="cover"
+                {/* Contenu scrollable */}
+                <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
+                    {/* Header avec bouton retour */}
+                    <View style={styles.header}>
+                        <Button3D
+                            variant="secondary"
+                            icon="chevron-back"
+                            iconOnly
+                            size="compact"
+                            onPress={() => router.back()}
                         />
+                    </View>
 
-                        {/* Mascot eyes en haut à gauche */}
-                        <View style={styles.mascotContainer}>
-                            <View style={styles.mascotPlaceholder} />
-                        </View>
-
-                        <View style={styles.bookCardContent}>
-                            {/* Cover image */}
-                            {params.coverUrl ? (
+                    {/* Contenu principal */}
+                    <View style={styles.mainContent}>
+                        <Text style={styles.title}>Bienvenue !</Text>
+                        <Text style={styles.description}>
+                            {params.adminFirstName} est ravi.e que tu participes à ce bbb
+                        </Text>
+                        
+                        {/* Carte du livre avec PopEyes */}
+                        <View style={styles.cardWrapper}>
+                            {/* Carte dark du livre */}
+                            <View style={styles.bookCard}>
+                                {/* Texture de fond */}
                                 <Image
-                                    source={{ uri: params.coverUrl }}
-                                    style={styles.coverImage}
+                                    source={TEXTURE_DARK}
+                                    style={styles.cardTexture}
                                     contentFit="cover"
                                 />
-                            ) : (
-                                <View style={styles.coverPlaceholder}>
-                                    <Ionicons name="book" size={40} color={colors.alphaWhite30} />
-                                </View>
-                            )}
 
-                            {/* Infos livre */}
-                            <View style={styles.bookInfo}>
-                                <Text style={styles.bookAuthor}>{params.author}</Text>
-                                <Text style={styles.bookTitle}>{params.bookTitle}</Text>
-                                <View style={styles.pagesBadge}>
-                                    <Text style={styles.pagesText}>{params.totalPages} pages</Text>
+                                <View style={styles.bookCardContent}>
+                                    {/* Cover image — hauteur = bloc texte, ratio conservé */}
+                                    {params.coverUrl ? (
+                                        <Image
+                                            source={{ uri: params.coverUrl }}
+                                            style={[
+                                                styles.coverImage,
+                                                {
+                                                    height: bookInfoHeight,
+                                                    width: bookInfoHeight * COVER_ASPECT_RATIO,
+                                                },
+                                            ]}
+                                            contentFit="cover"
+                                        />
+                                    ) : (
+                                        <View
+                                            style={[
+                                                styles.coverPlaceholder,
+                                                {
+                                                    height: bookInfoHeight,
+                                                    width: bookInfoHeight * COVER_ASPECT_RATIO,
+                                                },
+                                            ]}
+                                        >
+                                            <Ionicons name="book" size={40} color={colors.alphaWhite30} />
+                                        </View>
+                                    )}
+
+                                    {/* Infos livre — on mesure cette hauteur pour adapter la cover */}
+                                    <View
+                                        style={styles.bookInfo}
+                                        onLayout={(e) => {
+                                            const h = e.nativeEvent.layout.height;
+                                            if (h > 0) setBookInfoHeight(h);
+                                        }}
+                                    >
+                                        <Text style={styles.bookAuthor}>{params.author}</Text>
+                                        <Text style={styles.bookTitle}>{params.bookTitle}</Text>
+                                        <View style={styles.pagesBadge}>
+                                            <Text style={styles.pagesText}>{params.totalPages} pages</Text>
+                                        </View>
+                                    </View>
                                 </View>
+                            </View>
+
+                            {/* Pop eyes en overlay — z-index max, dépasse du bloc */}
+                            <View style={styles.mascotOverlay} pointerEvents="none">
+                                <PopEyes size="large" />
                             </View>
                         </View>
                     </View>
-                </View>
+                </ScrollView>
 
-                {/* Bouton en bas - safe area comme le login */}
-                <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 16) + 16 }]}>
+                {/* Footer ferré en bas — comme toutes les autres pages */}
+                <View style={[styles.footer, { paddingBottom: insets.bottom + 16 }]}>
                     <Button3D
                         onPress={handleJoinChallenge}
                         variant="primary"
@@ -156,7 +204,7 @@ export default function OnboardingWelcomeScreen() {
                         Rejoindre
                     </Button3D>
                 </View>
-            </ScrollView>
+            </View>
         </SafeAreaView>
     );
 }
@@ -168,6 +216,10 @@ const styles = StyleSheet.create({
     },
     content: {
         flex: 1,
+        flexDirection: 'column',
+    },
+    scrollView: {
+        flex: 1,
     },
     scrollContent: {
         flexGrow: 1,
@@ -176,14 +228,19 @@ const styles = StyleSheet.create({
         ...StyleSheet.absoluteFillObject,
         opacity: 0.05,
     },
+    header: {
+        paddingTop: spacing.lg,
+        paddingBottom: spacing.md,
+        paddingHorizontal: spacing.lg,
+    },
     mainContent: {
-        paddingHorizontal: spacing.xl,
-        paddingTop: spacing['6xl'],
-        gap: spacing.lg, // 16px entre titre et description
+        paddingHorizontal: spacing.lg,
+        paddingTop: spacing['2xl'],
+        gap: spacing.lg,
     },
     title: {
         fontFamily: 'Rokkitt_Medium',
-        fontSize: fontSize['3xl'], // 36px
+        fontSize: fontSize['3xl'],
         fontWeight: fontWeight.medium,
         color: colors.textPrimary,
         letterSpacing: -0.72,
@@ -191,16 +248,20 @@ const styles = StyleSheet.create({
     },
     description: {
         fontFamily: 'WorkSans',
-        fontSize: fontSize.md, // 16px
+        fontSize: fontSize.md,
         fontWeight: fontWeight.regular,
         color: colors.textSecondary,
         lineHeight: 24,
-        marginBottom: spacing['2xl'], // 24px avant la carte
+        marginBottom: spacing['4xl'],
+    },
+    cardWrapper: {
+        position: 'relative',
+        overflow: 'visible',
     },
     bookCard: {
-        backgroundColor: colors.dark800, // #13161b
-        borderRadius: borderRadius.xl, // 24px (pas de zone code en dessous)
-        padding: spacing.lg, // 16px
+        backgroundColor: colors.dark800,
+        borderRadius: borderRadius.xl,
+        padding: spacing.lg,
         position: 'relative',
         overflow: 'hidden',
     },
@@ -208,32 +269,23 @@ const styles = StyleSheet.create({
         ...StyleSheet.absoluteFillObject,
         opacity: 0.05,
     },
-    mascotContainer: {
+    mascotOverlay: {
         position: 'absolute',
-        top: spacing.lg,
-        left: spacing.lg,
-    },
-    mascotPlaceholder: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-        backgroundColor: colors.alphaWhite20,
+        top: -48,
+        right: spacing.sm,
+        zIndex: 9999,
+        elevation: 9999,
     },
     bookCardContent: {
         flexDirection: 'row',
-        gap: spacing.lg, // 16px
-        marginTop: spacing['2xl'], // 24px pour laisser place au mascot
+        gap: spacing.lg,
     },
     coverImage: {
-        width: 142,
-        height: 200,
-        borderRadius: borderRadius.xs, // 2px
+        borderRadius: borderRadius.xs,
         borderWidth: 1,
         borderColor: colors.alphaWhite10,
     },
     coverPlaceholder: {
-        width: 142,
-        height: 200,
         borderRadius: borderRadius.xs,
         borderWidth: 1,
         borderStyle: 'dashed',
@@ -244,18 +296,18 @@ const styles = StyleSheet.create({
     },
     bookInfo: {
         flex: 1,
-        gap: spacing.xs, // 4px
+        gap: spacing.xs,
     },
     bookAuthor: {
         fontFamily: 'WorkSans',
-        fontSize: fontSize.sm, // 14px
+        fontSize: fontSize.sm,
         fontWeight: fontWeight.regular,
-        color: colors.textSubtle, // #d5d7da
+        color: colors.textSubtle,
         lineHeight: 20,
     },
     bookTitle: {
         fontFamily: 'WorkSans_SemiBold',
-        fontSize: fontSize.md, // 16px
+        fontSize: fontSize.md,
         fontWeight: fontWeight.semibold,
         color: colors.white,
         lineHeight: 24,
@@ -264,22 +316,22 @@ const styles = StyleSheet.create({
         backgroundColor: colors.alphaWhite20,
         borderWidth: 1,
         borderColor: colors.alphaWhite10,
-        borderRadius: borderRadius.sm, // 8px
-        paddingHorizontal: spacing.sm, // 8px
-        paddingVertical: spacing.xs, // 4px
+        borderRadius: borderRadius.sm,
+        paddingHorizontal: spacing.sm,
+        paddingVertical: spacing.xs,
         alignSelf: 'flex-start',
         marginTop: spacing.xs,
     },
     pagesText: {
         fontFamily: 'WorkSans',
-        fontSize: fontSize.xs, // 12px
+        fontSize: fontSize.xs,
         fontWeight: fontWeight.regular,
         color: colors.white,
         lineHeight: 16,
     },
     footer: {
-        paddingHorizontal: spacing.xl,
-        paddingTop: spacing['2xl'],
-        // paddingBottom appliqué dynamiquement avec useSafeAreaInsets (comme login)
+        paddingHorizontal: spacing.lg,
+        paddingTop: spacing.xl,
+        gap: spacing.md,
     },
 });

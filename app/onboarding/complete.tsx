@@ -330,7 +330,7 @@ const styles = StyleSheet.create({
         color: colors.textSecondary,
     },
     header: {
-        paddingTop: spacing['6xl'],
+        paddingTop: spacing.lg,
         paddingBottom: spacing.md,
         paddingHorizontal: spacing.lg,
     },

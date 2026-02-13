@@ -35,10 +35,11 @@ CREATE POLICY "Admin can view own challenges" ON challenges
 
 -- La fonction generate_invite_code vérifie l'unicité du code
 -- dans TOUS les challenges, pas seulement ceux de l'utilisateur
+-- Uniquement des chiffres pour une saisie facile sur clavier numérique
 CREATE OR REPLACE FUNCTION generate_invite_code()
 RETURNS TEXT AS $$
 DECLARE
-  chars TEXT := 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  chars TEXT := '0123456789';
   result TEXT := '';
   i INTEGER;
   max_attempts INTEGER := 10;

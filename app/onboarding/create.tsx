@@ -177,7 +177,7 @@ const styles = StyleSheet.create({
         opacity: 0.05,
     },
     header: {
-        paddingTop: spacing['6xl'],
+        paddingTop: spacing.lg,
         paddingBottom: spacing.xl,
         paddingHorizontal: spacing.xl,
     },

@@ -137,7 +137,7 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     header: {
-        paddingTop: spacing['6xl'],
+        paddingTop: spacing.lg,
         paddingBottom: spacing.xl,
         paddingHorizontal: spacing.xl,
     },

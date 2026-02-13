@@ -11,17 +11,15 @@
 import { randomUUID } from 'expo-crypto';
 import { supabase } from '../../supabaseConfig';
 import {
-  Challenge,
-  ChallengeInsert,
-  ChallengeUpdate,
-  ChallengeParticipant,
-  ChallengeParticipantInsert,
-  UserProgress,
-  UserProgressUpdate,
-  ProgressHistory,
-  User,
-  ParticipantWithProgress,
-  ChallengeWithParticipants,
+    Challenge,
+    ChallengeInsert,
+    ChallengeParticipantInsert,
+    ChallengeUpdate,
+    ChallengeWithParticipants,
+    ParticipantWithProgress,
+    ProgressHistory,
+    UserProgress,
+    UserProgressUpdate
 } from '../../types/supabase';
 
 // =====================================================
@@ -144,9 +142,10 @@ export async function getChallengeById(challengeId: string): Promise<Challenge |
 
 /**
  * Obtenir un challenge par son code d'invitation
- * 
- * Utilisé quand un utilisateur veut rejoindre un challenge via un code
- * 
+ *
+ * Utilise une RPC car les policies RLS bloquent la lecture des challenges
+ * où l'utilisateur n'est ni admin ni participant (cas "rejoindre par code").
+ *
  * @param inviteCode - Le code d'invitation (6 caractères)
  * @returns Le challenge correspondant, ou null si non trouvé
  */
@@ -154,18 +153,21 @@ export async function getChallengeByInviteCode(
   inviteCode: string
 ): Promise<Challenge | null> {
   try {
-    const { data, error } = await supabase
-      .from('challenges')
-      .select('*')
-      .eq('invite_code', inviteCode.toUpperCase())
-      .single();
+    const { data: rows, error } = await supabase.rpc('get_challenge_by_invite_code', {
+      p_code: inviteCode.trim().toUpperCase(),
+    });
 
     if (error) {
-      if (error.code === 'PGRST116') return null; // Not found
+      if (error.code === 'PGRST116') return null;
       throw error;
     }
 
-    return data;
+    const row = Array.isArray(rows) && rows.length > 0 ? rows[0] : null;
+    if (!row) return null;
+
+    // La RPC retourne la ligne complète + admin_first_name, admin_last_name
+    const { admin_first_name: _a1, admin_last_name: _a2, ...challenge } = row as Record<string, unknown>;
+    return challenge as unknown as Challenge;
   } catch (error: any) {
     console.error('Erreur lors de la récupération du challenge par code:', error);
     throw error;
