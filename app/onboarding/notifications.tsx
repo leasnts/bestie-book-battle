@@ -24,6 +24,7 @@ import {
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import Button3D from '../../components/Button3D';
+import { scheduleDailyReminder } from '../../services/notifications';
 import { colors, fontSize, fontWeight, spacing } from '../../utils/constants';
 
 // Assets
@@ -59,7 +60,10 @@ export default function OnboardingNotificationsScreen() {
         try {
             const { status } = await Notifications.requestPermissionsAsync();
             
-            if (status !== 'granted') {
+            if (status === 'granted') {
+                // L'utilisateur a autorisé : on planifie le rappel quotidien
+                await scheduleDailyReminder(20, 0, 'cc', 'n\'oublie pas d\'ajouter tes pages stp');
+            } else {
                 Alert.alert(
                     'Permission refusée',
                     'Tu peux toujours activer les notifications plus tard dans les paramètres de l\'app.'

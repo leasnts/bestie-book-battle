@@ -203,14 +203,19 @@ function RootLayoutNav() {
     }
   }, [user, isInitialized, challenges, segments, isMounted, router]);
 
-  // Initialise les notifications quand l'utilisateur est connecté
-  // Seulement sur mobile - les notifications ne sont pas bien supportées sur web
+  // Initialise les notifications pour les utilisateurs DÉJÀ connectés (hors onboarding)
+  // IMPORTANT: On ne demande JAMAIS les permissions ici — c'est l'écran onboarding/notifications
+  // qui s'en charge. Sinon la boîte native iOS s'affiche trop tôt et quand l'user tape
+  // "Autoriser", iOS ne la réaffiche pas (déjà consommée).
+  // Ici on vérifie seulement si les perms sont déjà accordées et on planifie le rappel.
   useEffect(() => {
     if (!user?.id || Platform.OS === 'web') return;
+    const inOnboarding = segments[0] === 'onboarding';
+    if (inOnboarding) return; // Laissons l'écran notifications gérer la première demande
 
     const setupNotifications = async () => {
       try {
-        const { status } = await Notifications.requestPermissionsAsync();
+        const { status } = await Notifications.getPermissionsAsync();
         if (status === 'granted') {
           await scheduleDailyReminder(20, 0, 'cc', 'n\'oublie pas d\'ajouter tes pages stp');
         }
@@ -220,7 +225,7 @@ function RootLayoutNav() {
     };
 
     setupNotifications();
-  }, [user?.id]);
+  }, [user?.id, segments[0]]);
 
   // Callback quand le splash screen se termine
   const handleSplashFinish = () => {
