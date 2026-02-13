@@ -17,7 +17,7 @@ import {
   getChallengeById,
   getChallengeByInviteCode,
   getUserChallenges,
-  joinChallenge,
+  joinChallenge as dbJoinChallenge,
   getChallengeWithParticipants,
   updateChallenge,
   deleteChallenge,
@@ -45,6 +45,7 @@ interface ProjectStore {
   ) => Promise<Challenge>;
 
   // Actions - Rejoindre
+  joinChallenge: (challengeId: string, userId: string) => Promise<void>;
   joinChallengeByCode: (code: string, userId: string) => Promise<Challenge>;
 
   // Actions - Chargement
@@ -133,6 +134,41 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
 
   // ===== Action : Rejoindre un challenge =====
   /**
+   * Rejoindre un challenge par son ID
+   *
+   * Utilisé dans l'onboarding "Rejoindre" quand on a déjà le challengeId
+   * (ex: après avoir scanné un QR ou cliqué sur un lien d'invitation).
+   *
+   * @param challengeId - L'ID du challenge à rejoindre
+   * @param userId - L'ID de l'utilisateur qui rejoint
+   */
+  joinChallenge: async (challengeId, userId) => {
+    set({ isLoading: true, error: null });
+    try {
+      await dbJoinChallenge(challengeId, userId);
+
+      // Récupérer le challenge et l'ajouter à la liste
+      const challenge = await getChallengeById(challengeId);
+      if (challenge) {
+        set((state) => {
+          const exists = state.challenges.some((c) => c.id === challenge.id);
+          return {
+            challenges: exists ? state.challenges : [challenge, ...state.challenges],
+            activeChallenge: exists ? state.activeChallenge : challenge,
+            isLoading: false,
+          };
+        });
+      } else {
+        set({ isLoading: false });
+      }
+    } catch (error: any) {
+      console.error('Join challenge error:', error);
+      set({ error: error.message, isLoading: false });
+      throw error;
+    }
+  },
+
+  /**
    * Rejoindre un challenge via son code d'invitation
    * 
    * Process :
@@ -157,7 +193,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
       }
 
       // Rejoindre le challenge
-      await joinChallenge(challenge.id, userId);
+      await dbJoinChallenge(challenge.id, userId);
 
       // Ajouter le challenge à la liste si pas déjà présent
       set((state) => {
