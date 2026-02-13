@@ -11,6 +11,8 @@ import * as Clipboard from 'expo-clipboard';
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useState } from 'react';
+import Button3D from '../../components/Button3D';
+import PopEyes from '../../components/PopEyes';
 import {
     ActivityIndicator,
     Alert,
@@ -22,7 +24,6 @@ import {
     View
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import Button3D from '../../components/Button3D';
 import { createOrUpdateUserProfile } from '../../services/supabase/auth';
 import { updateChallenge } from '../../services/supabase/database';
 import { uploadBookCover } from '../../services/supabase/storage';
@@ -48,6 +49,10 @@ export default function OnboardingCompleteScreen() {
     const [isLoading, setIsLoading] = useState(false);
     const [inviteCode, setInviteCode] = useState<string | null>(null);
     const [challengeId, setChallengeId] = useState<string | null>(null);
+    const [bookInfoHeight, setBookInfoHeight] = useState<number>(80);
+
+    /** Ratio standard couverture livre (largeur / hauteur) */
+    const COVER_ASPECT_RATIO = 2 / 3;
 
     const user = useAuthStore((state) => state.user);
     const pendingUserData = useAuthStore((state) => state.pendingUserData);
@@ -162,13 +167,26 @@ export default function OnboardingCompleteScreen() {
 
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
-            <ScrollView style={styles.content} contentContainerStyle={styles.scrollContent}>
+            <View style={styles.content}>
                 {/* Background texture */}
                 <Image
                     source={TEXTURE_IMAGE}
                     style={styles.backgroundTexture}
                     contentFit="cover"
                 />
+
+                {/* Contenu scrollable */}
+                <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
+                    {/* Header avec bouton retour */}
+                <View style={styles.header}>
+                    <Button3D
+                        variant="secondary"
+                        icon="chevron-back"
+                        iconOnly
+                        size="compact"
+                        onPress={() => router.back()}
+                    />
+                </View>
 
                 {/* Contenu principal */}
                 <View style={styles.mainContent}>
@@ -177,9 +195,9 @@ export default function OnboardingCompleteScreen() {
                         Ton premier bbb est prêt, tu n'as plus qu'à inviter un.e ami.e pour cette lecture commune
                     </Text>
                     
-                    {/* Carte du livre + code */}
+                    {/* Carte du livre + code — bookCard (zIndex 2) au premier plan pour radius bas visibles */}
                     <View style={styles.cardWrapper}>
-                        {/* Carte dark du livre */}
+                        {/* Carte dark du livre (au premier plan) */}
                         <View style={styles.bookCard}>
                             {/* Texture de fond */}
                             <Image
@@ -188,27 +206,42 @@ export default function OnboardingCompleteScreen() {
                                 contentFit="cover"
                             />
 
-                            {/* Mascot eyes en haut à gauche */}
-                            <View style={styles.mascotContainer}>
-                                <View style={styles.mascotPlaceholder} />
-                            </View>
-
                             <View style={styles.bookCardContent}>
-                                {/* Cover image */}
+                                {/* Cover image — hauteur = bloc texte, ratio conservé (gauche) */}
                                 {params.coverUri ? (
                                     <Image
                                         source={{ uri: params.coverUri }}
-                                        style={styles.coverImage}
+                                        style={[
+                                            styles.coverImage,
+                                            {
+                                                height: bookInfoHeight,
+                                                width: bookInfoHeight * COVER_ASPECT_RATIO,
+                                            },
+                                        ]}
                                         contentFit="cover"
                                     />
                                 ) : (
-                                    <View style={styles.coverPlaceholder}>
+                                    <View
+                                        style={[
+                                            styles.coverPlaceholder,
+                                            {
+                                                height: bookInfoHeight,
+                                                width: bookInfoHeight * COVER_ASPECT_RATIO,
+                                            },
+                                        ]}
+                                    >
                                         <Ionicons name="book" size={40} color={colors.alphaWhite30} />
                                     </View>
                                 )}
 
-                                {/* Infos livre */}
-                                <View style={styles.bookInfo}>
+                                {/* Infos livre — on measure cette hauteur pour adapter la cover (droite) */}
+                                <View
+                                    style={styles.bookInfo}
+                                    onLayout={(e) => {
+                                        const h = e.nativeEvent.layout.height;
+                                        if (h > 0) setBookInfoHeight(h);
+                                    }}
+                                >
                                     <Text style={styles.bookAuthor}>{params.author}</Text>
                                     <Text style={styles.bookTitle}>{params.bookTitle}</Text>
                                     <View style={styles.pagesBadge}>
@@ -218,22 +251,31 @@ export default function OnboardingCompleteScreen() {
                             </View>
                         </View>
 
-                        {/* Zone code collée en dessous */}
+                        {/* Zone code (en arrière-plan, sous le bloc noir) */}
                         <View style={styles.codeZone}>
                             <Text style={styles.codeLabel}>Code pour rejoindre :</Text>
                             <View style={styles.codeRow}>
                                 <Text style={styles.codeText}>{inviteCode || '------'}</Text>
-                                <TouchableOpacity onPress={handleCopyCode}>
-                                    <Ionicons name="copy-outline" size={24} color={colors.textPrimary} />
+                                <TouchableOpacity
+                                    onPress={handleCopyCode}
+                                    style={styles.copyButton}
+                                    activeOpacity={0.7}
+                                >
+                                    <Ionicons name="copy-outline" size={20} color={colors.textPlaceholder} />
                                 </TouchableOpacity>
                             </View>
                         </View>
+
+                        {/* Pop eyes en overlay — z-index max, bien au-dessus, dépasse du bloc */}
+                        <View style={styles.mascotOverlay} pointerEvents="none">
+                            <PopEyes size="large" />
+                        </View>
                     </View>
                 </View>
+                </ScrollView>
 
-                {/* Boutons en bas - safe area comme le login */}
-                <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 16) + 16 }]}>
-                    {/* Bouton principal : Inviter un.e ami.e */}
+                {/* Footer ferré en bas — comme toutes les autres pages */}
+                <View style={[styles.footer, { paddingBottom: insets.bottom + 16 }]}>
                     <Button3D
                         onPress={handleShareInvite}
                         variant="primary"
@@ -244,7 +286,6 @@ export default function OnboardingCompleteScreen() {
                         Inviter un.e ami.e
                     </Button3D>
 
-                    {/* Bouton secondaire : Terminer */}
                     <Button3D
                         onPress={handleFinish}
                         variant="secondary"
@@ -253,7 +294,7 @@ export default function OnboardingCompleteScreen() {
                         Terminer
                     </Button3D>
                 </View>
-            </ScrollView>
+            </View>
         </SafeAreaView>
     );
 }
@@ -264,6 +305,10 @@ const styles = StyleSheet.create({
         backgroundColor: colors.white,
     },
     content: {
+        flex: 1,
+        flexDirection: 'column',
+    },
+    scrollView: {
         flex: 1,
     },
     scrollContent: {
@@ -284,10 +329,15 @@ const styles = StyleSheet.create({
         fontSize: fontSize.md,
         color: colors.textSecondary,
     },
-    mainContent: {
-        paddingHorizontal: spacing.xl,
+    header: {
         paddingTop: spacing['6xl'],
-        gap: spacing.lg, // 16px entre titre et description
+        paddingBottom: spacing.md,
+        paddingHorizontal: spacing.lg,
+    },
+    mainContent: {
+        paddingHorizontal: spacing.lg, // aligné sur notifications
+        paddingTop: spacing['2xl'], // même structure que textContainer des écrans précédents
+        gap: spacing.lg,
     },
     title: {
         fontFamily: 'Rokkitt_Medium',
@@ -299,53 +349,48 @@ const styles = StyleSheet.create({
     },
     description: {
         fontFamily: 'WorkSans',
-        fontSize: fontSize.md, // 16px
+        fontSize: fontSize.md,
         fontWeight: fontWeight.regular,
         color: colors.textSecondary,
         lineHeight: 24,
-        marginBottom: spacing['2xl'], // 24px avant la carte
+        marginBottom: spacing['4xl'], // 48px entre le texte et la carte livre
     },
     cardWrapper: {
-        // Container pour carte + zone code
+        position: 'relative',
+        overflow: 'visible',
     },
     bookCard: {
-        backgroundColor: colors.dark800, // #13161b
-        borderTopLeftRadius: borderRadius.xl, // 24px
-        borderTopRightRadius: borderRadius.xl,
-        padding: spacing.lg, // 16px
+        backgroundColor: colors.dark800,
+        borderRadius: borderRadius.xl,
+        padding: spacing.lg,
         position: 'relative',
         overflow: 'hidden',
+        zIndex: 2,
+        elevation: 2,
     },
     cardTexture: {
         ...StyleSheet.absoluteFillObject,
         opacity: 0.05,
     },
-    mascotContainer: {
+    mascotOverlay: {
         position: 'absolute',
-        top: spacing.lg,
-        left: spacing.lg,
-    },
-    mascotPlaceholder: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-        backgroundColor: colors.alphaWhite20,
+        top: -48,
+        right: spacing.sm,
+        zIndex: 9999,
+        elevation: 9999,
     },
     bookCardContent: {
         flexDirection: 'row',
         gap: spacing.lg, // 16px
-        marginTop: spacing['2xl'], // 24px pour laisser place au mascot
+        // Pas de marginTop : les pop eyes overlay par-dessus, ne prennent pas de place
     },
     coverImage: {
-        width: 142,
-        height: 200,
         borderRadius: borderRadius.xs, // 2px
         borderWidth: 1,
         borderColor: colors.alphaWhite10,
+        // width + height appliqués dynamiquement selon bookInfoHeight
     },
     coverPlaceholder: {
-        width: 142,
-        height: 200,
         borderRadius: borderRadius.xs,
         borderWidth: 1,
         borderStyle: 'dashed',
@@ -353,6 +398,7 @@ const styles = StyleSheet.create({
         backgroundColor: colors.alphaWhite10,
         justifyContent: 'center',
         alignItems: 'center',
+        // width + height appliqués dynamiquement
     },
     bookInfo: {
         flex: 1,
@@ -390,15 +436,20 @@ const styles = StyleSheet.create({
         lineHeight: 16,
     },
     codeZone: {
-        backgroundColor: colors.bgSecondary, // #fafafa
+        backgroundColor: colors.bgSecondary,
         borderWidth: 1,
         borderColor: colors.alphaBlack02,
-        borderBottomLeftRadius: borderRadius.xl, // 24px
+        borderTopLeftRadius: 0,
+        borderTopRightRadius: 0,
+        borderBottomLeftRadius: borderRadius.xl,
         borderBottomRightRadius: borderRadius.xl,
-        paddingHorizontal: spacing['2xl'], // 24px
-        paddingTop: spacing['3xl'], // 32px (collé à la carte, donc plus de padding top)
-        paddingBottom: spacing.lg, // 16px
-        gap: spacing.xs, // 4px
+        paddingHorizontal: spacing['2xl'],
+        paddingTop: spacing.lg, // 16px — réduit pour coller au bloc noir
+        paddingBottom: spacing.lg,
+        gap: spacing.xs,
+        marginTop: -1,
+        zIndex: 1,
+        elevation: 1,
     },
     codeLabel: {
         fontFamily: 'WorkSans',
@@ -412,6 +463,11 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'space-between',
     },
+    copyButton: {
+        padding: spacing.sm,
+        borderRadius: borderRadius.sm,
+        backgroundColor: colors.bgLight,
+    },
     codeText: {
         fontFamily: 'Rokkitt_Medium',
         fontSize: fontSize['3xl'], // 36px
@@ -421,9 +477,8 @@ const styles = StyleSheet.create({
         lineHeight: 44,
     },
     footer: {
-        paddingHorizontal: spacing.xl,
-        paddingTop: spacing['2xl'],
-        gap: spacing.md, // 12px entre les deux boutons
-        // paddingBottom appliqué dynamiquement avec useSafeAreaInsets (comme login)
+        paddingHorizontal: spacing.lg,
+        paddingTop: spacing.xl,
+        gap: spacing.md,
     },
 });
