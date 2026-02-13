@@ -6,21 +6,21 @@
  * La couverture peut être sélectionnée via la galerie de photos.
  */
 
+import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { 
-  Alert, 
-  StyleSheet, 
-  View, 
-  Text, 
-  Pressable,
+import {
+    Alert,
+    Pressable,
+    StyleSheet,
+    Text,
+    View,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
-import { colors, fontSize, fontWeight, spacing, borderRadius } from '../../utils/constants';
 import Button3D from '../../components/Button3D';
+import { borderRadius, colors, fontSize, fontWeight, spacing } from '../../utils/constants';
 
 // Asset : texture de fond
 const TEXTURE_IMAGE = require('../../assets/images/61ea1e0c638b5b9c8100383a37a5b488848db623.png');

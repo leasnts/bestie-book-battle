@@ -2,24 +2,26 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
-  ActivityIndicator,
-  Alert,
-  KeyboardAvoidingView,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View
+    ActivityIndicator,
+    Alert,
+    Keyboard,
+    KeyboardAvoidingView,
+    Platform,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import CoverPicker3D from '../../components/CoverPicker3D';
+import { updateChallenge } from '../../services/supabase/database';
+import { uploadBookCover } from '../../services/supabase/storage';
 import { useAuthStore } from '../../stores/authStore';
 import { useProjectStore } from '../../stores/projectStore';
-import { uploadBookCover } from '../../services/supabase/storage';
-import { updateChallenge } from '../../services/supabase/database';
 
 // Random covers imports - assume they exist in assets/images
 const RANDOM_COVERS = [
@@ -44,6 +46,23 @@ export default function CreateProjectScreen() {
 
   // UI State
   const [loading, setLoading] = useState(false);
+  const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
+
+  // Réduire l'espace entre le bouton et le clavier quand il est ouvert (même logique que onboarding/create)
+  useEffect(() => {
+    const showSub = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+      () => setIsKeyboardVisible(true)
+    );
+    const hideSub = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
+      () => setIsKeyboardVisible(false)
+    );
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
 
   // Le composant CoverPicker gère maintenant toute la logique de sélection
 
@@ -139,10 +158,11 @@ export default function CreateProjectScreen() {
             style={{ flex: 1 }}
             contentContainerStyle={{ 
               flexGrow: 1,
-              paddingBottom: 140, // Espace suffisant entre dernier input et footer
+              paddingBottom: 140, // Espace pour le footer fixe (évite que le dernier input soit caché)
             }}
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
+            contentInset={Platform.OS === 'ios' ? { top: 16, bottom: 16 } : undefined}
           >
             <View style={styles.content}>
 
@@ -211,7 +231,6 @@ export default function CreateProjectScreen() {
                     value={totalPages}
                     onChangeText={setTotalPages}
                     keyboardType="number-pad"
-                    returnKeyType="done"
                   />
                 </View>
 
@@ -219,12 +238,12 @@ export default function CreateProjectScreen() {
             </View>
           </ScrollView>
 
-          {/* Footer avec effet Glassmorphisme */}
+          {/* Footer fixe : reste au-dessus du clavier (KeyboardAvoidingView le pousse) */}
           <View 
             style={[
               styles.footer, 
               { 
-                paddingBottom: Math.max(insets.bottom, 16), // Minimal padding
+                paddingBottom: isKeyboardVisible ? 12 : Math.max(insets.bottom, 16),
               }
             ]}
           >
@@ -360,21 +379,11 @@ const styles = StyleSheet.create({
   footer: {
     paddingHorizontal: 24,
     paddingTop: 16,
-    // Position absolue pour coller en bas
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    // Background très transparent (glassmorphisme sans blur natif)
-    backgroundColor: 'rgba(255, 255, 255, 0.7)', // 70% transparent - laisse voir au travers
-    // Border subtil en haut
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(203, 213, 225, 0.6)',
-    // Ombre inversée pour élever le footer
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
+    backgroundColor: 'transparent',
   },
   buttonWrapper: {
     borderRadius: 16,

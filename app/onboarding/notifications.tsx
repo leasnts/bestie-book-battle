@@ -15,15 +15,15 @@ import { Image } from 'expo-image';
 import * as Notifications from 'expo-notifications';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { 
-  Alert, 
-  StyleSheet, 
-  View, 
-  Text,
+import {
+    Alert,
+    StyleSheet,
+    Text,
+    View,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, fontSize, fontWeight, spacing } from '../../utils/constants';
 import Button3D from '../../components/Button3D';
+import { colors, fontSize, fontWeight, spacing } from '../../utils/constants';
 
 // Assets
 const TEXTURE_IMAGE = require('../../assets/images/61ea1e0c638b5b9c8100383a37a5b488848db623.png');

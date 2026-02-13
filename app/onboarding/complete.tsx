@@ -6,29 +6,29 @@
  * L'utilisateur peut inviter un.e ami.e ou terminer l'onboarding.
  */
 
-import { Image } from 'expo-image';
+import { Ionicons } from '@expo/vector-icons';
 import * as Clipboard from 'expo-clipboard';
+import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { 
-  Alert, 
-  Share,
-  ScrollView,
-  StyleSheet, 
-  TouchableOpacity, 
-  View, 
-  Text, 
-  ActivityIndicator
+import {
+    ActivityIndicator,
+    Alert,
+    ScrollView,
+    Share,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
-import { colors, fontSize, fontWeight, spacing, borderRadius } from '../../utils/constants';
 import Button3D from '../../components/Button3D';
+import { createOrUpdateUserProfile } from '../../services/supabase/auth';
+import { updateChallenge } from '../../services/supabase/database';
+import { uploadBookCover } from '../../services/supabase/storage';
 import { useAuthStore } from '../../stores/authStore';
 import { useProjectStore } from '../../stores/projectStore';
-import { createOrUpdateUserProfile } from '../../services/supabase/auth';
-import { uploadBookCover } from '../../services/supabase/storage';
-import { updateChallenge } from '../../services/supabase/database';
+import { borderRadius, colors, fontSize, fontWeight, spacing } from '../../utils/constants';
 
 // Assets
 const TEXTURE_IMAGE = require('../../assets/images/61ea1e0c638b5b9c8100383a37a5b488848db623.png');
@@ -91,7 +91,6 @@ export default function OnboardingCompleteScreen() {
                     params.bookTitle,
                     params.author || undefined,
                     Number(params.totalPages),
-                    undefined,
                     undefined
                 );
 

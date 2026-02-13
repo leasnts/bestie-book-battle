@@ -1,30 +1,32 @@
 /**
- * Écran 3a de l'onboarding (branche Créer) : Formulaire livre
+ * Écran 3a de l'onboarding (branche Créer) : Titre + Auteur
  * 
  * L'utilisateur décrit son premier bbb :
  * - Titre du livre
  * - Auteur du livre
- * - Nombre de pages
  * 
- * Ces données seront utilisées pour créer le challenge.
+ * Le nombre de pages est demandé sur l'écran suivant (pages.tsx)
+ * dans un format identique à la saisie du prénom (input géant centré).
+ * 
+ * Structure identique à onboarding/index.tsx.
  */
 
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useState } from 'react';
-import { 
-  Alert, 
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView, 
-  StyleSheet, 
-  View, 
-  Text, 
-  TextInput,
+import React, { useEffect, useRef, useState } from 'react';
+import {
+    Alert,
+    Keyboard,
+    KeyboardAvoidingView,
+    Platform,
+    StyleSheet,
+    Text,
+    TextInput,
+    View,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, fontSize, fontWeight, spacing, borderRadius, shadows } from '../../utils/constants';
 import Button3D from '../../components/Button3D';
+import { borderRadius, colors, fontSize, fontWeight, shadows, spacing } from '../../utils/constants';
 
 // Asset : texture de fond
 const TEXTURE_IMAGE = require('../../assets/images/61ea1e0c638b5b9c8100383a37a5b488848db623.png');
@@ -36,31 +38,43 @@ export default function OnboardingBookFormScreen() {
     
     const [bookTitle, setBookTitle] = useState('');
     const [author, setAuthor] = useState('');
-    const [totalPages, setTotalPages] = useState('');
+    const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
+
+    // Refs pour naviguer entre les champs via la touche "Suivant" du clavier
+    const titleRef = useRef<TextInput>(null);
+    const authorRef = useRef<TextInput>(null);
+
+    useEffect(() => {
+        const showSub = Keyboard.addListener(
+            Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+            () => setIsKeyboardVisible(true)
+        );
+        const hideSub = Keyboard.addListener(
+            Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
+            () => setIsKeyboardVisible(false)
+        );
+        return () => {
+            showSub.remove();
+            hideSub.remove();
+        };
+    }, []);
 
     /**
-     * Passer à l'écran suivant (import couverture)
+     * Passer à l'écran suivant (nombre de pages)
      * Les données du livre sont passées en paramètres de route
      */
     const handleContinue = () => {
-        // Validation simple
-        if (!bookTitle.trim() || !author.trim() || !totalPages.trim()) {
+        if (!bookTitle.trim() || !author.trim()) {
             Alert.alert('Champs manquants', 'Merci de remplir tous les champs');
             return;
         }
 
-        if (isNaN(Number(totalPages)) || Number(totalPages) <= 0) {
-            Alert.alert('Nombre invalide', 'Le nombre de pages doit être un chiffre valide');
-            return;
-        }
-
         router.push({
-            pathname: '/onboarding/cover',
+            pathname: '/onboarding/pages',
             params: {
                 firstName,
                 bookTitle: bookTitle.trim(),
                 author: author.trim(),
-                totalPages: totalPages.trim(),
             },
         });
     };
@@ -80,7 +94,7 @@ export default function OnboardingBookFormScreen() {
                     contentFit="cover"
                 />
 
-                {/* Bouton retour = Button3D secondaire en mode icon-only */}
+                {/* Header : identique à onboarding/index.tsx */}
                 <View style={styles.header}>
                     <Button3D
                         variant="secondary"
@@ -91,19 +105,15 @@ export default function OnboardingBookFormScreen() {
                     />
                 </View>
 
-                {/* ScrollView pour le contenu */}
-                <ScrollView 
-                    style={styles.scrollContent} 
-                    showsVerticalScrollIndicator={false}
-                    contentContainerStyle={styles.scrollContentContainer}
-                >
+                {/* Contenu principal : titre + 2 inputs
+                    Même structure que mainContent de index.tsx */}
+                <View style={styles.mainContent}>
                     <Text style={styles.title}>Décris ton premier bbb !</Text>
                     
-                    {/* Formulaire avec 3 inputs */}
                     <View style={styles.formContainer}>
-                        {/* Input: Titre du livre */}
                         <View style={styles.inputWrapper}>
                             <TextInput
+                                ref={titleRef}
                                 style={styles.input}
                                 placeholder="Titre du livre"
                                 placeholderTextColor={colors.textPlaceholder}
@@ -111,44 +121,35 @@ export default function OnboardingBookFormScreen() {
                                 onChangeText={setBookTitle}
                                 autoCapitalize="words"
                                 returnKeyType="next"
+                                onSubmitEditing={() => authorRef.current?.focus()}
+                                autoFocus
                             />
                         </View>
 
-                        {/* Input: Auteur du livre */}
                         <View style={styles.inputWrapper}>
                             <TextInput
+                                ref={authorRef}
                                 style={styles.input}
                                 placeholder="Auteur du livre"
                                 placeholderTextColor={colors.textPlaceholder}
                                 value={author}
                                 onChangeText={setAuthor}
                                 autoCapitalize="words"
-                                returnKeyType="next"
-                            />
-                        </View>
-
-                        {/* Input: Nombre de pages */}
-                        <View style={styles.inputWrapper}>
-                            <TextInput
-                                style={styles.input}
-                                placeholder="Nombre de pages"
-                                placeholderTextColor={colors.textPlaceholder}
-                                value={totalPages}
-                                onChangeText={setTotalPages}
-                                keyboardType="number-pad"
                                 returnKeyType="done"
                                 onSubmitEditing={handleContinue}
                             />
                         </View>
                     </View>
-                </ScrollView>
+                </View>
 
-                {/* Bouton "Continuer" fixé en bas - safe area comme le login */}
-                <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 16) + 16 }]}>
+                {/* Footer : identique à onboarding/index.tsx */}
+                <View style={[styles.footer, { 
+                    paddingBottom: isKeyboardVisible ? 12 : Math.max(insets.bottom, 16) + 16 
+                }]}>
                     <Button3D
                         onPress={handleContinue}
                         variant="primary"
-                        disabled={!bookTitle.trim() || !author.trim() || !totalPages.trim()}
+                        disabled={!bookTitle.trim() || !author.trim()}
                         style={{ width: '100%' }}
                     >
                         Continuer
@@ -180,46 +181,41 @@ const styles = StyleSheet.create({
         paddingBottom: spacing.xl,
         paddingHorizontal: spacing.xl,
     },
-    scrollContent: {
+    // Même structure que mainContent de index.tsx
+    mainContent: {
         flex: 1,
         paddingHorizontal: spacing.xl,
-    },
-    scrollContentContainer: {
         paddingTop: spacing['3xl'],
         gap: spacing['6xl'], // 64px entre titre et formulaire
     },
     title: {
         fontFamily: 'Rokkitt_Medium',
-        fontSize: fontSize['3xl'], // 36px
+        fontSize: fontSize['3xl'],
         fontWeight: fontWeight.medium,
         color: colors.textPrimary,
         letterSpacing: -0.72,
         lineHeight: 44,
     },
     formContainer: {
-        gap: spacing['3xl'], // 32px entre les inputs (24px selon Figma)
+        gap: spacing.xl, // 20px entre Titre et Auteur (réduit, ils sont liés)
     },
-    inputWrapper: {
-        // Container pour les inputs
-    },
+    inputWrapper: {},
     input: {
         fontFamily: 'WorkSans',
-        fontSize: fontSize.md, // 16px
+        fontSize: fontSize.md,
         fontWeight: fontWeight.regular as any,
         color: colors.textPrimary,
         backgroundColor: colors.white,
         borderWidth: 1,
-        borderColor: colors.border, // #d5d7da
-        borderRadius: borderRadius.lg, // 20px
-        paddingHorizontal: spacing['2xl'], // 24px
-        paddingVertical: spacing.xl, // 20px
+        borderColor: colors.border,
+        borderRadius: borderRadius.lg,
+        paddingHorizontal: spacing['2xl'],
+        paddingVertical: spacing.xl,
         ...shadows.xs,
-        // Pas de lineHeight ici : sur TextInput, ça décale le texte verticalement
-        textAlignVertical: 'center', // Centre vertical sur Android
+        textAlignVertical: 'center',
     },
     footer: {
         paddingHorizontal: spacing.xl,
         paddingTop: spacing.xl,
-        // paddingBottom appliqué dynamiquement avec useSafeAreaInsets (comme login)
     },
 });

@@ -1,33 +1,42 @@
 /**
- * Écran 1 de l'onboarding : Saisie du prénom
+ * Écran 3b de l'onboarding (branche Créer) : Nombre de pages
  * 
- * Premier écran après le sign-in Apple pour les nouveaux utilisateurs.
- * Input géant centré en Rokkitt Bold 60px pour saisir le prénom.
+ * L'utilisateur saisit le nombre de pages du livre.
+ * Format identique à onboarding/index.tsx : input géant centré.
+ * 
+ * Flow : create (titre + auteur) → pages (ici) → cover
  */
 
 import { Image } from 'expo-image';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { 
-  Keyboard,
-  KeyboardAvoidingView,
-  Platform,
-  StyleSheet, 
-  View, 
-  Text, 
-  TextInput,
+import {
+    Alert,
+    Keyboard,
+    KeyboardAvoidingView,
+    Platform,
+    StyleSheet,
+    Text,
+    TextInput,
+    View,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, fontSize, fontWeight, spacing } from '../../utils/constants';
 import Button3D from '../../components/Button3D';
 
-// Asset : texture de fond
+// Asset : texture de fond (même que les autres écrans)
 const TEXTURE_IMAGE = require('../../assets/images/61ea1e0c638b5b9c8100383a37a5b488848db623.png');
 
-export default function OnboardingNameScreen() {
+export default function OnboardingPagesScreen() {
     const insets = useSafeAreaInsets();
     const router = useRouter();
-    const [firstName, setFirstName] = useState('');
+    const { firstName, bookTitle, author } = useLocalSearchParams<{
+        firstName: string;
+        bookTitle: string;
+        author: string;
+    }>();
+    
+    const [totalPages, setTotalPages] = useState('');
     const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
 
     useEffect(() => {
@@ -46,16 +55,25 @@ export default function OnboardingNameScreen() {
     }, []);
 
     /**
-     * Passer à l'écran suivant (choix du rôle)
-     * Le prénom est passé en paramètre de route pour être utilisé
-     * dans les écrans suivants et finalement sauvegardé dans le profil
+     * Passer à l'écran suivant (import couverture)
+     * Toutes les données du livre sont passées en paramètres de route
      */
     const handleContinue = () => {
-        if (!firstName.trim()) return;
-        
+        if (!totalPages.trim()) return;
+
+        if (isNaN(Number(totalPages)) || Number(totalPages) <= 0) {
+            Alert.alert('Nombre invalide', 'Le nombre de pages doit être un chiffre valide');
+            return;
+        }
+
         router.push({
-            pathname: '/onboarding/role',
-            params: { firstName: firstName.trim() },
+            pathname: '/onboarding/cover',
+            params: {
+                firstName,
+                bookTitle,
+                author,
+                totalPages: totalPages.trim(),
+            },
         });
     };
 
@@ -74,46 +92,46 @@ export default function OnboardingNameScreen() {
                     contentFit="cover"
                 />
 
-                {/* Bouton retour désactivé : pas de page précédente (premier écran après sign-in) */}
+                {/* Header : identique à index.tsx */}
                 <View style={styles.header}>
                     <Button3D
                         variant="secondary"
                         icon="chevron-back"
                         iconOnly
                         size="compact"
-                        disabled
                         onPress={() => router.back()}
                     />
                 </View>
 
-                {/* Contenu principal : titre + input */}
+                {/* Contenu principal : titre + input géant centré
+                    Structure identique à index.tsx (mainContent) */}
                 <View style={styles.mainContent}>
-                    <Text style={styles.title}>Comment tu t'appelles ?</Text>
+                    <Text style={styles.title}>Combien de pages ?</Text>
                     
-                    {/* Input géant centré */}
+                    {/* Input géant centré — même style que le prénom */}
                     <View style={styles.inputContainer}>
                         <TextInput
                             style={styles.input}
-                            placeholder="Prénom"
+                            placeholder="256"
                             placeholderTextColor={colors.alphaBlack10}
-                            value={firstName}
-                            onChangeText={setFirstName}
-                            autoCapitalize="words"
+                            value={totalPages}
+                            onChangeText={setTotalPages}
+                            keyboardType="number-pad"
                             autoFocus
-                            returnKeyType="next"
+                            returnKeyType="done"
                             onSubmitEditing={handleContinue}
                         />
                     </View>
                 </View>
 
-                {/* Bouton "Continuer" fixé en bas. Moins de padding quand le clavier est ouvert */}
+                {/* Footer : identique à index.tsx */}
                 <View style={[styles.footer, { 
                     paddingBottom: isKeyboardVisible ? 12 : Math.max(insets.bottom, 16) + 16 
                 }]}>
                     <Button3D
                         onPress={handleContinue}
                         variant="primary"
-                        disabled={!firstName.trim()}
+                        disabled={!totalPages.trim() || isNaN(Number(totalPages)) || Number(totalPages) <= 0}
                         style={{ width: '100%' }}
                     >
                         Continuer
@@ -125,6 +143,7 @@ export default function OnboardingNameScreen() {
     );
 }
 
+// ── Styles identiques à onboarding/index.tsx ──
 const styles = StyleSheet.create({
     container: {
         flex: 1,
@@ -153,7 +172,7 @@ const styles = StyleSheet.create({
     },
     title: {
         fontFamily: 'Rokkitt_Medium',
-        fontSize: fontSize['3xl'], // 36px
+        fontSize: fontSize['3xl'],     // 36px
         fontWeight: fontWeight.medium,
         color: colors.textPrimary,
         letterSpacing: -0.72,
@@ -163,24 +182,22 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         paddingHorizontal: spacing['4xl'], // 48px
-        paddingVertical: spacing['2xl'], // 24px
+        paddingVertical: spacing['2xl'],   // 24px
     },
     input: {
         fontFamily: 'Rokkitt_Bold',
-        fontSize: fontSize['5xl'], // 60px pour l'input géant
+        fontSize: fontSize['5xl'],     // 60px — input géant comme le prénom
         fontWeight: fontWeight.bold as any,
         color: colors.textPrimary,
         letterSpacing: -1.2,
         textAlign: 'center',
-        textAlignVertical: 'center', // Centre vertical sur Android
+        textAlignVertical: 'center',
         width: '100%',
-        // Pas de border, juste le texte
         backgroundColor: 'transparent',
         padding: 0,
     },
     footer: {
         paddingHorizontal: spacing.xl,
         paddingTop: spacing.xl,
-        // paddingBottom appliqué dynamiquement avec useSafeAreaInsets (comme login)
     },
 });

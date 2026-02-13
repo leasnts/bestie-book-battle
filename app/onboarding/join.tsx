@@ -8,9 +8,10 @@
 
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { 
   Alert, 
+  Keyboard,
   KeyboardAvoidingView,
   Platform,
   StyleSheet, 
@@ -33,6 +34,22 @@ export default function OnboardingJoinScreen() {
     
     const [inviteCode, setInviteCode] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
+
+    useEffect(() => {
+        const showSub = Keyboard.addListener(
+            Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+            () => setIsKeyboardVisible(true)
+        );
+        const hideSub = Keyboard.addListener(
+            Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
+            () => setIsKeyboardVisible(false)
+        );
+        return () => {
+            showSub.remove();
+            hideSub.remove();
+        };
+    }, []);
 
     /**
      * Vérifier si le code d'invitation existe
@@ -138,8 +155,10 @@ export default function OnboardingJoinScreen() {
                     </View>
                 </View>
 
-                {/* Bouton "Continuer" fixé en bas - safe area comme le login */}
-                <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 16) + 16 }]}>
+                {/* Bouton "Continuer" fixé en bas. Moins de padding quand le clavier est ouvert */}
+                <View style={[styles.footer, { 
+                    paddingBottom: isKeyboardVisible ? 12 : Math.max(insets.bottom, 16) + 16 
+                }]}>
                     <Button3D
                         onPress={handleContinue}
                         variant="primary"
