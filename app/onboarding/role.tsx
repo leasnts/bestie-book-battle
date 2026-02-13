@@ -60,8 +60,8 @@ export default function OnboardingRoleScreen() {
     const handleSelectRole = (role: RoleType) => {
         setSelectedRole(role);
         selectionProgress.value = withSpring(role === 'create' ? 0 : 1, {
-            damping: 15,
-            stiffness: 120,
+            damping: 25,
+            stiffness: 280,
         });
     };
 
