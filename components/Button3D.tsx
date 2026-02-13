@@ -11,18 +11,18 @@
  * Effet 3D : gradients concentrés aux bords, inversés au press.
  */
 
-import React, { useState } from 'react';
-import { 
-  Pressable, 
-  StyleSheet, 
-  Text, 
-  View, 
-  ActivityIndicator,
-  ViewStyle,
-  TextStyle,
-} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import React, { useState } from 'react';
+import {
+  ActivityIndicator,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextStyle,
+  View,
+  ViewStyle,
+} from 'react-native';
 
 interface Button3DProps {
   onPress: () => void;

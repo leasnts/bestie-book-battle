@@ -17,6 +17,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
     Alert,
+    ScrollView,
     StyleSheet,
     Text,
     View,
@@ -122,20 +123,23 @@ export default function OnboardingNotificationsScreen() {
                     contentFit="cover"
                 />
 
-                {/* Bouton retour = Button3D secondaire en mode icon-only */}
-                <View style={styles.header}>
-                    <Button3D
-                        variant="secondary"
-                        icon="chevron-back"
-                        iconOnly
-                        size="compact"
-                        onPress={() => router.back()}
-                    />
-                </View>
+                {/* Contenu scrollable : header + image + texte */}
+                <ScrollView
+                    style={styles.scrollView}
+                    contentContainerStyle={styles.scrollContent}
+                    showsVerticalScrollIndicator={false}
+                    bounces={false}
+                >
+                    <View style={styles.header}>
+                        <Button3D
+                            variant="secondary"
+                            icon="chevron-back"
+                            iconOnly
+                            size="compact"
+                            onPress={() => router.back()}
+                        />
+                    </View>
 
-                {/* Contenu principal centré verticalement */}
-                <View style={styles.mainContent}>
-                    {/* Illustration iPhone centrée */}
                     <View style={styles.illustrationContainer}>
                         <Image
                             source={NOTIFICATION_ILLUSTRATION}
@@ -144,26 +148,25 @@ export default function OnboardingNotificationsScreen() {
                         />
                     </View>
 
-                    {/* Texte centré */}
                     <View style={styles.textContainer}>
                         <Text style={styles.mainText}>
-                            Autorise les notifications pour recevoir des rappels !
+                            Autorise les notifications !
                         </Text>
                         <Text style={styles.subText}>
-                            On va pas te spamer, promis
+                            On va pas te spamer, promis :)
                         </Text>
                     </View>
-                </View>
+                </ScrollView>
 
-                {/* Boutons en bas - safe area comme le login */}
-                <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 16) + 16 }]}>
+                {/* Footer ferret en bas - toujours visible avec safe area */}
+                <View style={[styles.footer, { paddingBottom: insets.bottom + 16 }]}>
                     <Button3D
                         onPress={handleAllowNotifications}
                         variant="primary"
                         loading={isLoading}
                         style={{ width: '100%' }}
                     >
-                        Autoriser les notifications
+                        Autoriser
                     </Button3D>
 
                     <Button3D
@@ -187,6 +190,13 @@ const styles = StyleSheet.create({
     },
     content: {
         flex: 1,
+        flexDirection: 'column',
+    },
+    scrollView: {
+        flex: 1,
+    },
+    scrollContent: {
+        flexGrow: 1,
     },
     backgroundTexture: {
         ...StyleSheet.absoluteFillObject,
@@ -194,36 +204,31 @@ const styles = StyleSheet.create({
     },
     header: {
         paddingTop: spacing['6xl'],
-        paddingBottom: spacing.xl,
-        paddingHorizontal: spacing.xl,
-    },
-    mainContent: {
-        flex: 1,
-        justifyContent: 'center', // Centre verticalement le contenu
-        alignItems: 'center',
-        paddingHorizontal: spacing.xl,
-        gap: spacing['3xl'], // 32px entre illustration et texte
+        paddingBottom: spacing.md,
+        paddingHorizontal: spacing.lg,
     },
     illustrationContainer: {
+        paddingHorizontal: spacing.md,
+        width: '100%',
         alignItems: 'center',
-        justifyContent: 'center',
     },
     illustration: {
-        width: 300,
-        height: 280,
+        width: '100%',
+        aspectRatio: 300 / 280,
     },
     textContainer: {
         alignItems: 'center',
-        gap: spacing.sm, // 8px entre les deux textes
+        gap: spacing.sm,
         paddingHorizontal: spacing.lg,
+        paddingTop: spacing['2xl'],
     },
     mainText: {
         fontFamily: 'Rokkitt_SemiBold',
-        fontSize: fontSize['2xl'], // 24px
+        fontSize: fontSize['3xl'],
         fontWeight: fontWeight.semibold as any,
         color: colors.textPrimary,
         textAlign: 'center',
-        lineHeight: 32,
+        lineHeight: 44,
     },
     subText: {
         fontFamily: 'WorkSans',
@@ -234,7 +239,7 @@ const styles = StyleSheet.create({
         lineHeight: 20,
     },
     footer: {
-        paddingHorizontal: spacing.xl,
+        paddingHorizontal: spacing.lg,
         paddingTop: spacing.xl,
         gap: spacing.md, // 12px entre les deux boutons
         // paddingBottom appliqué dynamiquement avec useSafeAreaInsets (comme login)
