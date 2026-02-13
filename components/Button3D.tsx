@@ -76,20 +76,20 @@ export default function Button3D({
 
           {isPrimary && !pressed && (
             <>
-              {/* DEFAULT : reflet blanc en HAUT (concentré sur les premiers ~30%) */}
+              {/* DEFAULT : reflet blanc en HAUT (bord dur, transition rapide) */}
               <LinearGradient
                 colors={[
                   'rgba(255,255,255,0.22)',
-                  'rgba(255,255,255,0.08)',
+                  'rgba(255,255,255,0.06)',
                   'rgba(255,255,255,0.0)',
                   'rgba(255,255,255,0.0)',
                 ]}
-                locations={[0, 0.25, 0.5, 1]}
+                locations={[0, 0.1, 0.2, 1]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 0, y: 1 }}
                 style={styles.gradientOverlay}
               />
-              {/* DEFAULT : ombre noire en BAS (concentrée sur les derniers ~30%) */}
+              {/* DEFAULT : ombre noire en BAS (bord dur, transition rapide) */}
               <LinearGradient
                 colors={[
                   'rgba(0,0,0,0.0)',
@@ -97,7 +97,7 @@ export default function Button3D({
                   'rgba(0,0,0,0.25)',
                   'rgba(0,0,0,0.55)',
                 ]}
-                locations={[0, 0.5, 0.75, 1]}
+                locations={[0, 0.8, 0.9, 1]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 0, y: 1 }}
                 style={styles.gradientOverlay}
@@ -107,7 +107,7 @@ export default function Button3D({
 
           {isPrimary && pressed && (
             <>
-              {/* PRESSED : ombre noire en HAUT (inversé) */}
+              {/* PRESSED : ombre noire en HAUT (inversé, bord dur) */}
               <LinearGradient
                 colors={[
                   'rgba(0,0,0,0.55)',
@@ -115,12 +115,12 @@ export default function Button3D({
                   'rgba(0,0,0,0.0)',
                   'rgba(0,0,0,0.0)',
                 ]}
-                locations={[0, 0.25, 0.5, 1]}
+                locations={[0, 0.1, 0.2, 1]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 0, y: 1 }}
                 style={styles.gradientOverlay}
               />
-              {/* PRESSED : reflet blanc en BAS (inversé) */}
+              {/* PRESSED : reflet blanc en BAS (inversé, bord dur) */}
               <LinearGradient
                 colors={[
                   'rgba(255,255,255,0.0)',
@@ -128,7 +128,7 @@ export default function Button3D({
                   'rgba(255,255,255,0.08)',
                   'rgba(255,255,255,0.22)',
                 ]}
-                locations={[0, 0.5, 0.75, 1]}
+                locations={[0, 0.8, 0.9, 1]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 0, y: 1 }}
                 style={styles.gradientOverlay}

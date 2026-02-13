@@ -20,7 +20,6 @@ import {
   Text,
   View,
 } from 'react-native';
-import { Dialog, Portal, Button } from 'react-native-paper';
 import { useAuthStore } from '../../stores/authStore';
 import { useProgressStore } from '../../stores/progressStore';
 import { pickImage, uploadProfilePhoto } from '../../services/supabase/storage';
@@ -45,7 +44,6 @@ export default function ProfileScreen() {
   const { participants } = useProgressStore();
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
-  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   // Stats (simplifiées)
@@ -91,27 +89,35 @@ export default function ProfileScreen() {
     }
   };
 
+  /**
+   * Modal native iOS : demande confirmation puis déconnecte
+   *
+   * Alert.alert utilise UIAlertController sur iOS = look et comportement natifs.
+   * style: 'destructive' = bouton rouge pour les actions destructives.
+   */
   const handleLogoutPress = () => {
-    setShowLogoutConfirm(true);
-  };
-  // Alias pour compatibilité (au cas où le cache Metro serve une ancienne version)
-  const handleLogout = handleLogoutPress;
-
-  const handleLogoutConfirm = async () => {
-    try {
-      setIsLoggingOut(true);
-      await logout();
-      setShowLogoutConfirm(false);
-      router.replace('/auth/login');
-    } catch (error: any) {
-      Alert.alert('Erreur', error?.message || 'Impossible de te déconnecter. Réessaie.');
-    } finally {
-      setIsLoggingOut(false);
-    }
-  };
-
-  const handleLogoutCancel = () => {
-    setShowLogoutConfirm(false);
+    Alert.alert(
+      'Se déconnecter',
+      'Tu veux te déconnecter ?',
+      [
+        { text: 'Annuler', style: 'cancel' },
+        {
+          text: 'Se déconnecter',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              setIsLoggingOut(true);
+              await logout();
+              router.replace('/auth/login');
+            } catch (error: any) {
+              Alert.alert('Erreur', error?.message || 'Impossible de te déconnecter. Réessaie.');
+            } finally {
+              setIsLoggingOut(false);
+            }
+          },
+        },
+      ]
+    );
   };
 
   return (
@@ -206,7 +212,11 @@ export default function ProfileScreen() {
             <Ionicons name="chevron-forward" size={18} color={COLORS.textMuted} />
           </Pressable>
 
-          <Pressable style={[styles.actionRow, styles.actionRowLast]} onPress={handleLogout}>
+          <Pressable
+            style={[styles.actionRow, styles.actionRowLast]}
+            onPress={handleLogoutPress}
+            disabled={isLoggingOut}
+          >
             <Ionicons name="log-out-outline" size={20} color={COLORS.danger} />
             <Text style={[styles.actionLabel, { color: COLORS.danger }]}>Se déconnecter</Text>
             <Ionicons name="chevron-forward" size={18} color={COLORS.textMuted} />
@@ -217,26 +227,12 @@ export default function ProfileScreen() {
         <Text style={styles.version}>Bestie Book Battle v1.0</Text>
       </ScrollView>
 
-      {/* Modal de confirmation de déconnexion (plus fiable que Alert sur mobile) */}
-      <Portal>
-        <Dialog visible={showLogoutConfirm} onDismiss={handleLogoutCancel}>
-          <Dialog.Title>Se déconnecter</Dialog.Title>
-          <Dialog.Content>
-            <Text>Tu veux te déconnecter ?</Text>
-          </Dialog.Content>
-          <Dialog.Actions>
-            <Button onPress={handleLogoutCancel}>Annuler</Button>
-            <Button
-              onPress={handleLogoutConfirm}
-              loading={isLoggingOut}
-              disabled={isLoggingOut}
-              textColor={COLORS.danger}
-            >
-              Se déconnecter
-            </Button>
-          </Dialog.Actions>
-        </Dialog>
-      </Portal>
+      {/* Indicateur de chargement pendant la déconnexion */}
+      {isLoggingOut && (
+        <View style={styles.logoutOverlay}>
+          <ActivityIndicator size="large" color={COLORS.primary} />
+        </View>
+      )}
     </View>
   );
 }
@@ -438,6 +434,14 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: COLORS.textMuted,
     marginTop: 24,
+  },
+
+  // Overlay pendant la déconnexion
+  logoutOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 
 });

@@ -137,22 +137,38 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   // ===== Action : Déconnexion =====
   /**
    * Déconnecter l'utilisateur
-   * 
-   * Supprime la session Supabase, nettoie le store d'auth,
-   * et réinitialise les stores project et progress pour éviter
-   * d'afficher des données d'un autre utilisateur.
+   *
+   * Supabase signOut() peut rester bloqué indéfiniment sur React Native (problème connu).
+   * On utilise un timeout de 3s : si signOut ne répond pas, on déconnecte quand même
+   * côté UI pour ne pas laisser l'utilisateur en chargement infini.
    */
   logout: async () => {
     set({ isLoading: true });
-    try {
-      await signOut();
-      // Réinitialiser tous les stores liés à l'utilisateur
+    const clearStateAndStores = () => {
       useProjectStore.getState().reset();
       useProgressStore.getState().clearProgress();
       set({ user: null, pendingUserData: null, isLoading: false, error: null });
+    };
+
+    try {
+      // Timeout 3s : signOut peut hang sur RN, on ne bloque pas l'UX
+      const timeoutMs = 3000;
+      await Promise.race([
+        signOut(),
+        new Promise<void>((_, reject) =>
+          setTimeout(() => reject(new Error('timeout')), timeoutMs)
+        ),
+      ]);
+      clearStateAndStores();
     } catch (error: any) {
-      console.error('Logout error:', error);
-      set({ error: error.message, isLoading: false });
+      console.warn('Logout:', error?.message || error);
+      if (error?.message === 'timeout') {
+        // Timeout = signOut a hang, on déconnecte quand même côté UI
+        clearStateAndStores();
+      } else {
+        set({ error: error.message, isLoading: false });
+        throw error;
+      }
     }
   },
 
