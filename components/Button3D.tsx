@@ -1,13 +1,14 @@
 /**
- * Composant Button3D - Bouton avec effet 3D pixel-perfect
+ * Composant Button3D - Boutons avec effet 3D pixel-perfect
  * 
- * Reproduit fidèlement le design Figma "Button / Primary"
- * L'effet 3D est créé par des gradients concentrés aux bords :
- * - Bord supérieur : reflet lumineux blanc bien visible
- * - Bord inférieur : ombre sombre bien marquée
- * - Centre : couleur unie #181d27
+ * Deux variants sémantiques :
+ * - **primary** (bouton principal / "nir") : fond sombre #181d27, pour l'action principale
+ * - **secondary** (bouton secondaire) : fond clair #f5f5f5, pour actions secondaires ou retour
  * 
- * Au press, les effets s'inversent → le bouton semble "enfoncé".
+ * Le bouton back est un Button3D variant="secondary" en mode icon-only.
+ * Il peut aussi contenir du texte comme le primary (ex: "Retour", "Annuler").
+ * 
+ * Effet 3D : gradients concentrés aux bords, inversés au press.
  */
 
 import React, { useState } from 'react';
@@ -25,12 +26,14 @@ import { LinearGradient } from 'expo-linear-gradient';
 
 interface Button3DProps {
   onPress: () => void;
-  children: React.ReactNode;
+  children?: React.ReactNode;
   variant?: 'primary' | 'secondary';
   disabled?: boolean;
   loading?: boolean;
   icon?: keyof typeof Ionicons.glyphMap;
   iconPosition?: 'left' | 'right';
+  iconOnly?: boolean;
+  size?: 'default' | 'compact';
   style?: ViewStyle;
   textStyle?: TextStyle;
 }
@@ -43,10 +46,14 @@ export default function Button3D({
   loading = false,
   icon,
   iconPosition = 'left',
+  iconOnly = false,
+  size = 'default',
   style,
   textStyle,
 }: Button3DProps) {
   const isPrimary = variant === 'primary';
+  const isCompact = size === 'compact';
+  const showText = !iconOnly && (children !== undefined && children !== null && children !== '');
   const [pressed, setPressed] = useState(false);
 
   return (
@@ -57,18 +64,21 @@ export default function Button3D({
       disabled={disabled || loading}
       style={[
         (disabled || loading) && styles.buttonDisabled,
+        isCompact && styles.compactWrapper,
         style,
       ]}
     >
       {/* Shadow container - porte le drop shadow iOS */}
       <View style={[
         styles.shadowContainer,
+        isCompact && styles.shadowContainerCompact,
         isPrimary ? styles.primaryShadow : styles.secondaryShadow,
       ]}>
         
         {/* Bouton avec overflow hidden pour clipper les gradients */}
         <View style={[
           styles.button,
+          isCompact && styles.buttonCompact,
           isPrimary ? styles.primaryFill : styles.secondaryFill,
         ]}>
 
@@ -170,35 +180,44 @@ export default function Button3D({
           {/* ====== STROKE : bordure gradient ====== */}
           <View style={[
             styles.strokeBorder,
+            isCompact && styles.strokeBorderCompact,
             isPrimary ? styles.primaryStroke : styles.secondaryStroke,
           ]} />
 
           {/* ====== CONTENU ====== */}
-          <View style={styles.content}>
+          <View style={[styles.content, isCompact && styles.contentCompact]}>
             {loading ? (
-              <ActivityIndicator color={isPrimary ? '#FFFFFF' : '#181d27'} size="small" />
+              <ActivityIndicator color={isPrimary ? '#FFFFFF' : '#535862'} size="small" />
+            ) : iconOnly && icon ? (
+              <Ionicons 
+                name={icon} 
+                size={isCompact ? 20 : 24} 
+                color={isPrimary ? '#FFFFFF' : '#535862'} 
+              />
             ) : (
               <>
                 {icon && iconPosition === 'left' && (
                   <Ionicons 
                     name={icon} 
-                    size={24} 
-                    color={isPrimary ? '#FFFFFF' : '#181d27'} 
+                    size={isCompact ? 20 : 24} 
+                    color={isPrimary ? '#FFFFFF' : '#535862'} 
                     style={styles.iconLeft}
                   />
                 )}
-                <Text style={[
-                  styles.text,
-                  isPrimary ? styles.primaryText : styles.secondaryText,
-                  textStyle,
-                ]}>
-                  {children}
-                </Text>
+                {showText && (
+                  <Text style={[
+                    styles.text,
+                    isPrimary ? styles.primaryText : styles.secondaryText,
+                    textStyle,
+                  ]}>
+                    {children}
+                  </Text>
+                )}
                 {icon && iconPosition === 'right' && (
                   <Ionicons 
                     name={icon} 
-                    size={24} 
-                    color={isPrimary ? '#FFFFFF' : '#181d27'} 
+                    size={isCompact ? 20 : 24} 
+                    color={isPrimary ? '#FFFFFF' : '#535862'} 
                     style={styles.iconRight}
                   />
                 )}
@@ -215,10 +234,22 @@ const styles = StyleSheet.create({
   buttonDisabled: {
     opacity: 0.5,
   },
+  compactWrapper: {
+    width: 40,
+    height: 40,
+    minHeight: 40,
+  },
+  buttonCompact: {
+    height: 40,
+    borderRadius: 12,
+  },
   
   // Container qui porte le drop shadow (x=0, y=4, blur=6, #000 25%)
   shadowContainer: {
     borderRadius: 24,
+  },
+  shadowContainerCompact: {
+    borderRadius: 12,
   },
   primaryShadow: {
     shadowColor: '#000000',
@@ -229,10 +260,10 @@ const styles = StyleSheet.create({
   },
   secondaryShadow: {
     shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.10,
-    shadowRadius: 6,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    elevation: 2,
   },
 
   // Le bouton (overflow hidden pour les gradients)
@@ -261,6 +292,9 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     borderWidth: 1,
   },
+  strokeBorderCompact: {
+    borderRadius: 12,
+  },
   primaryStroke: {
     borderColor: 'rgba(255,255,255,0.20)',
   },
@@ -275,6 +309,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     zIndex: 2,
     paddingHorizontal: 24,
+  },
+  contentCompact: {
+    paddingHorizontal: 0,
   },
   text: {
     fontFamily: 'WorkSans_SemiBold',

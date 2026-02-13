@@ -144,8 +144,10 @@ export const shadows = {
 };
 
 // Styles de boutons réutilisables (depuis Figma)
+// Convention : primary = bouton principal (sombre), secondary = bouton secondaire (blanc/clair)
+// Le bouton "retour" est un Button3D variant="secondary" en mode icon-only (size="compact")
 export const buttonStyles = {
-  // Bouton principal dark avec inner shadows
+  // Bouton primaire (bouton "nir" / principal) - dark avec inner shadows
   primary: {
     backgroundColor: colors.dark900,
     borderWidth: 1,
@@ -154,26 +156,16 @@ export const buttonStyles = {
     paddingHorizontal: spacing['2xl'],
     paddingVertical: spacing.xl,
     ...shadows.button,
-    // Les inner shadows doivent être ajoutés via un View absolu
   },
-  // Bouton secondaire light
+  // Bouton secondaire (blanc/clair) - utilisé pour Retour, Annuler, actions secondaires
   secondary: {
     backgroundColor: colors.bgLight,
     borderWidth: 1,
-    borderColor: colors.alphaWhite30,
+    borderColor: colors.alphaBlack10,
     borderRadius: borderRadius.xl,
     paddingHorizontal: spacing['2xl'],
     paddingVertical: spacing.xl,
     ...shadows.buttonLight,
-  },
-  // Bouton back
-  back: {
-    backgroundColor: colors.bgLight,
-    borderWidth: 1,
-    borderColor: colors.alphaBlack10,
-    borderRadius: borderRadius.md,
-    padding: spacing.sm,
-    ...shadows.xs,
   },
 };
 

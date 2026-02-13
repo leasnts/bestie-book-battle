@@ -14,12 +14,10 @@ import {
   StyleSheet, 
   View, 
   Text, 
-  TextInput, 
-  TouchableOpacity 
+  TextInput,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
-import { colors, fontSize, fontWeight, spacing, buttonStyles, borderRadius } from '../../utils/constants';
+import { colors, fontSize, fontWeight, spacing } from '../../utils/constants';
 import Button3D from '../../components/Button3D';
 
 // Asset : texture de fond
@@ -58,15 +56,16 @@ export default function OnboardingNameScreen() {
                     contentFit="cover"
                 />
 
-                {/* Bouton back en haut à gauche */}
+                {/* Bouton retour désactivé : pas de page précédente (premier écran après sign-in) */}
                 <View style={styles.header}>
-                    <TouchableOpacity 
-                        style={styles.backButton} 
+                    <Button3D
+                        variant="secondary"
+                        icon="chevron-back"
+                        iconOnly
+                        size="compact"
+                        disabled
                         onPress={() => router.back()}
-                    >
-                        <View style={styles.backButtonInnerShadow} />
-                        <Ionicons name="chevron-back" size={24} color={colors.textPrimary} />
-                    </TouchableOpacity>
+                    />
                 </View>
 
                 {/* Contenu principal : titre + input */}
@@ -117,31 +116,14 @@ const styles = StyleSheet.create({
     content: {
         flex: 1,
     },
+    header: {
+        paddingTop: spacing['6xl'],
+        paddingBottom: spacing.xl,
+        paddingHorizontal: spacing.xl,
+    },
     backgroundTexture: {
         ...StyleSheet.absoluteFillObject,
         opacity: 0.05,
-    },
-    header: {
-        paddingTop: spacing['6xl'], // 64px pour status bar
-        paddingBottom: spacing.xl,  // 20px
-        paddingHorizontal: spacing.xl, // 20px
-    },
-    backButton: {
-        ...buttonStyles.back,
-        width: 40,
-        height: 40,
-        justifyContent: 'center',
-        alignItems: 'center',
-        position: 'relative',
-        overflow: 'hidden',
-    },
-    backButtonInnerShadow: {
-        ...StyleSheet.absoluteFillObject,
-        borderRadius: borderRadius.md,
-        shadowColor: 'rgba(30,30,30,0.25)',
-        shadowOffset: { width: 0, height: -4 },
-        shadowOpacity: 1,
-        shadowRadius: 4,
     },
     mainContent: {
         flex: 1,

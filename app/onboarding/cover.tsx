@@ -13,14 +13,13 @@ import React, { useState } from 'react';
 import { 
   Alert, 
   StyleSheet, 
-  TouchableOpacity, 
   View, 
   Text, 
-  Pressable 
+  Pressable,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, fontSize, fontWeight, spacing, buttonStyles, borderRadius } from '../../utils/constants';
+import { colors, fontSize, fontWeight, spacing, borderRadius } from '../../utils/constants';
 import Button3D from '../../components/Button3D';
 
 // Asset : texture de fond
@@ -108,15 +107,15 @@ export default function OnboardingCoverScreen() {
                     contentFit="cover"
                 />
 
-                {/* Bouton back en haut à gauche */}
+                {/* Bouton retour = Button3D secondaire en mode icon-only */}
                 <View style={styles.header}>
-                    <TouchableOpacity 
-                        style={styles.backButton} 
+                    <Button3D
+                        variant="secondary"
+                        icon="chevron-back"
+                        iconOnly
+                        size="compact"
                         onPress={() => router.back()}
-                    >
-                        <View style={styles.backButtonInnerShadow} />
-                        <Ionicons name="chevron-back" size={24} color={colors.textPrimary} />
-                    </TouchableOpacity>
+                    />
                 </View>
 
                 {/* Contenu principal */}
@@ -181,23 +180,6 @@ const styles = StyleSheet.create({
         paddingTop: spacing['6xl'],
         paddingBottom: spacing.xl,
         paddingHorizontal: spacing.xl,
-    },
-    backButton: {
-        ...buttonStyles.back,
-        width: 40,
-        height: 40,
-        justifyContent: 'center',
-        alignItems: 'center',
-        position: 'relative',
-        overflow: 'hidden',
-    },
-    backButtonInnerShadow: {
-        ...StyleSheet.absoluteFillObject,
-        borderRadius: borderRadius.md,
-        shadowColor: 'rgba(30,30,30,0.25)',
-        shadowOffset: { width: 0, height: -4 },
-        shadowOpacity: 1,
-        shadowRadius: 4,
     },
     mainContent: {
         flex: 1,
