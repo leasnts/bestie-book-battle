@@ -12,6 +12,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
     Alert,
+    InputAccessoryView,
     Keyboard,
     KeyboardAvoidingView,
     Platform,
@@ -79,6 +80,12 @@ export default function OnboardingPagesScreen() {
 
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
+            {/* InputAccessoryView vide : remplace la toolbar "Done" native d'iOS */}
+            {Platform.OS === 'ios' && (
+                <InputAccessoryView nativeID="pages-empty">
+                    <View />
+                </InputAccessoryView>
+            )}
             <KeyboardAvoidingView
                 style={styles.keyboardAvoid}
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -106,7 +113,7 @@ export default function OnboardingPagesScreen() {
                 {/* Contenu principal : titre + input géant centré
                     Structure identique à index.tsx (mainContent) */}
                 <View style={styles.mainContent}>
-                    <Text style={styles.title}>Combien de pages ?</Text>
+                    <Text style={styles.title}>Il fait combien de pages ?</Text>
                     
                     {/* Input géant centré — même style que le prénom */}
                     <View style={styles.inputContainer}>
@@ -117,6 +124,7 @@ export default function OnboardingPagesScreen() {
                             value={totalPages}
                             onChangeText={setTotalPages}
                             keyboardType="number-pad"
+                            inputAccessoryViewID="pages-empty"
                             autoFocus
                             returnKeyType="done"
                             onSubmitEditing={handleContinue}

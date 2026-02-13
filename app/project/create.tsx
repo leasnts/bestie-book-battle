@@ -6,6 +6,7 @@ import React, { useEffect, useState } from 'react';
 import {
     ActivityIndicator,
     Alert,
+    InputAccessoryView,
     Keyboard,
     KeyboardAvoidingView,
     Platform,
@@ -149,6 +150,12 @@ export default function CreateProjectScreen() {
   return (
     <View style={styles.container}>
       <StatusBar style="dark" />
+      {/* InputAccessoryView vide : supprime la toolbar "Done" native d'iOS */}
+      {Platform.OS === 'ios' && (
+        <InputAccessoryView nativeID="create-pages-empty">
+          <View />
+        </InputAccessoryView>
+      )}
       <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
         <KeyboardAvoidingView
           behavior="padding"
@@ -231,6 +238,7 @@ export default function CreateProjectScreen() {
                     value={totalPages}
                     onChangeText={setTotalPages}
                     keyboardType="number-pad"
+                    inputAccessoryViewID="create-pages-empty"
                   />
                 </View>
 
