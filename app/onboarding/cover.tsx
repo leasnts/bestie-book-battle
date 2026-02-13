@@ -7,10 +7,11 @@
  */
 
 import { Ionicons } from '@expo/vector-icons';
+import IconRotateCcw from '../../components/icons/IconRotateCcw';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
     Alert,
     Pressable,
@@ -42,26 +43,44 @@ export default function OnboardingCoverScreen() {
     
     const [coverUri, setCoverUri] = useState<string | null>(null);
     const [isPickingImage, setIsPickingImage] = useState(false);
+    
+    // On garde en mémoire si la permission est déjà accordée
+    const hasPermissionRef = useRef(false);
+
+    /**
+     * Pré-demander la permission dès l'affichage de l'écran
+     * Comme ça, quand l'utilisateur tape, la galerie s'ouvre direct sans attente
+     */
+    useEffect(() => {
+        const preRequestPermission = async () => {
+            const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+            hasPermissionRef.current = status === 'granted';
+        };
+        preRequestPermission();
+    }, []);
 
     /**
      * Ouvrir le sélecteur de photos pour choisir une couverture
+     * La permission est déjà demandée au montage → ouverture quasi-instantanée
      */
     const handlePickImage = async () => {
         try {
             setIsPickingImage(true);
 
-            // Demander la permission d'accéder à la galerie
-            const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-            
-            if (status !== 'granted') {
-                Alert.alert(
-                    'Permission refusée',
-                    'L\'application a besoin d\'accéder à tes photos pour importer une couverture.'
-                );
-                return;
+            // Vérifier si la permission est déjà accordée (pré-demandée au montage)
+            if (!hasPermissionRef.current) {
+                const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+                if (status !== 'granted') {
+                    Alert.alert(
+                        'Permission refusée',
+                        'L\'application a besoin d\'accéder à tes photos pour importer une couverture.'
+                    );
+                    return;
+                }
+                hasPermissionRef.current = true;
             }
 
-            // Ouvrir le sélecteur de photos
+            // Ouvrir le sélecteur de photos — rapide car permission déjà OK
             const result = await ImagePicker.launchImageLibraryAsync({
                 mediaTypes: ImagePicker.MediaTypeOptions.Images,
                 allowsEditing: true,
@@ -124,29 +143,46 @@ export default function OnboardingCoverScreen() {
                     <Text style={styles.title}>Importe sa couverture</Text>
                     
                     {/* Zone pointillée pour la couverture */}
-                    <View style={styles.coverZone}>
-                        {coverUri ? (
-                            // Afficher l'image sélectionnée
-                            <Image
-                                source={{ uri: coverUri }}
-                                style={styles.coverImage}
-                                contentFit="cover"
-                            />
-                        ) : null}
+                    <View style={styles.coverZoneWrapper}>
+                        <View style={styles.coverZone}>
+                            {coverUri ? (
+                                // Afficher l'image sélectionnée
+                                <Image
+                                    source={{ uri: coverUri }}
+                                    style={styles.coverImage}
+                                    contentFit="cover"
+                                />
+                            ) : null}
 
-                        {/* Bouton upload au centre (en absolu) */}
-                        <Pressable
-                            style={styles.uploadButton}
-                            onPress={handlePickImage}
-                            disabled={isPickingImage}
-                        >
-                            <View style={styles.uploadButtonInnerShadow} />
-                            <Ionicons 
-                                name="cloud-upload-outline" 
-                                size={24} 
-                                color={colors.white} 
-                            />
-                        </Pressable>
+                            {/* Bouton upload au centre — visible seulement si pas encore de cover */}
+                            {!coverUri && (
+                                <Pressable
+                                    style={styles.uploadButton}
+                                    onPress={handlePickImage}
+                                    disabled={isPickingImage}
+                                >
+                                    <View style={styles.uploadButtonInnerShadow} />
+                                    <Ionicons 
+                                        name="cloud-upload-outline" 
+                                        size={24} 
+                                        color={colors.white} 
+                                    />
+                                </Pressable>
+                            )}
+
+                            {/* Bouton "modifier la cover" — SUR la cover, padding 12px en bas à droite */}
+                            {coverUri && (
+                                <View style={styles.changeCoverButton}>
+                                    <Button3D
+                                        variant="secondary"
+                                        iconComponent={<IconRotateCcw size={20} color="#535862" />}
+                                        iconOnly
+                                        size="compact"
+                                        onPress={handlePickImage}
+                                    />
+                                </View>
+                            )}
+                        </View>
                     </View>
                 </View>
 
@@ -196,10 +232,13 @@ const styles = StyleSheet.create({
         letterSpacing: -0.72,
         lineHeight: 44,
     },
+    coverZoneWrapper: {
+        alignSelf: 'center',
+        position: 'relative',
+    },
     coverZone: {
         width: 214,
         height: 300,
-        alignSelf: 'center',
         borderWidth: 2,
         borderStyle: 'dashed',
         borderColor: colors.borderLight, // #e9eaeb
@@ -208,6 +247,12 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         position: 'relative',
         overflow: 'hidden',
+    },
+    changeCoverButton: {
+        position: 'absolute',
+        bottom: 12,
+        right: 12,
+        zIndex: 10,
     },
     coverImage: {
         ...StyleSheet.absoluteFillObject,

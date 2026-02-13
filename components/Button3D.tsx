@@ -31,6 +31,8 @@ interface Button3DProps {
   disabled?: boolean;
   loading?: boolean;
   icon?: keyof typeof Ionicons.glyphMap;
+  /** Icône personnalisée (ex. Lucide) pour mode iconOnly — remplace icon si fourni */
+  iconComponent?: React.ReactNode;
   iconPosition?: 'left' | 'right';
   iconOnly?: boolean;
   size?: 'default' | 'compact';
@@ -45,6 +47,7 @@ export default function Button3D({
   disabled = false,
   loading = false,
   icon,
+  iconComponent,
   iconPosition = 'left',
   iconOnly = false,
   size = 'default',
@@ -188,6 +191,8 @@ export default function Button3D({
           <View style={[styles.content, isCompact && styles.contentCompact]}>
             {loading ? (
               <ActivityIndicator color={isPrimary ? '#FFFFFF' : '#535862'} size="small" />
+            ) : iconOnly && iconComponent ? (
+              iconComponent
             ) : iconOnly && icon ? (
               <Ionicons 
                 name={icon} 
