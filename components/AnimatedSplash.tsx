@@ -149,7 +149,7 @@ const styles = StyleSheet.create({
     opacity: 0.05,
   },
   textContainer: {
-    alignItems: 'center',
+    alignItems: 'flex-start', // Aligne à gauche pour que les "b" soient empilés verticalement
     justifyContent: 'center',
     gap: 16,
   },

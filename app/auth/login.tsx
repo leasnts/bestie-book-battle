@@ -13,18 +13,18 @@ import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import React, { useState } from 'react';
-import { Alert, Dimensions, StyleSheet, View, Text } from 'react-native';
+import { Alert, Dimensions, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Button3D from '../../components/Button3D';
+import { isAppleAuthAvailable } from '../../services/supabase/auth';
 import { useAuthStore } from '../../stores/authStore';
 import { useProjectStore } from '../../stores/projectStore';
-import { isAppleAuthAvailable } from '../../services/supabase/auth';
 import {
   colors,
   fontSize,
   fontWeight,
   spacing,
 } from '../../utils/constants';
-import Button3D from '../../components/Button3D';
 
 // Asset : image de fond qui remplit tout l'écran (graphique BB + couvertures)
 const HERO_IMAGE = require('../../assets/images/5189b4a4ab2e5da08302bc27b5d740770b30721f.png');
@@ -151,7 +151,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Rokkitt_Medium',
     fontSize: fontSize['3xl'],
     fontWeight: fontWeight.medium as any,
-    color: '#9ca3af', // gris clair pour "estie", "ook", "attle"
+    color: 'rgba(0, 0, 0, 0.3)', // noir à 50% d'opacité pour "estie", "ook", "attle"
     letterSpacing: 3, // espacement généreux entre les lettres
     textAlign: 'center',
   },
