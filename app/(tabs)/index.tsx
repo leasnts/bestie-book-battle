@@ -36,6 +36,7 @@ import ProgressCard from '../../components/ui/ProgressCard';
 import { useAuthStore } from '../../stores/authStore';
 import { useProgressStore } from '../../stores/progressStore';
 import { useProjectStore } from '../../stores/projectStore';
+import { isStreakAtRisk } from '../../utils/streak';
 import { colors, spacing, borderRadius } from '../../utils/constants';
 
 // Texture de fond "noise" réutilisée depuis l'onboarding
@@ -161,6 +162,7 @@ export default function HomeScreen() {
     score: meParticipant.progress.current_page,
     streak: meParticipant.progress.streak_count || 0,
     isLeader: meParticipant.isLeader,
+    streakAtRisk: isStreakAtRisk(meParticipant.progress.last_streak_date),
   } : {
     id: user?.id || '',
     name: 'Moi',
@@ -168,6 +170,7 @@ export default function HomeScreen() {
     score: 0,
     streak: 0,
     isLeader: false,
+    streakAtRisk: false,
   };
 
   const friendData = friendParticipant ? {
@@ -177,6 +180,7 @@ export default function HomeScreen() {
     score: friendParticipant.progress.current_page,
     streak: friendParticipant.progress.streak_count || 0,
     isLeader: friendParticipant.isLeader,
+    streakAtRisk: isStreakAtRisk(friendParticipant.progress.last_streak_date),
   } : null;
 
   // ===== Callback : basculer l'étagère ouverte/fermée =====

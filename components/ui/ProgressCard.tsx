@@ -30,6 +30,8 @@ interface Participant {
   score: number;        // Page actuelle (= score)
   streak: number;       // Nombre de jours consécutifs
   isLeader: boolean;    // Est en tête ?
+  /** true = a lu hier mais pas aujourd'hui, le streak va « mourir » si pas de lecture */
+  streakAtRisk?: boolean;
 }
 
 interface ProgressCardProps {
@@ -206,7 +208,12 @@ export default function ProgressCard({
           <View style={styles.scoreSection}>
             <Text style={styles.scoreNumber}>{me.score}</Text>
             {me.streak > 0 && (
-              <View style={styles.streakBadge}>
+              <View
+                style={[
+                  styles.streakBadge,
+                  me.streakAtRisk && styles.streakBadgeAtRisk,
+                ]}
+              >
                 <IconFlame size={12} color={colors.textTertiary} />
                 <Text style={styles.streakText}>{me.streak}</Text>
               </View>
@@ -217,7 +224,12 @@ export default function ProgressCard({
           {friend && (
             <View style={[styles.scoreSection, styles.scoreSectionRight]}>
               {friend.streak > 0 && (
-                <View style={styles.streakBadge}>
+                <View
+                  style={[
+                    styles.streakBadge,
+                    friend.streakAtRisk && styles.streakBadgeAtRisk,
+                  ]}
+                >
                   <IconFlame size={12} color={colors.textTertiary} />
                   <Text style={styles.streakText}>{friend.streak}</Text>
                 </View>
@@ -370,6 +382,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 7,
     paddingVertical: 3,
     borderRadius: 8,
+  },
+  /** Streak en danger : badge en opacité réduite + bordure pointillée */
+  streakBadgeAtRisk: {
+    opacity: 0.6,
+    borderStyle: 'dashed',
+    borderColor: 'rgba(0,0,0,0.3)',
   },
   // Le lineHeight doit être 12 (= même hauteur que l'icône 12×12)
   // pour que le contenu intérieur fasse exactement 12px de haut.

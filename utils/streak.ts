@@ -66,6 +66,28 @@ export function calculateStreakFromHistory(history: ProgressEntry[]): number {
 }
 
 /**
+ * Vérifie si le streak est en danger (va « mourir » si l'utilisateur ne lit pas aujourd'hui)
+ * 
+ * Streak en danger = l'utilisateur a lu hier mais pas encore aujourd'hui.
+ * S'il n'ouvre pas son livre aujourd'hui, le streak sera réinitialisé à minuit.
+ * 
+ * @param lastStreakDate - La dernière date de lecture (YYYY-MM-DD ou Date)
+ * @returns true si streak > 0 ET lastRead = hier (pas lu aujourd'hui)
+ */
+export function isStreakAtRisk(lastStreakDate: Date | string | undefined | null): boolean {
+  if (!lastStreakDate) return false;
+
+  const lastRead = typeof lastStreakDate === 'string'
+    ? lastStreakDate.split('T')[0]
+    : getDateString(new Date(lastStreakDate));
+  const today = getDateString(new Date());
+  const yesterday = getDateString(getYesterday());
+
+  // Streak en danger : a lu hier mais pas aujourd'hui
+  return lastRead === yesterday && lastRead !== today;
+}
+
+/**
  * Vérifie si le streak est maintenu aujourd'hui
  * 
  * @param lastStreakDate - La dernière date de lecture
