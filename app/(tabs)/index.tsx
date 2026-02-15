@@ -70,6 +70,7 @@ export default function HomeScreen() {
     activeChallenge,
     setActiveChallenge,
     loadUserChallenges,
+    deleteCurrentChallenge,
     isLoading: projectsLoading,
   } = useProjectStore();
 
@@ -206,6 +207,62 @@ export default function HomeScreen() {
     });
   }, [router, user?.first_name]);
 
+  // ===== Callback : supprimer le livre actif =====
+  const handleDeleteBook = useCallback(async () => {
+    if (!activeChallenge) return;
+
+    try {
+      // Supprime le challenge via le store
+      await deleteCurrentChallenge();
+
+      // Recharge la liste des challenges
+      if (user?.id) {
+        await loadUserChallenges(user.id);
+      }
+
+      // Si on a d'autres challenges, sélectionne le premier
+      if (challenges.length > 1) {
+        const nextChallenge = challenges.find((c) => c.id !== activeChallenge.id);
+        if (nextChallenge) {
+          setActiveChallenge(nextChallenge);
+        }
+      } else {
+        // Plus de challenges : redirige vers l'ajout
+        router.push({
+          pathname: '/onboarding/role',
+          params: {
+            firstName: user?.first_name || 'Lecteur',
+            addChallenge: 'true',
+          },
+        });
+      }
+    } catch (error: any) {
+      console.error('Erreur suppression:', error);
+      // Optionnel : afficher un message d'erreur
+    }
+  }, [activeChallenge, challenges, user, deleteCurrentChallenge, loadUserChallenges, setActiveChallenge, router]);
+
+  // ===== Callback : inviter un ami =====
+  const handleInviteFriend = useCallback(() => {
+    if (!activeChallenge) return;
+    // Navigue vers l'écran d'invitation avec le code du challenge
+    router.push({
+      pathname: '/project/invite',
+      params: {
+        code: activeChallenge.invite_code,
+        challengeId: activeChallenge.id,
+      },
+    });
+  }, [activeChallenge, router]);
+
+  // ===== Callback : modifier le livre =====
+  const handleEditBook = useCallback(() => {
+    if (!activeChallenge) return;
+    // TODO: créer un écran d'édition de challenge
+    // Pour l'instant, on peut afficher une alerte
+    console.log('Modifier le livre:', activeChallenge.id);
+  }, [activeChallenge]);
+
   // ===== Callback historique participant =====
   const handleParticipantPress = useCallback((participantId: string) => {
     // TODO: ouvrir le modal d'historique du participant
@@ -253,6 +310,9 @@ export default function HomeScreen() {
             onToggle={handleBookStackToggle}
             onSelectChallenge={handleSelectChallenge}
             onAddBook={handleAddBook}
+            onDeleteBook={handleDeleteBook}
+            onInviteFriend={handleInviteFriend}
+            onEditBook={handleEditBook}
           />
         </View>
       )}

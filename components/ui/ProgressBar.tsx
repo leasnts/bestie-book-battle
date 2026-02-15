@@ -112,11 +112,10 @@ const styles = StyleSheet.create({
     top: 0,
   },
   percentageText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: colors.text,
-    minWidth: 40,
-    textAlign: 'right',
+    fontFamily: 'WorkSans_400Regular',
+    fontSize: 12,
+    color: colors.textPlaceholder, // gray 500 : #717680
+    lineHeight: 18,
   },
 });
 

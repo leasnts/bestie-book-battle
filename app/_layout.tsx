@@ -76,6 +76,11 @@ export default function RootLayout() {
     Rokkitt_Medium: Rokkitt_500Medium,
     Rokkitt_SemiBold: Rokkitt_600SemiBold,
     Rokkitt_Bold: Rokkitt_700Bold,
+    // Work Sans avec les noms complets pour correspondre aux usages dans les composants
+    WorkSans_400Regular,
+    WorkSans_500Medium,
+    WorkSans_600SemiBold,
+    // Alias pour la compatibilité avec l'ancien code
     WorkSans: WorkSans_400Regular,
     WorkSans_Medium: WorkSans_500Medium,
     WorkSans_SemiBold: WorkSans_600SemiBold,

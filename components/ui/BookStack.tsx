@@ -20,11 +20,15 @@
 
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
-import React, { useCallback } from 'react';
-import Button3D from '../Button3D';
+import React, { useCallback, useState } from 'react';
+import * as Clipboard from 'expo-clipboard';
 import {
+  Alert,
+  Dimensions,
+  Modal,
   Pressable,
   ScrollView,
+  Share,
   StyleSheet,
   Text,
   View,
@@ -32,14 +36,25 @@ import {
 import Animated, {
   FadeIn,
   FadeOut,
+  SlideInDown,
+  SlideOutDown,
   withDelay,
   withSpring,
   withTiming,
 } from 'react-native-reanimated';
 import Svg, { Path } from 'react-native-svg';
 import { Challenge, ParticipantWithProgress } from '../../types/supabase';
-import { colors, spacing } from '../../utils/constants';
-import CircularProgress from './CircularProgress';
+import { borderRadius, colors, spacing } from '../../utils/constants';
+import Button3D from '../Button3D';
+import PopEyes from '../PopEyes';
+import IconChevronRight from '../icons/IconChevronRight';
+import IconCopy from '../icons/IconCopy';
+import IconPencil from '../icons/IconPencil';
+import IconTrash from '../icons/IconTrash';
+import IconUserPlus from '../icons/IconUserPlus';
+import { ProgressBar } from './ProgressBar';
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 // ─── Badge marque-page ✓ (SVG) ──────────────────────────────────
 /**
@@ -90,6 +105,12 @@ interface BookStackProps {
   onSelectChallenge: (challenge: Challenge) => void;
   /** Appelé quand on appuie sur le bouton + */
   onAddBook: () => void;
+  /** Appelé pour supprimer le challenge actif */
+  onDeleteBook?: () => void;
+  /** Appelé pour inviter un ami au challenge actif */
+  onInviteFriend?: () => void;
+  /** Appelé pour modifier le challenge actif */
+  onEditBook?: () => void;
 }
 
 // ─── Constantes de taille (Figma) ─────────────────────────────────
@@ -140,18 +161,80 @@ export default function BookStack({
   onToggle,
   onSelectChallenge,
   onAddBook,
+  onDeleteBook,
+  onInviteFriend,
+  onEditBook,
 }: BookStackProps) {
+  // État local pour le menu contextuel et la modal d'invitation
+  const [menuVisible, setMenuVisible] = useState(false);
+  const [inviteVisible, setInviteVisible] = useState(false);
+
   // On extrait les données du challenge actif
   const bookTitle = activeChallenge.book_title;
   const bookAuthor = activeChallenge.book_author || '';
   const totalPages = activeChallenge.total_pages;
   const coverUrl = activeChallenge.cover_url;
+  const inviteCode = activeChallenge.invite_code || '';
 
   // Les covers des autres challenges (pour la pile en mode fermé)
   const otherCovers = allChallenges
     .filter((c) => c.id !== activeChallenge.id)
     .map((c) => c.cover_url)
     .slice(0, 3);
+
+  // ─── Handlers menu ────────────────────────────────────────────
+
+  const handleMenuPress = useCallback((e: any) => {
+    e.stopPropagation(); // Empêche l'ouverture de l'étagère
+    setMenuVisible(!menuVisible);
+  }, [menuVisible]);
+
+  const handleDeletePress = useCallback(() => {
+    setMenuVisible(false);
+    Alert.alert(
+      'Quitter le livre',
+      `Tu veux retirer « ${bookTitle} » de ta bibliothèque ? Tu pourras toujours le rejoindre plus tard avec le code d'invitation.`,
+      [
+        { text: 'Annuler', style: 'cancel' },
+        {
+          text: 'Quitter',
+          style: 'destructive',
+          onPress: () => onDeleteBook?.(),
+        },
+      ]
+    );
+  }, [bookTitle, onDeleteBook]);
+
+  const handleInvitePress = useCallback(() => {
+    setMenuVisible(false);
+    // Petit délai pour laisser le bottom sheet se fermer avant d'ouvrir la modal
+    setTimeout(() => setInviteVisible(true), 250);
+  }, []);
+
+  // Copier le code d'invitation dans le presse-papier
+  const handleCopyCode = useCallback(async () => {
+    if (!inviteCode) return;
+    await Clipboard.setStringAsync(inviteCode);
+    Alert.alert('Copié !', 'Le code a été copié dans le presse-papier.');
+  }, [inviteCode]);
+
+  // Partager le code d'invitation via Share natif
+  const handleShareInvite = useCallback(async () => {
+    if (!inviteCode) return;
+    try {
+      const code = inviteCode.split('').join(' ');
+      await Share.share({
+        message: `Rejoins-moi pour lire « ${bookTitle} » ensemble sur Bestie Book Battle !\n\nCode d'invitation : ${code}`,
+      });
+    } catch (_) {
+      // L'utilisateur a annulé le partage
+    }
+  }, [inviteCode, bookTitle]);
+
+  const handleEditPress = useCallback(() => {
+    setMenuVisible(false);
+    onEditBook?.();
+  }, [onEditBook]);
 
   // ─── Handler étagère ouverte ────────────────────────────────
 
@@ -390,32 +473,265 @@ export default function BookStack({
           </Animated.View>
         </View>
 
-        {/* Infos : auteur, titre, badge pages, progression */}
+        {/* Section infos du livre + menu */}
         <Animated.View
           style={styles.bookInfo}
           entering={FadeIn.delay(100).duration(250)}
         >
-          <View style={styles.bookDetails}>
-            <View style={styles.textAndBadge}>
+          {/* En-tête : textes à gauche, menu à droite */}
+          <View style={styles.bookHeader}>
+            <View style={styles.bookTexts}>
               <Text style={styles.author} numberOfLines={1}>
                 {bookAuthor || 'Auteur inconnu'}
               </Text>
               <Text style={styles.title} numberOfLines={1}>
                 {bookTitle}
               </Text>
-              <View style={styles.pagesBadge}>
-                <Text style={styles.pagesText}>{totalPages}p</Text>
-              </View>
             </View>
+
+            {/* Bouton menu (⋮) — trois points verticaux comme Figma */}
+            <Pressable
+              onPress={handleMenuPress}
+              style={styles.menuButton}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              <Ionicons name="ellipsis-vertical" size={20} color={colors.textSecondary} />
+            </Pressable>
           </View>
 
-          {/* Progression circulaire */}
-          <CircularProgress
-            percentage={progressPercentage}
-            size={56}
-            strokeWidth={4}
-          />
+          {/* Ligne du bas : badge pages + barre de progression + % (comme Figma) */}
+          <View style={styles.bookFooter}>
+            <View style={styles.pagesBadge}>
+              <Text style={styles.pagesText}>{totalPages}p</Text>
+            </View>
+            <View style={styles.progressBarContainer}>
+              <ProgressBar
+                percentage={progressPercentage}
+                height={8}
+                color={colors.dark900}
+                backgroundColor="rgba(0,0,0,0.05)"
+                showPercentage
+                animated
+              />
+            </View>
+          </View>
         </Animated.View>
+
+        {/* Bottom Sheet — Actions du livre */}
+        <Modal
+          visible={menuVisible}
+          transparent
+          animationType="none"
+          statusBarTranslucent
+          onRequestClose={() => setMenuVisible(false)}
+        >
+          {/* Overlay sombre avec blur */}
+          <Animated.View
+            style={styles.sheetOverlay}
+            entering={FadeIn.duration(200)}
+            exiting={FadeOut.duration(150)}
+          >
+            <Pressable
+              style={styles.sheetBackdrop}
+              onPress={() => setMenuVisible(false)}
+            />
+          </Animated.View>
+
+          {/* Le sheet — glisse depuis le bas, sans rebond */}
+          <Animated.View
+            style={styles.sheetContainer}
+            entering={SlideInDown.duration(300)}
+            exiting={SlideOutDown.duration(200)}
+          >
+            {/* Handle — indicateur de drag */}
+            <View style={styles.sheetHandle}>
+              <View style={styles.sheetHandleBar} />
+            </View>
+
+            {/* Titre + couverture du livre */}
+            <View style={styles.sheetHeader}>
+              <Image
+                source={resolveImage(coverUrl)}
+                style={styles.sheetCover}
+                contentFit="cover"
+              />
+              <View style={styles.sheetHeaderTexts}>
+                <Text style={styles.sheetTitle} numberOfLines={1}>
+                  {bookTitle}
+                </Text>
+                <Text style={styles.sheetSubtitle} numberOfLines={1}>
+                  {bookAuthor || 'Auteur inconnu'}
+                </Text>
+              </View>
+            </View>
+
+            <View style={styles.sheetDivider} />
+
+            {/* Actions */}
+            <View style={styles.sheetActions}>
+              <Pressable
+                onPress={handleInvitePress}
+                style={({ pressed }) => [
+                  styles.sheetAction,
+                  pressed && styles.sheetActionPressed,
+                ]}
+              >
+                <View style={styles.sheetActionIcon}>
+                  <IconUserPlus size={20} color={colors.textPrimary} />
+                </View>
+                <View style={styles.sheetActionTexts}>
+                  <Text style={styles.sheetActionTitle}>Inviter un ami</Text>
+                  <Text style={styles.sheetActionDesc}>Partager le code d'invitation</Text>
+                </View>
+                <IconChevronRight size={18} color={colors.textSubtle} />
+              </Pressable>
+
+              <Pressable
+                onPress={handleEditPress}
+                style={({ pressed }) => [
+                  styles.sheetAction,
+                  pressed && styles.sheetActionPressed,
+                ]}
+              >
+                <View style={styles.sheetActionIcon}>
+                  <IconPencil size={20} color={colors.textPrimary} />
+                </View>
+                <View style={styles.sheetActionTexts}>
+                  <Text style={styles.sheetActionTitle}>Modifier le livre</Text>
+                  <Text style={styles.sheetActionDesc}>Titre, auteur, couverture</Text>
+                </View>
+                <IconChevronRight size={18} color={colors.textSubtle} />
+              </Pressable>
+            </View>
+
+            <View style={styles.sheetDivider} />
+
+            {/* Action destructive isolée */}
+            <View style={styles.sheetActions}>
+              <Pressable
+                onPress={handleDeletePress}
+                style={({ pressed }) => [
+                  styles.sheetAction,
+                  pressed && styles.sheetActionPressed,
+                ]}
+              >
+                <View style={[styles.sheetActionIcon, styles.sheetActionIconDanger]}>
+                  <IconTrash size={20} color={colors.error} />
+                </View>
+                <View style={styles.sheetActionTexts}>
+                  <Text style={[styles.sheetActionTitle, styles.sheetActionDanger]}>
+                    Quitter le livre
+                  </Text>
+                  <Text style={styles.sheetActionDesc}>
+                    Retirer ce livre de ta bibliothèque
+                  </Text>
+                </View>
+              </Pressable>
+            </View>
+          </Animated.View>
+        </Modal>
+
+        {/* Modal d'invitation — identique à l'écran onboarding/complete */}
+        <Modal
+          visible={inviteVisible}
+          transparent
+          animationType="none"
+          statusBarTranslucent
+          onRequestClose={() => setInviteVisible(false)}
+        >
+          <Animated.View
+            style={styles.sheetOverlay}
+            entering={FadeIn.duration(200)}
+            exiting={FadeOut.duration(150)}
+          >
+            <Pressable
+              style={styles.sheetBackdrop}
+              onPress={() => setInviteVisible(false)}
+            />
+          </Animated.View>
+
+          <Animated.View
+            style={styles.sheetContainer}
+            entering={SlideInDown.duration(300)}
+            exiting={SlideOutDown.duration(200)}
+          >
+            <View style={styles.sheetHandle}>
+              <View style={styles.sheetHandleBar} />
+            </View>
+
+            {/* Carte livre + code — structure identique à l'onboarding */}
+            <View style={styles.inviteCardWrapper}>
+              {/* Carte dark du livre (au premier plan) */}
+              <View style={styles.inviteBookCard}>
+                {/* Texture de fond */}
+                <Image
+                  source={require('../../assets/images/61ea1e0c638b5b9c8100383a37a5b488848db623.png')}
+                  style={styles.inviteCardTexture}
+                  contentFit="cover"
+                />
+
+                <View style={styles.inviteBookCardContent}>
+                  {/* Cover image */}
+                  <Image
+                    source={resolveImage(coverUrl)}
+                    style={styles.inviteCoverImage}
+                    contentFit="cover"
+                  />
+
+                  {/* Infos livre */}
+                  <View style={styles.inviteBookInfo}>
+                    <Text style={styles.inviteAuthor} numberOfLines={1}>
+                      {bookAuthor || 'Auteur inconnu'}
+                    </Text>
+                    <Text style={styles.inviteBookTitle} numberOfLines={2}>
+                      {bookTitle}
+                    </Text>
+                    <View style={styles.invitePagesBadge}>
+                      <Text style={styles.invitePagesText}>{totalPages} pages</Text>
+                    </View>
+                  </View>
+                </View>
+              </View>
+
+              {/* Zone code (en arrière-plan, sous le bloc noir) */}
+              <View style={styles.inviteCodeZone}>
+                <Text style={styles.inviteCodeLabel}>Code pour rejoindre :</Text>
+                <View style={styles.inviteCodeRow}>
+                  <Text style={styles.inviteCodeText}>
+                    {inviteCode ? inviteCode.split('').join(' ') : '------'}
+                  </Text>
+                  <Pressable
+                    onPress={handleCopyCode}
+                    style={({ pressed }) => [
+                      styles.inviteCopyButton,
+                      pressed && { opacity: 0.6 },
+                    ]}
+                  >
+                    <IconCopy size={20} color={colors.textPlaceholder} />
+                  </Pressable>
+                </View>
+              </View>
+
+              {/* Pop eyes en overlay — dépasse du bloc */}
+              <View style={styles.inviteMascotOverlay} pointerEvents="none">
+                <PopEyes size="large" />
+              </View>
+            </View>
+
+            {/* Bouton partager */}
+            <View style={styles.inviteFooter}>
+              <Button3D
+                onPress={handleShareInvite}
+                variant="primary"
+                icon="share-outline"
+                iconPosition="left"
+                style={{ width: '100%' }}
+              >
+                Inviter un.e ami.e
+              </Button3D>
+            </View>
+          </Animated.View>
+        </Modal>
       </Animated.View>
     </Pressable>
   );
@@ -477,11 +793,34 @@ const styles = StyleSheet.create({
   },
   bookInfo: {
     flex: 1,
+    flexDirection: 'column',
+    paddingHorizontal: spacing.md,
+    gap: 8,
+  },
+  // En-tête : textes + menu
+  bookHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+  },
+  bookTexts: {
+    flex: 1,
+    gap: 4,
+  },
+  menuButton: {
+    padding: 4,
+    marginLeft: spacing.sm,
+  },
+  // Pied : badge pages + barre
+  bookFooter: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.md,
+    gap: spacing.sm,
   },
+  progressBarContainer: {
+    flex: 1,
+  },
+  // Ancien styles maintenant inutilisés mais conservés pour compatibilité
   bookDetails: {
     flex: 1,
     marginRight: spacing.sm,
@@ -516,6 +855,250 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
     lineHeight: 18,
     textAlign: 'center',
+  },
+
+  // ═══ BOTTOM SHEET — ACTIONS DU LIVRE ═══
+
+  // Overlay sombre couvrant tout l'écran
+  sheetOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+  },
+  // Zone pressable pour fermer le sheet en touchant l'overlay
+  sheetBackdrop: {
+    flex: 1,
+  },
+  // Conteneur principal du bottom sheet — ancré en bas de l'écran
+  sheetContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: colors.white,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingBottom: 32, // espace pour le home indicator
+    // Shadow vers le haut
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -8 },
+    shadowOpacity: 0.12,
+    shadowRadius: 24,
+    elevation: 16,
+  },
+  // Handle — petite barre horizontale indiquant que le sheet est draggable
+  sheetHandle: {
+    alignItems: 'center',
+    paddingTop: 12,
+    paddingBottom: 8,
+  },
+  sheetHandleBar: {
+    width: 40,
+    height: 4,
+    backgroundColor: colors.textSubtle,
+    borderRadius: 9999,
+  },
+  // Header — couverture + titre/auteur du livre sélectionné
+  sheetHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+    paddingVertical: 16,
+    gap: 16,
+  },
+  sheetCover: {
+    width: 44,
+    height: 62,
+    borderRadius: 4,
+  },
+  sheetHeaderTexts: {
+    flex: 1,
+    gap: 4,
+  },
+  sheetTitle: {
+    fontFamily: 'WorkSans_600SemiBold',
+    fontSize: 16,
+    color: colors.textPrimary,
+    lineHeight: 22,
+  },
+  sheetSubtitle: {
+    fontFamily: 'WorkSans_400Regular',
+    fontSize: 13,
+    color: colors.textTertiary,
+    lineHeight: 18,
+  },
+  // Séparateur fin entre les sections
+  sheetDivider: {
+    height: 1,
+    backgroundColor: colors.borderLight,
+    marginHorizontal: 24,
+  },
+  // Zone d'actions — contient les lignes d'action
+  sheetActions: {
+    paddingVertical: 8,
+  },
+  // Ligne d'action individuelle
+  sheetAction: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+    paddingVertical: 14,
+    gap: 16,
+  },
+  sheetActionPressed: {
+    backgroundColor: 'rgba(0,0,0,0.04)',
+  },
+  // Icône dans un cercle léger
+  sheetActionIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: colors.bgLight,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  sheetActionIconDanger: {
+    backgroundColor: colors.errorLight,
+  },
+  // Textes de l'action (titre + description)
+  sheetActionTexts: {
+    flex: 1,
+    gap: 2,
+  },
+  sheetActionTitle: {
+    fontFamily: 'WorkSans_500Medium',
+    fontSize: 15,
+    color: colors.textPrimary,
+    lineHeight: 20,
+  },
+  sheetActionDesc: {
+    fontFamily: 'WorkSans_400Regular',
+    fontSize: 12,
+    color: colors.textTertiary,
+    lineHeight: 16,
+  },
+  sheetActionDanger: {
+    color: colors.error,
+  },
+
+  // ═══ MODAL D'INVITATION (identique à onboarding/complete) ═══
+
+  // Wrapper carte + code — overflow visible pour le PopEyes
+  inviteCardWrapper: {
+    position: 'relative',
+    overflow: 'visible',
+    marginHorizontal: spacing.lg,
+    marginTop: spacing.sm,
+  },
+  // Carte dark du livre — premier plan (z-index 2)
+  inviteBookCard: {
+    backgroundColor: colors.dark800,
+    borderRadius: borderRadius.xl,
+    padding: spacing.lg,
+    position: 'relative',
+    overflow: 'hidden',
+    zIndex: 2,
+    elevation: 2,
+  },
+  inviteCardTexture: {
+    ...StyleSheet.absoluteFillObject,
+    opacity: 0.05,
+  },
+  // PopEyes en overlay — dépasse du bloc en haut à droite
+  inviteMascotOverlay: {
+    position: 'absolute',
+    top: -48,
+    right: spacing.sm,
+    zIndex: 9999,
+    elevation: 9999,
+  },
+  // Contenu de la carte : cover + infos côte à côte
+  inviteBookCardContent: {
+    flexDirection: 'row',
+    gap: spacing.lg,
+  },
+  inviteCoverImage: {
+    aspectRatio: 52 / 73,
+    borderRadius: borderRadius.xs,
+    borderWidth: 1,
+    borderColor: colors.alphaWhite10,
+    alignSelf: 'stretch',
+  },
+  inviteBookInfo: {
+    flex: 1,
+    gap: spacing.xs,
+  },
+  inviteAuthor: {
+    fontFamily: 'WorkSans_400Regular',
+    fontSize: 14,
+    color: colors.textSubtle,
+    lineHeight: 20,
+  },
+  inviteBookTitle: {
+    fontFamily: 'WorkSans_600SemiBold',
+    fontSize: 16,
+    color: colors.white,
+    lineHeight: 24,
+  },
+  invitePagesBadge: {
+    backgroundColor: colors.alphaWhite20,
+    borderWidth: 1,
+    borderColor: colors.alphaWhite10,
+    borderRadius: borderRadius.sm,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    alignSelf: 'flex-start',
+    marginTop: spacing.xs,
+  },
+  invitePagesText: {
+    fontFamily: 'WorkSans_400Regular',
+    fontSize: 12,
+    color: colors.white,
+    lineHeight: 16,
+  },
+  // Zone code — fond clair, sous le bloc noir
+  inviteCodeZone: {
+    backgroundColor: colors.bgSecondary,
+    borderWidth: 1,
+    borderColor: colors.alphaBlack02,
+    borderTopLeftRadius: 0,
+    borderTopRightRadius: 0,
+    borderBottomLeftRadius: borderRadius.xl,
+    borderBottomRightRadius: borderRadius.xl,
+    paddingHorizontal: spacing['2xl'],
+    paddingTop: spacing.lg,
+    paddingBottom: spacing.lg,
+    gap: spacing.xs,
+    marginTop: -1,
+    zIndex: 1,
+    elevation: 1,
+  },
+  inviteCodeLabel: {
+    fontFamily: 'WorkSans_400Regular',
+    fontSize: 14,
+    color: colors.textPlaceholder,
+    lineHeight: 20,
+  },
+  inviteCodeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  inviteCodeText: {
+    fontFamily: 'Rokkitt_Medium',
+    fontSize: 36,
+    color: colors.textPrimary,
+    letterSpacing: -0.72,
+    lineHeight: 44,
+  },
+  inviteCopyButton: {
+    padding: spacing.sm,
+    borderRadius: borderRadius.sm,
+    backgroundColor: colors.bgLight,
+  },
+  inviteFooter: {
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.xl,
+    paddingBottom: spacing.sm,
   },
 
   // ═══ ÉTAT OUVERT (étagère) ═══
