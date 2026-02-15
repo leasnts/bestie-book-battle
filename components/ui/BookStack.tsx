@@ -20,16 +20,21 @@
 
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
-import React, { useCallback, useRef } from 'react';
+import React, { useCallback } from 'react';
 import {
-  FlatList,
-  NativeScrollEvent,
-  NativeSyntheticEvent,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
+import Animated, {
+  FadeIn,
+  FadeOut,
+  withDelay,
+  withSpring,
+  withTiming,
+} from 'react-native-reanimated';
 import Svg, { Path } from 'react-native-svg';
 import { Challenge, ParticipantWithProgress } from '../../types/supabase';
 import { colors, spacing } from '../../utils/constants';
@@ -115,6 +120,14 @@ const resolveImage = (ref: string | null | undefined) => {
   return DEFAULT_COVER;
 };
 
+// ─── Constantes d'animation ──────────────────────────────────────
+// Délai entre chaque cover qui tombe sur l'étagère (ms)
+const DROP_STAGGER = 40;
+// Config spring pour l'atterrissage des covers (rebond léger et rapide)
+const DROP_SPRING = { damping: 14, stiffness: 220, mass: 0.6 };
+// Durée de la rétraction des covers vers la pile (ms)
+const RETRACT_DURATION = 180;
+
 // ─── Composant principal ──────────────────────────────────────────
 
 export default function BookStack({
@@ -127,9 +140,6 @@ export default function BookStack({
   onSelectChallenge,
   onAddBook,
 }: BookStackProps) {
-  const scrollRef = useRef<FlatList>(null);
-  const scrollX = useRef(0);
-
   // On extrait les données du challenge actif
   const bookTitle = activeChallenge.book_title;
   const bookAuthor = activeChallenge.book_author || '';
@@ -142,7 +152,7 @@ export default function BookStack({
     .map((c) => c.cover_url)
     .slice(0, 3);
 
-  // ─── Handlers étagère ouverte ────────────────────────────────
+  // ─── Handler étagère ouverte ────────────────────────────────
 
   const handleCoverPress = useCallback(
     (challenge: Challenge) => {
@@ -151,93 +161,127 @@ export default function BookStack({
     [onSelectChallenge]
   );
 
-  const handleScroll = useCallback(
-    (e: NativeSyntheticEvent<NativeScrollEvent>) => {
-      scrollX.current = e.nativeEvent.contentOffset.x;
-    },
-    []
-  );
-
   // ─── RENDU : ÉTAT OUVERT (étagère) ──────────────────────────
+  //
+  // On utilise un ScrollView au lieu de FlatList pour avoir le contrôle
+  // complet sur les animations d'entrée/sortie de chaque cover individuelle.
+  // (FlatList recycle ses items, ce qui casse les animations mount/unmount)
 
   if (isOpen) {
-    return (
-      // overflow: visible permet aux covers de NE PAS être coupées
-      // quand elles sortent de la zone de scroll pendant le drag
-      <View style={styles.openContainer}>
-        {/* Barre d'étagère dark — positionnée en absolute,
-            elle remonte de SHELF_OVERLAP px sur les covers pour
-            donner l'effet "posé sur l'étagère" */}
-        <View style={styles.shelfBar}>
-          <View style={styles.shelfDot} />
-          <View style={styles.shelfDot} />
-        </View>
+    const totalItems = allChallenges.length;
 
-        {/* Rangée scrollable de couvertures — au-dessus de la barre */}
-        <FlatList
-          ref={scrollRef}
-          data={allChallenges}
-          keyExtractor={(item) => item.id}
+    return (
+      <Animated.View
+        style={styles.openContainer}
+        exiting={FadeOut.duration(150)}
+      >
+        {/* Barre d'étagère — glisse depuis le bas */}
+        <Animated.View
+          style={styles.shelfBar}
+          entering={() => {
+            'worklet';
+            return {
+              initialValues: { transform: [{ translateY: 20 }], opacity: 0 },
+              animations: {
+                transform: [{ translateY: withDelay(80, withSpring(0, DROP_SPRING)) }],
+                opacity: withDelay(80, withTiming(1, { duration: 150 })),
+              },
+            };
+          }}
+        >
+          <View style={styles.shelfDot} />
+          <View style={styles.shelfDot} />
+        </Animated.View>
+
+        {/* Rangée scrollable de couvertures */}
+        <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
-          onScroll={handleScroll}
-          scrollEventThrottle={16}
           style={styles.shelfList}
           contentContainerStyle={styles.shelfContent}
-          ItemSeparatorComponent={() => <View style={{ width: COVER_GAP }} />}
-          renderItem={({ item }) => {
-            // Un livre est "terminé" quand le challenge est marqué completed
-            // OU quand la progression moyenne atteint 100%
+        >
+          {allChallenges.map((item, index) => {
             const isDone =
               item.status === 'completed' ||
               item.average_progress_percentage >= 100;
 
+            // Chaque cover "tombe" depuis le haut avec un délai échelonné.
+            // Le spring donne un petit rebond comme si la cover atterrissait sur l'étagère.
+            const dropDelay = index * DROP_STAGGER;
+
             return (
-              <Pressable
-                onPress={() => handleCoverPress(item)}
-                style={({ pressed }) => [
-                  styles.shelfCoverWrapper,
-                  pressed && { opacity: 0.85 },
-                ]}
+              <Animated.View
+                key={item.id}
+                style={index > 0 ? { marginLeft: COVER_GAP } : undefined}
+                entering={() => {
+                  'worklet';
+                  return {
+                    initialValues: {
+                      transform: [{ translateY: -COVER_H }],
+                      opacity: 0,
+                    },
+                    animations: {
+                      transform: [
+                        { translateY: withDelay(dropDelay, withSpring(0, DROP_SPRING)) },
+                      ],
+                      opacity: withDelay(dropDelay, withTiming(1, { duration: 100 })),
+                    },
+                  };
+                }}
               >
-                {isDone ? (
-                  // ── LIVRE TERMINÉ ──
-                  // Structure : fond dark (plus grand) + inner shadow overlay
-                  //           → cover carrée (2px radius) par-dessus
-                  //           → badge marque-page ✓ en haut à gauche
-                  <View style={styles.doneCoverContainer}>
-                    {/* 1. Fond dark derrière la cover (57×76, déborde de 3px) */}
-                    <View style={styles.doneCoverBackground}>
-                      {/* Overlay pour simuler les inner shadows Figma */}
-                      <View style={styles.doneCoverInnerShadow} />
+                <Pressable
+                  onPress={() => handleCoverPress(item)}
+                  style={({ pressed }) => [
+                    styles.shelfCoverWrapper,
+                    pressed && { opacity: 0.85 },
+                  ]}
+                >
+                  {isDone ? (
+                    <View style={styles.doneCoverContainer}>
+                      <View style={styles.doneCoverBackground}>
+                        <View style={styles.doneCoverInnerShadow} />
+                      </View>
+                      <Image
+                        source={resolveImage(item.cover_url)}
+                        style={styles.shelfCoverDone}
+                        contentFit="cover"
+                      />
+                      <BookmarkCheckBadge />
                     </View>
-
-                    {/* 2. Image de la couverture (coins carrés) */}
-                    <Image
-                      source={resolveImage(item.cover_url)}
-                      style={styles.shelfCoverDone}
-                      contentFit="cover"
-                    />
-
-                    {/* 3. Badge marque-page SVG avec checkmark */}
-                    <BookmarkCheckBadge />
-                  </View>
-                ) : (
-                  // ── LIVRE EN COURS ──
-                  // Structure : conteneur avec shadow + coins arrondis (20px)
-                  //           → cover arrondie à l'intérieur
-                  <View style={styles.shelfCoverShadow}>
-                    <Image
-                      source={resolveImage(item.cover_url)}
-                      style={styles.shelfCover}
-                      contentFit="cover"
-                    />
-                  </View>
-                )}
-              </Pressable>
+                  ) : (
+                    <View style={styles.shelfCoverShadow}>
+                      <Image
+                        source={resolveImage(item.cover_url)}
+                        style={styles.shelfCover}
+                        contentFit="cover"
+                      />
+                    </View>
+                  )}
+                </Pressable>
+              </Animated.View>
             );
-          }}
-          ListFooterComponent={() => (
+          })}
+
+          {/* Bouton + — tombe en dernier */}
+          <Animated.View
+            style={{ marginLeft: COVER_GAP }}
+            entering={() => {
+              'worklet';
+              const delay = totalItems * DROP_STAGGER + 60;
+              return {
+                initialValues: {
+                  transform: [{ translateY: -COVER_H }],
+                  opacity: 0,
+                },
+                animations: {
+                  transform: [
+                    { translateY: withDelay(delay, withSpring(0, DROP_SPRING)) },
+                  ],
+                  opacity: withDelay(delay, withTiming(1, { duration: 100 })),
+                },
+              };
+            }}
+          >
             <Pressable
               onPress={onAddBook}
               style={({ pressed }) => [
@@ -247,21 +291,18 @@ export default function BookStack({
             >
               <Ionicons name="add" size={24} color={colors.white} />
             </Pressable>
-          )}
-          ListFooterComponentStyle={{ marginLeft: COVER_GAP }}
-        />
-      </View>
+          </Animated.View>
+        </ScrollView>
+      </Animated.View>
     );
   }
 
   // ─── RENDU : ÉTAT FERMÉ (pile empilée) ──────────────────────
   //
-  // Structure : le livre actif est ancré à GAUCHE (avec le padding parent de 16px).
-  // Les covers empilées sont positionnées en absolute DERRIÈRE la cover active,
-  // décalées vers la gauche. Elles peuvent sortir de l'écran, c'est normal.
+  // Le livre actif est ancré à GAUCHE. Les covers empilées sont en absolute
+  // derrière lui, décalées vers la gauche (peuvent sortir de l'écran).
   //
-  // Pourquoi ? Si l'utilisateur a 10+ livres, le titre/auteur doit toujours
-  // rester lisible. En ancrant à gauche, l'espace pour le texte ne rétrécit jamais.
+  // À la fermeture, les covers se rétractent vers la gauche en se resserrant.
 
   const isActiveDone =
     activeChallenge.status === 'completed' ||
@@ -269,36 +310,63 @@ export default function BookStack({
 
   return (
     <Pressable onPress={onToggle} style={styles.closedContainer}>
-      <View style={styles.activeCard}>
-        {/* Zone couverture : cover active au premier plan + pile derrière */}
+      <Animated.View
+        style={styles.activeCard}
+        entering={FadeIn.duration(250)}
+      >
+        {/* Zone couverture : cover active + pile derrière */}
         <View style={styles.coverArea}>
-          {/* Covers empilées — positionnées en absolute, décalées vers la gauche.
-              Chaque cover est décalée de STACK_VISIBLE (10px) de plus que la précédente.
-              Les zIndex croissants assurent que les covers les plus proches de l'active
-              sont visuellement au-dessus des plus éloignées. */}
-          {otherCovers.map((cover, index) => (
-            <View
-              key={`bg-cover-${index}`}
-              style={[
-                styles.stackedCover,
-                {
-                  left: -((otherCovers.length - index) * STACK_VISIBLE),
-                  zIndex: index,
-                },
-              ]}
-            >
-              <View style={styles.smallCoverShadow}>
-                <Image
-                  source={resolveImage(cover)}
-                  style={styles.smallCover}
-                  contentFit="cover"
-                />
-              </View>
-            </View>
-          ))}
+          {/* Covers empilées — chacune se rétracte vers sa position finale
+              avec un léger délai, donnant l'effet de "re-stacking". */}
+          {otherCovers.map((cover, index) => {
+            const retractDelay = index * 30;
+            return (
+              <Animated.View
+                key={`bg-cover-${index}`}
+                style={[
+                  styles.stackedCover,
+                  {
+                    left: -((otherCovers.length - index) * STACK_VISIBLE),
+                    zIndex: index,
+                  },
+                ]}
+                entering={() => {
+                  'worklet';
+                  // Les covers arrivent depuis la droite (position 0 = au niveau de l'active)
+                  // et glissent vers leur position finale (negative left)
+                  return {
+                    initialValues: {
+                      transform: [{ translateX: (otherCovers.length - index) * STACK_VISIBLE }],
+                      opacity: 0.5,
+                    },
+                    animations: {
+                      transform: [
+                        { translateX: withDelay(retractDelay, withSpring(0, {
+                          damping: 16,
+                          stiffness: 180,
+                        })) },
+                      ],
+                      opacity: withDelay(retractDelay, withTiming(1, { duration: RETRACT_DURATION })),
+                    },
+                  };
+                }}
+              >
+                <View style={styles.smallCoverShadow}>
+                  <Image
+                    source={resolveImage(cover)}
+                    style={styles.smallCover}
+                    contentFit="cover"
+                  />
+                </View>
+              </Animated.View>
+            );
+          })}
 
-          {/* Cover active — toujours au premier plan (zIndex le plus haut) */}
-          <View style={{ zIndex: otherCovers.length + 1 }}>
+          {/* Cover active — au premier plan */}
+          <Animated.View
+            style={{ zIndex: otherCovers.length + 1 }}
+            entering={FadeIn.duration(200)}
+          >
             {isActiveDone ? (
               <View style={styles.doneCoverContainer}>
                 <View style={styles.doneCoverBackground}>
@@ -320,11 +388,14 @@ export default function BookStack({
                 />
               </View>
             )}
-          </View>
+          </Animated.View>
         </View>
 
         {/* Infos : auteur, titre, badge pages, progression */}
-        <View style={styles.bookInfo}>
+        <Animated.View
+          style={styles.bookInfo}
+          entering={FadeIn.delay(100).duration(250)}
+        >
           <View style={styles.bookDetails}>
             <View style={styles.textAndBadge}>
               <Text style={styles.author} numberOfLines={1}>
@@ -345,8 +416,8 @@ export default function BookStack({
             size={56}
             strokeWidth={4}
           />
-        </View>
-      </View>
+        </Animated.View>
+      </Animated.View>
     </Pressable>
   );
 }
@@ -417,7 +488,7 @@ const styles = StyleSheet.create({
     marginRight: spacing.sm,
   },
   textAndBadge: {
-    gap: 4,
+    gap: 8,
   },
   author: {
     fontFamily: 'WorkSans_400Regular',
