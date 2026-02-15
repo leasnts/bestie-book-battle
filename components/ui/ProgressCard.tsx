@@ -327,9 +327,9 @@ const styles = StyleSheet.create({
 
   userName: {
     fontFamily: 'WorkSans_600SemiBold',
-    fontSize: 14,
+    fontSize: 16,
     color: colors.textPrimary,
-    lineHeight: 20,
+    lineHeight: 22,
   },
 
   // ═══ SCORES + PROGRESSION ═══

@@ -4,8 +4,9 @@
  * Sélecteur de page horizontal avec scroll fluide :
  * - Largeur fixe par item pour un scroll fiable + snap
  * - Quand le scroll s'arrête, le numéro le plus proche se centre sur l'écran
- * - Numéro central : 112px, noir. Adjacents : 72px, gris transparent
- * - 24px entre chaque numéro. adjustsFontSizeToFit pour les gros numéros
+ * - Numéro central : 128px, noir. Adjacents : 72px, gris transparent
+ * - adjustsFontSizeToFit adapte la taille aux gros numéros (3-4 chiffres)
+ *   sans jamais tronquer ni couper le nombre
  */
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
@@ -20,12 +21,12 @@ import {
 } from 'react-native';
 import { colors } from '../../utils/constants';
 
-const GAP_BETWEEN_ITEMS = 24;
-
-// Pas fixe = largeur numéro + gap. On utilise une largeur suffisante pour
-// la plupart des livres (0-9999) sans troncature, avec 24px de gap.
-const ITEM_WIDTH = 100;
-const STEP = ITEM_WIDTH + GAP_BETWEEN_ITEMS;
+// Largeur de chaque cellule. 180px suffit pour afficher 1-2 chiffres à pleine
+// taille (128px). Pour 3-4 chiffres, adjustsFontSizeToFit réduit légèrement
+// la taille pour que le nombre entier soit toujours visible.
+// Pas de gap entre les cellules → les nombres adjacents restent bien visibles.
+const ITEM_WIDTH = 180;
+const STEP = ITEM_WIDTH;
 
 interface PageScrollPickerProps {
   currentPage: number;
@@ -139,6 +140,7 @@ export default function PageScrollPicker({
               ]}
               numberOfLines={1}
               adjustsFontSizeToFit
+              minimumFontScale={0.5}
             >
               {item}
             </Text>
@@ -216,30 +218,45 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    height: 120,
+    height: 150,
   },
   itemContainer: {
     justifyContent: 'center',
     alignItems: 'center',
-    height: 120,
+    height: 150,
   },
   pageNumber: {
     fontFamily: 'Rokkitt_Bold',
     fontWeight: '700',
     textAlign: 'center',
+    // textAlignVertical + includeFontPadding : corrige le centrage vertical
+    // sur Android, où le moteur de texte ajoute un padding fantôme par défaut.
+    textAlignVertical: 'center',
+    includeFontPadding: false,
   },
+  // Nombre central (sélectionné/en cours) — gros, noir, avec ombre portée.
+  // Pour 1-2 chiffres (0-99) : s'affiche à pleine taille 128px.
+  // Pour 3 chiffres (100-999) : adjustsFontSizeToFit réduit légèrement (~104px).
+  // Pour 4 chiffres (1000+) : réduit à ~78px, mais toujours lisible et complet.
+  //
+  // PAS de lineHeight ici : sur le simulateur iOS, un lineHeight fixe combiné
+  // avec adjustsFontSizeToFit provoque un bug où le texte disparaît quand la
+  // taille est réduite. Sans lineHeight, le texte prend sa hauteur naturelle
+  // et le conteneur (justifyContent: 'center') gère l'alignement vertical.
   pageNumberCenter: {
-    fontSize: 112,
-    lineHeight: 112,
+    fontSize: 128,
     color: colors.dark900,
-    letterSpacing: -2.24,
+    letterSpacing: -2.56,
     textShadowColor: 'rgba(0,0,0,0.25)',
     textShadowOffset: { width: 0, height: 4 },
     textShadowRadius: 6,
   },
+  // Nombres adjacents (non sélectionnés) — plus petits, gris transparent.
+  // Pas de lineHeight non plus, pour la même raison (compatibilité simulateur).
+  // L'alignement vertical est assuré par le conteneur flexbox (150px de haut,
+  // justifyContent: 'center'), qui centre chaque texte au même point vertical.
   pageNumberSide: {
     fontSize: 72,
-    lineHeight: 90,
     color: 'rgba(0,0,0,0.2)',
     letterSpacing: -1.44,
   },

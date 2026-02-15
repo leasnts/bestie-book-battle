@@ -897,15 +897,15 @@ const styles = StyleSheet.create({
   },
   author: {
     fontFamily: 'WorkSans_400Regular',
-    fontSize: 12,
+    fontSize: 16,
     color: colors.textTertiary,
-    lineHeight: 18,
+    lineHeight: 22,
   },
   title: {
     fontFamily: 'WorkSans_600SemiBold',
-    fontSize: 14,
+    fontSize: 18,
     color: colors.textPrimary,
-    lineHeight: 20,
+    lineHeight: 24,
   },
   pagesBadge: {
     backgroundColor: 'rgba(0,0,0,0.08)',
@@ -918,9 +918,9 @@ const styles = StyleSheet.create({
   },
   pagesText: {
     fontFamily: 'WorkSans_500Medium',
-    fontSize: 12,
+    fontSize: 16,
     color: colors.textPrimary,
-    lineHeight: 18,
+    lineHeight: 22,
     textAlign: 'center',
   },
 

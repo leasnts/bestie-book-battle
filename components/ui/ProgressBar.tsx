@@ -113,9 +113,9 @@ const styles = StyleSheet.create({
   },
   percentageText: {
     fontFamily: 'WorkSans_400Regular',
-    fontSize: 12,
+    fontSize: 14,
     color: colors.textPlaceholder, // gray 500 : #717680
-    lineHeight: 18,
+    lineHeight: 20,
   },
 });
 
