@@ -83,6 +83,7 @@ export default function HomeScreen() {
   // ===== État local =====
   const [currentPageInput, setCurrentPageInput] = useState(0);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [showBookShelf, setShowBookShelf] = useState(false);
 
   // Animations
   const successAnim = useRef(new Animated.Value(0)).current;
@@ -177,17 +178,25 @@ export default function HomeScreen() {
     isLeader: friendParticipant.isLeader,
   } : null;
 
-  // Covers des autres challenges (pour le BookStack)
-  const otherCovers = challenges
-    .filter(c => c.id !== activeChallenge?.id)
-    .map(c => c.cover_url)
-    .slice(0, 3);
-
-  // ===== Callback navigation étagère de livres =====
-  const handleBookStackPress = useCallback(() => {
-    // TODO: ouvrir l'étagère de livres (composant à venir)
-    // Pour l'instant, on pourrait afficher un bottomsheet ou naviguer
+  // ===== Callback : basculer l'étagère ouverte/fermée =====
+  const handleBookStackToggle = useCallback(() => {
+    setShowBookShelf((prev) => !prev);
   }, []);
+
+  // ===== Callback : sélectionner un livre dans l'étagère =====
+  const handleSelectChallenge = useCallback(
+    (challenge: NonNullable<typeof activeChallenge>) => {
+      setActiveChallenge(challenge);
+      setShowBookShelf(false);  // Referme l'étagère après sélection
+    },
+    [setActiveChallenge]
+  );
+
+  // ===== Callback : ajouter un nouveau livre =====
+  const handleAddBook = useCallback(() => {
+    setShowBookShelf(false);
+    router.push('/project/create');
+  }, [router]);
 
   // ===== Callback historique participant =====
   const handleParticipantPress = useCallback((participantId: string) => {
@@ -224,17 +233,17 @@ export default function HomeScreen() {
         />
       </View>
 
-      {/* ═══════════ SECTION LIVRE (pile de couvertures) ═══════════ */}
+      {/* ═══════════ SECTION LIVRE (fermé = pile empilée / ouvert = étagère scroll) ═══════════ */}
       {activeChallenge && (
         <View style={styles.bookSection}>
           <BookStack
-            bookTitle={activeChallenge.book_title}
-            bookAuthor={activeChallenge.book_author || ''}
-            totalPages={totalPages}
+            activeChallenge={activeChallenge}
+            allChallenges={challenges}
             progressPercentage={averagePercentage}
-            coverUrl={activeChallenge.cover_url}
-            otherCovers={otherCovers}
-            onPress={handleBookStackPress}
+            isOpen={showBookShelf}
+            onToggle={handleBookStackToggle}
+            onSelectChallenge={handleSelectChallenge}
+            onAddBook={handleAddBook}
           />
         </View>
       )}
@@ -361,12 +370,16 @@ const styles = StyleSheet.create({
   },
 
   // ===== SECTION LIVRE =====
+  // overflow: visible pour que les covers de l'étagère puissent
+  // déborder visuellement quand on scrolle (pas coupées par le conteneur)
   bookSection: {
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.lg,
     paddingBottom: spacing['2xl'],
     borderBottomWidth: 1,
     borderBottomColor: colors.borderLight,
+    overflow: 'visible',
+    zIndex: 10,
   },
 
   // ===== SECTION SÉLECTEUR DE PAGE =====

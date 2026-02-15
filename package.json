@@ -4,7 +4,8 @@
   "version": "1.0.0",
   "scripts": {
     "start": "expo start",
-    "ios": "expo start --ios"
+    "ios": "expo start --ios",
+    "upload-covers": "node scripts/upload-book-covers.mjs"
   },
   "dependencies": {
     "@expo-google-fonts/rokkitt": "^0.4.2",
