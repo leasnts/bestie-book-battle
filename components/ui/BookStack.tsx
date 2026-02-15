@@ -19,9 +19,10 @@
  */
 
 import { Ionicons } from '@expo/vector-icons';
+import { BlurView } from 'expo-blur';
+import * as Clipboard from 'expo-clipboard';
 import { Image } from 'expo-image';
 import React, { useCallback, useState } from 'react';
-import * as Clipboard from 'expo-clipboard';
 import {
   Alert,
   Dimensions,
@@ -150,6 +151,70 @@ const DROP_SPRING = { damping: 14, stiffness: 220, mass: 0.6 };
 // Durée de la rétraction des covers vers la pile (ms)
 const RETRACT_DURATION = 180;
 
+// ─── Vis métallique de l'étagère ──────────────────────────────────
+// Le design Figma utilise un conic-gradient pour créer un effet de vis
+// métallique chromée. Comme React Native SVG ne supporte pas les gradients
+// coniques, on découpe le cercle en 24 tranches de 15° chacune avec des
+// couleurs interpolées entre les stops du gradient Figma.
+// Résultat : un reflet métallique réaliste, identique au design.
+
+const SCREW_SIZE = 10;
+const SCREW_SEGMENTS = 24;
+const SCREW_STEP = 360 / SCREW_SEGMENTS; // 15° par tranche
+
+/** Interpolation linéaire entre deux valeurs */
+const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
+
+/**
+ * Retourne la luminosité (0-255) à un angle donné (0-360°).
+ * Reproduit exactement le conic-gradient du SVG Figma :
+ *   from 90deg → les stops commencent à droite (3h)
+ *   0°offset (=90° abs) : #D9D9D9 (217) — gris clair
+ *   180°offset (=270° abs) : #808080 (128) — gris moyen
+ *   270°offset (=360° abs) : #FFFFFF (255) — blanc (reflet vif)
+ *   315°offset (=45° abs) : #7F7F7F (127) — gris
+ *   360°offset (=90° abs) : #737373 (115) — gris foncé (cassure)
+ */
+function screwGray(deg: number): number {
+  deg = ((deg % 360) + 360) % 360;
+  if (deg >= 90 && deg < 270) return Math.round(lerp(217, 128, (deg - 90) / 180));
+  if (deg >= 270)             return Math.round(lerp(128, 255, (deg - 270) / 90));
+  if (deg < 45)               return Math.round(lerp(255, 127, deg / 45));
+  return                             Math.round(lerp(127, 115, (deg - 45) / 45));
+}
+
+/** Construit le chemin SVG d'une tranche de camembert (pie slice) */
+function screwSlice(cx: number, cy: number, r: number, startDeg: number, endDeg: number): string {
+  const toRad = (d: number) => ((d - 90) * Math.PI) / 180;
+  const x1 = cx + r * Math.cos(toRad(startDeg));
+  const y1 = cy + r * Math.sin(toRad(startDeg));
+  const x2 = cx + r * Math.cos(toRad(endDeg));
+  const y2 = cy + r * Math.sin(toRad(endDeg));
+  return `M${cx},${cy} L${x1.toFixed(2)},${y1.toFixed(2)} A${r},${r} 0 0,1 ${x2.toFixed(2)},${y2.toFixed(2)} Z`;
+}
+
+// Pré-calcul de toutes les tranches (exécuté 1 seule fois au chargement du module)
+const SCREW_DATA = Array.from({ length: SCREW_SEGMENTS }, (_, i) => {
+  const start = i * SCREW_STEP;
+  const end = (i + 1) * SCREW_STEP;
+  const gray = screwGray(start);
+  return {
+    d: screwSlice(5, 5, 5, start, end),
+    fill: `rgb(${gray},${gray},${gray})`,
+  };
+});
+
+/** Vis métallique avec gradient conique — remplace les simples dots */
+function ShelfScrew() {
+  return (
+    <Svg width={SCREW_SIZE} height={SCREW_SIZE} viewBox="0 0 10 10">
+      {SCREW_DATA.map((slice, i) => (
+        <Path key={i} d={slice.d} fill={slice.fill} />
+      ))}
+    </Svg>
+  );
+}
+
 // ─── Composant principal ──────────────────────────────────────────
 
 export default function BookStack({
@@ -261,7 +326,7 @@ export default function BookStack({
       >
         {/* Barre d'étagère — glisse depuis le bas */}
         <Animated.View
-          style={styles.shelfBar}
+          style={styles.shelfBarOuter}
           entering={() => {
             'worklet';
             return {
@@ -273,8 +338,10 @@ export default function BookStack({
             };
           }}
         >
-          <View style={styles.shelfDot} />
-          <View style={styles.shelfDot} />
+          <BlurView intensity={20} tint="dark" style={styles.shelfBar}>
+            <ShelfScrew />
+            <ShelfScrew />
+          </BlurView>
         </Animated.View>
 
         {/* Rangée scrollable de couvertures */}
@@ -1209,16 +1276,25 @@ const styles = StyleSheet.create({
     marginBottom: (COVER_H - ADD_BTN_SIZE) / 2,
   },
 
-  // Barre d'étagère dark — positionnée en absolute, AU PREMIER PLAN
+  // Wrapper animé de la barre d'étagère — positionnée en absolute, AU PREMIER PLAN
   // (zIndex: 2) pour passer PAR-DESSUS le bas des covers.
-  // Ça donne l'effet visuel d'une vraie étagère qui cache le bas des livres.
-  shelfBar: {
+  // overflow: 'hidden' est essentiel pour que le blur respecte le borderRadius.
+  shelfBarOuter: {
     position: 'absolute',
-    bottom: 0,
+    bottom: -6,
     left: 0,
     right: 0,
     height: SHELF_BAR_H,
-    backgroundColor: colors.dark900,
+    borderRadius: 10,
+    overflow: 'hidden',           // clip le blur aux coins arrondis
+    zIndex: 2,                    // AU-DESSUS des covers
+  },
+
+  // Contenu de la barre d'étagère — BlurView avec fond noir 30% d'opacité
+  // L'effet de blur crée une transparence vitrée plutôt qu'un noir plein.
+  shelfBar: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.3)',
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.4)',
     borderRadius: 10,
@@ -1226,14 +1302,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: spacing.md,
-    zIndex: 2, // AU-DESSUS des covers
   },
 
-  // Dots métalliques aux extrémités de la barre (Figma)
-  shelfDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: 'rgba(255,255,255,0.5)',
-  },
 });
