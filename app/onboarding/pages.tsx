@@ -31,10 +31,11 @@ const TEXTURE_IMAGE = require('../../assets/images/61ea1e0c638b5b9c8100383a37a5b
 export default function OnboardingPagesScreen() {
     const insets = useSafeAreaInsets();
     const router = useRouter();
-    const { firstName, bookTitle, author } = useLocalSearchParams<{
+    const { firstName, bookTitle, author, addChallenge } = useLocalSearchParams<{
         firstName: string;
         bookTitle: string;
         author: string;
+        addChallenge?: string;
     }>();
     
     const [totalPages, setTotalPages] = useState('');
@@ -74,6 +75,7 @@ export default function OnboardingPagesScreen() {
                 bookTitle,
                 author,
                 totalPages: totalPages.trim(),
+                ...(addChallenge && { addChallenge }),
             },
         });
     };

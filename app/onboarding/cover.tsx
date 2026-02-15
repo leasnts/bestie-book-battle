@@ -34,12 +34,14 @@ export default function OnboardingCoverScreen() {
         firstName, 
         bookTitle, 
         author, 
-        totalPages 
+        totalPages,
+        addChallenge,
     } = useLocalSearchParams<{
         firstName: string;
         bookTitle: string;
         author: string;
         totalPages: string;
+        addChallenge?: string;
     }>();
     
     const [coverUri, setCoverUri] = useState<string | null>(null);
@@ -105,24 +107,35 @@ export default function OnboardingCoverScreen() {
     };
 
     /**
-     * Passer à l'écran suivant (notifications)
-     * Toutes les données du livre + cover sont passées en paramètres
+     * Passer à l'écran suivant
+     * - addChallenge : va direct à complete (partage), sans notifications
+     * - onboarding : va à notifications → complete
      */
     const handleContinue = () => {
-        // Mettre à jour le store (null si pas de cover, pour éviter une valeur obsolète)
         useOnboardingStore.getState().setCoverUri(coverUri);
-        router.push({
-            pathname: '/onboarding/notifications',
-            params: {
-                firstName,
-                bookTitle,
-                author,
-                totalPages,
-                flow: 'create', // Indique qu'on vient de la branche Créer
-                // coverUri n'est plus passé ici : stocké dans onboardingStore
-                // pour éviter troncature des params URL (URIs fichier longs)
-            },
-        });
+        if (addChallenge) {
+            router.push({
+                pathname: '/onboarding/complete',
+                params: {
+                    firstName,
+                    bookTitle,
+                    author,
+                    totalPages,
+                    addChallenge,
+                },
+            });
+        } else {
+            router.push({
+                pathname: '/onboarding/notifications',
+                params: {
+                    firstName,
+                    bookTitle,
+                    author,
+                    totalPages,
+                    flow: 'create',
+                },
+            });
+        }
     };
 
     return (

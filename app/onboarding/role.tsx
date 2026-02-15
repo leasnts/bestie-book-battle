@@ -49,7 +49,7 @@ type RoleType = 'create' | 'join';
 export default function OnboardingRoleScreen() {
     const insets = useSafeAreaInsets();
     const router = useRouter();
-    const { firstName } = useLocalSearchParams<{ firstName: string }>();
+    const { firstName, addChallenge } = useLocalSearchParams<{ firstName: string; addChallenge?: string }>();
     
     // Rôle sélectionné (par défaut "create")
     const [selectedRole, setSelectedRole] = useState<RoleType>('create');
@@ -90,15 +90,16 @@ export default function OnboardingRoleScreen() {
     });
 
     const handleContinue = () => {
+        const baseParams = { firstName, ...(addChallenge && { addChallenge }) };
         if (selectedRole === 'create') {
             router.push({
                 pathname: '/onboarding/create',
-                params: { firstName },
+                params: baseParams,
             });
         } else {
             router.push({
                 pathname: '/onboarding/join',
-                params: { firstName },
+                params: baseParams,
             });
         }
     };
@@ -127,7 +128,7 @@ export default function OnboardingRoleScreen() {
                 {/* Contenu principal */}
                 <View style={styles.mainContent}>
                     <Text style={styles.title}>
-                        {firstName}, quel est ton rôle ?
+                        {addChallenge ? 'Quel projet veux-tu ajouter ?' : `${firstName}, quel est ton rôle ?`}
                     </Text>
                     
                     {/* Deux cartes de sélection animées */}

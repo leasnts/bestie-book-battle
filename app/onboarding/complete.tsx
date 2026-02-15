@@ -44,6 +44,7 @@ export default function OnboardingCompleteScreen() {
         bookTitle: string;
         author: string;
         totalPages: string;
+        addChallenge?: string;
     }>();
     // coverUri : lu depuis le store (évite troncature des params URL pour les chemins fichiers longs)
     const coverUri = useOnboardingStore((s) => s.coverUri);
@@ -62,19 +63,22 @@ export default function OnboardingCompleteScreen() {
     const setPendingUserData = useAuthStore((state) => state.setPendingUserData);
     const createChallenge = useProjectStore((state) => state.createChallenge);
 
+    const isAddChallenge = params.addChallenge === 'true';
+
     /**
      * Créer le profil utilisateur + le challenge
-     * Cette fonction est appelée automatiquement au montage de l'écran
+     * - onboarding : crée le profil si nouveau, puis le challenge
+     * - addChallenge : user existe déjà, on crée juste le challenge
      */
     React.useEffect(() => {
         const initializeChallenge = async () => {
-            if (isLoading || challengeId) return; // Déjà créé
+            if (isLoading || challengeId) return;
             
             setIsLoading(true);
             try {
-                // 1. Créer/mettre à jour le profil utilisateur
                 let userId = user?.id;
-                if (!userId && pendingUserData) {
+                // En mode addChallenge, l'utilisateur existe déjà
+                if (!isAddChallenge && !userId && pendingUserData) {
                     const newUser = await createOrUpdateUserProfile({
                         id: pendingUserData.authId,
                         apple_user_id: pendingUserData.appleUserId,
@@ -92,7 +96,7 @@ export default function OnboardingCompleteScreen() {
                     return;
                 }
 
-                // 2. Créer le challenge
+                // Créer le challenge
                 const challenge = await createChallenge(
                     userId,
                     params.bookTitle,
@@ -209,7 +213,9 @@ export default function OnboardingCompleteScreen() {
                 <View style={styles.mainContent}>
                     <Text style={styles.title}>C'est terminé !</Text>
                     <Text style={styles.description}>
-                        Ton premier bbb est prêt, tu n'as plus qu'à inviter un.e ami.e pour cette lecture commune
+                        {isAddChallenge
+                            ? 'Ton nouveau bbb est prêt, invite un.e ami.e pour cette lecture commune'
+                            : 'Ton premier bbb est prêt, tu n\'as plus qu\'à inviter un.e ami.e pour cette lecture commune'}
                     </Text>
                     
                     {/* Carte du livre + code — bookCard (zIndex 2) au premier plan pour radius bas visibles */}

@@ -21,6 +21,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import React, { useCallback } from 'react';
+import Button3D from '../Button3D';
 import {
   Pressable,
   ScrollView,
@@ -264,7 +265,7 @@ export default function BookStack({
 
           {/* Bouton + — tombe en dernier */}
           <Animated.View
-            style={{ marginLeft: COVER_GAP }}
+            style={[styles.addButtonWrapper, { marginLeft: COVER_GAP }]}
             entering={() => {
               'worklet';
               const delay = totalItems * DROP_STAGGER + 60;
@@ -282,15 +283,13 @@ export default function BookStack({
               };
             }}
           >
-            <Pressable
+            <Button3D
               onPress={onAddBook}
-              style={({ pressed }) => [
-                styles.addButton,
-                pressed && { opacity: 0.85 },
-              ]}
-            >
-              <Ionicons name="add" size={24} color={colors.white} />
-            </Pressable>
+              variant="primary"
+              icon="add"
+              iconOnly
+              size="compact"
+            />
           </Animated.View>
         </ScrollView>
       </Animated.View>
@@ -619,25 +618,12 @@ const styles = StyleSheet.create({
     height: 18,
   },
 
-  // Bouton + pour ajouter un livre — centré verticalement avec les covers.
-  // La FlatList a alignItems: 'flex-end' (covers calées en bas).
-  // Le bouton (40px) doit être centré par rapport aux covers (70px).
-  // → marginBottom = (COVER_H - ADD_BTN_SIZE) / 2 = (70 - 40) / 2 = 15px
-  addButton: {
-    width: ADD_BTN_SIZE,
-    height: ADD_BTN_SIZE,
-    borderRadius: 12,
-    backgroundColor: colors.dark900,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.3)',
-    justifyContent: 'center',
-    alignItems: 'center',
+  // Wrapper du bouton + — aligné verticalement avec les covers.
+  // alignItems: 'flex-end' sur le parent = covers calées en bas.
+  // Le bouton 40px doit être centré par rapport aux covers 70px.
+  addButtonWrapper: {
+    alignSelf: 'flex-end',
     marginBottom: (COVER_H - ADD_BTN_SIZE) / 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 6,
-    elevation: 3,
   },
 
   // Barre d'étagère dark — positionnée en absolute, AU PREMIER PLAN

@@ -31,7 +31,7 @@ const TEXTURE_IMAGE = require('../../assets/images/61ea1e0c638b5b9c8100383a37a5b
 export default function OnboardingJoinScreen() {
     const insets = useSafeAreaInsets();
     const router = useRouter();
-    const { firstName } = useLocalSearchParams<{ firstName: string }>();
+    const { firstName, addChallenge } = useLocalSearchParams<{ firstName: string; addChallenge?: string }>();
     
     const [inviteCode, setInviteCode] = useState('');
     const [isLoading, setIsLoading] = useState(false);
@@ -81,20 +81,31 @@ export default function OnboardingJoinScreen() {
                 return;
             }
 
-            // Passer à l'écran notifications avec les infos du challenge
-            router.push({
-                pathname: '/onboarding/notifications',
-                params: {
-                    firstName,
-                    flow: 'join',
-                    challengeId: challenge.id,
-                    bookTitle: challenge.book_title,
-                    author: challenge.book_author || '',
-                    totalPages: challenge.total_pages?.toString() || '',
-                    coverUrl: challenge.cover_url || '',
-                    adminFirstName: challenge.admin_first_name || 'L\'admin',
-                },
-            });
+            // addChallenge : aller direct à welcome (pas notifications)
+            // onboarding : aller à notifications → welcome
+            const nextParams = {
+                firstName,
+                challengeId: challenge.id,
+                bookTitle: challenge.book_title,
+                author: challenge.book_author || '',
+                totalPages: challenge.total_pages?.toString() || '',
+                coverUrl: challenge.cover_url || '',
+                adminFirstName: challenge.admin_first_name || 'L\'admin',
+            };
+            if (addChallenge) {
+                router.push({
+                    pathname: '/onboarding/welcome',
+                    params: nextParams,
+                });
+            } else {
+                router.push({
+                    pathname: '/onboarding/notifications',
+                    params: {
+                        ...nextParams,
+                        flow: 'join',
+                    },
+                });
+            }
         } catch (error: any) {
             console.error('Erreur recherche challenge:', error);
             Alert.alert('Erreur', 'Impossible de vérifier le code. Réessaie plus tard.');

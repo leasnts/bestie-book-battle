@@ -193,10 +193,18 @@ export default function HomeScreen() {
   );
 
   // ===== Callback : ajouter un nouveau livre =====
+  // Réutilise les écrans onboarding (role, create, pages, cover, complete)
+  // en mode addChallenge : pas de notifications, flow direct jusqu'au partage
   const handleAddBook = useCallback(() => {
     setShowBookShelf(false);
-    router.push('/project/create');
-  }, [router]);
+    router.push({
+      pathname: '/onboarding/role',
+      params: {
+        firstName: user?.first_name || 'Lecteur',
+        addChallenge: 'true',
+      },
+    });
+  }, [router, user?.first_name]);
 
   // ===== Callback historique participant =====
   const handleParticipantPress = useCallback((participantId: string) => {

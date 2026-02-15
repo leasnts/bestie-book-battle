@@ -34,7 +34,7 @@ const TEXTURE_IMAGE = require('../../assets/images/61ea1e0c638b5b9c8100383a37a5b
 export default function OnboardingBookFormScreen() {
     const insets = useSafeAreaInsets();
     const router = useRouter();
-    const { firstName } = useLocalSearchParams<{ firstName: string }>();
+    const { firstName, addChallenge } = useLocalSearchParams<{ firstName: string; addChallenge?: string }>();
     
     const [bookTitle, setBookTitle] = useState('');
     const [author, setAuthor] = useState('');
@@ -75,6 +75,7 @@ export default function OnboardingBookFormScreen() {
                 firstName,
                 bookTitle: bookTitle.trim(),
                 author: author.trim(),
+                ...(addChallenge && { addChallenge }),
             },
         });
     };
@@ -108,7 +109,9 @@ export default function OnboardingBookFormScreen() {
                 {/* Contenu principal : titre + 2 inputs
                     Même structure que mainContent de index.tsx */}
                 <View style={styles.mainContent}>
-                    <Text style={styles.title}>Décris ton premier bbb !</Text>
+                    <Text style={styles.title}>
+                        {addChallenge ? 'Décris ce nouveau bbb' : 'Décris ton premier bbb !'}
+                    </Text>
                     
                     <View style={styles.formContainer}>
                         <View style={styles.inputWrapper}>
