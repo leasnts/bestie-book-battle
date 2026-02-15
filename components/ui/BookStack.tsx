@@ -30,9 +30,40 @@ import {
   Text,
   View,
 } from 'react-native';
-import { Challenge } from '../../types/supabase';
+import Svg, { Path } from 'react-native-svg';
+import { Challenge, ParticipantWithProgress } from '../../types/supabase';
 import { colors, spacing } from '../../utils/constants';
 import CircularProgress from './CircularProgress';
+
+// ─── Badge marque-page ✓ (SVG) ──────────────────────────────────
+/**
+ * Petit badge en forme de marque-page/ruban avec un checkmark blanc.
+ * S'affiche en haut à gauche des couvertures de livres terminés.
+ *
+ * Comment ça marche :
+ * - On dessine un rectangle avec une encoche en V en bas (forme de ruban)
+ * - On superpose un trait en forme de ✓ (checkmark) en blanc
+ * - Le tout via react-native-svg pour un rendu net à toutes les tailles
+ */
+const BookmarkCheckBadge = () => (
+  <View style={styles.doneBadge}>
+    <Svg width={14} height={18} viewBox="0 0 14 18" fill="none">
+      {/* Corps du marque-page : rectangle + V-notch en bas */}
+      <Path
+        d="M0 0H14V14.5L7 11.5L0 14.5V0Z"
+        fill={colors.dark900}
+      />
+      {/* Checkmark blanc centré dans la partie haute du ruban */}
+      <Path
+        d="M3.5 6.5L6 9L10.5 4.5"
+        stroke="#FFFFFF"
+        strokeWidth={1.5}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  </View>
+);
 
 // ─── Props ───────────────────────────────────────────────────────────
 
@@ -43,6 +74,8 @@ interface BookStackProps {
   allChallenges: Challenge[];
   /** Pourcentage de progression moyen du challenge actif */
   progressPercentage: number;
+  /** Liste des participants avec leur progression (pour déterminer si un livre est terminé) */
+  participants?: ParticipantWithProgress[];
   /** Indique si l'étagère est ouverte (true) ou fermée (false) */
   isOpen: boolean;
   /** Bascule ouvert/fermé */
@@ -59,6 +92,7 @@ const COVER_W = 50;
 const COVER_H = 70;
 const COVER_GAP = 12;          // gap entre covers en mode ouvert
 const STACK_OVERLAP = -40;      // overlap en mode fermé (marginRight négatif)
+const STACK_VISIBLE = COVER_W + STACK_OVERLAP; // 10px visible par cover empilée
 const DONE_BG_W = 57;          // fond dark derrière les covers "terminées"
 const DONE_BG_H = 76;
 const SHELF_BAR_H = 24;        // hauteur de la barre d'étagère
@@ -87,6 +121,7 @@ export default function BookStack({
   activeChallenge,
   allChallenges,
   progressPercentage,
+  participants = [],
   isOpen,
   onToggle,
   onSelectChallenge,
@@ -151,9 +186,11 @@ export default function BookStack({
           contentContainerStyle={styles.shelfContent}
           ItemSeparatorComponent={() => <View style={{ width: COVER_GAP }} />}
           renderItem={({ item }) => {
-            const isActive = item.id === activeChallenge.id;
-            // TODO: déterminer si un challenge est "terminé" (ex. progression >= 100%)
-            const isDone = false;
+            // Un livre est "terminé" quand le challenge est marqué completed
+            // OU quand la progression moyenne atteint 100%
+            const isDone =
+              item.status === 'completed' ||
+              item.average_progress_percentage >= 100;
 
             return (
               <Pressable
@@ -163,25 +200,38 @@ export default function BookStack({
                   pressed && { opacity: 0.85 },
                 ]}
               >
-                {/* Fond dark derrière les livres terminés */}
-                {isDone && <View style={styles.doneCoverBackground} />}
+                {isDone ? (
+                  // ── LIVRE TERMINÉ ──
+                  // Structure : fond dark (plus grand) + inner shadow overlay
+                  //           → cover carrée (2px radius) par-dessus
+                  //           → badge marque-page ✓ en haut à gauche
+                  <View style={styles.doneCoverContainer}>
+                    {/* 1. Fond dark derrière la cover (57×76, déborde de 3px) */}
+                    <View style={styles.doneCoverBackground}>
+                      {/* Overlay pour simuler les inner shadows Figma */}
+                      <View style={styles.doneCoverInnerShadow} />
+                    </View>
 
-                {/* Image de la couverture */}
-                <View style={styles.shelfCoverShadow}>
-                  <Image
-                    source={resolveImage(item.cover_url)}
-                    style={[
-                      styles.shelfCover,
-                      isActive && styles.shelfCoverActive,
-                    ]}
-                    contentFit="cover"
-                  />
-                </View>
+                    {/* 2. Image de la couverture (coins carrés) */}
+                    <Image
+                      source={resolveImage(item.cover_url)}
+                      style={styles.shelfCoverDone}
+                      contentFit="cover"
+                    />
 
-                {/* Badge ✓ pour livres terminés */}
-                {isDone && (
-                  <View style={styles.doneBadge}>
-                    <Ionicons name="checkmark" size={10} color={colors.white} />
+                    {/* 3. Badge marque-page SVG avec checkmark */}
+                    <BookmarkCheckBadge />
+                  </View>
+                ) : (
+                  // ── LIVRE EN COURS ──
+                  // Structure : conteneur avec shadow + coins arrondis (20px)
+                  //           → cover arrondie à l'intérieur
+                  <View style={styles.shelfCoverShadow}>
+                    <Image
+                      source={resolveImage(item.cover_url)}
+                      style={styles.shelfCover}
+                      contentFit="cover"
+                    />
                   </View>
                 )}
               </Pressable>
@@ -205,63 +255,96 @@ export default function BookStack({
   }
 
   // ─── RENDU : ÉTAT FERMÉ (pile empilée) ──────────────────────
+  //
+  // Structure : le livre actif est ancré à GAUCHE (avec le padding parent de 16px).
+  // Les covers empilées sont positionnées en absolute DERRIÈRE la cover active,
+  // décalées vers la gauche. Elles peuvent sortir de l'écran, c'est normal.
+  //
+  // Pourquoi ? Si l'utilisateur a 10+ livres, le titre/auteur doit toujours
+  // rester lisible. En ancrant à gauche, l'espace pour le texte ne rétrécit jamais.
+
+  const isActiveDone =
+    activeChallenge.status === 'completed' ||
+    activeChallenge.average_progress_percentage >= 100;
 
   return (
     <Pressable onPress={onToggle} style={styles.closedContainer}>
-      <View style={styles.stackRow}>
-        {/* Les petites covers d'arrière-plan empilées */}
-        {otherCovers.map((cover, index) => (
-          <View
-            key={`bg-cover-${index}`}
-            style={[
-              styles.smallCoverWrapper,
-              { zIndex: index, marginRight: STACK_OVERLAP },
-            ]}
-          >
-            <View style={styles.smallCoverShadow}>
-              <Image
-                source={resolveImage(cover)}
-                style={styles.smallCover}
-                contentFit="cover"
-              />
-            </View>
-          </View>
-        ))}
-
-        {/* Le livre actif (premier plan) avec détails */}
-        <View style={[styles.activeCoverWrapper, { zIndex: otherCovers.length + 1 }]}>
-          <View style={styles.activeCard}>
-            {/* Couverture du livre actif */}
-            <Image
-              source={resolveImage(coverUrl)}
-              style={styles.activeCover}
-              contentFit="cover"
-            />
-
-            {/* Infos : auteur, titre, badge pages */}
-            <View style={styles.bookInfo}>
-              <View style={styles.bookDetails}>
-                <View style={styles.textAndBadge}>
-                  <Text style={styles.author} numberOfLines={1}>
-                    {bookAuthor || 'Auteur inconnu'}
-                  </Text>
-                  <Text style={styles.title} numberOfLines={1}>
-                    {bookTitle}
-                  </Text>
-                  <View style={styles.pagesBadge}>
-                    <Text style={styles.pagesText}>{totalPages}p</Text>
-                  </View>
-                </View>
+      <View style={styles.activeCard}>
+        {/* Zone couverture : cover active au premier plan + pile derrière */}
+        <View style={styles.coverArea}>
+          {/* Covers empilées — positionnées en absolute, décalées vers la gauche.
+              Chaque cover est décalée de STACK_VISIBLE (10px) de plus que la précédente.
+              Les zIndex croissants assurent que les covers les plus proches de l'active
+              sont visuellement au-dessus des plus éloignées. */}
+          {otherCovers.map((cover, index) => (
+            <View
+              key={`bg-cover-${index}`}
+              style={[
+                styles.stackedCover,
+                {
+                  left: -((otherCovers.length - index) * STACK_VISIBLE),
+                  zIndex: index,
+                },
+              ]}
+            >
+              <View style={styles.smallCoverShadow}>
+                <Image
+                  source={resolveImage(cover)}
+                  style={styles.smallCover}
+                  contentFit="cover"
+                />
               </View>
+            </View>
+          ))}
 
-              {/* Progression circulaire */}
-              <CircularProgress
-                percentage={progressPercentage}
-                size={56}
-                strokeWidth={4}
-              />
+          {/* Cover active — toujours au premier plan (zIndex le plus haut) */}
+          <View style={{ zIndex: otherCovers.length + 1 }}>
+            {isActiveDone ? (
+              <View style={styles.doneCoverContainer}>
+                <View style={styles.doneCoverBackground}>
+                  <View style={styles.doneCoverInnerShadow} />
+                </View>
+                <Image
+                  source={resolveImage(coverUrl)}
+                  style={styles.shelfCoverDone}
+                  contentFit="cover"
+                />
+                <BookmarkCheckBadge />
+              </View>
+            ) : (
+              <View style={styles.activeCoverShadow}>
+                <Image
+                  source={resolveImage(coverUrl)}
+                  style={styles.activeCover}
+                  contentFit="cover"
+                />
+              </View>
+            )}
+          </View>
+        </View>
+
+        {/* Infos : auteur, titre, badge pages, progression */}
+        <View style={styles.bookInfo}>
+          <View style={styles.bookDetails}>
+            <View style={styles.textAndBadge}>
+              <Text style={styles.author} numberOfLines={1}>
+                {bookAuthor || 'Auteur inconnu'}
+              </Text>
+              <Text style={styles.title} numberOfLines={1}>
+                {bookTitle}
+              </Text>
+              <View style={styles.pagesBadge}>
+                <Text style={styles.pagesText}>{totalPages}p</Text>
+              </View>
             </View>
           </View>
+
+          {/* Progression circulaire */}
+          <CircularProgress
+            percentage={progressPercentage}
+            size={56}
+            strokeWidth={4}
+          />
         </View>
       </View>
     </Pressable>
@@ -274,14 +357,26 @@ const styles = StyleSheet.create({
   // ═══ ÉTAT FERMÉ ═══
   closedContainer: {
     width: '100%',
+    overflow: 'visible', // Les covers empilées peuvent sortir à gauche
   },
-  stackRow: {
+  // Carte du livre actif — flexDirection: row pour cover + infos côte à côte
+  activeCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'flex-end',
   },
-  smallCoverWrapper: {
-    // marginRight appliqué dynamiquement (STACK_OVERLAP)
+  // Zone de la couverture — dimensionnée par la cover active (50×70).
+  // Les covers empilées sont en absolute et débordent vers la gauche.
+  coverArea: {
+    width: COVER_W,
+    height: COVER_H,
+    overflow: 'visible',
+  },
+  // Cover empilée (absolute, derrière la cover active)
+  stackedCover: {
+    position: 'absolute',
+    top: 0,
+    // left est appliqué dynamiquement : -((otherCovers.length - index) * STACK_VISIBLE)
+    // zIndex est appliqué dynamiquement : index
   },
   smallCoverShadow: {
     borderRadius: 2,
@@ -296,23 +391,19 @@ const styles = StyleSheet.create({
     height: COVER_H,
     borderRadius: 2,
   },
-  activeCoverWrapper: {
-    flex: 1,
-  },
-  activeCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderRadius: 2,
-  },
-  activeCover: {
-    width: COVER_W,
-    height: COVER_H,
+  // Conteneur shadow pour la cover active (état non terminé)
+  activeCoverShadow: {
     borderRadius: 2,
     shadowColor: '#000',
     shadowOffset: { width: -4, height: 0 },
     shadowOpacity: 0.26,
     shadowRadius: 4,
     elevation: 4,
+  },
+  activeCover: {
+    width: COVER_W,
+    height: COVER_H,
+    borderRadius: 2,
   },
   bookInfo: {
     flex: 1,
@@ -382,6 +473,8 @@ const styles = StyleSheet.create({
     overflow: 'visible',
   },
 
+  // ── Cover en cours (non terminée) ──
+  // Wrapper avec radius 2px (comme Figma) et shadow latérale
   shelfCoverWrapper: {
     alignItems: 'center',
     justifyContent: 'flex-end',
@@ -393,18 +486,25 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.26,
     shadowRadius: 4,
     elevation: 4,
+    overflow: 'hidden', // Clip l'image aux coins arrondis du conteneur
   },
   shelfCover: {
     width: COVER_W,
     height: COVER_H,
     borderRadius: 2,
   },
-  shelfCoverActive: {
-    // Même radius que les autres covers (2px) — pas de différence visuelle
-    borderRadius: 2,
-  },
 
-  // Fond dark derrière une cover "terminée" (Figma: 57x76, dark900, inner shadows)
+  // ── Cover terminée (100%) ──
+  // Conteneur global qui porte la shadow de l'ensemble (fond dark + cover)
+  doneCoverContainer: {
+    shadowColor: '#000',
+    shadowOffset: { width: -4, height: 0 },
+    shadowOpacity: 0.26,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  // Fond dark derrière la cover — 57×76px, déborde de 3px de chaque côté
+  // Ce fond crée l'effet "cadre sombre" autour de la couverture terminée
   doneCoverBackground: {
     position: 'absolute',
     left: -3,
@@ -413,9 +513,33 @@ const styles = StyleSheet.create({
     height: DONE_BG_H,
     borderRadius: 2,
     backgroundColor: colors.dark900,
+    overflow: 'hidden',
   },
-
-  // Badge ✓ en haut à gauche pour les livres terminés
+  // Overlay pour simuler les inner shadows du Figma
+  // En React Native on ne peut pas faire box-shadow: inset, donc on utilise
+  // des bordures à épaisseur variable avec des couleurs semi-transparentes :
+  // - haut/gauche : reflet lumineux (blanc transparent)
+  // - bas/droite : ombre profonde (noir transparent)
+  doneCoverInnerShadow: {
+    ...StyleSheet.absoluteFillObject,
+    borderRadius: 2,
+    borderTopWidth: 2,
+    borderLeftWidth: 2,
+    borderBottomWidth: 2,
+    borderRightWidth: 1,
+    borderTopColor: 'rgba(255,255,255,0.20)',
+    borderLeftColor: 'rgba(255,255,255,0.15)',
+    borderBottomColor: 'rgba(0,0,0,0.35)',
+    borderRightColor: 'rgba(0,0,0,0.20)',
+  },
+  // Cover terminée : coins presque carrés (2px)
+  shelfCoverDone: {
+    width: COVER_W,
+    height: COVER_H,
+    borderRadius: 2,
+  },
+  // Badge marque-page SVG — positionné en haut à gauche
+  // Il déborde légèrement au-dessus de la cover (top: -2)
   doneBadge: {
     position: 'absolute',
     top: -2,

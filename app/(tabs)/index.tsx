@@ -240,6 +240,7 @@ export default function HomeScreen() {
             activeChallenge={activeChallenge}
             allChallenges={challenges}
             progressPercentage={averagePercentage}
+            participants={participants}
             isOpen={showBookShelf}
             onToggle={handleBookStackToggle}
             onSelectChallenge={handleSelectChallenge}
