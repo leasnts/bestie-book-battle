@@ -48,6 +48,7 @@ import { Challenge, ParticipantWithProgress } from '../../types/supabase';
 import { borderRadius, colors, spacing } from '../../utils/constants';
 import Button3D from '../Button3D';
 import PopEyes from '../PopEyes';
+import IconCalendar from '../icons/IconCalendar';
 import IconChevronRight from '../icons/IconChevronRight';
 import IconCopy from '../icons/IconCopy';
 import IconPencil from '../icons/IconPencil';
@@ -686,7 +687,6 @@ export default function BookStack({
                 </View>
                 <View style={styles.sheetActionTexts}>
                   <Text style={styles.sheetActionTitle}>Inviter un ami</Text>
-                  <Text style={styles.sheetActionDesc}>Partager le code d'invitation</Text>
                 </View>
                 <IconChevronRight size={18} color={colors.textSubtle} />
               </Pressable>
@@ -703,7 +703,6 @@ export default function BookStack({
                 </View>
                 <View style={styles.sheetActionTexts}>
                   <Text style={styles.sheetActionTitle}>Modifier le livre</Text>
-                  <Text style={styles.sheetActionDesc}>Titre, auteur, couverture</Text>
                 </View>
                 <IconChevronRight size={18} color={colors.textSubtle} />
               </Pressable>
@@ -716,11 +715,10 @@ export default function BookStack({
                 ]}
               >
                 <View style={styles.sheetActionIcon}>
-                  <Ionicons name="hourglass-outline" size={20} color={colors.textPrimary} />
+                  <IconCalendar size={20} color={colors.textPrimary} />
                 </View>
                 <View style={styles.sheetActionTexts}>
                   <Text style={styles.sheetActionTitle}>Modifier la deadline</Text>
-                  <Text style={styles.sheetActionDesc}>Date butoir pour finir le livre</Text>
                 </View>
                 <IconChevronRight size={18} color={colors.textSubtle} />
               </Pressable>
@@ -743,9 +741,6 @@ export default function BookStack({
                 <View style={styles.sheetActionTexts}>
                   <Text style={[styles.sheetActionTitle, styles.sheetActionDanger]}>
                     Quitter le livre
-                  </Text>
-                  <Text style={styles.sheetActionDesc}>
-                    Retirer ce livre de ta bibliothèque
                   </Text>
                 </View>
               </Pressable>
@@ -1001,9 +996,9 @@ const styles = StyleSheet.create({
   },
   pagesText: {
     fontFamily: 'WorkSans_500Medium',
-    fontSize: 16,
+    fontSize: 14,
     color: colors.textPrimary,
-    lineHeight: 22,
+    lineHeight: 20,
     textAlign: 'center',
   },
   deadlineBadge: {

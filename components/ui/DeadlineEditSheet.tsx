@@ -1,31 +1,31 @@
 /**
  * DeadlineEditSheet
  *
- * Bottom sheet simple pour modifier la deadline globale du livre.
- * - Titre « La deadline »
- * - Input texte au format JJ/MM/AAAA (style onboarding)
+ * Bottom sheet pour modifier la deadline globale du livre.
+ * - Titre « La deadline » aligné à gauche
+ * - DateTimePicker natif iOS en mode roulette (spinner)
  * - Bouton « Enregistrer »
  */
 
+import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
-  Alert,
-  KeyboardAvoidingView,
-  Modal,
-  Platform,
-  Pressable,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
+    Alert,
+    Modal,
+    Platform,
+    Pressable,
+    StyleSheet,
+    Text,
+    View,
 } from 'react-native';
 import Animated, {
-  FadeIn,
-  FadeOut,
-  SlideInDown,
-  SlideOutDown,
+    FadeIn,
+    FadeOut,
+    SlideInDown,
+    SlideOutDown,
 } from 'react-native-reanimated';
-import { borderRadius, colors, fontSize, spacing } from '../../utils/constants';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { colors, fontSize, spacing } from '../../utils/constants';
 import Button3D from '../Button3D';
 
 interface DeadlineEditSheetProps {
@@ -37,69 +37,60 @@ interface DeadlineEditSheetProps {
   onSave: (date: Date) => Promise<void>;
 }
 
-/** Parse JJ/MM/AAAA en Date. Retourne null si invalide. */
-function parseDDMMYYYY(input: string): Date | null {
-  const trimmed = input.trim().replace(/\s/g, '');
-  const match = trimmed.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-  if (!match) return null;
-  const day = parseInt(match[1], 10);
-  const month = parseInt(match[2], 10) - 1;
-  const year = parseInt(match[3], 10);
-  if (month < 0 || month > 11 || day < 1 || day > 31) return null;
-  const d = new Date(year, month, day);
-  if (d.getFullYear() !== year || d.getMonth() !== month || d.getDate() !== day) {
-    return null;
-  }
-  return d;
-}
-
-/** Formate une Date en JJ/MM/AAAA */
-function formatToDDMMYYYY(d: Date): string {
-  const day = String(d.getDate()).padStart(2, '0');
-  const month = String(d.getMonth() + 1).padStart(2, '0');
-  const year = d.getFullYear();
-  return `${day}/${month}/${year}`;
-}
-
 export default function DeadlineEditSheet({
   visible,
   onClose,
   currentDate,
   onSave,
 }: DeadlineEditSheetProps) {
-  const [value, setValue] = useState('');
+  // Safe area insets pour respecter la zone sûre iOS en bas
+  const insets = useSafeAreaInsets();
+  
+  // État pour la date sélectionnée
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [isSaving, setIsSaving] = useState(false);
 
-  // Pré-remplir au montage / quand currentDate change
+  // Initialiser la date au montage / quand currentDate change
   useEffect(() => {
     if (currentDate) {
-      setValue(formatToDDMMYYYY(new Date(currentDate)));
+      setSelectedDate(new Date(currentDate));
     } else {
-      setValue('');
+      // Par défaut : demain
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      setSelectedDate(tomorrow);
     }
   }, [visible, currentDate]);
 
-  const handleSave = useCallback(async () => {
-    const parsed = parseDDMMYYYY(value);
-    if (!parsed) {
-      Alert.alert('Format invalide', 'Entre une date au format JJ/MM/AAAA (ex: 01/03/2026)');
-      return;
+  // Callback quand l'utilisateur change la date dans le picker
+  const handleDateChange = useCallback((_event: DateTimePickerEvent, date?: Date) => {
+    if (date) {
+      setSelectedDate(date);
     }
-    if (parsed < new Date()) {
+  }, []);
+
+  const handleSave = useCallback(async () => {
+    // Vérifier que la date est dans le futur
+    const now = new Date();
+    now.setHours(0, 0, 0, 0); // Reset time pour comparer juste les jours
+    const selectedDay = new Date(selectedDate);
+    selectedDay.setHours(0, 0, 0, 0);
+
+    if (selectedDay < now) {
       Alert.alert('Date passée', 'La deadline doit être une date future.');
       return;
     }
 
     setIsSaving(true);
     try {
-      await onSave(parsed);
+      await onSave(selectedDate);
       onClose();
     } catch (e) {
       Alert.alert('Erreur', 'Impossible d\'enregistrer la deadline.');
     } finally {
       setIsSaving(false);
     }
-  }, [value, onSave, onClose]);
+  }, [selectedDate, onSave, onClose]);
 
   if (!visible) return null;
 
@@ -119,47 +110,51 @@ export default function DeadlineEditSheet({
         <Pressable style={styles.backdrop} onPress={onClose} />
       </Animated.View>
 
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        style={styles.keyboardView}
+      <Animated.View
+        style={[styles.sheet, { paddingBottom: Math.max(32, insets.bottom + 16) }]}
+        entering={SlideInDown.duration(300)}
+        exiting={SlideOutDown.duration(200)}
       >
-        <Animated.View
-          style={styles.sheet}
-          entering={SlideInDown.duration(300)}
-          exiting={SlideOutDown.duration(200)}
-        >
-          <View style={styles.handleRow}>
-            <View style={styles.handle} />
-          </View>
+        <View style={styles.handleRow}>
+          <View style={styles.handle} />
+        </View>
 
-          <Text style={styles.title}>La deadline</Text>
+        <Text style={styles.title}>La deadline</Text>
 
-          <View style={styles.inputContainer}>
-            <TextInput
-              style={styles.input}
-              value={value}
-              onChangeText={setValue}
-              placeholder="01/03/2026"
-              placeholderTextColor={colors.textSubtle}
-              keyboardType="numbers-and-punctuation"
-              maxLength={10}
-              returnKeyType="done"
-              onSubmitEditing={handleSave}
+        <View style={styles.pickerContainer}>
+          {Platform.OS === 'ios' && (
+            <DateTimePicker
+              value={selectedDate}
+              mode="date"
+              display="spinner"
+              onChange={handleDateChange}
+              locale="fr-FR"
+              textColor={colors.textPrimary}
+              style={styles.picker}
             />
-          </View>
+          )}
+          {Platform.OS === 'android' && (
+            <DateTimePicker
+              value={selectedDate}
+              mode="date"
+              display="default"
+              onChange={handleDateChange}
+              locale="fr-FR"
+            />
+          )}
+        </View>
 
-          <View style={styles.footer}>
-            <Button3D
-              onPress={handleSave}
-              variant="primary"
-              disabled={!value.trim() || isSaving}
-              style={{ width: '100%' }}
-            >
-              Enregistrer
-            </Button3D>
-          </View>
-        </Animated.View>
-      </KeyboardAvoidingView>
+        <View style={styles.footer}>
+          <Button3D
+            onPress={handleSave}
+            variant="primary"
+            disabled={isSaving}
+            style={{ width: '100%' }}
+          >
+            Enregistrer
+          </Button3D>
+        </View>
+      </Animated.View>
     </Modal>
   );
 }
@@ -172,15 +167,15 @@ const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
   },
-  keyboardView: {
-    flex: 1,
-    justifyContent: 'flex-end',
-  },
   sheet: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
     backgroundColor: colors.white,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
-    paddingBottom: 32,
+    // paddingBottom est maintenant dynamique via le style inline (safe area)
     paddingHorizontal: spacing.xl,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: -8 },
@@ -205,26 +200,19 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
     letterSpacing: -0.72,
     lineHeight: 44,
-    marginBottom: spacing['2xl'],
-    textAlign: 'center',
+    marginBottom: spacing.lg,
+    textAlign: 'left', // Aligné à gauche comme demandé
   },
-  inputContainer: {
-    alignItems: 'center',
-    paddingHorizontal: spacing['4xl'],
-    paddingVertical: spacing['2xl'],
+  pickerContainer: {
+    // Centre la roulette horizontalement sur la modal
+    paddingVertical: spacing.md,
+    minHeight: 200,
+    justifyContent: 'center',
+    alignItems: 'center', // Centre la roulette horizontalement
   },
-  input: {
-    fontFamily: 'Rokkitt_Bold',
-    fontSize: fontSize['5xl'],
-    color: colors.textPrimary,
-    letterSpacing: -1.2,
-    textAlign: 'center',
-    textAlignVertical: 'center',
-    width: '100%',
-    backgroundColor: 'transparent',
-    padding: 0,
-    borderBottomWidth: 2,
-    borderBottomColor: colors.borderLight,
+  picker: {
+    // La roulette prend sa largeur naturelle et est centrée
+    height: 200,
   },
   footer: {
     paddingTop: spacing.lg,
