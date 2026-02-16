@@ -4,7 +4,7 @@
  * L'utilisateur saisit le nombre de pages du livre.
  * Format identique à onboarding/index.tsx : input géant centré.
  * 
- * Flow : create (titre + auteur) → pages (ici) → cover
+ * Flow : create (titre + auteur) → pages (ici) → deadline → cover
  */
 
 import { Image } from 'expo-image';
@@ -57,7 +57,7 @@ export default function OnboardingPagesScreen() {
     }, []);
 
     /**
-     * Passer à l'écran suivant (import couverture)
+     * Passer à l'écran suivant (choix de la deadline)
      * Toutes les données du livre sont passées en paramètres de route
      */
     const handleContinue = () => {
@@ -69,7 +69,7 @@ export default function OnboardingPagesScreen() {
         }
 
         router.push({
-            pathname: '/onboarding/cover',
+            pathname: '/onboarding/deadline',
             params: {
                 firstName,
                 bookTitle,

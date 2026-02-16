@@ -212,6 +212,78 @@ export default function ProfileScreen() {
             <Ionicons name="chevron-forward" size={18} color={COLORS.textMuted} />
           </Pressable>
 
+          {/* 🧪 Boutons temporaires pour tester l'onboarding - À SUPPRIMER EN PRODUCTION */}
+          <View style={{ backgroundColor: COLORS.flame + '10', padding: 12, borderRadius: 8, marginVertical: 8 }}>
+            <Text style={{ fontFamily: 'WorkSans_SemiBold', fontSize: 14, color: COLORS.flame, marginBottom: 8 }}>
+              🧪 Test Onboarding (dev only)
+            </Text>
+            
+            <Pressable 
+              style={[styles.actionRow, { backgroundColor: 'transparent', borderBottomWidth: 0, paddingVertical: 8 }]} 
+              onPress={() => router.push('/onboarding/index')}
+            >
+              <Text style={[styles.actionLabel, { fontSize: 13 }]}>1. Comment tu t'appelles ?</Text>
+              <Ionicons name="chevron-forward" size={16} color={COLORS.textMuted} />
+            </Pressable>
+            
+            <Pressable 
+              style={[styles.actionRow, { backgroundColor: 'transparent', borderBottomWidth: 0, paddingVertical: 8 }]} 
+              onPress={() => router.push({
+                pathname: '/onboarding/role',
+                params: { firstName: 'Test' }
+              })}
+            >
+              <Text style={[styles.actionLabel, { fontSize: 13 }]}>2. Quel est ton rôle ?</Text>
+              <Ionicons name="chevron-forward" size={16} color={COLORS.textMuted} />
+            </Pressable>
+            
+            <Pressable 
+              style={[styles.actionRow, { backgroundColor: 'transparent', borderBottomWidth: 0, paddingVertical: 8 }]} 
+              onPress={() => router.push({
+                pathname: '/onboarding/create',
+                params: { firstName: 'Test' }
+              })}
+            >
+              <Text style={[styles.actionLabel, { fontSize: 13 }]}>3. Décris ton bbb</Text>
+              <Ionicons name="chevron-forward" size={16} color={COLORS.textMuted} />
+            </Pressable>
+            
+            <Pressable 
+              style={[styles.actionRow, { backgroundColor: 'transparent', borderBottomWidth: 0, paddingVertical: 8 }]} 
+              onPress={() => router.push({
+                pathname: '/onboarding/pages',
+                params: { firstName: 'Test', bookTitle: 'Test Book', author: 'Test Author' }
+              })}
+            >
+              <Text style={[styles.actionLabel, { fontSize: 13 }]}>4. Nombre de pages</Text>
+              <Ionicons name="chevron-forward" size={16} color={COLORS.textMuted} />
+            </Pressable>
+            
+            <Pressable 
+              style={[styles.actionRow, { backgroundColor: 'transparent', borderBottomWidth: 0, paddingVertical: 8 }]} 
+              onPress={() => router.push({
+                pathname: '/onboarding/deadline',
+                params: { firstName: 'Test', bookTitle: 'Test Book', author: 'Test Author', totalPages: '250' }
+              })}
+            >
+              <Text style={[styles.actionLabel, { fontSize: 13, color: COLORS.flame, fontFamily: 'WorkSans_SemiBold' }]}>
+                5. ⭐ Deadline (NOUVEAU)
+              </Text>
+              <Ionicons name="chevron-forward" size={16} color={COLORS.flame} />
+            </Pressable>
+            
+            <Pressable 
+              style={[styles.actionRow, { backgroundColor: 'transparent', borderBottomWidth: 0, paddingVertical: 8 }]} 
+              onPress={() => router.push({
+                pathname: '/onboarding/cover',
+                params: { firstName: 'Test', bookTitle: 'Test Book', author: 'Test Author', totalPages: '250', deadline: '31/12/2026' }
+              })}
+            >
+              <Text style={[styles.actionLabel, { fontSize: 13 }]}>6. Import couverture</Text>
+              <Ionicons name="chevron-forward" size={16} color={COLORS.textMuted} />
+            </Pressable>
+          </View>
+
           <Pressable
             style={[styles.actionRow, styles.actionRowLast]}
             onPress={handleLogoutPress}

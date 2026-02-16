@@ -43,6 +43,7 @@ export default function OnboardingNotificationsScreen() {
         bookTitle?: string;
         author?: string;
         totalPages?: string;
+        deadline?: string;
         coverUri?: string;
         // Params pour la branche "join"
         challengeId?: string;
@@ -98,6 +99,7 @@ export default function OnboardingNotificationsScreen() {
                     bookTitle: params.bookTitle || '',
                     author: params.author || '',
                     totalPages: params.totalPages || '',
+                    deadline: params.deadline || '',
                     // coverUri : lu depuis onboardingStore (évite troncature params URL)
                 },
             });

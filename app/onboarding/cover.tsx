@@ -4,6 +4,8 @@
  * L'utilisateur importe une photo de la couverture du livre.
  * Zone pointillée avec bouton d'upload au centre.
  * La couverture peut être sélectionnée via la galerie de photos.
+ * 
+ * Flow : create → pages → deadline → cover (ici) → notifications/complete
  */
 
 import { Ionicons } from '@expo/vector-icons';
@@ -35,12 +37,14 @@ export default function OnboardingCoverScreen() {
         bookTitle, 
         author, 
         totalPages,
+        deadline,
         addChallenge,
     } = useLocalSearchParams<{
         firstName: string;
         bookTitle: string;
         author: string;
         totalPages: string;
+        deadline: string;
         addChallenge?: string;
     }>();
     
@@ -121,6 +125,7 @@ export default function OnboardingCoverScreen() {
                     bookTitle,
                     author,
                     totalPages,
+                    deadline,
                     addChallenge,
                 },
             });
@@ -132,6 +137,7 @@ export default function OnboardingCoverScreen() {
                     bookTitle,
                     author,
                     totalPages,
+                    deadline,
                     flow: 'create',
                 },
             });

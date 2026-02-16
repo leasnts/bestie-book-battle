@@ -44,6 +44,7 @@ export default function OnboardingCompleteScreen() {
         bookTitle: string;
         author: string;
         totalPages: string;
+        deadline: string;
         addChallenge?: string;
     }>();
     // coverUri : lu depuis le store (évite troncature des params URL pour les chemins fichiers longs)
@@ -96,13 +97,25 @@ export default function OnboardingCompleteScreen() {
                     return;
                 }
 
+                // Convertir la deadline du format JJ/MM/AAAA vers ISO (YYYY-MM-DD)
+                let targetEndDate: string | undefined = undefined;
+                if (params.deadline) {
+                    const parts = params.deadline.split('/');
+                    if (parts.length === 3) {
+                        const [day, month, year] = parts;
+                        // Format ISO : YYYY-MM-DD
+                        targetEndDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+                    }
+                }
+
                 // Créer le challenge
                 const challenge = await createChallenge(
                     userId,
                     params.bookTitle,
                     params.author || undefined,
                     Number(params.totalPages),
-                    undefined
+                    undefined,
+                    targetEndDate
                 );
 
                 // 3. Upload de la cover si présente
