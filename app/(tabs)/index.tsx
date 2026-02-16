@@ -611,6 +611,15 @@ export default function HomeScreen() {
             me={meData}
             friend={friendData}
             onParticipantPress={handleParticipantPress}
+            intermediateGoal={
+              secondaryGoal
+                ? {
+                    target_pages: secondaryGoal.target_pages,
+                    deadline: secondaryGoal.deadline,
+                  }
+                : null
+            }
+            onGoalPress={handleSetIntermediateGoal}
           />
         </View>
       )}

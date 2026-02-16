@@ -13,12 +13,17 @@
  *   pour un feedback visuel satisfaisant quand la valeur change
  * - La couronne PNG est positionnée en absolute au-dessus de l'avatar du leader,
  *   légèrement penchée (~9°) comme dans le Figma
+ * - Si un objectif intermédiaire existe, on affiche une carte en haut :
+ *   → Colonne gauche : "Objectif" + nombre de pages, "Deadline" + date
+ *   → Colonne droite : cercle de progression + chevron
  */
 
 import { Image } from 'expo-image';
 import React, { useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { colors, spacing } from '../../utils/constants';
+import { Ionicons } from '@expo/vector-icons';
+import Svg, { Circle } from 'react-native-svg';
+import { colors, spacing, borderRadius } from '../../utils/constants';
 import IconFlame from '../icons/IconFlame';
 
 interface Participant {
@@ -39,6 +44,13 @@ interface ProgressCardProps {
   friend: Participant | null;
   /** Callback quand on tap sur un participant */
   onParticipantPress?: (participantId: string) => void;
+  /** Objectif intermédiaire complet (optionnel) */
+  intermediateGoal?: {
+    target_pages: number;
+    deadline: string;
+  } | null;
+  /** Callback quand on clique sur la carte objectif */
+  onGoalPress?: () => void;
 }
 
 // Fallback avatar quand le participant n'a pas de photo
@@ -173,6 +185,8 @@ export default function ProgressCard({
   me,
   friend,
   onParticipantPress,
+  intermediateGoal,
+  onGoalPress,
 }: ProgressCardProps) {
   // Compteurs roulants — quand le score change (ex: après enregistrement),
   // le nombre affiché s'incrémente progressivement de l'ancien au nouveau.
@@ -191,8 +205,42 @@ export default function ProgressCard({
   // Tri décroissant par score (le plus lu en haut)
   sortedParticipants.sort((a, b) => b.participant.score - a.participant.score);
 
+  // ═══ CALCULS OBJECTIF INTERMÉDIAIRE ═══
+  const goalData = intermediateGoal ? (() => {
+    const deadline = new Date(intermediateGoal.deadline);
+    
+    // Formater la date "Mer. 18 févr."
+    const dateStr = deadline.toLocaleDateString('fr-FR', {
+      weekday: 'short',
+      day: 'numeric',
+      month: 'short',
+    });
+    // Capitaliser et formatter (ex: "mer. 18 févr." -> "Mer. 18 févr.")
+    const formattedDate = dateStr.charAt(0).toUpperCase() + dateStr.slice(1).replace('.', '. ');
+
+    // Progression globale = moyenne des progressions des participants
+    const totalCurrentPages = sortedParticipants.reduce(
+      (sum, entry) => sum + entry.participant.score,
+      0
+    );
+    const averageCurrentPage = sortedParticipants.length > 0
+      ? totalCurrentPages / sortedParticipants.length
+      : 0;
+    
+    const progressPercentage = Math.min(
+      100,
+      Math.round((averageCurrentPage / intermediateGoal.target_pages) * 100)
+    );
+
+    return {
+      formattedDate,
+      progressPercentage,
+    };
+  })() : null;
+
   return (
     <View style={styles.container}>
+      {/* ── Liste des participants ── */}
       {sortedParticipants.map((entry) => (
         <ParticipantRow
           key={entry.participant.id}
@@ -201,6 +249,69 @@ export default function ProgressCard({
           onPress={() => onParticipantPress?.(entry.participant.id)}
         />
       ))}
+
+      {/* ── Carte objectif intermédiaire (si existe) - EN DESSOUS des participants ── */}
+      {intermediateGoal && goalData && (
+        <>
+          {/* Ligne de séparation */}
+          <View style={styles.separator} />
+          
+          <Pressable style={styles.goalCard} onPress={onGoalPress}>
+            {/* Partie gauche : Objectif + Deadline */}
+            <View style={styles.goalLeft}>
+              {/* Colonne Objectif */}
+              <View style={styles.goalColumn}>
+                <Text style={styles.goalLabel}>Objectif</Text>
+                <Text style={styles.goalValue}>{intermediateGoal.target_pages}</Text>
+              </View>
+
+              {/* Colonne Deadline */}
+              <View style={[styles.goalColumn, styles.goalColumnDeadline]}>
+                <Text style={styles.goalLabel}>Deadline</Text>
+                <Text style={styles.goalValue}>{goalData.formattedDate}</Text>
+              </View>
+            </View>
+
+            {/* Partie droite : Cercle de progression + Chevron */}
+            <View style={styles.goalRight}>
+              {/* Cercle de progression */}
+              <View style={styles.progressCircle}>
+                <Svg width={44} height={44} viewBox="0 0 44 44">
+                  {/* Cercle de fond (gris clair) */}
+                  <Circle
+                    cx={22}
+                    cy={22}
+                    r={20}
+                    stroke="rgba(0,0,0,0.08)"
+                    strokeWidth={3}
+                    fill="none"
+                  />
+                  {/* Cercle de progression (noir) */}
+                  <Circle
+                    cx={22}
+                    cy={22}
+                    r={20}
+                    stroke={colors.dark900}
+                    strokeWidth={3}
+                    fill="none"
+                    strokeDasharray={`${(goalData.progressPercentage / 100) * 125.6} 125.6`}
+                    strokeLinecap="round"
+                    rotation="-90"
+                    origin="22, 22"
+                  />
+                </Svg>
+                {/* Pourcentage au centre */}
+                <View style={styles.progressPercentageContainer}>
+                  <Text style={styles.progressPercentageText}>{goalData.progressPercentage}%</Text>
+                </View>
+              </View>
+
+              {/* Chevron */}
+              <Ionicons name="chevron-forward" size={24} color={colors.textSecondary} />
+            </View>
+          </Pressable>
+        </>
+      )}
     </View>
   );
 }
@@ -210,6 +321,88 @@ const styles = StyleSheet.create({
   container: {
     width: '100%',
     gap: spacing.md,
+  },
+
+  // ═══ SÉPARATEUR ═══
+  // Ligne grise horizontale qui sépare les participants de l'objectif
+  separator: {
+    height: 1,
+    backgroundColor: 'rgba(0,0,0,0.1)',
+    width: '100%',
+  },
+
+  // ═══ SECTION OBJECTIF (sans fond, bordure, radius, padding) ═══
+  goalCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing['2xl'],
+  },
+
+  // Partie gauche : contient les deux colonnes (Objectif + Deadline)
+  goalLeft: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: spacing['2xl'],
+  },
+
+  // Une colonne (Objectif ou Deadline)
+  goalColumn: {
+    flexDirection: 'column',
+    gap: spacing.xs,
+  },
+  // La colonne Deadline prend plus d'espace
+  goalColumnDeadline: {
+    flex: 1,
+  },
+
+  // Label (texte "Objectif" ou "Deadline")
+  goalLabel: {
+    fontFamily: 'WorkSans_500Medium',
+    fontSize: 14,
+    color: colors.textTertiary,
+    lineHeight: 20,
+  },
+
+  // Valeur (nombre de pages ou date) - 16px gras
+  goalValue: {
+    fontFamily: 'WorkSans_700Bold',
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors.textPrimary,
+    lineHeight: 22,
+  },
+
+  // Partie droite : cercle de progression + chevron
+  goalRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.lg,
+  },
+
+  // Conteneur du cercle de progression
+  progressCircle: {
+    width: 44,
+    height: 44,
+    position: 'relative',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  // Conteneur du pourcentage au centre du cercle
+  progressPercentageContainer: {
+    position: 'absolute',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  // Texte du pourcentage
+  progressPercentageText: {
+    fontFamily: 'Rokkitt_400Regular',
+    fontSize: 10,
+    color: colors.textTertiary,
+    lineHeight: 14,
   },
 
   // ═══ LIGNE PARTICIPANT ═══
