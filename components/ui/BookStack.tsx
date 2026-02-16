@@ -57,6 +57,16 @@ import { ProgressBar } from './ProgressBar';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
+/** Formate une date ISO en JJ/MM/AAAA */
+function formatDateDDMMYYYY(iso: string | null | undefined): string {
+  if (!iso) return '--/--/----';
+  const d = new Date(iso);
+  const day = String(d.getDate()).padStart(2, '0');
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const year = d.getFullYear();
+  return `${day}/${month}/${year}`;
+}
+
 // ─── Badge marque-page ✓ (SVG) ──────────────────────────────────
 /**
  * Petit badge en forme de marque-page/ruban avec un checkmark blanc.
@@ -112,9 +122,20 @@ interface BookStackProps {
   onInviteFriend?: () => void;
   /** Appelé pour modifier le challenge actif */
   onEditBook?: () => void;
+  /** Appelé pour modifier la deadline globale du livre */
+  onEditDeadline?: () => void;
 }
 
 // ─── Constantes de taille (Figma) ─────────────────────────────────
+
+// Ratio cover livre : 50:70 (largeur:hauteur)
+const COVER_RATIO_W = 50;
+const COVER_RATIO_H = 70;
+
+// Étagère ouverte : les covers ont la MÊME taille et ratio que la cover détaillée
+// (celle de la section fermée). La cover détaillée ≈ hauteur bookInfo (~110px).
+const SHELF_COVER_H = 110;
+const SHELF_COVER_W = Math.round((SHELF_COVER_H * COVER_RATIO_W) / COVER_RATIO_H); // 79
 
 const COVER_W = 50;
 const COVER_H = 70;
@@ -229,6 +250,7 @@ export default function BookStack({
   onDeleteBook,
   onInviteFriend,
   onEditBook,
+  onEditDeadline,
 }: BookStackProps) {
   // État local pour le menu contextuel et la modal d'invitation
   const [menuVisible, setMenuVisible] = useState(false);
@@ -240,6 +262,7 @@ export default function BookStack({
   const totalPages = activeChallenge.total_pages;
   const coverUrl = activeChallenge.cover_url;
   const inviteCode = activeChallenge.invite_code || '';
+  const targetEndDate = activeChallenge.target_end_date;
 
   // Les covers des autres challenges (pour la pile en mode fermé)
   const otherCovers = allChallenges
@@ -300,6 +323,11 @@ export default function BookStack({
     setMenuVisible(false);
     onEditBook?.();
   }, [onEditBook]);
+
+  const handleEditDeadlinePress = useCallback(() => {
+    setMenuVisible(false);
+    setTimeout(() => onEditDeadline?.(), 250);
+  }, [onEditDeadline]);
 
   // ─── Handler étagère ouverte ────────────────────────────────
 
@@ -368,7 +396,7 @@ export default function BookStack({
                   'worklet';
                   return {
                     initialValues: {
-                      transform: [{ translateY: -COVER_H }],
+                      transform: [{ translateY: -SHELF_COVER_H }],
                       opacity: 0,
                     },
                     animations: {
@@ -388,7 +416,7 @@ export default function BookStack({
                   ]}
                 >
                   {isDone ? (
-                    <View style={styles.doneCoverContainer}>
+                    <View style={[styles.doneCoverContainer, styles.shelfDoneCover]}>
                       <View style={styles.doneCoverBackground}>
                         <View style={styles.doneCoverInnerShadow} />
                       </View>
@@ -421,7 +449,7 @@ export default function BookStack({
               const delay = totalItems * DROP_STAGGER + 60;
               return {
                 initialValues: {
-                  transform: [{ translateY: -COVER_H }],
+                  transform: [{ translateY: -SHELF_COVER_H }],
                   opacity: 0,
                 },
                 animations: {
@@ -511,9 +539,9 @@ export default function BookStack({
             );
           })}
 
-          {/* Cover active — au premier plan */}
+          {/* Cover active — au premier plan, remplit coverArea */}
           <Animated.View
-            style={{ zIndex: otherCovers.length + 1 }}
+            style={[styles.activeCoverWrapper, { zIndex: otherCovers.length + 1 }]}
             entering={FadeIn.duration(200)}
           >
             {isActiveDone ? (
@@ -566,20 +594,30 @@ export default function BookStack({
             </Pressable>
           </View>
 
-          {/* Ligne du bas : badge pages + barre de progression + % (comme Figma) */}
+          {/* Ligne du bas : badges (pages + deadline) + barre de progression */}
           <View style={styles.bookFooter}>
-            <View style={styles.pagesBadge}>
-              <Text style={styles.pagesText}>{totalPages}p</Text>
+            <View style={styles.badgesRow}>
+              <View style={styles.pagesBadge}>
+                <Text style={styles.pagesText}>{totalPages}p</Text>
+              </View>
+              <View style={styles.deadlineBadge}>
+                <Text style={styles.deadlineText}>{formatDateDDMMYYYY(targetEndDate)}</Text>
+              </View>
             </View>
-            <View style={styles.progressBarContainer}>
-              <ProgressBar
-                percentage={progressPercentage}
-                height={8}
-                color={colors.dark900}
-                backgroundColor="rgba(0,0,0,0.05)"
-                showPercentage
-                animated
-              />
+            <View style={styles.progressBarRow}>
+              <View style={styles.progressBarContainer}>
+                <ProgressBar
+                  percentage={progressPercentage}
+                  height={8}
+                  color={colors.dark900}
+                  backgroundColor="rgba(0,0,0,0.05)"
+                  showPercentage={false}
+                  animated
+                />
+              </View>
+              <Text style={styles.progressBarPercentage}>
+                {Math.round(progressPercentage)}%
+              </Text>
             </View>
           </View>
         </Animated.View>
@@ -666,6 +704,23 @@ export default function BookStack({
                 <View style={styles.sheetActionTexts}>
                   <Text style={styles.sheetActionTitle}>Modifier le livre</Text>
                   <Text style={styles.sheetActionDesc}>Titre, auteur, couverture</Text>
+                </View>
+                <IconChevronRight size={18} color={colors.textSubtle} />
+              </Pressable>
+
+              <Pressable
+                onPress={handleEditDeadlinePress}
+                style={({ pressed }) => [
+                  styles.sheetAction,
+                  pressed && styles.sheetActionPressed,
+                ]}
+              >
+                <View style={styles.sheetActionIcon}>
+                  <Ionicons name="hourglass-outline" size={20} color={colors.textPrimary} />
+                </View>
+                <View style={styles.sheetActionTexts}>
+                  <Text style={styles.sheetActionTitle}>Modifier la deadline</Text>
+                  <Text style={styles.sheetActionDesc}>Date butoir pour finir le livre</Text>
                 </View>
                 <IconChevronRight size={18} color={colors.textSubtle} />
               </Pressable>
@@ -812,26 +867,32 @@ const styles = StyleSheet.create({
     width: '100%',
     overflow: 'visible', // Les covers empilées peuvent sortir à gauche
   },
-  // Carte du livre actif — flexDirection: row pour cover + infos côte à côte
+  // Carte du livre actif — flexDirection: row pour cover + infos côte à côte.
+  // alignItems: stretch = la cover prend la hauteur de la section (bookInfo).
   activeCard: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'stretch',
   },
-  // Zone de la couverture — dimensionnée par la cover active (50×70).
-  // Les covers empilées sont en absolute et débordent vers la gauche.
+  // Zone de la couverture — s'adapte à la hauteur de la section en gardant le ratio 50:70.
+  // Même ratio que les covers de l'étagère (SHELF_COVER_W / SHELF_COVER_H).
   coverArea: {
-    width: COVER_W,
-    height: COVER_H,
+    flex: 0,
+    alignSelf: 'stretch',
+    aspectRatio: COVER_RATIO_W / COVER_RATIO_H,
     overflow: 'visible',
   },
-  // Cover empilée (absolute, derrière la cover active)
+  // Cover empilée (absolute, derrière la cover active) — remplit coverArea
   stackedCover: {
     position: 'absolute',
     top: 0,
+    width: '100%',
+    height: '100%',
     // left est appliqué dynamiquement : -((otherCovers.length - index) * STACK_VISIBLE)
     // zIndex est appliqué dynamiquement : index
   },
   smallCoverShadow: {
+    width: '100%',
+    height: '100%',
     borderRadius: 2,
     shadowColor: '#000',
     shadowOffset: { width: -4, height: 0 },
@@ -840,12 +901,14 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   smallCover: {
-    width: COVER_W,
-    height: COVER_H,
+    width: '100%',
+    height: '100%',
     borderRadius: 2,
   },
   // Conteneur shadow pour la cover active (état non terminé)
   activeCoverShadow: {
+    width: '100%',
+    height: '100%',
     borderRadius: 2,
     shadowColor: '#000',
     shadowOffset: { width: -4, height: 0 },
@@ -854,9 +917,13 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   activeCover: {
-    width: COVER_W,
-    height: COVER_H,
+    width: '100%',
+    height: '100%',
     borderRadius: 2,
+  },
+  // Wrapper de la cover active — remplit coverArea (position absolute)
+  activeCoverWrapper: {
+    ...StyleSheet.absoluteFillObject,
   },
   bookInfo: {
     flex: 1,
@@ -872,20 +939,36 @@ const styles = StyleSheet.create({
   },
   bookTexts: {
     flex: 1,
-    gap: 4,
+    gap: 8,
   },
   menuButton: {
     padding: 4,
     marginLeft: spacing.sm,
   },
-  // Pied : badge pages + barre
+  // Pied : badges (pages + deadline) + barre
   bookFooter: {
+    flexDirection: 'column',
+    gap: 8,
+  },
+  badgesRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
   },
+  progressBarRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
   progressBarContainer: {
     flex: 1,
+    minWidth: 0,
+  },
+  progressBarPercentage: {
+    fontFamily: 'WorkSans_400Regular',
+    fontSize: 14,
+    color: colors.textPlaceholder,
+    lineHeight: 20,
   },
   // Ancien styles maintenant inutilisés mais conservés pour compatibilité
   bookDetails: {
@@ -922,6 +1005,24 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
     lineHeight: 22,
     textAlign: 'center',
+  },
+  deadlineBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: 'rgba(0,0,0,0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.08)',
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    alignSelf: 'flex-start',
+  },
+  deadlineText: {
+    fontFamily: 'WorkSans_500Medium',
+    fontSize: 14,
+    color: colors.textPrimary,
+    lineHeight: 20,
   },
 
   // ═══ BOTTOM SHEET — ACTIONS DU LIVRE ═══
@@ -1209,28 +1310,35 @@ const styles = StyleSheet.create({
     overflow: 'hidden', // Clip l'image aux coins arrondis du conteneur
   },
   shelfCover: {
-    width: COVER_W,
-    height: COVER_H,
+    width: SHELF_COVER_W,
+    height: SHELF_COVER_H,
     borderRadius: 2,
   },
 
   // ── Cover terminée (100%) ──
-  // Conteneur global qui porte la shadow de l'ensemble (fond dark + cover)
+  // Conteneur global qui porte la shadow — remplit le parent (état fermé flexible)
+  // En mode étagère, shelfDoneCover override avec dimensions fixes
   doneCoverContainer: {
+    width: '100%',
+    height: '100%',
+    position: 'relative',
     shadowColor: '#000',
     shadowOffset: { width: -4, height: 0 },
     shadowOpacity: 0.26,
     shadowRadius: 4,
     elevation: 4,
   },
-  // Fond dark derrière la cover — 57×76px, déborde de 3px de chaque côté
-  // Ce fond crée l'effet "cadre sombre" autour de la couverture terminée
+  shelfDoneCover: {
+    width: SHELF_COVER_W,
+    height: SHELF_COVER_H,
+  },
+  // Fond dark derrière la cover — déborde de 3px de chaque côté
   doneCoverBackground: {
     position: 'absolute',
     left: -3,
     top: -3,
-    width: DONE_BG_W,
-    height: DONE_BG_H,
+    right: -3,
+    bottom: -3,
     borderRadius: 2,
     backgroundColor: colors.dark900,
     overflow: 'hidden',
@@ -1252,10 +1360,10 @@ const styles = StyleSheet.create({
     borderBottomColor: 'rgba(0,0,0,0.35)',
     borderRightColor: 'rgba(0,0,0,0.20)',
   },
-  // Cover terminée : coins presque carrés (2px)
+  // Cover terminée — remplit le parent (fermé = 100% du wrapper, étagère = 100% du conteneur COVER_W×COVER_H)
   shelfCoverDone: {
-    width: COVER_W,
-    height: COVER_H,
+    width: '100%',
+    height: '100%',
     borderRadius: 2,
   },
   // Badge marque-page SVG — positionné en haut à gauche
@@ -1269,11 +1377,10 @@ const styles = StyleSheet.create({
   },
 
   // Wrapper du bouton + — aligné verticalement avec les covers.
-  // alignItems: 'flex-end' sur le parent = covers calées en bas.
-  // Le bouton 40px doit être centré par rapport aux covers 70px.
+  // Le bouton 40px est centré par rapport à la hauteur des covers (SHELF_COVER_H).
   addButtonWrapper: {
     alignSelf: 'flex-end',
-    marginBottom: (COVER_H - ADD_BTN_SIZE) / 2,
+    marginBottom: (SHELF_COVER_H - ADD_BTN_SIZE) / 2,
   },
 
   // Wrapper animé de la barre d'étagère — positionnée en absolute, AU PREMIER PLAN

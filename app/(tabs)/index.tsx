@@ -17,19 +17,27 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
-  Animated,
   Pressable,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
+import Animated, {
+  Easing,
+  useAnimatedStyle,
+  useSharedValue,
+  withDelay,
+  withSequence,
+  withTiming,
+} from 'react-native-reanimated';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import Button3D from '../../components/Button3D';
 import PopEyes from '../../components/PopEyes';
 import IconRotateCcw from '../../components/icons/IconRotateCcw';
 import BookStack from '../../components/ui/BookStack';
+import DeadlineEditSheet from '../../components/ui/DeadlineEditSheet';
 import NotificationButton from '../../components/ui/NotificationButton';
 import PageScrollPicker from '../../components/ui/PageScrollPicker';
 import ProgressCard from '../../components/ui/ProgressCard';
@@ -72,6 +80,7 @@ export default function HomeScreen() {
     setActiveChallenge,
     loadUserChallenges,
     deleteCurrentChallenge,
+    updateActiveChallenge,
     isLoading: projectsLoading,
   } = useProjectStore();
 
@@ -82,13 +91,31 @@ export default function HomeScreen() {
     participants,
   } = useProgressStore();
 
+
   // ===== État local =====
   const [currentPageInput, setCurrentPageInput] = useState(0);
-  const [showSuccess, setShowSuccess] = useState(false);
   const [showBookShelf, setShowBookShelf] = useState(false);
 
-  // Animations
-  const successAnim = useRef(new Animated.Value(0)).current;
+  // Modal de modification de la deadline
+  const [deadlineModalVisible, setDeadlineModalVisible] = useState(false);
+
+  // Toast "feuille qui tombe" — affiche "+12" et descend doucement
+  const [deltaText, setDeltaText] = useState('');
+  const leafY = useSharedValue(0);
+  const leafX = useSharedValue(0);
+  const leafOpacity = useSharedValue(0);
+  const leafRotate = useSharedValue(0);
+
+  // Style animé : combine la descente (Y), le balancement (X),
+  // la rotation et l'opacité en un seul transform fluide.
+  const leafAnimStyle = useAnimatedStyle(() => ({
+    opacity: leafOpacity.value,
+    transform: [
+      { translateY: leafY.value },
+      { translateX: leafX.value },
+      { rotate: `${leafRotate.value}deg` },
+    ],
+  }));
 
   // ===== Chargement des données au montage =====
   useEffect(() => {
@@ -128,19 +155,58 @@ export default function HomeScreen() {
   }, []);
 
   // ===== Enregistrer la progression (bouton check ✓) =====
+  // Après la sauvegarde :
+  // 1. Toast "feuille" affiche "+12" et descend doucement vers le bas
+  // 2. Le compteur roulant et la barre animée dans ProgressCard se déclenchent
   const handleSave = async () => {
     if (!hasChanged || !activeChallenge || !user) return;
 
+    // Capture le delta AVANT la sauvegarde (après, lastSavedPage va changer)
+    const delta = currentPageInput - lastSavedPage;
+
     try {
       await updateProgress(activeChallenge.id, user.id, currentPageInput);
-      // Feedback visuel de succès
-      setShowSuccess(true);
-      Animated.timing(successAnim, { toValue: 1, duration: 300, useNativeDriver: true }).start();
-      setTimeout(() => {
-        Animated.timing(successAnim, { toValue: 0, duration: 200, useNativeDriver: true }).start(() => {
-          setShowSuccess(false);
-        });
-      }, 1500);
+
+      // Lance le toast "feuille qui tombe" avec le delta
+      if (delta !== 0) {
+        setDeltaText(delta > 0 ? `+${delta}` : `${delta}`);
+
+        // ── Opacité : apparaît vite, reste visible, puis s'efface doucement ──
+        // 0→1 (150ms) → maintien 1.3s → 1→0 (1s)
+        leafOpacity.value = withSequence(
+          withTiming(0, { duration: 50 }),
+          withTiming(1, { duration: 150 }),
+          withDelay(1300, withTiming(0, { duration: 1000 })),
+        );
+
+        // ── Chute verticale : descend ~130px avec décélération ──
+        // Easing.out(quad) = rapide au début, ralentit à la fin
+        // → la feuille "arrive doucement au sol"
+        leafY.value = withSequence(
+          withTiming(0, { duration: 50 }),
+          withTiming(130, { duration: 2500, easing: Easing.out(Easing.quad) }),
+        );
+
+        // ── Balancement latéral (le vent) : amplitude décroissante ──
+        // 0 → +14 → -10 → +6 → 0 = oscillation qui se calme
+        leafX.value = withSequence(
+          withTiming(0, { duration: 50 }),
+          withTiming(14, { duration: 650 }),
+          withTiming(-10, { duration: 750 }),
+          withTiming(6, { duration: 600 }),
+          withTiming(0, { duration: 500 }),
+        );
+
+        // ── Rotation qui suit le balancement ──
+        // Inclinaison légère dans le sens du mouvement latéral
+        leafRotate.value = withSequence(
+          withTiming(0, { duration: 50 }),
+          withTiming(5, { duration: 650 }),
+          withTiming(-3, { duration: 750 }),
+          withTiming(2, { duration: 600 }),
+          withTiming(0, { duration: 500 }),
+        );
+      }
     } catch (error) {
       console.error('Erreur lors de la sauvegarde:', error);
     }
@@ -267,6 +333,23 @@ export default function HomeScreen() {
     console.log('Modifier le livre:', activeChallenge.id);
   }, [activeChallenge]);
 
+  // ===== Callback : modifier la deadline =====
+  const handleEditDeadline = useCallback(() => {
+    setDeadlineModalVisible(true);
+  }, []);
+
+  const handleSaveDeadline = useCallback(
+    async (date: Date) => {
+      try {
+        await updateActiveChallenge({ target_end_date: date.toISOString() });
+      } catch (error) {
+        console.error('Erreur mise à jour deadline:', error);
+        throw error;
+      }
+    },
+    [updateActiveChallenge]
+  );
+
   // ===== Callback historique participant =====
   const handleParticipantPress = useCallback((participantId: string) => {
     // TODO: ouvrir le modal d'historique du participant
@@ -317,6 +400,7 @@ export default function HomeScreen() {
             onDeleteBook={handleDeleteBook}
             onInviteFriend={handleInviteFriend}
             onEditBook={handleEditBook}
+            onEditDeadline={handleEditDeadline}
           />
         </View>
       )}
@@ -327,7 +411,10 @@ export default function HomeScreen() {
         quand hasChanged=false) pour éviter tout décalage vertical.
       */}
       {activeChallenge ? (
-        <View style={styles.pageSection}>
+        <View
+          style={[styles.pageSection, showBookShelf && styles.pageSectionDisabled]}
+          pointerEvents={showBookShelf ? 'none' : 'auto'}
+        >
           <View style={styles.pageSectionInner}>
             <PageScrollPicker
               currentPage={currentPageInput}
@@ -393,7 +480,7 @@ export default function HomeScreen() {
 
       {/* ═══════════ CARTE DE PROGRESSION (bas de page) ═══════════ */}
       {activeChallenge && (
-        <View style={[styles.progressSection, { paddingBottom: insets.bottom + spacing['4xl'] }]}>
+        <View style={[styles.progressSection, { paddingBottom: insets.bottom + spacing.md }]}>
           <ProgressCard
             me={meData}
             friend={friendData}
@@ -402,13 +489,27 @@ export default function HomeScreen() {
         </View>
       )}
 
-      {/* ═══════════ TOAST DE SUCCÈS ═══════════ */}
-      {showSuccess && (
-        <Animated.View style={[styles.successOverlay, { opacity: successAnim }]}>
-          <Ionicons name="checkmark-circle" size={22} color={colors.dark900} />
-          <Text style={styles.successText}>Enregistré !</Text>
-        </Animated.View>
-      )}
+      {/* ═══════════ TOAST DELTA — FEUILLE QUI TOMBE ═══════════
+        Toujours monté dans le DOM mais invisible (opacity: 0 par défaut).
+        Quand on sauvegarde, les shared values animent :
+        - leafY : descente verticale (0 → 130px)
+        - leafX : balancement latéral (vent)
+        - leafRotate : légère inclinaison qui suit le mouvement
+        - leafOpacity : apparition → maintien → fondu
+        pointerEvents none = ne bloque jamais les interactions.
+      */}
+      <Animated.View style={[styles.deltaToast, leafAnimStyle]} pointerEvents="none">
+        <Text style={styles.deltaToastText}>{deltaText}</Text>
+      </Animated.View>
+
+      {/* ═══════════ MODAL DEADLINE ═══════════ */}
+      <DeadlineEditSheet
+        visible={deadlineModalVisible}
+        onClose={() => setDeadlineModalVisible(false)}
+        currentDate={activeChallenge?.target_end_date ?? null}
+        onSave={handleSaveDeadline}
+      />
+
     </View>
   );
 }
@@ -461,6 +562,12 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  // Quand l'étagère est ouverte, on ne peut pas scroller les pages :
+  // - opacity réduite = signal visuel "section désactivée"
+  // - pointerEvents: 'none' est appliqué côté JSX (pas en stylesheet)
+  pageSectionDisabled: {
+    opacity: 0.25,
   },
   // Conteneur avec hauteur fixe, pleine largeur pour le centrage.
   pageSectionInner: {
@@ -516,27 +623,28 @@ const styles = StyleSheet.create({
     gap: 16,
   },
 
-  // ===== TOAST SUCCÈS =====
-  successOverlay: {
+  // ===== TOAST DELTA — FEUILLE QUI TOMBE =====
+  // Positionné juste en dessous de la zone des boutons undo/check (~58% de l'écran).
+  // Le translateY de l'animation le fait descendre de 130px vers la section progression.
+  deltaToast: {
     position: 'absolute',
-    top: '40%',
+    top: '58%',
     alignSelf: 'center',
-    backgroundColor: colors.white,
-    paddingHorizontal: 24,
-    paddingVertical: 16,
-    borderRadius: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+    backgroundColor: 'rgba(10, 13, 18, 0.85)',
+    paddingHorizontal: 16,
+    paddingVertical: 5,
+    borderRadius: 9999,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 6,
+    elevation: 3,
   },
-  successText: {
-    fontFamily: 'WorkSans_600SemiBold',
-    fontSize: 16,
-    color: colors.textPrimary,
+  deltaToastText: {
+    fontFamily: 'Rokkitt_Bold',
+    fontSize: 22,
+    color: '#FFFFFF',
+    lineHeight: 28,
   },
+
 });

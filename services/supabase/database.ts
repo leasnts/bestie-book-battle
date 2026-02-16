@@ -12,6 +12,9 @@ import { randomUUID } from 'expo-crypto';
 import { supabase } from '../../supabaseConfig';
 import {
     Challenge,
+    ChallengeGoal,
+    ChallengeGoalInsert,
+    ChallengeGoalUpdate,
     ChallengeInsert,
     ChallengeParticipantInsert,
     ChallengeUpdate,
@@ -633,4 +636,97 @@ export async function getChallengeWithParticipants(
     console.error('Erreur lors de la récupération du challenge complet:', error);
     throw error;
   }
+}
+
+// =====================================================
+// OBJECTIFS DE LECTURE (GOALS)
+// =====================================================
+
+/**
+ * Récupérer les objectifs actifs d'un challenge.
+ * Retourne au maximum 2 objectifs (1 primary + 1 secondary).
+ */
+export async function getActiveGoals(challengeId: string): Promise<ChallengeGoal[]> {
+  const { data, error } = await supabase
+    .from('challenge_goals')
+    .select('*')
+    .eq('challenge_id', challengeId)
+    .eq('status', 'active')
+    .order('type', { ascending: true }); // primary first
+
+  if (error) throw error;
+  return data || [];
+}
+
+/**
+ * Récupérer l'historique des objectifs secondaires d'un challenge.
+ * Inclut les objectifs terminés (completed/failed/archived), triés du plus récent au plus ancien.
+ */
+export async function getGoalHistory(challengeId: string): Promise<ChallengeGoal[]> {
+  const { data, error } = await supabase
+    .from('challenge_goals')
+    .select('*')
+    .eq('challenge_id', challengeId)
+    .eq('type', 'secondary')
+    .neq('status', 'active')
+    .order('created_at', { ascending: false });
+
+  if (error) throw error;
+  return data || [];
+}
+
+/**
+ * Créer un nouvel objectif.
+ * Si un objectif du même type est déjà actif, il est archivé automatiquement.
+ */
+export async function createGoal(goalData: ChallengeGoalInsert): Promise<ChallengeGoal> {
+  // Archiver l'ancien objectif actif du même type s'il existe
+  const { error: archiveError } = await supabase
+    .from('challenge_goals')
+    .update({ status: 'archived' } as ChallengeGoalUpdate)
+    .eq('challenge_id', goalData.challenge_id)
+    .eq('type', goalData.type)
+    .eq('status', 'active');
+
+  if (archiveError) throw archiveError;
+
+  // Créer le nouvel objectif
+  const { data, error } = await supabase
+    .from('challenge_goals')
+    .insert(goalData)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+/**
+ * Mettre à jour un objectif (modifier target_pages, deadline, status, results).
+ */
+export async function updateGoal(
+  goalId: string,
+  updates: ChallengeGoalUpdate
+): Promise<ChallengeGoal> {
+  const { data, error } = await supabase
+    .from('challenge_goals')
+    .update(updates)
+    .eq('id', goalId)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+/**
+ * Supprimer un objectif.
+ */
+export async function deleteGoal(goalId: string): Promise<void> {
+  const { error } = await supabase
+    .from('challenge_goals')
+    .delete()
+    .eq('id', goalId);
+
+  if (error) throw error;
 }

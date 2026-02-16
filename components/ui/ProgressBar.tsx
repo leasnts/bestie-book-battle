@@ -88,7 +88,7 @@ export function ProgressBar({
         />
       </View>
       
-      {/* Affichage du pourcentage */}
+      {/* Affichage du pourcentage à droite de la barre */}
       {showPercentage && (
         <Text style={styles.percentageText}>{Math.round(clampedPercentage)}%</Text>
       )}
@@ -101,6 +101,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+    flex: 1,
+    minWidth: 0, // Permet au track (flex: 1) de se compresser si nécessaire
   },
   track: {
     flex: 1,
@@ -116,6 +118,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.textPlaceholder, // gray 500 : #717680
     lineHeight: 20,
+    flexShrink: 0, // Ne jamais comprimer le pourcentage
   },
 });
 

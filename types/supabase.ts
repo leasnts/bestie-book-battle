@@ -216,6 +216,44 @@ export interface Database {
           // created_date est généré automatiquement, pas besoin de le fournir
         };
       };
+      challenge_goals: {
+        Row: {
+          id: string; // UUID
+          challenge_id: string; // UUID référence challenges(id)
+          type: 'primary' | 'secondary';
+          target_pages: number;
+          deadline: string; // ISO timestamp
+          created_by: string; // UUID référence users(id)
+          status: 'active' | 'completed' | 'failed' | 'archived';
+          results: Json | null; // { userId: { achieved: boolean, pages: number } }
+          created_at: string; // ISO timestamp
+          updated_at: string; // ISO timestamp
+        };
+        Insert: {
+          id?: string;
+          challenge_id: string;
+          type: 'primary' | 'secondary';
+          target_pages: number;
+          deadline: string;
+          created_by: string;
+          status?: 'active' | 'completed' | 'failed' | 'archived';
+          results?: Json | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          challenge_id?: string;
+          type?: 'primary' | 'secondary';
+          target_pages?: number;
+          deadline?: string;
+          created_by?: string;
+          status?: 'active' | 'completed' | 'failed' | 'archived';
+          results?: Json | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
     };
     Views: {
       [_ in never]: never;
@@ -239,6 +277,7 @@ export type Challenge = Database['public']['Tables']['challenges']['Row'];
 export type ChallengeParticipant = Database['public']['Tables']['challenge_participants']['Row'];
 export type UserProgress = Database['public']['Tables']['user_progress']['Row'];
 export type ProgressHistory = Database['public']['Tables']['progress_history']['Row'];
+export type ChallengeGoal = Database['public']['Tables']['challenge_goals']['Row'];
 
 // Type pour Insert (création)
 export type UserInsert = Database['public']['Tables']['users']['Insert'];
@@ -246,6 +285,7 @@ export type ChallengeInsert = Database['public']['Tables']['challenges']['Insert
 export type ChallengeParticipantInsert = Database['public']['Tables']['challenge_participants']['Insert'];
 export type UserProgressInsert = Database['public']['Tables']['user_progress']['Insert'];
 export type ProgressHistoryInsert = Database['public']['Tables']['progress_history']['Insert'];
+export type ChallengeGoalInsert = Database['public']['Tables']['challenge_goals']['Insert'];
 
 // Type pour Update (mise à jour)
 export type UserUpdate = Database['public']['Tables']['users']['Update'];
@@ -253,6 +293,7 @@ export type ChallengeUpdate = Database['public']['Tables']['challenges']['Update
 export type ChallengeParticipantUpdate = Database['public']['Tables']['challenge_participants']['Update'];
 export type UserProgressUpdate = Database['public']['Tables']['user_progress']['Update'];
 export type ProgressHistoryUpdate = Database['public']['Tables']['progress_history']['Update'];
+export type ChallengeGoalUpdate = Database['public']['Tables']['challenge_goals']['Update'];
 
 /**
  * Types composés pour l'affichage dans l'UI
@@ -271,6 +312,10 @@ export interface UserProgressWithUser extends UserProgress {
 export interface ProgressHistoryWithDetails extends ProgressHistory {
   user: User;
   challenge: Challenge;
+}
+
+export interface ChallengeGoalWithCreator extends ChallengeGoal {
+  creator: User;
 }
 
 export interface ParticipantWithProgress {

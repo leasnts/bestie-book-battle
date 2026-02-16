@@ -17,9 +17,10 @@
  */
 
 import { Image } from 'expo-image';
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import Svg, { Defs, RadialGradient, Stop, Circle } from 'react-native-svg';
+import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
+import Svg, { Circle, Defs, RadialGradient, Stop } from 'react-native-svg';
 import { colors, spacing } from '../../utils/constants';
 import IconFlame from '../icons/IconFlame';
 
@@ -54,6 +55,56 @@ const resolveAvatar = (url: string | null) => {
   if (url.startsWith('http://') || url.startsWith('https://')) return { uri: url };
   return DEFAULT_AVATAR;
 };
+
+// ─── Hook : compteur roulant ──────────────────────────────────────
+/**
+ * Anime un nombre de sa valeur précédente vers la nouvelle valeur,
+ * avec un effet de "compteur qui roule" (odometer).
+ *
+ * Comment ça marche :
+ * - On garde en mémoire la valeur précédente avec useRef
+ * - Quand target change, on lance une boucle requestAnimationFrame
+ *   qui interpole entre l'ancienne et la nouvelle valeur
+ * - L'interpolation utilise une courbe ease-out cubique :
+ *   rapide au début, ralentit vers la fin (naturel et satisfaisant)
+ * - Le nombre affiché est arrondi à l'entier le plus proche
+ *
+ * @param target La valeur cible (nombre entier)
+ * @param duration Durée de l'animation en ms (défaut: 800ms)
+ * @returns Le nombre actuellement affiché (animé)
+ */
+function useRollingCounter(target: number, duration = 800): number {
+  const [display, setDisplay] = useState(target);
+  const prev = useRef(target);
+  const rafId = useRef<number | undefined>(undefined);
+
+  useEffect(() => {
+    const from = prev.current;
+    prev.current = target;
+    if (from === target) return;
+
+    const start = Date.now();
+    const diff = target - from;
+
+    const tick = () => {
+      const elapsed = Date.now() - start;
+      const t = Math.min(elapsed / duration, 1);
+      // Ease-out cubique : rapide au début, ralentit à la fin
+      const eased = 1 - Math.pow(1 - t, 3);
+      setDisplay(Math.round(from + diff * eased));
+      if (t < 1) {
+        rafId.current = requestAnimationFrame(tick);
+      }
+    };
+
+    rafId.current = requestAnimationFrame(tick);
+    return () => {
+      if (rafId.current) cancelAnimationFrame(rafId.current);
+    };
+  }, [target, duration]);
+
+  return display;
+}
 
 // ─── Sphère 3D (online dot) ──────────────────────────────────────
 /**
@@ -115,14 +166,27 @@ function ProgressSegment3D({
   color: string;
   flex: number;
 }) {
+  // Shared value animée pour la proportion (flex) de la barre.
+  // Quand flex change (ex: score mis à jour après enregistrement),
+  // withTiming interpole doucement sur 800ms entre l'ancienne et
+  // la nouvelle proportion → la barre "grandit" progressivement.
+  const animatedFlex = useSharedValue(flex);
+
+  useEffect(() => {
+    animatedFlex.value = withTiming(flex, { duration: 800 });
+  }, [flex]);
+
+  // Style animé — seule la propriété flex est interpolée
+  const animatedStyle = useAnimatedStyle(() => ({
+    flex: animatedFlex.value,
+  }));
+
   return (
-    <View
+    <Animated.View
       style={[
         styles.progressSegment,
-        {
-          backgroundColor: color,
-          flex,
-        },
+        { backgroundColor: color },
+        animatedStyle,
       ]}
     >
       {/* Overlay qui simule l'ombre interne (inset box-shadow).
@@ -130,7 +194,7 @@ function ProgressSegment3D({
           - borderBottomColor noir = ombre sombre en bas de la barre
           Combiné, ça donne un effet de cylindre/tube 3D. */}
       <View style={styles.progressInnerShadow} />
-    </View>
+    </Animated.View>
   );
 }
 
@@ -145,6 +209,13 @@ export default function ProgressCard({
   const totalScore = me.score + (friend?.score || 0);
   const myRatio = totalScore > 0 ? me.score / totalScore : 0.5;
 
+  // Compteurs roulants — quand le score change (ex: après enregistrement),
+  // le nombre affiché s'incrémente progressivement de l'ancien au nouveau,
+  // comme un compteur/odomètre qui "roule". Ça donne un feedback visuel
+  // satisfaisant à la place du toast "Enregistré !".
+  const myDisplayScore = useRollingCounter(me.score);
+  const friendDisplayScore = useRollingCounter(friend?.score ?? 0);
+
   return (
     <View style={styles.container}>
       {/* ── Ligne des participants (avatars + noms + sphères 3D) ── */}
@@ -155,15 +226,15 @@ export default function ProgressCard({
           onPress={() => onParticipantPress?.(me.id)}
         >
           {/* Conteneur avatar + couronne : la couronne est positionnée
-              en absolute par rapport à ce wrapper, ce qui la place exactement
-              au-dessus de l'avatar du leader (coin supérieur gauche). */}
+              en absolute par rapport à ce wrapper, centrée horizontalement
+              au-dessus de l'avatar du leader. */}
           <View style={styles.avatarWrapper}>
             <Image
               source={resolveAvatar(me.photoUrl)}
               style={styles.avatar}
               contentFit="cover"
             />
-            {/* Couronne du leader — chevauchant l'avatar en haut à gauche */}
+            {/* Couronne du leader — centrée et droite au-dessus de l'avatar */}
             {me.isLeader && (
               <View style={styles.crownOverAvatar}>
                 <Image source={CROWN_IMAGE} style={styles.crownImage} contentFit="contain" />
@@ -190,7 +261,7 @@ export default function ProgressCard({
                 style={styles.avatar}
                 contentFit="cover"
               />
-              {/* Couronne ami si c'est le leader */}
+              {/* Couronne ami — même centrage droit */}
               {friend.isLeader && (
                 <View style={[styles.crownOverAvatar, styles.crownOverAvatarRight]}>
                   <Image source={CROWN_IMAGE} style={styles.crownImage} contentFit="contain" />
@@ -206,7 +277,7 @@ export default function ProgressCard({
         <View style={styles.scoresRow}>
           {/* Score de gauche (moi) */}
           <View style={styles.scoreSection}>
-            <Text style={styles.scoreNumber}>{me.score}</Text>
+            <Text style={styles.scoreNumber}>{myDisplayScore}</Text>
             {me.streak > 0 && (
               <View
                 style={[
@@ -234,7 +305,7 @@ export default function ProgressCard({
                   <Text style={styles.streakText}>{friend.streak}</Text>
                 </View>
               )}
-              <Text style={styles.scoreNumber}>{friend.score}</Text>
+              <Text style={styles.scoreNumber}>{friendDisplayScore}</Text>
             </View>
           )}
         </View>
@@ -301,22 +372,20 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.3)',
   },
-  // Couronne positionnée en haut à gauche de l'avatar, débordant légèrement.
-  // - top négatif = remonte au-dessus de l'avatar
-  // - left négatif = décale vers la gauche
-  // - rotate 9deg = légère inclinaison (comme dans le Figma)
+  // Couronne positionnée au-dessus de l'avatar, centrée horizontalement.
+  // - top: -18 = remonte au-dessus de l'avatar (bottom du crown à -18+28 = 10px)
+  // - left: -2 = centre les 28px de la couronne sur les 24px de l'avatar
+  //   → (24 - 28) / 2 = -2
+  // - Pas de rotation : la couronne reste droite
   crownOverAvatar: {
     position: 'absolute',
     top: -18,
-    left: -6,
+    left: -2,
     zIndex: 10,
-    transform: [{ rotate: '9deg' }],
   },
-  // Pour l'ami à droite, la couronne est inversée en miroir
+  // Pour l'ami à droite, même centrage (pas d'inversion miroir)
   crownOverAvatarRight: {
-    left: undefined,
-    right: -6,
-    transform: [{ rotate: '-9deg' }],
+    // Même position centrée que la gauche, pas de surcharge nécessaire
   },
   crownImage: {
     width: 28,

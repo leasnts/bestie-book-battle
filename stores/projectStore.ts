@@ -59,6 +59,8 @@ interface ProjectStore {
 
   // Actions - Modification
   updateCurrentChallenge: (updates: Partial<Challenge>) => Promise<void>;
+  /** Met à jour le challenge affiché sur la home (activeChallenge) */
+  updateActiveChallenge: (updates: Partial<Challenge>) => Promise<void>;
   deleteCurrentChallenge: () => Promise<void>;
 
   // Actions - Réinitialisation
@@ -338,6 +340,32 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
       }));
     } catch (error: any) {
       console.error('Update challenge error:', error);
+      set({ error: error.message, isLoading: false });
+      throw error;
+    }
+  },
+
+  /** Met à jour le challenge actif (home). Utilisé pour modifier la deadline, etc. */
+  updateActiveChallenge: async (updates) => {
+    const { activeChallenge } = get();
+    if (!activeChallenge) {
+      throw new Error('Aucun challenge actif');
+    }
+
+    set({ isLoading: true, error: null });
+    try {
+      const updated = await updateChallenge(activeChallenge.id, updates);
+      set((state) => ({
+        challenges: state.challenges.map((c) =>
+          c.id === updated.id ? updated : c
+        ),
+        activeChallenge: state.activeChallenge?.id === updated.id
+          ? { ...state.activeChallenge, ...updated }
+          : state.activeChallenge,
+        isLoading: false,
+      }));
+    } catch (error: any) {
+      console.error('Update active challenge error:', error);
       set({ error: error.message, isLoading: false });
       throw error;
     }
