@@ -23,7 +23,6 @@ import {
 } from '@expo-google-fonts/work-sans';
 import * as Notifications from 'expo-notifications';
 import { Stack, useRouter, useSegments } from 'expo-router';
-import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
 import { Platform, View, Linking } from 'react-native';
@@ -38,8 +37,10 @@ import { colors } from '../utils/constants';
 import { supabase } from '../supabaseConfig';
 import AnimatedSplash from '../components/AnimatedSplash';
 
-// Empêche l'écran de splash de se cacher automatiquement
-SplashScreen.preventAutoHideAsync();
+// Désactivé : expo-splash-screen provoque des erreurs "No native splash screen
+// registered" quand on ouvre une Modal (nouveau view controller iOS). L'app
+// utilise AnimatedSplash custom, donc on laisse le splash natif se cacher
+// automatiquement au chargement.
 
 // Configuration du thème React Native Paper
 // On personnalise les couleurs pour correspondre à notre design system
@@ -91,17 +92,7 @@ export default function RootLayout() {
     if (fontError) throw fontError;
   }, [fontError]);
 
-  // Cache le splash screen quand les polices sont chargées
-  useEffect(() => {
-    if (fontsLoaded) {
-      // Petit délai pour éviter l'erreur de timing
-      setTimeout(() => {
-        SplashScreen.hideAsync().catch(() => {
-          // Ignore l'erreur si le splash screen n'existe pas
-        });
-      }, 100);
-    }
-  }, [fontsLoaded]);
+  // Plus d'appel à SplashScreen.hideAsync() — source des erreurs sur Modal
 
   if (!fontsLoaded) {
     return null;

@@ -19,20 +19,20 @@ import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
+    Pressable,
+    StyleSheet,
+    Text,
+    View,
 } from 'react-native';
 import Animated, {
-  Easing,
-  useAnimatedStyle,
-  useSharedValue,
-  withDelay,
-  withSequence,
-  withTiming,
+    Easing,
+    useAnimatedStyle,
+    useSharedValue,
+    withDelay,
+    withSequence,
+    withTiming,
 } from 'react-native-reanimated';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Button3D from '../../components/Button3D';
 import PopEyes from '../../components/PopEyes';
 import IconRotateCcw from '../../components/icons/IconRotateCcw';
@@ -42,14 +42,17 @@ import EditBookSheet from '../../components/ui/EditBookSheet';
 import GoalFormSheet from '../../components/ui/GoalFormSheet';
 import NotificationButton from '../../components/ui/NotificationButton';
 import PageScrollPicker from '../../components/ui/PageScrollPicker';
+import ParticipantHistorySheet from '../../components/ui/ParticipantHistorySheet';
 import ProgressCard from '../../components/ui/ProgressCard';
+import { getUserHistory } from '../../services/supabase/database';
+import { uploadBookCover } from '../../services/supabase/storage';
 import { useAuthStore } from '../../stores/authStore';
 import { useGoalStore } from '../../stores/goalStore';
 import { useProgressStore } from '../../stores/progressStore';
 import { useProjectStore } from '../../stores/projectStore';
-import { uploadBookCover } from '../../services/supabase/storage';
+import { ProgressHistory } from '../../types/supabase';
+import { colors, spacing } from '../../utils/constants';
 import { isStreakAtRisk } from '../../utils/streak';
-import { colors, spacing, borderRadius } from '../../utils/constants';
 
 // Texture de fond "noise" réutilisée depuis l'onboarding
 const TEXTURE_IMAGE = require('../../assets/images/61ea1e0c638b5b9c8100383a37a5b488848db623.png');
@@ -124,6 +127,11 @@ export default function HomeScreen() {
   const [deadlineModalVisible, setDeadlineModalVisible] = useState(false);
   const [editBookModalVisible, setEditBookModalVisible] = useState(false);
   const [goalModalVisible, setGoalModalVisible] = useState(false);
+  const [historyModalVisible, setHistoryModalVisible] = useState(false);
+
+  // Historique du participant sélectionné (pour la modal timeline)
+  const [selectedParticipantId, setSelectedParticipantId] = useState<string | null>(null);
+  const [participantHistory, setParticipantHistory] = useState<ProgressHistory[]>([]);
 
   // Toast "feuille qui tombe" — affiche "+12" et descend doucement
   const [deltaText, setDeltaText] = useState('');
@@ -476,9 +484,29 @@ export default function HomeScreen() {
   );
 
   // ===== Callback historique participant =====
-  const handleParticipantPress = useCallback((participantId: string) => {
-    // TODO: ouvrir le modal d'historique du participant
-  }, []);
+  /**
+   * Quand on clique sur un participant dans la ProgressCard :
+   * 1. On enregistre l'ID du participant sélectionné
+   * 2. On charge son historique depuis Supabase (table progress_history)
+   * 3. On ouvre la modal timeline qui affiche chaque import (date, heure, pages)
+   *
+   * Le chargement est async : la modal s'ouvre tout de suite (UX réactive),
+   * et l'historique s'affiche dès qu'il est chargé.
+   */
+  const handleParticipantPress = useCallback(async (participantId: string) => {
+    if (!activeChallenge) return;
+
+    setSelectedParticipantId(participantId);
+    setHistoryModalVisible(true);
+    setParticipantHistory([]); // Reset pour montrer le loading
+
+    try {
+      const history = await getUserHistory(activeChallenge.id, participantId);
+      setParticipantHistory(history);
+    } catch (error) {
+      console.error('Erreur chargement historique:', error);
+    }
+  }, [activeChallenge]);
 
   return (
     <View style={styles.container}>
@@ -670,6 +698,31 @@ export default function HomeScreen() {
           onSave={handleSaveBookEdit}
         />
       )}
+
+      {/* ═══════════ MODAL HISTORIQUE PARTICIPANT ═══════════
+        Affiche la timeline des imports de pages d'un participant.
+        On détermine le nom et la photo à partir de l'ID sélectionné :
+        - Si c'est l'utilisateur connecté → "Moi" + sa photo depuis authStore
+        - Sinon → prénom de l'ami + sa photo depuis participants
+      */}
+      <ParticipantHistorySheet
+        visible={historyModalVisible}
+        onClose={() => {
+          setHistoryModalVisible(false);
+          setSelectedParticipantId(null);
+        }}
+        participantName={
+          selectedParticipantId === user?.id
+            ? 'Moi'
+            : (friendParticipant?.user.first_name || 'Participant')
+        }
+        participantPhoto={
+          selectedParticipantId === user?.id
+            ? mePhotoUrlWithCacheBust
+            : (friendPhotoUrlWithCacheBust || null)
+        }
+        history={participantHistory}
+      />
 
     </View>
   );
