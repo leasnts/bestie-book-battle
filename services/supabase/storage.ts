@@ -77,22 +77,30 @@ export async function pickImage(
  * Upload une photo de profil pour un utilisateur
  * 
  * Process :
- * 1. Lit le fichier depuis l'URI
- * 2. Upload vers Supabase Storage dans le bucket profile-photos
- * 3. Le fichier est stocké sous : {userId}/avatar.jpg
- * 4. Retourne l'URL publique de l'image
+ * 1. Supprime les anciennes photos (avatar.jpg, avatar.png, etc.) pour éviter les orphelins
+ * 2. Lit le fichier depuis l'URI
+ * 3. Upload vers Supabase Storage dans le bucket profile-photos
+ * 4. Le fichier est stocké sous : {userId}/avatar.{ext}
+ * 5. Retourne l'URL publique + paramètre de cache busting (?v=timestamp)
  * 
- * Note : Si une photo existe déjà, elle sera écrasée
+ * Le paramètre ?v=timestamp force le rechargement de l'image car expo-image
+ * et les CDN cachent par URL. Sans cela, l'ancienne photo resterait affichée.
  * 
  * @param userId - L'ID de l'utilisateur
  * @param imageUri - L'URI locale de l'image (depuis ImagePicker)
- * @returns L'URL publique de la photo uploadée
+ * @returns L'URL publique de la photo uploadée (avec cache busting)
  */
 export async function uploadProfilePhoto(
   userId: string,
   imageUri: string
 ): Promise<UploadResult> {
   try {
+    // Supprimer les anciennes photos (avatar.jpg, avatar.png, etc.)
+    // pour éviter les fichiers orphelins quand l'extension change
+    await deleteProfilePhoto(userId).catch(() => {
+      // Ignorer si aucun fichier n'existe (normal pour premier upload)
+    });
+
     // Lire le fichier en base64 depuis son URI locale
     // On utilise la chaîne 'base64' directement au lieu de FileSystem.EncodingType.Base64
     // car l'enum EncodingType n'est plus exporté dans les nouvelles versions d'expo-file-system
@@ -122,11 +130,14 @@ export async function uploadProfilePhoto(
 
     if (uploadError) throw uploadError;
 
-    // Obtenir l'URL publique
-    const publicUrl = getProfilePhotoUrl(userId, fileName);
+    // Obtenir l'URL publique avec cache busting (?v=timestamp)
+    // Cela force expo-image et les CDN à recharger l'image au lieu d'afficher l'ancienne
+    const baseUrl = getProfilePhotoUrl(userId, fileName);
+    const separator = baseUrl.includes('?') ? '&' : '?';
+    const url = `${baseUrl}${separator}v=${Date.now()}`;
 
     return {
-      url: publicUrl,
+      url,
       path: filePath,
     };
   } catch (error: any) {

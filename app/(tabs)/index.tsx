@@ -54,14 +54,26 @@ const TEXTURE_IMAGE = require('../../assets/images/61ea1e0c638b5b9c8100383a37a5b
 
 /**
  * Résout la source d'un avatar utilisateur.
- * - URL http(s) → { uri: url }
+ * - URL http(s) → { uri: url } avec cache busting si updatedAt fourni
  * - Ref locale connue → require()
  * - Sinon → fallback lea.png
+ *
+ * Le cache busting (?v=timestamp) force expo-image à recharger l'image
+ * au lieu d'afficher une version en cache quand la photo a changé.
  */
-const resolveAvatarSource = (ref: string | null | undefined) => {
+const resolveAvatarSource = (
+  ref: string | null | undefined,
+  updatedAt?: string | null
+) => {
   if (!ref) return require('../../assets/images/lea.png');
   if (ref.startsWith('http://') || ref.startsWith('https://')) {
-    return { uri: ref };
+    let url = ref;
+    if (updatedAt) {
+      const sep = url.includes('?') ? '&' : '?';
+      const v = new Date(updatedAt).getTime();
+      url = `${url}${sep}v=${v}`;
+    }
+    return { uri: url };
   }
   switch (ref) {
     case 'lea': return require('../../assets/images/lea.png');
@@ -224,10 +236,17 @@ export default function HomeScreen() {
   const meParticipant = participants.find(p => p.user.id === user?.id);
   const friendParticipant = participants.find(p => p.user.id !== user?.id);
 
+  // Pour "moi", toujours utiliser authStore (user) pour la photo : les participants
+  // du progressStore sont chargés une fois et ne se mettent pas à jour quand on
+  // change sa photo de profil. authStore est mis à jour immédiatement.
+  const mePhotoUrl = user?.profile_photo_url || meParticipant?.user.profile_photo_url || null;
+  const mePhotoUrlWithCacheBust = mePhotoUrl && user?.updated_at
+    ? `${mePhotoUrl}${mePhotoUrl.includes('?') ? '&' : '?'}v=${new Date(user.updated_at).getTime()}`
+    : mePhotoUrl;
   const meData = meParticipant ? {
     id: meParticipant.user.id,
     name: 'Moi',
-    photoUrl: meParticipant.user.profile_photo_url || null,
+    photoUrl: mePhotoUrlWithCacheBust,
     score: meParticipant.progress.current_page,
     streak: meParticipant.progress.streak_count || 0,
     isLeader: meParticipant.isLeader,
@@ -235,17 +254,23 @@ export default function HomeScreen() {
   } : {
     id: user?.id || '',
     name: 'Moi',
-    photoUrl: user?.profile_photo_url || null,
+    photoUrl: user?.profile_photo_url && user?.updated_at
+      ? `${user.profile_photo_url}${user.profile_photo_url.includes('?') ? '&' : '?'}v=${new Date(user.updated_at).getTime()}`
+      : user?.profile_photo_url || null,
     score: 0,
     streak: 0,
     isLeader: false,
     streakAtRisk: false,
   };
 
+  const friendPhotoUrl = friendParticipant?.user.profile_photo_url || null;
+  const friendPhotoUrlWithCacheBust = friendPhotoUrl && friendParticipant?.user.updated_at
+    ? `${friendPhotoUrl}${friendPhotoUrl.includes('?') ? '&' : '?'}v=${new Date(friendParticipant.user.updated_at).getTime()}`
+    : friendPhotoUrl;
   const friendData = friendParticipant ? {
     id: friendParticipant.user.id,
     name: friendParticipant.user.first_name || 'Ami.e',
-    photoUrl: friendParticipant.user.profile_photo_url || null,
+    photoUrl: friendPhotoUrlWithCacheBust,
     score: friendParticipant.progress.current_page,
     streak: friendParticipant.progress.streak_count || 0,
     isLeader: friendParticipant.isLeader,
@@ -407,7 +432,7 @@ export default function HomeScreen() {
         {/* Avatar profil — navigue vers /profile */}
         <Pressable onPress={() => router.push('/profile')}>
           <Image
-            source={resolveAvatarSource(user?.profile_photo_url)}
+            source={resolveAvatarSource(user?.profile_photo_url, user?.updated_at)}
             style={styles.headerAvatar}
             contentFit="cover"
           />
