@@ -125,6 +125,8 @@ interface BookStackProps {
   onEditBook?: () => void;
   /** Appelé pour modifier la deadline globale du livre */
   onEditDeadline?: () => void;
+  /** Appelé pour définir un objectif intermédiaire (ex: lire X pages d'ici mercredi) */
+  onSetIntermediateGoal?: () => void;
 }
 
 // ─── Constantes de taille (Figma) ─────────────────────────────────
@@ -252,6 +254,7 @@ export default function BookStack({
   onInviteFriend,
   onEditBook,
   onEditDeadline,
+  onSetIntermediateGoal,
 }: BookStackProps) {
   // État local pour le menu contextuel et la modal d'invitation
   const [menuVisible, setMenuVisible] = useState(false);
@@ -329,6 +332,11 @@ export default function BookStack({
     setMenuVisible(false);
     setTimeout(() => onEditDeadline?.(), 250);
   }, [onEditDeadline]);
+
+  const handleSetIntermediateGoalPress = useCallback(() => {
+    setMenuVisible(false);
+    setTimeout(() => onSetIntermediateGoal?.(), 250);
+  }, [onSetIntermediateGoal]);
 
   // ─── Handler étagère ouverte ────────────────────────────────
 
@@ -719,6 +727,22 @@ export default function BookStack({
                 </View>
                 <View style={styles.sheetActionTexts}>
                   <Text style={styles.sheetActionTitle}>Modifier la deadline</Text>
+                </View>
+                <IconChevronRight size={18} color={colors.textSubtle} />
+              </Pressable>
+
+              <Pressable
+                onPress={handleSetIntermediateGoalPress}
+                style={({ pressed }) => [
+                  styles.sheetAction,
+                  pressed && styles.sheetActionPressed,
+                ]}
+              >
+                <View style={styles.sheetActionIcon}>
+                  <Ionicons name="flag-outline" size={20} color={colors.textPrimary} />
+                </View>
+                <View style={styles.sheetActionTexts}>
+                  <Text style={styles.sheetActionTitle}>Définir un objectif intermédiaire</Text>
                 </View>
                 <IconChevronRight size={18} color={colors.textSubtle} />
               </Pressable>

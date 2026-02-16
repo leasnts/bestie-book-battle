@@ -39,10 +39,12 @@ import IconRotateCcw from '../../components/icons/IconRotateCcw';
 import BookStack from '../../components/ui/BookStack';
 import DeadlineEditSheet from '../../components/ui/DeadlineEditSheet';
 import EditBookSheet from '../../components/ui/EditBookSheet';
+import GoalFormSheet from '../../components/ui/GoalFormSheet';
 import NotificationButton from '../../components/ui/NotificationButton';
 import PageScrollPicker from '../../components/ui/PageScrollPicker';
 import ProgressCard from '../../components/ui/ProgressCard';
 import { useAuthStore } from '../../stores/authStore';
+import { useGoalStore } from '../../stores/goalStore';
 import { useProgressStore } from '../../stores/progressStore';
 import { useProjectStore } from '../../stores/projectStore';
 import { uploadBookCover } from '../../services/supabase/storage';
@@ -105,6 +107,14 @@ export default function HomeScreen() {
     participants,
   } = useProgressStore();
 
+  const {
+    secondaryGoal,
+    loadActiveGoals,
+    loadGoalHistory,
+    addGoal,
+    editGoal,
+  } = useGoalStore();
+
 
   // ===== État local =====
   const [currentPageInput, setCurrentPageInput] = useState(0);
@@ -113,6 +123,7 @@ export default function HomeScreen() {
   // Modals
   const [deadlineModalVisible, setDeadlineModalVisible] = useState(false);
   const [editBookModalVisible, setEditBookModalVisible] = useState(false);
+  const [goalModalVisible, setGoalModalVisible] = useState(false);
 
   // Toast "feuille qui tombe" — affiche "+12" et descend doucement
   const [deltaText, setDeltaText] = useState('');
@@ -142,6 +153,13 @@ export default function HomeScreen() {
   useEffect(() => {
     if (activeChallenge?.id) {
       loadChallengeProgress(activeChallenge.id);
+    }
+  }, [activeChallenge?.id]);
+
+  useEffect(() => {
+    if (activeChallenge?.id) {
+      loadActiveGoals(activeChallenge.id);
+      loadGoalHistory(activeChallenge.id);
     }
   }, [activeChallenge?.id]);
 
@@ -413,6 +431,50 @@ export default function HomeScreen() {
     [updateActiveChallenge]
   );
 
+  // ===== Callback : définir un objectif intermédiaire =====
+  const handleSetIntermediateGoal = useCallback(() => {
+    setGoalModalVisible(true);
+  }, []);
+
+  const handleSaveGoal = useCallback(
+    async (type: 'primary' | 'secondary', targetPages: number, deadline: Date) => {
+      if (!activeChallenge || !user?.id) return;
+
+      try {
+        if (type === 'primary') {
+          await updateActiveChallenge({ target_end_date: deadline.toISOString() });
+        } else {
+          if (secondaryGoal) {
+            await editGoal(secondaryGoal.id, {
+              target_pages: targetPages,
+              deadline: deadline.toISOString(),
+            });
+          } else {
+            await addGoal({
+              challenge_id: activeChallenge.id,
+              type: 'secondary',
+              target_pages: targetPages,
+              deadline: deadline.toISOString(),
+              created_by: user.id,
+            });
+          }
+        }
+        setGoalModalVisible(false);
+      } catch (error) {
+        console.error('Erreur sauvegarde objectif:', error);
+        throw error;
+      }
+    },
+    [
+      activeChallenge,
+      user?.id,
+      secondaryGoal,
+      updateActiveChallenge,
+      addGoal,
+      editGoal,
+    ]
+  );
+
   // ===== Callback historique participant =====
   const handleParticipantPress = useCallback((participantId: string) => {
     // TODO: ouvrir le modal d'historique du participant
@@ -464,6 +526,7 @@ export default function HomeScreen() {
             onInviteFriend={handleInviteFriend}
             onEditBook={handleEditBook}
             onEditDeadline={handleEditDeadline}
+            onSetIntermediateGoal={handleSetIntermediateGoal}
           />
         </View>
       )}
@@ -572,6 +635,17 @@ export default function HomeScreen() {
         currentDate={activeChallenge?.target_end_date ?? null}
         onSave={handleSaveDeadline}
       />
+
+      {/* ═══════════ MODAL OBJECTIF INTERMÉDIAIRE ═══════════ */}
+      {activeChallenge && (
+        <GoalFormSheet
+          visible={goalModalVisible}
+          onClose={() => setGoalModalVisible(false)}
+          currentGoal={secondaryGoal}
+          onSaveGoal={handleSaveGoal}
+          totalPages={activeChallenge.total_pages}
+        />
+      )}
 
       {/* ═══════════ MODAL MODIFIER LE LIVRE ═══════════ */}
       {activeChallenge && (
