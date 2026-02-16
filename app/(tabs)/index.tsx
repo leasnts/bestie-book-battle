@@ -38,12 +38,14 @@ import PopEyes from '../../components/PopEyes';
 import IconRotateCcw from '../../components/icons/IconRotateCcw';
 import BookStack from '../../components/ui/BookStack';
 import DeadlineEditSheet from '../../components/ui/DeadlineEditSheet';
+import EditBookSheet from '../../components/ui/EditBookSheet';
 import NotificationButton from '../../components/ui/NotificationButton';
 import PageScrollPicker from '../../components/ui/PageScrollPicker';
 import ProgressCard from '../../components/ui/ProgressCard';
 import { useAuthStore } from '../../stores/authStore';
 import { useProgressStore } from '../../stores/progressStore';
 import { useProjectStore } from '../../stores/projectStore';
+import { uploadBookCover } from '../../services/supabase/storage';
 import { isStreakAtRisk } from '../../utils/streak';
 import { colors, spacing, borderRadius } from '../../utils/constants';
 
@@ -96,8 +98,9 @@ export default function HomeScreen() {
   const [currentPageInput, setCurrentPageInput] = useState(0);
   const [showBookShelf, setShowBookShelf] = useState(false);
 
-  // Modal de modification de la deadline
+  // Modals
   const [deadlineModalVisible, setDeadlineModalVisible] = useState(false);
+  const [editBookModalVisible, setEditBookModalVisible] = useState(false);
 
   // Toast "feuille qui tombe" — affiche "+12" et descend doucement
   const [deltaText, setDeltaText] = useState('');
@@ -328,10 +331,45 @@ export default function HomeScreen() {
   // ===== Callback : modifier le livre =====
   const handleEditBook = useCallback(() => {
     if (!activeChallenge) return;
-    // TODO: créer un écran d'édition de challenge
-    // Pour l'instant, on peut afficher une alerte
-    console.log('Modifier le livre:', activeChallenge.id);
+    setEditBookModalVisible(true);
   }, [activeChallenge]);
+
+  const handleSaveBookEdit = useCallback(
+    async (data: {
+      title: string;
+      author: string;
+      totalPages: number;
+      coverUri?: string;
+    }) => {
+      if (!activeChallenge) return;
+
+      try {
+        // 1. Upload la nouvelle cover si elle a changé
+        let coverUrl = activeChallenge.cover_url;
+        if (data.coverUri) {
+          const { url } = await uploadBookCover(activeChallenge.id, data.coverUri);
+          coverUrl = url;
+        }
+
+        // 2. Met à jour les infos du livre
+        await updateActiveChallenge({
+          book_title: data.title,
+          book_author: data.author,
+          total_pages: data.totalPages,
+          cover_url: coverUrl,
+        });
+
+        // Recharge les challenges pour afficher les nouvelles données
+        if (user?.id) {
+          await loadUserChallenges(user.id);
+        }
+      } catch (error) {
+        console.error('Erreur sauvegarde livre:', error);
+        throw error;
+      }
+    },
+    [activeChallenge, updateActiveChallenge, user?.id, loadUserChallenges]
+  );
 
   // ===== Callback : modifier la deadline =====
   const handleEditDeadline = useCallback(() => {
@@ -509,6 +547,21 @@ export default function HomeScreen() {
         currentDate={activeChallenge?.target_end_date ?? null}
         onSave={handleSaveDeadline}
       />
+
+      {/* ═══════════ MODAL MODIFIER LE LIVRE ═══════════ */}
+      {activeChallenge && (
+        <EditBookSheet
+          visible={editBookModalVisible}
+          onClose={() => setEditBookModalVisible(false)}
+          currentBook={{
+            title: activeChallenge.book_title,
+            author: activeChallenge.book_author || '',
+            totalPages: activeChallenge.total_pages,
+            coverUrl: activeChallenge.cover_url,
+          }}
+          onSave={handleSaveBookEdit}
+        />
+      )}
 
     </View>
   );
