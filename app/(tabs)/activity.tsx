@@ -25,6 +25,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Button3D from '../../components/Button3D';
+import PopEyes from '../../components/PopEyes';
 import { useAuthStore } from '../../stores/authStore';
 import { useNotificationStore } from '../../stores/notificationStore';
 import { useProjectStore } from '../../stores/projectStore';
@@ -182,11 +183,7 @@ export default function ActivityScreen() {
 function EmptyState() {
   return (
     <View style={styles.centerContainer}>
-      <Image
-        source={DEFAULT_PROFILE_IMAGE}
-        style={styles.emptyImage}
-        contentFit="contain"
-      />
+      <PopEyes variant="together" size="large" style={styles.emptyEyes} />
       <Text style={styles.emptyTitle}>Aucune notification</Text>
       <Text style={styles.emptySubtitle}>
         Les alertes importantes (milestones, dépassements, streaks…) apparaîtront ici
@@ -305,10 +302,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing['2xl'],
     gap: spacing.md,
   },
-  emptyImage: {
-    width: 80,
-    height: 80,
-    borderRadius: borderRadius.md,
+  emptyEyes: {
     marginBottom: spacing.sm,
   },
   emptyTitle: {
@@ -325,5 +319,6 @@ const styles = StyleSheet.create({
     color: colors.textTertiary,
     textAlign: 'center',
     lineHeight: 20,
+    maxWidth: 260,
   },
 });
