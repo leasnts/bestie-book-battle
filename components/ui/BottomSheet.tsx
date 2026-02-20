@@ -1,30 +1,19 @@
 /**
- * BottomSheet — Composant réutilisable de bottom sheet
+ * BottomSheet — Bottom sheet fiable sans swipe-to-dismiss
  *
- * Comportement iOS natif :
- * - Glisse vers le haut à l'ouverture (spring)
- * - Swipe vers le bas depuis N'IMPORTE OÙ sur le sheet → ferme
- * - Le sheet suit le doigt en temps réel pendant le drag
- * - Relâcher après 100px ou flick rapide → ferme avec spring
- * - Relâcher avant → snap back
- * - Tap sur le backdrop → ferme
+ * Fermeture par :
+ * - Tap sur le backdrop (fond sombre)
+ * - Bouton retour Android (onRequestClose)
  *
- * Le PanResponder couvre TOUT le sheet (pas juste le handle).
- * Il ne capture le geste qu'au MOUVEMENT (pas au touch), donc :
- * - Un tap sur un bouton → fonctionne normalement
- * - Un tap sur un TextInput → prend le focus normalement
- * - Un drag vertical vers le bas → le sheet suit le doigt
- *
- * Pour les sheets avec ScrollView : le scroll interne prend priorité
- * sur le PanResponder (onPanResponderTerminationRequest: true).
- * Les zones non-scrollables restent draggables.
+ * Animations d'ouverture (spring) et de fermeture (timing) gérées
+ * avec l'API Animated native — aucune dépendance tierce.
  */
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Animated,
+  Dimensions,
   Modal,
-  PanResponder,
   Pressable,
   StyleSheet,
   View,
@@ -37,151 +26,92 @@ interface BottomSheetProps {
   children: React.ReactNode;
 }
 
-const OFFSCREEN = 1200;
-const CLOSE_THRESHOLD = 100;
-const VELOCITY_THRESHOLD = 0.5;
+const SCREEN_HEIGHT = Dimensions.get('window').height;
+const OFFSCREEN = SCREEN_HEIGHT;
 
 export default function BottomSheet({ visible, onClose, children }: BottomSheetProps) {
-  const [isModalMounted, setIsModalMounted] = useState(false);
+  const [modalVisible, setModalVisible] = useState(false);
+
   const translateY = useRef(new Animated.Value(OFFSCREEN)).current;
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+
+  const isClosingRef = useRef(false);
 
   const backdropOpacity = useRef(
     translateY.interpolate({
-      inputRange: [0, 300, OFFSCREEN],
-      outputRange: [1, 0.15, 0],
+      inputRange: [0, OFFSCREEN * 0.4, OFFSCREEN],
+      outputRange: [0.45, 0.1, 0],
       extrapolate: 'clamp',
-    })
+    }),
   ).current;
 
-  const onCloseRef = useRef(onClose);
-  onCloseRef.current = onClose;
-  const isAnimatingOutRef = useRef(false);
+  const animateClose = useCallback(
+    (notifyParent: boolean) => {
+      if (isClosingRef.current) return;
+      isClosingRef.current = true;
 
-  const animateOut = useCallback(() => {
-    if (isAnimatingOutRef.current) return;
-    isAnimatingOutRef.current = true;
+      Animated.timing(translateY, {
+        toValue: OFFSCREEN,
+        duration: 250,
+        useNativeDriver: true,
+      }).start(() => {
+        setModalVisible(false);
+        isClosingRef.current = false;
+        if (notifyParent) onCloseRef.current?.();
+      });
+    },
+    [translateY],
+  );
 
+  const animateOpen = useCallback(() => {
+    isClosingRef.current = false;
+    translateY.setValue(OFFSCREEN);
     Animated.spring(translateY, {
-      toValue: OFFSCREEN,
-      damping: 28,
-      stiffness: 360,
+      toValue: 0,
+      damping: 20,
+      stiffness: 200,
       mass: 0.8,
-      useNativeDriver: false,
-    }).start(() => {
-      setIsModalMounted(false);
-      isAnimatingOutRef.current = false;
-    });
-
-    setTimeout(() => {
-      if (isAnimatingOutRef.current) {
-        translateY.stopAnimation();
-        setIsModalMounted(false);
-        isAnimatingOutRef.current = false;
-      }
-    }, 500);
+      useNativeDriver: true,
+    }).start();
   }, [translateY]);
 
   useEffect(() => {
     if (visible) {
-      isAnimatingOutRef.current = false;
-      translateY.setValue(OFFSCREEN);
-      setIsModalMounted(true);
-    } else if (isModalMounted) {
-      animateOut();
+      setModalVisible(true);
+    } else if (modalVisible) {
+      animateClose(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible]);
 
   useEffect(() => {
-    if (isModalMounted && visible) {
-      requestAnimationFrame(() => {
-        Animated.spring(translateY, {
-          toValue: 0,
-          damping: 26,
-          stiffness: 240,
-          mass: 0.9,
-          useNativeDriver: false,
-        }).start();
-      });
-    }
+    if (modalVisible && visible) animateOpen();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isModalMounted]);
+  }, [modalVisible]);
 
-  const dismiss = useCallback(() => {
-    onCloseRef.current?.();
-  }, []);
+  const dismiss = useCallback(() => animateClose(true), [animateClose]);
 
-  /**
-   * PanResponder sur TOUT le sheet (pas juste le handle).
-   *
-   * - onStartShouldSetPanResponder: false
-   *   → Un simple tap ne déclenche PAS le PanResponder.
-   *   → Les boutons, inputs, pressables reçoivent le tap normalement.
-   *
-   * - onMoveShouldSetPanResponder: true si dy > 8px ET mouvement vertical
-   *   → Seulement un vrai glissement vers le bas capture le geste.
-   *   → Un scroll horizontal ou un tout petit mouvement est ignoré.
-   *
-   * - onPanResponderTerminationRequest: true
-   *   → Si un enfant (ScrollView par ex.) veut prendre le geste,
-   *     on lui donne la priorité. Ça évite les conflits scroll/dismiss.
-   */
-  const panResponder = useRef(
-    PanResponder.create({
-      onStartShouldSetPanResponder: () => false,
-      onMoveShouldSetPanResponder: (_, gs) =>
-        gs.dy > 8 && Math.abs(gs.dy) > Math.abs(gs.dx) * 1.5,
-      onPanResponderTerminationRequest: () => true,
-      onPanResponderMove: (_, gs) => {
-        if (gs.dy > 0) {
-          translateY.setValue(gs.dy);
-        }
-      },
-      onPanResponderRelease: (_, gs) => {
-        if (gs.dy > CLOSE_THRESHOLD || gs.vy > VELOCITY_THRESHOLD) {
-          onCloseRef.current?.();
-        } else {
-          Animated.spring(translateY, {
-            toValue: 0,
-            damping: 26,
-            stiffness: 240,
-            mass: 0.9,
-            useNativeDriver: false,
-          }).start();
-        }
-      },
-    })
-  ).current;
-
-  if (!isModalMounted) return null;
+  if (!modalVisible) return null;
 
   return (
     <Modal
-      visible={isModalMounted}
+      visible
       transparent
       animationType="none"
       statusBarTranslucent
       onRequestClose={dismiss}
     >
-      {/* Backdrop */}
+      {/* Backdrop — tap pour fermer */}
       <Animated.View style={[styles.backdrop, { opacity: backdropOpacity }]}>
         <Pressable style={StyleSheet.absoluteFill} onPress={dismiss} />
       </Animated.View>
 
-      {/*
-        Le PanResponder est sur l'Animated.View du sheet entier.
-        panHandlers contient les callbacks onResponderMove, etc.
-        Tout le contenu du sheet est draggable vers le bas.
-      */}
-      <Animated.View
-        {...panResponder.panHandlers}
-        style={[styles.sheet, { transform: [{ translateY }] }]}
-      >
-        {/* Handle visuel (purement décoratif, la zone de drag = tout le sheet) */}
+      {/* Sheet */}
+      <Animated.View style={[styles.sheet, { transform: [{ translateY }] }]}>
         <View style={styles.handleArea}>
           <View style={styles.handleBar} />
         </View>
-
         {children}
       </Animated.View>
     </Modal>
@@ -191,13 +121,14 @@ export default function BottomSheet({ visible, onClose, children }: BottomSheetP
 const styles = StyleSheet.create({
   backdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.45)',
+    backgroundColor: '#000',
   },
   sheet: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
+    maxHeight: SCREEN_HEIGHT * 0.88,
     backgroundColor: colors.white,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
@@ -206,6 +137,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.12,
     shadowRadius: 24,
     elevation: 16,
+    overflow: 'hidden',
   },
   handleArea: {
     alignItems: 'center',

@@ -117,10 +117,6 @@ export default function ParticipantHistorySheet({
 
   return (
     <BottomSheet visible={visible} onClose={onClose}>
-      {/*
-        maxHeight: '80%' borne la hauteur du sheet.
-        Le header reste fixe, la ScrollView prend l'espace restant.
-      */}
       <View style={styles.container}>
         {/* Header : avatar + nom — fixe, pas dans le scroll */}
         <View style={styles.header}>
@@ -226,7 +222,7 @@ const LINE_WIDTH = 2;
 
 const styles = StyleSheet.create({
   container: {
-    maxHeight: '80%',
+    flex: 1,
   },
 
   // ═══ HEADER ═══
@@ -270,7 +266,7 @@ const styles = StyleSheet.create({
 
   // ═══ SCROLL VIEW ═══
   scrollView: {
-    flexGrow: 0,
+    flex: 1,
   },
   scrollContent: {
     paddingHorizontal: 24,

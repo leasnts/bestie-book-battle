@@ -218,6 +218,7 @@ export default function OnboardingCoverScreen() {
                     <Button3D
                         onPress={handleContinue}
                         variant="primary"
+                        disabled={!coverUri}
                         style={{ width: '100%' }}
                     >
                         Continuer

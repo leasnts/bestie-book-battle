@@ -33,7 +33,6 @@ import {
   Keyboard,
   KeyboardAvoidingView,
   Linking,
-  Modal,
   Platform,
   Pressable,
   Share,
@@ -43,13 +42,9 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import Animated, {
-  FadeIn,
-  FadeOut,
-  SlideInDown,
-  SlideOutDown,
-} from 'react-native-reanimated';
+import 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import BottomSheet from '../../components/ui/BottomSheet';
 import Button3D from '../../components/Button3D';
 import { pickImage, uploadProfilePhoto } from '../../services/supabase/storage';
 import { useAuthStore } from '../../stores/authStore';
@@ -198,7 +193,7 @@ export default function ProfileScreen() {
     const body = encodeURIComponent(
       `Décris ton problème ici :\n\n\n---\nApp version : ${APP_VERSION}\niOS : ${Platform.OS === 'ios' ? 'oui' : 'non'}`
     );
-    const mailUrl = `mailto:support@bestiebookbattle.com?subject=${subject}&body=${body}`;
+    const mailUrl = `mailto:support@leasantos.me?subject=${subject}&body=${body}`;
     const canOpen = await Linking.canOpenURL(mailUrl);
     if (canOpen) {
       Linking.openURL(mailUrl);
@@ -299,10 +294,10 @@ export default function ProfileScreen() {
       {/* ═══════════ FOOTER ═══════════ */}
       <View style={[styles.footer, { paddingBottom: insets.bottom + spacing['2xl'] }]}>
         <View style={styles.footerLinks}>
-          <Pressable onPress={() => Linking.openURL('https://bestiebookbattle.com/terms')}>
+          <Pressable onPress={() => Linking.openURL('https://bbb.leasantos.me/terms')}>
             <Text style={styles.footerLink}>Conditions d'utilisations</Text>
           </Pressable>
-          <Pressable onPress={() => Linking.openURL('https://bestiebookbattle.com/privacy')}>
+          <Pressable onPress={() => Linking.openURL('https://bbb.leasantos.me/privacy')}>
             <Text style={styles.footerLink}>Politique de confidentialité</Text>
           </Pressable>
         </View>
@@ -416,27 +411,16 @@ function EditProfileSheet({ visible, onClose }: { visible: boolean; onClose: () 
     }
   };
 
-  if (!visible) return null;
-
   const photoSource = resolvePhotoSource(user?.profile_photo_url, user?.updated_at);
 
   return (
-    <Modal visible={visible} transparent animationType="none" statusBarTranslucent onRequestClose={onClose}>
-      <Animated.View style={sheetStyles.overlay} entering={FadeIn.duration(200)} exiting={FadeOut.duration(150)}>
-        <Pressable style={{ flex: 1 }} onPress={onClose} />
-      </Animated.View>
-
+    <BottomSheet visible={visible} onClose={onClose}>
       {Platform.OS === 'ios' && (
         <InputAccessoryView nativeID={ACCESSORY_ID_PROFILE}><View /></InputAccessoryView>
       )}
 
       <KeyboardAvoidingView style={sheetStyles.keyboardAvoid} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-        <Animated.View
-          style={[sheetStyles.sheet, { paddingBottom: isKeyboardVisible ? 12 : Math.max(32, insets.bottom + 16) }]}
-          entering={SlideInDown.duration(300)}
-          exiting={SlideOutDown.duration(200)}
-        >
-          <View style={sheetStyles.handleRow}><View style={sheetStyles.handle} /></View>
+        <View style={{ paddingHorizontal: spacing.xl, paddingBottom: isKeyboardVisible ? 12 : Math.max(32, insets.bottom + 16) }}>
           <Text style={sheetStyles.title}>Modifier le profil</Text>
 
           <Pressable
@@ -474,9 +458,9 @@ function EditProfileSheet({ visible, onClose }: { visible: boolean; onClose: () 
               Enregistrer
             </Button3D>
           </View>
-        </Animated.View>
+        </View>
       </KeyboardAvoidingView>
-    </Modal>
+    </BottomSheet>
   );
 }
 
@@ -520,104 +504,87 @@ function InviteSheet({ visible, onClose, challenges }: { visible: boolean; onClo
     }
   };
 
-  if (!visible) return null;
-
   const hasMultiple = challenges.length > 1;
 
   return (
-    <Modal visible={visible} transparent animationType="none" statusBarTranslucent onRequestClose={onClose}>
-      <Animated.View style={sheetStyles.overlay} entering={FadeIn.duration(200)} exiting={FadeOut.duration(150)}>
-        <Pressable style={{ flex: 1 }} onPress={onClose} />
-      </Animated.View>
+    <BottomSheet visible={visible} onClose={onClose}>
+      <View style={{ paddingHorizontal: spacing.xl, paddingBottom: Math.max(32, insets.bottom + 16) }}>
+        <Text style={sheetStyles.title}>Inviter un ami</Text>
 
-      <View style={sheetStyles.keyboardAvoid}>
-        <Animated.View
-          style={[sheetStyles.sheet, { paddingBottom: Math.max(32, insets.bottom + 16) }]}
-          entering={SlideInDown.duration(300)}
-          exiting={SlideOutDown.duration(200)}
-        >
-          <View style={sheetStyles.handleRow}><View style={sheetStyles.handle} /></View>
-          <Text style={sheetStyles.title}>Inviter un ami</Text>
-
-          {challenges.length === 0 ? (
-            <Text style={sheetStyles.emptyText}>Tu n'as aucun projet de lecture actif pour le moment.</Text>
-          ) : (
-            <>
-              {/* Sélecteur horizontal si plusieurs livres */}
-              {hasMultiple && (
-                <RNAnimated.ScrollView
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  style={{ marginBottom: spacing.lg }}
-                  contentContainerStyle={inviteStyles.bookPickerContent}
-                >
-                  {challenges.map((c) => {
-                    const isSelected = c.id === selectedChallenge?.id;
-                    return (
-                      <Pressable
-                        key={c.id}
-                        onPress={() => setSelectedChallenge(c)}
-                        style={[inviteStyles.bookCard, isSelected && inviteStyles.bookCardSelected]}
-                      >
-                        {c.cover_url ? (
-                          <Image source={{ uri: c.cover_url }} style={inviteStyles.bookCardCover} contentFit="cover" />
-                        ) : (
-                          <View style={inviteStyles.bookCardNoCover}>
-                            <Ionicons name="book-outline" size={24} color={colors.textTertiary} />
-                          </View>
-                        )}
-                      </Pressable>
-                    );
-                  })}
-                </RNAnimated.ScrollView>
-              )}
-
-              {/* Affichage livre unique */}
-              {!hasMultiple && selectedChallenge && (
-                <View style={inviteStyles.singleBook}>
-                  {selectedChallenge.cover_url ? (
-                    <Image source={{ uri: selectedChallenge.cover_url }} style={inviteStyles.singleBookCover} contentFit="cover" />
-                  ) : (
-                    <View style={[inviteStyles.singleBookCover, inviteStyles.singleBookNoCover]}>
-                      <Ionicons name="book-outline" size={28} color={colors.textTertiary} />
-                    </View>
-                  )}
-                  <View style={{ flex: 1 }}>
-                    <Text style={inviteStyles.singleBookTitle}>{selectedChallenge.book_title}</Text>
-                    {selectedChallenge.book_author && (
-                      <Text style={inviteStyles.singleBookAuthor}>{selectedChallenge.book_author}</Text>
-                    )}
-                  </View>
-                </View>
-              )}
-
-              {selectedChallenge && (
-                <>
-                  <Text style={sheetStyles.label}>Code d'invitation</Text>
-                  {/* Pressable copie + toast inline */}
-                  <View>
-                    <Pressable style={inviteStyles.codeBox} onPress={handleCopy}>
-                      <Text style={inviteStyles.codeText}>{selectedChallenge.invite_code}</Text>
-                      <Ionicons name="copy-outline" size={20} color={colors.textTertiary} />
+        {challenges.length === 0 ? (
+          <Text style={sheetStyles.emptyText}>Tu n'as aucun projet de lecture actif pour le moment.</Text>
+        ) : (
+          <>
+            {hasMultiple && (
+              <RNAnimated.ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                style={{ marginBottom: spacing.lg }}
+                contentContainerStyle={inviteStyles.bookPickerContent}
+              >
+                {challenges.map((c) => {
+                  const isSelected = c.id === selectedChallenge?.id;
+                  return (
+                    <Pressable
+                      key={c.id}
+                      onPress={() => setSelectedChallenge(c)}
+                      style={[inviteStyles.bookCard, isSelected && inviteStyles.bookCardSelected]}
+                    >
+                      {c.cover_url ? (
+                        <Image source={{ uri: c.cover_url }} style={inviteStyles.bookCardCover} contentFit="cover" />
+                      ) : (
+                        <View style={inviteStyles.bookCardNoCover}>
+                          <Ionicons name="book-outline" size={24} color={colors.textTertiary} />
+                        </View>
+                      )}
                     </Pressable>
-                    {/* Mini-toast "Copié !" — apparaît sur le code, disparaît seul */}
-                    <RNAnimated.View style={[inviteStyles.copyToast, { opacity: copyToastOpacity }]} pointerEvents="none">
-                      <Text style={inviteStyles.copyToastText}>Copié !</Text>
-                    </RNAnimated.View>
-                  </View>
+                  );
+                })}
+              </RNAnimated.ScrollView>
+            )}
 
-                  <View style={{ marginTop: spacing.lg }}>
-                    <Button3D variant="primary" onPress={handleShare} icon="share-outline" iconPosition="left">
-                      Inviter à participer
-                    </Button3D>
+            {!hasMultiple && selectedChallenge && (
+              <View style={inviteStyles.singleBook}>
+                {selectedChallenge.cover_url ? (
+                  <Image source={{ uri: selectedChallenge.cover_url }} style={inviteStyles.singleBookCover} contentFit="cover" />
+                ) : (
+                  <View style={[inviteStyles.singleBookCover, inviteStyles.singleBookNoCover]}>
+                    <Ionicons name="book-outline" size={28} color={colors.textTertiary} />
                   </View>
-                </>
-              )}
-            </>
-          )}
-        </Animated.View>
+                )}
+                <View style={{ flex: 1 }}>
+                  <Text style={inviteStyles.singleBookTitle}>{selectedChallenge.book_title}</Text>
+                  {selectedChallenge.book_author && (
+                    <Text style={inviteStyles.singleBookAuthor}>{selectedChallenge.book_author}</Text>
+                  )}
+                </View>
+              </View>
+            )}
+
+            {selectedChallenge && (
+              <>
+                <Text style={sheetStyles.label}>Code d'invitation</Text>
+                <View>
+                  <Pressable style={inviteStyles.codeBox} onPress={handleCopy}>
+                    <Text style={inviteStyles.codeText}>{selectedChallenge.invite_code}</Text>
+                    <Ionicons name="copy-outline" size={20} color={colors.textTertiary} />
+                  </Pressable>
+                  <RNAnimated.View style={[inviteStyles.copyToast, { opacity: copyToastOpacity }]} pointerEvents="none">
+                    <Text style={inviteStyles.copyToastText}>Copié !</Text>
+                  </RNAnimated.View>
+                </View>
+
+                <View style={{ marginTop: spacing.lg }}>
+                  <Button3D variant="primary" onPress={handleShare} icon="share-outline" iconPosition="left">
+                    Inviter à participer
+                  </Button3D>
+                </View>
+              </>
+            )}
+          </>
+        )}
       </View>
-    </Modal>
+    </BottomSheet>
   );
 }
 
@@ -779,35 +746,9 @@ const styles = StyleSheet.create({
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const sheetStyles = StyleSheet.create({
-  overlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.45)',
-  },
   keyboardAvoid: {
     flex: 1,
     justifyContent: 'flex-end',
-  },
-  sheet: {
-    backgroundColor: colors.white,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    paddingHorizontal: spacing.xl,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -8 },
-    shadowOpacity: 0.12,
-    shadowRadius: 24,
-    elevation: 16,
-  },
-  handleRow: {
-    alignItems: 'center',
-    paddingTop: 12,
-    paddingBottom: 8,
-  },
-  handle: {
-    width: 40,
-    height: 4,
-    borderRadius: 9999,
-    backgroundColor: colors.textSubtle,
   },
   title: {
     fontFamily: 'Rokkitt_Medium',
