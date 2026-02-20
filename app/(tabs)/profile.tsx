@@ -1,17 +1,21 @@
 /**
- * 👤 Page Profil — v2
+ * 👤 Page Profil — v3
  *
- * Structure :
+ * Structure (layout fixe, aucun scroll) :
  * 1. HEADER   : bouton retour (Button3D) | titre "Profil"
- * 2. PROFIL   : photo rectangulaire + prénom (Rokkitt Bold) + bouton "Modifier"
- * 3. SETTINGS : liste claire (notifications, inviter, signaler, déconnexion)
- * 4. FOOTER   : liens légaux cliquables + version dynamique depuis expo-constants
+ * 2. PROFIL   : photo + prénom Rokkitt + bouton "Modifier"
+ * 3. SETTINGS : notifications (toggle natif), inviter, signaler, déconnexion
+ * 4. FOOTER   : liens légaux cliquables + version dynamique
  *
- * Modals bottom sheet intégrés :
- * - EditProfileSheet : changer photo, prénom, voir email
- * - InviteSheet : choisir le livre, afficher le code, partage natif iOS
+ * Notifications :
+ * - Au montage, on lit l'état réel des permissions iOS via expo-notifications
+ * - Toggle ON  → requestPermissionsAsync (si refusé → Settings iOS)
+ * - Toggle OFF → iOS ne permet pas de couper programmatiquement les notifs
+ *   d'une app, on redirige vers les Settings du téléphone
+ * - Compatible Expo Go + build production (App Store)
  */
 
+import * as Notifications from 'expo-notifications';
 import { Ionicons } from '@expo/vector-icons';
 import * as Clipboard from 'expo-clipboard';
 import Constants from 'expo-constants';
@@ -22,6 +26,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  Animated as RNAnimated,
   InputAccessoryView,
   Keyboard,
   KeyboardAvoidingView,
@@ -29,7 +34,6 @@ import {
   Modal,
   Platform,
   Pressable,
-  ScrollView,
   Share,
   StyleSheet,
   Switch,
@@ -60,12 +64,27 @@ import {
 // ─── Constantes ────────────────────────────────────────────────────────────────
 
 const TEXTURE_IMAGE = require('../../assets/images/61ea1e0c638b5b9c8100383a37a5b488848db623.png');
-
-// Version lue depuis le manifeste Expo — évite de la mettre en dur
 const APP_VERSION = Constants.expoConfig?.version ?? '1.0';
-
-// InputAccessoryView ID pour masquer la barre "Done" iOS sur le clavier texte
 const ACCESSORY_ID_PROFILE = 'edit-profile-no-done';
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Construit l'URI de la photo avec cache-busting (?v=timestamp).
+ * Même logique que resolveAvatarSource sur la home — force expo-image
+ * à recharger après un changement de photo.
+ */
+function resolvePhotoSource(url?: string | null, updatedAt?: string | null) {
+  if (!url) return require('../../assets/images/lea.png');
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    const sep = url.includes('?') ? '&' : '?';
+    const v = updatedAt ? new Date(updatedAt).getTime() : Date.now();
+    return { uri: `${url}${sep}v=${v}` };
+  }
+  return require('../../assets/images/lea.png');
+}
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // PAGE PRINCIPALE
@@ -75,14 +94,73 @@ export default function ProfileScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { user, logout } = useAuthStore();
-  const { challenges } = useProjectStore();
+  const { challenges, loadUserChallenges } = useProjectStore();
 
-  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [editProfileVisible, setEditProfileVisible] = useState(false);
   const [inviteVisible, setInviteVisible] = useState(false);
 
-  // ─── Handlers ──────────────────────────────────────────────────────────────
+  // ─── Init : permissions notifs + challenges ─────────────────────────────────
+
+  useEffect(() => {
+    // Lit l'état réel des permissions au montage pour initialiser le toggle
+    Notifications.getPermissionsAsync().then(({ status }) => {
+      setNotificationsEnabled(status === 'granted');
+    });
+  }, []);
+
+  useEffect(() => {
+    // Charge les challenges si pas encore en mémoire (ex: arrivée directe sur profil)
+    if (user?.id && challenges.length === 0) {
+      loadUserChallenges(user.id);
+    }
+  }, [user?.id]);
+
+  // ─── Toggle notifications ───────────────────────────────────────────────────
+
+  /**
+   * iOS ne permet pas de désactiver les notifs programmatiquement depuis l'app.
+   * - ON  → on demande la permission (ou on informe si déjà accordée)
+   * - OFF → on renvoie l'user dans les Réglages iOS pour couper lui-même
+   */
+  const handleToggleNotifications = async (value: boolean) => {
+    if (value) {
+      // L'user veut activer
+      const { status } = await Notifications.requestPermissionsAsync();
+      if (status === 'granted') {
+        setNotificationsEnabled(true);
+      } else {
+        // Permission refusée ou non déterminée → Settings
+        Alert.alert(
+          'Notifications désactivées',
+          'Pour recevoir des rappels de lecture, active les notifications pour Bestie Book Battle dans tes Réglages.',
+          [
+            { text: 'Plus tard', style: 'cancel' },
+            {
+              text: 'Ouvrir les Réglages',
+              onPress: () => Linking.openURL('app-settings:'),
+            },
+          ]
+        );
+      }
+    } else {
+      // L'user veut désactiver → redirection Réglages iOS
+      Alert.alert(
+        'Désactiver les notifications',
+        'Pour désactiver les notifications, rends-toi dans tes Réglages → Bestie Book Battle → Notifications.',
+        [
+          { text: 'Annuler', style: 'cancel' },
+          {
+            text: 'Ouvrir les Réglages',
+            onPress: () => Linking.openURL('app-settings:'),
+          },
+        ]
+      );
+    }
+  };
+
+  // ─── Déconnexion ────────────────────────────────────────────────────────────
 
   const handleLogoutPress = () => {
     Alert.alert(
@@ -109,39 +187,28 @@ export default function ProfileScreen() {
     );
   };
 
-  /**
-   * Ouvre l'app Mail native iOS avec sujet + corps pré-remplis.
-   * L'utilisateur n'a qu'à appuyer Envoyer.
-   * Remplace le lien App Store pour un feedback plus direct.
-   */
+  // ─── Signalement ────────────────────────────────────────────────────────────
+
   const handleReportIssue = async () => {
     const subject = encodeURIComponent('[BBB] Signalement d\'un problème');
     const body = encodeURIComponent(
       `Décris ton problème ici :\n\n\n---\nApp version : ${APP_VERSION}\niOS : ${Platform.OS === 'ios' ? 'oui' : 'non'}`
     );
     const mailUrl = `mailto:support@bestiebookbattle.com?subject=${subject}&body=${body}`;
-
     const canOpen = await Linking.canOpenURL(mailUrl);
     if (canOpen) {
       Linking.openURL(mailUrl);
     } else {
-      Alert.alert(
-        'Aucune app Mail',
-        'Configure une app Mail sur ton iPhone pour envoyer un signalement.'
-      );
+      Alert.alert('Aucune app Mail', 'Configure une app Mail sur ton iPhone pour envoyer un signalement.');
     }
   };
 
-  const photoSource =
-    typeof user?.profile_photo_url === 'string'
-      ? { uri: user.profile_photo_url }
-      : require('../../assets/images/lea.png');
+  const photoSource = resolvePhotoSource(user?.profile_photo_url, user?.updated_at);
 
   // ─── Rendu ─────────────────────────────────────────────────────────────────
 
   return (
     <View style={styles.container}>
-      {/* Texture de fond noise (même que la home) */}
       <Image source={TEXTURE_IMAGE} style={styles.backgroundTexture} contentFit="cover" />
 
       {/* ═══════════ HEADER ═══════════ */}
@@ -157,86 +224,77 @@ export default function ProfileScreen() {
         <View style={styles.headerSpacer} />
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-
-        {/* ═══════════ SECTION PROFIL ═══════════ */}
-        <View style={styles.profileSection}>
-          <View style={styles.profileRow}>
-            {/* Photo rectangulaire */}
-            <View style={styles.photoWrapper}>
-              <Image source={photoSource} style={styles.photo} contentFit="cover" />
-            </View>
-
-            {/* Prénom + bouton Modifier */}
-            <View style={styles.profileInfo}>
-              <Text style={styles.profileName}>{user?.first_name || 'Lecteur'}</Text>
-              <EditButton onPress={() => setEditProfileVisible(true)} />
-            </View>
+      {/* ═══════════ SECTION PROFIL ═══════════ */}
+      <View style={styles.profileSection}>
+        <View style={styles.profileRow}>
+          <View style={styles.photoWrapper}>
+            <Image source={photoSource} style={styles.photo} contentFit="cover" />
+          </View>
+          <View style={styles.profileInfo}>
+            <Text style={styles.profileName}>{user?.first_name || 'Lecteur'}</Text>
+            <EditButton onPress={() => setEditProfileVisible(true)} />
           </View>
         </View>
+      </View>
 
-        {/* ═══════════ LISTE PARAMÈTRES ═══════════ */}
-        <View style={styles.settingsList}>
+      {/* ═══════════ LISTE PARAMÈTRES ═══════════ */}
+      <View style={styles.settingsList}>
 
-          {/* Notifications push */}
-          <View style={[styles.settingRow, styles.settingRowFirst]}>
-            <View style={styles.settingLeft}>
-              <Ionicons name="notifications-outline" size={24} color={colors.textSecondary} />
-              <Text style={styles.settingLabel}>Notifications push</Text>
-            </View>
-            <Switch
-              value={notificationsEnabled}
-              onValueChange={setNotificationsEnabled}
-              // Noir primary au lieu du vert iOS — cohérent avec la charte BBB
-              trackColor={{ false: colors.border, true: colors.dark900 }}
-              thumbColor="#FFFFFF"
-            />
+        <View style={[styles.settingRow, styles.settingRowFirst]}>
+          <View style={styles.settingLeft}>
+            <Ionicons name="notifications-outline" size={24} color={colors.textSecondary} />
+            <Text style={styles.settingLabel}>Notifications push</Text>
           </View>
-
-          {/* Inviter un ami */}
-          <Pressable
-            style={({ pressed }) => [styles.settingRow, pressed && styles.settingRowPressed]}
-            onPress={() => setInviteVisible(true)}
-          >
-            <View style={styles.settingLeft}>
-              <Ionicons name="share-outline" size={24} color={colors.textSecondary} />
-              <Text style={styles.settingLabel}>Inviter un ami</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={24} color={colors.textTertiary} />
-          </Pressable>
-
-          {/* Signaler un problème — ouvre Mail natif avec sujet pré-rempli */}
-          <Pressable
-            style={({ pressed }) => [styles.settingRow, pressed && styles.settingRowPressed]}
-            onPress={handleReportIssue}
-          >
-            <View style={styles.settingLeft}>
-              <Ionicons name="warning-outline" size={24} color={colors.textSecondary} />
-              <Text style={styles.settingLabel}>Signaler un problème</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={24} color={colors.textTertiary} />
-          </Pressable>
-
-          {/* Se déconnecter */}
-          <Pressable
-            style={({ pressed }) => [styles.settingRow, pressed && styles.settingRowPressed]}
-            onPress={handleLogoutPress}
-            disabled={isLoggingOut}
-          >
-            <View style={styles.settingLeft}>
-              <Ionicons name="log-out-outline" size={24} color={colors.error} />
-              <Text style={[styles.settingLabel, styles.settingLabelDanger]}>Se déconnecter</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={24} color={colors.error} />
-          </Pressable>
-
+          <Switch
+            value={notificationsEnabled}
+            onValueChange={handleToggleNotifications}
+            trackColor={{ false: colors.border, true: colors.dark900 }}
+            thumbColor="#FFFFFF"
+          />
         </View>
-      </ScrollView>
+
+        <Pressable
+          style={({ pressed }) => [styles.settingRow, pressed && styles.settingRowPressed]}
+          onPress={() => setInviteVisible(true)}
+        >
+          <View style={styles.settingLeft}>
+            <Ionicons name="share-outline" size={24} color={colors.textSecondary} />
+            <Text style={styles.settingLabel}>Inviter un ami</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={24} color={colors.textTertiary} />
+        </Pressable>
+
+        <Pressable
+          style={({ pressed }) => [styles.settingRow, pressed && styles.settingRowPressed]}
+          onPress={handleReportIssue}
+        >
+          <View style={styles.settingLeft}>
+            <Ionicons name="warning-outline" size={24} color={colors.textSecondary} />
+            <Text style={styles.settingLabel}>Signaler un problème</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={24} color={colors.textTertiary} />
+        </Pressable>
+
+        <Pressable
+          style={({ pressed }) => [styles.settingRow, pressed && styles.settingRowPressed]}
+          onPress={handleLogoutPress}
+          disabled={isLoggingOut}
+        >
+          <View style={styles.settingLeft}>
+            <Ionicons name="log-out-outline" size={24} color={colors.error} />
+            <Text style={[styles.settingLabel, styles.settingLabelDanger]}>Se déconnecter</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={24} color={colors.error} />
+        </Pressable>
+
+      </View>
+
+      {/* Spacer — pousse le footer vers le bas */}
+      <View style={{ flex: 1 }} />
 
       {/* ═══════════ FOOTER ═══════════ */}
       <View style={[styles.footer, { paddingBottom: insets.bottom + spacing['2xl'] }]}>
         <View style={styles.footerLinks}>
-          {/* Liens légaux → ouvrent Safari en externe */}
           <Pressable onPress={() => Linking.openURL('https://bestiebookbattle.com/terms')}>
             <Text style={styles.footerLink}>Conditions d'utilisations</Text>
           </Pressable>
@@ -247,34 +305,24 @@ export default function ProfileScreen() {
         <Text style={styles.footerVersion}>bestie book battle v{APP_VERSION}</Text>
       </View>
 
-      {/* Overlay pendant la déconnexion */}
       {isLoggingOut && (
         <View style={styles.logoutOverlay}>
           <ActivityIndicator size="large" color={colors.dark900} />
         </View>
       )}
 
-      {/* ═══════════ MODALS ═══════════ */}
-      <EditProfileSheet
-        visible={editProfileVisible}
-        onClose={() => setEditProfileVisible(false)}
-      />
-      <InviteSheet
-        visible={inviteVisible}
-        onClose={() => setInviteVisible(false)}
-        challenges={challenges}
-      />
+      <EditProfileSheet visible={editProfileVisible} onClose={() => setEditProfileVisible(false)} />
+      <InviteSheet visible={inviteVisible} onClose={() => setInviteVisible(false)} challenges={challenges} />
     </View>
   );
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// BOUTON "MODIFIER" — réplique Button3D secondary en pill compact
+// BOUTON "MODIFIER"
 // ═══════════════════════════════════════════════════════════════════════════════
 
 function EditButton({ onPress }: { onPress: () => void }) {
   const [pressed, setPressed] = useState(false);
-
   return (
     <Pressable
       onPress={onPress}
@@ -303,18 +351,12 @@ function EditButton({ onPress }: { onPress: () => void }) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// EDIT PROFILE SHEET — photo (avec bouton refresh à côté) + prénom
+// EDIT PROFILE SHEET
 // ═══════════════════════════════════════════════════════════════════════════════
 
-interface EditProfileSheetProps {
-  visible: boolean;
-  onClose: () => void;
-}
-
-function EditProfileSheet({ visible, onClose }: EditProfileSheetProps) {
+function EditProfileSheet({ visible, onClose }: { visible: boolean; onClose: () => void }) {
   const insets = useSafeAreaInsets();
   const { user, updateProfile } = useAuthStore();
-
   const [firstName, setFirstName] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
@@ -372,50 +414,27 @@ function EditProfileSheet({ visible, onClose }: EditProfileSheetProps) {
 
   if (!visible) return null;
 
-  const photoSource =
-    typeof user?.profile_photo_url === 'string'
-      ? { uri: user.profile_photo_url }
-      : require('../../assets/images/lea.png');
+  const photoSource = resolvePhotoSource(user?.profile_photo_url, user?.updated_at);
 
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="none"
-      statusBarTranslucent
-      onRequestClose={onClose}
-    >
-      {/* Overlay sombre — tap = fermer */}
+    <Modal visible={visible} transparent animationType="none" statusBarTranslucent onRequestClose={onClose}>
       <Animated.View style={sheetStyles.overlay} entering={FadeIn.duration(200)} exiting={FadeOut.duration(150)}>
         <Pressable style={{ flex: 1 }} onPress={onClose} />
       </Animated.View>
 
       {Platform.OS === 'ios' && (
-        <InputAccessoryView nativeID={ACCESSORY_ID_PROFILE}>
-          <View />
-        </InputAccessoryView>
+        <InputAccessoryView nativeID={ACCESSORY_ID_PROFILE}><View /></InputAccessoryView>
       )}
 
-      {/* flex: 1 + justifyContent: flex-end = sheet ancré en bas */}
-      <KeyboardAvoidingView
-        style={sheetStyles.keyboardAvoid}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      >
+      <KeyboardAvoidingView style={sheetStyles.keyboardAvoid} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
         <Animated.View
-          style={[
-            sheetStyles.sheet,
-            { paddingBottom: isKeyboardVisible ? 12 : Math.max(32, insets.bottom + 16) },
-          ]}
+          style={[sheetStyles.sheet, { paddingBottom: isKeyboardVisible ? 12 : Math.max(32, insets.bottom + 16) }]}
           entering={SlideInDown.duration(300)}
           exiting={SlideOutDown.duration(200)}
         >
-          <View style={sheetStyles.handleRow}>
-            <View style={sheetStyles.handle} />
-          </View>
-
+          <View style={sheetStyles.handleRow}><View style={sheetStyles.handle} /></View>
           <Text style={sheetStyles.title}>Modifier le profil</Text>
 
-          {/* ── Photo + bouton refresh à côté ── */}
           <View style={sheetStyles.photoSection}>
             <View style={sheetStyles.photoThumb}>
               <Image source={photoSource} style={sheetStyles.photoThumbImg} contentFit="cover" />
@@ -425,7 +444,6 @@ function EditProfileSheet({ visible, onClose }: EditProfileSheetProps) {
                 </View>
               )}
             </View>
-            {/* Bouton refresh circulaire à côté de la photo */}
             <Pressable
               style={({ pressed }) => [sheetStyles.refreshBtn, pressed && { opacity: 0.6 }]}
               onPress={handleChangePhoto}
@@ -460,36 +478,33 @@ function EditProfileSheet({ visible, onClose }: EditProfileSheetProps) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// INVITE SHEET — choisir le livre, afficher le code, partage natif iOS
+// INVITE SHEET
 // ═══════════════════════════════════════════════════════════════════════════════
 
-interface InviteSheetProps {
-  visible: boolean;
-  onClose: () => void;
-  challenges: Challenge[];
-}
-
-function InviteSheet({ visible, onClose, challenges }: InviteSheetProps) {
+function InviteSheet({ visible, onClose, challenges }: { visible: boolean; onClose: () => void; challenges: Challenge[] }) {
   const insets = useSafeAreaInsets();
   const [selectedChallenge, setSelectedChallenge] = useState<Challenge | null>(null);
+  // Opacité du mini-toast "Copié !" inline (remplace l'Alert)
+  const copyToastOpacity = useRef(new RNAnimated.Value(0)).current;
 
-  // Pré-sélectionne le premier challenge à l'ouverture
   useEffect(() => {
-    if (visible && challenges.length > 0) {
-      setSelectedChallenge(challenges[0]);
-    }
+    if (visible && challenges.length > 0) setSelectedChallenge(challenges[0]);
   }, [visible, challenges]);
 
+  /**
+   * Copie le code et affiche un mini-toast inline qui disparaît en 1.5s.
+   * Plus léger qu'une Alert pour une action aussi simple.
+   */
   const handleCopy = async () => {
     if (!selectedChallenge?.invite_code) return;
     await Clipboard.setStringAsync(selectedChallenge.invite_code);
-    Alert.alert('Copié !', 'Le code d\'invitation a été copié.');
+    RNAnimated.sequence([
+      RNAnimated.timing(copyToastOpacity, { toValue: 1, duration: 150, useNativeDriver: true }),
+      RNAnimated.delay(1200),
+      RNAnimated.timing(copyToastOpacity, { toValue: 0, duration: 300, useNativeDriver: true }),
+    ]).start();
   };
 
-  /**
-   * Partage natif iOS (share sheet) avec message + deep link.
-   * Sur iOS, Share.share affiche la vraie share sheet native.
-   */
   const handleShare = async () => {
     if (!selectedChallenge) return;
     const code = selectedChallenge.invite_code;
@@ -498,50 +513,36 @@ function InviteSheet({ visible, onClose, challenges }: InviteSheetProps) {
     try {
       await Share.share({ message, url: deepLink });
     } catch {
-      // L'utilisateur a annulé le share
+      // Annulé par l'utilisateur
     }
   };
 
   if (!visible) return null;
 
-  const hasMultipleChallenges = challenges.length > 1;
+  const hasMultiple = challenges.length > 1;
 
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="none"
-      statusBarTranslucent
-      onRequestClose={onClose}
-    >
-      {/* Overlay sombre — tap = fermer */}
+    <Modal visible={visible} transparent animationType="none" statusBarTranslucent onRequestClose={onClose}>
       <Animated.View style={sheetStyles.overlay} entering={FadeIn.duration(200)} exiting={FadeOut.duration(150)}>
         <Pressable style={{ flex: 1 }} onPress={onClose} />
       </Animated.View>
 
-      {/* Même structure que GoalFormSheet : flex:1 + justifyContent:flex-end */}
       <View style={sheetStyles.keyboardAvoid}>
         <Animated.View
           style={[sheetStyles.sheet, { paddingBottom: Math.max(32, insets.bottom + 16) }]}
           entering={SlideInDown.duration(300)}
           exiting={SlideOutDown.duration(200)}
         >
-        <View style={sheetStyles.handleRow}>
-          <View style={sheetStyles.handle} />
-        </View>
+          <View style={sheetStyles.handleRow}><View style={sheetStyles.handle} /></View>
+          <Text style={sheetStyles.title}>Inviter un ami</Text>
 
-        <Text style={sheetStyles.title}>Inviter un ami</Text>
-
-        {challenges.length === 0 ? (
-          <Text style={sheetStyles.emptyText}>
-            Tu n'as aucun projet de lecture actif pour le moment.
-          </Text>
-        ) : (
-          <>
-            {/* ── Sélecteur de livre (si plusieurs challenges) ── */}
-            {hasMultipleChallenges && (
-              <>
-                <ScrollView
+          {challenges.length === 0 ? (
+            <Text style={sheetStyles.emptyText}>Tu n'as aucun projet de lecture actif pour le moment.</Text>
+          ) : (
+            <>
+              {/* Sélecteur horizontal si plusieurs livres */}
+              {hasMultiple && (
+                <RNAnimated.ScrollView
                   horizontal
                   showsHorizontalScrollIndicator={false}
                   style={{ marginBottom: spacing.lg }}
@@ -556,11 +557,7 @@ function InviteSheet({ visible, onClose, challenges }: InviteSheetProps) {
                         style={[inviteStyles.bookCard, isSelected && inviteStyles.bookCardSelected]}
                       >
                         {c.cover_url ? (
-                          <Image
-                            source={{ uri: c.cover_url }}
-                            style={inviteStyles.bookCardCover}
-                            contentFit="cover"
-                          />
+                          <Image source={{ uri: c.cover_url }} style={inviteStyles.bookCardCover} contentFit="cover" />
                         ) : (
                           <View style={inviteStyles.bookCardNoCover}>
                             <Ionicons name="book-outline" size={24} color={colors.textTertiary} />
@@ -569,51 +566,52 @@ function InviteSheet({ visible, onClose, challenges }: InviteSheetProps) {
                       </Pressable>
                     );
                   })}
-                </ScrollView>
-              </>
-            )}
+                </RNAnimated.ScrollView>
+              )}
 
-            {/* ── Affichage livre sélectionné (si un seul) ── */}
-            {!hasMultipleChallenges && selectedChallenge && (
-              <View style={inviteStyles.singleBook}>
-                {selectedChallenge.cover_url ? (
-                  <Image
-                    source={{ uri: selectedChallenge.cover_url }}
-                    style={inviteStyles.singleBookCover}
-                    contentFit="cover"
-                  />
-                ) : (
-                  <View style={[inviteStyles.singleBookCover, inviteStyles.singleBookNoCover]}>
-                    <Ionicons name="book-outline" size={28} color={colors.textTertiary} />
-                  </View>
-                )}
-                <View style={{ flex: 1 }}>
-                  <Text style={inviteStyles.singleBookTitle}>{selectedChallenge.book_title}</Text>
-                  {selectedChallenge.book_author && (
-                    <Text style={inviteStyles.singleBookAuthor}>{selectedChallenge.book_author}</Text>
+              {/* Affichage livre unique */}
+              {!hasMultiple && selectedChallenge && (
+                <View style={inviteStyles.singleBook}>
+                  {selectedChallenge.cover_url ? (
+                    <Image source={{ uri: selectedChallenge.cover_url }} style={inviteStyles.singleBookCover} contentFit="cover" />
+                  ) : (
+                    <View style={[inviteStyles.singleBookCover, inviteStyles.singleBookNoCover]}>
+                      <Ionicons name="book-outline" size={28} color={colors.textTertiary} />
+                    </View>
                   )}
+                  <View style={{ flex: 1 }}>
+                    <Text style={inviteStyles.singleBookTitle}>{selectedChallenge.book_title}</Text>
+                    {selectedChallenge.book_author && (
+                      <Text style={inviteStyles.singleBookAuthor}>{selectedChallenge.book_author}</Text>
+                    )}
+                  </View>
                 </View>
-              </View>
-            )}
+              )}
 
-            {/* ── Code d'invitation ── */}
-            {selectedChallenge && (
-              <>
-                <Text style={sheetStyles.label}>Code d'invitation</Text>
-                <Pressable style={inviteStyles.codeBox} onPress={handleCopy}>
-                  <Text style={inviteStyles.codeText}>{selectedChallenge.invite_code}</Text>
-                  <Ionicons name="copy-outline" size={20} color={colors.textTertiary} />
-                </Pressable>
+              {selectedChallenge && (
+                <>
+                  <Text style={sheetStyles.label}>Code d'invitation</Text>
+                  {/* Pressable copie + toast inline */}
+                  <View>
+                    <Pressable style={inviteStyles.codeBox} onPress={handleCopy}>
+                      <Text style={inviteStyles.codeText}>{selectedChallenge.invite_code}</Text>
+                      <Ionicons name="copy-outline" size={20} color={colors.textTertiary} />
+                    </Pressable>
+                    {/* Mini-toast "Copié !" — apparaît sur le code, disparaît seul */}
+                    <RNAnimated.View style={[inviteStyles.copyToast, { opacity: copyToastOpacity }]} pointerEvents="none">
+                      <Text style={inviteStyles.copyToastText}>Copié !</Text>
+                    </RNAnimated.View>
+                  </View>
 
-                <View style={{ marginTop: spacing.lg }}>
-                  <Button3D variant="primary" onPress={handleShare} icon="share-outline" iconPosition="left">
-                    Inviter à participer
-                  </Button3D>
-                </View>
-              </>
-            )}
-          </>
-        )}
+                  <View style={{ marginTop: spacing.lg }}>
+                    <Button3D variant="primary" onPress={handleShare} icon="share-outline" iconPosition="left">
+                      Inviter à participer
+                    </Button3D>
+                  </View>
+                </>
+              )}
+            </>
+          )}
         </Animated.View>
       </View>
     </Modal>
@@ -621,11 +619,10 @@ function InviteSheet({ visible, onClose, challenges }: InviteSheetProps) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// STYLES PAGE PRINCIPALE
+// STYLES — PAGE
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const styles = StyleSheet.create({
-
   container: {
     flex: 1,
     backgroundColor: '#f5f5f5',
@@ -650,14 +647,7 @@ const styles = StyleSheet.create({
     lineHeight: 32,
     color: colors.textPrimary,
   },
-  headerSpacer: {
-    width: 40,
-  },
-
-  // ─── Scroll ──────────────────────────────────────────────────────────────────
-  scrollContent: {
-    paddingBottom: spacing['4xl'],
-  },
+  headerSpacer: { width: 40 },
 
   // ─── Section profil ──────────────────────────────────────────────────────────
   profileSection: {
@@ -679,10 +669,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.3)',
   },
-  photo: {
-    width: 90,
-    height: 90,
-  },
+  photo: { width: 90, height: 90 },
   profileInfo: {
     flex: 1,
     gap: spacing.sm,
@@ -698,7 +685,7 @@ const styles = StyleSheet.create({
   editButtonShadow: {
     alignSelf: 'flex-start',
     borderRadius: 20,
-    shadowColor: '#000000',
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.06,
     shadowRadius: 4,
@@ -736,12 +723,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: spacing.xl,
   },
-  settingRowFirst: {
-    paddingTop: spacing['3xl'],
-  },
-  settingRowPressed: {
-    opacity: 0.6,
-  },
+  settingRowFirst: { paddingTop: spacing['3xl'] },
+  settingRowPressed: { opacity: 0.6 },
   settingLeft: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -753,9 +736,7 @@ const styles = StyleSheet.create({
     lineHeight: 24,
     color: colors.textSecondary,
   },
-  settingLabelDanger: {
-    color: colors.error,
-  },
+  settingLabelDanger: { color: colors.error },
 
   // ─── Footer ──────────────────────────────────────────────────────────────────
   footer: {
@@ -791,16 +772,14 @@ const styles = StyleSheet.create({
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// STYLES PARTAGÉS — bottom sheets (même pattern que GoalFormSheet)
+// STYLES — SHEETS PARTAGÉS
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const sheetStyles = StyleSheet.create({
-  // Overlay plein écran — même pattern que GoalFormSheet
   overlay: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(0,0,0,0.45)',
   },
-  // flex:1 + justifyContent:flex-end = sheet ancré en bas (GoalFormSheet pattern)
   keyboardAvoid: {
     flex: 1,
     justifyContent: 'flex-end',
@@ -857,9 +836,6 @@ const sheetStyles = StyleSheet.create({
     marginBottom: spacing.lg,
     ...shadows.xs,
   },
-
-  // ─── Section photo (EditProfileSheet) ───────────────────────────────────────
-  // Photo carrée + bouton refresh à côté, ligne horizontale
   photoSection: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -872,17 +848,13 @@ const sheetStyles = StyleSheet.create({
     borderRadius: 8,
     overflow: 'hidden',
   },
-  photoThumbImg: {
-    width: 72,
-    height: 72,
-  },
+  photoThumbImg: { width: 72, height: 72 },
   photoThumbOverlay: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(0,0,0,0.45)',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  // Bouton circulaire refresh — Button3D secondary compact lookalike
   refreshBtn: {
     width: 40,
     height: 40,
@@ -898,8 +870,6 @@ const sheetStyles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 2,
   },
-
-  // ─── Texte vide (InviteSheet) ─────────────────────────────────────────────────
   emptyText: {
     fontFamily: 'WorkSans_400Regular',
     fontSize: fontSize.md,
@@ -910,19 +880,17 @@ const sheetStyles = StyleSheet.create({
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// STYLES SPÉCIFIQUES — InviteSheet
+// STYLES — INVITE SHEET
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const inviteStyles = StyleSheet.create({
-  // ─── Sélecteur de livres (scroll horizontal) ─────────────────────────────────
   bookPickerContent: {
     gap: spacing.md,
     paddingHorizontal: 2,
   },
   bookCard: {
-    width: 100,
+    width: 84,
     alignItems: 'center',
-    gap: spacing.sm,
     padding: spacing.sm,
     borderRadius: borderRadius.md,
     borderWidth: 2,
@@ -934,20 +902,18 @@ const inviteStyles = StyleSheet.create({
     backgroundColor: colors.white,
   },
   bookCardCover: {
-    width: 72,
-    height: 100,
+    width: 68,
+    height: 95,
     borderRadius: 4,
   },
   bookCardNoCover: {
-    width: 72,
-    height: 100,
+    width: 68,
+    height: 95,
     borderRadius: 4,
     backgroundColor: colors.borderLight,
     justifyContent: 'center',
     alignItems: 'center',
   },
-
-  // ─── Livre unique ─────────────────────────────────────────────────────────────
   singleBook: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -975,8 +941,6 @@ const inviteStyles = StyleSheet.create({
     fontSize: fontSize.sm,
     color: colors.textTertiary,
   },
-
-  // ─── Code d'invitation ────────────────────────────────────────────────────────
   codeBox: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -994,5 +958,21 @@ const inviteStyles = StyleSheet.create({
     fontSize: 28,
     color: colors.textPrimary,
     letterSpacing: 4,
+  },
+  // Mini-toast "Copié !" superposé sur le codeBox, centré
+  copyToast: {
+    position: 'absolute',
+    alignSelf: 'center',
+    top: '50%',
+    transform: [{ translateY: -14 }],
+    backgroundColor: colors.dark900,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: 6,
+    borderRadius: 9999,
+  },
+  copyToastText: {
+    fontFamily: 'WorkSans_600SemiBold',
+    fontSize: fontSize.sm,
+    color: colors.white,
   },
 });
