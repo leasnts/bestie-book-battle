@@ -326,13 +326,14 @@ const styles = StyleSheet.create({
 
   // ═══ BOTTOM SHEET CONTAINER ═══
   // Positionné en bas, avec des coins arrondis en haut.
-  // maxHeight 70% pour laisser voir le fond derrière.
+  // minHeight 75% pour garantir une grande surface visible.
   sheetContainer: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    maxHeight: '70%',
+    minHeight: '75%',
+    maxHeight: '85%',
     backgroundColor: colors.white,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
@@ -408,7 +409,7 @@ const styles = StyleSheet.create({
 
   // ═══ ÉTAT VIDE ═══
   emptyState: {
-    alignItems: 'center',
+    alignItems: 'flex-start',
     paddingVertical: 40,
     gap: 8,
   },
@@ -427,8 +428,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.textPlaceholder,
     lineHeight: 20,
-    textAlign: 'center',
-    maxWidth: 260,
+    textAlign: 'left',
   },
 
   // ═══ GROUPE PAR JOUR ═══
@@ -436,12 +436,11 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
 
-  // Header du jour — le badge "Aujourd'hui", "Hier", "Lun. 10 fév."
+  // Header du jour — ferré à gauche, aligné avec le bord du padding
   dayHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 12,
-    marginLeft: TIMELINE_TRACK_WIDTH, // aligné avec le contenu, à droite de la timeline
   },
   dayBadge: {
     backgroundColor: colors.dark900,
@@ -523,9 +522,9 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
 
-  // Badge "+X pages" — fond vert clair avec texte vert
+  // Badge "+X pages" — fond gris clair avec texte gris
   pagesDeltaBadge: {
-    backgroundColor: colors.successLight,
+    backgroundColor: colors.bgLight,
     borderRadius: 6,
     paddingHorizontal: 8,
     paddingVertical: 2,
@@ -533,22 +532,22 @@ const styles = StyleSheet.create({
   pagesDeltaText: {
     fontFamily: 'WorkSans_600SemiBold',
     fontSize: 11,
-    color: colors.success,
+    color: colors.textTertiary,
     lineHeight: 16,
   },
-  // Badge négatif (correction de page) — fond rouge clair
+  // Badge négatif (correction de page) — même gris que le positif
   pagesDeltaBadgeNeg: {
-    backgroundColor: colors.errorLight,
+    backgroundColor: colors.bgLight,
   },
   pagesDeltaTextNeg: {
-    color: colors.error,
+    color: colors.textPlaceholder,
   },
 
   // "Page 142" — le numéro de page atteint, bien visible
   entryPageNumber: {
     fontFamily: 'Rokkitt_SemiBold',
     fontSize: 20,
-    color: colors.textPrimary,
+    color: colors.textTertiary,
     lineHeight: 28,
   },
 });
