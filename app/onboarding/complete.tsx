@@ -172,7 +172,7 @@ export default function OnboardingCompleteScreen() {
 
         try {
             await Share.share({
-                message: `Rejoins-moi sur Bestie Book Battle pour lire "${params.bookTitle}" ensemble ! 📚\n\nCode d'invitation : ${inviteCode}`,
+                message: `Rejoins-moi sur bestiebookbattle pour lire "${params.bookTitle}" ensemble ! 📚\n\nCode d'invitation : ${inviteCode}`,
                 title: 'Invitation BBB',
             });
         } catch (error) {

@@ -138,7 +138,7 @@ export default function ProfileScreen() {
         // Permission refusée ou non déterminée → Settings
         Alert.alert(
           'Notifications désactivées',
-          'Pour recevoir des rappels de lecture, active les notifications pour Bestie Book Battle dans tes Réglages.',
+          'Pour recevoir des rappels de lecture, active les notifications pour bestiebookbattle dans tes Réglages.',
           [
             { text: 'Plus tard', style: 'cancel' },
             {
@@ -152,7 +152,7 @@ export default function ProfileScreen() {
       // L'user veut désactiver → redirection Réglages iOS
       Alert.alert(
         'Désactiver les notifications',
-        'Pour désactiver les notifications, rends-toi dans tes Réglages → Bestie Book Battle → Notifications.',
+        'Pour désactiver les notifications, rends-toi dans tes Réglages → bestiebookbattle → Notifications.',
         [
           { text: 'Annuler', style: 'cancel' },
           {
@@ -512,7 +512,7 @@ function InviteSheet({ visible, onClose, challenges }: { visible: boolean; onClo
     if (!selectedChallenge) return;
     const code = selectedChallenge.invite_code;
     const deepLink = selectedChallenge.invite_url || `bestiebookbattle://join/${code}`;
-    const message = `Rejoins-moi pour lire "${selectedChallenge.book_title}" sur Bestie Book Battle ! 📚\n\nCode : ${code}\n${deepLink}`;
+    const message = `Rejoins-moi pour lire "${selectedChallenge.book_title}" sur bestiebookbattle ! 📚\n\nCode : ${code}\n${deepLink}`;
     try {
       await Share.share({ message, url: deepLink });
     } catch {

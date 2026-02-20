@@ -44,7 +44,7 @@ export function generateInviteLink(project: Project): string {
 export function generateShareMessage(project: Project): string {
   return `📚 Rejoins-moi pour lire "${project.bookTitle}" ensemble !\n\n` +
     `Code d'invitation : ${project.inviteCode}\n\n` +
-    `Télécharge Bestie Book Battle et utilise ce code pour nous rejoindre !`;
+    `Télécharge bestiebookbattle et utilise ce code pour nous rejoindre !`;
 }
 
 /**

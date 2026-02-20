@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Bestie Book Battle",
+    "name": "bestiebookbattle",
     "slug": "bestie-book-battle",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -31,7 +31,7 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "Bestie Book Battle a besoin d'accéder à tes photos pour ta photo de profil et les couvertures de livres."
+          "photosPermission": "bestiebookbattle a besoin d'accéder à tes photos pour ta photo de profil et les couvertures de livres."
         }
       ],
       "@react-native-community/datetimepicker"

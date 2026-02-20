@@ -3,15 +3,13 @@
  *
  * Bottom sheet pour modifier les informations d'un livre.
  * - Titre « Modifier le livre »
- * - Upload cover (cliquable, sans label)
- * - 3 inputs identiques à l'onboarding (create.tsx) : Titre, Auteur, Nb pages
- * - Bouton « Enregistrer » qui reste au-dessus du clavier
+ * - Upload cover (cliquable)
+ * - 3 inputs : Titre, Auteur, Nb pages
+ * - Bouton « Enregistrer »
  *
- * Gestion clavier :
- * - KeyboardAvoidingView pousse le contenu vers le haut
- * - ScrollView permet de scroller quand le clavier est ouvert
- * - returnKeyType="next" passe au champ suivant avec Entrée
- * - Le dernier champ a returnKeyType="done" qui lance la sauvegarde
+ * Utilise BottomSheet (custom) pour le glissement-pour-fermer natif.
+ * Le handle (zone de drag) est au-dessus — les inputs et le scroll
+ * en dessous gardent leur comportement normal sans conflit.
  */
 
 import { Ionicons } from '@expo/vector-icons';
@@ -19,28 +17,22 @@ import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
-    Alert,
-    InputAccessoryView,
-    Keyboard,
-    KeyboardAvoidingView,
-    Modal,
-    Platform,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    View,
+  Alert,
+  InputAccessoryView,
+  Keyboard,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
 } from 'react-native';
-import Animated, {
-    FadeIn,
-    FadeOut,
-    SlideInDown,
-    SlideOutDown,
-} from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { borderRadius, colors, fontSize, fontWeight, shadows, spacing } from '../../utils/constants';
 import Button3D from '../Button3D';
+import BottomSheet from './BottomSheet';
 
 interface EditBookSheetProps {
   visible: boolean;
@@ -67,13 +59,11 @@ export default function EditBookSheet({
 }: EditBookSheetProps) {
   const insets = useSafeAreaInsets();
 
-  // Refs pour naviguer entre les champs avec la touche Entrée
   const titleRef = useRef<TextInput>(null);
   const authorRef = useRef<TextInput>(null);
   const pagesRef = useRef<TextInput>(null);
   const scrollRef = useRef<ScrollView>(null);
 
-  // États du formulaire
   const [title, setTitle] = useState(currentBook.title);
   const [author, setAuthor] = useState(currentBook.author);
   const [totalPages, setTotalPages] = useState(currentBook.totalPages.toString());
@@ -82,7 +72,7 @@ export default function EditBookSheet({
   const [isPickingImage, setIsPickingImage] = useState(false);
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
 
-  // Écouter l'ouverture/fermeture du clavier
+  // Écouter l'ouverture/fermeture du clavier pour adapter le padding bas
   useEffect(() => {
     const showSub = Keyboard.addListener(
       Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
@@ -98,7 +88,7 @@ export default function EditBookSheet({
     };
   }, []);
 
-  // Réinitialiser les champs quand la modal s'ouvre
+  // Réinitialise les champs à chaque ouverture
   useEffect(() => {
     if (visible) {
       setTitle(currentBook.title);
@@ -108,7 +98,6 @@ export default function EditBookSheet({
     }
   }, [visible, currentBook]);
 
-  // Sélectionner une image dans la galerie
   const handlePickImage = useCallback(async () => {
     try {
       setIsPickingImage(true);
@@ -117,7 +106,7 @@ export default function EditBookSheet({
       if (status !== 'granted') {
         Alert.alert(
           'Permission refusée',
-          'Nous avons besoin d\'accéder à ta galerie pour changer la couverture.'
+          "Nous avons besoin d'accéder à ta galerie pour changer la couverture."
         );
         return;
       }
@@ -140,14 +129,13 @@ export default function EditBookSheet({
     }
   }, []);
 
-  // Sauvegarder les modifications
   const handleSave = useCallback(async () => {
     if (!title.trim()) {
       Alert.alert('Titre manquant', 'Entre un titre pour le livre.');
       return;
     }
     if (!author.trim()) {
-      Alert.alert('Auteur manquant', 'Entre un nom d\'auteur.');
+      Alert.alert('Auteur manquant', "Entre un nom d'auteur.");
       return;
     }
 
@@ -169,76 +157,51 @@ export default function EditBookSheet({
       onClose();
     } catch (error) {
       console.error('Erreur sauvegarde:', error);
-      Alert.alert('Erreur', 'Impossible d\'enregistrer les modifications.');
+      Alert.alert('Erreur', "Impossible d'enregistrer les modifications.");
     } finally {
       setIsSaving(false);
     }
   }, [title, author, totalPages, coverUri, onSave, onClose]);
 
-  if (!visible) return null;
-
   const displayCoverUrl = coverUri || currentBook.coverUrl;
 
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="none"
-      statusBarTranslucent
-      onRequestClose={onClose}
-    >
-      {/* Overlay sombre */}
-      <Animated.View
-        style={styles.overlay}
-        entering={FadeIn.duration(200)}
-        exiting={FadeOut.duration(150)}
-      >
-        <Pressable style={styles.backdrop} onPress={onClose} />
-      </Animated.View>
-
-      {/* InputAccessoryView vide : enlève la barre "Done" native sur le clavier chiffres iOS */}
+    <>
+      {/* Supprime la barre "Done" native sur le clavier numérique iOS */}
       {Platform.OS === 'ios' && (
         <InputAccessoryView nativeID="editbook-pages-empty">
           <View />
         </InputAccessoryView>
       )}
 
-      {/* Sheet — KeyboardAvoidingView englobe tout le sheet
-          pour que le bouton Enregistrer remonte au-dessus du clavier */}
-      <KeyboardAvoidingView
-        style={styles.keyboardAvoid}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
-      >
-        <Animated.View
-          style={[
-            styles.sheet,
-            {
-              paddingBottom: isKeyboardVisible
-                ? 12
-                : Math.max(32, insets.bottom + 16),
-            },
-          ]}
-          entering={SlideInDown.duration(300)}
-          exiting={SlideOutDown.duration(200)}
+      <BottomSheet visible={visible} onClose={onClose}>
+        {/*
+          KeyboardAvoidingView pousse le contenu au-dessus du clavier.
+          Il est à l'intérieur du BottomSheet (pas autour) pour ne pas
+          interférer avec l'animation de la modal.
+        */}
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={0}
+          style={styles.keyboardAvoid}
         >
-          {/* Handle */}
-          <View style={styles.handleRow}>
-            <View style={styles.handle} />
-          </View>
-
-          {/* Titre */}
           <Text style={styles.title}>Modifier le livre</Text>
 
-          {/* Contenu scrollable */}
           <ScrollView
             ref={scrollRef}
             style={styles.scrollContent}
-            contentContainerStyle={styles.scrollContentInner}
+            contentContainerStyle={[
+              styles.scrollContentInner,
+              {
+                paddingBottom: isKeyboardVisible
+                  ? 12
+                  : Math.max(32, insets.bottom + 16),
+              },
+            ]}
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
           >
-            {/* Cover upload — pas de label, juste l'image cliquable */}
+            {/* Cover upload */}
             <Pressable
               onPress={handlePickImage}
               disabled={isPickingImage}
@@ -270,7 +233,6 @@ export default function EditBookSheet({
               )}
             </Pressable>
 
-            {/* Inputs — style identique à onboarding/create.tsx */}
             <View style={styles.formContainer}>
               <TextInput
                 ref={titleRef}
@@ -283,7 +245,10 @@ export default function EditBookSheet({
                 returnKeyType="next"
                 onSubmitEditing={() => authorRef.current?.focus()}
                 onFocus={() => {
-                  setTimeout(() => scrollRef.current?.scrollTo({ y: 200, animated: true }), 300);
+                  setTimeout(
+                    () => scrollRef.current?.scrollTo({ y: 200, animated: true }),
+                    300
+                  );
                 }}
               />
 
@@ -298,7 +263,10 @@ export default function EditBookSheet({
                 returnKeyType="next"
                 onSubmitEditing={() => pagesRef.current?.focus()}
                 onFocus={() => {
-                  setTimeout(() => scrollRef.current?.scrollTo({ y: 260, animated: true }), 300);
+                  setTimeout(
+                    () => scrollRef.current?.scrollTo({ y: 260, animated: true }),
+                    300
+                  );
                 }}
               />
 
@@ -312,62 +280,34 @@ export default function EditBookSheet({
                 keyboardType="number-pad"
                 inputAccessoryViewID="editbook-pages-empty"
                 onFocus={() => {
-                  setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 300);
+                  setTimeout(
+                    () => scrollRef.current?.scrollToEnd({ animated: true }),
+                    300
+                  );
                 }}
               />
             </View>
-          </ScrollView>
 
-          {/* Footer : bouton Enregistrer — reste au-dessus du clavier */}
-          <View style={styles.footer}>
-            <Button3D
-              onPress={handleSave}
-              variant="primary"
-              disabled={isSaving}
-              style={{ width: '100%' }}
-            >
-              {isSaving ? 'Enregistrement...' : 'Enregistrer'}
-            </Button3D>
-          </View>
-        </Animated.View>
-      </KeyboardAvoidingView>
-    </Modal>
+            <View style={styles.footer}>
+              <Button3D
+                onPress={handleSave}
+                variant="primary"
+                disabled={isSaving}
+                style={{ width: '100%' }}
+              >
+                {isSaving ? 'Enregistrement...' : 'Enregistrer'}
+              </Button3D>
+            </View>
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </BottomSheet>
+    </>
   );
 }
 
 const styles = StyleSheet.create({
-  overlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.45)',
-  },
-  backdrop: {
-    flex: 1,
-  },
   keyboardAvoid: {
-    flex: 1,
-    justifyContent: 'flex-end',
-  },
-  sheet: {
-    backgroundColor: colors.white,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
     maxHeight: '90%',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -8 },
-    shadowOpacity: 0.12,
-    shadowRadius: 24,
-    elevation: 16,
-  },
-  handleRow: {
-    alignItems: 'center',
-    paddingTop: 12,
-    paddingBottom: 8,
-  },
-  handle: {
-    width: 40,
-    height: 4,
-    backgroundColor: colors.textSubtle,
-    borderRadius: 9999,
   },
   title: {
     fontFamily: 'Rokkitt_Medium',
@@ -379,8 +319,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.xl,
     textAlign: 'left',
   },
-
-  // ═══ SCROLL ═══
   scrollContent: {
     flexGrow: 0,
   },
@@ -438,7 +376,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 
-  // ═══ FORM — identique à onboarding/create.tsx ═══
+  // ═══ FORM ═══
   formContainer: {
     gap: spacing.md,
   },
@@ -460,7 +398,6 @@ const styles = StyleSheet.create({
 
   // ═══ FOOTER ═══
   footer: {
-    paddingHorizontal: spacing.xl,
     paddingTop: spacing.lg,
   },
 });

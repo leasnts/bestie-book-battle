@@ -5,35 +5,22 @@
  * - Titre « La deadline » aligné à gauche
  * - DateTimePicker natif iOS en mode roulette (spinner)
  * - Bouton « Enregistrer »
+ *
+ * Utilise BottomSheet (custom) pour le glissement-pour-fermer natif et fluide.
  */
 
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import React, { useCallback, useEffect, useState } from 'react';
-import {
-    Alert,
-    Modal,
-    Platform,
-    Pressable,
-    StyleSheet,
-    Text,
-    View,
-} from 'react-native';
-import Animated, {
-    FadeIn,
-    FadeOut,
-    SlideInDown,
-    SlideOutDown,
-} from 'react-native-reanimated';
+import { Alert, Platform, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, fontSize, spacing } from '../../utils/constants';
 import Button3D from '../Button3D';
+import BottomSheet from './BottomSheet';
 
 interface DeadlineEditSheetProps {
   visible: boolean;
   onClose: () => void;
-  /** Date actuelle (ISO) ou null */
   currentDate: string | null;
-  /** Callback avec la nouvelle date en ISO */
   onSave: (date: Date) => Promise<void>;
 }
 
@@ -43,36 +30,31 @@ export default function DeadlineEditSheet({
   currentDate,
   onSave,
 }: DeadlineEditSheetProps) {
-  // Safe area insets pour respecter la zone sûre iOS en bas
   const insets = useSafeAreaInsets();
-  
-  // État pour la date sélectionnée
+
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [isSaving, setIsSaving] = useState(false);
 
-  // Initialiser la date au montage / quand currentDate change
+  // Réinitialise la date à chaque ouverture
   useEffect(() => {
-    if (currentDate) {
-      setSelectedDate(new Date(currentDate));
-    } else {
-      // Par défaut : demain
-      const tomorrow = new Date();
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      setSelectedDate(tomorrow);
+    if (visible) {
+      if (currentDate) {
+        setSelectedDate(new Date(currentDate));
+      } else {
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        setSelectedDate(tomorrow);
+      }
     }
   }, [visible, currentDate]);
 
-  // Callback quand l'utilisateur change la date dans le picker
   const handleDateChange = useCallback((_event: DateTimePickerEvent, date?: Date) => {
-    if (date) {
-      setSelectedDate(date);
-    }
+    if (date) setSelectedDate(date);
   }, []);
 
   const handleSave = useCallback(async () => {
-    // Vérifier que la date est dans le futur
     const now = new Date();
-    now.setHours(0, 0, 0, 0); // Reset time pour comparer juste les jours
+    now.setHours(0, 0, 0, 0);
     const selectedDay = new Date(selectedDate);
     selectedDay.setHours(0, 0, 0, 0);
 
@@ -85,40 +67,16 @@ export default function DeadlineEditSheet({
     try {
       await onSave(selectedDate);
       onClose();
-    } catch (e) {
-      Alert.alert('Erreur', 'Impossible d\'enregistrer la deadline.');
+    } catch {
+      Alert.alert('Erreur', "Impossible d'enregistrer la deadline.");
     } finally {
       setIsSaving(false);
     }
   }, [selectedDate, onSave, onClose]);
 
-  if (!visible) return null;
-
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="none"
-      statusBarTranslucent
-      onRequestClose={onClose}
-    >
-      <Animated.View
-        style={styles.overlay}
-        entering={FadeIn.duration(200)}
-        exiting={FadeOut.duration(150)}
-      >
-        <Pressable style={styles.backdrop} onPress={onClose} />
-      </Animated.View>
-
-      <Animated.View
-        style={[styles.sheet, { paddingBottom: Math.max(32, insets.bottom + 16) }]}
-        entering={SlideInDown.duration(300)}
-        exiting={SlideOutDown.duration(200)}
-      >
-        <View style={styles.handleRow}>
-          <View style={styles.handle} />
-        </View>
-
+    <BottomSheet visible={visible} onClose={onClose}>
+      <View style={[styles.content, { paddingBottom: Math.max(32, insets.bottom + 16) }]}>
         <Text style={styles.title}>La deadline</Text>
 
         <View style={styles.pickerContainer}>
@@ -154,45 +112,14 @@ export default function DeadlineEditSheet({
             Enregistrer
           </Button3D>
         </View>
-      </Animated.View>
-    </Modal>
+      </View>
+    </BottomSheet>
   );
 }
 
 const styles = StyleSheet.create({
-  overlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.45)',
-  },
-  backdrop: {
-    flex: 1,
-  },
-  sheet: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: colors.white,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    // paddingBottom est maintenant dynamique via le style inline (safe area)
+  content: {
     paddingHorizontal: spacing.xl,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -8 },
-    shadowOpacity: 0.12,
-    shadowRadius: 24,
-    elevation: 16,
-  },
-  handleRow: {
-    alignItems: 'center',
-    paddingTop: 12,
-    paddingBottom: 8,
-  },
-  handle: {
-    width: 40,
-    height: 4,
-    backgroundColor: colors.textSubtle,
-    borderRadius: 9999,
   },
   title: {
     fontFamily: 'Rokkitt_Medium',
@@ -201,17 +128,15 @@ const styles = StyleSheet.create({
     letterSpacing: -0.72,
     lineHeight: 44,
     marginBottom: spacing.lg,
-    textAlign: 'left', // Aligné à gauche comme demandé
+    textAlign: 'left',
   },
   pickerContainer: {
-    // Centre la roulette horizontalement sur la modal
     paddingVertical: spacing.md,
     minHeight: 200,
     justifyContent: 'center',
-    alignItems: 'center', // Centre la roulette horizontalement
+    alignItems: 'center',
   },
   picker: {
-    // La roulette prend sa largeur naturelle et est centrée
     height: 200,
   },
   footer: {

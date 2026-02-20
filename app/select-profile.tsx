@@ -63,7 +63,7 @@ export default function ProfileSelectionScreen() {
       <View style={styles.content}>
         {/* Titre */}
         <View style={styles.header}>
-          <Text style={styles.appName}>Bestie Book Battle</Text>
+          <Text style={styles.appName}>bestiebookbattle</Text>
           <Text style={styles.question}>Qui es-tu ?</Text>
         </View>
         

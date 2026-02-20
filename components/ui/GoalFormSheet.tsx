@@ -4,46 +4,34 @@
  * Bottom sheet modal pour définir un objectif intermédiaire de lecture.
  *
  * Structure :
- * 1. Handle
- * 2. Gros titre « Objectif » (Rokkitt 36px, ferré gauche)
- * 3. Label « Page à atteindre » + input normal (style onboarding/create.tsx)
- * 4. Label « Date butoir » + input pressable qui affiche/masque le DatePicker
- * 5. Bouton « Enregistrer l'objectif »
+ * 1. Gros titre « Objectif »
+ * 2. Label « Page à atteindre » + input
+ * 3. Label « Date butoir » + input pressable → DatePicker
+ * 4. Bouton « Enregistrer l'objectif »
  *
- * Les inputs reprennent le style exact de onboarding/create.tsx
- * (WorkSans 16px, fond blanc, border, borderRadius.lg, shadows.xs).
- *
- * Le clavier numérique n'a PAS de barre "Done" native (InputAccessoryView vide,
- * même pattern que EditBookSheet, onboarding/pages, onboarding/join, etc.).
- *
- * KeyboardAvoidingView autour du sheet pour que tout remonte au-dessus du clavier.
+ * Utilise BottomSheet (custom) pour le glissement-pour-fermer natif.
+ * Le handle du BottomSheet est la zone de drag — les inputs en dessous
+ * gardent leur comportement normal sans conflit.
  */
 
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
-    Alert,
-    InputAccessoryView,
-    Keyboard,
-    KeyboardAvoidingView,
-    Modal,
-    Platform,
-    Pressable,
-    StyleSheet,
-    Text,
-    TextInput,
-    View,
+  Alert,
+  InputAccessoryView,
+  Keyboard,
+  Platform,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
 } from 'react-native';
-import Animated, {
-    FadeIn,
-    FadeOut,
-    SlideInDown,
-    SlideOutDown,
-} from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ChallengeGoal } from '../../types/supabase';
 import { borderRadius, colors, fontSize, fontWeight, shadows, spacing } from '../../utils/constants';
 import Button3D from '../Button3D';
+import BottomSheet from './BottomSheet';
 
 // ─── Props ───────────────────────────────────────────────────────────
 
@@ -74,7 +62,7 @@ function formatDateLabel(d: Date): string {
   return `${JOURS[d.getDay()]} ${d.getDate()} ${MOIS[d.getMonth()]} ${d.getFullYear()}`;
 }
 
-// ID unique pour l'InputAccessoryView vide (supprime la barre "Done" iOS)
+// ID pour supprimer la barre "Done" native du clavier numérique iOS
 const ACCESSORY_ID = 'goal-pages-empty';
 
 // ─── Composant ───────────────────────────────────────────────────────
@@ -93,23 +81,6 @@ export default function GoalFormSheet({
   const [deadline, setDeadline] = useState<Date>(getDefaultDeadline());
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
-
-  // Écouter ouverture/fermeture du clavier (même pattern que EditBookSheet)
-  useEffect(() => {
-    const showSub = Keyboard.addListener(
-      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
-      () => setIsKeyboardVisible(true)
-    );
-    const hideSub = Keyboard.addListener(
-      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
-      () => setIsKeyboardVisible(false)
-    );
-    return () => {
-      showSub.remove();
-      hideSub.remove();
-    };
-  }, []);
 
   // Réinitialise les champs à chaque ouverture
   useEffect(() => {
@@ -121,8 +92,6 @@ export default function GoalFormSheet({
       setShowDatePicker(false);
     }
   }, [visible, currentGoal]);
-
-  // ─── Handlers ──────────────────────────────────────────
 
   const handleDateChange = useCallback((_event: DateTimePickerEvent, date?: Date) => {
     if (Platform.OS === 'android') setShowDatePicker(false);
@@ -154,61 +123,19 @@ export default function GoalFormSheet({
     }
   }, [targetPage, deadline, totalPages, onSaveGoal, onClose]);
 
-  if (!visible) return null;
-
-  // ─── Rendu ──────────────────────────────────────────────
-
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="none"
-      statusBarTranslucent
-      onRequestClose={onClose}
-    >
-      {/* Overlay sombre */}
-      <Animated.View
-        style={styles.overlay}
-        entering={FadeIn.duration(200)}
-        exiting={FadeOut.duration(150)}
-      >
-        <Pressable style={styles.backdrop} onPress={onClose} />
-      </Animated.View>
-
-      {/* InputAccessoryView vide : enlève la barre "Done" native sur le clavier chiffres iOS */}
+    <>
+      {/* Supprime la barre "Done" native sur le clavier numérique iOS */}
       {Platform.OS === 'ios' && (
         <InputAccessoryView nativeID={ACCESSORY_ID}>
           <View />
         </InputAccessoryView>
       )}
 
-      {/* KeyboardAvoidingView : tout le sheet remonte au-dessus du clavier */}
-      <KeyboardAvoidingView
-        style={styles.keyboardAvoid}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
-      >
-        <Animated.View
-          style={[
-            styles.sheet,
-            {
-              paddingBottom: isKeyboardVisible
-                ? 12
-                : Math.max(32, insets.bottom + 16),
-            },
-          ]}
-          entering={SlideInDown.duration(300)}
-          exiting={SlideOutDown.duration(200)}
-        >
-          {/* Handle */}
-          <View style={styles.handleRow}>
-            <View style={styles.handle} />
-          </View>
-
-          {/* Gros titre */}
+      <BottomSheet visible={visible} onClose={onClose}>
+        <View style={[styles.content, { paddingBottom: Math.max(32, insets.bottom + 16) }]}>
           <Text style={styles.title}>Objectif</Text>
 
-          {/* ── Champ 1 : Page à atteindre ── */}
           <Text style={styles.label}>Page à atteindre</Text>
           <TextInput
             ref={pageInputRef}
@@ -222,7 +149,6 @@ export default function GoalFormSheet({
             onFocus={() => setShowDatePicker(false)}
           />
 
-          {/* ── Champ 2 : Date butoir ── */}
           <Text style={styles.label}>Date butoir</Text>
           <Pressable
             style={styles.dateInput}
@@ -234,7 +160,6 @@ export default function GoalFormSheet({
             <Text style={styles.dateInputText}>{formatDateLabel(deadline)}</Text>
           </Pressable>
 
-          {/* Roulette native quand on appuie sur le champ date */}
           {showDatePicker && (
             <View style={styles.pickerContainer}>
               {Platform.OS === 'ios' && (
@@ -262,7 +187,6 @@ export default function GoalFormSheet({
             </View>
           )}
 
-          {/* Bouton */}
           <View style={styles.footer}>
             <Button3D
               onPress={handleSave}
@@ -273,52 +197,18 @@ export default function GoalFormSheet({
               Enregistrer l'objectif
             </Button3D>
           </View>
-        </Animated.View>
-      </KeyboardAvoidingView>
-    </Modal>
+        </View>
+      </BottomSheet>
+    </>
   );
 }
 
 // ─── Styles ──────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
-  overlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.45)',
-  },
-  backdrop: {
-    flex: 1,
-  },
-
-  // ═══ KEYBOARD + SHEET ═══
-  keyboardAvoid: {
-    flex: 1,
-    justifyContent: 'flex-end',
-  },
-  sheet: {
-    backgroundColor: colors.white,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
+  content: {
     paddingHorizontal: spacing.xl,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -8 },
-    shadowOpacity: 0.12,
-    shadowRadius: 24,
-    elevation: 16,
   },
-  handleRow: {
-    alignItems: 'center',
-    paddingTop: 12,
-    paddingBottom: 8,
-  },
-  handle: {
-    width: 40,
-    height: 4,
-    backgroundColor: colors.textSubtle,
-    borderRadius: 9999,
-  },
-
-  // ═══ GROS TITRE ═══
   title: {
     fontFamily: 'Rokkitt_Medium',
     fontSize: fontSize['2xl'],
@@ -328,8 +218,6 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xl,
     textAlign: 'left',
   },
-
-  // ═══ LABELS ═══
   label: {
     fontFamily: 'WorkSans_600SemiBold',
     fontSize: fontSize.sm,
@@ -338,8 +226,6 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
     textAlign: 'left',
   },
-
-  // ═══ INPUT — identique à onboarding/create.tsx ═══
   input: {
     fontFamily: 'WorkSans',
     fontSize: fontSize.md,
@@ -356,8 +242,6 @@ const styles = StyleSheet.create({
     textAlignVertical: 'center',
     marginBottom: spacing.lg,
   },
-
-  // ═══ INPUT DATE — même look que l'input texte, mais c'est un Pressable ═══
   dateInput: {
     backgroundColor: colors.white,
     borderWidth: 1,
@@ -375,16 +259,12 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
     letterSpacing: -0.3,
   },
-
-  // ═══ DATE PICKER ═══
   pickerContainer: {
     marginBottom: spacing.sm,
   },
   picker: {
     height: 150,
   },
-
-  // ═══ FOOTER ═══
   footer: {
     paddingTop: spacing.lg,
   },

@@ -316,7 +316,7 @@ export default function BookStack({
     try {
       const code = inviteCode.split('').join(' ');
       await Share.share({
-        message: `Rejoins-moi pour lire « ${bookTitle} » ensemble sur Bestie Book Battle !\n\nCode d'invitation : ${code}`,
+        message: `Rejoins-moi pour lire « ${bookTitle} » ensemble sur bestiebookbattle !\n\nCode d'invitation : ${code}`,
       });
     } catch (_) {
       // L'utilisateur a annulé le partage
