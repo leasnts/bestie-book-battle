@@ -196,7 +196,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontFamily: 'Rokkitt_Medium',
-    fontSize: fontSize['3xl'],
+    fontSize: fontSize['2xl'],
     color: colors.textPrimary,
     letterSpacing: -0.72,
     lineHeight: 44,

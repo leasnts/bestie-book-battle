@@ -17,6 +17,8 @@
 
 import * as Notifications from 'expo-notifications';
 import { Ionicons } from '@expo/vector-icons';
+import RefreshCcw from 'lucide-react-native/dist/esm/icons/refresh-ccw';
+import SquarePen from 'lucide-react-native/dist/esm/icons/square-pen';
 import * as Clipboard from 'expo-clipboard';
 import Constants from 'expo-constants';
 import { Image } from 'expo-image';
@@ -345,7 +347,7 @@ function EditButton({ onPress }: { onPress: () => void }) {
           style={StyleSheet.absoluteFillObject}
         />
         <View style={styles.editButtonStroke} />
-        <Ionicons name="create-outline" size={16} color={colors.textPrimary} />
+        <SquarePen size={15} color={colors.textPrimary} strokeWidth={2.2} />
         <Text style={styles.editButtonText}>Modifier</Text>
       </View>
     </Pressable>
@@ -437,23 +439,22 @@ function EditProfileSheet({ visible, onClose }: { visible: boolean; onClose: () 
           <View style={sheetStyles.handleRow}><View style={sheetStyles.handle} /></View>
           <Text style={sheetStyles.title}>Modifier le profil</Text>
 
-          <View style={sheetStyles.photoSection}>
-            <View style={sheetStyles.photoThumb}>
-              <Image source={photoSource} style={sheetStyles.photoThumbImg} contentFit="cover" />
-              {isUploadingPhoto && (
-                <View style={sheetStyles.photoThumbOverlay}>
+          <Pressable
+            style={sheetStyles.photoCentered}
+            onPress={handleChangePhoto}
+            disabled={isUploadingPhoto}
+          >
+            <View style={sheetStyles.photoCenteredThumb}>
+              <Image source={photoSource} style={sheetStyles.photoCenteredImg} contentFit="cover" />
+              <View style={sheetStyles.photoCenteredIconOverlay}>
+                {isUploadingPhoto ? (
                   <ActivityIndicator size="small" color="#FFF" />
-                </View>
-              )}
+                ) : (
+                  <RefreshCcw size={28} color="#FFF" strokeWidth={2.5} />
+                )}
+              </View>
             </View>
-            <Pressable
-              style={({ pressed }) => [sheetStyles.refreshBtn, pressed && { opacity: 0.6 }]}
-              onPress={handleChangePhoto}
-              disabled={isUploadingPhoto}
-            >
-              <Ionicons name="refresh-outline" size={20} color={colors.textPrimary} />
-            </Pressable>
-          </View>
+          </Pressable>
 
           <TextInput
             ref={inputRef}
@@ -666,7 +667,7 @@ const styles = StyleSheet.create({
   photoWrapper: {
     width: 90,
     height: 90,
-    borderRadius: 8,
+    borderRadius: 16,
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.3)',
@@ -686,7 +687,7 @@ const styles = StyleSheet.create({
   // ─── Bouton Modifier ─────────────────────────────────────────────────────────
   editButtonShadow: {
     alignSelf: 'flex-start',
-    borderRadius: 20,
+    borderRadius: 12,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.06,
@@ -700,12 +701,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingVertical: 10,
     backgroundColor: '#f5f5f5',
-    borderRadius: 20,
+    borderRadius: 12,
     overflow: 'hidden',
   },
   editButtonStroke: {
     ...StyleSheet.absoluteFillObject,
-    borderRadius: 20,
+    borderRadius: 12,
     borderWidth: 1,
     borderColor: 'rgba(0,0,0,0.08)',
   },
@@ -810,7 +811,7 @@ const sheetStyles = StyleSheet.create({
   },
   title: {
     fontFamily: 'Rokkitt_Medium',
-    fontSize: fontSize['3xl'],
+    fontSize: fontSize['2xl'],
     color: colors.textPrimary,
     letterSpacing: -0.72,
     lineHeight: 44,
@@ -838,39 +839,26 @@ const sheetStyles = StyleSheet.create({
     marginBottom: spacing.lg,
     ...shadows.xs,
   },
-  photoSection: {
-    flexDirection: 'row',
+  photoCentered: {
     alignItems: 'center',
-    gap: spacing.md,
     marginBottom: spacing.xl,
   },
-  photoThumb: {
-    width: 72,
-    height: 72,
-    borderRadius: 8,
+  photoCenteredThumb: {
+    width: 120,
+    height: 120,
+    borderRadius: 20,
     overflow: 'hidden',
   },
-  photoThumbImg: { width: 72, height: 72 },
-  photoThumbOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.45)',
-    justifyContent: 'center',
-    alignItems: 'center',
+  photoCenteredImg: {
+    width: 120,
+    height: 120,
   },
-  refreshBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: colors.bgLight,
-    borderWidth: 1,
-    borderColor: colors.borderLight,
+  photoCenteredIconOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.35)',
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
-    elevation: 2,
+    borderRadius: 20,
   },
   emptyText: {
     fontFamily: 'WorkSans_400Regular',
