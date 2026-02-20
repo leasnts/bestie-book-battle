@@ -30,6 +30,7 @@ import {
   subscribeToChallengeHistory,
   unsubscribeChannel,
 } from '../services/supabase/realtime';
+import { handleRealtimeProgressUpdate } from '../services/notificationTriggers';
 
 /**
  * Interface du store de progression
@@ -63,7 +64,10 @@ interface ProgressStore {
   ) => Promise<UserProgress>;
 
   // Actions - Subscriptions temps réel
-  subscribeToProgress: (challengeId: string) => () => void;
+  subscribeToProgress: (
+    challengeId: string,
+    options?: { currentUserId: string; totalPages: number; bookTitle: string }
+  ) => () => void;
   subscribeToHistory: (challengeId: string) => () => void;
   unsubscribeAll: () => void;
 
@@ -253,16 +257,16 @@ export const useProgressStore = create<ProgressStore>((set, get) => ({
    * 
    * Écoute tous les changements de progression du challenge.
    * Met à jour automatiquement le store quand quelqu'un lit.
+   * Déclenche les notifications (dépassement, écart, activité ami, etc.) si options fournies.
    * 
    * @param challengeId - L'ID du challenge
+   * @param options - Contexte pour les notifications (currentUserId, totalPages, bookTitle)
    * @returns Fonction pour se désabonner
    */
-  subscribeToProgress: (challengeId) => {
+  subscribeToProgress: (challengeId, options) => {
     const unsubscribe = subscribeToChallengeProgress(
       challengeId,
-      async (progress, event) => {
-        console.log('Progress updated in realtime:', progress);
-
+      async (progress, event, oldProgress) => {
         if (event === 'UPDATE' || event === 'INSERT') {
           // Mettre à jour la progression dans la liste
           set((state) => {
@@ -283,6 +287,22 @@ export const useProgressStore = create<ProgressStore>((set, get) => ({
           try {
             const participants = await getChallengeParticipants(challengeId);
             set({ participants });
+
+            // Déclencher les notifications si mise à jour par un AUTRE utilisateur
+            if (
+              options &&
+              progress.user_id !== options.currentUserId
+            ) {
+              handleRealtimeProgressUpdate(
+                challengeId,
+                options.currentUserId,
+                progress,
+                oldProgress ?? null,
+                participants,
+                options.totalPages,
+                options.bookTitle
+              ).catch(() => {});
+            }
           } catch (error) {
             console.error('Failed to reload participants:', error);
           }
@@ -314,8 +334,6 @@ export const useProgressStore = create<ProgressStore>((set, get) => ({
     const unsubscribe = subscribeToChallengeHistory(
       challengeId,
       (entry) => {
-        console.log('New history entry in realtime:', entry);
-
         // Ajouter la nouvelle entrée au début de l'historique
         set((state) => ({
           history: [entry, ...state.history],
@@ -333,9 +351,7 @@ export const useProgressStore = create<ProgressStore>((set, get) => ({
    * Utile lors du changement de page ou de la déconnexion.
    */
   unsubscribeAll: () => {
-    // Les channels sont gérés automatiquement par le service realtime
-    // Mais on peut forcer le nettoyage si nécessaire
-    console.log('Unsubscribing from all progress subscriptions');
+    // Les channels sont gérés par le service realtime
   },
 
   // ===== Helper : Obtenir la progression d'un utilisateur =====

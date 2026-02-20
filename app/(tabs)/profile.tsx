@@ -76,14 +76,16 @@ const ACCESSORY_ID_PROFILE = 'edit-profile-no-done';
  * Même logique que resolveAvatarSource sur la home — force expo-image
  * à recharger après un changement de photo.
  */
+const DEFAULT_PROFILE_IMAGE = require('../../assets/images/profile_picture_default.png');
+
 function resolvePhotoSource(url?: string | null, updatedAt?: string | null) {
-  if (!url) return require('../../assets/images/lea.png');
+  if (!url) return DEFAULT_PROFILE_IMAGE;
   if (url.startsWith('http://') || url.startsWith('https://')) {
     const sep = url.includes('?') ? '&' : '?';
     const v = updatedAt ? new Date(updatedAt).getTime() : Date.now();
     return { uri: `${url}${sep}v=${v}` };
   }
-  return require('../../assets/images/lea.png');
+  return DEFAULT_PROFILE_IMAGE;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════

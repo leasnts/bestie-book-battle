@@ -6,21 +6,39 @@
  * - Enregistrement du token
  * - Envoi de notifications locales
  * - Planification de rappels quotidiens
+ * 
+ * Types de notifications gérés :
+ * - RAPPEL QUOTIDIEN (ex: 20h)
+ * - DÉPASSEMENT (quelqu'un te passe devant)
+ * - ÉCART QUI SE CREUSE (+25 pages)
+ * - STREAK en danger
+ * - MILESTONES (paliers de progression, moitié du livre, livre terminé)
+ * - Rappels d'objectifs (deadline demain)
+ * - ACTIVITÉ D'UN AMI (l'autre vient de mettre à jour)
+ * - INACTIVITÉ (pas de mise à jour depuis plusieurs jours)
+ * - L'AUTRE A FINI LE LIVRE
  */
 
 import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
 import { updateUserProfile } from './supabase/auth';
 
+// Identifiants des notifications planifiées (pour les annuler individuellement)
+export const NOTIFICATION_IDS = {
+  DAILY_REMINDER: 'daily-reminder',
+  STREAK_AT_RISK: 'streak-at-risk',
+  GOAL_DEADLINE: 'goal-deadline',
+  INACTIVITY: 'inactivity',
+} as const;
+
 // Configure le comportement des notifications quand l'app est au premier plan
 // Cela permet d'afficher les notifications même quand l'app est ouverte
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
-    shouldShowAlert: true,    // Affiche l'alerte
-    shouldPlaySound: true,    // Joue le son
-    shouldSetBadge: true,     // Met à jour le badge
-    shouldShowBanner: true,   // iOS 15+: affiche en banner
-    shouldShowList: true,     // iOS 15+: affiche dans le centre de notifications
+    shouldPlaySound: true,
+    shouldSetBadge: true,
+    shouldShowBanner: true,
+    shouldShowList: true,
   }),
 });
 
@@ -42,7 +60,6 @@ export async function registerForPushNotifications(
   
   // Les notifications ne fonctionnent que sur les appareils physiques
   if (!Device.isDevice) {
-    console.log('Les notifications nécessitent un appareil physique');
     return null;
   }
   
@@ -58,7 +75,6 @@ export async function registerForPushNotifications(
   
   // Si l'utilisateur refuse, on ne peut pas continuer
   if (finalStatus !== 'granted') {
-    console.log('Permission de notification refusée');
     return null;
   }
   
@@ -123,14 +139,15 @@ export async function scheduleDailyReminder(
   title?: string,
   body?: string
 ): Promise<string> {
-  // Annule d'abord les rappels existants
-  await cancelDailyReminder();
+  // Annule d'abord les rappels quotidiens existants
+  await cancelNotificationById(NOTIFICATION_IDS.DAILY_REMINDER);
   
   // Planifie le nouveau rappel avec le message personnalisé ou le message par défaut
   const id = await Notifications.scheduleNotificationAsync({
     content: {
       title: title || '📚 C\'est l\'heure de lire !',
       body: body || 'N\'oublie pas de mettre à jour ta progression aujourd\'hui',
+      data: { type: 'daily_reminder', notificationId: NOTIFICATION_IDS.DAILY_REMINDER },
       sound: true,
     },
     trigger: {
@@ -138,56 +155,285 @@ export async function scheduleDailyReminder(
       hour,
       minute,
     },
+    identifier: NOTIFICATION_IDS.DAILY_REMINDER,
   });
   
   return id;
 }
 
 /**
- * Annule le rappel quotidien
+ * Annule une notification planifiée par son identifiant
+ */
+export async function cancelNotificationById(identifier: string): Promise<void> {
+  await Notifications.cancelScheduledNotificationAsync(identifier);
+}
+
+/**
+ * Annule le rappel quotidien (rétrocompatibilité)
  */
 export async function cancelDailyReminder(): Promise<void> {
-  // Récupère toutes les notifications planifiées
-  const scheduled = await Notifications.getAllScheduledNotificationsAsync();
-  
-  // Annule celles qui sont des rappels quotidiens
-  for (const notification of scheduled) {
-    await Notifications.cancelScheduledNotificationAsync(notification.identifier);
-  }
+  await cancelNotificationById(NOTIFICATION_IDS.DAILY_REMINDER);
 }
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// NOTIFICATIONS IMMÉDIATES (événements temps réel)
+// ═══════════════════════════════════════════════════════════════════════════════
 
 /**
  * Envoie une notification quand quelqu'un dépasse l'utilisateur
- * 
- * @param competitorName - Le nom de la personne qui a dépassé
- * @param projectId - L'ID du projet pour le deep linking
  */
 export async function sendOvertakeNotification(
   competitorName: string,
-  projectId: string
+  challengeId: string
 ): Promise<void> {
   await sendLocalNotification(
-    '👀 Tu as été dépassé !',
-    `${competitorName} vient de te dépasser. Rattrape-le !`,
-    { projectId, type: 'overtake' }
+    `${competitorName} t'a dépassé`,
+    `On va pas s'appesantir là-dessus`,
+    { challengeId, type: 'overtake' }
   );
 }
 
 /**
- * Envoie une notification de milestone
- * 
- * @param pagesRead - Nombre de pages lues
- * @param milestone - Le milestone atteint (100, 200, etc.)
+ * Envoie une notification quand quelqu'un prend une avance significative (+25 pages)
  */
-export async function sendMilestoneNotification(
-  pagesRead: number,
-  milestone: number
+export async function sendGapWideningNotification(
+  competitorName: string,
+  gapPages: number,
+  challengeId: string
 ): Promise<void> {
   await sendLocalNotification(
-    '🎉 Félicitations !',
-    `Tu as lu ${pagesRead} pages ! Continue comme ça !`,
-    { type: 'milestone', milestone }
+    `${gapPages} pages de retard`,
+    `Pas de panique... si si un peu`,
+    { challengeId, type: 'gap_widening' }
   );
+}
+
+/**
+ * Envoie une notification quand ton streak est en danger
+ */
+export async function sendStreakAtRiskNotification(
+  streakCount: number,
+  challengeId?: string
+): Promise<void> {
+  await sendLocalNotification(
+    'Streak en danger',
+    `${streakCount} jour${streakCount > 1 ? 's' : ''} d'affilée — fais pas l'imbécile ce soir`,
+    { challengeId, type: 'streak_at_risk' }
+  );
+}
+
+/**
+ * Envoie une notification de milestone (paliers de progression)
+ */
+export async function sendMilestoneNotification(
+  pageReached: number,
+  milestone: number,
+  challengeId?: string
+): Promise<void> {
+  await sendLocalNotification(
+    `Page ${milestone} atteinte`,
+    buildMilestonePushBody(pageReached, milestone),
+    { challengeId, type: 'milestone', milestone }
+  );
+}
+
+/**
+ * Envoie une notification pour la moitié du livre (milestone spécial)
+ */
+export async function sendHalfBookNotification(
+  bookTitle: string,
+  challengeId?: string
+): Promise<void> {
+  await sendLocalNotification(
+    'Moitié du livre',
+    `Plus que la moitié — t'es lancé`,
+    { challengeId, type: 'milestone', milestone: 'half' }
+  );
+}
+
+/**
+ * Envoie une notification quand l'utilisateur termine le livre
+ */
+export async function sendBookFinishedNotification(
+  bookTitle: string,
+  challengeId?: string
+): Promise<void> {
+  await sendLocalNotification(
+    'Livre terminé',
+    `"${bookTitle}" dans la poche — bien joué`,
+    { challengeId, type: 'book_finished' }
+  );
+}
+
+/**
+ * Envoie une notification de rappel d'objectif (deadline demain)
+ */
+export async function sendGoalDeadlineReminderNotification(
+  goalDescription: string,
+  challengeId?: string
+): Promise<void> {
+  await sendLocalNotification(
+    'Deadline demain',
+    goalDescription,
+    { challengeId, type: 'goal_deadline' }
+  );
+}
+
+/**
+ * Envoie une notification quand un ami met à jour sa progression
+ */
+export async function sendFriendActivityNotification(
+  friendName: string,
+  pagesRead: number,
+  challengeId: string
+): Promise<void> {
+  const body = pagesRead > 0
+    ? `${pagesRead} page${pagesRead > 1 ? 's' : ''} de plus — garde un oeil sur lui`
+    : `Il avance, toi t'es au courant`;
+  await sendLocalNotification(
+    `${friendName} lit`,
+    body,
+    { challengeId, type: 'friend_activity' }
+  );
+}
+
+/**
+ * Envoie une notification quand l'autre participant a fini le livre
+ */
+export async function sendOtherFinishedBookNotification(
+  friendName: string,
+  bookTitle: string,
+  challengeId: string
+): Promise<void> {
+  await sendLocalNotification(
+    `${friendName} a fini le livre`,
+    `Et toi t'en es où déjà ?`,
+    { challengeId, type: 'other_finished_book' }
+  );
+}
+
+/**
+ * Envoie une notification d'inactivité (pas de mise à jour depuis X jours)
+ */
+export async function sendInactivityNotification(
+  daysSinceLastUpdate: number,
+  challengeId?: string
+): Promise<void> {
+  await sendLocalNotification(
+    `${daysSinceLastUpdate} jours sans lire`,
+    `Ton marque-page se sent abandonné`,
+    { challengeId, type: 'inactivity' }
+  );
+}
+
+function buildMilestonePushBody(_pageReached: number, milestone: number): string {
+  if (milestone === 10) return 'T\'es parti, c\'est l\'essentiel';
+  if (milestone === 25) return 'T\'es lancé là';
+  if (milestone === 50) return 'La moitié approche — accroche-toi';
+  if (milestone === 100) return 'Triple chiffres, pas anodin';
+  if (milestone === 150) return 'Y\'a plus grand chose entre toi et la fin';
+  if (milestone >= 200) return 'Mode lecteur professionnel activé';
+  return 'Continue comme ça';
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// PLANIFICATION (notifications différées)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Planifie la notification de streak en danger
+ * À envoyer en fin de journée (ex: 18h) si l'utilisateur n'a pas lu aujourd'hui
+ */
+export async function scheduleStreakAtRiskNotification(
+  streakCount: number,
+  hour: number,
+  minute: number,
+  challengeId?: string
+): Promise<string | null> {
+  await cancelNotificationById(NOTIFICATION_IDS.STREAK_AT_RISK);
+  
+  const id = await Notifications.scheduleNotificationAsync({
+    content: {
+      title: 'Streak en danger',
+      body: `${streakCount} jour${streakCount > 1 ? 's' : ''} d'affilée — fais pas l'imbécile ce soir`,
+      data: { challengeId, type: 'streak_at_risk' },
+      sound: true,
+    },
+    trigger: {
+      type: Notifications.SchedulableTriggerInputTypes.DAILY,
+      hour,
+      minute,
+    },
+    identifier: NOTIFICATION_IDS.STREAK_AT_RISK,
+  });
+  return id;
+}
+
+/**
+ * Planifie une notification de rappel d'objectif (la veille de la deadline)
+ */
+export async function scheduleGoalDeadlineReminder(
+  goalDescription: string,
+  deadlineDate: Date,
+  challengeId?: string,
+  goalId?: string
+): Promise<string | null> {
+  // La veille à 20h
+  const dayBefore = new Date(deadlineDate);
+  dayBefore.setDate(dayBefore.getDate() - 1);
+  dayBefore.setHours(20, 0, 0, 0);
+  
+  if (dayBefore <= new Date()) return null; // Déjà passé
+  
+  const identifier = goalId
+    ? `${NOTIFICATION_IDS.GOAL_DEADLINE}-${goalId}`
+    : NOTIFICATION_IDS.GOAL_DEADLINE;
+  
+  await cancelNotificationById(identifier);
+  
+  const id = await Notifications.scheduleNotificationAsync({
+    content: {
+      title: 'Deadline demain',
+      body: goalDescription,
+      data: { challengeId, type: 'goal_deadline' },
+      sound: true,
+    },
+    trigger: {
+      type: Notifications.SchedulableTriggerInputTypes.DATE,
+      date: dayBefore,
+    },
+    identifier,
+  });
+  return id;
+}
+
+/**
+ * Planifie une notification d'inactivité (J+3 sans mise à jour)
+ */
+export async function scheduleInactivityNotification(
+  daysFromNow: number,
+  challengeId?: string
+): Promise<string | null> {
+  await cancelNotificationById(NOTIFICATION_IDS.INACTIVITY);
+  
+  const triggerDate = new Date();
+  triggerDate.setDate(triggerDate.getDate() + daysFromNow);
+  triggerDate.setHours(20, 0, 0, 0);
+  
+  const id = await Notifications.scheduleNotificationAsync({
+    content: {
+      title: 'Tu n\'as pas lu depuis un moment',
+      body: `Ton marque-page se sent abandonné`,
+      data: { challengeId, type: 'inactivity' },
+      sound: true,
+    },
+    trigger: {
+      type: Notifications.SchedulableTriggerInputTypes.DATE,
+      date: triggerDate,
+    },
+    identifier: NOTIFICATION_IDS.INACTIVITY,
+  });
+  return id;
 }
 
 /**

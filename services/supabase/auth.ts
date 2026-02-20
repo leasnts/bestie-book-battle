@@ -304,8 +304,6 @@ export function subscribeToAuthChanges(
 ): () => void {
   const { data: { subscription } } = supabase.auth.onAuthStateChange(
     async (event, session) => {
-      console.log('Auth state changed:', event);
-
       if (session?.user) {
         // Récupérer le profil complet (peut être null si nouvel utilisateur)
         // On ne crée PAS automatiquement le profil ici

@@ -5,7 +5,10 @@
   "scripts": {
     "start": "expo start",
     "ios": "expo start --ios",
-    "upload-covers": "node scripts/upload-book-covers.mjs"
+    "upload-covers": "node scripts/upload-book-covers.mjs",
+    "migrate-notifications": "node scripts/run-notification-migration.mjs",
+    "fix-search-path": "node scripts/run-fix-search-path.mjs",
+    "fix-search-path-ui": "node scripts/open-sql-editor-with-fix.mjs"
   },
   "dependencies": {
     "@expo-google-fonts/rokkitt": "^0.4.2",
@@ -51,6 +54,7 @@
   },
   "devDependencies": {
     "@types/react": "~19.1.0",
+    "pg": "^8.18.0",
     "react-test-renderer": "19.1.0",
     "typescript": "~5.9.2"
   },

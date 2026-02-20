@@ -151,7 +151,6 @@ function RootLayoutNav() {
     // Écouter les deep links
     const handleDeepLink = async (event: { url: string }) => {
       const url = event.url;
-      console.log('Deep link reçu:', url);
 
       // Vérifier si c'est un lien d'authentification
       if (url.includes('auth/callback')) {
@@ -170,7 +169,6 @@ function RootLayoutNav() {
               access_token,
               refresh_token,
             });
-            console.log('Session établie avec succès !');
           }
         } catch (error) {
           console.error('Erreur lors du traitement du deep link:', error);

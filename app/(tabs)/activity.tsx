@@ -1,384 +1,329 @@
 /**
- * 📜 Fil d'activité - Light Mode
- * 
- * Affiche les dernières mises à jour de lecture
+ * Page Notifications / Activité
+ *
+ * Affiche les alertes importantes du challenge actif :
+ * milestones, dépassements, écarts, livre terminé, streak en danger, etc.
+ *
+ * Ce feed NE contient PAS "l'ami a lu 3 pages" car c'est du spam.
+ * Les données viennent du notificationStore (persisté en local via AsyncStorage).
+ *
+ * Logique de l'image affichée :
+ * - avatarSource === 'self'        → ma photo de profil
+ * - avatarSource starts with http  → photo d'un autre utilisateur
+ * - avatarSource === null          → image BBB par défaut (notif générale)
+ * - aucune photo disponible        → image BBB par défaut (fallback)
  */
 
-import React, { useEffect, useState } from 'react';
+import { Image } from 'expo-image';
+import { useRouter } from 'expo-router';
+import React from 'react';
 import {
-  View,
+  ScrollView,
   StyleSheet,
   Text,
-  ScrollView,
-  Image,
-  Pressable,
-  ActivityIndicator,
+  View,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import Button3D from '../../components/Button3D';
 import { useAuthStore } from '../../stores/authStore';
+import { useNotificationStore } from '../../stores/notificationStore';
 import { useProjectStore } from '../../stores/projectStore';
-import { getChallengeHistory } from '../../services/supabase/database';
-import { ProgressHistoryRow, UserRow } from '../../types/supabase';
-import { getProfilePhotoUrl } from '../../supabaseConfig';
+import { borderRadius, colors, fontSize, fontWeight, spacing } from '../../utils/constants';
 
-// 🎨 Noir & Blanc + Bleu Klein + Orange flamme
-const COLORS = {
-  bg: '#FAFAF8',
-  bgLines: '#E8E8E4',
-  card: '#FFFFFF',
-  cardBorder: '#E0E0E0',
-  primary: '#002FA7',
-  text: '#1A1A1A',
-  textDim: '#6B7280',
-  textMuted: '#9CA3AF',
-  flame: '#F59E0B',
-};
+// ─── Assets ──────────────────────────────────────────────────────────────────
 
-// Type pour une activité affichée
-type Activity = {
-  id: string;
-  userId: string;
-  userName: string;
-  userPhotoUrl: string | null;
-  type: 'progress' | 'streak';
-  pages?: number;
-  currentPage?: number;
-  streak?: number;
-  bookTitle: string;
-  timestamp: Date;
-};
+const TEXTURE_IMAGE = require('../../assets/images/61ea1e0c638b5b9c8100383a37a5b488848db623.png');
 
-function formatTime(date: Date): string {
+/**
+ * Image BBB par défaut.
+ * Affichée pour :
+ * 1. Les notifications générales (streak, deadline, inactivité)
+ * 2. Tout utilisateur sans photo de profil uploadée
+ */
+const DEFAULT_PROFILE_IMAGE = require('../../assets/images/profile_picture_default.png');
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+/** Formate une date ISO en texte relatif (ex: "Il y a 3 min", "Hier") */
+function formatRelativeTime(isoString: string): string {
+  const date = new Date(isoString);
   const now = new Date();
   const diff = now.getTime() - date.getTime();
-  const minutes = Math.floor(diff / (1000 * 60));
-  const hours = Math.floor(diff / (1000 * 60 * 60));
-  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-  
+  const minutes = Math.floor(diff / 60_000);
+  const hours = Math.floor(diff / 3_600_000);
+  const days = Math.floor(diff / 86_400_000);
+
   if (minutes < 1) return "À l'instant";
   if (minutes < 60) return `Il y a ${minutes} min`;
   if (hours < 24) return `Il y a ${hours}h`;
   if (days === 1) return 'Hier';
-  return `Il y a ${days} jours`;
+  if (days < 7) return `Il y a ${days} j`;
+  return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
 }
+
+/**
+ * Résout la source image à afficher pour une notification.
+ *
+ * - 'self' + photo dispo         → { uri: maPhoto }
+ * - URL http(s)                  → { uri: url }
+ * - null ou aucune photo dispo   → DEFAULT_PROFILE_IMAGE
+ */
+function resolveAvatarSource(
+  avatarSource: 'self' | string | null,
+  currentUserPhotoUrl: string | null | undefined
+) {
+  if (avatarSource === null) return DEFAULT_PROFILE_IMAGE;
+
+  if (avatarSource === 'self') {
+    if (
+      currentUserPhotoUrl &&
+      (currentUserPhotoUrl.startsWith('http://') ||
+        currentUserPhotoUrl.startsWith('https://'))
+    ) {
+      return { uri: currentUserPhotoUrl };
+    }
+    return DEFAULT_PROFILE_IMAGE;
+  }
+
+  // URL directe d'un autre utilisateur
+  if (avatarSource.startsWith('http://') || avatarSource.startsWith('https://')) {
+    return { uri: avatarSource };
+  }
+
+  return DEFAULT_PROFILE_IMAGE;
+}
+
+// ─── Composant principal ─────────────────────────────────────────────────────
 
 export default function ActivityScreen() {
   const router = useRouter();
   const { user } = useAuthStore();
-  const { activeProject, participants } = useProjectStore();
-  
-  const [activities, setActivities] = useState<Activity[]>([]);
-  const [loading, setLoading] = useState(true);
-  
-  // Charge l'historique du challenge actif
-  useEffect(() => {
-    loadActivities();
-  }, [activeProject?.id]);
-  
-  async function loadActivities() {
-    if (!activeProject?.id) {
-      setLoading(false);
-      return;
-    }
-    
-    try {
-      setLoading(true);
-      
-      // Récupère l'historique des 30 derniers jours
-      const history = await getChallengeHistory(activeProject.id, 30);
-      
-      // Transforme l'historique en activités
-      const newActivities: Activity[] = history.map((entry) => {
-        const participant = participants.find(p => p.id === entry.user_id);
-        
-        return {
-          id: entry.id,
-          userId: entry.user_id,
-          userName: participant?.first_name || 'Utilisateur',
-          userPhotoUrl: participant?.profile_photo_url 
-            ? getProfilePhotoUrl(participant.profile_photo_url) 
-            : null,
-          type: 'progress',
-          pages: entry.pages_added,
-          currentPage: entry.current_page,
-          bookTitle: activeProject.book_name,
-          timestamp: new Date(entry.recorded_at),
-        };
-      });
-      
-      setActivities(newActivities);
-    } catch (error) {
-      console.error('Erreur chargement activités:', error);
-    } finally {
-      setLoading(false);
-    }
-  }
-  
+  const { activeChallenge } = useProjectStore();
+  const { notifications } = useNotificationStore();
+
+  // Filtrer uniquement les notifs du challenge actif (s'il y en a un)
+  const filtered = activeChallenge
+    ? notifications.filter((n) => n.challengeId === activeChallenge.id)
+    : notifications;
+
   return (
-    <View style={styles.container}>
-      {/* Lignes de cahier en fond */}
-      <View style={styles.linesBackground}>
-        {[...Array(30)].map((_, i) => (
-          <View key={i} style={styles.line} />
-        ))}
-      </View>
-      
-      {/* Header */}
+    <SafeAreaView style={styles.container} edges={['top']}>
+      {/* Texture de fond noise à 5% d'opacité */}
+      <Image
+        source={TEXTURE_IMAGE}
+        style={styles.backgroundTexture}
+        contentFit="cover"
+      />
+
+      {/* ── Header ── */}
       <View style={styles.header}>
-        <Pressable onPress={() => router.back()} style={styles.backButton}>
-          <Ionicons name="chevron-back" size={24} color={COLORS.text} />
-        </Pressable>
-        <Text style={styles.headerTitle}>Activité</Text>
-        <View style={{ width: 40 }} />
+        <Button3D
+          variant="secondary"
+          icon="chevron-back"
+          iconOnly
+          size="compact"
+          onPress={() => router.back()}
+        />
+        <Text style={styles.headerTitle}>Notifications</Text>
+        <View style={styles.headerSpacer} />
       </View>
-      
-      {/* Liste des activités */}
-      <ScrollView style={styles.list} contentContainerStyle={styles.listContent}>
-        {loading ? (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={COLORS.primary} />
-            <Text style={styles.loadingText}>Chargement...</Text>
-          </View>
-        ) : activities.length === 0 ? (
-          <View style={styles.emptyContainer}>
-            <Ionicons name="book-outline" size={48} color={COLORS.textMuted} />
-            <Text style={styles.emptyText}>Aucune activité pour le moment</Text>
-            <Text style={styles.emptySubtext}>
-              Les mises à jour de lecture apparaîtront ici
-            </Text>
-          </View>
+
+      {/* ── Contenu ── */}
+      <ScrollView
+        style={styles.list}
+        contentContainerStyle={styles.listContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {filtered.length === 0 ? (
+          <EmptyState />
         ) : (
-          <>
-            {activities.map(activity => {
-              const isMe = activity.userId === user?.id;
-          
-              return (
-                <View key={activity.id} style={styles.activityItem}>
-                  {/* Avatar */}
+          filtered.map((item) => {
+            const avatarSrc = resolveAvatarSource(
+              item.avatarSource,
+              user?.profile_photo_url
+            );
+
+            return (
+              <View key={item.id} style={styles.row}>
+                {/* Thumbnail carré 35×35 (radius 8px = borderRadius.sm) */}
+                <View style={styles.avatarWrapper}>
                   <Image
-                    source={
-                      activity.userPhotoUrl
-                        ? { uri: activity.userPhotoUrl }
-                        : require('../../assets/images/lea.png')
-                    }
-                    style={styles.avatar}
+                    source={avatarSrc}
+                    style={styles.avatarImage}
+                    contentFit="cover"
                   />
-                  
-                  {/* Contenu */}
-                  <View style={styles.activityContent}>
-                    <View style={styles.activityTextRow}>
-                      <Text style={styles.activityText}>
-                        <Text style={styles.activityName}>
-                          {isMe ? 'Toi' : activity.userName}
-                        </Text>
-                        {activity.type === 'progress' && (
-                          <Text>
-                            {' '}a lu <Text style={styles.highlight}>+{activity.pages} pages</Text>
-                          </Text>
-                        )}
-                        {activity.type === 'streak' && (
-                          <Text> a atteint </Text>
-                        )}
-                      </Text>
-                      {activity.type === 'streak' && (
-                        <View style={styles.streakInline}>
-                          <Ionicons name="flame" size={14} color={COLORS.flame} />
-                          <Text style={styles.highlightStreak}>{activity.streak} jours</Text>
-                          <Text style={styles.activityText}> de suite</Text>
-                        </View>
-                      )}
-                    </View>
-                    
-                    <View style={styles.activityMeta}>
-                      <Text style={styles.activityBook}>{activity.bookTitle}</Text>
-                      <Text style={styles.activityDot}>•</Text>
-                      <Text style={styles.activityTime}>{formatTime(activity.timestamp)}</Text>
-                    </View>
-                  </View>
-                  
-                  {/* Badge pages */}
-                  {activity.type === 'progress' && (
-                    <View style={styles.pageBadge}>
-                      <Text style={styles.pageBadgeText}>p.{activity.currentPage}</Text>
-                    </View>
-                  )}
                 </View>
-              );
-            })}
-            
-            {/* Fin de la liste */}
-            <Text style={styles.endText}>C'est tout pour le moment</Text>
-          </>
+
+                {/* Texte */}
+                <View style={styles.rowContent}>
+                  <View style={styles.rowTopLine}>
+                    <Text style={styles.rowTitle} numberOfLines={1}>
+                      {item.title}
+                    </Text>
+                    <Text style={styles.rowTime}>
+                      {formatRelativeTime(item.timestamp)}
+                    </Text>
+                  </View>
+                  <Text style={styles.rowDescription} numberOfLines={1}>
+                    {item.body}
+                  </Text>
+                </View>
+              </View>
+            );
+          })
         )}
       </ScrollView>
+    </SafeAreaView>
+  );
+}
+
+// ─── État vide ────────────────────────────────────────────────────────────────
+
+function EmptyState() {
+  return (
+    <View style={styles.centerContainer}>
+      <Image
+        source={DEFAULT_PROFILE_IMAGE}
+        style={styles.emptyImage}
+        contentFit="contain"
+      />
+      <Text style={styles.emptyTitle}>Aucune notification</Text>
+      <Text style={styles.emptySubtitle}>
+        Les alertes importantes (milestones, dépassements, streaks…) apparaîtront ici
+      </Text>
     </View>
   );
 }
 
+// ─── Styles ───────────────────────────────────────────────────────────────────
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.bg,
+    backgroundColor: colors.bgLight,
   },
-  
-  // Lignes de cahier
-  linesBackground: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
+  backgroundTexture: {
+    ...StyleSheet.absoluteFillObject,
+    opacity: 0.05,
   },
-  line: {
-    height: 32,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.bgLines,
-  },
-  
+
+  // Header
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingTop: 50,
-    paddingBottom: 16,
-    paddingHorizontal: 16,
-    backgroundColor: COLORS.bg,
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: COLORS.card,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: COLORS.cardBorder,
+    justifyContent: 'space-between',
+    paddingTop: spacing['3xl'],
+    paddingBottom: spacing.lg,
+    paddingHorizontal: spacing.lg,
   },
   headerTitle: {
-    flex: 1,
-    fontSize: 18,
-    fontWeight: '700',
-    color: COLORS.primary,
-    textAlign: 'center',
+    fontFamily: 'Rokkitt',
+    fontSize: fontSize['2xl'],
+    fontWeight: fontWeight.regular as any,
+    color: colors.textPrimary,
+    lineHeight: 32,
   },
+  headerSpacer: {
+    width: 40,
+    height: 40,
+  },
+
+  // Liste
   list: {
     flex: 1,
   },
   listContent: {
-    padding: 16,
+    paddingTop: spacing.lg,
   },
-  activityItem: {
+
+  // Ligne notification (style Figma : séparateur bas, pas de cards)
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing['2xl'],
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+
+  avatarWrapper: {
+    width: 48,
+    height: 48,
+    borderRadius: borderRadius.sm,
+    borderWidth: 1,
+    borderColor: colors.alphaWhite30,
+    overflow: 'hidden',
+    flexShrink: 0,
+  },
+  avatarImage: {
+    width: '100%',
+    height: '100%',
+  },
+
+  // Texte
+  rowContent: {
+    flex: 1,
+    gap: spacing.xs,
+    minWidth: 0,
+  },
+  rowTopLine: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    backgroundColor: COLORS.card,
-    padding: 14,
-    borderRadius: 12,
-    marginBottom: 10,
-    borderWidth: 1,
-    borderColor: COLORS.cardBorder,
+    justifyContent: 'space-between',
+    gap: spacing.sm,
   },
-  avatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    marginRight: 12,
+  rowTitle: {
+    fontFamily: 'Inter',
+    fontSize: fontSize.sm,
+    fontWeight: fontWeight.bold as any,
+    color: colors.textPrimary,
+    lineHeight: 20,
+    flexShrink: 1,
   },
-  activityContent: {
-    flex: 1,
+  rowTime: {
+    fontFamily: 'Inter',
+    fontSize: fontSize.xs,
+    fontWeight: fontWeight.regular as any,
+    color: colors.textPlaceholder,
+    lineHeight: 18,
+    flexShrink: 0,
   },
-  activityTextRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    alignItems: 'center',
-  },
-  activityText: {
-    fontSize: 14,
-    color: COLORS.text,
+  rowDescription: {
+    fontFamily: 'Inter',
+    fontSize: fontSize.sm,
+    fontWeight: fontWeight.regular as any,
+    color: colors.textSecondary,
     lineHeight: 20,
   },
-  streakInline: {
-    flexDirection: 'row',
+
+  // État vide
+  centerContainer: {
     alignItems: 'center',
-    gap: 2,
-  },
-  activityName: {
-    fontWeight: '600',
-    color: COLORS.text,
-  },
-  highlight: {
-    fontWeight: '700',
-    color: COLORS.primary,
-  },
-  highlightStreak: {
-    fontWeight: '700',
-    color: COLORS.flame,
-  },
-  activityMeta: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 4,
-  },
-  activityBook: {
-    fontSize: 12,
-    color: COLORS.textDim,
-  },
-  activityDot: {
-    fontSize: 12,
-    color: COLORS.textMuted,
-    marginHorizontal: 6,
-  },
-  activityTime: {
-    fontSize: 12,
-    color: COLORS.textMuted,
-  },
-  pageBadge: {
-    backgroundColor: COLORS.primary + '15',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-    marginLeft: 8,
-  },
-  pageBadgeText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: COLORS.primary,
-  },
-  endText: {
-    textAlign: 'center',
-    color: COLORS.textMuted,
-    fontSize: 13,
-    marginTop: 20,
-    marginBottom: 40,
-  },
-  
-  // États loading et empty
-  loadingContainer: {
-    flex: 1,
     justifyContent: 'center',
-    alignItems: 'center',
-    paddingTop: 100,
+    paddingTop: 80,
+    paddingHorizontal: spacing['2xl'],
+    gap: spacing.md,
   },
-  loadingText: {
-    marginTop: 16,
-    fontSize: 14,
-    color: COLORS.textDim,
+  emptyImage: {
+    width: 80,
+    height: 80,
+    borderRadius: borderRadius.md,
+    marginBottom: spacing.sm,
   },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingTop: 100,
-  },
-  emptyText: {
-    marginTop: 16,
-    fontSize: 16,
-    fontWeight: '600',
-    color: COLORS.text,
-  },
-  emptySubtext: {
-    marginTop: 8,
-    fontSize: 14,
-    color: COLORS.textDim,
+  emptyTitle: {
+    fontFamily: 'Rokkitt',
+    fontSize: fontSize.lg,
+    fontWeight: fontWeight.semibold as any,
+    color: colors.textPrimary,
     textAlign: 'center',
+  },
+  emptySubtitle: {
+    fontFamily: 'Inter',
+    fontSize: fontSize.sm,
+    fontWeight: fontWeight.regular as any,
+    color: colors.textTertiary,
+    textAlign: 'center',
+    lineHeight: 20,
   },
 });

@@ -21,8 +21,13 @@ export interface NotificationPreferences {
   enabled: boolean;
   daily_reminder: boolean;
   daily_reminder_time: string; // Format "HH:mm"
-  competitive_alerts: boolean;
+  competitive_alerts: boolean;      // Dépassement + écart qui se creuse
   milestone_alerts: boolean;
+  streak_alerts: boolean;          // Streak en danger
+  goal_reminders: boolean;         // Rappels d'objectifs (deadline demain)
+  friend_activity: boolean;        // L'autre vient de mettre à jour
+  inactivity_alerts: boolean;      // Pas de mise à jour depuis X jours
+  other_finished_book: boolean;    // L'autre a fini le livre
 }
 
 /**

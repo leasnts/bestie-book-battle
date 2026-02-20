@@ -34,7 +34,7 @@ export default function ProjectDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { user } = useAuthStore();
-  const { currentProject, selectProject, isLoading: projectLoading } = useProjectStore();
+  const { currentChallenge: currentProject, loadChallenge: selectProject, isLoading: projectLoading } = useProjectStore();
   const { 
     participants, 
     subscribeToProgress, 
@@ -50,16 +50,19 @@ export default function ProjectDetailScreen() {
     }
   }, [id]);
   
-  // S'abonne aux changements de progression
+  // S'abonne aux changements de progression (+ déclenche les notifications si un ami met à jour)
   useEffect(() => {
-    if (currentProject) {
-      const unsubscribe = subscribeToProgress(
-        currentProject.id,
-        currentProject.totalPages
-      );
+    if (currentProject && user?.id) {
+      const totalPages = currentProject.total_pages ?? (currentProject as any).totalPages ?? 100;
+      const bookTitle = currentProject.book_title ?? (currentProject as any).bookTitle ?? 'Le livre';
+      const unsubscribe = subscribeToProgress(currentProject.id, {
+        currentUserId: user.id,
+        totalPages,
+        bookTitle,
+      });
       return () => unsubscribe();
     }
-  }, [currentProject?.id]);
+  }, [currentProject?.id, user?.id]);
   
   // Si pas de projet, affiche un loader ou revient en arrière
   if (!currentProject) {

@@ -6,6 +6,7 @@
  */
 
 import { useEffect, useState } from 'react';
+import { useAuthStore } from '../stores/authStore';
 import { useProjectStore } from '../stores/projectStore';
 import { useProgressStore } from '../stores/progressStore';
 import { Project, ParticipantWithProgress } from '../types';
@@ -25,9 +26,10 @@ interface UseProjectResult {
  * @returns Les données du projet et des participants
  */
 export function useProject(projectId: string | undefined): UseProjectResult {
+  const { user } = useAuthStore();
   const { 
-    currentProject, 
-    selectProject, 
+    currentChallenge: currentProject, 
+    loadChallenge: selectProject, 
     isLoading: projectLoading,
     error: projectError 
   } = useProjectStore();
@@ -50,17 +52,19 @@ export function useProject(projectId: string | undefined): UseProjectResult {
     }
   }, [projectId]);
   
-  // S'abonne aux changements de progression quand le projet est chargé
+  // S'abonne aux changements de progression quand le projet est chargé (+ notifications)
   useEffect(() => {
-    if (currentProject && isInitialized) {
-      const unsubscribe = subscribeToProgress(
-        currentProject.id,
-        currentProject.totalPages
-      );
-      
+    if (currentProject && isInitialized && user?.id) {
+      const totalPages = (currentProject as any).total_pages ?? currentProject.totalPages ?? 100;
+      const bookTitle = (currentProject as any).book_title ?? (currentProject as any).bookTitle ?? 'Le livre';
+      const unsubscribe = subscribeToProgress(currentProject.id, {
+        currentUserId: user.id,
+        totalPages,
+        bookTitle,
+      });
       return () => unsubscribe();
     }
-  }, [currentProject?.id, isInitialized]);
+  }, [currentProject?.id, isInitialized, user?.id]);
   
   // Fonction de rafraîchissement
   const refresh = () => {

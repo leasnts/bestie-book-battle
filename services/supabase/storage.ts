@@ -198,9 +198,6 @@ export async function uploadBookCover(
   imageUri: string
 ): Promise<UploadResult> {
   try {
-    console.log('[Cover Upload] Début - challengeId:', challengeId);
-    console.log('[Cover Upload] Image URI:', imageUri);
-
     // Lire le fichier en base64 depuis son URI locale
     // C'est la méthode la plus fiable en React Native pour lire un fichier image
     // On utilise 'base64' en string au lieu de FileSystem.EncodingType.Base64
@@ -208,15 +205,11 @@ export async function uploadBookCover(
       encoding: 'base64' as any,
     });
 
-    console.log('[Cover Upload] Base64 lu, taille:', Math.round(base64.length / 1024), 'Ko');
-
     // Toujours uploader en JPEG : c'est 3-5x plus léger que PNG
     // et la qualité est largement suffisante pour une couverture de livre
     const mimeType = 'image/jpeg';
     const fileName = 'cover.jpg';
     const filePath = `${challengeId}/${fileName}`;
-
-    console.log('[Cover Upload] Upload vers:', filePath, '(type:', mimeType, ')');
 
     // Convertir la chaîne base64 en ArrayBuffer
     // C'est le format binaire que Supabase Storage attend
@@ -235,9 +228,7 @@ export async function uploadBookCover(
       throw uploadError;
     }
 
-    // Obtenir l'URL publique permanente
     const publicUrl = getBookCoverUrl(challengeId, fileName);
-    console.log('[Cover Upload] Succès ! URL publique:', publicUrl);
 
     return {
       url: publicUrl,

@@ -24,13 +24,6 @@ import { uploadBookCover } from '../../services/supabase/storage';
 import { useAuthStore } from '../../stores/authStore';
 import { useProjectStore } from '../../stores/projectStore';
 
-// Random covers imports - assume they exist in assets/images
-const RANDOM_COVERS = [
-  require('../../assets/images/random_cover_1.png'),
-  require('../../assets/images/random_cover_2.png'),
-  require('../../assets/images/random_cover_3.png'),
-];
-
 export default function CreateProjectScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -76,15 +69,9 @@ export default function CreateProjectScreen() {
 
     // Si c'est une cover personnalisée, essayer de l'uploader sur Supabase
     try {
-      console.log("Tentative d'upload de la cover personnalisée...");
-      
-      // Upload to Supabase Storage
       const { url } = await uploadBookCover(challengeId, coverUri);
-      console.log("Upload réussi:", url);
       return url;
-      
     } catch (error: any) {
-      console.warn("Échec de l'upload Supabase, utilisation d'une cover par défaut:", error);
       
       // En cas d'échec, utiliser une cover de fallback
       return `https://picsum.photos/seed/${challengeId}/300/400`;
@@ -112,19 +99,13 @@ export default function CreateProjectScreen() {
         undefined  // Pas de target date pour l'instant
       );
 
-      console.log('Challenge créé:', challenge);
-
       // 2. Upload de la cover si nécessaire et sauvegarde en BDD
       let coverUrl = challenge.cover_url;
       if (coverUri) {
         coverUrl = await processCover(challenge.id);
-        console.log('Cover uploadée:', coverUrl);
 
-        // Sauvegarder l'URL de la cover dans la base de données
-        // Sans ça, l'URL serait perdue au prochain chargement
         if (coverUrl) {
           await updateChallenge(challenge.id, { cover_url: coverUrl });
-          console.log('Cover URL sauvegardée en BDD');
         }
       }
 

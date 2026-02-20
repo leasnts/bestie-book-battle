@@ -161,7 +161,6 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       ]);
       clearStateAndStores();
     } catch (error: any) {
-      console.warn('Logout:', error?.message || error);
       if (error?.message === 'timeout') {
         // Timeout = signOut a hang, on déconnecte quand même côté UI
         clearStateAndStores();

@@ -53,8 +53,8 @@ interface ProgressCardProps {
   onGoalPress?: () => void;
 }
 
-// Fallback avatar quand le participant n'a pas de photo
-const DEFAULT_AVATAR = require('../../assets/images/lea.png');
+// Fallback avatar quand le participant n'a pas de photo (image BBB par défaut)
+const DEFAULT_AVATAR = require('../../assets/images/profile_picture_default.png');
 
 // Image de la couronne (remplace l'emoji 👑 pour un rendu cohérent cross-platform)
 const CROWN_IMAGE = require('../../assets/images/crown.png');

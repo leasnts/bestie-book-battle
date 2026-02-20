@@ -16,6 +16,7 @@
 
 -- Table des utilisateurs
 -- Stocke les informations de profil des utilisateurs
+-- notification_token : Expo Push Token (APNs iOS uniquement, pas d'Android)
 CREATE TABLE IF NOT EXISTS users (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   apple_user_id TEXT UNIQUE,
@@ -29,7 +30,12 @@ CREATE TABLE IF NOT EXISTS users (
     "daily_reminder": true,
     "daily_reminder_time": "20:00",
     "competitive_alerts": true,
-    "milestone_alerts": true
+    "milestone_alerts": true,
+    "streak_alerts": true,
+    "goal_reminders": true,
+    "friend_activity": true,
+    "inactivity_alerts": true,
+    "other_finished_book": true
   }'::jsonb,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   last_login_at TIMESTAMPTZ,

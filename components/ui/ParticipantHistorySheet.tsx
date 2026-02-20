@@ -50,8 +50,8 @@ interface ParticipantHistorySheetProps {
   history?: ProgressHistory[] | null;
 }
 
-// Avatar par défaut si pas de photo
-const DEFAULT_AVATAR = require('../../assets/images/lea.png');
+// Avatar par défaut si pas de photo (image BBB par défaut)
+const DEFAULT_AVATAR = require('../../assets/images/profile_picture_default.png');
 
 /**
  * Résout l'URL de l'avatar en source Image.

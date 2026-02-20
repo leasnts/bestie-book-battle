@@ -47,13 +47,14 @@ import ParticipantHistorySheet from '../../components/ui/ParticipantHistorySheet
 import ProgressCard from '../../components/ui/ProgressCard';
 import { getUserHistory } from '../../services/supabase/database';
 import { uploadBookCover } from '../../services/supabase/storage';
+import { useNotificationScheduler } from '../../hooks/useNotificationScheduler';
 import { useAuthStore } from '../../stores/authStore';
 import { useGoalStore } from '../../stores/goalStore';
 import { useProgressStore } from '../../stores/progressStore';
 import { useProjectStore } from '../../stores/projectStore';
 import { ProgressHistory } from '../../types/supabase';
 import { colors, spacing } from '../../utils/constants';
-import { isStreakAtRisk } from '../../utils/streak';
+import { getActiveStreak, isStreakAtRisk } from '../../utils/streak';
 
 // Texture de fond "noise" réutilisée depuis l'onboarding
 const TEXTURE_IMAGE = require('../../assets/images/61ea1e0c638b5b9c8100383a37a5b488848db623.png');
@@ -62,16 +63,18 @@ const TEXTURE_IMAGE = require('../../assets/images/61ea1e0c638b5b9c8100383a37a5b
  * Résout la source d'un avatar utilisateur.
  * - URL http(s) → { uri: url } avec cache busting si updatedAt fourni
  * - Ref locale connue → require()
- * - Sinon → fallback lea.png
+ * - Sinon → fallback image BBB par défaut
  *
  * Le cache busting (?v=timestamp) force expo-image à recharger l'image
  * au lieu d'afficher une version en cache quand la photo a changé.
  */
+const DEFAULT_PROFILE_IMAGE = require('../../assets/images/profile_picture_default.png');
+
 const resolveAvatarSource = (
   ref: string | null | undefined,
   updatedAt?: string | null
 ) => {
-  if (!ref) return require('../../assets/images/lea.png');
+  if (!ref) return DEFAULT_PROFILE_IMAGE;
   if (ref.startsWith('http://') || ref.startsWith('https://')) {
     let url = ref;
     if (updatedAt) {
@@ -84,7 +87,7 @@ const resolveAvatarSource = (
   switch (ref) {
     case 'lea': return require('../../assets/images/lea.png');
     case 'zoe': return require('../../assets/images/zoe.png');
-    default: return require('../../assets/images/lea.png');
+    default: return DEFAULT_PROFILE_IMAGE;
   }
 };
 
@@ -112,12 +115,20 @@ export default function HomeScreen() {
   } = useProgressStore();
 
   const {
+    primaryGoal,
     secondaryGoal,
     loadActiveGoals,
     loadGoalHistory,
     addGoal,
     editGoal,
   } = useGoalStore();
+
+  // Planifie les notifications (streak en danger, rappels objectifs, inactivité)
+  useNotificationScheduler({
+    challengeId: activeChallenge?.id ?? null,
+    participantsLoaded: participants.length > 0,
+    goalsLoaded: true, // loadActiveGoals est appelé en parallèle
+  });
 
 
   // ===== État local =====
@@ -275,7 +286,7 @@ export default function HomeScreen() {
     name: 'Moi',
     photoUrl: mePhotoUrlWithCacheBust,
     score: meParticipant.progress.current_page,
-    streak: meParticipant.progress.streak_count || 0,
+    streak: getActiveStreak(meParticipant.progress.streak_count, meParticipant.progress.last_streak_date),
     isLeader: meParticipant.isLeader,
     streakAtRisk: isStreakAtRisk(meParticipant.progress.last_streak_date),
   } : {
@@ -299,7 +310,7 @@ export default function HomeScreen() {
     name: friendParticipant.user.first_name || 'Ami.e',
     photoUrl: friendPhotoUrlWithCacheBust,
     score: friendParticipant.progress.current_page,
-    streak: friendParticipant.progress.streak_count || 0,
+    streak: getActiveStreak(friendParticipant.progress.streak_count, friendParticipant.progress.last_streak_date),
     isLeader: friendParticipant.isLeader,
     streakAtRisk: isStreakAtRisk(friendParticipant.progress.last_streak_date),
   } : null;

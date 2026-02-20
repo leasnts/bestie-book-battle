@@ -64,13 +64,6 @@ export async function createChallenge(
       throw new Error('Vous n\'êtes pas connecté. Veuillez vous reconnecter.');
     }
 
-    // Debug : vérifier la correspondance entre les IDs
-    // auth.uid() côté PostgreSQL = session.user.id côté client
-    console.log('Session Supabase active:');
-    console.log('  - session.user.id (= auth.uid()):', session.user.id);
-    console.log('  - admin_id envoyé:', challengeData.admin_id);
-    console.log('  - Match:', session.user.id === challengeData.admin_id);
-
     // Sécurité : utiliser l'ID de la session comme admin_id
     // Même si challengeData.admin_id est différent (ex: bug dans le store),
     // on force l'utilisation de l'ID de la session pour que la RLS passe
@@ -287,9 +280,7 @@ export async function joinChallenge(
       .insert(participantData);
 
     if (error) {
-      // Si l'erreur est une violation de contrainte unique, l'utilisateur est déjà participant
       if (error.code === '23505') {
-        console.log('L\'utilisateur est déjà participant de ce challenge');
         return;
       }
       throw error;

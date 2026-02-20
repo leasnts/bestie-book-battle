@@ -20,6 +20,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '../../stores/authStore';
 import { useProjectStore } from '../../stores/projectStore';
 import { useProgressStore } from '../../stores/progressStore';
+import { handleOwnProgressUpdateMilestones } from '../../services/notificationTriggers';
+import { cancelNotificationById, NOTIFICATION_IDS } from '../../services/notifications';
 
 // 🎨 Palette de couleurs - Thème sombre néon
 const COLORS = {
@@ -49,8 +51,8 @@ export default function UpdateProgressScreen() {
   const router = useRouter();
   const { projectId } = useLocalSearchParams<{ projectId: string }>();
   const { user } = useAuthStore();
-  const { currentProject, selectProject } = useProjectStore();
-  const { updateProgress, getUserProgress, loadProjectProgress, isLoading } = useProgressStore();
+  const { currentChallenge: currentProject, loadChallenge: selectProject } = useProjectStore();
+  const { updateProgress, getUserProgressById, loadChallengeProgress, isLoading } = useProgressStore();
   
   // State - Le numéro de page actuel
   const [currentPageInput, setCurrentPageInput] = useState(0);
@@ -68,14 +70,14 @@ export default function UpdateProgressScreen() {
       selectProject(projectId);
     }
     if (projectId && currentProject) {
-      loadProjectProgress(projectId, currentProject.totalPages);
+      loadChallengeProgress(projectId);
     }
   }, [projectId, currentProject?.id]);
   
   // Initialise avec la page actuelle de l'utilisateur
-  const userProgress = user ? getUserProgress(user.id) : undefined;
-  const lastSavedPage = userProgress?.currentPage || 0;
-  const totalPages = currentProject?.totalPages || 100;
+  const userProgress = user ? getUserProgressById(user.id) : undefined;
+  const lastSavedPage = userProgress?.current_page || 0;
+  const totalPages = (currentProject as any)?.total_pages ?? currentProject?.totalPages ?? 100;
   
   // Initialise l'input avec la dernière page sauvegardée
   useEffect(() => {
@@ -159,6 +161,21 @@ export default function UpdateProgressScreen() {
     
     try {
       await updateProgress(projectId, user.id, currentPageInput);
+
+      // L'utilisateur vient de lire → annuler les notifs planifiées
+      // "inactivité" et "streak en danger" qui ne sont plus pertinentes.
+      cancelNotificationById(NOTIFICATION_IDS.INACTIVITY).catch(() => {});
+      cancelNotificationById(NOTIFICATION_IDS.STREAK_AT_RISK).catch(() => {});
+
+      // Déclencher les notifications de milestones (50%, 100 pages, livre terminé, etc.)
+      handleOwnProgressUpdateMilestones(
+        projectId,
+        lastSavedPage,
+        currentPageInput,
+        totalPages,
+        currentProject?.book_title ?? (currentProject as any)?.bookTitle ?? 'Ton livre',
+        user.profile_photo_url ?? null
+      ).catch(() => {});
       celebrate();
     } catch (error) {
       console.error(error);
