@@ -123,7 +123,7 @@ export default function RootLayout() {
  */
 function RootLayoutNav() {
   const { user, isInitialized, initialize: initAuth } = useAuthStore();
-  const { challenges } = useProjectStore();
+  const { challenges, loadUserChallenges } = useProjectStore();
   const router = useRouter();
   const segments = useSegments();
   const [isMounted, setIsMounted] = useState(false);
@@ -137,6 +137,14 @@ function RootLayoutNav() {
       unsubAuth();
     };
   }, [initAuth]);
+
+  // Charge les challenges dès que l'utilisateur est connu (session restaurée)
+  // → réduit le flash d'empty state au démarrage de l'app
+  useEffect(() => {
+    if (user?.id) {
+      loadUserChallenges(user.id);
+    }
+  }, [user?.id, loadUserChallenges]);
 
   // Gérer les deep links pour l'authentification
   useEffect(() => {
