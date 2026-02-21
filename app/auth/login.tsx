@@ -156,7 +156,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Rokkitt_Medium',
     fontSize: fontSize['3xl'],
     fontWeight: fontWeight.medium as any,
-    color: 'rgba(0, 0, 0, 0.3)', // noir à 50% d'opacité pour "estie", "ook", "attle"
+    color: colors.textPrimary,
     letterSpacing: 3, // espacement généreux entre les lettres
     textAlign: 'center',
   },
