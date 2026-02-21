@@ -11,19 +11,19 @@
  *   → [avatar + couronne si leader] [nom] ........... [badge streak] [score]
  * - Le score utilise un compteur roulant animé (hook useRollingCounter)
  *   pour un feedback visuel satisfaisant quand la valeur change
- * - La couronne PNG est positionnée en absolute au-dessus de l'avatar du leader,
- *   légèrement penchée (~9°) comme dans le Figma
+ * - La couronne PNG est centrée verticalement sur l'avatar du leader, droite
  * - Si un objectif intermédiaire existe, on affiche une carte en haut :
  *   → Colonne gauche : "Objectif" + nombre de pages, "Deadline" + date
  *   → Colonne droite : cercle de progression + chevron
  */
 
+import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import React, { useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import Animated, { LinearTransition } from 'react-native-reanimated';
 import Svg, { Circle } from 'react-native-svg';
-import { colors, spacing, borderRadius } from '../../utils/constants';
+import { colors, spacing } from '../../utils/constants';
 import IconFlame from '../icons/IconFlame';
 
 interface Participant {
@@ -128,8 +128,8 @@ function useRollingCounter(target: number, duration = 800): number {
  * ........... espace flexible ...........
  * [badge streak : 🔥 + nombre] [score en Rokkitt SemiBold 24px]
  *
- * La couronne est positionnée en absolute au-dessus de l'avatar,
- * légèrement penchée (~9°) pour un rendu fun et naturel.
+ * La couronne est centrée verticalement sur l'avatar, droite.
+ *
  */
 function ParticipantRow({
   participant,
@@ -141,6 +141,12 @@ function ParticipantRow({
   onPress?: () => void;
 }) {
   return (
+    // Animated.View avec layout= pour animer le glissement de position
+    // quand l'ordre des lignes change (LinearTransition = glissement fluide)
+    <Animated.View
+      layout={LinearTransition.springify().damping(18).stiffness(180)}
+      style={styles.rowWrapper}
+    >
     <Pressable style={styles.participantRow} onPress={onPress}>
       {/* ── Côté gauche : avatar + nom ── */}
       <View style={styles.participantLeft}>
@@ -151,7 +157,7 @@ function ParticipantRow({
             style={styles.avatar}
             contentFit="cover"
           />
-          {/* Couronne du leader — légèrement penchée (~9°) comme dans le Figma */}
+          {/* Couronne du leader — centrée sur l'avatar, droite */}
           {participant.isLeader && (
             <View style={styles.crownOverAvatar}>
               <Image source={CROWN_IMAGE} style={styles.crownImage} contentFit="contain" />
@@ -177,6 +183,7 @@ function ParticipantRow({
         <Text style={styles.scoreNumber}>{displayScore}</Text>
       </View>
     </Pressable>
+    </Animated.View>
   );
 }
 
@@ -192,6 +199,7 @@ export default function ProgressCard({
   // le nombre affiché s'incrémente progressivement de l'ancien au nouveau.
   const myDisplayScore = useRollingCounter(me.score);
   const friendDisplayScore = useRollingCounter(friend?.score ?? 0);
+
 
   // On construit la liste des participants, triée par score décroissant.
   // Le participant avec le plus de pages lues apparaît en premier (en haut).
@@ -406,6 +414,10 @@ const styles = StyleSheet.create({
   },
 
   // ═══ LIGNE PARTICIPANT ═══
+
+  // Wrapper Animated.View : porte l'animation de layout (glissement de position).
+  rowWrapper: {},
+
   // Chaque participant occupe une ligne horizontale :
   // gauche (avatar + nom) ↔ droite (streak + score)
   participantRow: {
@@ -446,14 +458,15 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.3)',
   },
-  // Couronne positionnée au-dessus de l'avatar, légèrement penchée.
-  // Avatar 28×28 : on centre la couronne (~28px) et on remonte au-dessus
+  // Couronne au bord supérieur de l'avatar, droite (sans rotation)
+  // La base de la couronne touche le haut de l'avatar (28×28)
   crownOverAvatar: {
     position: 'absolute',
-    top: -18,
+    top: -19,
     left: -2,
+    right: -2,
     zIndex: 10,
-    transform: [{ rotate: '9deg' }],
+    alignItems: 'center',
   },
   crownImage: {
     width: 28,
@@ -503,7 +516,7 @@ const styles = StyleSheet.create({
     fontFamily: 'WorkSans_600SemiBold',
     fontSize: 12,
     color: colors.textTertiary,
-    lineHeight: 12,
+    lineHeight: 16,
     textAlign: 'center',
   },
 });
