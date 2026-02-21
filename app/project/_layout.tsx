@@ -28,25 +28,10 @@ export default function ProjectLayout() {
         }}
       />
       <Stack.Screen
-        name="create"
-        options={{
-          headerShown: false,
-          presentation: 'modal',
-        }}
-      />
-      <Stack.Screen
         name="invite"
         options={{
           headerShown: false,
           presentation: 'card',
-        }}
-      />
-      <Stack.Screen
-        name="join"
-        options={{
-          title: 'Rejoindre un projet',
-          presentation: 'modal',
-          headerShown: true,
         }}
       />
     </Stack>

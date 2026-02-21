@@ -636,7 +636,13 @@ export default function HomeScreen() {
 
           <View style={styles.emptyStateButtons}>
             <Button3D
-              onPress={() => router.push('/project/create')}
+              onPress={() => router.push({
+                pathname: '/onboarding/role',
+                params: {
+                  firstName: user?.first_name || 'Lecteur',
+                  addChallenge: 'true',
+                },
+              })}
               variant="primary"
               icon="add-circle-outline"
               iconPosition="left"
@@ -646,7 +652,13 @@ export default function HomeScreen() {
             </Button3D>
 
             <Button3D
-              onPress={() => router.push('/project/join')}
+              onPress={() => router.push({
+                pathname: '/onboarding/join',
+                params: {
+                  firstName: user?.first_name || 'Lecteur',
+                  addChallenge: 'true',
+                },
+              })}
               variant="secondary"
               style={{ width: '100%' }}
             >

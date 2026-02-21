@@ -5,8 +5,9 @@
  * logo avec b en gras, slogan "que le meilleur lise !", bouton Apple Sign In.
  *
  * Flow :
- * - Nouveaux utilisateurs → onboarding (saisie prénom)
- * - Utilisateurs existants → home ou création de projet
+ * - Nouveaux utilisateurs → onboarding (saisie prénom "Comment tu t'appelles ?")
+ * - Utilisateurs existants avec projet(s) → home (tabs)
+ * - Utilisateurs existants sans projet → onboarding (écran rôle, addChallenge)
  */
 
 import { Image } from 'expo-image';
@@ -66,9 +67,13 @@ export default function WelcomeScreen() {
         if (challenges && challenges.length > 0) {
           router.replace('/(tabs)');
         } else {
+          // Utilisateur existant sans projet → nouveau flow onboarding (écran rôle)
+          // On skip "Comment tu t'appelles ?" car il a déjà un profil, et on passe
+          // le prénom depuis son profil pour l'écran rôle.
+          const firstName = result.user?.first_name || 'Toi';
           router.replace({
-            pathname: '/project/create',
-            params: { isFirstProject: 'true' },
+            pathname: '/onboarding/role',
+            params: { firstName, addChallenge: 'true' },
           });
         }
       }

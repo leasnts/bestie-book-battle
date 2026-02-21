@@ -276,12 +276,6 @@ function RootLayoutNav() {
         }}
       />
 
-      <Stack.Screen
-        name="select-profile"
-        options={{
-          headerShown: false,
-        }}
-      />
     </Stack>
   );
 }
