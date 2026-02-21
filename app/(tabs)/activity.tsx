@@ -41,7 +41,7 @@ const TEXTURE_IMAGE = require('../../assets/images/61ea1e0c638b5b9c8100383a37a5b
  * 1. Les notifications générales (streak, deadline, inactivité)
  * 2. Tout utilisateur sans photo de profil uploadée
  */
-const DEFAULT_PROFILE_IMAGE = require('../../assets/images/profile_picture_default.png');
+const DEFAULT_PROFILE_IMAGE = require('../../assets/images/pop-eyes.png');
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -65,15 +65,17 @@ function formatRelativeTime(isoString: string): string {
 /**
  * Résout la source image à afficher pour une notification.
  *
- * - 'self' + photo dispo         → { uri: maPhoto }
- * - URL http(s)                  → { uri: url }
- * - null ou aucune photo dispo   → DEFAULT_PROFILE_IMAGE
+ * - 'self' + photo dispo         → { source: { uri }, fit: 'cover' }
+ * - URL http(s)                  → { source: { uri }, fit: 'cover' }
+ * - null ou aucune photo dispo   → { source: DEFAULT_PROFILE_IMAGE, fit: 'contain' }
+ *
+ * On retourne aussi le `fit` pour que les PopEyes ne soient jamais coupés.
  */
 function resolveAvatarSource(
   avatarSource: 'self' | string | null,
   currentUserPhotoUrl: string | null | undefined
-) {
-  if (avatarSource === null) return DEFAULT_PROFILE_IMAGE;
+): { source: any; fit: 'cover' | 'contain' } {
+  if (avatarSource === null) return { source: DEFAULT_PROFILE_IMAGE, fit: 'contain' };
 
   if (avatarSource === 'self') {
     if (
@@ -81,17 +83,17 @@ function resolveAvatarSource(
       (currentUserPhotoUrl.startsWith('http://') ||
         currentUserPhotoUrl.startsWith('https://'))
     ) {
-      return { uri: currentUserPhotoUrl };
+      return { source: { uri: currentUserPhotoUrl }, fit: 'cover' };
     }
-    return DEFAULT_PROFILE_IMAGE;
+    return { source: DEFAULT_PROFILE_IMAGE, fit: 'contain' };
   }
 
   // URL directe d'un autre utilisateur
   if (avatarSource.startsWith('http://') || avatarSource.startsWith('https://')) {
-    return { uri: avatarSource };
+    return { source: { uri: avatarSource }, fit: 'cover' };
   }
 
-  return DEFAULT_PROFILE_IMAGE;
+  return { source: DEFAULT_PROFILE_IMAGE, fit: 'contain' };
 }
 
 // ─── Composant principal ─────────────────────────────────────────────────────
@@ -139,19 +141,19 @@ export default function ActivityScreen() {
           <EmptyState />
         ) : (
           filtered.map((item) => {
-            const avatarSrc = resolveAvatarSource(
+            const { source: avatarSrc, fit: avatarFit } = resolveAvatarSource(
               item.avatarSource,
               user?.profile_photo_url
             );
 
             return (
               <View key={item.id} style={styles.row}>
-                {/* Thumbnail carré 35×35 (radius 8px = borderRadius.sm) */}
+                {/* Thumbnail carré 48×48 */}
                 <View style={styles.avatarWrapper}>
                   <Image
                     source={avatarSrc}
                     style={styles.avatarImage}
-                    contentFit="cover"
+                    contentFit={avatarFit}
                   />
                 </View>
 
