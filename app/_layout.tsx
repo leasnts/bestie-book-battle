@@ -235,9 +235,15 @@ function RootLayoutNav() {
   };
 
   // Afficher le splash screen pendant l'animation
-  // Ce return est placé APRÈS tous les hooks pour respecter les règles des hooks React
+  // On attend aussi isInitialized pour éviter le flash "nouvel utilisateur"
+  // (photo par défaut, pas de prénom, empty state) quand checkSession est lent
   if (showSplash) {
-    return <AnimatedSplash onFinish={handleSplashFinish} />;
+    return (
+      <AnimatedSplash
+        onFinish={handleSplashFinish}
+        waitFor={isInitialized}
+      />
+    );
   }
 
   return (

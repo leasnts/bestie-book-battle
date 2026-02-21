@@ -10,7 +10,7 @@
  */
 
 import { Image } from 'expo-image';
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import Animated, {
   Easing,
@@ -25,9 +25,13 @@ import TEXTURE_IMAGE from '../assets/images/61ea1e0c638b5b9c8100383a37a5b488848d
 
 interface AnimatedSplashProps {
   onFinish: () => void;
+  /** Si fourni, le splash reste visible jusqu'à ce que cette condition soit true.
+   * Utile pour attendre l'init auth et éviter le flash "nouvel utilisateur"
+   * (photo par défaut, pas de prénom, empty state) au démarrage. */
+  waitFor?: boolean;
 }
 
-export default function AnimatedSplash({ onFinish }: AnimatedSplashProps) {
+export default function AnimatedSplash({ onFinish, waitFor }: AnimatedSplashProps) {
   // Texte
   const textOpacity = useSharedValue(0);
   
@@ -42,6 +46,9 @@ export default function AnimatedSplash({ onFinish }: AnimatedSplashProps) {
   const onFinishRef = useRef(onFinish);
   onFinishRef.current = onFinish;
 
+  // Track si l'animation est terminée (à 3700ms) — state pour déclencher l'effet conditionnel
+  const [animationFinished, setAnimationFinished] = useState(false);
+
   useEffect(() => {
     // Timeline :
     // 0ms       → Fade in du texte (700ms)
@@ -49,7 +56,7 @@ export default function AnimatedSplash({ onFinish }: AnimatedSplashProps) {
     //             durée 250ms, easing decelerate → effet "ça vient vers nous et se pose"
     // 1250ms    → Yeux posés, immobiles
     // 3200ms    → Fade out global (500ms)
-    // 3700ms    → onFinish → écran de sign in
+    // 3700ms    → animation "terminée" → onFinish si waitFor est prêt
 
     // 1. Fade in du texte
     textOpacity.value = withTiming(1, { duration: 1000 });
@@ -73,13 +80,22 @@ export default function AnimatedSplash({ onFinish }: AnimatedSplashProps) {
       withTiming(0, { duration: 500 })
     );
 
-    // 4. Quand le fade out est fini, on passe à l'écran suivant
+    // 4. Quand le fade out est fini, marquer l'animation comme terminée
     const timer = setTimeout(() => {
-      onFinishRef.current();
+      setAnimationFinished(true);
     }, 3700);
     
     return () => clearTimeout(timer);
   }, []);
+
+  // Appeler onFinish une seule fois quand : (animation terminée) ET (pas de waitFor OU waitFor est true)
+  const hasCalledFinishRef = useRef(false);
+  useEffect(() => {
+    if (!animationFinished || hasCalledFinishRef.current) return;
+    if (waitFor !== undefined && !waitFor) return;
+    hasCalledFinishRef.current = true;
+    onFinishRef.current();
+  }, [animationFinished, waitFor]);
 
   // Style animé pour le texte
   const textAnimatedStyle = useAnimatedStyle(() => ({
