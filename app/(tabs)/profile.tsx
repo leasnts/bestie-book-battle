@@ -46,6 +46,7 @@ import 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import BottomSheet from '../../components/ui/BottomSheet';
 import Button3D from '../../components/Button3D';
+import PageTransition from '../../components/PageTransition';
 import { pickImage, uploadProfilePhoto } from '../../services/supabase/storage';
 import { useAuthStore } from '../../stores/authStore';
 import { useProjectStore } from '../../stores/projectStore';
@@ -207,6 +208,7 @@ export default function ProfileScreen() {
   // ─── Rendu ─────────────────────────────────────────────────────────────────
 
   return (
+    <PageTransition>
     <View style={styles.container}>
       <Image source={TEXTURE_IMAGE} style={styles.backgroundTexture} contentFit="cover" />
 
@@ -313,6 +315,7 @@ export default function ProfileScreen() {
       <EditProfileSheet visible={editProfileVisible} onClose={() => setEditProfileVisible(false)} />
       <InviteSheet visible={inviteVisible} onClose={() => setInviteVisible(false)} challenges={challenges} />
     </View>
+    </PageTransition>
   );
 }
 

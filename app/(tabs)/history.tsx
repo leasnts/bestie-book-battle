@@ -15,6 +15,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import PageTransition from '../../components/PageTransition';
 import { useAuthStore } from '../../stores/authStore';
 import { useProgressStore } from '../../stores/progressStore';
 
@@ -73,6 +74,7 @@ export default function HistoryScreen() {
   // Plus besoin des stats ni du picker
   
   return (
+    <PageTransition>
     <View style={styles.container}>
       {/* Lignes de cahier en fond */}
       <View style={styles.linesBackground}>
@@ -144,6 +146,7 @@ export default function HistoryScreen() {
         </Text>
       </ScrollView>
     </View>
+    </PageTransition>
   );
 }
 

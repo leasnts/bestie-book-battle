@@ -35,6 +35,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Button3D from '../../components/Button3D';
+import PageTransition from '../../components/PageTransition';
 import PopEyes from '../../components/PopEyes';
 import IconRotateCcw from '../../components/icons/IconRotateCcw';
 import BookStack from '../../components/ui/BookStack';
@@ -521,6 +522,7 @@ export default function HomeScreen() {
   }, [activeChallenge]);
 
   return (
+    <PageTransition>
     <View style={styles.container}>
       {/* Texture de fond "noise" semi-transparente */}
       <Image
@@ -761,6 +763,7 @@ export default function HomeScreen() {
       />
 
     </View>
+    </PageTransition>
   );
 }
 

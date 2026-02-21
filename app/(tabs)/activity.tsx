@@ -25,6 +25,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Button3D from '../../components/Button3D';
+import PageTransition from '../../components/PageTransition';
 import PopEyes from '../../components/PopEyes';
 import { useAuthStore } from '../../stores/authStore';
 import { useNotificationStore } from '../../stores/notificationStore';
@@ -110,6 +111,7 @@ export default function ActivityScreen() {
     : notifications;
 
   return (
+    <PageTransition>
     <SafeAreaView style={styles.container} edges={['top']}>
       {/* Texture de fond noise à 5% d'opacité */}
       <Image
@@ -177,6 +179,7 @@ export default function ActivityScreen() {
         )}
       </ScrollView>
     </SafeAreaView>
+    </PageTransition>
   );
 }
 
