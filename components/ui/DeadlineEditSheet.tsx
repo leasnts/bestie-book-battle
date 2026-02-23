@@ -9,9 +9,10 @@
  * Utilise BottomSheet (custom) pour le glissement-pour-fermer natif et fluide.
  */
 
+import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import React, { useCallback, useEffect, useState } from 'react';
-import { Alert, Platform, StyleSheet, Text, View } from 'react-native';
+import { Alert, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, fontSize, spacing } from '../../utils/constants';
 import Button3D from '../Button3D';
@@ -77,7 +78,12 @@ export default function DeadlineEditSheet({
   return (
     <BottomSheet visible={visible} onClose={onClose}>
       <View style={[styles.content, { paddingBottom: Math.max(32, insets.bottom + 16) }]}>
-        <Text style={styles.title}>La deadline</Text>
+        <View style={styles.titleRow}>
+          <Text style={styles.title}>La deadline</Text>
+          <Pressable onPress={onClose} hitSlop={12} style={styles.closeBtn}>
+            <Ionicons name="close" size={22} color={colors.textSubtle} />
+          </Pressable>
+        </View>
 
         <View style={styles.pickerContainer}>
           {Platform.OS === 'ios' && (
@@ -121,15 +127,22 @@ const styles = StyleSheet.create({
   content: {
     paddingHorizontal: spacing.xl,
   },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: spacing.lg,
+  },
   title: {
+    flex: 1,
     fontFamily: 'Rokkitt_Medium',
     fontSize: fontSize['2xl'],
     color: colors.textPrimary,
     letterSpacing: -0.72,
     lineHeight: 44,
-    marginBottom: spacing.lg,
     textAlign: 'left',
   },
+  closeBtn: { padding: 4 },
   pickerContainer: {
     paddingVertical: spacing.md,
     minHeight: 200,

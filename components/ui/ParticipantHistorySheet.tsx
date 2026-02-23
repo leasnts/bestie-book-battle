@@ -16,9 +16,10 @@
  * scroller la liste ne déclenche pas le dismiss — seul le handle en haut le fait.
  */
 
+import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import React, { useMemo } from 'react';
-import { Dimensions, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Dimensions, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { ProgressHistory } from '../../types/supabase';
 import { borderRadius, colors, spacing } from '../../utils/constants';
 import BottomSheet from './BottomSheet';
@@ -129,6 +130,9 @@ export default function ParticipantHistorySheet({
             <Text style={styles.headerName}>{participantName}</Text>
             <Text style={styles.headerSubtitle}>Historique de lecture</Text>
           </View>
+          <Pressable onPress={onClose} hitSlop={12} style={styles.closeBtn}>
+            <Ionicons name="close" size={22} color={colors.textSubtle} />
+          </Pressable>
         </View>
 
         <View style={styles.divider} />
@@ -234,10 +238,12 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: 24,
     paddingVertical: 16,
     gap: 16,
   },
+  closeBtn: { padding: 4 },
   headerAvatar: {
     width: 44,
     height: 44,

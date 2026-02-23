@@ -19,7 +19,6 @@ import {
   Dimensions,
   InputAccessoryView,
   Keyboard,
-  KeyboardAvoidingView,
   LayoutChangeEvent,
   Platform,
   Pressable,
@@ -283,14 +282,10 @@ export default function EditBookSheet({
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
 
   useEffect(() => {
-    const showSub = Keyboard.addListener(
-      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
-      () => setIsKeyboardVisible(true)
-    );
-    const hideSub = Keyboard.addListener(
-      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
-      () => setIsKeyboardVisible(false)
-    );
+    const show = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+    const hide = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+    const showSub = Keyboard.addListener(show, () => setIsKeyboardVisible(true));
+    const hideSub = Keyboard.addListener(hide, () => setIsKeyboardVisible(false));
     return () => { showSub.remove(); hideSub.remove(); };
   }, []);
 
@@ -385,103 +380,112 @@ export default function EditBookSheet({
       )}
 
       <BottomSheet visible={visible} onClose={onClose} overlay={cropOverlay}>
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          keyboardVerticalOffset={0}
-          style={styles.keyboardAvoid}
-        >
+        {/* ── Titre fixe (ne scroll pas) ── */}
+        <View style={styles.titleRow}>
           <Text style={styles.title}>Modifier le livre</Text>
+          <Pressable onPress={onClose} hitSlop={12} style={styles.closeBtn}>
+            <Ionicons name="close" size={22} color={colors.textSubtle} />
+          </Pressable>
+        </View>
 
-          <ScrollView
-            ref={scrollRef}
-            style={styles.scrollContent}
-            contentContainerStyle={[
-              styles.scrollContentInner,
-              { paddingBottom: isKeyboardVisible ? 12 : Math.max(32, insets.bottom + 16) },
-            ]}
-            showsVerticalScrollIndicator={false}
-            keyboardShouldPersistTaps="handled"
-          >
-            <Pressable onPress={handlePickImage} disabled={isPickingImage} style={styles.coverButton}>
-              {displayCoverUrl ? (
-                <View style={styles.coverWrapper}>
-                  <Image source={{ uri: displayCoverUrl }} style={styles.coverImage} contentFit="cover" />
-                  <View style={styles.coverOverlay}>
-                    <Ionicons name="camera-outline" size={20} color={colors.white} />
-                    <Text style={styles.coverOverlayText}>Modifier</Text>
-                  </View>
+        {/* ── Contenu scrollable : cover + champs ── */}
+        <ScrollView
+          ref={scrollRef}
+          style={styles.scrollContent}
+          contentContainerStyle={styles.scrollContentInner}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          <Pressable onPress={handlePickImage} disabled={isPickingImage} style={styles.coverButton}>
+            {displayCoverUrl ? (
+              <View style={styles.coverWrapper}>
+                <Image source={{ uri: displayCoverUrl }} style={styles.coverImage} contentFit="cover" />
+                <View style={styles.coverOverlay}>
+                  <Ionicons name="camera-outline" size={20} color={colors.white} />
+                  <Text style={styles.coverOverlayText}>Modifier</Text>
                 </View>
-              ) : (
-                <View style={styles.coverPlaceholder}>
-                  <Ionicons name="cloud-upload-outline" size={32} color={colors.textTertiary} />
-                  <Text style={styles.coverPlaceholderText}>Ajouter une couverture</Text>
-                </View>
-              )}
-            </Pressable>
+              </View>
+            ) : (
+              <View style={styles.coverPlaceholder}>
+                <Ionicons name="cloud-upload-outline" size={32} color={colors.textTertiary} />
+                <Text style={styles.coverPlaceholderText}>Ajouter une couverture</Text>
+              </View>
+            )}
+          </Pressable>
 
-            <View style={styles.formContainer}>
-              <TextInput
-                ref={titleRef}
-                style={styles.input}
-                placeholder="Titre du livre"
-                placeholderTextColor={colors.textPlaceholder}
-                value={title}
-                onChangeText={setTitle}
-                autoCapitalize="words"
-                returnKeyType="next"
-                onSubmitEditing={() => authorRef.current?.focus()}
-                onFocus={() => setTimeout(() => scrollRef.current?.scrollTo({ y: 200, animated: true }), 300)}
-              />
-              <TextInput
-                ref={authorRef}
-                style={styles.input}
-                placeholder="Auteur du livre"
-                placeholderTextColor={colors.textPlaceholder}
-                value={author}
-                onChangeText={setAuthor}
-                autoCapitalize="words"
-                returnKeyType="next"
-                onSubmitEditing={() => pagesRef.current?.focus()}
-                onFocus={() => setTimeout(() => scrollRef.current?.scrollTo({ y: 260, animated: true }), 300)}
-              />
-              <TextInput
-                ref={pagesRef}
-                style={styles.input}
-                placeholder="Nombre de pages"
-                placeholderTextColor={colors.textPlaceholder}
-                value={totalPages}
-                onChangeText={setTotalPages}
-                keyboardType="number-pad"
-                inputAccessoryViewID="editbook-pages-empty"
-                onFocus={() => setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 300)}
-              />
-            </View>
+          <View style={styles.formContainer}>
+            <TextInput
+              ref={titleRef}
+              style={styles.input}
+              placeholder="Titre du livre"
+              placeholderTextColor={colors.textPlaceholder}
+              value={title}
+              onChangeText={setTitle}
+              autoCapitalize="words"
+              returnKeyType="next"
+              onSubmitEditing={() => authorRef.current?.focus()}
+              onFocus={() => setTimeout(() => scrollRef.current?.scrollTo({ y: 0, animated: true }), 300)}
+            />
+            <TextInput
+              ref={authorRef}
+              style={styles.input}
+              placeholder="Auteur du livre"
+              placeholderTextColor={colors.textPlaceholder}
+              value={author}
+              onChangeText={setAuthor}
+              autoCapitalize="words"
+              returnKeyType="next"
+              onSubmitEditing={() => pagesRef.current?.focus()}
+              onFocus={() => setTimeout(() => scrollRef.current?.scrollTo({ y: 80, animated: true }), 300)}
+            />
+            <TextInput
+              ref={pagesRef}
+              style={styles.input}
+              placeholder="Nombre de pages"
+              placeholderTextColor={colors.textPlaceholder}
+              value={totalPages}
+              onChangeText={setTotalPages}
+              keyboardType="number-pad"
+              inputAccessoryViewID="editbook-pages-empty"
+              onFocus={() => setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 300)}
+            />
+          </View>
+        </ScrollView>
 
-            <View style={styles.footer}>
-              <Button3D onPress={handleSave} variant="primary" disabled={isSaving} style={{ width: '100%' }}>
-                {isSaving ? 'Enregistrement...' : 'Enregistrer'}
-              </Button3D>
-            </View>
-          </ScrollView>
-        </KeyboardAvoidingView>
+        {/* ── Bouton fixe au-dessus du clavier (hors ScrollView) ── */}
+        <View style={[
+          styles.footer,
+          { paddingBottom: isKeyboardVisible ? spacing.md : Math.max(spacing.xl, insets.bottom + spacing.md) },
+        ]}>
+          <Button3D onPress={handleSave} variant="primary" disabled={isSaving} style={{ width: '100%' }}>
+            {isSaving ? 'Enregistrement...' : 'Enregistrer'}
+          </Button3D>
+        </View>
       </BottomSheet>
     </>
   );
 }
 
 const styles = StyleSheet.create({
-  keyboardAvoid: { maxHeight: '90%' },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.xl,
+    marginBottom: spacing.lg,
+  },
   title: {
+    flex: 1,
     fontFamily: 'Rokkitt_Medium',
     fontSize: fontSize['2xl'],
     color: colors.textPrimary,
     letterSpacing: -0.72,
     lineHeight: 44,
-    marginBottom: spacing.lg,
-    paddingHorizontal: spacing.xl,
     textAlign: 'left',
   },
-  scrollContent: { flexGrow: 0 },
+  closeBtn: { padding: 4 },
+  // flex:1 pour que le ScrollView prenne tout l'espace disponible entre le titre et le footer
+  scrollContent: { flex: 1 },
   scrollContentInner: { paddingHorizontal: spacing.xl, paddingBottom: spacing.lg },
   coverButton: { alignItems: 'center', marginBottom: spacing['2xl'] },
   coverWrapper: {
@@ -540,5 +544,9 @@ const styles = StyleSheet.create({
     ...shadows.xs,
     textAlignVertical: 'center',
   },
-  footer: { paddingTop: spacing.lg },
+  footer: {
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.md,
+    // paddingBottom est appliqué dynamiquement en ligne (selon clavier ouvert ou non)
+  },
 });

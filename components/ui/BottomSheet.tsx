@@ -5,19 +5,24 @@
  * - Tap sur le backdrop (fond sombre)
  * - Bouton retour Android (onRequestClose)
  *
- * Animations d'ouverture (spring) et de fermeture (timing) gérées
- * avec l'API Animated native — aucune dépendance tierce.
+ * Gestion clavier :
+ * - La modal remonte de la hauteur exacte du clavier (keyboardOffset)
+ * - Sa maxHeight se réduit pour ne jamais dépasser le haut de l'écran (maxHeightAnim)
+ * → Le bouton fixe reste toujours visible au-dessus du clavier.
  */
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Animated,
   Dimensions,
+  Keyboard,
   Modal,
+  Platform,
   Pressable,
   StyleSheet,
   View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '../../utils/constants';
 
 interface BottomSheetProps {
@@ -30,16 +35,24 @@ interface BottomSheetProps {
 
 const SCREEN_HEIGHT = Dimensions.get('window').height;
 const OFFSCREEN = SCREEN_HEIGHT;
+const MAX_HEIGHT_DEFAULT = SCREEN_HEIGHT * 0.88;
 
 export default function BottomSheet({ visible, onClose, children, overlay }: BottomSheetProps) {
+  const insets = useSafeAreaInsets();
   const [modalVisible, setModalVisible] = useState(false);
 
+  // translateY : animation d'ouverture/fermeture du sheet (de OFFSCREEN → 0)
   const translateY = useRef(new Animated.Value(OFFSCREEN)).current;
+  // keyboardOffset : décalage vertical quand le clavier est ouvert (0 → -keyboardHeight)
+  const keyboardOffset = useRef(new Animated.Value(0)).current;
+  // maxHeightAnim : hauteur max du sheet, se réduit quand le clavier ouvre pour ne pas dépasser le haut de l'écran
+  const maxHeightAnim = useRef(new Animated.Value(MAX_HEIGHT_DEFAULT)).current;
+
   const onCloseRef = useRef(onClose);
   onCloseRef.current = onClose;
-
   const isClosingRef = useRef(false);
 
+  // L'opacité du backdrop suit translateY (s'assombrit à l'ouverture)
   const backdropOpacity = useRef(
     translateY.interpolate({
       inputRange: [0, OFFSCREEN * 0.4, OFFSCREEN],
@@ -48,35 +61,68 @@ export default function BottomSheet({ visible, onClose, children, overlay }: Bot
     }),
   ).current;
 
+  // Écoute le clavier et anime le sheet en conséquence
+  // useNativeDriver: false est obligatoire car maxHeight ne peut pas passer par le thread natif
+  useEffect(() => {
+    const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+    const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+
+    const showSub = Keyboard.addListener(showEvent, (e) => {
+      const kh = e.endCoordinates.height;
+      const duration = Platform.OS === 'ios' ? e.duration : 220;
+      // Nouvelle hauteur max : l'espace disponible entre le safe area top et le haut du clavier
+      const newMaxHeight = SCREEN_HEIGHT - kh - insets.top - 16;
+      Animated.parallel([
+        Animated.timing(keyboardOffset, { toValue: -kh, duration, useNativeDriver: false }),
+        Animated.timing(maxHeightAnim, { toValue: newMaxHeight, duration, useNativeDriver: false }),
+      ]).start();
+    });
+
+    const hideSub = Keyboard.addListener(hideEvent, (e) => {
+      const duration = Platform.OS === 'ios' ? e.duration : 220;
+      Animated.parallel([
+        Animated.timing(keyboardOffset, { toValue: 0, duration, useNativeDriver: false }),
+        Animated.timing(maxHeightAnim, { toValue: MAX_HEIGHT_DEFAULT, duration, useNativeDriver: false }),
+      ]).start();
+    });
+
+    return () => { showSub.remove(); hideSub.remove(); };
+  }, [insets.top, keyboardOffset, maxHeightAnim]);
+
   const animateClose = useCallback(
     (notifyParent: boolean) => {
       if (isClosingRef.current) return;
       isClosingRef.current = true;
 
-      Animated.timing(translateY, {
-        toValue: OFFSCREEN,
-        duration: 250,
-        useNativeDriver: true,
-      }).start(() => {
+      Animated.parallel([
+        Animated.timing(translateY, { toValue: OFFSCREEN, duration: 250, useNativeDriver: false }),
+        // Remet le clavier à zéro pour la prochaine ouverture
+        Animated.timing(keyboardOffset, { toValue: 0, duration: 150, useNativeDriver: false }),
+        Animated.timing(maxHeightAnim, { toValue: MAX_HEIGHT_DEFAULT, duration: 150, useNativeDriver: false }),
+      ]).start(() => {
         setModalVisible(false);
         isClosingRef.current = false;
         if (notifyParent) onCloseRef.current?.();
       });
     },
-    [translateY],
+    [translateY, keyboardOffset, maxHeightAnim],
   );
 
   const animateOpen = useCallback(() => {
     isClosingRef.current = false;
+    // Reset clean à chaque ouverture
     translateY.setValue(OFFSCREEN);
+    keyboardOffset.setValue(0);
+    maxHeightAnim.setValue(MAX_HEIGHT_DEFAULT);
+
     Animated.spring(translateY, {
       toValue: 0,
       damping: 20,
       stiffness: 200,
       mass: 0.8,
-      useNativeDriver: true,
+      useNativeDriver: false,
     }).start();
-  }, [translateY]);
+  }, [translateY, keyboardOffset, maxHeightAnim]);
 
   useEffect(() => {
     if (visible) {
@@ -109,11 +155,16 @@ export default function BottomSheet({ visible, onClose, children, overlay }: Bot
         <Pressable style={StyleSheet.absoluteFill} onPress={dismiss} />
       </Animated.View>
 
-      {/* Sheet */}
-      <Animated.View style={[styles.sheet, { transform: [{ translateY }] }]}>
-        <View style={styles.handleArea}>
-          <View style={styles.handleBar} />
-        </View>
+      {/* Sheet — remonte avec le clavier, maxHeight garantit qu'il ne dépasse pas le haut */}
+      <Animated.View
+        style={[
+          styles.sheet,
+          {
+            maxHeight: maxHeightAnim,
+            transform: [{ translateY: Animated.add(translateY, keyboardOffset) }],
+          },
+        ]}
+      >
         {children}
       </Animated.View>
 
@@ -133,7 +184,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    maxHeight: SCREEN_HEIGHT * 0.88,
+    paddingTop: 16,
     backgroundColor: colors.white,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
@@ -143,16 +194,5 @@ const styles = StyleSheet.create({
     shadowRadius: 24,
     elevation: 16,
     overflow: 'hidden',
-  },
-  handleArea: {
-    alignItems: 'center',
-    paddingTop: 14,
-    paddingBottom: 12,
-  },
-  handleBar: {
-    width: 40,
-    height: 4,
-    backgroundColor: colors.textSubtle,
-    borderRadius: 9999,
   },
 });

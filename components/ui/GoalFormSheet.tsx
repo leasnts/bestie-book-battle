@@ -14,6 +14,7 @@
  * gardent leur comportement normal sans conflit.
  */
 
+import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
@@ -134,7 +135,12 @@ export default function GoalFormSheet({
 
       <BottomSheet visible={visible} onClose={onClose}>
         <View style={[styles.content, { paddingBottom: Math.max(32, insets.bottom + 16) }]}>
-          <Text style={styles.title}>Objectif</Text>
+          <View style={styles.titleRow}>
+            <Text style={styles.title}>Objectif</Text>
+            <Pressable onPress={onClose} hitSlop={12} style={styles.closeBtn}>
+              <Ionicons name="close" size={22} color={colors.textSubtle} />
+            </Pressable>
+          </View>
 
           <Text style={styles.label}>Page à atteindre</Text>
           <TextInput
@@ -209,15 +215,22 @@ const styles = StyleSheet.create({
   content: {
     paddingHorizontal: spacing.xl,
   },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: spacing.xl,
+  },
   title: {
+    flex: 1,
     fontFamily: 'Rokkitt_Medium',
     fontSize: fontSize['2xl'],
     color: colors.textPrimary,
     letterSpacing: -0.72,
     lineHeight: 44,
-    marginBottom: spacing.xl,
     textAlign: 'left',
   },
+  closeBtn: { padding: 4 },
   label: {
     fontFamily: 'WorkSans_600SemiBold',
     fontSize: fontSize.sm,

@@ -424,7 +424,12 @@ function EditProfileSheet({ visible, onClose }: { visible: boolean; onClose: () 
 
       <KeyboardAvoidingView style={sheetStyles.keyboardAvoid} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
         <View style={{ paddingHorizontal: spacing.xl, paddingBottom: isKeyboardVisible ? 12 : Math.max(32, insets.bottom + 16) }}>
-          <Text style={sheetStyles.title}>Modifier le profil</Text>
+          <View style={sheetStyles.titleRow}>
+            <Text style={sheetStyles.title}>Modifier le profil</Text>
+            <Pressable onPress={onClose} hitSlop={12} style={sheetStyles.closeBtn}>
+              <Ionicons name="close" size={22} color={colors.textSubtle} />
+            </Pressable>
+          </View>
 
           <Pressable
             style={sheetStyles.photoCentered}
@@ -512,7 +517,12 @@ function InviteSheet({ visible, onClose, challenges }: { visible: boolean; onClo
   return (
     <BottomSheet visible={visible} onClose={onClose}>
       <View style={{ paddingHorizontal: spacing.xl, paddingBottom: Math.max(32, insets.bottom + 16) }}>
-        <Text style={sheetStyles.title}>Inviter un ami</Text>
+        <View style={sheetStyles.titleRow}>
+          <Text style={sheetStyles.title}>Inviter un ami</Text>
+          <Pressable onPress={onClose} hitSlop={12} style={sheetStyles.closeBtn}>
+            <Ionicons name="close" size={22} color={colors.textSubtle} />
+          </Pressable>
+        </View>
 
         {challenges.length === 0 ? (
           <Text style={sheetStyles.emptyText}>Tu n'as aucun projet de lecture actif pour le moment.</Text>
@@ -753,14 +763,21 @@ const sheetStyles = StyleSheet.create({
     flex: 1,
     justifyContent: 'flex-end',
   },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: spacing.xl,
+  },
   title: {
+    flex: 1,
     fontFamily: 'Rokkitt_Medium',
     fontSize: fontSize['2xl'],
     color: colors.textPrimary,
     letterSpacing: -0.72,
     lineHeight: 44,
-    marginBottom: spacing.xl,
   },
+  closeBtn: { padding: 4 },
   label: {
     fontFamily: 'WorkSans_600SemiBold',
     fontSize: fontSize.sm,

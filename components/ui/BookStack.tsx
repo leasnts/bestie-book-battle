@@ -657,11 +657,6 @@ export default function BookStack({
             entering={SlideInDown.duration(300)}
             exiting={SlideOutDown.duration(200)}
           >
-            {/* Handle — indicateur de drag */}
-            <View style={styles.sheetHandle}>
-              <View style={styles.sheetHandleBar} />
-            </View>
-
             {/* Titre + couverture du livre */}
             <View style={styles.sheetHeader}>
               <Image
@@ -677,6 +672,9 @@ export default function BookStack({
                   {bookAuthor || 'Auteur inconnu'}
                 </Text>
               </View>
+              <Pressable onPress={() => setMenuVisible(false)} hitSlop={12} style={styles.sheetCloseBtn}>
+                <Ionicons name="close" size={22} color={colors.textSubtle} />
+              </Pressable>
             </View>
 
             <View style={styles.sheetDivider} />
@@ -796,8 +794,11 @@ export default function BookStack({
             entering={SlideInDown.duration(300)}
             exiting={SlideOutDown.duration(200)}
           >
-            <View style={styles.sheetHandle}>
-              <View style={styles.sheetHandleBar} />
+            {/* Croix de fermeture */}
+            <View style={styles.inviteCloseRow}>
+              <Pressable onPress={() => setInviteVisible(false)} hitSlop={12} style={styles.sheetCloseBtn}>
+                <Ionicons name="close" size={22} color={colors.textSubtle} />
+              </Pressable>
             </View>
 
             {/* Carte livre + code — structure identique à l'onboarding */}
@@ -1073,24 +1074,20 @@ const styles = StyleSheet.create({
     elevation: 16,
   },
   // Handle — petite barre horizontale indiquant que le sheet est draggable
-  sheetHandle: {
-    alignItems: 'center',
-    paddingTop: 12,
-    paddingBottom: 8,
-  },
-  sheetHandleBar: {
-    width: 40,
-    height: 4,
-    backgroundColor: colors.textSubtle,
-    borderRadius: 9999,
-  },
   // Header — couverture + titre/auteur du livre sélectionné
   sheetHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 24,
-    paddingVertical: 16,
+    paddingTop: 16,
+    paddingBottom: 16,
     gap: 16,
+  },
+  sheetCloseBtn: { padding: 4, marginLeft: 'auto' },
+  inviteCloseRow: {
+    alignItems: 'flex-end',
+    paddingHorizontal: 24,
+    paddingTop: 16,
   },
   sheetCover: {
     width: 44,
