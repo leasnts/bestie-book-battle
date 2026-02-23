@@ -233,6 +233,9 @@ export default function ProfileScreen() {
           </View>
           <View style={styles.profileInfo}>
             <Text style={styles.profileName}>{user?.first_name || 'Lecteur'}</Text>
+            {user?.email && (
+              <Text style={styles.profileEmail}>{user.email}</Text>
+            )}
             <EditButton onPress={() => setEditProfileVisible(true)} />
           </View>
         </View>
@@ -662,6 +665,12 @@ const styles = StyleSheet.create({
     fontSize: 30,
     lineHeight: 38,
     color: colors.textPrimary,
+  },
+  profileEmail: {
+    fontFamily: 'WorkSans_400Regular',
+    fontSize: 13,
+    lineHeight: 18,
+    color: colors.textTertiary,
   },
 
   // ─── Bouton Modifier ─────────────────────────────────────────────────────────

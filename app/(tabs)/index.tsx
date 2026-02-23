@@ -20,6 +20,7 @@ import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
     ActivityIndicator,
+    Alert,
     Pressable,
     StyleSheet,
     Text,
@@ -103,7 +104,7 @@ export default function HomeScreen() {
     activeChallenge,
     setActiveChallenge,
     loadUserChallenges,
-    deleteCurrentChallenge,
+    leaveActiveChallenge,
     updateActiveChallenge,
     isLoading: projectsLoading,
   } = useProjectStore();
@@ -344,27 +345,16 @@ export default function HomeScreen() {
     });
   }, [router, user?.first_name]);
 
-  // ===== Callback : supprimer le livre actif =====
+  // ===== Callback : quitter le livre actif =====
   const handleDeleteBook = useCallback(async () => {
-    if (!activeChallenge) return;
+    if (!activeChallenge || !user?.id) return;
 
     try {
-      // Supprime le challenge via le store
-      await deleteCurrentChallenge();
+      await leaveActiveChallenge(user.id);
 
-      // Recharge la liste des challenges
-      if (user?.id) {
-        await loadUserChallenges(user.id);
-      }
-
-      // Si on a d'autres challenges, sélectionne le premier
-      if (challenges.length > 1) {
-        const nextChallenge = challenges.find((c) => c.id !== activeChallenge.id);
-        if (nextChallenge) {
-          setActiveChallenge(nextChallenge);
-        }
-      } else {
-        // Plus de challenges : redirige vers l'ajout
+      // Après avoir quitté, s'il ne reste plus de challenges on redirige vers l'ajout
+      const remaining = challenges.filter((c) => c.id !== activeChallenge.id);
+      if (remaining.length === 0) {
         router.push({
           pathname: '/onboarding/role',
           params: {
@@ -374,10 +364,10 @@ export default function HomeScreen() {
         });
       }
     } catch (error: any) {
-      console.error('Erreur suppression:', error);
-      // Optionnel : afficher un message d'erreur
+      console.error('Erreur en quittant le challenge:', error);
+      Alert.alert('Erreur', 'Impossible de quitter ce livre. Réessaie.');
     }
-  }, [activeChallenge, challenges, user, deleteCurrentChallenge, loadUserChallenges, setActiveChallenge, router]);
+  }, [activeChallenge, challenges, user, leaveActiveChallenge, router]);
 
   // ===== Callback : inviter un ami =====
   const handleInviteFriend = useCallback(() => {

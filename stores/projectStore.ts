@@ -21,6 +21,7 @@ import {
   getChallengeWithParticipants,
   updateChallenge,
   deleteChallenge,
+  leaveChallenge,
 } from '../services/supabase/database';
 
 /**
@@ -62,6 +63,8 @@ interface ProjectStore {
   /** Met à jour le challenge affiché sur la home (activeChallenge) */
   updateActiveChallenge: (updates: Partial<Challenge>) => Promise<void>;
   deleteCurrentChallenge: () => Promise<void>;
+  /** Quitte le challenge actif (retire l'utilisateur sans supprimer le challenge) */
+  leaveActiveChallenge: (userId: string) => Promise<void>;
 
   // Actions - Réinitialisation
   reset: () => void;
@@ -396,6 +399,40 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
       }));
     } catch (error: any) {
       console.error('Delete challenge error:', error);
+      set({ error: error.message, isLoading: false });
+      throw error;
+    }
+  },
+
+  // ===== Action : Quitter le challenge actif =====
+  /**
+   * Quitte le challenge actif en retirant l'utilisateur de la liste des participants.
+   * Contrairement à deleteCurrentChallenge, ceci ne supprime pas le challenge pour
+   * les autres — ça retire juste l'utilisateur courant.
+   *
+   * @param userId - L'ID de l'utilisateur qui quitte
+   */
+  leaveActiveChallenge: async (userId: string) => {
+    const { activeChallenge } = get();
+    if (!activeChallenge) {
+      throw new Error('Aucun challenge actif');
+    }
+
+    set({ isLoading: true, error: null });
+    try {
+      await leaveChallenge(activeChallenge.id, userId);
+
+      // Retire le challenge de la liste et réinitialise le challenge actif
+      set((state) => {
+        const remaining = state.challenges.filter((c) => c.id !== activeChallenge.id);
+        return {
+          challenges: remaining,
+          activeChallenge: remaining.length > 0 ? remaining[0] : null,
+          isLoading: false,
+        };
+      });
+    } catch (error: any) {
+      console.error('Leave challenge error:', error);
       set({ error: error.message, isLoading: false });
       throw error;
     }
