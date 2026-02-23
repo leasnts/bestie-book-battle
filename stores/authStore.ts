@@ -256,6 +256,16 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       set({ isLoading: true });
       try {
         const user = await getCurrentUser();
+
+        // On charge les challenges AVANT de passer isInitialized à true.
+        // Le splash screen attend isInitialized, donc quand il se cache,
+        // les challenges sont déjà prêts → plus d'écran vide au démarrage.
+        // loadUserChallenges ne throw jamais (erreurs catchées en interne),
+        // donc ce await ne bloque pas indéfiniment.
+        if (user?.id) {
+          await useProjectStore.getState().loadUserChallenges(user.id);
+        }
+
         set({ user, isInitialized: true, isLoading: false });
       } catch (error) {
         console.error('Session check error:', error);

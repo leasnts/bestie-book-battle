@@ -138,8 +138,10 @@ function RootLayoutNav() {
     };
   }, [initAuth]);
 
-  // Charge les challenges dès que l'utilisateur est connu (session restaurée)
-  // → réduit le flash d'empty state au démarrage de l'app
+  // Recharge les challenges si l'état d'auth change après le démarrage
+  // (connexion depuis l'écran login, retour d'onboarding…).
+  // Au démarrage à froid, les challenges sont déjà chargés par authStore.initialize()
+  // avant que isInitialized ne passe à true, donc le splash n'affiche jamais d'écran vide.
   useEffect(() => {
     if (user?.id) {
       loadUserChallenges(user.id);

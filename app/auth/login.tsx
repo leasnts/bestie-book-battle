@@ -62,7 +62,18 @@ export default function WelcomeScreen() {
           await loadUserChallenges(result.user.id);
         }
 
-        const { challenges } = useProjectStore.getState();
+        const { challenges, error: challengesError } = useProjectStore.getState();
+
+        // Si le chargement a échoué (réseau, Supabase…), on ne redirige PAS vers
+        // l'onboarding : l'utilisateur a un compte existant. On affiche une erreur
+        // pour qu'il réessaie plutôt que de lui faire re-créer un projet.
+        if (challengesError) {
+          Alert.alert(
+            'Erreur de connexion',
+            'Impossible de charger tes projets. Vérifie ta connexion et réessaie.'
+          );
+          return;
+        }
 
         if (challenges && challenges.length > 0) {
           router.replace('/(tabs)');

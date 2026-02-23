@@ -79,12 +79,19 @@ export async function signInWithApple(): Promise<AppleSignInResult> {
 
     // Étape 3 : Vérifier si un profil existe dans notre table users
     // On utilise .maybeSingle() au lieu de .single() pour éviter l'erreur PGRST116
-    // quand il n'y a aucun résultat (nouveau user)
-    const { data: existingProfile } = await supabase
+    // quand il n'y a aucun résultat (nouveau user).
+    // On vérifie l'erreur explicitement : si la requête échoue (réseau, RLS…),
+    // on lève une exception plutôt que de traiter l'utilisateur comme "nouveau"
+    // par erreur, ce qui déclencherait l'onboarding à tort.
+    const { data: existingProfile, error: profileQueryError } = await supabase
       .from('users')
       .select('*')
       .eq('id', authData.user.id)
       .maybeSingle();
+
+    if (profileQueryError) {
+      throw new Error(`Impossible de vérifier le profil utilisateur : ${profileQueryError.message}`);
+    }
 
     // Si le profil existe, mettre à jour last_login_at
     if (existingProfile) {
