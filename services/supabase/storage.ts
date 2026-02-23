@@ -228,7 +228,10 @@ export async function uploadBookCover(
       throw uploadError;
     }
 
-    const publicUrl = getBookCoverUrl(challengeId, fileName);
+    // Ajoute un timestamp pour invalider le cache expo-image :
+    // l'URL est toujours cover.jpg (même chemin Supabase, upsert)
+    // donc sans le ?t=... le composant Image afficherait l'ancienne version mise en cache.
+    const publicUrl = getBookCoverUrl(challengeId, fileName) + `?t=${Date.now()}`;
 
     return {
       url: publicUrl,

@@ -9,6 +9,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
+import ImageCropModal, { PendingImage } from './ui/ImageCropModal';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useEffect, useRef, useState } from 'react';
 import { Alert, Dimensions, Image as RNImage, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -42,6 +43,7 @@ interface CoverPicker3DProps {
 
 export default function CoverPicker3D({ onCoverSelected, initialCover }: CoverPicker3DProps) {
     const [customCover, setCustomCover] = useState<string | null>(null);
+    const [pendingImage, setPendingImage] = useState<PendingImage | null>(null);
     const [activeIndex, setActiveIndex] = useState(0); // Commence sur la première carte (alignée à gauche)
     const [selectedIndex, setSelectedIndex] = useState(0);
     const scrollX = useSharedValue(0); // Position initiale à gauche
@@ -105,19 +107,16 @@ export default function CoverPicker3D({ onCoverSelected, initialCover }: CoverPi
             return;
         }
 
+        // Sans crop natif — iOS force le carré, on utilise notre modal interactif
         const result = await ImagePicker.launchImageLibraryAsync({
             mediaTypes: ['images'],
-            allowsEditing: true,
-            aspect: [1, 1],
-            quality: 0.5, // 0.5 suffit largement pour une couverture de livre
-            // Ça réduit la taille du fichier d'environ 60% vs 0.8
+            allowsEditing: false,
+            quality: 0.8,
         });
 
-        if (!result.canceled) {
-            const uri = result.assets[0].uri;
-            setCustomCover(uri);
-            onCoverSelected(uri);
-            selectCover(0);
+        if (!result.canceled && result.assets[0]) {
+            const asset = result.assets[0];
+            setPendingImage({ uri: asset.uri, width: asset.width, height: asset.height });
         }
     };
 
@@ -185,6 +184,7 @@ export default function CoverPicker3D({ onCoverSelected, initialCover }: CoverPi
     };
 
     return (
+        <>
         <View style={styles.container}>
             {/* Titre */}
             <Text style={styles.title}>Choisir une couverture</Text>
@@ -309,6 +309,19 @@ export default function CoverPicker3D({ onCoverSelected, initialCover }: CoverPi
                 ))}
             </View>
         </View>
+
+        <ImageCropModal
+            visible={pendingImage !== null}
+            image={pendingImage}
+            onConfirm={(croppedUri) => {
+                setPendingImage(null);
+                setCustomCover(croppedUri);
+                onCoverSelected(croppedUri);
+                selectCover(0);
+            }}
+            onCancel={() => setPendingImage(null)}
+        />
+        </>
     );
 }
 

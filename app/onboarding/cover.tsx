@@ -24,6 +24,7 @@ import {
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import Button3D from '../../components/Button3D';
+import ImageCropModal, { PendingImage } from '../../components/ui/ImageCropModal';
 import { borderRadius, colors, fontSize, fontWeight, spacing } from '../../utils/constants';
 
 // Asset : texture de fond
@@ -50,6 +51,7 @@ export default function OnboardingCoverScreen() {
     
     const [coverUri, setCoverUri] = useState<string | null>(null);
     const [isPickingImage, setIsPickingImage] = useState(false);
+    const [pendingImage, setPendingImage] = useState<PendingImage | null>(null);
     
     // On garde en mémoire si la permission est déjà accordée
     const hasPermissionRef = useRef(false);
@@ -87,20 +89,17 @@ export default function OnboardingCoverScreen() {
                 hasPermissionRef.current = true;
             }
 
-            // Ouvrir le sélecteur de photos — rapide car permission déjà OK
+            // Ouvrir la galerie sans crop natif (iOS force le carré)
             const result = await ImagePicker.launchImageLibraryAsync({
                 mediaTypes: ImagePicker.MediaTypeOptions.Images,
-                allowsEditing: true,
-                aspect: [2, 3], // Ratio couverture de livre (largeur:hauteur)
+                allowsEditing: false,
                 quality: 0.8,
             });
 
             if (!result.canceled && result.assets[0]) {
-                const uri = result.assets[0].uri;
-                setCoverUri(uri);
-                // Stocker dans le store pour éviter la perte via les params de route
-                // (les URIs fichier peuvent être longs et tronqués dans l'URL)
-                useOnboardingStore.getState().setCoverUri(uri);
+                const asset = result.assets[0];
+                // Ouvrir le modal de crop interactif au ratio 5:7
+                setPendingImage({ uri: asset.uri, width: asset.width, height: asset.height });
             }
         } catch (error: any) {
             console.error('Erreur sélection image:', error);
@@ -145,6 +144,7 @@ export default function OnboardingCoverScreen() {
     };
 
     return (
+        <>
         <SafeAreaView style={styles.container} edges={['top']}>
             <View style={styles.content}>
                 {/* Background texture */}
@@ -226,6 +226,18 @@ export default function OnboardingCoverScreen() {
                 </View>
             </View>
         </SafeAreaView>
+
+        <ImageCropModal
+            visible={pendingImage !== null}
+            image={pendingImage}
+            onConfirm={(croppedUri) => {
+                setPendingImage(null);
+                setCoverUri(croppedUri);
+                useOnboardingStore.getState().setCoverUri(croppedUri);
+            }}
+            onCancel={() => setPendingImage(null)}
+        />
+        </>
     );
 }
 

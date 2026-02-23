@@ -24,12 +24,14 @@ interface BottomSheetProps {
   visible: boolean;
   onClose: () => void;
   children: React.ReactNode;
+  /** Rendu à l'intérieur du même Modal, au-dessus du sheet. Idéal pour un crop plein écran sans Modal imbriqué. */
+  overlay?: React.ReactNode;
 }
 
 const SCREEN_HEIGHT = Dimensions.get('window').height;
 const OFFSCREEN = SCREEN_HEIGHT;
 
-export default function BottomSheet({ visible, onClose, children }: BottomSheetProps) {
+export default function BottomSheet({ visible, onClose, children, overlay }: BottomSheetProps) {
   const [modalVisible, setModalVisible] = useState(false);
 
   const translateY = useRef(new Animated.Value(OFFSCREEN)).current;
@@ -114,6 +116,9 @@ export default function BottomSheet({ visible, onClose, children }: BottomSheetP
         </View>
         {children}
       </Animated.View>
+
+      {/* Overlay plein écran dans le même Modal (ex: crop cover) */}
+      {overlay}
     </Modal>
   );
 }
