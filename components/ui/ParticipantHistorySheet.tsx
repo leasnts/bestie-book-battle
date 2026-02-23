@@ -18,7 +18,7 @@
 
 import { Image } from 'expo-image';
 import React, { useMemo } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Dimensions, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { ProgressHistory } from '../../types/supabase';
 import { borderRadius, colors, spacing } from '../../utils/constants';
 import BottomSheet from './BottomSheet';
@@ -215,6 +215,11 @@ export default function ParticipantHistorySheet({
 
 // ─── Styles ────────────────────────────────────────────────────────
 
+const SCREEN_HEIGHT = Dimensions.get('window').height;
+// Hauteur max de la sheet (88% écran) moins les zones fixes :
+// handle bar (~30px) + header (~76px) + divider (1px) + marge (~16px)
+const SCROLL_MAX_HEIGHT = SCREEN_HEIGHT * 0.88 - 123;
+
 const TIMELINE_TRACK_WIDTH = 32;
 const DOT_SIZE = 12;
 const DOT_INNER_SIZE = 6;
@@ -266,7 +271,7 @@ const styles = StyleSheet.create({
 
   // ═══ SCROLL VIEW ═══
   scrollView: {
-    flex: 1,
+    maxHeight: SCROLL_MAX_HEIGHT,
   },
   scrollContent: {
     paddingHorizontal: 24,

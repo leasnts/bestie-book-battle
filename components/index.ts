@@ -19,6 +19,3 @@ export { default as ProgressCard } from './ui/ProgressCard';
 // Common Components
 export { default as Avatar } from './common/Avatar';
 export { default as Crown } from './common/Crown';
-
-// Charts
-export { default as ProgressChart } from './charts/ProgressChart';
