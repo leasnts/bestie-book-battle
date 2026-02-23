@@ -114,8 +114,8 @@ export default function OnboardingRoleScreen() {
                     contentFit="cover"
                 />
 
-                {/* Bouton retour = Button3D secondaire en mode icon-only */}
-                <View style={styles.header}>
+                {/* Header : retour à gauche, fermeture (flow home) à droite */}
+                <View style={[styles.header, styles.headerRow]}>
                     <Button3D
                         variant="secondary"
                         icon="chevron-back"
@@ -123,6 +123,15 @@ export default function OnboardingRoleScreen() {
                         size="compact"
                         onPress={() => router.back()}
                     />
+                    {addChallenge === 'true' && (
+                        <Button3D
+                            variant="primary"
+                            icon="close"
+                            iconOnly
+                            size="compact"
+                            onPress={() => router.navigate('/(tabs)')}
+                        />
+                    )}
                 </View>
 
                 {/* Contenu principal */}
@@ -230,6 +239,11 @@ const styles = StyleSheet.create({
         paddingTop: spacing.lg,
         paddingBottom: spacing.xl,
         paddingHorizontal: spacing.xl,
+    },
+    headerRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
     },
     mainContent: {
         flex: 1,

@@ -101,8 +101,8 @@ export default function OnboardingPagesScreen() {
                     contentFit="cover"
                 />
 
-                {/* Header : identique à index.tsx */}
-                <View style={styles.header}>
+                {/* Header : retour à gauche, fermeture (flow home) à droite */}
+                <View style={[styles.header, styles.headerRow]}>
                     <Button3D
                         variant="secondary"
                         icon="chevron-back"
@@ -110,6 +110,15 @@ export default function OnboardingPagesScreen() {
                         size="compact"
                         onPress={() => router.back()}
                     />
+                    {addChallenge === 'true' && (
+                        <Button3D
+                            variant="primary"
+                            icon="close"
+                            iconOnly
+                            size="compact"
+                            onPress={() => router.navigate('/(tabs)')}
+                        />
+                    )}
                 </View>
 
                 {/* Contenu principal : titre + input géant centré
@@ -164,6 +173,11 @@ const styles = StyleSheet.create({
     },
     content: {
         flex: 1,
+    },
+    headerRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
     },
     header: {
         paddingTop: spacing.lg,

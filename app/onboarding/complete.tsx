@@ -211,8 +211,8 @@ export default function OnboardingCompleteScreen() {
 
                 {/* Contenu scrollable */}
                 <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
-                    {/* Header avec bouton retour */}
-                <View style={styles.header}>
+                    {/* Header : retour à gauche, fermeture (flow home) à droite */}
+                <View style={[styles.header, styles.headerRow]}>
                     <Button3D
                         variant="secondary"
                         icon="chevron-back"
@@ -220,6 +220,15 @@ export default function OnboardingCompleteScreen() {
                         size="compact"
                         onPress={() => router.back()}
                     />
+                    {isAddChallenge && (
+                        <Button3D
+                            variant="primary"
+                            icon="close"
+                            iconOnly
+                            size="compact"
+                            onPress={() => router.navigate('/(tabs)')}
+                        />
+                    )}
                 </View>
 
                 {/* Contenu principal */}
@@ -369,6 +378,11 @@ const styles = StyleSheet.create({
         paddingTop: spacing.lg,
         paddingBottom: spacing.md,
         paddingHorizontal: spacing.lg,
+    },
+    headerRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
     },
     mainContent: {
         paddingHorizontal: spacing.lg, // aligné sur notifications
