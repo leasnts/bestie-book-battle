@@ -34,7 +34,7 @@ const SCREEN_OPTIONS = {
 export default function OnboardingLayout() {
   return (
     <Stack screenOptions={SCREEN_OPTIONS}>
-      <Stack.Screen name="index" />
+      <Stack.Screen name="index" options={{ gestureEnabled: false }} />
       <Stack.Screen name="role" />
       <Stack.Screen name="create" />
       <Stack.Screen name="cover" />
