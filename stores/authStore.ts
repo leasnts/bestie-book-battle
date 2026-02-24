@@ -10,7 +10,9 @@
  * Ce store est la source de vérité pour l'état d'authentification dans toute l'app.
  */
 
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
+import { createJSONStorage, persist } from 'zustand/middleware';
 import { User as SupabaseUser } from '../types/supabase';
 import {
   signInWithApple,
@@ -73,7 +75,9 @@ interface AuthStore {
  * - Récupération de la session
  * - Mise à jour du profil
  */
-export const useAuthStore = create<AuthStore>((set, get) => ({
+export const useAuthStore = create<AuthStore>()(
+  persist(
+    (set, get) => ({
   // ===== État initial =====
   user: null,
   isLoading: true,
@@ -296,4 +300,13 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
     // Retourner la fonction de nettoyage
     return unsubscribe;
   },
-}));
+    }),
+    {
+      name: 'bbb-auth-pending',
+      storage: createJSONStorage(() => AsyncStorage),
+      // On ne persiste QUE pendingUserData — les autres états sont éphémères
+      // (user est géré par Supabase, isLoading/error ne doivent pas survivre au redémarrage)
+      partialize: (state) => ({ pendingUserData: state.pendingUserData }),
+    }
+  )
+);

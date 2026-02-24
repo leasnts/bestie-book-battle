@@ -122,7 +122,7 @@ export default function RootLayout() {
  * - Si projet → écran principal (tabs)
  */
 function RootLayoutNav() {
-  const { user, isInitialized, initialize: initAuth } = useAuthStore();
+  const { user, isInitialized, initialize: initAuth, pendingUserData } = useAuthStore();
   const { challenges, loadUserChallenges } = useProjectStore();
   const router = useRouter();
   const segments = useSegments();
@@ -200,12 +200,21 @@ function RootLayoutNav() {
     const inAuthGroup = segments[0] === 'auth';
     const inOnboarding = segments[0] === 'onboarding';
     
-    // Si pas d'utilisateur connecté et pas déjà sur les pages d'auth → rediriger vers login
-    // Mais ne pas interférer si on est déjà en onboarding (pour les nouveaux users)
+    // Si pas d'utilisateur connecté et pas déjà sur les pages d'auth → rediriger
     if (!user && !inAuthGroup && !inOnboarding) {
-      router.replace('/auth/login');
+      if (pendingUserData) {
+        // Onboarding interrompu (ex: app tuée en plein milieu) :
+        // pendingUserData a été restauré depuis AsyncStorage — on reprend l'onboarding
+        // avec le prénom Apple qu'on avait capturé, sans redemander à l'utilisateur
+        router.replace({
+          pathname: '/onboarding/role',
+          params: { firstName: pendingUserData.firstName || '' },
+        });
+      } else {
+        router.replace('/auth/login');
+      }
     }
-  }, [user, isInitialized, challenges, segments, isMounted, router]);
+  }, [user, isInitialized, challenges, segments, isMounted, router, pendingUserData]);
 
   // Initialise les notifications pour les utilisateurs DÉJÀ connectés (hors onboarding)
   // IMPORTANT: On ne demande JAMAIS les permissions ici — c'est l'écran onboarding/notifications
