@@ -48,20 +48,27 @@ export default function PageScrollPicker({
   const isUserScrolling = useRef(false);
   // Quand le changement vient du scroll user, on évite que le useEffect re-scrolle (conflit de gestes)
   const skipNextScrollFromEffect = useRef(false);
+  // Ref pour toujours lire la dernière valeur de savedPage dans le timeout du montage
+  const savedPageRef = useRef(savedPage);
+  savedPageRef.current = savedPage;
 
   const pages = Array.from({ length: totalPages + 1 }, (_, i) => i);
   // Pour que le centre de chaque cellule soit à screenWidth/2 quand on a scrollé vers elle
   const horizontalPadding = (screenWidth - STEP) / 2;
 
-  // Montage : scroll vers la page sauvegardée
+  // Montage : scroll vers la page sauvegardée.
+  // On utilise savedPageRef.current (et non savedPage directement) pour éviter
+  // la race condition : si les données chargent depuis Supabase en < 100 ms,
+  // le timeout lit la valeur à jour et ne remet pas le scroll à 0.
   useEffect(() => {
     const t = setTimeout(() => {
+      const latestSavedPage = savedPageRef.current;
       flatListRef.current?.scrollToOffset({
-        offset: savedPage * STEP,
+        offset: latestSavedPage * STEP,
         animated: false,
       });
-      setDisplayPage(savedPage);
-      currentCenterRef.current = savedPage;
+      setDisplayPage(latestSavedPage);
+      currentCenterRef.current = latestSavedPage;
     }, 100);
     return () => clearTimeout(t);
   }, []);
