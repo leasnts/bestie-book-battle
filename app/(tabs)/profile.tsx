@@ -353,7 +353,7 @@ export default function ProfileScreen() {
       <View style={{ flex: 1 }} />
 
       {/* ═══════════ FOOTER ═══════════ */}
-      <View style={[styles.footer, { paddingBottom: insets.bottom + spacing['2xl'] }]}>
+      <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 34) + spacing['2xl'] }]}>
         <View style={styles.footerLinks}>
           <Pressable onPress={() => Linking.openURL('https://bbb.leasantos.me/terms')}>
             <Text style={styles.footerLink}>Conditions d'utilisations</Text>
