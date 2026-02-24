@@ -107,6 +107,7 @@ export default function HomeScreen() {
     leaveActiveChallenge,
     updateActiveChallenge,
     isLoading: projectsLoading,
+    challengesLoaded,
   } = useProjectStore();
 
   const {
@@ -605,12 +606,8 @@ export default function HomeScreen() {
             </View>
           </View>
         </View>
-      ) : projectsLoading && user?.id ? (
-        /* ═══════════ ÉTAT CHARGEMENT : on attend les challenges de Supabase ═══════════
-         * Ne pas afficher l'empty state pendant le chargement sinon l'utilisateur
-         * voit brièvement "Aucun projet" à chaque ouverture de l'app (race condition
-         * entre auth restore et loadUserChallenges).
-         */
+      ) : !challengesLoaded || projectsLoading ? (
+        /* ═══════════ ÉTAT CHARGEMENT : challenges pas encore chargés ═══════════ */
         <View style={styles.emptyStateContainer}>
           <ActivityIndicator size="large" color={colors.primary} />
           <Text style={[styles.emptyStateSubtitle, { marginTop: 16 }]}>
@@ -618,7 +615,7 @@ export default function HomeScreen() {
           </Text>
         </View>
       ) : (
-        /* ═══════════ ÉTAT VIDE : AUCUN PROJET (chargement terminé, vraiment vide) ═══════════ */
+        /* ═══════════ ÉTAT VIDE : AUCUN PROJET (chargement confirmé, vraiment vide) ═══════════ */
         <View style={styles.emptyStateContainer}>
           <Ionicons name="book-outline" size={80} color="#D0D0D0" style={{ marginBottom: 24 }} />
           <Text style={styles.emptyStateTitle}>Aucun projet de lecture</Text>

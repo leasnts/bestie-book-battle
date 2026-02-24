@@ -32,70 +32,72 @@ interface AnimatedSplashProps {
 }
 
 export default function AnimatedSplash({ onFinish, waitFor }: AnimatedSplashProps) {
-  // Texte
   const textOpacity = useSharedValue(0);
   
-  // Yeux : commencent gros (scale 3) et se rétrécissent vers 1
   const eyesScale = useSharedValue(3);
   const eyesOpacity = useSharedValue(0);
 
-  // Fade out global à la fin
   const screenOpacity = useSharedValue(1);
 
-  // Ref pour accéder à la dernière version de onFinish sans re-déclencher l'effet
   const onFinishRef = useRef(onFinish);
   onFinishRef.current = onFinish;
 
-  // Track si l'animation est terminée (à 3700ms) — state pour déclencher l'effet conditionnel
-  const [animationFinished, setAnimationFinished] = useState(false);
+  const [entryDone, setEntryDone] = useState(false);
+  const [fadeOutDone, setFadeOutDone] = useState(false);
+  const [forceExit, setForceExit] = useState(false);
 
+  // Phase 1 — Animation d'entrée (texte + yeux). Pas de fade-out ici.
   useEffect(() => {
-    // Timeline :
-    // 0ms       → Fade in du texte (700ms)
-    // 1000ms    → Les yeux apparaissent (opacity 0→1) en zoomant depuis gros (3→1)
-    //             durée 250ms, easing decelerate → effet "ça vient vers nous et se pose"
-    // 1250ms    → Yeux posés, immobiles
-    // 3200ms    → Fade out global (500ms)
-    // 3700ms    → animation "terminée" → onFinish si waitFor est prêt
-
-    // 1. Fade in du texte
-    textOpacity.value = withTiming(1, { duration: 1000 });
+    textOpacity.value = withTiming(1, { duration: 600 });
     
-    // 2. Les yeux arrivent : opacity 0→1 + scale 3→1
     eyesOpacity.value = withDelay(
-      1000,
-      withTiming(1, { duration: 200 })
+      600,
+      withTiming(1, { duration: 180 })
     );
     eyesScale.value = withDelay(
-      1000,
+      600,
       withTiming(1, { 
-        duration: 250,
-        easing: Easing.out(Easing.cubic), // Décélère en arrivant → se "pose"
+        duration: 220,
+        easing: Easing.out(Easing.cubic),
       })
     );
-    
-    // 3. Temps de latence (~2s pour lire), puis fade out global
-    screenOpacity.value = withDelay(
-      3200,
-      withTiming(0, { duration: 500 })
-    );
 
-    // 4. Quand le fade out est fini, marquer l'animation comme terminée
-    const timer = setTimeout(() => {
-      setAnimationFinished(true);
-    }, 3700);
+    const entryTimer = setTimeout(() => setEntryDone(true), 1500);
+
+    // Filet de sécurité : si après 8s le splash est toujours visible
+    // (Supabase hang, réseau mort…), on force la sortie quand même.
+    const bailoutTimer = setTimeout(() => setForceExit(true), 8000);
     
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(entryTimer);
+      clearTimeout(bailoutTimer);
+    };
   }, []);
 
-  // Appeler onFinish une seule fois quand : (animation terminée) ET (pas de waitFor OU waitFor est true)
+  // Phase 2 — Lancer le fade-out quand :
+  //   (entrée finie ET waitFor prêt) OU forceExit (timeout 8s)
+  const hasStartedFadeOut = useRef(false);
+  useEffect(() => {
+    if (hasStartedFadeOut.current) return;
+
+    const waitForReady = waitFor === undefined || waitFor;
+    const canProceed = (entryDone && waitForReady) || forceExit;
+    if (!canProceed) return;
+
+    hasStartedFadeOut.current = true;
+    screenOpacity.value = withTiming(0, { duration: 300 });
+
+    const timer = setTimeout(() => setFadeOutDone(true), 300);
+    return () => clearTimeout(timer);
+  }, [entryDone, waitFor, forceExit]);
+
+  // Phase 3 — Appeler onFinish une seule fois quand le fade-out est terminé
   const hasCalledFinishRef = useRef(false);
   useEffect(() => {
-    if (!animationFinished || hasCalledFinishRef.current) return;
-    if (waitFor !== undefined && !waitFor) return;
+    if (!fadeOutDone || hasCalledFinishRef.current) return;
     hasCalledFinishRef.current = true;
     onFinishRef.current();
-  }, [animationFinished, waitFor]);
+  }, [fadeOutDone]);
 
   // Style animé pour le texte
   const textAnimatedStyle = useAnimatedStyle(() => ({

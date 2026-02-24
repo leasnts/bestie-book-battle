@@ -212,34 +212,42 @@ export async function createOrUpdateUserProfile(
  */
 export async function getCurrentUser(): Promise<User | null> {
   try {
-    // Obtenir la session Supabase Auth
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-
-    if (sessionError || !session?.user) {
-      return null;
-    }
-
-    // Récupérer le profil complet depuis la table users
-    // On utilise .maybeSingle() au lieu de .single() pour éviter l'erreur PGRST116
-    // .single() plante si 0 résultats, .maybeSingle() retourne null proprement
-    const { data: userProfile, error: profileError } = await supabase
-      .from('users')
-      .select('*')
-      .eq('id', session.user.id)
-      .maybeSingle();
-
-    if (profileError) {
-      console.error('Erreur lors de la récupération du profil:', profileError);
-      return null;
-    }
-
-    // Peut retourner null si l'user est authentifié mais n'a pas encore de profil
-    // (cas d'un nouvel utilisateur qui n'a pas fini l'onboarding)
-    return userProfile;
+    const result = await withTimeout(getCurrentUserInternal(), 5000);
+    return result;
   } catch (error) {
-    console.error('Erreur lors de la récupération de l\'utilisateur:', error);
+    console.error('getCurrentUser failed or timed out:', error);
     return null;
   }
+}
+
+async function getCurrentUserInternal(): Promise<User | null> {
+  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+
+  if (sessionError || !session?.user) {
+    return null;
+  }
+
+  const { data: userProfile, error: profileError } = await supabase
+    .from('users')
+    .select('*')
+    .eq('id', session.user.id)
+    .maybeSingle();
+
+  if (profileError) {
+    console.error('Erreur lors de la récupération du profil:', profileError);
+    return null;
+  }
+
+  return userProfile;
+}
+
+function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) =>
+      setTimeout(() => reject(new Error(`Timeout after ${ms}ms`)), ms)
+    ),
+  ]);
 }
 
 /**
@@ -311,10 +319,9 @@ export function subscribeToAuthChanges(
 ): () => void {
   const { data: { subscription } } = supabase.auth.onAuthStateChange(
     async (event, session) => {
+      if (event === 'INITIAL_SESSION') return;
+
       if (session?.user) {
-        // Récupérer le profil complet (peut être null si nouvel utilisateur)
-        // On ne crée PAS automatiquement le profil ici
-        // C'est l'onboarding qui s'en charge pour les nouveaux utilisateurs
         const userProfile = await getCurrentUser();
         callback(userProfile);
       } else {
@@ -323,7 +330,6 @@ export function subscribeToAuthChanges(
     }
   );
 
-  // Retourner une fonction pour se désabonner
   return () => {
     subscription.unsubscribe();
   };

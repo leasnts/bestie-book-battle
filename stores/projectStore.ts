@@ -33,6 +33,7 @@ interface ProjectStore {
   activeChallenge: Challenge | null; // Challenge affiché sur la homepage
   currentChallenge: ChallengeWithParticipants | null; // Challenge actuellement affiché (page détail)
   isLoading: boolean;
+  challengesLoaded: boolean; // true après le premier chargement réussi ou échoué
   error: string | null;
 
   // Actions - Création
@@ -82,6 +83,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
   activeChallenge: null,
   currentChallenge: null,
   isLoading: false,
+  challengesLoaded: false,
   error: null,
 
   // ===== Action : Créer un challenge =====
@@ -248,10 +250,10 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
         newActive = null;
       }
 
-      set({ challenges, activeChallenge: newActive, isLoading: false });
+      set({ challenges, activeChallenge: newActive, isLoading: false, challengesLoaded: true });
     } catch (error: any) {
       console.error('Load challenges error:', error);
-      set({ error: error.message, isLoading: false });
+      set({ error: error.message, isLoading: false, challengesLoaded: true });
     }
   },
 
@@ -448,6 +450,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
       activeChallenge: null,
       currentChallenge: null,
       isLoading: false,
+      challengesLoaded: false,
       error: null,
     });
   },
