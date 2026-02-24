@@ -74,7 +74,7 @@ export default function OnboardingWelcomeScreen() {
                     id: pendingUserData.authId,
                     apple_user_id: pendingUserData.appleUserId,
                     email: pendingUserData.email,
-                    first_name: params.firstName,
+                    first_name: params.firstName || pendingUserData.firstName || 'Lecteur',
                     last_name: pendingUserData.lastName || null,
                 });
                 setUser(newUser);

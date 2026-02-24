@@ -137,7 +137,11 @@ export default function OnboardingRoleScreen() {
                 {/* Contenu principal */}
                 <View style={styles.mainContent}>
                     <Text style={styles.title}>
-                        {addChallenge ? 'Quel projet veux-tu ajouter ?' : `${firstName}, quel est ton rôle ?`}
+                        {addChallenge
+                            ? 'Quel projet veux-tu ajouter ?'
+                            : firstName
+                                ? `${firstName}, quel est ton rôle ?`
+                                : 'Quel est ton rôle ?'}
                     </Text>
                     
                     {/* Deux cartes de sélection animées */}

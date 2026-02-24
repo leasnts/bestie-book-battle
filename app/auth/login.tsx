@@ -56,7 +56,13 @@ export default function WelcomeScreen() {
       const result = await login();
 
       if (result.isNewUser) {
-        router.replace('/onboarding');
+        // Apple fournit firstName au premier sign-in — on l'utilise directement
+        // sans demander à l'utilisateur de le re-saisir (exigence App Store 4.0)
+        const firstName = result.firstName || '';
+        router.replace({
+          pathname: '/onboarding/role',
+          params: { firstName },
+        });
       } else {
         if (result.user) {
           await loadUserChallenges(result.user.id);
