@@ -336,6 +336,32 @@ export function subscribeToAuthChanges(
 }
 
 /**
+ * Supprimer le compte utilisateur
+ *
+ * Supprime le profil dans la table users, puis déconnecte la session Supabase.
+ * Note : la suppression complète du compte dans auth.users nécessite une
+ * Edge Function côté serveur (service role key) — à implémenter si besoin.
+ *
+ * @param userId - L'ID de l'utilisateur à supprimer
+ */
+export async function deleteUserAccount(userId: string): Promise<void> {
+  try {
+    const { error: deleteError } = await supabase
+      .from('users')
+      .delete()
+      .eq('id', userId);
+
+    if (deleteError) throw deleteError;
+
+    const { error: signOutError } = await supabase.auth.signOut({ scope: 'local' });
+    if (signOutError) throw signOutError;
+  } catch (error: any) {
+    console.error('Erreur lors de la suppression du compte :', error);
+    throw error;
+  }
+}
+
+/**
  * Vérifier si Apple Sign In est disponible sur cet appareil
  * 
  * Apple Sign In nécessite :

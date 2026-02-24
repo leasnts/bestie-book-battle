@@ -93,11 +93,12 @@ function resolvePhotoSource(url?: string | null, updatedAt?: string | null) {
 export default function ProfileScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { user, logout } = useAuthStore();
+  const { user, logout, deleteAccount } = useAuthStore();
   const { challenges, loadUserChallenges } = useProjectStore();
 
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
   const [editProfileVisible, setEditProfileVisible] = useState(false);
   const [inviteVisible, setInviteVisible] = useState(false);
 
@@ -203,6 +204,46 @@ export default function ProfileScreen() {
     }
   };
 
+  // ─── Suppression du compte ──────────────────────────────────────────────────
+
+  const handleDeleteAccountPress = () => {
+    Alert.alert(
+      'Supprimer mon compte',
+      'Cette action est irréversible. Toutes tes données (profil, challenges, progression) seront définitivement supprimées.',
+      [
+        { text: 'Annuler', style: 'cancel' },
+        {
+          text: 'Supprimer mon compte',
+          style: 'destructive',
+          onPress: () => {
+            Alert.alert(
+              'Tu es sûr·e ?',
+              'Dernière chance. Ton compte sera supprimé définitivement.',
+              [
+                { text: 'Annuler', style: 'cancel' },
+                {
+                  text: 'Oui, supprimer',
+                  style: 'destructive',
+                  onPress: async () => {
+                    try {
+                      setIsDeletingAccount(true);
+                      await deleteAccount();
+                      router.replace('/auth/login');
+                    } catch (error: any) {
+                      Alert.alert('Erreur', error?.message || 'Impossible de supprimer ton compte. Réessaie.');
+                    } finally {
+                      setIsDeletingAccount(false);
+                    }
+                  },
+                },
+              ]
+            );
+          },
+        },
+      ]
+    );
+  };
+
   const photoSource = resolvePhotoSource(user?.profile_photo_url, user?.updated_at);
 
   // ─── Rendu ─────────────────────────────────────────────────────────────────
@@ -285,12 +326,27 @@ export default function ProfileScreen() {
           disabled={isLoggingOut}
         >
           <View style={styles.settingLeft}>
-            <Ionicons name="log-out-outline" size={24} color={colors.error} />
-            <Text style={[styles.settingLabel, styles.settingLabelDanger]}>Se déconnecter</Text>
+            <Ionicons name="log-out-outline" size={24} color={colors.textSecondary} />
+            <Text style={styles.settingLabel}>Se déconnecter</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={24} color={colors.textTertiary} />
+        </Pressable>
+
+      </View>
+
+      {/* ═══════════ ZONE DANGER ═══════════ */}
+      <View style={styles.dangerZone}>
+        <Pressable
+          style={({ pressed }) => [styles.settingRow, pressed && styles.settingRowPressed]}
+          onPress={handleDeleteAccountPress}
+          disabled={isDeletingAccount}
+        >
+          <View style={styles.settingLeft}>
+            <Ionicons name="trash-outline" size={24} color={colors.error} />
+            <Text style={[styles.settingLabel, styles.settingLabelDanger]}>Supprimer mon compte</Text>
           </View>
           <Ionicons name="chevron-forward" size={24} color={colors.error} />
         </Pressable>
-
       </View>
 
       {/* Spacer — pousse le footer vers le bas */}
@@ -309,7 +365,7 @@ export default function ProfileScreen() {
         <Text style={styles.footerVersion}>bestie book battle v{APP_VERSION}</Text>
       </View>
 
-      {isLoggingOut && (
+      {(isLoggingOut || isDeletingAccount) && (
         <View style={styles.logoutOverlay}>
           <ActivityIndicator size="large" color={colors.dark900} />
         </View>
@@ -708,6 +764,13 @@ const styles = StyleSheet.create({
   // ─── Liste paramètres ────────────────────────────────────────────────────────
   settingsList: {
     paddingHorizontal: spacing.lg,
+  },
+  dangerZone: {
+    paddingHorizontal: spacing.lg,
+    marginTop: spacing['3xl'],
+    paddingTop: spacing.xl,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
   },
   settingRow: {
     flexDirection: 'row',

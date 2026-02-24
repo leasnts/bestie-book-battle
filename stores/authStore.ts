@@ -18,6 +18,7 @@ import {
   getCurrentUser,
   subscribeToAuthChanges,
   updateUserProfile,
+  deleteUserAccount,
   AppleSignInResult,
 } from '../services/supabase/auth';
 import { useProjectStore } from './projectStore';
@@ -55,6 +56,7 @@ interface AuthStore {
   // Actions
   login: () => Promise<AppleSignInResult>;
   logout: () => Promise<void>;
+  deleteAccount: () => Promise<void>;
   setUser: (user: SupabaseUser | null) => void;
   setError: (error: string | null) => void;
   setPendingUserData: (data: PendingUserData | null) => void;
@@ -168,6 +170,22 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
         set({ error: error.message, isLoading: false });
         throw error;
       }
+    }
+  },
+
+  // ===== Action : Suppression du compte =====
+  deleteAccount: async () => {
+    const { user } = get();
+    if (!user) throw new Error('Aucun utilisateur connecté');
+    set({ isLoading: true });
+    try {
+      await deleteUserAccount(user.id);
+      useProjectStore.getState().reset();
+      useProgressStore.getState().clearProgress();
+      set({ user: null, pendingUserData: null, isLoading: false, error: null });
+    } catch (error: any) {
+      set({ error: error.message, isLoading: false });
+      throw error;
     }
   },
 
