@@ -2,7 +2,7 @@
  * Écran 3c de l'onboarding (branche Créer) : Choix de la deadline
  * 
  * L'utilisateur saisit une date de deadline au format JJ/MM/AAAA.
- * Format identique à onboarding/index.tsx : input géant centré.
+ * Format : input géant centré (même structure que les autres écrans onboarding).
  * Un texte en dessous calcule automatiquement le temps restant.
  * 
  * Flow : create (titre + auteur) → pages → deadline (ici) → cover
@@ -283,7 +283,7 @@ export default function OnboardingDeadlineScreen() {
     );
 }
 
-// ── Styles identiques à onboarding/index.tsx ──
+// ── Styles ──
 const styles = StyleSheet.create({
     container: {
         flex: 1,

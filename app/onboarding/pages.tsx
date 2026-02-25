@@ -2,7 +2,7 @@
  * Écran 3b de l'onboarding (branche Créer) : Nombre de pages
  * 
  * L'utilisateur saisit le nombre de pages du livre.
- * Format identique à onboarding/index.tsx : input géant centré.
+ * Format : input géant centré (même structure que les autres écrans onboarding).
  * 
  * Flow : create (titre + auteur) → pages (ici) → deadline → cover
  */
@@ -162,7 +162,7 @@ export default function OnboardingPagesScreen() {
     );
 }
 
-// ── Styles identiques à onboarding/index.tsx ──
+// ── Styles ──
 const styles = StyleSheet.create({
     container: {
         flex: 1,

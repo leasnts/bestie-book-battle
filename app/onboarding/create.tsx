@@ -8,7 +8,7 @@
  * Le nombre de pages est demandé sur l'écran suivant (pages.tsx)
  * dans un format identique à la saisie du prénom (input géant centré).
  * 
- * Structure identique à onboarding/index.tsx.
+ * Structure : input géant centré (même pattern que les autres écrans onboarding).
  */
 
 import { Image } from 'expo-image';
@@ -154,7 +154,7 @@ export default function OnboardingBookFormScreen() {
                     </View>
                 </View>
 
-                {/* Footer : identique à onboarding/index.tsx */}
+                {/* Footer */}
                 <View style={[styles.footer, { 
                     paddingBottom: isKeyboardVisible ? 12 : Math.max(insets.bottom, 16) + 16 
                 }]}>
