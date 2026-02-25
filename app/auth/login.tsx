@@ -97,7 +97,9 @@ export default function WelcomeScreen() {
     } catch (error: any) {
       console.error('Login error:', error);
 
-      if (error.code === 'ERR_REQUEST_CANCELED') {
+      // ERR_CANCELED = l'utilisateur a appuyé sur "Annuler" dans la modale Apple
+      // Ce n'est pas une vraie erreur, on ignore silencieusement
+      if (error.code === 'ERR_CANCELED') {
         return;
       }
 

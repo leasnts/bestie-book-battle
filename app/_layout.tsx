@@ -226,10 +226,12 @@ function RootLayoutNav() {
     const inOnboarding = segments[0] === 'onboarding';
     if (inOnboarding) return; // Laissons l'écran notifications gérer la première demande
 
+    let cancelled = false;
+
     const setupNotifications = async () => {
       try {
         const { status } = await Notifications.getPermissionsAsync();
-        if (status === 'granted') {
+        if (!cancelled && status === 'granted') {
           await scheduleDailyReminder(20, 0, 'cc', 'n\'oublie pas d\'ajouter tes pages stp');
         }
       } catch (error) {
@@ -238,6 +240,10 @@ function RootLayoutNav() {
     };
 
     setupNotifications();
+
+    return () => {
+      cancelled = true;
+    };
   }, [user?.id, segments[0]]);
 
   // Callback quand le splash screen se termine

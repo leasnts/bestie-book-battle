@@ -124,6 +124,11 @@ export async function signInWithApple(): Promise<AppleSignInResult> {
       lastName: credential.fullName?.familyName || null,
     };
   } catch (error: any) {
+    // ERR_CANCELED = l'utilisateur a volontairement annulé la modale Apple
+    // Ce n'est pas une erreur applicative, on re-throw sans logger
+    if (error.code === 'ERR_CANCELED') {
+      throw error;
+    }
     console.error('Erreur lors du sign in avec Apple:', error);
     throw error;
   }

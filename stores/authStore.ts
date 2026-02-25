@@ -133,6 +133,12 @@ export const useAuthStore = create<AuthStore>()(
 
       return result;
     } catch (error: any) {
+      // ERR_CANCELED = l'utilisateur a annulé la modale Apple
+      // On remet juste isLoading à false, pas d'état d'erreur dans le store
+      if (error.code === 'ERR_CANCELED') {
+        set({ isLoading: false });
+        throw error;
+      }
       console.error('Login error:', error);
       const errorMessage = error.message || 'Erreur lors de la connexion';
       set({ error: errorMessage, isLoading: false });
