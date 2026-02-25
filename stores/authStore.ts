@@ -23,6 +23,7 @@ import {
   deleteUserAccount,
   AppleSignInResult,
 } from '../services/supabase/auth';
+import { supabase } from '../supabaseConfig';
 import { useProjectStore } from './projectStore';
 import { useProgressStore } from './progressStore';
 
@@ -282,12 +283,29 @@ export const useAuthStore = create<AuthStore>()(
     const checkSession = async () => {
       set({ isLoading: true });
       try {
-        const user = await getCurrentUser();
+        // Étape 1 : vérifier la session locale depuis AsyncStorage (< 200ms, pas de réseau)
+        // C'est ce qui évite le faux redirect vers le login au démarrage sur Expo Go :
+        // l'ancien code appelait getCurrentUser() directement, qui contacte le réseau
+        // et tombait en timeout (5s) avant qu'Expo Go ait fini d'initialiser le réseau.
+        const { data: { session } } = await supabase.auth.getSession();
 
-        set({ user, isInitialized: true, isLoading: false });
+        if (!session?.user) {
+          set({ user: null, isInitialized: true, isLoading: false });
+          return;
+        }
 
-        if (user?.id) {
-          useProjectStore.getState().loadUserChallenges(user.id);
+        // Étape 2 : session confirmée → récupérer le profil complet depuis la base
+        // Sans timeout arbitraire : on sait déjà que l'utilisateur EST connecté.
+        const { data: userProfile } = await supabase
+          .from('users')
+          .select('*')
+          .eq('id', session.user.id)
+          .maybeSingle();
+
+        set({ user: userProfile ?? null, isInitialized: true, isLoading: false });
+
+        if (userProfile?.id) {
+          useProjectStore.getState().loadUserChallenges(userProfile.id);
         }
       } catch (error) {
         console.error('Session check error:', error);
