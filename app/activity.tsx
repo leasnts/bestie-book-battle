@@ -23,18 +23,20 @@ import {
   Text,
   View,
 } from 'react-native';
+import { GestureDetector } from 'react-native-gesture-handler';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Button3D from '../../components/Button3D';
-import PageTransition from '../../components/PageTransition';
-import PopEyes from '../../components/PopEyes';
-import { useAuthStore } from '../../stores/authStore';
-import { useNotificationStore } from '../../stores/notificationStore';
-import { useProjectStore } from '../../stores/projectStore';
-import { borderRadius, colors, fontSize, fontWeight, spacing } from '../../utils/constants';
+import Button3D from '../components/Button3D';
+import PageTransition from '../components/PageTransition';
+import { useSwipeBack } from '../hooks/useSwipeBack';
+import PopEyes from '../components/PopEyes';
+import { useAuthStore } from '../stores/authStore';
+import { useNotificationStore } from '../stores/notificationStore';
+import { useProjectStore } from '../stores/projectStore';
+import { borderRadius, colors, fontSize, fontWeight, spacing } from '../utils/constants';
 
 // ─── Assets ──────────────────────────────────────────────────────────────────
 
-const TEXTURE_IMAGE = require('../../assets/images/61ea1e0c638b5b9c8100383a37a5b488848db623.png');
+const TEXTURE_IMAGE = require('../assets/images/61ea1e0c638b5b9c8100383a37a5b488848db623.png');
 
 /**
  * Image BBB par défaut.
@@ -42,7 +44,7 @@ const TEXTURE_IMAGE = require('../../assets/images/61ea1e0c638b5b9c8100383a37a5b
  * 1. Les notifications générales (streak, deadline, inactivité)
  * 2. Tout utilisateur sans photo de profil uploadée
  */
-const DEFAULT_PROFILE_IMAGE = require('../../assets/images/pop-eyes.png');
+const DEFAULT_PROFILE_IMAGE = require('../assets/images/pop-eyes.png');
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -105,6 +107,9 @@ export default function ActivityScreen() {
   const { activeChallenge } = useProjectStore();
   const { notifications } = useNotificationStore();
 
+  // Swipe vers la droite pour fermer l'activité (symétrique à l'ouverture)
+  const swipeGesture = useSwipeBack('right');
+
   // Filtrer uniquement les notifs du challenge actif (s'il y en a un)
   const filtered = activeChallenge
     ? notifications.filter((n) => n.challengeId === activeChallenge.id)
@@ -112,6 +117,7 @@ export default function ActivityScreen() {
 
   return (
     <PageTransition>
+    <GestureDetector gesture={swipeGesture}>
     <SafeAreaView style={styles.container} edges={['top']}>
       {/* Texture de fond noise à 5% d'opacité */}
       <Image
@@ -179,6 +185,7 @@ export default function ActivityScreen() {
         )}
       </ScrollView>
     </SafeAreaView>
+    </GestureDetector>
     </PageTransition>
   );
 }

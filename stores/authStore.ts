@@ -17,7 +17,6 @@ import { User as SupabaseUser } from '../types/supabase';
 import {
   signInWithApple,
   signOut,
-  getCurrentUser,
   subscribeToAuthChanges,
   updateUserProfile,
   deleteUserAccount,

@@ -290,7 +290,28 @@ function RootLayoutNav() {
         }}
       />
 
-      {/* Garde les routes d'auth mais cachées (pour éviter les erreurs) */}
+      {/* Page Profil — glisse depuis la gauche (symétrique au swipe d'ouverture) */}
+      {/* Le gesture natif iOS est désactivé car il irait dans le mauvais sens.     */}
+      {/* C'est useSwipeBack('left') dans profile.tsx qui gère la fermeture.        */}
+      <Stack.Screen
+        name="profile"
+        options={{
+          headerShown: false,
+          animation: 'slide_from_left',
+          gestureEnabled: false,
+        }}
+      />
+
+      {/* Page Activité — glisse depuis la droite (comportement Stack standard) */}
+      {/* Le gesture natif iOS (bord gauche → glisse droite) fonctionne automatiquement */}
+      <Stack.Screen
+        name="activity"
+        options={{
+          headerShown: false,
+          animation: 'slide_from_right',
+        }}
+      />
+
       {/* Garde les routes d'auth mais cachées (pour éviter les erreurs) */}
       <Stack.Screen
         name="auth"

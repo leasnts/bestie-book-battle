@@ -327,8 +327,15 @@ export function subscribeToAuthChanges(
       if (event === 'INITIAL_SESSION') return;
 
       if (session?.user) {
-        const userProfile = await getCurrentUser();
-        callback(userProfile);
+        // On utilise directement session.user.id (déjà disponible dans l'événement)
+        // plutôt que d'appeler getCurrentUser() qui referait un getSession() réseau
+        // et pourrait tomber en timeout au démarrage sous Expo Go.
+        const { data: userProfile } = await supabase
+          .from('users')
+          .select('*')
+          .eq('id', session.user.id)
+          .maybeSingle();
+        callback(userProfile ?? null);
       } else {
         callback(null);
       }

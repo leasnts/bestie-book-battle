@@ -43,13 +43,15 @@ import {
   View,
 } from 'react-native';
 import 'react-native-reanimated';
+import { GestureDetector } from 'react-native-gesture-handler';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import BottomSheet from '../../components/ui/BottomSheet';
-import Button3D from '../../components/Button3D';
-import PageTransition from '../../components/PageTransition';
-import { pickImage, uploadProfilePhoto } from '../../services/supabase/storage';
-import { useAuthStore } from '../../stores/authStore';
-import { useProjectStore } from '../../stores/projectStore';
+import { useSwipeBack } from '../hooks/useSwipeBack';
+import BottomSheet from '../components/ui/BottomSheet';
+import Button3D from '../components/Button3D';
+import PageTransition from '../components/PageTransition';
+import { pickImage, uploadProfilePhoto } from '../services/supabase/storage';
+import { useAuthStore } from '../stores/authStore';
+import { useProjectStore } from '../stores/projectStore';
 import { Challenge } from '../../types/supabase';
 import {
   borderRadius,
@@ -57,11 +59,11 @@ import {
   fontSize,
   shadows,
   spacing,
-} from '../../utils/constants';
+} from '../utils/constants';
 
 // ─── Constantes ────────────────────────────────────────────────────────────────
 
-const TEXTURE_IMAGE = require('../../assets/images/61ea1e0c638b5b9c8100383a37a5b488848db623.png');
+const TEXTURE_IMAGE = require('../assets/images/61ea1e0c638b5b9c8100383a37a5b488848db623.png');
 const APP_VERSION = Constants.expoConfig?.version ?? '1.0';
 const ACCESSORY_ID_PROFILE = 'edit-profile-no-done';
 
@@ -74,7 +76,7 @@ const ACCESSORY_ID_PROFILE = 'edit-profile-no-done';
  * Même logique que resolveAvatarSource sur la home — force expo-image
  * à recharger après un changement de photo.
  */
-const DEFAULT_PROFILE_IMAGE = require('../../assets/images/profile_picture_default.png');
+const DEFAULT_PROFILE_IMAGE = require('../assets/images/profile_picture_default.png');
 
 function resolvePhotoSource(url?: string | null, updatedAt?: string | null) {
   if (!url) return DEFAULT_PROFILE_IMAGE;
@@ -95,6 +97,9 @@ export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const { user, logout, deleteAccount } = useAuthStore();
   const { challenges, loadUserChallenges } = useProjectStore();
+
+  // Swipe vers la gauche pour fermer le profil (symétrique à l'ouverture)
+  const swipeGesture = useSwipeBack('left');
 
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -250,6 +255,7 @@ export default function ProfileScreen() {
 
   return (
     <PageTransition>
+    <GestureDetector gesture={swipeGesture}>
     <View style={styles.container}>
       <Image source={TEXTURE_IMAGE} style={styles.backgroundTexture} contentFit="cover" />
 
@@ -374,6 +380,7 @@ export default function ProfileScreen() {
       <EditProfileSheet visible={editProfileVisible} onClose={() => setEditProfileVisible(false)} />
       <InviteSheet visible={inviteVisible} onClose={() => setInviteVisible(false)} challenges={challenges} />
     </View>
+    </GestureDetector>
     </PageTransition>
   );
 }

@@ -25,15 +25,18 @@ import {
     StyleSheet,
     Text,
     View,
+    useWindowDimensions,
 } from 'react-native';
 import Animated, {
     Easing,
+    runOnJS,
     useAnimatedStyle,
     useSharedValue,
     withDelay,
     withSequence,
     withTiming,
 } from 'react-native-reanimated';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Button3D from '../../components/Button3D';
 import PageTransition from '../../components/PageTransition';
@@ -93,9 +96,14 @@ const resolveAvatarSource = (
   }
 };
 
+// Zone de détection du bord d'écran (en pixels)
+// Le swipe doit démarrer dans les 50px depuis le bord gauche ou droit
+const EDGE_ZONE = 50;
+
 export default function HomeScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { width: screenWidth } = useWindowDimensions();
   const { user } = useAuthStore();
 
   // ===== Stores Supabase =====
@@ -155,6 +163,20 @@ export default function HomeScreen() {
   const leafOpacity = useSharedValue(0);
   const leafRotate = useSharedValue(0);
 
+  // ===== Swipe de navigation latéral (bord d'écran) =====
+  // Shared value pour mémoriser la position X initiale du doigt
+  const swipeStartX = useSharedValue(0);
+
+  // Ces callbacks sont appelés depuis un worklet Reanimated (thread UI),
+  // donc runOnJS est obligatoire pour traverser vers le thread JS.
+  const navigateToProfile = useCallback(() => {
+    router.push('/profile');
+  }, [router]);
+
+  const navigateToActivity = useCallback(() => {
+    router.push('/activity');
+  }, [router]);
+
   // Style animé : combine la descente (Y), le balancement (X),
   // la rotation et l'opacité en un seul transform fluide.
   const leafAnimStyle = useAnimatedStyle(() => ({
@@ -165,6 +187,37 @@ export default function HomeScreen() {
       { rotate: `${leafRotate.value}deg` },
     ],
   }));
+
+  // Gesture de glissement horizontal depuis les bords de l'écran.
+  //
+  // Comment ça fonctionne :
+  // 1. onBegin → on enregistre la position X initiale du doigt
+  // 2. activeOffsetX → le gesture ne s'active qu'après 25px de mouvement horizontal
+  //    (évite les conflits avec les taps et les micro-mouvements)
+  // 3. onEnd → si le doigt a démarré dans la zone du bord ET que le swipe est
+  //    assez long (>60px) ET assez rapide (>250px/s), on navigue
+  //
+  // La vérification du bord (swipeStartX < EDGE_ZONE) est la clé :
+  // elle empêche tout conflit avec le PageScrollPicker au centre de l'écran.
+  const swipeGesture = Gesture.Pan()
+    .activeOffsetX([-25, 25])
+    .onBegin((event) => {
+      swipeStartX.set(event.x);
+    })
+    .onEnd((event) => {
+      const startX = swipeStartX.get();
+      const tx = event.translationX;
+      const vx = event.velocityX;
+
+      // Bord gauche → swipe vers la droite → Profil
+      if (startX < EDGE_ZONE && tx > 60 && vx > 250) {
+        runOnJS(navigateToProfile)();
+      }
+      // Bord droit → swipe vers la gauche → Activité
+      else if (startX > screenWidth - EDGE_ZONE && tx < -60 && vx < -250) {
+        runOnJS(navigateToActivity)();
+      }
+    });
 
   // ===== Chargement des données au montage =====
   useEffect(() => {
@@ -514,6 +567,7 @@ export default function HomeScreen() {
 
   return (
     <PageTransition>
+    <GestureDetector gesture={swipeGesture}>
     <View style={styles.container}>
       {/* Texture de fond "noise" semi-transparente */}
       <Image
@@ -750,6 +804,7 @@ export default function HomeScreen() {
       />
 
     </View>
+    </GestureDetector>
     </PageTransition>
   );
 }
