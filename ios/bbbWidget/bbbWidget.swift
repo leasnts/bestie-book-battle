@@ -2,21 +2,30 @@
 //  bbbWidget.swift
 //  bbbWidget
 //
-//  Widget Bestie Book Battle
-//  Affiche la progression de lecture : mon avancement vs celui de mon·ma ami·e
+//  Widget Bestie Book Battle — Redesign Light
+//  Jauge de progression (arc ouvert) + top 2 du classement
 //
 
 import WidgetKit
 import SwiftUI
 
 // ─────────────────────────────────────────────────────────────
-// MARK: - Modèle de données
-//
-// Cette structure doit correspondre exactement à ce qu'on envoie
-// depuis React Native dans utils/widget.ts
+// MARK: - Modèles de données
 // ─────────────────────────────────────────────────────────────
 
 struct WidgetData: Codable {
+    var totalPages: Int
+    var averageProgress: Double
+    var participant1Name: String
+    var participant1Page: Int
+    var participant1Photo: String?
+    var participant2Name: String?
+    var participant2Page: Int?
+    var participant2Photo: String?
+    var lastUpdated: String
+}
+
+struct OldWidgetData: Codable {
     var bookTitle: String
     var bookAuthor: String
     var myCurrentPage: Int
@@ -28,367 +37,302 @@ struct WidgetData: Codable {
 }
 
 // ─────────────────────────────────────────────────────────────
-// MARK: - Entry (l'objet que le widget affiche à un instant T)
+// MARK: - Entry
 // ─────────────────────────────────────────────────────────────
 
 struct BookEntry: TimelineEntry {
     let date: Date
-    let bookTitle: String
-    let bookAuthor: String
-    let myCurrentPage: Int
-    let myTotalPages: Int
-    let myStreak: Int
-    let friendName: String?
-    let friendCurrentPage: Int?
+    let totalPages: Int
+    let averageProgress: Double
+    let participant1Name: String
+    let participant1Page: Int
+    let participant1Photo: String?
+    let participant2Name: String?
+    let participant2Page: Int?
+    let participant2Photo: String?
 
-    // Calcul du pourcentage de progression (0.0 → 1.0)
-    var myProgress: Double {
-        guard myTotalPages > 0 else { return 0 }
-        return Double(myCurrentPage) / Double(myTotalPages)
-    }
-
-    var friendProgress: Double? {
-        guard let pages = friendCurrentPage, myTotalPages > 0 else { return nil }
-        return Double(pages) / Double(myTotalPages)
-    }
-
-    // Vrai si je suis devant mon·ma ami·e (ou si je suis seul·e)
-    var iAmWinning: Bool {
-        guard let friendPages = friendCurrentPage else { return true }
-        return myCurrentPage >= friendPages
-    }
-
-    // Données de prévisualisation dans l'éditeur Xcode
     static var placeholder: BookEntry {
         BookEntry(
             date: Date(),
-            bookTitle: "Harry Potter",
-            bookAuthor: "J.K. Rowling",
-            myCurrentPage: 142,
-            myTotalPages: 652,
-            myStreak: 5,
-            friendName: "Zoé",
-            friendCurrentPage: 98
+            totalPages: 350,
+            averageProgress: 0.65,
+            participant1Name: "Zoé",
+            participant1Page: 230,
+            participant1Photo: nil,
+            participant2Name: "Léa",
+            participant2Page: 201,
+            participant2Photo: nil
         )
     }
 }
 
 // ─────────────────────────────────────────────────────────────
-// MARK: - Provider (fournit les données au widget)
-//
-// C'est ici qu'on lit l'App Group pour récupérer ce que React
-// Native a écrit avec `react-native-shared-group-preferences`.
+// MARK: - Provider
 // ─────────────────────────────────────────────────────────────
 
 struct Provider: TimelineProvider {
 
-    // Affiché instantanément pendant le chargement
-    func placeholder(in context: Context) -> BookEntry {
-        .placeholder
-    }
+    func placeholder(in context: Context) -> BookEntry { .placeholder }
 
-    // Affiché dans la galerie de widgets iOS
     func getSnapshot(in context: Context, completion: @escaping (BookEntry) -> Void) {
         completion(loadEntry())
     }
 
-    // Planifie les mises à jour du widget (toutes les 15 minutes)
     func getTimeline(in context: Context, completion: @escaping (Timeline<BookEntry>) -> Void) {
         let entry = loadEntry()
         let nextUpdate = Calendar.current.date(byAdding: .minute, value: 15, to: Date())!
-        let timeline = Timeline(entries: [entry], policy: .after(nextUpdate))
-        completion(timeline)
+        completion(Timeline(entries: [entry], policy: .after(nextUpdate)))
     }
 
-    // Lit les données depuis l'App Group partagé avec l'app principale
     private func loadEntry() -> BookEntry {
         let userDefaults = UserDefaults(suiteName: "group.com.leasantos.bestiebookbattle")
 
-        if let jsonString = userDefaults?.string(forKey: "widgetData"),
-           let data = jsonString.data(using: .utf8),
-           let widgetData = try? JSONDecoder().decode(WidgetData.self, from: data) {
+        guard let jsonString = userDefaults?.string(forKey: "widgetData"),
+              let data = jsonString.data(using: .utf8) else {
+            return emptyEntry()
+        }
+
+        if let w = try? JSONDecoder().decode(WidgetData.self, from: data) {
             return BookEntry(
                 date: Date(),
-                bookTitle: widgetData.bookTitle,
-                bookAuthor: widgetData.bookAuthor,
-                myCurrentPage: widgetData.myCurrentPage,
-                myTotalPages: widgetData.myTotalPages,
-                myStreak: widgetData.myStreak,
-                friendName: widgetData.friendName,
-                friendCurrentPage: widgetData.friendCurrentPage
+                totalPages: w.totalPages,
+                averageProgress: w.averageProgress,
+                participant1Name: w.participant1Name,
+                participant1Page: w.participant1Page,
+                participant1Photo: w.participant1Photo,
+                participant2Name: w.participant2Name,
+                participant2Page: w.participant2Page,
+                participant2Photo: w.participant2Photo
             )
         }
 
-        // Si aucune donnée n'a encore été écrite par l'app, on affiche un état vide
-        return BookEntry(
+        if let old = try? JSONDecoder().decode(OldWidgetData.self, from: data) {
+            let progress = old.myTotalPages > 0
+                ? Double(old.myCurrentPage) / Double(old.myTotalPages) : 0
+            return BookEntry(
+                date: Date(),
+                totalPages: old.myTotalPages,
+                averageProgress: min(progress, 1.0),
+                participant1Name: "Moi",
+                participant1Page: old.myCurrentPage,
+                participant1Photo: nil,
+                participant2Name: old.friendName,
+                participant2Page: old.friendCurrentPage,
+                participant2Photo: nil
+            )
+        }
+
+        return emptyEntry()
+    }
+
+    private func emptyEntry() -> BookEntry {
+        BookEntry(
             date: Date(),
-            bookTitle: "Ouvre l'app !",
-            bookAuthor: "Bestie Book Battle",
-            myCurrentPage: 0,
-            myTotalPages: 1,
-            myStreak: 0,
-            friendName: nil,
-            friendCurrentPage: nil
+            totalPages: 1,
+            averageProgress: 0,
+            participant1Name: "Ouvre l'app !",
+            participant1Page: 0,
+            participant1Photo: nil,
+            participant2Name: nil,
+            participant2Page: nil,
+            participant2Photo: nil
         )
     }
 }
 
 // ─────────────────────────────────────────────────────────────
-// MARK: - Vue principale (choisit le layout selon la taille)
+// MARK: - Vue principale
 // ─────────────────────────────────────────────────────────────
 
 struct bbbWidgetEntryView: View {
-    @Environment(\.widgetFamily) var family
     var entry: BookEntry
 
     var body: some View {
-        switch family {
-        case .systemSmall:
-            SmallWidgetView(entry: entry)
-        case .systemMedium:
-            MediumWidgetView(entry: entry)
-        default:
-            SmallWidgetView(entry: entry)
-        }
+        SmallWidgetView(entry: entry)
     }
 }
 
 // ─────────────────────────────────────────────────────────────
-// MARK: - Petit widget (systemSmall)
+// MARK: - Small Widget
 //
-// Layout :
-//   📚 Titre du livre
-//   ──────────────
-//   Barre de progression orange
-//   Page X / Y
-//   🔥5    78%
+// La jauge est un ARC OUVERT (pas un cercle fermé).
+// Elle se remplit de gauche à droite, avec un gap en bas
+// où la mascotte PopEyes dépasse du widget.
 // ─────────────────────────────────────────────────────────────
 
 struct SmallWidgetView: View {
     let entry: BookEntry
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
+        GeometryReader { geo in
+            let side = min(geo.size.width, geo.size.height)
 
-            // Emoji livre + titre
-            HStack(spacing: 5) {
-                Text("📚")
-                    .font(.system(size: 14))
-                Text(entry.bookTitle)
-                    .font(.system(size: 12, weight: .bold))
-                    .foregroundColor(.white)
-                    .lineLimit(2)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
+            ZStack {
+                // ── Jauge de progression (arc ouvert) ──
+                DashedProgressGauge(progress: entry.averageProgress)
+                    .frame(width: side * 0.88, height: side * 0.88)
 
-            Spacer(minLength: 8)
+                // ── Top 2 participants ──
+                VStack(alignment: .leading, spacing: 6) {
+                    // Leader (top 1) + couronne qui chevauche la photo
+                    ZStack(alignment: .topLeading) {
+                        ParticipantRow(
+                            name: entry.participant1Name,
+                            page: entry.participant1Page,
+                            base64Photo: entry.participant1Photo,
+                            avatarColor: Color(hex: "C4876E")
+                        )
 
-            // Barre de progression
-            GeometryReader { geo in
-                ZStack(alignment: .leading) {
-                    RoundedRectangle(cornerRadius: 4)
-                        .fill(Color.white.opacity(0.1))
-                        .frame(height: 7)
-                    RoundedRectangle(cornerRadius: 4)
-                        .fill(Color(hex: "F97316"))
-                        .frame(width: geo.size.width * entry.myProgress, height: 7)
-                }
-            }
-            .frame(height: 7)
+                        if entry.participant1Page > 0 {
+                            Image("Crown")
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .frame(width: 24)
+                                .offset(x: 1, y: -10)
+                        }
+                    }
 
-            Spacer(minLength: 6)
-
-            // Page actuelle
-            Text("Page \(entry.myCurrentPage) / \(entry.myTotalPages)")
-                .font(.system(size: 10))
-                .foregroundColor(Color(hex: "717680"))
-
-            Spacer(minLength: 8)
-
-            // Streak + pourcentage
-            HStack {
-                if entry.myStreak > 0 {
-                    HStack(spacing: 3) {
-                        Text("🔥")
-                            .font(.system(size: 11))
-                        Text("\(entry.myStreak)")
-                            .font(.system(size: 11, weight: .semibold))
-                            .foregroundColor(Color(hex: "F97316"))
+                    // Second (top 2)
+                    if let name = entry.participant2Name,
+                       let page = entry.participant2Page {
+                        ParticipantRow(
+                            name: name,
+                            page: page,
+                            base64Photo: entry.participant2Photo,
+                            avatarColor: Color(hex: "8B7EC4")
+                        )
                     }
                 }
-                Spacer()
-                Text("\(Int(entry.myProgress * 100))%")
-                    .font(.system(size: 15, weight: .bold))
-                    .foregroundColor(.white)
+                .offset(y: -side * 0.06)
+
+                // ── Mascotte PopEyes ──
+                // Positionnée très bas pour déborder du widget.
+                // iOS clippe automatiquement au bord arrondi.
+                Image("PopEyes")
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: side * 0.55)
+                    .rotationEffect(.degrees(-25))
+                    .offset(y: side * 0.43)
             }
+            .frame(width: geo.size.width, height: geo.size.height)
         }
-        .padding(14)
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-        .background(Color(hex: "181d27"))
+        .background(Color.white)
     }
 }
 
 // ─────────────────────────────────────────────────────────────
-// MARK: - Grand widget (systemMedium)
+// MARK: - Jauge en arc ouvert (DashedProgressGauge)
 //
-// Layout :
-//   📚 Harry Potter · J.K. Rowling       652 pages
-//   ──────────────────────────────────────────────
-//   Moi 👑                  │  Zoé
-//   142 pages               │  98 pages
-//   ████████░░░░ 21%        │  ██████░░░░░ 15%
-//   🔥5                     │
+// Contrairement à un cercle fermé, cette jauge est un ARC
+// OUVERT en bas (~80° de gap). Elle se remplit de GAUCHE à
+// DROITE, comme un compteur de vitesse.
+//
+// Maths :
+// - Arc total = 280° (= 360° - 80° de gap)
+// - En fraction de cercle : 280/360 = 0.778
+// - Rotation de 130° pour que l'arc commence en bas-gauche
+//   (position ~7h20 sur une horloge) et finisse en bas-droite
+//   (~4h40), avec le gap centré en bas.
+// - Le progress remplit proportionnellement cet arc.
 // ─────────────────────────────────────────────────────────────
 
-struct MediumWidgetView: View {
-    let entry: BookEntry
+struct DashedProgressGauge: View {
+    let progress: Double
+
+    private let arcFraction: Double = 0.778
+    private let startRotation: Double = 130
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-
-            // En-tête : titre + total pages
-            HStack(alignment: .top) {
-                HStack(spacing: 5) {
-                    Text("📚")
-                        .font(.system(size: 13))
-                    VStack(alignment: .leading, spacing: 1) {
-                        Text(entry.bookTitle)
-                            .font(.system(size: 13, weight: .bold))
-                            .foregroundColor(.white)
-                            .lineLimit(1)
-                        Text(entry.bookAuthor)
-                            .font(.system(size: 10))
-                            .foregroundColor(Color(hex: "717680"))
-                            .lineLimit(1)
-                    }
-                }
-                Spacer()
-                Text("\(entry.myTotalPages) pages")
-                    .font(.system(size: 10))
-                    .foregroundColor(Color(hex: "535862"))
-            }
-
-            // Ligne de séparation
-            Rectangle()
-                .fill(Color.white.opacity(0.08))
-                .frame(height: 1)
-
-            // Comparaison côte à côte
-            HStack(spacing: 0) {
-
-                // ── Moi ──
-                ParticipantColumnView(
-                    name: "Moi",
-                    currentPage: entry.myCurrentPage,
-                    totalPages: entry.myTotalPages,
-                    progress: entry.myProgress,
-                    streak: entry.myStreak,
-                    isWinning: entry.iAmWinning
+        ZStack {
+            // Arc de fond (gris clair) — la totalité de la jauge
+            Circle()
+                .trim(from: 0, to: arcFraction)
+                .stroke(
+                    style: StrokeStyle(lineWidth: 5, dash: [5.5, 2.5])
                 )
+                .foregroundColor(Color(hex: "D5D7DA"))
+                .rotationEffect(.degrees(startRotation))
 
-                // Séparateur vertical
-                Rectangle()
-                    .fill(Color.white.opacity(0.08))
-                    .frame(width: 1)
-                    .padding(.horizontal, 12)
-
-                // ── Ami·e ──
-                if let name = entry.friendName,
-                   let pages = entry.friendCurrentPage,
-                   let progress = entry.friendProgress {
-                    ParticipantColumnView(
-                        name: name,
-                        currentPage: pages,
-                        totalPages: entry.myTotalPages,
-                        progress: progress,
-                        streak: nil,
-                        isWinning: !entry.iAmWinning
-                    )
-                } else {
-                    // Pas encore d'ami·e dans le challenge
-                    VStack(spacing: 4) {
-                        Text("✉️")
-                            .font(.system(size: 20))
-                        Text("Invite\nun·e ami·e")
-                            .font(.system(size: 10))
-                            .foregroundColor(Color(hex: "535862"))
-                            .multilineTextAlignment(.center)
-                    }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                }
-            }
+            // Arc de progression (noir) — rempli de gauche à droite
+            Circle()
+                .trim(from: 0, to: min(progress, 1.0) * arcFraction)
+                .stroke(
+                    style: StrokeStyle(lineWidth: 5, lineCap: .butt, dash: [5.5, 2.5])
+                )
+                .foregroundColor(Color(hex: "181D27"))
+                .rotationEffect(.degrees(startRotation))
         }
-        .padding(14)
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-        .background(Color(hex: "181d27"))
     }
 }
 
 // ─────────────────────────────────────────────────────────────
-// MARK: - Colonne d'un participant (réutilisée dans le medium)
+// MARK: - Ligne participant (ParticipantRow)
+//
+// Si une photo base64 est fournie, on la décode en UIImage
+// et on l'affiche dans le carré arrondi. Sinon, fallback sur
+// un carré coloré avec l'initiale du prénom.
 // ─────────────────────────────────────────────────────────────
 
-struct ParticipantColumnView: View {
+struct ParticipantRow: View {
     let name: String
-    let currentPage: Int
-    let totalPages: Int
-    let progress: Double
-    let streak: Int?
-    let isWinning: Bool
+    let page: Int
+    let base64Photo: String?
+    let avatarColor: Color
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 5) {
+        HStack(spacing: 8) {
+            // Avatar : photo réelle ou initiale colorée
+            ZStack {
+                if let photo = base64Photo,
+                   let imageData = Data(base64Encoded: photo),
+                   let uiImage = UIImage(data: imageData) {
+                    Image(uiImage: uiImage)
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                        .frame(width: 35, height: 35)
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 8)
+                                .stroke(Color.white.opacity(0.3), lineWidth: 1)
+                        )
+                        .shadow(color: .black.opacity(0.25), radius: 3, x: 0, y: 2)
+                } else {
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(avatarColor)
+                        .frame(width: 35, height: 35)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 8)
+                                .stroke(Color.white.opacity(0.3), lineWidth: 1)
+                        )
+                        .shadow(color: .black.opacity(0.25), radius: 3, x: 0, y: 2)
 
-            // Nom + couronne si en tête
-            HStack(spacing: 4) {
+                    Text(String(name.prefix(1)).uppercased())
+                        .font(.system(size: 15, weight: .bold))
+                        .foregroundColor(.white)
+                }
+            }
+            .frame(width: 35, height: 35)
+
+            VStack(alignment: .leading, spacing: 2) {
                 Text(name)
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundColor(.white)
+                    .font(.system(size: 12))
+                    .foregroundColor(Color(hex: "535862"))
                     .lineLimit(1)
-                if isWinning {
-                    Text("👑")
-                        .font(.system(size: 10))
-                }
-            }
 
-            // Pages lues
-            Text("\(currentPage) pages")
-                .font(.system(size: 11))
-                .foregroundColor(Color(hex: "717680"))
-
-            // Barre de progression
-            GeometryReader { geo in
-                ZStack(alignment: .leading) {
-                    RoundedRectangle(cornerRadius: 3)
-                        .fill(Color.white.opacity(0.1))
-                        .frame(height: 5)
-                    RoundedRectangle(cornerRadius: 3)
-                        .fill(isWinning ? Color(hex: "F97316") : Color(hex: "535862"))
-                        .frame(width: geo.size.width * min(progress, 1.0), height: 5)
-                }
-            }
-            .frame(height: 5)
-
-            // Pourcentage + streak (si disponible)
-            HStack(spacing: 4) {
-                Text("\(Int(progress * 100))%")
-                    .font(.system(size: 11, weight: .bold))
-                    .foregroundColor(isWinning ? Color(hex: "F97316") : Color(hex: "717680"))
-
-                if let streak = streak, streak > 0 {
-                    Spacer()
-                    Text("🔥\(streak)")
-                        .font(.system(size: 10))
-                        .foregroundColor(Color(hex: "F97316"))
-                }
+                Text("\(page)")
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundColor(Color(hex: "181D27"))
             }
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 
 // ─────────────────────────────────────────────────────────────
 // MARK: - Déclaration du widget
+//
+// contentMarginsDisabled() supprime les marges automatiques
+// d'iOS 17 pour que le contenu puisse déborder (PopEyes).
 // ─────────────────────────────────────────────────────────────
 
 struct bbbWidget: Widget {
@@ -397,19 +341,17 @@ struct bbbWidget: Widget {
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: Provider()) { entry in
             bbbWidgetEntryView(entry: entry)
-                .containerBackground(Color(hex: "181d27"), for: .widget)
+                .containerBackground(.white, for: .widget)
         }
         .configurationDisplayName("Bestie Book Battle")
-        .description("Ta progression de lecture et celle de ton·ta ami·e")
-        .supportedFamilies([.systemSmall, .systemMedium])
+        .description("Le classement de ton challenge lecture")
+        .supportedFamilies([.systemSmall])
+        .contentMarginsDisabled()
     }
 }
 
 // ─────────────────────────────────────────────────────────────
-// MARK: - Extension utilitaire : couleur depuis un code hex
-//
-// Permet d'utiliser les couleurs de l'app (ex: Color(hex: "F97316"))
-// sans avoir à convertir en RGB manuellement à chaque fois.
+// MARK: - Extension Color hex
 // ─────────────────────────────────────────────────────────────
 
 extension Color {
@@ -439,16 +381,10 @@ extension Color {
 }
 
 // ─────────────────────────────────────────────────────────────
-// MARK: - Prévisualisations Xcode (Canvas)
+// MARK: - Prévisualisation
 // ─────────────────────────────────────────────────────────────
 
 #Preview(as: .systemSmall) {
-    bbbWidget()
-} timeline: {
-    BookEntry.placeholder
-}
-
-#Preview(as: .systemMedium) {
     bbbWidget()
 } timeline: {
     BookEntry.placeholder

@@ -52,7 +52,7 @@ import ParticipantHistorySheet from '../../components/ui/ParticipantHistorySheet
 import ProgressCard from '../../components/ui/ProgressCard';
 import { getUserHistory } from '../../services/supabase/database';
 import { uploadBookCover } from '../../services/supabase/storage';
-import { updateWidgetData } from '../../utils/widget';
+import { updateWidgetData, profilePhotoToBase64 } from '../../utils/widget';
 import { useNotificationScheduler } from '../../hooks/useNotificationScheduler';
 import { useAuthStore } from '../../stores/authStore';
 import { useGoalStore } from '../../stores/goalStore';
@@ -277,20 +277,6 @@ export default function HomeScreen() {
     try {
       await updateProgress(activeChallenge.id, user.id, currentPageInput);
 
-      // Met à jour le widget iOS avec les nouvelles données de progression.
-      // Le widget lit cet espace partagé (App Group) pour afficher les infos
-      // sur l'écran d'accueil de l'iPhone sans avoir à ouvrir l'app.
-      await updateWidgetData({
-        bookTitle: activeChallenge.book_title,
-        bookAuthor: activeChallenge.book_author || '',
-        myCurrentPage: currentPageInput,
-        myTotalPages: activeChallenge.total_pages,
-        myStreak: meData.streak,
-        friendName: friendData?.name ?? null,
-        friendCurrentPage: friendData?.score ?? null,
-        lastUpdated: new Date().toISOString(),
-      });
-
       // Lance le toast "feuille qui tombe" avec le delta
       if (delta !== 0) {
         setDeltaText(delta > 0 ? `+${delta}` : `${delta}`);
@@ -386,24 +372,44 @@ export default function HomeScreen() {
     streakAtRisk: isStreakAtRisk(friendParticipant.progress.last_streak_date),
   } : null;
 
-  // ===== Mise à jour automatique du widget iOS au chargement des données =====
-  // Placé après meData et friendData pour qu'ils soient déjà définis.
-  // Se déclenche dès que la progression ou le challenge change — ainsi le widget
-  // est toujours à jour dès l'ouverture de l'app, sans appuyer sur ✓.
+  // ===== Mise à jour automatique du widget iOS =====
+  // Se déclenche dès que les participants ou le challenge changent.
+  // 1. Trie les participants par pages lues (décroissant)
+  // 2. Télécharge + encode en base64 les photos des 2 premiers
+  // 3. Calcule la progression moyenne du groupe
+  // 4. Envoie tout dans l'App Group pour le widget Swift
   useEffect(() => {
-    if (!activeChallenge) return;
+    if (!activeChallenge || participants.length === 0) return;
 
-    updateWidgetData({
-      bookTitle: activeChallenge.book_title,
-      bookAuthor: activeChallenge.book_author || '',
-      myCurrentPage: lastSavedPage,
-      myTotalPages: activeChallenge.total_pages,
-      myStreak: meData.streak,
-      friendName: friendData?.name ?? null,
-      friendCurrentPage: friendData?.score ?? null,
-      lastUpdated: new Date().toISOString(),
-    });
-  }, [activeChallenge?.id, lastSavedPage, meData.streak, friendData?.score]);
+    const sorted = [...participants].sort(
+      (a, b) => b.progress.current_page - a.progress.current_page
+    );
+    const top1 = sorted[0];
+    const top2 = sorted.length > 1 ? sorted[1] : null;
+
+    const avgProgress = participants.reduce(
+      (acc, p) => acc + p.progress.current_page, 0
+    ) / (participants.length * totalPages);
+
+    (async () => {
+      const [photo1, photo2] = await Promise.all([
+        profilePhotoToBase64(top1.user.profile_photo_url),
+        top2 ? profilePhotoToBase64(top2.user.profile_photo_url) : null,
+      ]);
+
+      await updateWidgetData({
+        totalPages,
+        averageProgress: Math.min(avgProgress, 1),
+        participant1Name: top1.user.first_name || 'Joueur 1',
+        participant1Page: top1.progress.current_page,
+        participant1Photo: photo1,
+        participant2Name: top2?.user.first_name ?? null,
+        participant2Page: top2?.progress.current_page ?? null,
+        participant2Photo: photo2 ?? null,
+        lastUpdated: new Date().toISOString(),
+      });
+    })();
+  }, [participants, activeChallenge?.id, totalPages]);
 
   // ===== Callback : basculer l'étagère ouverte/fermée =====
   const handleBookStackToggle = useCallback(() => {
