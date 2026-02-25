@@ -13,8 +13,10 @@
 		3E6C6A4F2F4F436D005A9186 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3E6C6A4E2F4F436D005A9186 /* SwiftUI.framework */; };
 		3E6C6A602F4F436E005A9186 /* bbbWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 3E6C6A4B2F4F436D005A9186 /* bbbWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		73EC14473B23A578625830B9 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 594B7B854E0446039A45F039 /* PrivacyInfo.xcprivacy */; };
+		7D6D1A0F2A9E475D92F8EE42 /* WidgetRefreshModule.m in Sources */ = {isa = PBXBuildFile; fileRef = FB1D8266C7F3421CAF299055 /* WidgetRefreshModule.m */; };
 		9B86F12CA47EE548687C14C2 /* libPods-bestiebookbattle.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 2D2B8D2833A276A64E1AAAE8 /* libPods-bestiebookbattle.a */; };
 		BB2F792D24A3F905000567C9 /* Expo.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB2F792C24A3F905000567C9 /* Expo.plist */; };
+		C34F8C85D3774DDE80AD1B68 /* WidgetRefreshModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13FCDADA4D804E4BA4E2301A /* WidgetRefreshModule.swift */; };
 		C5A656E7AB53F87215F219A1 /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F5FDDED5CCAAF261B81D77C /* ExpoModulesProvider.swift */; };
 		F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11748412D0307B40044C1D9 /* AppDelegate.swift */; };
 /* End PBXBuildFile section */
@@ -47,6 +49,7 @@
 		13B07F961A680F5B00A75B9A /* bestiebookbattle.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = bestiebookbattle.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = bestiebookbattle/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = bestiebookbattle/Info.plist; sourceTree = "<group>"; };
+		13FCDADA4D804E4BA4E2301A /* WidgetRefreshModule.swift */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = sourcecode.swift; name = WidgetRefreshModule.swift; path = bestiebookbattle/WidgetRefreshModule.swift; sourceTree = "<group>"; };
 		1F5FDDED5CCAAF261B81D77C /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-bestiebookbattle/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
 		2D2B8D2833A276A64E1AAAE8 /* libPods-bestiebookbattle.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-bestiebookbattle.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		3E6C6A4B2F4F436D005A9186 /* bbbWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = bbbWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -61,10 +64,11 @@
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 		F11748412D0307B40044C1D9 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = bestiebookbattle/AppDelegate.swift; sourceTree = "<group>"; };
 		F11748442D0722820044C1D9 /* bestiebookbattle-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "bestiebookbattle-Bridging-Header.h"; path = "bestiebookbattle/bestiebookbattle-Bridging-Header.h"; sourceTree = "<group>"; };
+		FB1D8266C7F3421CAF299055 /* WidgetRefreshModule.m */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = sourcecode.c.objc; name = WidgetRefreshModule.m; path = bestiebookbattle/WidgetRefreshModule.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		3E6C6A642F4F436E005A9186 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
+		3E6C6A642F4F436E005A9186 /* Exceptions for "bbbWidget" folder in "bbbWidgetExtension" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
@@ -74,7 +78,18 @@
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		3E6C6A502F4F436D005A9186 /* bbbWidget */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (3E6C6A642F4F436E005A9186 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = bbbWidget; sourceTree = "<group>"; };
+		3E6C6A502F4F436D005A9186 /* bbbWidget */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				3E6C6A642F4F436E005A9186 /* Exceptions for "bbbWidget" folder in "bbbWidgetExtension" target */,
+			);
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
+			path = bbbWidget;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -102,6 +117,8 @@
 			isa = PBXGroup;
 			children = (
 				1F5FDDED5CCAAF261B81D77C /* ExpoModulesProvider.swift */,
+				13FCDADA4D804E4BA4E2301A /* WidgetRefreshModule.swift */,
+				FB1D8266C7F3421CAF299055 /* WidgetRefreshModule.m */,
 			);
 			name = bestiebookbattle;
 			sourceTree = "<group>";
@@ -233,8 +250,6 @@
 				3E6C6A502F4F436D005A9186 /* bbbWidget */,
 			);
 			name = bbbWidgetExtension;
-			packageProductDependencies = (
-			);
 			productName = bbbWidgetExtension;
 			productReference = 3E6C6A4B2F4F436D005A9186 /* bbbWidgetExtension.appex */;
 			productType = "com.apple.product-type.app-extension";
@@ -435,6 +450,8 @@
 			files = (
 				F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */,
 				C5A656E7AB53F87215F219A1 /* ExpoModulesProvider.swift in Sources */,
+				C34F8C85D3774DDE80AD1B68 /* WidgetRefreshModule.swift in Sources */,
+				7D6D1A0F2A9E475D92F8EE42 /* WidgetRefreshModule.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -563,6 +580,7 @@
 				MARKETING_VERSION = 1.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
+				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
 				PRODUCT_BUNDLE_IDENTIFIER = com.leasantos.bestiebookbattle.bbbWidget;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
@@ -612,6 +630,7 @@
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MARKETING_VERSION = 1.0;
 				MTL_FAST_MATH = YES;
+				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
 				PRODUCT_BUNDLE_IDENTIFIER = com.leasantos.bestiebookbattle.bbbWidget;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;

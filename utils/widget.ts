@@ -15,8 +15,10 @@
  */
 
 import * as FileSystem from 'expo-file-system';
-import { Platform } from 'react-native';
+import { NativeModules, Platform } from 'react-native';
 import SharedGroupPreferences from 'react-native-shared-group-preferences';
+
+const { WidgetRefreshModule } = NativeModules;
 
 const APP_GROUP = 'group.com.leasantos.bestiebookbattle';
 const WIDGET_KEY = 'widgetData';
@@ -54,6 +56,8 @@ export async function updateWidgetData(data: WidgetData): Promise<void> {
       JSON.stringify(data),
       APP_GROUP
     );
+
+    WidgetRefreshModule?.reloadAllTimelines();
   } catch (error) {
     console.warn('[Widget] Impossible d\'écrire dans l\'App Group :', error);
   }
