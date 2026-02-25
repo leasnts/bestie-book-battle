@@ -87,14 +87,18 @@ export default function RootLayout() {
     WorkSans_SemiBold: WorkSans_600SemiBold,
   });
 
-  // Si erreur de chargement des polices, on la propage
+  // Si erreur de chargement des polices, on log sans planter l'app.
+  // Certaines variantes (WorkSans_Medium) peuvent échouer sur certains appareils
+  // sans que ça bloque l'expérience — l'app continue avec la police de secours.
   useEffect(() => {
-    if (fontError) throw fontError;
+    if (fontError) console.warn('[Fonts] Erreur de chargement :', fontError.message);
   }, [fontError]);
 
   // Plus d'appel à SplashScreen.hideAsync() — source des erreurs sur Modal
 
-  if (!fontsLoaded) {
+  // On attend que les polices soient chargées OU qu'une erreur soit survenue
+  // (dans ce cas on continue quand même avec les polices système par défaut)
+  if (!fontsLoaded && !fontError) {
     return null;
   }
 

@@ -3,47 +3,109 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 54;
+	objectVersion = 70;
 	objects = {
 
 /* Begin PBXBuildFile section */
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
-		35FEF68CCA5856DAF41E043F /* libPods-bestiebookbattle.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 756A8DF10796EAE42611B4F2 /* libPods-bestiebookbattle.a */; };
 		3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */; };
+		3E6C6A4D2F4F436D005A9186 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3E6C6A4C2F4F436D005A9186 /* WidgetKit.framework */; };
+		3E6C6A4F2F4F436D005A9186 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3E6C6A4E2F4F436D005A9186 /* SwiftUI.framework */; };
+		3E6C6A602F4F436E005A9186 /* bbbWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 3E6C6A4B2F4F436D005A9186 /* bbbWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		73EC14473B23A578625830B9 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 594B7B854E0446039A45F039 /* PrivacyInfo.xcprivacy */; };
+		9B86F12CA47EE548687C14C2 /* libPods-bestiebookbattle.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 2D2B8D2833A276A64E1AAAE8 /* libPods-bestiebookbattle.a */; };
 		BB2F792D24A3F905000567C9 /* Expo.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB2F792C24A3F905000567C9 /* Expo.plist */; };
-		E6C2D55A2751BD91B0AC3D11 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 7677BB3F8373C87F410F9276 /* PrivacyInfo.xcprivacy */; };
+		C5A656E7AB53F87215F219A1 /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F5FDDED5CCAAF261B81D77C /* ExpoModulesProvider.swift */; };
 		F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11748412D0307B40044C1D9 /* AppDelegate.swift */; };
-		F195F2DFC16A98B91734C63E /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC7BC80B2AA960E5BF3844D1 /* ExpoModulesProvider.swift */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		3E6C6A5E2F4F436E005A9186 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 83CBB9F71A601CBA00E9B192 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 3E6C6A4A2F4F436D005A9186;
+			remoteInfo = bbbWidgetExtension;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		3E6C6A612F4F436E005A9186 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				3E6C6A602F4F436E005A9186 /* bbbWidgetExtension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		13B07F961A680F5B00A75B9A /* bestiebookbattle.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = bestiebookbattle.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = bestiebookbattle/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = bestiebookbattle/Info.plist; sourceTree = "<group>"; };
-		756A8DF10796EAE42611B4F2 /* libPods-bestiebookbattle.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-bestiebookbattle.a"; sourceTree = BUILT_PRODUCTS_DIR; };
-		7677BB3F8373C87F410F9276 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; name = PrivacyInfo.xcprivacy; path = bestiebookbattle/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
-		829203BD5C07F46007A299F1 /* Pods-bestiebookbattle.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-bestiebookbattle.debug.xcconfig"; path = "Target Support Files/Pods-bestiebookbattle/Pods-bestiebookbattle.debug.xcconfig"; sourceTree = "<group>"; };
+		1F5FDDED5CCAAF261B81D77C /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-bestiebookbattle/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
+		2D2B8D2833A276A64E1AAAE8 /* libPods-bestiebookbattle.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-bestiebookbattle.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		3E6C6A4B2F4F436D005A9186 /* bbbWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = bbbWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		3E6C6A4C2F4F436D005A9186 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
+		3E6C6A4E2F4F436D005A9186 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
+		3E6C6A662F4F438A005A9186 /* bbbWidgetExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = bbbWidgetExtension.entitlements; sourceTree = "<group>"; };
+		4EBF9E6A24DCE3BF156EB75D /* Pods-bestiebookbattle.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-bestiebookbattle.release.xcconfig"; path = "Target Support Files/Pods-bestiebookbattle/Pods-bestiebookbattle.release.xcconfig"; sourceTree = "<group>"; };
+		594B7B854E0446039A45F039 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xml; name = PrivacyInfo.xcprivacy; path = bestiebookbattle/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = SplashScreen.storyboard; path = bestiebookbattle/SplashScreen.storyboard; sourceTree = "<group>"; };
 		BB2F792C24A3F905000567C9 /* Expo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Expo.plist; sourceTree = "<group>"; };
-		D5D828D15C2304B74040A6E4 /* Pods-bestiebookbattle.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-bestiebookbattle.release.xcconfig"; path = "Target Support Files/Pods-bestiebookbattle/Pods-bestiebookbattle.release.xcconfig"; sourceTree = "<group>"; };
-		DC7BC80B2AA960E5BF3844D1 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-bestiebookbattle/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
+		EC43934E466524642753D9F1 /* Pods-bestiebookbattle.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-bestiebookbattle.debug.xcconfig"; path = "Target Support Files/Pods-bestiebookbattle/Pods-bestiebookbattle.debug.xcconfig"; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 		F11748412D0307B40044C1D9 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = bestiebookbattle/AppDelegate.swift; sourceTree = "<group>"; };
 		F11748442D0722820044C1D9 /* bestiebookbattle-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "bestiebookbattle-Bridging-Header.h"; path = "bestiebookbattle/bestiebookbattle-Bridging-Header.h"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		3E6C6A642F4F436E005A9186 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 3E6C6A4A2F4F436D005A9186 /* bbbWidgetExtension */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		3E6C6A502F4F436D005A9186 /* bbbWidget */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (3E6C6A642F4F436E005A9186 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = bbbWidget; sourceTree = "<group>"; };
+/* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		13B07F8C1A680F5B00A75B9A /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				35FEF68CCA5856DAF41E043F /* libPods-bestiebookbattle.a in Frameworks */,
+				9B86F12CA47EE548687C14C2 /* libPods-bestiebookbattle.a in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		3E6C6A482F4F436D005A9186 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				3E6C6A4F2F4F436D005A9186 /* SwiftUI.framework in Frameworks */,
+				3E6C6A4D2F4F436D005A9186 /* WidgetKit.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		09CB77D3539E6EF190099D6D /* bestiebookbattle */ = {
+			isa = PBXGroup;
+			children = (
+				1F5FDDED5CCAAF261B81D77C /* ExpoModulesProvider.swift */,
+			);
+			name = bestiebookbattle;
+			sourceTree = "<group>";
+		};
 		13B07FAE1A68108700A75B9A /* bestiebookbattle */ = {
 			isa = PBXGroup;
 			children = (
@@ -53,15 +115,7 @@
 				13B07FB51A68108700A75B9A /* Images.xcassets */,
 				13B07FB61A68108700A75B9A /* Info.plist */,
 				AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */,
-				7677BB3F8373C87F410F9276 /* PrivacyInfo.xcprivacy */,
-			);
-			name = bestiebookbattle;
-			sourceTree = "<group>";
-		};
-		13EDD9E96759C85277B6F94E /* bestiebookbattle */ = {
-			isa = PBXGroup;
-			children = (
-				DC7BC80B2AA960E5BF3844D1 /* ExpoModulesProvider.swift */,
+				594B7B854E0446039A45F039 /* PrivacyInfo.xcprivacy */,
 			);
 			name = bestiebookbattle;
 			sourceTree = "<group>";
@@ -70,9 +124,28 @@
 			isa = PBXGroup;
 			children = (
 				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
-				756A8DF10796EAE42611B4F2 /* libPods-bestiebookbattle.a */,
+				2D2B8D2833A276A64E1AAAE8 /* libPods-bestiebookbattle.a */,
+				3E6C6A4C2F4F436D005A9186 /* WidgetKit.framework */,
+				3E6C6A4E2F4F436D005A9186 /* SwiftUI.framework */,
 			);
 			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		479F273D1582EF06C6855B3D /* ExpoModulesProviders */ = {
+			isa = PBXGroup;
+			children = (
+				09CB77D3539E6EF190099D6D /* bestiebookbattle */,
+			);
+			name = ExpoModulesProviders;
+			sourceTree = "<group>";
+		};
+		6307F5CFFF51F45806D07E3B /* Pods */ = {
+			isa = PBXGroup;
+			children = (
+				EC43934E466524642753D9F1 /* Pods-bestiebookbattle.debug.xcconfig */,
+				4EBF9E6A24DCE3BF156EB75D /* Pods-bestiebookbattle.release.xcconfig */,
+			);
+			path = Pods;
 			sourceTree = "<group>";
 		};
 		832341AE1AAA6A7D00B99B32 /* Libraries */ = {
@@ -85,12 +158,14 @@
 		83CBB9F61A601CBA00E9B192 = {
 			isa = PBXGroup;
 			children = (
+				3E6C6A662F4F438A005A9186 /* bbbWidgetExtension.entitlements */,
 				13B07FAE1A68108700A75B9A /* bestiebookbattle */,
 				832341AE1AAA6A7D00B99B32 /* Libraries */,
+				3E6C6A502F4F436D005A9186 /* bbbWidget */,
 				83CBBA001A601CBA00E9B192 /* Products */,
 				2D16E6871FA4F8E400B85C8A /* Frameworks */,
-				D8E75FE93616A78DEF5EDE4B /* Pods */,
-				F552D0939A322DD9BFBCD240 /* ExpoModulesProviders */,
+				6307F5CFFF51F45806D07E3B /* Pods */,
+				479F273D1582EF06C6855B3D /* ExpoModulesProviders */,
 			);
 			indentWidth = 2;
 			sourceTree = "<group>";
@@ -101,6 +176,7 @@
 			isa = PBXGroup;
 			children = (
 				13B07F961A680F5B00A75B9A /* bestiebookbattle.app */,
+				3E6C6A4B2F4F436D005A9186 /* bbbWidgetExtension.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -114,24 +190,6 @@
 			path = bestiebookbattle/Supporting;
 			sourceTree = "<group>";
 		};
-		D8E75FE93616A78DEF5EDE4B /* Pods */ = {
-			isa = PBXGroup;
-			children = (
-				829203BD5C07F46007A299F1 /* Pods-bestiebookbattle.debug.xcconfig */,
-				D5D828D15C2304B74040A6E4 /* Pods-bestiebookbattle.release.xcconfig */,
-			);
-			name = Pods;
-			path = Pods;
-			sourceTree = "<group>";
-		};
-		F552D0939A322DD9BFBCD240 /* ExpoModulesProviders */ = {
-			isa = PBXGroup;
-			children = (
-				13EDD9E96759C85277B6F94E /* bestiebookbattle */,
-			);
-			name = ExpoModulesProviders;
-			sourceTree = "<group>";
-		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -140,22 +198,46 @@
 			buildConfigurationList = 13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "bestiebookbattle" */;
 			buildPhases = (
 				08A4A3CD28434E44B6B9DE2E /* [CP] Check Pods Manifest.lock */,
-				F27D12C15B0822A26EA1CE1E /* [Expo] Configure project */,
+				BBD6E997D65BB84C1F20069E /* [Expo] Configure project */,
 				13B07F871A680F5B00A75B9A /* Sources */,
 				13B07F8C1A680F5B00A75B9A /* Frameworks */,
 				13B07F8E1A680F5B00A75B9A /* Resources */,
 				00DD1BFF1BD5951E006B06BC /* Bundle React Native code and images */,
 				800E24972A6A228C8D4807E9 /* [CP] Copy Pods Resources */,
-				DAB923D4F6243BC7C50B31C0 /* [CP] Embed Pods Frameworks */,
+				D71DB3E0B0893E1F852D887E /* [CP] Embed Pods Frameworks */,
+				3E6C6A612F4F436E005A9186 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				3E6C6A5F2F4F436E005A9186 /* PBXTargetDependency */,
 			);
 			name = bestiebookbattle;
 			productName = bestiebookbattle;
 			productReference = 13B07F961A680F5B00A75B9A /* bestiebookbattle.app */;
 			productType = "com.apple.product-type.application";
+		};
+		3E6C6A4A2F4F436D005A9186 /* bbbWidgetExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 3E6C6A652F4F436E005A9186 /* Build configuration list for PBXNativeTarget "bbbWidgetExtension" */;
+			buildPhases = (
+				3E6C6A472F4F436D005A9186 /* Sources */,
+				3E6C6A482F4F436D005A9186 /* Frameworks */,
+				3E6C6A492F4F436D005A9186 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				3E6C6A502F4F436D005A9186 /* bbbWidget */,
+			);
+			name = bbbWidgetExtension;
+			packageProductDependencies = (
+			);
+			productName = bbbWidgetExtension;
+			productReference = 3E6C6A4B2F4F436D005A9186 /* bbbWidgetExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
 		};
 /* End PBXNativeTarget section */
 
@@ -163,10 +245,16 @@
 		83CBB9F71A601CBA00E9B192 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
+				LastSwiftUpdateCheck = 2620;
 				LastUpgradeCheck = 1130;
 				TargetAttributes = {
 					13B07F861A680F5B00A75B9A = {
+						DevelopmentTeam = 78XSB339KL;
 						LastSwiftMigration = 1250;
+						ProvisioningStyle = Automatic;
+					};
+					3E6C6A4A2F4F436D005A9186 = {
+						CreatedOnToolsVersion = 26.2;
 					};
 				};
 			};
@@ -184,6 +272,7 @@
 			projectRoot = "";
 			targets = (
 				13B07F861A680F5B00A75B9A /* bestiebookbattle */,
+				3E6C6A4A2F4F436D005A9186 /* bbbWidgetExtension */,
 			);
 		};
 /* End PBXProject section */
@@ -196,7 +285,14 @@
 				BB2F792D24A3F905000567C9 /* Expo.plist in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 				3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */,
-				E6C2D55A2751BD91B0AC3D11 /* PrivacyInfo.xcprivacy in Resources */,
+				73EC14473B23A578625830B9 /* PrivacyInfo.xcprivacy in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		3E6C6A492F4F436D005A9186 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -284,29 +380,7 @@
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-bestiebookbattle/Pods-bestiebookbattle-resources.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
-		DAB923D4F6243BC7C50B31C0 /* [CP] Embed Pods Frameworks */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-bestiebookbattle/Pods-bestiebookbattle-frameworks.sh",
-				"${PODS_XCFRAMEWORKS_BUILD_DIR}/React-Core-prebuilt/React.framework/React",
-				"${PODS_XCFRAMEWORKS_BUILD_DIR}/ReactNativeDependencies/ReactNativeDependencies.framework/ReactNativeDependencies",
-				"${PODS_XCFRAMEWORKS_BUILD_DIR}/hermes-engine/Pre-built/hermes.framework/hermes",
-			);
-			name = "[CP] Embed Pods Frameworks";
-			outputPaths = (
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/React.framework",
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/ReactNativeDependencies.framework",
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/hermes.framework",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-bestiebookbattle/Pods-bestiebookbattle-frameworks.sh\"\n";
-			showEnvVarsInLog = 0;
-		};
-		F27D12C15B0822A26EA1CE1E /* [Expo] Configure project */ = {
+		BBD6E997D65BB84C1F20069E /* [Expo] Configure project */ = {
 			isa = PBXShellScriptBuildPhase;
 			alwaysOutOfDate = 1;
 			buildActionMask = 2147483647;
@@ -330,6 +404,28 @@
 			shellPath = /bin/sh;
 			shellScript = "# This script configures Expo modules and generates the modules provider file.\nbash -l -c \"./Pods/Target\\ Support\\ Files/Pods-bestiebookbattle/expo-configure-project.sh\"\n";
 		};
+		D71DB3E0B0893E1F852D887E /* [CP] Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-bestiebookbattle/Pods-bestiebookbattle-frameworks.sh",
+				"${PODS_XCFRAMEWORKS_BUILD_DIR}/React-Core-prebuilt/React.framework/React",
+				"${PODS_XCFRAMEWORKS_BUILD_DIR}/ReactNativeDependencies/ReactNativeDependencies.framework/ReactNativeDependencies",
+				"${PODS_XCFRAMEWORKS_BUILD_DIR}/hermes-engine/Pre-built/hermes.framework/hermes",
+			);
+			name = "[CP] Embed Pods Frameworks";
+			outputPaths = (
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/React.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/ReactNativeDependencies.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/hermes.framework",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-bestiebookbattle/Pods-bestiebookbattle-frameworks.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
 /* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
@@ -338,21 +434,39 @@
 			buildActionMask = 2147483647;
 			files = (
 				F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */,
-				F195F2DFC16A98B91734C63E /* ExpoModulesProvider.swift in Sources */,
+				C5A656E7AB53F87215F219A1 /* ExpoModulesProvider.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		3E6C6A472F4F436D005A9186 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
 
+/* Begin PBXTargetDependency section */
+		3E6C6A5F2F4F436E005A9186 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 3E6C6A4A2F4F436D005A9186 /* bbbWidgetExtension */;
+			targetProxy = 3E6C6A5E2F4F436E005A9186 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
 /* Begin XCBuildConfiguration section */
 		13B07F941A680F5B00A75B9A /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 829203BD5C07F46007A299F1 /* Pods-bestiebookbattle.debug.xcconfig */;
+			baseConfigurationReference = EC43934E466524642753D9F1 /* Pods-bestiebookbattle.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = bestiebookbattle/bestiebookbattle.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 78XSB339KL;
 				ENABLE_BITCODE = NO;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"$(inherited)",
@@ -383,12 +497,15 @@
 		};
 		13B07F951A680F5B00A75B9A /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = D5D828D15C2304B74040A6E4 /* Pods-bestiebookbattle.release.xcconfig */;
+			baseConfigurationReference = 4EBF9E6A24DCE3BF156EB75D /* Pods-bestiebookbattle.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = bestiebookbattle/bestiebookbattle.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 78XSB339KL;
 				INFOPLIST_FILE = bestiebookbattle/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -408,6 +525,103 @@
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 1;
 				VERSIONING_SYSTEM = "apple-generic";
+			};
+			name = Release;
+		};
+		3E6C6A622F4F436E005A9186 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CODE_SIGN_ENTITLEMENTS = bbbWidgetExtension.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = 78XSB339KL;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = bbbWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = bbbWidget;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = 1.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.leasantos.bestiebookbattle.bbbWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		3E6C6A632F4F436E005A9186 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CODE_SIGN_ENTITLEMENTS = bbbWidgetExtension.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = 78XSB339KL;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = bbbWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = bbbWidget;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = 1.0;
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.leasantos.bestiebookbattle.bbbWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Release;
 		};
@@ -537,6 +751,15 @@
 			buildConfigurations = (
 				13B07F941A680F5B00A75B9A /* Debug */,
 				13B07F951A680F5B00A75B9A /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		3E6C6A652F4F436E005A9186 /* Build configuration list for PBXNativeTarget "bbbWidgetExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				3E6C6A622F4F436E005A9186 /* Debug */,
+				3E6C6A632F4F436E005A9186 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

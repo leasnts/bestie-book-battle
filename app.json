@@ -44,6 +44,12 @@
       "eas": {
         "projectId": "47b87edb-68d3-47d9-8b2b-a46859cc2ea1"
       }
+    },
+    "android": {
+      "permissions": [
+        "android.permission.RECORD_AUDIO"
+      ],
+      "package": "com.leasantos.bestiebookbattle"
     }
   }
 }

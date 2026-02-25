@@ -52,6 +52,7 @@ import ParticipantHistorySheet from '../../components/ui/ParticipantHistorySheet
 import ProgressCard from '../../components/ui/ProgressCard';
 import { getUserHistory } from '../../services/supabase/database';
 import { uploadBookCover } from '../../services/supabase/storage';
+import { updateWidgetData } from '../../utils/widget';
 import { useNotificationScheduler } from '../../hooks/useNotificationScheduler';
 import { useAuthStore } from '../../stores/authStore';
 import { useGoalStore } from '../../stores/goalStore';
@@ -276,6 +277,20 @@ export default function HomeScreen() {
     try {
       await updateProgress(activeChallenge.id, user.id, currentPageInput);
 
+      // Met à jour le widget iOS avec les nouvelles données de progression.
+      // Le widget lit cet espace partagé (App Group) pour afficher les infos
+      // sur l'écran d'accueil de l'iPhone sans avoir à ouvrir l'app.
+      await updateWidgetData({
+        bookTitle: activeChallenge.book_title,
+        bookAuthor: activeChallenge.book_author || '',
+        myCurrentPage: currentPageInput,
+        myTotalPages: activeChallenge.total_pages,
+        myStreak: meData.streak,
+        friendName: friendData?.name ?? null,
+        friendCurrentPage: friendData?.score ?? null,
+        lastUpdated: new Date().toISOString(),
+      });
+
       // Lance le toast "feuille qui tombe" avec le delta
       if (delta !== 0) {
         setDeltaText(delta > 0 ? `+${delta}` : `${delta}`);
@@ -370,6 +385,25 @@ export default function HomeScreen() {
     isLeader: friendParticipant.isLeader,
     streakAtRisk: isStreakAtRisk(friendParticipant.progress.last_streak_date),
   } : null;
+
+  // ===== Mise à jour automatique du widget iOS au chargement des données =====
+  // Placé après meData et friendData pour qu'ils soient déjà définis.
+  // Se déclenche dès que la progression ou le challenge change — ainsi le widget
+  // est toujours à jour dès l'ouverture de l'app, sans appuyer sur ✓.
+  useEffect(() => {
+    if (!activeChallenge) return;
+
+    updateWidgetData({
+      bookTitle: activeChallenge.book_title,
+      bookAuthor: activeChallenge.book_author || '',
+      myCurrentPage: lastSavedPage,
+      myTotalPages: activeChallenge.total_pages,
+      myStreak: meData.streak,
+      friendName: friendData?.name ?? null,
+      friendCurrentPage: friendData?.score ?? null,
+      lastUpdated: new Date().toISOString(),
+    });
+  }, [activeChallenge?.id, lastSavedPage, meData.streak, friendData?.score]);
 
   // ===== Callback : basculer l'étagère ouverte/fermée =====
   const handleBookStackToggle = useCallback(() => {
