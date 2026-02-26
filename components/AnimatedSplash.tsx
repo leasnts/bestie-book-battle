@@ -172,7 +172,7 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   text: {
-    fontFamily: 'Rokkitt_Bold',
+    fontFamily: 'Rokkitt_700Bold',
     fontSize: fontSize['6xl'], // 72px
     fontWeight: '700',
     color: colors.white,

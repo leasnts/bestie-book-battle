@@ -485,7 +485,7 @@ const styles = StyleSheet.create({
   // ═══ SCORE ═══
   // Rokkitt SemiBold 24px (display-xs dans le Figma)
   scoreNumber: {
-    fontFamily: 'Rokkitt_SemiBold',
+    fontFamily: 'Rokkitt_600SemiBold',
     fontSize: 24,
     color: colors.textPrimary,
     lineHeight: 32,

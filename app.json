@@ -24,7 +24,19 @@
     },
     "plugins": [
       "expo-router",
-      "expo-font",
+      ["expo-font", {
+        "fonts": [
+          "./assets/fonts/SpaceMono-Regular.ttf",
+          "./node_modules/@expo-google-fonts/rokkitt/400Regular/Rokkitt_400Regular.ttf",
+          "./node_modules/@expo-google-fonts/rokkitt/500Medium/Rokkitt_500Medium.ttf",
+          "./node_modules/@expo-google-fonts/rokkitt/600SemiBold/Rokkitt_600SemiBold.ttf",
+          "./node_modules/@expo-google-fonts/rokkitt/700Bold/Rokkitt_700Bold.ttf",
+          "./node_modules/@expo-google-fonts/work-sans/400Regular/WorkSans_400Regular.ttf",
+          "./node_modules/@expo-google-fonts/work-sans/500Medium/WorkSans_500Medium.ttf",
+          "./node_modules/@expo-google-fonts/work-sans/600SemiBold/WorkSans_600SemiBold.ttf",
+          "./node_modules/@expo-google-fonts/work-sans/700Bold/WorkSans_700Bold.ttf"
+        ]
+      }],
       "expo-web-browser",
       "expo-apple-authentication",
       "expo-notifications",

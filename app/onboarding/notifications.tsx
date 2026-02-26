@@ -227,7 +227,7 @@ const styles = StyleSheet.create({
         paddingTop: spacing['2xl'],
     },
     mainText: {
-        fontFamily: 'Rokkitt_SemiBold',
+        fontFamily: 'Rokkitt_600SemiBold',
         fontSize: fontSize['3xl'],
         fontWeight: fontWeight.semibold as any,
         color: colors.textPrimary,
@@ -235,7 +235,7 @@ const styles = StyleSheet.create({
         lineHeight: 44,
     },
     subText: {
-        fontFamily: 'WorkSans',
+        fontFamily: 'WorkSans_400Regular',
         fontSize: fontSize.sm, // 14px
         fontWeight: fontWeight.regular as any,
         color: colors.textTertiary,

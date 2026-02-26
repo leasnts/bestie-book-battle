@@ -1268,7 +1268,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   inviteCodeText: {
-    fontFamily: 'Rokkitt_Medium',
+    fontFamily: 'Rokkitt_500Medium',
     fontSize: 36,
     color: colors.textPrimary,
     letterSpacing: -0.72,

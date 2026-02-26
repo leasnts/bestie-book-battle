@@ -254,7 +254,7 @@ const styles = StyleSheet.create({
         gap: spacing.lg,
     },
     title: {
-        fontFamily: 'Rokkitt_Medium',
+        fontFamily: 'Rokkitt_500Medium',
         fontSize: fontSize['3xl'],
         fontWeight: fontWeight.medium,
         color: colors.textPrimary,
@@ -262,7 +262,7 @@ const styles = StyleSheet.create({
         lineHeight: 44,
     },
     description: {
-        fontFamily: 'WorkSans',
+        fontFamily: 'WorkSans_400Regular',
         fontSize: fontSize.md,
         fontWeight: fontWeight.regular,
         color: colors.textSecondary,
@@ -314,14 +314,14 @@ const styles = StyleSheet.create({
         gap: spacing.xs,
     },
     bookAuthor: {
-        fontFamily: 'WorkSans',
+        fontFamily: 'WorkSans_400Regular',
         fontSize: fontSize.sm,
         fontWeight: fontWeight.regular,
         color: colors.textSubtle,
         lineHeight: 20,
     },
     bookTitle: {
-        fontFamily: 'WorkSans_SemiBold',
+        fontFamily: 'WorkSans_600SemiBold',
         fontSize: fontSize.md,
         fontWeight: fontWeight.semibold,
         color: colors.white,
@@ -338,7 +338,7 @@ const styles = StyleSheet.create({
         marginTop: spacing.xs,
     },
     pagesText: {
-        fontFamily: 'WorkSans',
+        fontFamily: 'WorkSans_400Regular',
         fontSize: fontSize.xs,
         fontWeight: fontWeight.regular,
         color: colors.white,

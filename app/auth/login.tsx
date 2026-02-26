@@ -172,7 +172,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
   },
   logo: {
-    fontFamily: 'Rokkitt_Medium',
+    fontFamily: 'Rokkitt_500Medium',
     fontSize: fontSize['3xl'],
     fontWeight: fontWeight.medium as any,
     color: colors.textPrimary,
@@ -180,7 +180,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   logoBold: {
-    fontFamily: 'Rokkitt_Bold',
+    fontFamily: 'Rokkitt_700Bold',
     fontWeight: fontWeight.bold as any,
     color: colors.textPrimary, // gris foncé/noir pour les "b"
   },

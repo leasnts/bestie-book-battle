@@ -206,7 +206,7 @@ const styles = StyleSheet.create({
         gap: spacing['6xl'], // 64px entre titre et formulaire
     },
     title: {
-        fontFamily: 'Rokkitt_Medium',
+        fontFamily: 'Rokkitt_500Medium',
         fontSize: fontSize['3xl'],
         fontWeight: fontWeight.medium,
         color: colors.textPrimary,
@@ -218,7 +218,7 @@ const styles = StyleSheet.create({
     },
     inputWrapper: {},
     input: {
-        fontFamily: 'WorkSans',
+        fontFamily: 'WorkSans_400Regular',
         fontSize: fontSize.md,
         fontWeight: fontWeight.regular as any,
         color: colors.textPrimary,

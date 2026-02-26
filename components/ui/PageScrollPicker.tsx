@@ -215,7 +215,7 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
   pageLabel: {
-    fontFamily: 'Rokkitt_Bold',
+    fontFamily: 'Rokkitt_700Bold',
     fontSize: 36,
     color: 'rgba(0,0,0,0.08)',
     letterSpacing: -0.72,
@@ -233,7 +233,7 @@ const styles = StyleSheet.create({
     height: 150,
   },
   pageNumber: {
-    fontFamily: 'Rokkitt_Bold',
+    fontFamily: 'Rokkitt_700Bold',
     fontWeight: '700',
     textAlign: 'center',
     // textAlignVertical + includeFontPadding : corrige le centrage vertical

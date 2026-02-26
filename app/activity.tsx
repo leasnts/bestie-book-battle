@@ -226,7 +226,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
   },
   headerTitle: {
-    fontFamily: 'Rokkitt',
+    fontFamily: 'Rokkitt_400Regular',
     fontSize: fontSize['2xl'],
     fontWeight: fontWeight.regular as any,
     color: colors.textPrimary,
@@ -318,7 +318,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   emptyTitle: {
-    fontFamily: 'Rokkitt',
+    fontFamily: 'Rokkitt_400Regular',
     fontSize: fontSize.lg,
     fontWeight: fontWeight.semibold as any,
     color: colors.textPrimary,

@@ -9,18 +9,6 @@
  * C'est le point d'entrée de toute la navigation de l'app.
  */
 
-import { useFonts } from 'expo-font';
-import {
-  Rokkitt_400Regular,
-  Rokkitt_500Medium,
-  Rokkitt_600SemiBold,
-  Rokkitt_700Bold,
-} from '@expo-google-fonts/rokkitt';
-import {
-  WorkSans_400Regular,
-  WorkSans_500Medium,
-  WorkSans_600SemiBold,
-} from '@expo-google-fonts/work-sans';
 import * as Notifications from 'expo-notifications';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -70,37 +58,8 @@ export const unstable_settings = {
 };
 
 export default function RootLayout() {
-  // Charge les polices personnalisées (Rokkitt pour display, Work Sans pour body)
-  const [fontsLoaded, fontError] = useFonts({
-    SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
-    Rokkitt: Rokkitt_400Regular,
-    Rokkitt_Medium: Rokkitt_500Medium,
-    Rokkitt_SemiBold: Rokkitt_600SemiBold,
-    Rokkitt_Bold: Rokkitt_700Bold,
-    // Work Sans avec les noms complets pour correspondre aux usages dans les composants
-    WorkSans_400Regular,
-    WorkSans_500Medium,
-    WorkSans_600SemiBold,
-    // Alias pour la compatibilité avec l'ancien code
-    WorkSans: WorkSans_400Regular,
-    WorkSans_Medium: WorkSans_500Medium,
-    WorkSans_SemiBold: WorkSans_600SemiBold,
-  });
-
-  // Si erreur de chargement des polices, on log sans planter l'app.
-  // Certaines variantes (WorkSans_Medium) peuvent échouer sur certains appareils
-  // sans que ça bloque l'expérience — l'app continue avec la police de secours.
-  useEffect(() => {
-    if (fontError) console.warn('[Fonts] Erreur de chargement :', fontError.message);
-  }, [fontError]);
-
-  // Plus d'appel à SplashScreen.hideAsync() — source des erreurs sur Modal
-
-  // On attend que les polices soient chargées OU qu'une erreur soit survenue
-  // (dans ce cas on continue quand même avec les polices système par défaut)
-  if (!fontsLoaded && !fontError) {
-    return null;
-  }
+  // Polices chargées nativement au build time via le config plugin expo-font
+  // (voir app.json). Plus besoin de useFonts() ni d'attendre le chargement.
 
   // Sur le web, on n'utilise pas GestureHandlerRootView car il n'est pas compatible
   // On utilise un View simple à la place

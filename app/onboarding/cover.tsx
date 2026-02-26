@@ -279,7 +279,7 @@ const styles = StyleSheet.create({
         gap: spacing['6xl'], // 64px entre titre et zone
     },
     title: {
-        fontFamily: 'Rokkitt_Medium',
+        fontFamily: 'Rokkitt_500Medium',
         fontSize: fontSize['3xl'], // 36px
         fontWeight: fontWeight.medium,
         color: colors.textPrimary,

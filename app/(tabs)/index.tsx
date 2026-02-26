@@ -221,22 +221,15 @@ export default function HomeScreen() {
     });
 
   // ===== Chargement des données au montage =====
-  useEffect(() => {
-    if (user?.id) {
-      loadUserChallenges(user.id);
-    }
-  }, [user?.id]);
-
+  // loadUserChallenges est déjà appelé par authStore.initialize() (cold start)
+  // et par _layout.tsx (changement d'auth post-login). Pas besoin de le refaire ici.
   useEffect(() => {
     if (activeChallenge?.id) {
-      loadChallengeProgress(activeChallenge.id);
-    }
-  }, [activeChallenge?.id]);
-
-  useEffect(() => {
-    if (activeChallenge?.id) {
-      loadActiveGoals(activeChallenge.id);
-      loadGoalHistory(activeChallenge.id);
+      Promise.all([
+        loadChallengeProgress(activeChallenge.id),
+        loadActiveGoals(activeChallenge.id),
+        loadGoalHistory(activeChallenge.id),
+      ]);
     }
   }, [activeChallenge?.id]);
 
@@ -962,7 +955,7 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   deltaToastText: {
-    fontFamily: 'Rokkitt_Bold',
+    fontFamily: 'Rokkitt_700Bold',
     fontSize: 22,
     color: '#FFFFFF',
     lineHeight: 28,

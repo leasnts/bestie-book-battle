@@ -476,7 +476,7 @@ const styles = StyleSheet.create({
   },
   title: {
     flex: 1,
-    fontFamily: 'Rokkitt_Medium',
+    fontFamily: 'Rokkitt_500Medium',
     fontSize: fontSize['2xl'],
     color: colors.textPrimary,
     letterSpacing: -0.72,
@@ -530,7 +530,7 @@ const styles = StyleSheet.create({
   },
   formContainer: { gap: spacing.md },
   input: {
-    fontFamily: 'WorkSans',
+    fontFamily: 'WorkSans_400Regular',
     fontSize: fontSize.md,
     fontWeight: fontWeight.regular as any,
     color: colors.textPrimary,

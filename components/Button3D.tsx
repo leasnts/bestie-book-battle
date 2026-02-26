@@ -319,7 +319,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 0,
   },
   text: {
-    fontFamily: 'WorkSans_SemiBold',
+    fontFamily: 'WorkSans_600SemiBold',
     fontSize: 16,
     fontWeight: '600' as any,
     lineHeight: 24,

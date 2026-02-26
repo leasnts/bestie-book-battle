@@ -405,7 +405,7 @@ const styles = StyleSheet.create({
     color: colors.textPlaceholder,
   },
   entryPageNumber: {
-    fontFamily: 'Rokkitt_SemiBold',
+    fontFamily: 'Rokkitt_600SemiBold',
     fontSize: 20,
     color: colors.textTertiary,
     lineHeight: 28,

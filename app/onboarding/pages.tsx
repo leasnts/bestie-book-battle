@@ -195,7 +195,7 @@ const styles = StyleSheet.create({
         gap: spacing['6xl'], // 64px entre titre et input
     },
     title: {
-        fontFamily: 'Rokkitt_Medium',
+        fontFamily: 'Rokkitt_500Medium',
         fontSize: fontSize['3xl'],     // 36px
         fontWeight: fontWeight.medium,
         color: colors.textPrimary,
@@ -209,7 +209,7 @@ const styles = StyleSheet.create({
         paddingVertical: spacing['2xl'],   // 24px
     },
     input: {
-        fontFamily: 'Rokkitt_Bold',
+        fontFamily: 'Rokkitt_700Bold',
         fontSize: fontSize['5xl'],     // 60px — input géant comme le prénom
         fontWeight: fontWeight.bold as any,
         color: colors.textPrimary,

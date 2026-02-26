@@ -257,7 +257,7 @@ const styles = StyleSheet.create({
         gap: spacing['4xl'], // 48px entre titre et cartes
     },
     title: {
-        fontFamily: 'Rokkitt_Medium',
+        fontFamily: 'Rokkitt_500Medium',
         fontSize: fontSize['3xl'], // 36px
         fontWeight: fontWeight.medium as any,
         color: colors.textPrimary,
@@ -292,7 +292,7 @@ const styles = StyleSheet.create({
         gap: spacing.xs, // 4px
     },
     cardTitle: {
-        fontFamily: 'Rokkitt_Bold',
+        fontFamily: 'Rokkitt_700Bold',
         fontSize: fontSize['2xl'], // 24px
         fontWeight: fontWeight.bold as any,
         color: colors.textPrimary,
@@ -302,7 +302,7 @@ const styles = StyleSheet.create({
         color: colors.textPlaceholder,
     },
     cardDescription: {
-        fontFamily: 'WorkSans_Medium',
+        fontFamily: 'WorkSans_500Medium',
         fontSize: fontSize.sm, // 14px
         fontWeight: fontWeight.medium as any,
         color: colors.textTertiary,

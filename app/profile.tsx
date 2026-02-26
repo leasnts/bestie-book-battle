@@ -691,7 +691,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     flex: 1,
     textAlign: 'center',
-    fontFamily: 'Rokkitt',
+    fontFamily: 'Rokkitt_400Regular',
     fontSize: 24,
     lineHeight: 32,
     color: colors.textPrimary,
@@ -724,7 +724,7 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   profileName: {
-    fontFamily: 'Rokkitt_Bold',
+    fontFamily: 'Rokkitt_700Bold',
     fontSize: 30,
     lineHeight: 38,
     color: colors.textPrimary,
@@ -850,7 +850,7 @@ const sheetStyles = StyleSheet.create({
   },
   title: {
     flex: 1,
-    fontFamily: 'Rokkitt_Medium',
+    fontFamily: 'Rokkitt_500Medium',
     fontSize: fontSize['2xl'],
     color: colors.textPrimary,
     letterSpacing: -0.72,
