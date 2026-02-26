@@ -52,7 +52,7 @@ import ParticipantHistorySheet from '../../components/ui/ParticipantHistorySheet
 import ProgressCard from '../../components/ui/ProgressCard';
 import { getUserHistory } from '../../services/supabase/database';
 import { uploadBookCover } from '../../services/supabase/storage';
-import { updateWidgetData, profilePhotoToBase64 } from '../../utils/widget';
+import { updateWidgetData } from '../../utils/widget';
 import { useNotificationScheduler } from '../../hooks/useNotificationScheduler';
 import { useAuthStore } from '../../stores/authStore';
 import { useGoalStore } from '../../stores/goalStore';
@@ -373,11 +373,6 @@ export default function HomeScreen() {
   } : null;
 
   // ===== Mise à jour automatique du widget iOS =====
-  // Se déclenche dès que les participants ou le challenge changent.
-  // 1. Trie les participants par pages lues (décroissant)
-  // 2. Télécharge + encode en base64 les photos des 2 premiers
-  // 3. Calcule la progression moyenne du groupe
-  // 4. Envoie tout dans l'App Group pour le widget Swift
   useEffect(() => {
     if (!activeChallenge || participants.length === 0) return;
 
@@ -391,24 +386,15 @@ export default function HomeScreen() {
       (acc, p) => acc + p.progress.current_page, 0
     ) / (participants.length * totalPages);
 
-    (async () => {
-      const [photo1, photo2] = await Promise.all([
-        profilePhotoToBase64(top1.user.profile_photo_url),
-        top2 ? profilePhotoToBase64(top2.user.profile_photo_url) : null,
-      ]);
-
-      await updateWidgetData({
-        totalPages,
-        averageProgress: Math.min(avgProgress, 1),
-        participant1Name: top1.user.first_name || 'Joueur 1',
-        participant1Page: top1.progress.current_page,
-        participant1Photo: photo1,
-        participant2Name: top2?.user.first_name ?? null,
-        participant2Page: top2?.progress.current_page ?? null,
-        participant2Photo: photo2 ?? null,
-        lastUpdated: new Date().toISOString(),
-      });
-    })();
+    updateWidgetData({
+      totalPages,
+      averageProgress: Math.min(avgProgress, 1),
+      participant1Name: top1.user.first_name || 'Joueur 1',
+      participant1Page: top1.progress.current_page,
+      participant2Name: top2?.user.first_name ?? null,
+      participant2Page: top2?.progress.current_page ?? null,
+      lastUpdated: new Date().toISOString(),
+    });
   }, [participants, activeChallenge?.id, totalPages]);
 
   // ===== Callback : basculer l'étagère ouverte/fermée =====

@@ -18,10 +18,8 @@ struct WidgetData: Codable {
     var averageProgress: Double
     var participant1Name: String
     var participant1Page: Int
-    var participant1Photo: String?
     var participant2Name: String?
     var participant2Page: Int?
-    var participant2Photo: String?
     var lastUpdated: String
 }
 
@@ -46,10 +44,8 @@ struct BookEntry: TimelineEntry {
     let averageProgress: Double
     let participant1Name: String
     let participant1Page: Int
-    let participant1Photo: String?
     let participant2Name: String?
     let participant2Page: Int?
-    let participant2Photo: String?
 
     static var placeholder: BookEntry {
         BookEntry(
@@ -58,10 +54,8 @@ struct BookEntry: TimelineEntry {
             averageProgress: 0.65,
             participant1Name: "Zoé",
             participant1Page: 230,
-            participant1Photo: nil,
             participant2Name: "Léa",
-            participant2Page: 201,
-            participant2Photo: nil
+            participant2Page: 201
         )
     }
 }
@@ -99,10 +93,8 @@ struct Provider: TimelineProvider {
                 averageProgress: w.averageProgress,
                 participant1Name: w.participant1Name,
                 participant1Page: w.participant1Page,
-                participant1Photo: w.participant1Photo,
                 participant2Name: w.participant2Name,
-                participant2Page: w.participant2Page,
-                participant2Photo: w.participant2Photo
+                participant2Page: w.participant2Page
             )
         }
 
@@ -115,10 +107,8 @@ struct Provider: TimelineProvider {
                 averageProgress: min(progress, 1.0),
                 participant1Name: "Moi",
                 participant1Page: old.myCurrentPage,
-                participant1Photo: nil,
                 participant2Name: old.friendName,
-                participant2Page: old.friendCurrentPage,
-                participant2Photo: nil
+                participant2Page: old.friendCurrentPage
             )
         }
 
@@ -132,10 +122,8 @@ struct Provider: TimelineProvider {
             averageProgress: 0,
             participant1Name: "Ouvre l'app !",
             participant1Page: 0,
-            participant1Photo: nil,
             participant2Name: nil,
-            participant2Page: nil,
-            participant2Photo: nil
+            participant2Page: nil
         )
     }
 }
@@ -179,7 +167,6 @@ struct SmallWidgetView: View {
                         ParticipantRow(
                             name: entry.participant1Name,
                             page: entry.participant1Page,
-                            base64Photo: entry.participant1Photo,
                             avatarColor: Color(hex: "C4876E")
                         )
 
@@ -198,7 +185,6 @@ struct SmallWidgetView: View {
                         ParticipantRow(
                             name: name,
                             page: page,
-                            base64Photo: entry.participant2Photo,
                             avatarColor: Color(hex: "8B7EC4")
                         )
                     }
@@ -268,49 +254,28 @@ struct DashedProgressGauge: View {
 
 // ─────────────────────────────────────────────────────────────
 // MARK: - Ligne participant (ParticipantRow)
-//
-// Si une photo base64 est fournie, on la décode en UIImage
-// et on l'affiche dans le carré arrondi. Sinon, fallback sur
-// un carré coloré avec l'initiale du prénom.
 // ─────────────────────────────────────────────────────────────
 
 struct ParticipantRow: View {
     let name: String
     let page: Int
-    let base64Photo: String?
     let avatarColor: Color
 
     var body: some View {
         HStack(spacing: 8) {
-            // Avatar : photo réelle ou initiale colorée
             ZStack {
-                if let photo = base64Photo,
-                   let imageData = Data(base64Encoded: photo),
-                   let uiImage = UIImage(data: imageData) {
-                    Image(uiImage: uiImage)
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                        .frame(width: 35, height: 35)
-                        .clipShape(RoundedRectangle(cornerRadius: 8))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 8)
-                                .stroke(Color.white.opacity(0.3), lineWidth: 1)
-                        )
-                        .shadow(color: .black.opacity(0.25), radius: 3, x: 0, y: 2)
-                } else {
-                    RoundedRectangle(cornerRadius: 8)
-                        .fill(avatarColor)
-                        .frame(width: 35, height: 35)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 8)
-                                .stroke(Color.white.opacity(0.3), lineWidth: 1)
-                        )
-                        .shadow(color: .black.opacity(0.25), radius: 3, x: 0, y: 2)
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(avatarColor)
+                    .frame(width: 35, height: 35)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8)
+                            .stroke(Color.white.opacity(0.3), lineWidth: 1)
+                    )
+                    .shadow(color: .black.opacity(0.25), radius: 3, x: 0, y: 2)
 
-                    Text(String(name.prefix(1)).uppercased())
-                        .font(.system(size: 15, weight: .bold))
-                        .foregroundColor(.white)
-                }
+                Text(String(name.prefix(1)).uppercased())
+                    .font(.system(size: 15, weight: .bold))
+                    .foregroundColor(.white)
             }
             .frame(width: 35, height: 35)
 

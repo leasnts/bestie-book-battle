@@ -14,7 +14,6 @@
  * nouveau challenge actif), on appelle `updateWidgetData()`.
  */
 
-import * as FileSystem from 'expo-file-system';
 import { NativeModules, Platform } from 'react-native';
 import SharedGroupPreferences from 'react-native-shared-group-preferences';
 
@@ -30,17 +29,14 @@ const WIDGET_KEY = 'widgetData';
  * - Une jauge en arc (ouvert en bas) = progression moyenne de tous les participants
  * - Les 2 premiers du classement (triés par pages lues, décroissant)
  * - Une couronne sur le leader
- * - Les photos de profil encodées en base64 (70×70 JPEG)
  */
 export interface WidgetData {
   totalPages: number;
   averageProgress: number; // 0.0 → 1.0
   participant1Name: string;
   participant1Page: number;
-  participant1Photo: string | null;
   participant2Name: string | null;
   participant2Page: number | null;
-  participant2Photo: string | null;
   lastUpdated: string;
 }
 
@@ -60,38 +56,5 @@ export async function updateWidgetData(data: WidgetData): Promise<void> {
     WidgetRefreshModule?.reloadAllTimelines();
   } catch (error) {
     console.warn('[Widget] Impossible d\'écrire dans l\'App Group :', error);
-  }
-}
-
-/**
- * Télécharge une photo de profil et la renvoie en base64.
- *
- * Approche simple et fiable : on télécharge l'image telle quelle
- * avec expo-file-system et on lit les octets en base64.
- * Pas de redimensionnement (ImageManipulator posait problème).
- *
- * Un JPEG de profil fait typiquement 20-100 Ko en base64,
- * ce qui reste largement dans les limites d'UserDefaults (~1 Mo).
- */
-export async function profilePhotoToBase64(
-  url: string | null | undefined
-): Promise<string | null> {
-  if (!url || Platform.OS !== 'ios') return null;
-  if (!url.startsWith('http://') && !url.startsWith('https://')) return null;
-
-  try {
-    const tempPath = FileSystem.cacheDirectory + `widget_avatar_${Date.now()}.jpg`;
-    const download = await FileSystem.downloadAsync(url, tempPath);
-
-    const base64 = await FileSystem.readAsStringAsync(download.uri, {
-      encoding: FileSystem.EncodingType.Base64,
-    });
-
-    await FileSystem.deleteAsync(download.uri, { idempotent: true });
-
-    return base64;
-  } catch (error) {
-    console.warn('[Widget] Erreur téléchargement photo profil :', url, error);
-    return null;
   }
 }
