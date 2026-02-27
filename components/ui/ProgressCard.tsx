@@ -8,10 +8,10 @@
  * - On reçoit "me" (l'utilisateur connecté) et "friend" (l'ami.e)
  * - On les trie par score décroissant (le plus de pages lues en premier)
  * - Chaque participant est affiché sur une ligne horizontale :
- *   → [couronne si leader] [nom] ........... [badge streak] [score]
+ *   → [avatar + couronne si leader] [nom] ........... [badge streak] [score]
  * - Le score utilise un compteur roulant animé (hook useRollingCounter)
  *   pour un feedback visuel satisfaisant quand la valeur change
- * - La couronne PNG est affichée à gauche du prénom du leader
+ * - La couronne PNG est centrée verticalement sur l'avatar du leader, droite
  * - Si un objectif intermédiaire existe, on affiche une carte en haut :
  *   → Colonne gauche : "Objectif" + nombre de pages, "Deadline" + date
  *   → Colonne droite : cercle de progression + chevron
@@ -53,8 +53,21 @@ interface ProgressCardProps {
   onGoalPress?: () => void;
 }
 
-// Image de la couronne affichée à gauche du prénom du leader
+// Fallback avatar quand le participant n'a pas de photo (image BBB par défaut)
+const DEFAULT_AVATAR = require('../../assets/images/profile_picture_default.png');
+
+// Image de la couronne (remplace l'emoji 👑 pour un rendu cohérent cross-platform)
 const CROWN_IMAGE = require('../../assets/images/crown.png');
+
+/**
+ * Résout l'URL de l'avatar en source Image compatible expo-image.
+ * Si l'URL est null ou invalide, on utilise l'avatar par défaut.
+ */
+const resolveAvatar = (url: string | null) => {
+  if (!url) return DEFAULT_AVATAR;
+  if (url.startsWith('http://') || url.startsWith('https://')) return { uri: url };
+  return DEFAULT_AVATAR;
+};
 
 // ─── Hook : compteur roulant ──────────────────────────────────────
 /**
@@ -111,9 +124,11 @@ function useRollingCounter(target: number, duration = 800): number {
  * Affiche une ligne pour un participant dans le classement.
  *
  * Layout horizontal :
- * [couronne si leader] [nom en WorkSans SemiBold 18px]
+ * [avatar 24×24 + couronne si leader] [nom en WorkSans SemiBold 14px]
  * ........... espace flexible ...........
  * [badge streak : 🔥 + nombre] [score en Rokkitt SemiBold 24px]
+ *
+ * La couronne est centrée verticalement sur l'avatar, droite.
  *
  */
 function ParticipantRow({
@@ -133,11 +148,22 @@ function ParticipantRow({
       style={styles.rowWrapper}
     >
     <Pressable style={styles.participantRow} onPress={onPress}>
-      {/* ── Côté gauche : couronne (si leader) + nom ── */}
+      {/* ── Côté gauche : avatar + nom ── */}
       <View style={styles.participantLeft}>
-        {participant.isLeader && (
-          <Image source={CROWN_IMAGE} style={styles.crownInline} contentFit="contain" />
-        )}
+        {/* Wrapper avatar : la couronne est positionnée en absolute par rapport à lui */}
+        <View style={styles.avatarWrapper}>
+          <Image
+            source={resolveAvatar(participant.photoUrl)}
+            style={styles.avatar}
+            contentFit="cover"
+          />
+          {/* Couronne du leader — centrée sur l'avatar, droite */}
+          {participant.isLeader && (
+            <View style={styles.crownOverAvatar}>
+              <Image source={CROWN_IMAGE} style={styles.crownImage} contentFit="contain" />
+            </View>
+          )}
+        </View>
         <Text style={styles.userName} numberOfLines={1}>{participant.name}</Text>
       </View>
 
@@ -416,10 +442,35 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
 
-  // ═══ COURONNE ═══
-  crownInline: {
-    width: 20,
-    height: 20,
+  // ═══ AVATAR + COURONNE ═══
+
+  // Le wrapper autour de l'avatar permet de positionner la couronne
+  // en absolute par rapport à l'avatar (pas par rapport au container global)
+  avatarWrapper: {
+    position: 'relative',
+    width: 28,
+    height: 28,
+  },
+  avatar: {
+    width: 28,
+    height: 28,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.3)',
+  },
+  // Couronne au bord supérieur de l'avatar, droite (sans rotation)
+  // La base de la couronne touche le haut de l'avatar (28×28)
+  crownOverAvatar: {
+    position: 'absolute',
+    top: -19,
+    left: -2,
+    right: -2,
+    zIndex: 10,
+    alignItems: 'center',
+  },
+  crownImage: {
+    width: 28,
+    height: 28,
   },
 
   // ═══ NOM UTILISATEUR ═══
