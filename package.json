@@ -9,7 +9,8 @@
     "migrate-notifications": "node scripts/run-notification-migration.mjs",
     "fix-search-path": "node scripts/run-fix-search-path.mjs",
     "fix-search-path-ui": "node scripts/open-sql-editor-with-fix.mjs",
-    "android": "expo run:android"
+    "android": "expo run:android",
+    "storybook-generate": "sb-rn-get-stories"
   },
   "dependencies": {
     "@expo-google-fonts/rokkitt": "^0.4.2",
@@ -68,7 +69,16 @@
     "react-native-svg": "15.12.1",
     "react-native-worklets": "0.5.1",
     "tailwind-merge": "^3.5.0",
-    "zustand": "^5.0.10"
+    "zustand": "^5.0.10",
+    "@babel/core": "^7.29.0",
+    "babel-loader": "^8.4.1",
+    "@react-native-community/slider": "^5.1.2",
+    "@gorhom/bottom-sheet": "^5.2.8",
+    "@storybook/addon-ondevice-controls": "^10.2.3",
+    "@storybook/addon-ondevice-actions": "^10.2.3",
+    "@storybook/react-native": "^10.2.3",
+    "storybook": "^10.2.13",
+    "react-dom": "19.1.0"
   },
   "devDependencies": {
     "@types/react": "~19.1.0",

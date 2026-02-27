@@ -6,8 +6,10 @@
  */
 
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import { colors } from '../../utils/constants';
+import { View, StyleSheet } from 'react-native';
+import { Image } from 'expo-image';
+
+const CROWN_IMAGE = require('../../assets/images/crown.png');
 
 interface CrownProps {
   /** Taille de la couronne */
@@ -15,23 +17,22 @@ interface CrownProps {
 }
 
 export function Crown({ size = 'medium' }: CrownProps) {
-  // Tailles en pixels pour chaque variante
   const sizeMap = {
     small: 16,
     medium: 20,
     large: 28,
   };
-  
+
+  const px = sizeMap[size];
+
   return (
     <View style={styles.container}>
-      <Text style={{ fontSize: sizeMap[size] }}>👑</Text>
+      <Image source={CROWN_IMAGE} style={{ width: px, height: px }} contentFit="contain" />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    // Le container permet d'ajouter des effets si besoin
-  },
+  container: {},
 });
 

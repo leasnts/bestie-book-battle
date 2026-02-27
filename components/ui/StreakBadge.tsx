@@ -2,22 +2,21 @@
  * Composant StreakBadge
  * 
  * Badge qui affiche le nombre de jours consécutifs de lecture.
- * Le nombre de flammes augmente avec la durée du streak :
- * - 1-6 jours : 🔥
- * - 7-29 jours : 🔥🔥
- * - 30+ jours : 🔥🔥🔥
+ * Une seule flamme (icône IconFlame) est toujours affichée,
+ * accompagnée du nombre de jours.
  */
 
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { colors, borderRadius, spacing } from '../../utils/constants';
+import IconFlame from '../icons/IconFlame';
 
 interface StreakBadgeProps {
   /** Nombre de jours consécutifs */
   streak: number;
   /** Taille du badge : small, medium, large */
   size?: 'small' | 'medium' | 'large';
-  /** Affiche uniquement les flammes (sans le nombre) */
+  /** Affiche uniquement la flamme (sans le nombre) */
   iconOnly?: boolean;
 }
 
@@ -26,42 +25,33 @@ export function StreakBadge({
   size = 'medium',
   iconOnly = false,
 }: StreakBadgeProps) {
-  // Si pas de streak, on n'affiche rien
   if (streak === 0) {
     return null;
   }
-  
-  // Détermine le nombre de flammes selon le streak
-  const getFlames = (): string => {
-    if (streak >= 30) return '🔥🔥🔥';
-    if (streak >= 7) return '🔥🔥';
-    return '🔥';
-  };
-  
-  // Styles selon la taille
+
   const sizeStyles = {
     small: {
-      paddingHorizontal: spacing.sm,
+      paddingHorizontal: 5,
       paddingVertical: 2,
-      fontSize: 12,
-      emojiSize: 12,
+      fontSize: 11,
+      iconSize: 10,
     },
     medium: {
-      paddingHorizontal: spacing.md,
-      paddingVertical: spacing.xs,
-      fontSize: 14,
-      emojiSize: 14,
+      paddingHorizontal: 7,
+      paddingVertical: 3,
+      fontSize: 12,
+      iconSize: 12,
     },
     large: {
-      paddingHorizontal: spacing.lg,
-      paddingVertical: spacing.sm,
-      fontSize: 18,
-      emojiSize: 18,
+      paddingHorizontal: 9,
+      paddingVertical: 4,
+      fontSize: 14,
+      iconSize: 14,
     },
   };
-  
+
   const currentSize = sizeStyles[size];
-  
+
   return (
     <View
       style={[
@@ -72,7 +62,7 @@ export function StreakBadge({
         },
       ]}
     >
-      <Text style={{ fontSize: currentSize.emojiSize }}>{getFlames()}</Text>
+      <IconFlame size={currentSize.iconSize} color={colors.textTertiary} />
       {!iconOnly && (
         <Text style={[styles.text, { fontSize: currentSize.fontSize }]}>
           {streak}
@@ -86,13 +76,16 @@ const styles = StyleSheet.create({
   badge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.warningLight,
-    borderRadius: borderRadius.full,
-    gap: 4,
+    backgroundColor: 'rgba(0,0,0,0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.1)',
+    borderRadius: 8,
+    gap: 2,
   },
   text: {
-    fontWeight: '700',
-    color: colors.streak,
+    fontFamily: 'WorkSans_600SemiBold',
+    color: colors.textTertiary,
+    lineHeight: 16,
   },
 });
 
