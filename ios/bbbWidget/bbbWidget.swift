@@ -161,31 +161,27 @@ struct SmallWidgetView: View {
                     .frame(width: side * 0.88, height: side * 0.88)
 
                 // ── Top 2 participants ──
-                VStack(alignment: .leading, spacing: 6) {
-                    // Leader (top 1) + couronne qui chevauche la photo
-                    ZStack(alignment: .topLeading) {
-                        ParticipantRow(
-                            name: entry.participant1Name,
-                            page: entry.participant1Page,
-                            avatarColor: Color(hex: "C4876E")
-                        )
-
-                        if entry.participant1Page > 0 {
-                            Image("Crown")
-                                .resizable()
-                                .aspectRatio(contentMode: .fit)
-                                .frame(width: 24)
-                                .offset(x: 1, y: -10)
-                        }
+                VStack(alignment: .center, spacing: 4) {
+                    // Couronne centrée au-dessus du classement
+                    if entry.participant1Page > 0 {
+                        Image("Crown")
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .frame(width: 28)
                     }
+
+                    // Leader (top 1)
+                    ParticipantRow(
+                        name: entry.participant1Name,
+                        page: entry.participant1Page
+                    )
 
                     // Second (top 2)
                     if let name = entry.participant2Name,
                        let page = entry.participant2Page {
                         ParticipantRow(
                             name: name,
-                            page: page,
-                            avatarColor: Color(hex: "8B7EC4")
+                            page: page
                         )
                     }
                 }
@@ -259,36 +255,19 @@ struct DashedProgressGauge: View {
 struct ParticipantRow: View {
     let name: String
     let page: Int
-    let avatarColor: Color
 
     var body: some View {
-        HStack(spacing: 8) {
-            ZStack {
-                RoundedRectangle(cornerRadius: 8)
-                    .fill(avatarColor)
-                    .frame(width: 35, height: 35)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 8)
-                            .stroke(Color.white.opacity(0.3), lineWidth: 1)
-                    )
-                    .shadow(color: .black.opacity(0.25), radius: 3, x: 0, y: 2)
+        HStack(spacing: 6) {
+            Text(name)
+                .font(.system(size: 13))
+                .foregroundColor(Color(hex: "535862"))
+                .lineLimit(1)
+                .frame(width: 70, alignment: .trailing)
 
-                Text(String(name.prefix(1)).uppercased())
-                    .font(.system(size: 15, weight: .bold))
-                    .foregroundColor(.white)
-            }
-            .frame(width: 35, height: 35)
-
-            VStack(alignment: .leading, spacing: 2) {
-                Text(name)
-                    .font(.system(size: 12))
-                    .foregroundColor(Color(hex: "535862"))
-                    .lineLimit(1)
-
-                Text("\(page)")
-                    .font(.system(size: 18, weight: .semibold))
-                    .foregroundColor(Color(hex: "181D27"))
-            }
+            Text("\(page)")
+                .font(.system(size: 22, weight: .bold))
+                .foregroundColor(Color(hex: "181D27"))
+                .frame(alignment: .leading)
         }
     }
 }

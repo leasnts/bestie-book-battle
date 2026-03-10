@@ -9,8 +9,8 @@
  * C'est le point d'entrée de toute la navigation de l'app.
  */
 
-import StorybookUIRoot from '../.rnstorybook/index';
-const SHOW_STORYBOOK = false; // true = Storybook, false = app normale
+// import StorybookUIRoot from '../.rnstorybook/index';
+const SHOW_STORYBOOK = false;
 
 import * as Notifications from 'expo-notifications';
 import { Stack, useRouter, useSegments } from 'expo-router';
@@ -61,9 +61,9 @@ export const unstable_settings = {
 };
 
 export default function RootLayout() {
-  if (SHOW_STORYBOOK) {
-    return <StorybookUIRoot />;
-  }
+  // if (SHOW_STORYBOOK) {
+  //   return <StorybookUIRoot />;
+  // }
 
   // Polices chargées nativement au build time via le config plugin expo-font
   // (voir app.json). Plus besoin de useFonts() ni d'attendre le chargement.

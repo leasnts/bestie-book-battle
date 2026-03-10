@@ -238,9 +238,11 @@ export default function HomeScreen() {
   const lastSavedPage = myProgress?.current_page || 0;
   const totalPages = activeChallenge?.total_pages || 100;
 
-  // Sync input avec page sauvegardée
+  // Sync input avec page sauvegardée (seulement quand on a des vraies données)
   useEffect(() => {
-    setCurrentPageInput(lastSavedPage);
+    if (myProgress !== undefined) {
+      setCurrentPageInput(lastSavedPage);
+    }
   }, [lastSavedPage, activeChallenge?.id]);
 
   // Savoir si l'utilisateur a bougé le scroll
@@ -649,6 +651,7 @@ export default function HomeScreen() {
         >
           <View style={styles.pageSectionInner}>
             <PageScrollPicker
+              key={activeChallenge.id}
               currentPage={currentPageInput}
               totalPages={totalPages}
               onPageChange={handlePageChange}

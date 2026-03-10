@@ -17,8 +17,7 @@
 
 import * as Notifications from 'expo-notifications';
 import { Ionicons } from '@expo/vector-icons';
-import RefreshCcw from 'lucide-react-native/dist/esm/icons/refresh-ccw';
-import SquarePen from 'lucide-react-native/dist/esm/icons/square-pen';
+import { RefreshCcw, SquarePen } from 'lucide-react-native';
 import * as Clipboard from 'expo-clipboard';
 import Constants from 'expo-constants';
 import { Image } from 'expo-image';

@@ -100,7 +100,7 @@ export const useProgressStore = create<ProgressStore>((set, get) => ({
    * @param challengeId - L'ID du challenge
    */
   loadChallengeProgress: async (challengeId) => {
-    set({ isLoading: true, error: null });
+    set({ isLoading: true, error: null, progressList: [], participants: [] });
     try {
       // Charger les participants avec leurs progressions et classement
       const participants = await getChallengeParticipants(challengeId);
