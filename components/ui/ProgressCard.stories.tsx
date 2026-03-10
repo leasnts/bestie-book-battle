@@ -110,6 +110,7 @@ export const WithGoal: Story = {
     intermediateGoal: {
       target_pages: 150,
       deadline: '2026-03-15',
+      baseline: 80,
     },
     onParticipantPress: (id: string) => console.log('Tap:', id),
     onGoalPress: () => console.log('Goal tapped!'),

@@ -48,6 +48,8 @@ interface ProgressCardProps {
   intermediateGoal?: {
     target_pages: number;
     deadline: string;
+    /** Page moyenne des participants au moment de la création de l'objectif */
+    baseline: number;
   } | null;
   /** Callback quand on clique sur la carte objectif */
   onGoalPress?: () => void;
@@ -226,7 +228,11 @@ export default function ProgressCard({
     // Capitaliser et formatter (ex: "mer. 18 févr." -> "Mer. 18 févr.")
     const formattedDate = dateStr.charAt(0).toUpperCase() + dateStr.slice(1).replace('.', '. ');
 
-    // Progression globale = moyenne des progressions des participants
+    // Progression relative à l'objectif intermédiaire :
+    // On calcule la moyenne des pages actuelles, puis on soustrait la baseline
+    // (page moyenne au moment de la création de l'objectif).
+    // Le pourcentage représente l'avancée depuis la création de l'objectif,
+    // pas depuis le début du livre.
     const totalCurrentPages = sortedParticipants.reduce(
       (sum, entry) => sum + entry.participant.score,
       0
@@ -234,11 +240,12 @@ export default function ProgressCard({
     const averageCurrentPage = sortedParticipants.length > 0
       ? totalCurrentPages / sortedParticipants.length
       : 0;
-    
-    const progressPercentage = Math.min(
-      100,
-      Math.round((averageCurrentPage / intermediateGoal.target_pages) * 100)
-    );
+
+    const baseline = intermediateGoal.baseline ?? 0;
+    const range = intermediateGoal.target_pages - baseline;
+    const progressPercentage = range > 0
+      ? Math.min(100, Math.max(0, Math.round(((averageCurrentPage - baseline) / range) * 100)))
+      : 0;
 
     return {
       formattedDate,

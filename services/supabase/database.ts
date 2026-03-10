@@ -469,6 +469,36 @@ export async function getUserProgress(
 }
 
 /**
+ * Obtenir la page actuelle d'un utilisateur pour tous ses challenges.
+ * Requête légère (2 colonnes) utilisée au démarrage pour pré-peupler
+ * le cache du PageScrollPicker et éviter un reset à 0 lors du switch.
+ *
+ * @param userId - L'ID de l'utilisateur
+ * @returns Map challengeId → current_page
+ */
+export async function getAllUserPages(
+  userId: string
+): Promise<Record<string, number>> {
+  try {
+    const { data, error } = await supabase
+      .from('user_progress')
+      .select('challenge_id, current_page')
+      .eq('user_id', userId);
+
+    if (error) throw error;
+
+    const map: Record<string, number> = {};
+    for (const row of data ?? []) {
+      map[row.challenge_id] = row.current_page;
+    }
+    return map;
+  } catch (error: any) {
+    console.error('Erreur lors de la récupération des pages utilisateur:', error);
+    return {};
+  }
+}
+
+/**
  * Obtenir toutes les progressions d'un challenge
  * 
  * @param challengeId - L'ID du challenge

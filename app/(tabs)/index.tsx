@@ -17,7 +17,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
     ActivityIndicator,
     Alert,
@@ -50,7 +50,7 @@ import NotificationButton from '../../components/ui/NotificationButton';
 import PageScrollPicker from '../../components/ui/PageScrollPicker';
 import ParticipantHistorySheet from '../../components/ui/ParticipantHistorySheet';
 import ProgressCard from '../../components/ui/ProgressCard';
-import { getUserHistory } from '../../services/supabase/database';
+import { getAllUserPages, getUserHistory } from '../../services/supabase/database';
 import { uploadBookCover } from '../../services/supabase/storage';
 import { updateWidgetData } from '../../utils/widget';
 import { useNotificationScheduler } from '../../hooks/useNotificationScheduler';
@@ -147,6 +147,22 @@ export default function HomeScreen() {
   const [currentPageInput, setCurrentPageInput] = useState(0);
   const [showBookShelf, setShowBookShelf] = useState(false);
 
+  // Cache des pages sauvegardées par challenge.
+  // Quand on switch de challenge, les données du store sont rechargées (async).
+  // Sans ce cache, le picker afficherait 0 pendant le chargement.
+  // Avec le cache, on affiche immédiatement la dernière page connue.
+  const savedPagesByChallenge = useRef<Record<string, number>>({});
+
+  // Pré-charge les pages de TOUS les challenges au montage (1 requête légère).
+  // Comme ça quand on switch de challenge, le cache a déjà la bonne page.
+  useEffect(() => {
+    if (user?.id) {
+      getAllUserPages(user.id).then((pages) => {
+        savedPagesByChallenge.current = { ...savedPagesByChallenge.current, ...pages };
+      });
+    }
+  }, [user?.id]);
+
   // Modals
   const [deadlineModalVisible, setDeadlineModalVisible] = useState(false);
   const [editBookModalVisible, setEditBookModalVisible] = useState(false);
@@ -234,23 +250,43 @@ export default function HomeScreen() {
   }, [activeChallenge?.id]);
 
   // ===== Données dérivées =====
-  const myProgress = user ? getUserProgressById(user.id) : undefined;
-  const lastSavedPage = myProgress?.current_page || 0;
   const totalPages = activeChallenge?.total_pages || 100;
 
-  // Sync input avec page sauvegardée (seulement quand on a des vraies données)
+  // IMPORTANT : on vérifie que les participants correspondent bien au challenge actif.
+  // Sans ce guard, quand on switch de livre, participants contient encore les données
+  // de l'ancien challenge pendant un cycle de rendu (le temps que loadChallengeProgress
+  // recharge les nouvelles données), ce qui provoque des données croisées
+  // (ex: current_page de l'ancien livre divisé par totalPages du nouveau → % faux).
+  const participantsMatchChallenge = participants.length > 0 &&
+    participants[0].progress.challenge_id === activeChallenge?.id;
+
+  const myProgress = participantsMatchChallenge && user
+    ? getUserProgressById(user.id)
+    : undefined;
+
+  // Quand on a les bonnes données, on met en cache la page par challenge
+  if (myProgress && activeChallenge?.id) {
+    savedPagesByChallenge.current[activeChallenge.id] = myProgress.current_page;
+  }
+
+  // lastSavedPage : données fraîches si dispo, sinon cache du dernier passage
+  const lastSavedPage = myProgress?.current_page
+    ?? (activeChallenge?.id ? savedPagesByChallenge.current[activeChallenge.id] : undefined)
+    ?? 0;
+
+  // Sync le picker avec la page sauvegardée quand le challenge change ou les données arrivent
   useEffect(() => {
-    if (myProgress !== undefined) {
-      setCurrentPageInput(lastSavedPage);
-    }
+    setCurrentPageInput(lastSavedPage);
   }, [lastSavedPage, activeChallenge?.id]);
 
   // Savoir si l'utilisateur a bougé le scroll
   const hasChanged = currentPageInput !== lastSavedPage;
 
   // Progression moyenne du groupe
-  const totalReadPages = participants.reduce((acc, p) => acc + p.progress.current_page, 0);
-  const averagePercentage = participants.length > 0
+  const totalReadPages = participantsMatchChallenge
+    ? participants.reduce((acc, p) => acc + p.progress.current_page, 0)
+    : 0;
+  const averagePercentage = participantsMatchChallenge
     ? Math.round((totalReadPages / participants.length / totalPages) * 100)
     : 0;
 
@@ -323,8 +359,14 @@ export default function HomeScreen() {
   }, [lastSavedPage]);
 
   // ===== Données participants pour la ProgressCard =====
-  const meParticipant = participants.find(p => p.user.id === user?.id);
-  const friendParticipant = participants.find(p => p.user.id !== user?.id);
+  // On ne cherche les participants que si les données correspondent au challenge actif
+  // (même guard que pour averagePercentage, pour éviter les données croisées)
+  const meParticipant = participantsMatchChallenge
+    ? participants.find(p => p.user.id === user?.id)
+    : undefined;
+  const friendParticipant = participantsMatchChallenge
+    ? participants.find(p => p.user.id !== user?.id)
+    : undefined;
 
   // Pour "moi", toujours utiliser authStore (user) pour la photo : les participants
   // du progressStore sont chargés une fois et ne se mettent pas à jour quand on
@@ -369,7 +411,7 @@ export default function HomeScreen() {
 
   // ===== Mise à jour automatique du widget iOS =====
   useEffect(() => {
-    if (!activeChallenge || participants.length === 0) return;
+    if (!activeChallenge || !participantsMatchChallenge) return;
 
     const sorted = [...participants].sort(
       (a, b) => b.progress.current_page - a.progress.current_page
@@ -530,11 +572,27 @@ export default function HomeScreen() {
         if (type === 'primary') {
           await updateActiveChallenge({ target_end_date: deadline.toISOString() });
         } else {
+          // Calculer la baseline (page moyenne actuelle des participants)
+          const totalPages = participants.reduce(
+            (sum, p) => sum + (p.progress?.current_page ?? 0),
+            0
+          );
+          const currentBaseline = participants.length > 0
+            ? Math.round(totalPages / participants.length)
+            : 0;
+
           if (secondaryGoal) {
-            await editGoal(secondaryGoal.id, {
+            // Si l'objectif existant n'a pas de baseline (créé avant le fix),
+            // on la capture maintenant. Sinon on garde l'existante.
+            const existingBaseline = (secondaryGoal.results as any)?.baseline;
+            const updates: any = {
               target_pages: targetPages,
               deadline: deadline.toISOString(),
-            });
+            };
+            if (existingBaseline == null) {
+              updates.results = { baseline: currentBaseline };
+            }
+            await editGoal(secondaryGoal.id, updates);
           } else {
             await addGoal({
               challenge_id: activeChallenge.id,
@@ -542,6 +600,7 @@ export default function HomeScreen() {
               target_pages: targetPages,
               deadline: deadline.toISOString(),
               created_by: user.id,
+              results: { baseline: currentBaseline },
             });
           }
         }
@@ -555,6 +614,7 @@ export default function HomeScreen() {
       activeChallenge,
       user?.id,
       secondaryGoal,
+      participants,
       updateActiveChallenge,
       addGoal,
       editGoal,
@@ -745,6 +805,7 @@ export default function HomeScreen() {
                 ? {
                     target_pages: secondaryGoal.target_pages,
                     deadline: secondaryGoal.deadline,
+                    baseline: (secondaryGoal.results as any)?.baseline ?? 0,
                   }
                 : null
             }
