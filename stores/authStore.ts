@@ -295,11 +295,33 @@ export const useAuthStore = create<AuthStore>()(
 
         // Étape 2 : session confirmée → récupérer le profil complet depuis la base
         // Sans timeout arbitraire : on sait déjà que l'utilisateur EST connecté.
-        const { data: userProfile } = await supabase
+        const { data: userProfile, error: profileError } = await supabase
           .from('users')
           .select('*')
           .eq('id', session.user.id)
           .maybeSingle();
+
+        // Si la requête profil échoue (token expiré, réseau…), on tente un refresh
+        // plutôt que de déconnecter l'utilisateur à tort.
+        if (profileError) {
+          console.warn('Profile fetch failed, refreshing session…', profileError.message);
+          const { data: { session: refreshed } } = await supabase.auth.refreshSession();
+          if (refreshed?.user) {
+            const { data: retryProfile } = await supabase
+              .from('users')
+              .select('*')
+              .eq('id', refreshed.user.id)
+              .maybeSingle();
+            set({ user: retryProfile ?? null, isInitialized: true, isLoading: false });
+            if (retryProfile?.id) {
+              useProjectStore.getState().loadUserChallenges(retryProfile.id);
+            }
+            return;
+          }
+          // Refresh échoué → vraiment déconnecté
+          set({ user: null, isInitialized: true, isLoading: false });
+          return;
+        }
 
         set({ user: userProfile ?? null, isInitialized: true, isLoading: false });
 

@@ -10,7 +10,7 @@
  */
 
 import { createClient } from '@supabase/supabase-js';
-import { Platform } from 'react-native';
+import { AppState, Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // ⚠️ IMPORTANT : Ces valeurs doivent être remplies avec tes credentials Supabase
@@ -41,6 +41,17 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     // Persister la session entre les redémarrages de l'app
     persistSession: true,
   },
+});
+
+// Sur React Native, le timer d'auto-refresh des tokens s'arrête quand l'app
+// passe en background. Sans ce listener, les tokens expirent et l'utilisateur
+// est déconnecté au retour. C'est la recommandation officielle Supabase pour RN.
+AppState.addEventListener('change', (state) => {
+  if (state === 'active') {
+    supabase.auth.startAutoRefresh();
+  } else {
+    supabase.auth.stopAutoRefresh();
+  }
 });
 
 /**

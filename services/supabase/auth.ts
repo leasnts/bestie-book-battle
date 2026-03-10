@@ -330,11 +330,17 @@ export function subscribeToAuthChanges(
         // On utilise directement session.user.id (déjà disponible dans l'événement)
         // plutôt que d'appeler getCurrentUser() qui referait un getSession() réseau
         // et pourrait tomber en timeout au démarrage sous Expo Go.
-        const { data: userProfile } = await supabase
+        const { data: userProfile, error } = await supabase
           .from('users')
           .select('*')
           .eq('id', session.user.id)
           .maybeSingle();
+
+        // Si la requête échoue mais qu'on a une session valide, ne pas déconnecter
+        if (error) {
+          console.warn('Auth change: profile fetch failed, ignoring', error.message);
+          return;
+        }
         callback(userProfile ?? null);
       } else {
         callback(null);
