@@ -8,6 +8,7 @@
 
 import { supabase, STORAGE_BUCKETS, getProfilePhotoUrl, getBookCoverUrl } from '../../supabaseConfig';
 import * as ImagePicker from 'expo-image-picker';
+import * as ImageManipulator from 'expo-image-manipulator';
 import * as FileSystem from 'expo-file-system/legacy';
 import { decode } from 'base64-arraybuffer';
 
@@ -95,30 +96,36 @@ export async function uploadProfilePhoto(
   imageUri: string
 ): Promise<UploadResult> {
   try {
-    // Supprimer les anciennes photos (avatar.jpg, avatar.png, etc.)
-    // pour éviter les fichiers orphelins quand l'extension change
-    await deleteProfilePhoto(userId).catch(() => {
+    // Redimensionner l'image à 400px max (suffisant pour un avatar, même en 3x retina)
+    // Réduit drastiquement la taille du fichier et donc le temps d'upload + d'encodage base64
+    const manipulated = await ImageManipulator.manipulateAsync(
+      imageUri,
+      [{ resize: { width: 400 } }],
+      { compress: 0.8, format: ImageManipulator.SaveFormat.JPEG }
+    );
+    const optimizedUri = manipulated.uri;
+
+    // Lancer suppression des anciennes photos EN PARALLÈLE avec l'encodage + upload
+    // Au lieu d'attendre la suppression avant de commencer l'upload
+    const deletePromise = deleteProfilePhoto(userId).catch(() => {
       // Ignorer si aucun fichier n'existe (normal pour premier upload)
     });
 
-    // Lire le fichier en base64 depuis son URI locale
-    // On utilise la chaîne 'base64' directement au lieu de FileSystem.EncodingType.Base64
-    // car l'enum EncodingType n'est plus exporté dans les nouvelles versions d'expo-file-system
-    const base64 = await FileSystem.readAsStringAsync(imageUri, {
+    // Lire le fichier optimisé en base64
+    const base64 = await FileSystem.readAsStringAsync(optimizedUri, {
       encoding: 'base64' as any,
     });
 
-    // Déterminer le type MIME de l'image
-    const ext = imageUri.split('.').pop()?.toLowerCase() || 'jpg';
-    const mimeType = ext === 'png' ? 'image/png' : ext === 'webp' ? 'image/webp' : 'image/jpeg';
-
-    // Construire le chemin du fichier
-    const fileName = `avatar.${ext}`;
+    // Toujours JPEG après manipulation
+    const mimeType = 'image/jpeg';
+    const fileName = 'avatar.jpg';
     const filePath = `${userId}/${fileName}`;
 
     // Convertir la chaîne base64 en ArrayBuffer (format binaire)
-    // C'est ce format que Supabase Storage attend pour l'upload
     const arrayBuffer = decode(base64);
+
+    // Attendre la fin de la suppression avant l'upload pour éviter les conflits
+    await deletePromise;
 
     // Upload vers Supabase Storage
     const { error: uploadError } = await supabase.storage
@@ -131,7 +138,6 @@ export async function uploadProfilePhoto(
     if (uploadError) throw uploadError;
 
     // Obtenir l'URL publique avec cache busting (?v=timestamp)
-    // Cela force expo-image et les CDN à recharger l'image au lieu d'afficher l'ancienne
     const baseUrl = getProfilePhotoUrl(userId, fileName);
     const separator = baseUrl.includes('?') ? '&' : '?';
     const url = `${baseUrl}${separator}v=${Date.now()}`;

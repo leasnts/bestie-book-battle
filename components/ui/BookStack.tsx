@@ -284,7 +284,7 @@ export default function BookStack({
   const handleDeletePress = useCallback(() => {
     setMenuVisible(false);
     Alert.alert(
-      'Quitter le livre',
+      'Supprimer définitivement le livre',
       `Tu veux retirer « ${bookTitle} » de ta bibliothèque ? Tu pourras toujours le rejoindre plus tard avec le code d'invitation.`,
       [
         { text: 'Annuler', style: 'cancel' },
@@ -762,7 +762,7 @@ export default function BookStack({
                 </View>
                 <View style={styles.sheetActionTexts}>
                   <Text style={[styles.sheetActionTitle, styles.sheetActionDanger]}>
-                    Quitter le livre
+                    Supprimer définitivement le livre
                   </Text>
                 </View>
               </Pressable>

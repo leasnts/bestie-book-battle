@@ -339,6 +339,22 @@ export default function ProfileScreen() {
 
       </View>
 
+      {/* ═══════════ DEV TOOLS ═══════════ */}
+      {__DEV__ && (
+        <View style={styles.settingsList}>
+          <Pressable
+            style={({ pressed }) => [styles.settingRow, pressed && styles.settingRowPressed]}
+            onPress={() => router.push('/onboarding')}
+          >
+            <View style={styles.settingLeft}>
+              <Ionicons name="flask-outline" size={24} color={colors.textSecondary} />
+              <Text style={styles.settingLabel}>Tester l'onboarding</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={24} color={colors.textTertiary} />
+          </Pressable>
+        </View>
+      )}
+
       {/* ═══════════ ZONE DANGER ═══════════ */}
       <View style={styles.dangerZone}>
         <Pressable
@@ -428,10 +444,14 @@ function EditProfileSheet({ visible, onClose }: { visible: boolean; onClose: () 
   const [isSaving, setIsSaving] = useState(false);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
+  const [localPhotoUri, setLocalPhotoUri] = useState<string | null>(null);
   const inputRef = useRef<TextInput>(null);
 
   useEffect(() => {
-    if (visible) setFirstName(user?.first_name || '');
+    if (visible) {
+      setFirstName(user?.first_name || '');
+      setLocalPhotoUri(null);
+    }
   }, [visible, user?.first_name]);
 
   useEffect(() => {
@@ -451,10 +471,15 @@ function EditProfileSheet({ visible, onClose }: { visible: boolean; onClose: () 
     try {
       const imageUri = await pickImage(true, [1, 1], 0.8);
       if (!imageUri) return;
+      // Afficher la photo locale IMMÉDIATEMENT (optimistic UI)
+      // L'utilisatrice voit sa photo tout de suite, sans attendre l'upload
+      setLocalPhotoUri(imageUri);
       setIsUploadingPhoto(true);
       const { url } = await uploadProfilePhoto(user.id, imageUri);
       await updateProfile({ profile_photo_url: url });
     } catch {
+      // En cas d'échec, on retire la preview locale
+      setLocalPhotoUri(null);
       Alert.alert('Erreur', 'Impossible de changer ta photo. Réessaie.');
     } finally {
       setIsUploadingPhoto(false);
@@ -479,7 +504,10 @@ function EditProfileSheet({ visible, onClose }: { visible: boolean; onClose: () 
     }
   };
 
-  const photoSource = resolvePhotoSource(user?.profile_photo_url, user?.updated_at);
+  // Priorité : photo locale (preview instantanée) > photo serveur > défaut
+  const photoSource = localPhotoUri
+    ? { uri: localPhotoUri }
+    : resolvePhotoSource(user?.profile_photo_url, user?.updated_at);
 
   return (
     <BottomSheet visible={visible} onClose={onClose}>
