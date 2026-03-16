@@ -582,16 +582,13 @@ export default function HomeScreen() {
             : 0;
 
           if (secondaryGoal) {
-            // Si l'objectif existant n'a pas de baseline (créé avant le fix),
-            // on la capture maintenant. Sinon on garde l'existante.
-            const existingBaseline = (secondaryGoal.results as any)?.baseline;
+            // Quand on change l'objectif, on recalcule toujours la baseline
+            // pour mesurer la progression depuis la position actuelle.
             const updates: any = {
               target_pages: targetPages,
               deadline: deadline.toISOString(),
+              results: { baseline: currentBaseline },
             };
-            if (existingBaseline == null) {
-              updates.results = { baseline: currentBaseline };
-            }
             await editGoal(secondaryGoal.id, updates);
           } else {
             await addGoal({
