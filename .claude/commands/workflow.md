@@ -1,0 +1,1 @@
+Lis le fichier .cursor/skills/workflow/SKILL.md et charge l'action appropriée depuis references/actions/. Commandes : plan {idea}, spike {question}, ship, review, spec-review, focus, done, drop, workflow. $ARGUMENTS

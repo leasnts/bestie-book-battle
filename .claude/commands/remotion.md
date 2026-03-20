@@ -1,0 +1,1 @@
+Lis le fichier .cursor/skills/remotion-best-practices/SKILL.md et les rules pertinentes dans rules/ pour appliquer les best practices Remotion. Couvre : animations, timing, séquençage, assets, audio, vidéo, captions, transitions, 3D, charts. $ARGUMENTS

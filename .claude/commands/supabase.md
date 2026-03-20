@@ -1,0 +1,1 @@
+Lis le fichier .cursor/skills/supabase-postgres-best-practices/SKILL.md et les references pertinentes dans references/ pour appliquer les best practices Supabase/Postgres. Priorité : query perf > connections > security/RLS > schema > locking > data access > monitoring > advanced. $ARGUMENTS

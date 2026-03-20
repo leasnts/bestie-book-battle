@@ -8,6 +8,7 @@
       "developmentClient": true,
       "distribution": "internal",
       "env": {
+        "APP_VARIANT": "development",
         "EXPO_PUBLIC_SUPABASE_URL": "https://ktpyoqqswdblnqaqcfxw.supabase.co",
         "EXPO_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt0cHlvcXFzd2RibG5xYXFjZnh3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk2ODIwNzQsImV4cCI6MjA4NTI1ODA3NH0.bhWRbZ6yovVEM8e_Lnl6M2CdULzT2cMTtobsDhdvu98"
       }

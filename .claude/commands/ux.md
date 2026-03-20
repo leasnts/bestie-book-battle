@@ -1,0 +1,1 @@
+Lis le fichier .cursor/skills/santostudio-ux/SKILL.md et les fichiers dans essentials/ et patterns/ pour appliquer les best practices UX. Suis les règles d'accessibilité (WCAG), responsive (mobile-first), hiérarchie, feedback, et UX writing. $ARGUMENTS

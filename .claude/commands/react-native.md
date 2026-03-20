@@ -1,0 +1,1 @@
+Lis le fichier .cursor/skills/react-native-skills/SKILL.md et les rules pertinentes dans rules/ pour appliquer les best practices React Native/Expo. Priorité : list performance > animation > navigation > UI patterns > state > rendering > monorepo > config. $ARGUMENTS

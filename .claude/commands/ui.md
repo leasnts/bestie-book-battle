@@ -1,0 +1,1 @@
+Lis le fichier .cursor/skills/santostudio-ui/SKILL.md et les fichiers dans essentials/ et components/ pour appliquer le style santostudio-ui à la tâche en cours. Suis les règles de spacing (6-32px), radius (12-20px), couleurs (pas de purple primary), motion (hover+active+focus obligatoires) et effets (glassmorphism, glow). $ARGUMENTS
