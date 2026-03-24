@@ -23,6 +23,7 @@ import {
   AppleSignInResult,
 } from '../services/supabase/auth';
 import { supabase } from '../supabaseConfig';
+import { withTimeout } from '../utils/withTimeout';
 import { useProjectStore } from './projectStore';
 import { useProgressStore } from './progressStore';
 
@@ -283,10 +284,9 @@ export const useAuthStore = create<AuthStore>()(
       set({ isLoading: true });
       try {
         // Étape 1 : vérifier la session locale depuis AsyncStorage (< 200ms, pas de réseau)
-        // C'est ce qui évite le faux redirect vers le login au démarrage sur Expo Go :
-        // l'ancien code appelait getCurrentUser() directement, qui contacte le réseau
-        // et tombait en timeout (5s) avant qu'Expo Go ait fini d'initialiser le réseau.
-        const { data: { session } } = await supabase.auth.getSession();
+        const { data: { session } } = await withTimeout(
+          supabase.auth.getSession(), 5000
+        );
 
         if (!session?.user) {
           set({ user: null, isInitialized: true, isLoading: false });
@@ -294,28 +294,34 @@ export const useAuthStore = create<AuthStore>()(
         }
 
         // Étape 2 : session confirmée → récupérer le profil complet depuis la base
-        // Sans timeout arbitraire : on sait déjà que l'utilisateur EST connecté.
-        const { data: userProfile, error: profileError } = await supabase
-          .from('users')
-          .select('*')
-          .eq('id', session.user.id)
-          .maybeSingle();
+        // Timeout 8s : sur mobile le réseau peut être lent au réveil, mais on ne
+        // doit jamais pendre indéfiniment.
+        const { data: userProfile, error: profileError } = await withTimeout(
+          supabase
+            .from('users')
+            .select('*')
+            .eq('id', session.user.id)
+            .maybeSingle(),
+          8000
+        );
 
         // Si la requête profil échoue (token expiré, réseau…), on tente un refresh
         // plutôt que de déconnecter l'utilisateur à tort.
         if (profileError) {
           console.warn('Profile fetch failed, refreshing session…', profileError.message);
-          const { data: { session: refreshed } } = await supabase.auth.refreshSession();
+          const { data: { session: refreshed } } = await withTimeout(
+            supabase.auth.refreshSession(), 8000
+          );
           if (refreshed?.user) {
-            const { data: retryProfile } = await supabase
-              .from('users')
-              .select('*')
-              .eq('id', refreshed.user.id)
-              .maybeSingle();
+            const { data: retryProfile } = await withTimeout(
+              supabase
+                .from('users')
+                .select('*')
+                .eq('id', refreshed.user.id)
+                .maybeSingle(),
+              8000
+            );
             set({ user: retryProfile ?? null, isInitialized: true, isLoading: false });
-            if (retryProfile?.id) {
-              useProjectStore.getState().loadUserChallenges(retryProfile.id);
-            }
             return;
           }
           // Refresh échoué → vraiment déconnecté
@@ -324,10 +330,8 @@ export const useAuthStore = create<AuthStore>()(
         }
 
         set({ user: userProfile ?? null, isInitialized: true, isLoading: false });
-
-        if (userProfile?.id) {
-          useProjectStore.getState().loadUserChallenges(userProfile.id);
-        }
+        // Note : loadUserChallenges est déclenché par _layout.tsx via useEffect [user?.id]
+        // — pas besoin de l'appeler ici (évite les appels dupliqués et race conditions).
       } catch (error) {
         console.error('Session check error:', error);
         set({ user: null, isInitialized: true, isLoading: false });

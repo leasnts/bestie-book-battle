@@ -33,6 +33,7 @@ interface ProjectStore {
   activeChallenge: Challenge | null; // Challenge affiché sur la homepage
   currentChallenge: ChallengeWithParticipants | null; // Challenge actuellement affiché (page détail)
   isLoading: boolean;
+  challengesLoading: boolean; // true uniquement pendant loadUserChallenges (pas pollué par les autres actions)
   challengesLoaded: boolean; // true après le premier chargement réussi ou échoué
   error: string | null;
 
@@ -83,6 +84,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
   activeChallenge: null,
   currentChallenge: null,
   isLoading: false,
+  challengesLoading: false,
   challengesLoaded: false,
   error: null,
 
@@ -226,7 +228,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
    * @param userId - L'ID de l'utilisateur
    */
   loadUserChallenges: async (userId) => {
-    set({ isLoading: true, error: null });
+    set({ challengesLoading: true, error: null });
     try {
       const challenges = await getUserChallenges(userId);
 
@@ -250,10 +252,10 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
         newActive = null;
       }
 
-      set({ challenges, activeChallenge: newActive, isLoading: false, challengesLoaded: true });
+      set({ challenges, activeChallenge: newActive, challengesLoading: false, challengesLoaded: true });
     } catch (error: any) {
       console.error('Load challenges error:', error);
-      set({ error: error.message, isLoading: false, challengesLoaded: true });
+      set({ error: error.message, challengesLoading: false, challengesLoaded: true });
     }
   },
 
@@ -450,6 +452,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
       activeChallenge: null,
       currentChallenge: null,
       isLoading: false,
+      challengesLoading: false,
       challengesLoaded: false,
       error: null,
     });

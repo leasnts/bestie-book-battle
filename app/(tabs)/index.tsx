@@ -21,6 +21,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
     ActivityIndicator,
     Alert,
+    AppState,
     Pressable,
     StyleSheet,
     Text,
@@ -115,7 +116,7 @@ export default function HomeScreen() {
     loadUserChallenges,
     leaveActiveChallenge,
     updateActiveChallenge,
-    isLoading: projectsLoading,
+    challengesLoading,
     challengesLoaded,
   } = useProjectStore();
 
@@ -237,8 +238,8 @@ export default function HomeScreen() {
     });
 
   // ===== Chargement des données au montage =====
-  // loadUserChallenges est déjà appelé par authStore.initialize() (cold start)
-  // et par _layout.tsx (changement d'auth post-login). Pas besoin de le refaire ici.
+  // loadUserChallenges est déjà appelé par _layout.tsx via useEffect [user?.id].
+  // Pas besoin de le refaire ici.
   useEffect(() => {
     if (activeChallenge?.id) {
       Promise.all([
@@ -248,6 +249,18 @@ export default function HomeScreen() {
       ]);
     }
   }, [activeChallenge?.id]);
+
+  // ===== Recovery au retour du foreground =====
+  // Si le chargement initial a échoué (timeout réseau, requête pendue…),
+  // on retente automatiquement quand l'app revient au premier plan.
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state === 'active' && user?.id && !challengesLoaded) {
+        loadUserChallenges(user.id);
+      }
+    });
+    return () => sub.remove();
+  }, [user?.id, challengesLoaded, loadUserChallenges]);
 
   // ===== Données dérivées =====
   const totalPages = activeChallenge?.total_pages || 100;
@@ -739,7 +752,7 @@ export default function HomeScreen() {
             </View>
           </View>
         </View>
-      ) : !challengesLoaded || projectsLoading ? (
+      ) : !challengesLoaded || challengesLoading ? (
         /* ═══════════ ÉTAT CHARGEMENT : challenges pas encore chargés ═══════════ */
         <View style={styles.emptyStateContainer}>
           <ActivityIndicator size="large" color={colors.primary} />

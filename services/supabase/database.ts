@@ -10,6 +10,7 @@
 
 import { randomUUID } from 'expo-crypto';
 import { supabase } from '../../supabaseConfig';
+import { withTimeout } from '../../utils/withTimeout';
 import {
     Challenge,
     ChallengeGoal,
@@ -181,14 +182,17 @@ export async function getChallengeByInviteCode(
  */
 export async function getUserChallenges(userId: string): Promise<Challenge[]> {
   try {
-    const { data, error } = await supabase
-      .from('challenges')
-      .select(`
-        *,
-        challenge_participants!inner(user_id)
-      `)
-      .eq('challenge_participants.user_id', userId)
-      .order('created_at', { ascending: false });
+    const { data, error } = await withTimeout(
+      supabase
+        .from('challenges')
+        .select(`
+          *,
+          challenge_participants!inner(user_id)
+        `)
+        .eq('challenge_participants.user_id', userId)
+        .order('created_at', { ascending: false }),
+      10_000
+    );
 
     if (error) throw error;
     return data || [];

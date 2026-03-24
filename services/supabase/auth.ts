@@ -11,6 +11,7 @@
 import * as AppleAuthentication from 'expo-apple-authentication';
 import { supabase } from '../../supabaseConfig';
 import { User, UserInsert, UserUpdate } from '../../types/supabase';
+import { withTimeout } from '../../utils/withTimeout';
 
 /**
  * Résultat de l'authentification Apple
@@ -246,14 +247,7 @@ async function getCurrentUserInternal(): Promise<User | null> {
   return userProfile;
 }
 
-function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
-  return Promise.race([
-    promise,
-    new Promise<T>((_, reject) =>
-      setTimeout(() => reject(new Error(`Timeout after ${ms}ms`)), ms)
-    ),
-  ]);
-}
+// withTimeout est importé depuis utils/withTimeout.ts
 
 /**
  * Mettre à jour le profil utilisateur
@@ -330,11 +324,15 @@ export function subscribeToAuthChanges(
         // On utilise directement session.user.id (déjà disponible dans l'événement)
         // plutôt que d'appeler getCurrentUser() qui referait un getSession() réseau
         // et pourrait tomber en timeout au démarrage sous Expo Go.
-        const { data: userProfile, error } = await supabase
-          .from('users')
-          .select('*')
-          .eq('id', session.user.id)
-          .maybeSingle();
+        // Timeout 8s : évite que le listener pende indéfiniment sur réseau instable.
+        const { data: userProfile, error } = await withTimeout(
+          supabase
+            .from('users')
+            .select('*')
+            .eq('id', session.user.id)
+            .maybeSingle(),
+          8000
+        );
 
         // Si la requête échoue mais qu'on a une session valide, ne pas déconnecter
         if (error) {
