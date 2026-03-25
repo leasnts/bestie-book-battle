@@ -293,6 +293,12 @@ export const useAuthStore = create<AuthStore>()(
           return;
         }
 
+        // Lancer le chargement des challenges dès qu'on a le user ID,
+        // en parallèle avec le fetch du profil. Pas besoin d'attendre
+        // isInitialized — les challenges cachés s'affichent déjà,
+        // et les frais les remplaceront silencieusement.
+        useProjectStore.getState().loadUserChallenges(session.user.id);
+
         // Étape 2 : session confirmée → récupérer le profil complet depuis la base
         // Timeout 8s : sur mobile le réseau peut être lent au réveil, mais on ne
         // doit jamais pendre indéfiniment.

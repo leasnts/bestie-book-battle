@@ -752,8 +752,8 @@ export default function HomeScreen() {
             </View>
           </View>
         </View>
-      ) : !challengesLoaded || challengesLoading ? (
-        /* ═══════════ ÉTAT CHARGEMENT : challenges pas encore chargés ═══════════ */
+      ) : challenges.length === 0 && (!challengesLoaded || challengesLoading) ? (
+        /* ═══════════ ÉTAT CHARGEMENT : aucun cache local, premier chargement ═══════════ */
         <View style={styles.emptyStateContainer}>
           <ActivityIndicator size="large" color={colors.primary} />
           <Text style={[styles.emptyStateSubtitle, { marginTop: 16 }]}>

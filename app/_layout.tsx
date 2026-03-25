@@ -108,10 +108,9 @@ function RootLayoutNav() {
     };
   }, [initAuth]);
 
-  // Recharge les challenges si l'état d'auth change après le démarrage
-  // (connexion depuis l'écran login, retour d'onboarding…).
-  // Au démarrage à froid, les challenges sont déjà chargés par authStore.initialize()
-  // avant que isInitialized ne passe à true, donc le splash n'affiche jamais d'écran vide.
+  // Recharge les challenges quand le user change (login, retour d'onboarding…).
+  // Au cold start, initialize() lance déjà loadUserChallenges en parallèle du
+  // profile fetch → ce useEffect crée un doublon inoffensif (même résultat).
   useEffect(() => {
     if (user?.id) {
       loadUserChallenges(user.id);

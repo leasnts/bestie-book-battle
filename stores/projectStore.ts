@@ -10,7 +10,9 @@
  * Ce store gère la liste des challenges et le challenge actif dans l'UI.
  */
 
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
+import { createJSONStorage, persist } from 'zustand/middleware';
 import { Challenge, ChallengeWithParticipants } from '../types/supabase';
 import {
   createChallenge,
@@ -78,7 +80,9 @@ interface ProjectStore {
  * 
  * Gère tous les challenges de l'utilisateur et leurs interactions.
  */
-export const useProjectStore = create<ProjectStore>((set, get) => ({
+export const useProjectStore = create<ProjectStore>()(
+  persist(
+  (set, get) => ({
   // ===== État initial =====
   challenges: [],
   activeChallenge: null,
@@ -467,4 +471,16 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
   setError: (error) => {
     set({ error });
   },
-}));
+  }),
+  {
+    name: 'bbb-project-store',
+    storage: createJSONStorage(() => AsyncStorage),
+    // On ne persiste QUE les données utiles au démarrage instantané.
+    // currentChallenge (page détail), isLoading, error, etc. sont éphémères.
+    partialize: (state) => ({
+      challenges: state.challenges,
+      activeChallenge: state.activeChallenge,
+    }),
+  }
+  )
+);
