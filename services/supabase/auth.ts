@@ -321,25 +321,26 @@ export function subscribeToAuthChanges(
       if (event === 'INITIAL_SESSION') return;
 
       if (session?.user) {
-        // On utilise directement session.user.id (déjà disponible dans l'événement)
-        // plutôt que d'appeler getCurrentUser() qui referait un getSession() réseau
-        // et pourrait tomber en timeout au démarrage sous Expo Go.
-        // Timeout 8s : évite que le listener pende indéfiniment sur réseau instable.
-        const { data: userProfile, error } = await withTimeout(
-          supabase
-            .from('users')
-            .select('*')
-            .eq('id', session.user.id)
-            .maybeSingle(),
-          8000
-        );
+        try {
+          const { data: userProfile, error } = await withTimeout(
+            supabase
+              .from('users')
+              .select('*')
+              .eq('id', session.user.id)
+              .maybeSingle(),
+            8000
+          );
 
-        // Si la requête échoue mais qu'on a une session valide, ne pas déconnecter
-        if (error) {
-          console.warn('Auth change: profile fetch failed, ignoring', error.message);
-          return;
+          if (error) {
+            console.warn('Auth change: profile fetch failed, ignoring', error.message);
+            return;
+          }
+          callback(userProfile ?? null);
+        } catch (e) {
+          // Timeout ou réseau mort — on ignore silencieusement.
+          // Le profil sera récupéré au prochain événement auth ou foreground.
+          console.warn('Auth change: profile fetch timed out, ignoring');
         }
-        callback(userProfile ?? null);
       } else {
         callback(null);
       }
