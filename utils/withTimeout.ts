@@ -10,8 +10,14 @@
  * @returns        Le resultat de la promise, ou reject si timeout depasse
  */
 export function withTimeout<T>(promise: PromiseLike<T>, ms = 10_000): Promise<T> {
+  // Wrap pour pouvoir silencer le rejet tardif si le timeout gagne la race.
+  // Sans ça, quand le timeout se déclenche mais que la requête originale finit
+  // par échouer aussi, son rejet n'est rattrapé par personne → "Uncaught in promise".
+  const wrapped = Promise.resolve(promise);
+  wrapped.catch(() => {});
+
   return Promise.race([
-    Promise.resolve(promise),
+    wrapped,
     new Promise<T>((_, reject) =>
       setTimeout(() => reject(new Error(`Timeout after ${ms}ms`)), ms)
     ),
