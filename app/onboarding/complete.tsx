@@ -118,15 +118,25 @@ export default function OnboardingCompleteScreen() {
                     targetEndDate
                 );
 
-                // 3. Upload de la cover si présente
+                // 3. Cover : URL distante (API) ou upload local (galerie)
                 if (coverUri) {
                     try {
-                        const { url } = await uploadBookCover(challenge.id, coverUri);
-                        await updateChallenge(challenge.id, { cover_url: url });
+                        let finalCoverUrl: string;
+
+                        if (coverUri.startsWith('http')) {
+                            // Cover provenant de l'API Google Books → utiliser l'URL directement
+                            finalCoverUrl = coverUri;
+                        } else {
+                            // Cover locale (photo galerie) → upload vers Supabase Storage
+                            const { url } = await uploadBookCover(challenge.id, coverUri);
+                            finalCoverUrl = url;
+                        }
+
+                        await updateChallenge(challenge.id, { cover_url: finalCoverUrl });
                         // Mettre à jour le store local pour que la homepage affiche la bonne cover
                         // sans attendre loadUserChallenges
                         useProjectStore.setState((state) => {
-                            const updated = { ...challenge, cover_url: url };
+                            const updated = { ...challenge, cover_url: finalCoverUrl };
                             return {
                                 challenges: state.challenges.map((c) =>
                                     c.id === challenge.id ? updated : c

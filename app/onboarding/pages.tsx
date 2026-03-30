@@ -24,6 +24,7 @@ import {
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, fontSize, fontWeight, spacing } from '../../utils/constants';
 import Button3D from '../../components/Button3D';
+import { useOnboardingStore } from '../../stores/onboardingStore';
 
 // Asset : texture de fond (même que les autres écrans)
 const TEXTURE_IMAGE = require('../../assets/images/61ea1e0c638b5b9c8100383a37a5b488848db623.png');
@@ -38,7 +39,10 @@ export default function OnboardingPagesScreen() {
         addChallenge?: string;
     }>();
     
-    const [totalPages, setTotalPages] = useState('');
+    const apiPageCount = useOnboardingStore((s) => s.apiPageCount);
+    const [totalPages, setTotalPages] = useState(() =>
+        apiPageCount ? String(apiPageCount) : ''
+    );
     const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
 
     useEffect(() => {

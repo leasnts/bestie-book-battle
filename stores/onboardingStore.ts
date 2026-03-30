@@ -15,15 +15,25 @@ import { create } from 'zustand';
 interface OnboardingStore {
   /** URI locale de la cover importée (cover.tsx → complete.tsx) */
   coverUri: string | null;
+  /** Nombre de pages récupéré via l'API Google Books (create.tsx → pages.tsx) */
+  apiPageCount: number | null;
+  /** URL de la cover récupérée via l'API Google Books (create.tsx → cover.tsx) */
+  apiCoverUrl: string | null;
 
   setCoverUri: (uri: string | null) => void;
+  setApiPageCount: (count: number | null) => void;
+  setApiCoverUrl: (url: string | null) => void;
   /** Réinitialiser après la création du projet (complete.tsx) */
   reset: () => void;
 }
 
 export const useOnboardingStore = create<OnboardingStore>((set) => ({
   coverUri: null,
+  apiPageCount: null,
+  apiCoverUrl: null,
 
   setCoverUri: (uri) => set({ coverUri: uri }),
-  reset: () => set({ coverUri: null }),
+  setApiPageCount: (count) => set({ apiPageCount: count }),
+  setApiCoverUrl: (url) => set({ apiCoverUrl: url }),
+  reset: () => set({ coverUri: null, apiPageCount: null, apiCoverUrl: null }),
 }));

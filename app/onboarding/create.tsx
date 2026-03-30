@@ -11,6 +11,7 @@
  * Structure : input géant centré (même pattern que les autres écrans onboarding).
  */
 
+import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
@@ -19,6 +20,7 @@ import {
     Keyboard,
     KeyboardAvoidingView,
     Platform,
+    Pressable,
     StyleSheet,
     Text,
     TextInput,
@@ -26,6 +28,9 @@ import {
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import Button3D from '../../components/Button3D';
+import BookSearchSheet from '../../components/ui/BookSearchSheet';
+import { useOnboardingStore } from '../../stores/onboardingStore';
+import type { BookSearchResult } from '../../types/bookSearch';
 import { borderRadius, colors, fontSize, fontWeight, shadows, spacing } from '../../utils/constants';
 
 // Asset : texture de fond
@@ -39,10 +44,19 @@ export default function OnboardingBookFormScreen() {
     const [bookTitle, setBookTitle] = useState('');
     const [author, setAuthor] = useState('');
     const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
+    const [searchVisible, setSearchVisible] = useState(false);
 
     // Refs pour naviguer entre les champs via la touche "Suivant" du clavier
     const titleRef = useRef<TextInput>(null);
     const authorRef = useRef<TextInput>(null);
+
+    /** Quand un livre est sélectionné depuis la recherche API */
+    const handleSelectBook = (book: BookSearchResult) => {
+        setBookTitle(book.title);
+        setAuthor(book.author);
+        useOnboardingStore.getState().setApiPageCount(book.pageCount);
+        useOnboardingStore.getState().setApiCoverUrl(book.coverUrl);
+    };
 
     useEffect(() => {
         const showSub = Keyboard.addListener(
@@ -121,8 +135,20 @@ export default function OnboardingBookFormScreen() {
                     <Text style={styles.title}>
                         {addChallenge ? 'Décris ce nouveau bbb' : 'Décris ton premier bbb !'}
                     </Text>
-                    
+
                     <View style={styles.formContainer}>
+                        {/* Bouton recherche API */}
+                        <Pressable
+                            style={styles.searchButton}
+                            onPress={() => {
+                                Keyboard.dismiss();
+                                setSearchVisible(true);
+                            }}
+                        >
+                            <Ionicons name="search" size={18} color={colors.textPlaceholder} />
+                            <Text style={styles.searchButtonText}>Rechercher un livre...</Text>
+                        </Pressable>
+
                         <View style={styles.inputWrapper}>
                             <TextInput
                                 ref={titleRef}
@@ -169,6 +195,12 @@ export default function OnboardingBookFormScreen() {
                 </View>
             </View>
             </KeyboardAvoidingView>
+
+            <BookSearchSheet
+                visible={searchVisible}
+                onClose={() => setSearchVisible(false)}
+                onSelectBook={handleSelectBook}
+            />
         </SafeAreaView>
     );
 }
@@ -214,7 +246,25 @@ const styles = StyleSheet.create({
         lineHeight: 44,
     },
     formContainer: {
-        gap: spacing.xl, // 20px entre Titre et Auteur (réduit, ils sont liés)
+        gap: spacing.xl, // 20px entre les champs
+    },
+    searchButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: spacing.sm,
+        backgroundColor: colors.white,
+        borderWidth: 1,
+        borderColor: colors.border,
+        borderRadius: borderRadius.lg,
+        paddingHorizontal: spacing['2xl'],
+        paddingVertical: spacing.xl,
+        ...shadows.xs,
+    },
+    searchButtonText: {
+        fontFamily: 'WorkSans_400Regular',
+        fontSize: fontSize.md,
+        color: colors.textPlaceholder,
+        letterSpacing: -0.3,
     },
     inputWrapper: {},
     input: {

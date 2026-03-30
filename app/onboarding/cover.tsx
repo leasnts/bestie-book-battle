@@ -49,7 +49,8 @@ export default function OnboardingCoverScreen() {
         addChallenge?: string;
     }>();
     
-    const [coverUri, setCoverUri] = useState<string | null>(null);
+    const apiCoverUrl = useOnboardingStore((s) => s.apiCoverUrl);
+    const [coverUri, setCoverUri] = useState<string | null>(apiCoverUrl);
     const [isPickingImage, setIsPickingImage] = useState(false);
     const [pendingImage, setPendingImage] = useState<PendingImage | null>(null);
     
