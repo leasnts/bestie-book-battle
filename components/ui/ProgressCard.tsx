@@ -2,25 +2,23 @@
  * Composant ProgressCard
  *
  * Classement vertical des participants dans un challenge de lecture.
- * Celui qui a le plus lu est en haut, celui qui a le moins lu est en bas.
+ * Supporte N participants (book club). Celui qui a le plus avancé (en %)
+ * est en haut, celui qui a le moins avancé est en bas.
  *
  * Comment ça marche :
- * - On reçoit "me" (l'utilisateur connecté) et "friend" (l'ami.e)
- * - On les trie par score décroissant (le plus de pages lues en premier)
+ * - On reçoit un tableau de participants + l'ID de l'utilisateur connecté
+ * - On les trie par pourcentage décroissant
+ * - La liste est scrollable (maxHeight contraint) pour supporter 20+ participants
  * - Chaque participant est affiché sur une ligne horizontale :
  *   → [avatar + couronne si leader] [nom] ........... [badge streak] [score]
  * - Le score utilise un compteur roulant animé (hook useRollingCounter)
- *   pour un feedback visuel satisfaisant quand la valeur change
- * - La couronne PNG est centrée verticalement sur l'avatar du leader, droite
- * - Si un objectif intermédiaire existe, on affiche une carte en haut :
- *   → Colonne gauche : "Objectif" + nombre de pages, "Deadline" + date
- *   → Colonne droite : cercle de progression + chevron
+ * - Si un objectif intermédiaire existe, il s'affiche en dessous (hors scroll)
  */
 
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import React, { useEffect, useRef, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, { LinearTransition } from 'react-native-reanimated';
 import Svg, { Circle } from 'react-native-svg';
 import { colors, spacing } from '../../utils/constants';
@@ -31,6 +29,7 @@ interface Participant {
   name: string;
   photoUrl: string | null;
   score: number;        // Page actuelle (= score)
+  percentage: number;   // Pourcentage de progression (tient compte du total_pages de chaque édition)
   streak: number;       // Nombre de jours consécutifs
   isLeader: boolean;    // Est en tête ?
   /** true = a lu hier mais pas aujourd'hui, le streak va « mourir » si pas de lecture */
@@ -38,10 +37,10 @@ interface Participant {
 }
 
 interface ProgressCardProps {
-  /** Le participant "moi" (utilisateur connecté) */
-  me: Participant;
-  /** Le participant ami.e */
-  friend: Participant | null;
+  /** Tous les participants (y compris l'utilisateur connecté) */
+  participants: Participant[];
+  /** ID de l'utilisateur connecté (pour distinction visuelle) */
+  myUserId: string;
   /** Callback quand on tap sur un participant */
   onParticipantPress?: (participantId: string) => void;
   /** Objectif intermédiaire complet (optionnel) */
@@ -135,13 +134,14 @@ function useRollingCounter(target: number, duration = 800): number {
  */
 function ParticipantRow({
   participant,
-  displayScore,
   onPress,
 }: {
   participant: Participant;
-  displayScore: number;
   onPress?: () => void;
 }) {
+  // Chaque row gère son propre compteur roulant (permet N participants)
+  const displayScore = useRollingCounter(participant.score);
+
   return (
     // Animated.View avec layout= pour animer le glissement de position
     // quand l'ordre des lignes change (LinearTransition = glissement fluide)
@@ -189,52 +189,36 @@ function ParticipantRow({
   );
 }
 
+// Hauteur max de la liste scrollable (~4 lignes de participants)
+const PARTICIPANT_LIST_MAX_HEIGHT = 180;
+
 // ─── Composant principal ──────────────────────────────────────────
 export default function ProgressCard({
-  me,
-  friend,
+  participants,
+  myUserId,
   onParticipantPress,
   intermediateGoal,
   onGoalPress,
 }: ProgressCardProps) {
-  // Compteurs roulants — quand le score change (ex: après enregistrement),
-  // le nombre affiché s'incrémente progressivement de l'ancien au nouveau.
-  const myDisplayScore = useRollingCounter(me.score);
-  const friendDisplayScore = useRollingCounter(friend?.score ?? 0);
-
-
-  // On construit la liste des participants, triée par score décroissant.
-  // Le participant avec le plus de pages lues apparaît en premier (en haut).
-  const sortedParticipants: { participant: Participant; displayScore: number }[] = [];
-
-  sortedParticipants.push({ participant: me, displayScore: myDisplayScore });
-  if (friend) {
-    sortedParticipants.push({ participant: friend, displayScore: friendDisplayScore });
-  }
-
-  // Tri décroissant par score (le plus lu en haut)
-  sortedParticipants.sort((a, b) => b.participant.score - a.participant.score);
+  // Tri décroissant par pourcentage (le plus avancé en haut)
+  const sortedParticipants = [...participants].sort(
+    (a, b) => b.percentage - a.percentage
+  );
 
   // ═══ CALCULS OBJECTIF INTERMÉDIAIRE ═══
   const goalData = intermediateGoal ? (() => {
     const deadline = new Date(intermediateGoal.deadline);
-    
+
     // Formater la date "Mer. 18 févr."
     const dateStr = deadline.toLocaleDateString('fr-FR', {
       weekday: 'short',
       day: 'numeric',
       month: 'short',
     });
-    // Capitaliser et formatter (ex: "mer. 18 févr." -> "Mer. 18 févr.")
     const formattedDate = dateStr.charAt(0).toUpperCase() + dateStr.slice(1).replace('.', '. ');
 
-    // Progression relative à l'objectif intermédiaire :
-    // On calcule la moyenne des pages actuelles, puis on soustrait la baseline
-    // (page moyenne au moment de la création de l'objectif).
-    // Le pourcentage représente l'avancée depuis la création de l'objectif,
-    // pas depuis le début du livre.
     const totalCurrentPages = sortedParticipants.reduce(
-      (sum, entry) => sum + entry.participant.score,
+      (sum, p) => sum + p.score,
       0
     );
     const averageCurrentPage = sortedParticipants.length > 0
@@ -255,15 +239,23 @@ export default function ProgressCard({
 
   return (
     <View style={styles.container}>
-      {/* ── Liste des participants ── */}
-      {sortedParticipants.map((entry) => (
-        <ParticipantRow
-          key={entry.participant.id}
-          participant={entry.participant}
-          displayScore={entry.displayScore}
-          onPress={() => onParticipantPress?.(entry.participant.id)}
-        />
-      ))}
+      {/* ── Liste scrollable des participants ── */}
+      <ScrollView
+        style={styles.participantList}
+        showsVerticalScrollIndicator={false}
+        nestedScrollEnabled
+        bounces={false}
+      >
+        <View style={styles.participantListInner}>
+          {sortedParticipants.map((participant) => (
+            <ParticipantRow
+              key={participant.id}
+              participant={participant}
+              onPress={() => onParticipantPress?.(participant.id)}
+            />
+          ))}
+        </View>
+      </ScrollView>
 
       {/* ── Carte objectif intermédiaire (si existe) - EN DESSOUS des participants ── */}
       {intermediateGoal && goalData && (
@@ -332,9 +324,19 @@ export default function ProgressCard({
 }
 
 const styles = StyleSheet.create({
-  // Conteneur principal : liste verticale avec un gap de 12px entre les lignes
+  // Conteneur principal : liste verticale avec un gap de 12px entre les sections
   container: {
     width: '100%',
+    gap: spacing.md,
+  },
+
+  // ScrollView de la liste de participants (contraint en hauteur)
+  participantList: {
+    maxHeight: PARTICIPANT_LIST_MAX_HEIGHT,
+  },
+
+  // Conteneur interne avec gap entre les lignes
+  participantListInner: {
     gap: spacing.md,
   },
 

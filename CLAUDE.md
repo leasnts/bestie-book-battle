@@ -7,7 +7,6 @@ Ces skills contiennent des guidelines et best practices à consulter selon le co
 ### UI & Design
 - **Quand tu crées ou modifies des composants UI** (boutons, cards, inputs, modals, couleurs, spacing, effets) → consulte `.cursor/skills/santostudio-ui/SKILL.md` et les fichiers dans `essentials/` et `components/`
 - **Quand tu travailles sur l'UX** (flows, navigation, accessibilité, responsive, formulaires, feedback, microcopy) → consulte `.cursor/skills/santostudio-ux/SKILL.md` et les fichiers dans `essentials/` et `patterns/`
-- **Quand tu crées un design system** (tokens, couleurs, spacing, typographie, architecture composants) → consulte `.cursor/skills/santostudio-design-system/SKILL.md` et les fichiers dans `process/` et `templates/`
 
 ### Code Quality
 - **Quand tu écris du React** (composants, hooks, state, rendu, performance, bundle) → consulte `.cursor/skills/react-best-practices/SKILL.md` et les rules dans `rules/`

@@ -11,6 +11,8 @@ Santos Studio uses **effects intentionally**, not decoratively:
 
 **Core belief:** Effects should enhance usability and personality, not just look cool.
 
+**⚠️ AI SLOP WARNING:** Glassmorphism used everywhere, without purpose, is one of the top AI clichés of 2024-2026. Use it when it ADDS meaning (premium layer, depth, overlay), not as default decoration. If every card is glassmorphism, none of them are special.
+
 ---
 
 ## Glassmorphism

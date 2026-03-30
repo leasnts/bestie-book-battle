@@ -163,6 +163,7 @@ export interface Database {
           progress_percentage: number; // Decimal(5,2)
           streak_count: number;
           last_streak_date: string | null; // Date only (YYYY-MM-DD)
+          total_pages: number | null; // Nombre de pages de l'édition du participant
           last_updated_at: string; // ISO timestamp
           created_at: string; // ISO timestamp
         };
@@ -172,6 +173,7 @@ export interface Database {
           user_id: string;
           current_page?: number;
           progress_percentage?: number;
+          total_pages?: number | null;
           streak_count?: number;
           last_streak_date?: string | null;
           last_updated_at?: string;
@@ -183,6 +185,7 @@ export interface Database {
           user_id?: string;
           current_page?: number;
           progress_percentage?: number;
+          total_pages?: number | null;
           streak_count?: number;
           last_streak_date?: string | null;
           last_updated_at?: string;

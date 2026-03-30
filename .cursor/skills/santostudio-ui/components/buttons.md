@@ -77,16 +77,25 @@ box-shadow:
 ```css
 opacity: 0.5;
 cursor: not-allowed;
-/* Remove hover/active effects */
 pointer-events: none;
 ```
 
-**Focus (accessibility):**
+**Loading:**
+```jsx
+<button disabled className="relative">
+  <span className="opacity-0">Get Started</span>
+  <div className="absolute inset-0 flex items-center justify-center">
+    <div className="animate-spin h-5 w-5 border-2 border-white/30 border-t-white rounded-full" />
+  </div>
+</button>
+```
+Keep button width stable by hiding text with `opacity-0` and overlaying spinner.
+
+**Focus-visible (keyboard only):**
 ```css
-outline: none;
-box-shadow: 
-  0 0 0 3px rgba(primary-color, 0.3),
-  0 4px 12px rgba(primary-color, 0.3);
+outline: 2px solid var(--color-primary);
+outline-offset: 2px;
+/* Only visible for keyboard users, not mouse clicks */
 ```
 
 ### Code Examples

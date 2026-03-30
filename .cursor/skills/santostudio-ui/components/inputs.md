@@ -100,7 +100,7 @@ Success message below (12px, Green-600):
       bg-white dark:bg-gray-900
       text-base text-gray-900 dark:text-white
       placeholder:text-gray-400
-      focus:border-blue-500 focus:outline-none focus:ring-3 focus:ring-blue-100
+      focus-visible:border-blue-500 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-blue-100
       disabled:bg-gray-100 dark:disabled:bg-gray-800
       disabled:text-gray-400 disabled:cursor-not-allowed
       transition-all duration-200
@@ -122,7 +122,7 @@ Success message below (12px, Green-600):
       border-2 border-red-500
       bg-white dark:bg-gray-900
       text-base
-      focus:outline-none focus:ring-3 focus:ring-red-100
+      focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-red-100
       transition-all duration-200
     "
   />
@@ -157,7 +157,7 @@ Same as standard input, but:
     bg-white dark:bg-gray-900
     text-base
     resize-y
-    focus:border-blue-500 focus:outline-none focus:ring-3 focus:ring-blue-100
+    focus-visible:border-blue-500 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-blue-100
     transition-all duration-200
   "
 />
@@ -196,7 +196,7 @@ Input with search icon.
       border border-gray-300 dark:border-gray-700
       bg-white dark:bg-gray-900
       text-base
-      focus:border-blue-500 focus:outline-none focus:ring-3 focus:ring-blue-100
+      focus-visible:border-blue-500 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-blue-100
       transition-all duration-200
     "
   />
@@ -225,7 +225,7 @@ Same padding and radius as standard input:
       bg-white dark:bg-gray-900
       text-base
       appearance-none
-      focus:border-blue-500 focus:outline-none focus:ring-3 focus:ring-blue-100
+      focus-visible:border-blue-500 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-blue-100
       transition-all duration-200
       cursor-pointer
     "
@@ -267,7 +267,7 @@ Same padding and radius as standard input:
       w-5 h-5 rounded
       border-2 border-gray-300
       text-blue-500
-      focus:ring-2 focus:ring-blue-100 focus:ring-offset-0
+      focus-visible:ring-2 focus-visible:ring-blue-100 focus-visible:ring-offset-0
       transition-all duration-150
       cursor-pointer
     "
@@ -301,7 +301,7 @@ Same padding and radius as standard input:
         w-5 h-5
         border-2 border-gray-300
         text-blue-500
-        focus:ring-2 focus:ring-blue-100 focus:ring-offset-0
+        focus-visible:ring-2 focus-visible:ring-blue-100 focus-visible:ring-offset-0
         cursor-pointer
       "
     />
@@ -318,7 +318,7 @@ Same padding and radius as standard input:
         w-5 h-5
         border-2 border-gray-300
         text-blue-500
-        focus:ring-2 focus:ring-blue-100 focus:ring-offset-0
+        focus-visible:ring-2 focus-visible:ring-blue-100 focus-visible:ring-offset-0
         cursor-pointer
       "
     />
@@ -349,7 +349,7 @@ Same padding and radius as standard input:
     <div className="
       w-11 h-6 bg-gray-300 rounded-full
       peer-checked:bg-blue-500
-      peer-focus:ring-2 peer-focus:ring-blue-100
+      peer-focus-visible:ring-2 peer-focus-visible:ring-blue-100
       transition-all duration-200
     "></div>
     <div className="
@@ -383,7 +383,7 @@ Example: Password input with "show/hide" button.
       border border-gray-300 dark:border-gray-700
       bg-white dark:bg-gray-900
       text-base
-      focus:border-blue-500 focus:outline-none focus:ring-3 focus:ring-blue-100
+      focus-visible:border-blue-500 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-blue-100
       transition-all duration-200
     "
   />
@@ -479,16 +479,16 @@ const Input = ({
             text-base
             transition-all duration-200
             ${error 
-              ? 'border-2 border-red-500 focus:ring-red-100' 
+              ? 'border-2 border-red-500 focus-visible:ring-red-100' 
               : success
-              ? 'border-2 border-green-500 focus:ring-green-100'
-              : 'border border-gray-300 dark:border-gray-700 focus:border-blue-500 focus:ring-blue-100'
+              ? 'border-2 border-green-500 focus-visible:ring-green-100'
+              : 'border border-gray-300 dark:border-gray-700 focus-visible:border-blue-500 focus-visible:ring-blue-100'
             }
             ${disabled 
               ? 'bg-gray-100 dark:bg-gray-900 text-gray-400 cursor-not-allowed' 
               : 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white'
             }
-            focus:outline-none focus:ring-3
+            focus-visible:outline-none focus-visible:ring-3
             placeholder:text-gray-400
           `}
         />

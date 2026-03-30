@@ -37,6 +37,29 @@ Users scan in a Z shape:
 
 ## Visual Weight Hierarchy
 
+### The Squint Test
+
+Blur your eyes (or take a screenshot and blur it). Can you identify:
+1. The most important element?
+2. The second most important?
+3. Clear groupings?
+
+If everything looks the same weight blurred, you have a hierarchy problem.
+
+### Multi-Dimension Hierarchy
+
+Don't rely on size alone. The best hierarchy uses 2-3 dimensions at once:
+
+| Tool | Strong | Weak |
+|------|--------|------|
+| Size | 3:1+ ratio | <2:1 ratio |
+| Weight | Bold vs Regular | Medium vs Regular |
+| Color | High contrast | Similar tones |
+| Position | Top/left (primary) | Bottom/right |
+| Space | Surrounded by whitespace | Crowded |
+
+A heading that's larger AND bolder AND has more space above it is unmistakable.
+
 Visual weight determines what users see first. In order of impact:
 
 ### 1. Size

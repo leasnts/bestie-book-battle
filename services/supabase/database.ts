@@ -367,6 +367,7 @@ export async function getChallengeParticipants(
         user_id: item.user_id,
         current_page: item.current_page,
         progress_percentage: item.progress_percentage,
+        total_pages: item.total_pages,
         streak_count: item.streak_count,
         last_streak_date: item.last_streak_date,
         last_updated_at: item.last_updated_at,
@@ -378,13 +379,14 @@ export async function getChallengeParticipants(
       rank: 0, // Sera calculé après
     }));
 
-    // Trier par page actuelle (du plus avancé au moins avancé)
-    participants.sort((a, b) => b.progress.current_page - a.progress.current_page);
+    // Trier par pourcentage de progression (du plus avancé au moins avancé)
+    // Le pourcentage tient compte du total_pages propre à chaque participant
+    participants.sort((a, b) => b.percentage - a.percentage);
 
     // Assigner les rangs et déterminer le leader
     participants.forEach((participant, index) => {
       participant.rank = index + 1;
-      participant.isLeader = index === 0 && participant.progress.current_page > 0;
+      participant.isLeader = index === 0 && participant.percentage > 0;
     });
 
     return participants;
@@ -442,8 +444,44 @@ export async function updateUserProgress(
 }
 
 /**
+ * Mettre à jour le nombre total de pages d'un participant
+ *
+ * Permet à chaque participant d'avoir son propre nombre de pages
+ * (édition différente : Kindle, poche, broché, etc.)
+ * Le trigger recalcule automatiquement le pourcentage de progression.
+ *
+ * @param challengeId - L'ID du challenge
+ * @param userId - L'ID de l'utilisateur
+ * @param totalPages - Le nombre de pages de l'édition du participant
+ */
+export async function updateUserTotalPages(
+  challengeId: string,
+  userId: string,
+  totalPages: number
+): Promise<UserProgress> {
+  try {
+    const { data, error } = await supabase
+      .from('user_progress')
+      .update({
+        total_pages: totalPages,
+        last_updated_at: new Date().toISOString(),
+      })
+      .eq('challenge_id', challengeId)
+      .eq('user_id', userId)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  } catch (error: any) {
+    console.error('Erreur lors de la mise à jour du total de pages:', error);
+    throw error;
+  }
+}
+
+/**
  * Obtenir la progression d'un utilisateur dans un challenge
- * 
+ *
  * @param challengeId - L'ID du challenge
  * @param userId - L'ID de l'utilisateur
  * @returns La progression de l'utilisateur

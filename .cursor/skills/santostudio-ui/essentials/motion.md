@@ -1,552 +1,328 @@
-# Motion & Interactivity - santostudio ui
+# Motion & Interactivity — Santos Studio
 
-**CRITICAL PRINCIPLE:** All Santos Studio components must feel ALIVE and responsive.
+**CRITICAL:** All Santos Studio components must feel ALIVE and responsive. Static UIs are dead UIs.
 
 ## Philosophy
 
-**"Vivant raisonnablement"** - Components should be:
-- ✅ **Responsive:** Immediate visual feedback on interaction
-- ✅ **Smooth:** Transitions between states feel natural
-- ✅ **Intentional:** Motion has purpose, not decoration
-- ❌ **NOT static:** Fixed, unmoving UIs feel dead
-- ❌ **NOT excessive:** Avoid distracting animations
+**"Vivant raisonnablement"** — Motion has purpose. Every animation should enhance understanding, provide feedback, or create delight — never decoration.
 
-**Inspiration:** Opal (smooth micro-interactions), Revolut (premium feel), Airbnb (polished responses)
+**One well-orchestrated experience beats scattered animations everywhere.** Focus on high-impact moments.
 
 ---
 
-## Mandatory Interactive States
+## The Eight Interactive States
 
-### ALL Clickable Elements MUST Have
+Every interactive element needs ALL of these designed:
 
-**1. Hover State**
-- Visual change on mouse over
-- Scale, shadow, background, or color change
-- Duration: 150-200ms
+| State | When | Visual Treatment |
+|-------|------|------------------|
+| **Default** | At rest | Base styling |
+| **Hover** | Pointer over (desktop only) | Scale, shadow, color shift |
+| **Focus-visible** | Keyboard focus | Visible ring (NOT on mouse click) |
+| **Active** | Being pressed | Pressed-in, darker |
+| **Disabled** | Not interactive | 50% opacity, no pointer events |
+| **Loading** | Processing async action | Spinner or skeleton inside |
+| **Error** | Invalid state | Red border + icon + message |
+| **Success** | Completed action | Green check + confirmation |
 
-**2. Active State**
-- Visual change on click/press
-- Usually slight reduction (scale-98)
-- Duration: 100-150ms
+**The common miss:** Designing hover without focus-visible, or vice versa. Keyboard users NEVER see hover states.
 
-**3. Focus State**
-- Visible outline or ring for keyboard navigation
-- Essential for accessibility
-- Uses primary color
+```css
+/* ✅ Focus-visible — keyboard users only */
+button:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+/* Mouse/touch users don't see the ring */
 
-**4. Transition**
-- Smooth animation between states
-- No jarring instant changes
-- Duration: 150-300ms
+/* ❌ NEVER do this */
+button:focus { outline: none; } /* Accessibility violation */
+```
 
 ---
 
-## Component-Specific Motion
+## Timing
+
+| Duration | Use Case | Examples |
+|----------|----------|---------|
+| **100-150ms** | Instant feedback | Button press, toggle, color change |
+| **200-300ms** | State changes | Menu open, tooltip, hover effects |
+| **300-500ms** | Layout changes | Accordion, modal, drawer |
+| **500-800ms** | Entrance animations | Page load, hero reveals |
+
+**Exit animations are FASTER than entrances** — use ~75% of enter duration.
+
+**Rule:** Never exceed 600ms for UI feedback (feels sluggish).
+
+---
+
+## Easing Curves (USE THESE, not CSS defaults)
+
+**Don't use `ease`.** It's a compromise that's rarely optimal.
+
+```css
+/* ✅ RECOMMENDED — Natural deceleration */
+--ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);    /* Smooth, refined (DEFAULT) */
+--ease-out-quint: cubic-bezier(0.22, 1, 0.36, 1);   /* Slightly snappier */
+--ease-out-expo:  cubic-bezier(0.16, 1, 0.3, 1);    /* Confident, decisive */
+
+/* For exits */
+--ease-in-quart: cubic-bezier(0.5, 0, 0.75, 0);     /* Elements leaving */
+
+/* For toggles (there → back) */
+--ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+```
+
+**❌ NEVER use bounce or elastic curves.** They were trendy in 2015 but feel dated and tacky. Real objects don't bounce when they stop — they decelerate smoothly.
+
+```css
+/* ❌ Dated, tacky — NEVER USE */
+/* bounce: cubic-bezier(0.34, 1.56, 0.64, 1); */
+/* elastic: cubic-bezier(0.68, -0.6, 0.32, 1.6); */
+```
+
+---
+
+## Performance: The Two Properties Rule
+
+**Only animate `transform` and `opacity`.** Everything else triggers layout recalculation and kills performance.
+
+```css
+/* ✅ GPU-accelerated, smooth */
+transform: scale(1.02);
+transform: translateY(-4px);
+opacity: 0.8;
+
+/* ❌ Causes layout thrashing */
+width: 200px;
+height: auto;
+padding: 20px;
+margin-top: 8px;
+top: 50px;
+```
+
+**For height animations** (accordions), use `grid-template-rows: 0fr → 1fr` instead of animating `height` directly.
+
+Use `will-change` sparingly — only when animation is imminent (`:hover`, `.animating`), not preemptively.
+
+---
+
+## Reduced Motion (NON-NEGOTIABLE)
+
+Vestibular disorders affect ~35% of adults over 40. This is NOT optional.
+
+```css
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+```
+
+**What to PRESERVE in reduced motion:** Progress bars, loading spinners (slowed), focus indicators — just without spatial movement.
+
+**Better approach — crossfade instead of slide:**
+```css
+@media (prefers-reduced-motion: reduce) {
+  .modal { animation: fade-in 200ms ease-out; } /* Instead of slide-up */
+}
+```
+
+---
+
+## Component Motion Patterns
 
 ### Buttons
 
-**Required states:**
-```jsx
-<button className="
-  /* Base */
-  bg-blue-500 text-white
-  px-4 py-3 rounded-xl
-  
-  /* Transition (REQUIRED) */
-  transition-all duration-150 ease-out
-  
-  /* Hover (REQUIRED) */
-  hover:scale-102
-  hover:shadow-[0_6px_16px_rgba(59,130,246,0.4)]
-  
-  /* Active (REQUIRED) */
-  active:scale-98
-  active:shadow-[0_2px_6px_rgba(59,130,246,0.2)]
-  
-  /* Focus (REQUIRED for accessibility) */
-  focus:outline-none
-  focus:ring-3 focus:ring-blue-100
-">
-  Click Me
-</button>
-```
-
-**Effect:**
-- Hover: Button grows 2%, shadow increases
-- Click: Button shrinks 2%, shadow decreases
-- Focus: Blue ring appears (keyboard navigation)
-
-**Duration:** 150ms (quick, responsive)
-
----
-
-### Cards (Interactive)
-
-**If card is clickable/hoverable:**
-
-```jsx
-<div className="
-  /* Base */
-  bg-white dark:bg-gray-800
-  p-6 rounded-2xl
-  border border-gray-200
-  shadow-md
-  
-  /* Transition (REQUIRED) */
-  transition-all duration-200 ease-out
-  
-  /* Hover (REQUIRED) */
-  hover:-translate-y-1
-  hover:shadow-xl
-  hover:border-gray-300
-  
-  /* Active */
-  active:-translate-y-0.5
-  
-  /* Cursor */
-  cursor-pointer
-">
-  {/* Card content */}
-</div>
-```
-
-**Effect:**
-- Hover: Card lifts up 4px, shadow grows
-- Click: Card slightly lowers (2px)
-- Smooth elevation feel
-
-**Duration:** 200ms (standard)
-
-**Non-interactive cards** (no click action):
 ```jsx
 className="
-  transition-opacity duration-200
-  hover:opacity-95
+  transition-all duration-150 ease-[cubic-bezier(0.25,1,0.5,1)]
+  hover:scale-[1.02] hover:shadow-lg
+  active:scale-[0.98]
+  focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-blue-500
+  disabled:opacity-50 disabled:pointer-events-none
 "
 ```
 
-Subtle hover shows it's "alive" even if not clickable.
+Duration: 150ms. Scale: hover +2%, active -2%.
 
----
+### Cards (Interactive)
+
+```jsx
+className="
+  transition-all duration-200 ease-[cubic-bezier(0.25,1,0.5,1)]
+  hover:-translate-y-1 hover:shadow-xl
+  active:-translate-y-0.5
+  cursor-pointer
+"
+```
+
+Duration: 200ms. Lift: 4px on hover.
 
 ### Glassmorphism Cards
 
-**On colored backgrounds, interactive glassmorphism cards:**
-
 ```jsx
-<div className="
-  /* Base glassmorphism */
-  backdrop-blur-xl
-  bg-white/10
-  border border-white/20
-  rounded-2xl p-6
-  shadow-[0_8px_32px_rgba(0,0,0,0.1)]
-  
-  /* Transition (REQUIRED) */
-  transition-all duration-200 ease-out
-  
-  /* Hover (REQUIRED) */
-  hover:bg-white/15
-  hover:-translate-y-1
-  hover:shadow-[0_12px_48px_rgba(0,0,0,0.15)]
-  
-  /* Active */
+className="
+  backdrop-blur-xl bg-white/10 border border-white/20 rounded-2xl
+  transition-all duration-200 ease-[cubic-bezier(0.25,1,0.5,1)]
+  hover:bg-white/15 hover:-translate-y-1 hover:shadow-[0_12px_48px_rgba(0,0,0,0.15)]
   active:-translate-y-0.5
-  
-  /* Cursor */
   cursor-pointer
-">
-  {/* Content */}
-</div>
+"
 ```
-
-**Effect:**
-- Hover: Slightly more opaque, lifts, shadow increases
-- Click: Slight reduction in elevation
-- Premium, responsive feel
-
----
 
 ### Inputs
 
-**Focus is CRITICAL for inputs:**
-
 ```jsx
-<input className="
-  /* Base */
-  w-full px-5 py-4 rounded-2xl
+className="
+  transition-colors duration-200
   border border-gray-300
-  bg-white
-  
-  /* Transition (REQUIRED) */
-  transition-all duration-200
-  
-  /* Focus (REQUIRED) */
-  focus:border-blue-500
-  focus:outline-none
-  focus:ring-3 focus:ring-blue-100
-  
-  /* Hover (optional but nice) */
+  focus:border-blue-500 focus-visible:ring-2 focus-visible:ring-blue-500/20
   hover:border-gray-400
-" />
+"
 ```
-
-**Effect:**
-- Focus: Border turns primary color, ring appears
-- Hover: Border slightly darkens
-- Clear visual feedback
-
-**Duration:** 200ms
-
----
 
 ### Icon Buttons
 
-**Small interactive elements need clear hover:**
-
 ```jsx
-<button className="
-  /* Base */
-  w-10 h-10
-  flex items-center justify-center
-  rounded-lg
-  text-gray-600
-  
-  /* Transition (REQUIRED) */
+className="
+  w-10 h-10 flex items-center justify-center rounded-lg
   transition-all duration-150
-  
-  /* Hover (REQUIRED) */
-  hover:bg-gray-100
-  hover:text-gray-900
-  hover:scale-110
-  
-  /* Active */
+  hover:bg-gray-100 hover:scale-110
   active:scale-95
-">
-  <IconComponent />
-</button>
+  focus-visible:ring-2 focus-visible:ring-offset-2
+"
 ```
-
-**Effect:**
-- Hover: Background appears, icon grows 10%, color darkens
-- Click: Icon shrinks 5%
-- Immediate tactile feedback
 
 ---
 
-### Links
+## Entrance Animations
 
-```jsx
-<a className="
-  text-blue-600
-  transition-all duration-150
-  hover:underline
-  hover:text-blue-700
-  active:text-blue-800
-">
-  Learn More
-</a>
-```
+### Page Load Choreography
 
-**Effect:**
-- Hover: Underline appears, color darkens slightly
-- Click: Color darkens more
+Stagger element reveals for a polished entrance:
 
----
-
-### Modals & Bottom Sheets
-
-**Enter animation:**
 ```css
-@keyframes modalEnter {
-  from {
-    opacity: 0;
-    transform: scale(0.95) translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1) translateY(0);
-  }
-}
+.card { animation: slide-up 400ms ease-[cubic-bezier(0.25,1,0.5,1)] both; }
+.card:nth-child(1) { animation-delay: 0ms; }
+.card:nth-child(2) { animation-delay: 75ms; }
+.card:nth-child(3) { animation-delay: 150ms; }
 
-.modal-enter {
-  animation: modalEnter 200ms ease-out;
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 ```
 
-**Exit animation:**
-```css
-@keyframes modalExit {
-  from {
-    opacity: 1;
-    transform: scale(1);
-  }
-  to {
-    opacity: 0;
-    transform: scale(0.95);
-  }
-}
+**Cap total stagger time** — 10 items at 75ms = 750ms total. For many items, reduce per-item delay.
 
-.modal-exit {
-  animation: modalExit 150ms ease-in;
+### Modals
+
+```css
+/* Enter: 250ms ease-out */
+@keyframes modal-enter {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+/* Exit: 180ms ease-in (75% of enter) */
+@keyframes modal-exit {
+  from { opacity: 1; transform: scale(1); }
+  to { opacity: 0; transform: scale(0.95); }
 }
 ```
 
-**Bottom sheet slide:**
+### Bottom Sheets
+
 ```css
-@keyframes slideUp {
+@keyframes sheet-enter {
   from { transform: translateY(100%); }
   to { transform: translateY(0); }
 }
-
-.sheet-enter {
-  animation: slideUp 300ms ease-out;
-}
-```
-
-**Duration:** 200-300ms (slower for large elements)
-
----
-
-## Transition Guidelines
-
-### Duration Standards
-
-| Element Type | Duration | Use Case |
-|--------------|----------|----------|
-| **Quick** | 100-150ms | Buttons, small icons, instant feedback |
-| **Standard** | 200ms | Cards, inputs, most interactions |
-| **Slow** | 300ms | Modals, page transitions, large movements |
-
-**Rule:** Never exceed 400ms (feels sluggish)
-
-### Easing Functions
-
-**ease-out (default):**
-```css
-transition: all 200ms ease-out;
-```
-- Natural deceleration
-- Use for: entrances, hover states, expansions
-
-**ease-in:**
-```css
-transition: all 150ms ease-in;
-```
-- Acceleration
-- Use for: exits, closing animations
-
-**ease-in-out:**
-```css
-transition: all 200ms ease-in-out;
-```
-- Symmetrical
-- Use for: two-way transforms, toggles
-
----
-
-## Transform Guidelines
-
-### Scale
-
-**Hover enlargement:**
-```css
-hover:scale-102  /* Buttons, standard */
-hover:scale-105  /* Icons, small elements */
-hover:scale-110  /* Tiny icons (16px) */
-```
-
-**Active reduction:**
-```css
-active:scale-98  /* Buttons */
-active:scale-95  /* Icons */
-```
-
-**Rule:** Never scale above 110% (looks exaggerated)
-
-### Translate (Elevation)
-
-**Hover lift (cards):**
-```css
-hover:-translate-y-1   /* 4px lift, subtle */
-hover:-translate-y-2   /* 8px lift, pronounced */
-```
-
-**Active press:**
-```css
-active:-translate-y-0.5  /* 2px, subtle press */
-```
-
-**Bottom sheets:**
-```css
-/* Enter from bottom */
-from: translateY(100%)
-to: translateY(0)
+.sheet { animation: sheet-enter 300ms cubic-bezier(0.25, 1, 0.5, 1); }
 ```
 
 ---
 
 ## Micro-Interactions
 
-### Loading States
-
-**Spinner:**
+### Loading Spinner
 ```jsx
-<div className="animate-spin rounded-full h-6 w-6 border-2 border-gray-300 border-t-blue-500" />
+<div className="animate-spin rounded-full h-5 w-5 border-2 border-gray-300 border-t-blue-500" />
 ```
 
-**Pulse (subtle):**
+### Skeleton Pulse
 ```jsx
 <div className="animate-pulse bg-gray-200 rounded-lg h-20" />
 ```
 
-### Success/Error Feedback
-
-**Success check animation:**
+### Success Check
 ```css
-@keyframes checkPop {
+@keyframes check-pop {
   0% { transform: scale(0); opacity: 0; }
-  50% { transform: scale(1.1); }
+  60% { transform: scale(1.1); }
   100% { transform: scale(1); opacity: 1; }
-}
-
-.check-appear {
-  animation: checkPop 300ms ease-out;
 }
 ```
 
-**Error shake:**
+### Error Shake
 ```css
 @keyframes shake {
   0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-10px); }
-  75% { transform: translateX(10px); }
+  25% { transform: translateX(-8px); }
+  75% { transform: translateX(8px); }
 }
-
-.error-shake {
-  animation: shake 300ms ease-in-out;
-}
+.error { animation: shake 300ms cubic-bezier(0.25, 1, 0.5, 1); }
 ```
 
-### Progress Indicators
+---
 
-**Indeterminate bar:**
+## Scroll-Triggered Animations
+
+Use Intersection Observer, not scroll events:
+
+```js
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('animate-in');
+      observer.unobserve(entry.target); // Animate once only
+    }
+  });
+}, { threshold: 0.1 });
+```
+
+---
+
+## Motion Tokens (CSS Custom Properties)
+
 ```css
-@keyframes indeterminate {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
+:root {
+  /* Durations */
+  --duration-instant: 150ms;
+  --duration-standard: 200ms;
+  --duration-slow: 300ms;
+  --duration-entrance: 400ms;
+
+  /* Easing */
+  --ease-default: cubic-bezier(0.25, 1, 0.5, 1);
+  --ease-exit: cubic-bezier(0.5, 0, 0.75, 0);
+  --ease-toggle: cubic-bezier(0.65, 0, 0.35, 1);
 }
-
-.progress-bar {
-  animation: indeterminate 1.5s ease-in-out infinite;
-}
-```
-
----
-
-## Best Practices
-
-### Do's ✅
-
-- **Always add transitions** to interactive elements (150-300ms)
-- **Always add hover states** to clickable elements
-- **Use scale for buttons** (subtle, 102-105%)
-- **Use translate for cards** (elevation effect)
-- **Add focus rings** for accessibility
-- **Keep animations smooth** (ease-out for most cases)
-- **Use 200ms as default** transition duration
-- **Test on mobile** (hover doesn't exist, focus on tap feedback)
-
-### Don'ts ❌
-
-- **Never create static buttons** (no hover = feels broken)
-- **Never use instant changes** (always transition)
-- **Don't overdo scale** (max 110%)
-- **Don't use long durations** (> 400ms feels slow)
-- **Don't animate too many properties** (all is fine for simple elements)
-- **Don't forget active states** (click feedback is essential)
-- **Don't skip focus states** (accessibility!)
-
----
-
-## Real-World Examples
-
-### Opal-Style Stat Card
-
-```jsx
-<div className="
-  backdrop-blur-xl
-  bg-white/10
-  border border-white/20
-  rounded-xl p-4
-  
-  transition-all duration-200 ease-out
-  hover:bg-white/15 hover:-translate-y-0.5 hover:shadow-xl
-  cursor-pointer
-">
-  <p className="text-3xl font-bold text-white">2,847</p>
-  <p className="text-xs text-white/50 uppercase tracking-wide mt-1">
-    Total Views
-  </p>
-</div>
-```
-
-### Airbnb-Style Image Card
-
-```jsx
-<div className="
-  bg-white rounded-2xl
-  border border-gray-200
-  shadow-md
-  overflow-hidden
-  
-  transition-all duration-200 ease-out
-  hover:-translate-y-1 hover:shadow-xl hover:border-gray-300
-  cursor-pointer
-">
-  <img src="/property.jpg" className="w-full h-48 object-cover" />
-  <div className="p-4">
-    <h3 className="font-bold text-lg">Apartment in Center City</h3>
-    <p className="text-gray-600 text-sm mt-1">$228 for 2 nights</p>
-  </div>
-</div>
-```
-
-### Revolut-Style Button
-
-```jsx
-<button className="
-  w-full
-  bg-blue-500 text-white
-  px-6 py-4 rounded-2xl
-  font-semibold
-  shadow-[0_4px_12px_rgba(59,130,246,0.3)]
-  
-  transition-all duration-150 ease-out
-  hover:scale-102 hover:shadow-[0_6px_16px_rgba(59,130,246,0.4)]
-  active:scale-98
-  focus:outline-none focus:ring-3 focus:ring-blue-100
-">
-  View Full Report
-</button>
 ```
 
 ---
 
 ## Quick Decision Tree
 
-**Question: What motion should this element have?**
-
-1. **Is it clickable?** → Add hover + active + focus states
-2. **Is it a button?** → Scale on hover (102%), scale down on active (98%)
-3. **Is it a card?** → Translate up on hover (-translate-y-1), shadow increase
-4. **Is it an input?** → Border color + ring on focus
-5. **Is it an icon?** → Background + scale on hover (110%)
-6. **Is it a modal?** → Fade + scale animation on enter/exit
-7. **Is it purely decorative?** → Subtle opacity change on hover (if any)
-
-**Still unsure?** Add `transition-all duration-200 hover:opacity-90` — works 70% of the time.
+1. **Is it clickable?** → Add hover + active + focus-visible + disabled states
+2. **Is it a button?** → Scale hover +2%, active -2%, 150ms, ease-out-quart
+3. **Is it a card?** → Translate-y hover -4px, shadow increase, 200ms
+4. **Is it an input?** → Border color + ring on focus-visible, 200ms
+5. **Is it an icon?** → Background + scale hover +10%, 150ms
+6. **Is it a modal?** → Fade + scale entrance 250ms, exit 180ms
+7. **Is it purely decorative?** → Maybe subtle opacity change, or nothing
 
 ---
 
-**Remember:** Santos Studio UIs feel ALIVE. Every interaction should be smooth, responsive, and intentional. Static = dead.
+**Remember:** Santos Studio UIs feel ALIVE. Every interaction is smooth, responsive, and intentional.

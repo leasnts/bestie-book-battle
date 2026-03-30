@@ -18,17 +18,20 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import Button3D from '../../components/Button3D';
 import PopEyes from '../../components/PopEyes';
-import { 
-    Alert, 
+import {
+    Alert,
+    Pressable,
     ScrollView,
-    StyleSheet, 
-    View, 
-    Text 
+    StyleSheet,
+    TextInput,
+    View,
+    Text
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, fontSize, fontWeight, spacing, borderRadius } from '../../utils/constants';
 import { useAuthStore } from '../../stores/authStore';
 import { useProjectStore } from '../../stores/projectStore';
+import { useProgressStore } from '../../stores/progressStore';
 import { createOrUpdateUserProfile } from '../../services/supabase/auth';
 
 // Assets
@@ -51,6 +54,8 @@ export default function OnboardingWelcomeScreen() {
     
     const [isLoading, setIsLoading] = useState(false);
     const [bookInfoHeight, setBookInfoHeight] = useState<number>(80);
+    const [showCustomPages, setShowCustomPages] = useState(false);
+    const [customTotalPages, setCustomTotalPages] = useState('');
 
     /** Ratio standard couverture livre (largeur / hauteur) */
     const COVER_ASPECT_RATIO = 2 / 3;
@@ -60,6 +65,7 @@ export default function OnboardingWelcomeScreen() {
     const setUser = useAuthStore((state) => state.setUser);
     const setPendingUserData = useAuthStore((state) => state.setPendingUserData);
     const joinChallenge = useProjectStore((state) => state.joinChallenge);
+    const updateUserTotalPages = useProgressStore((state) => state.updateUserTotalPages);
 
     /**
      * Rejoindre le challenge et terminer l'onboarding
@@ -90,7 +96,13 @@ export default function OnboardingWelcomeScreen() {
             // 2. Rejoindre le challenge
             await joinChallenge(params.challengeId, userId);
 
-            // 3. Aller à la home
+            // 3. Mettre à jour le total de pages si édition différente
+            const parsedCustomPages = parseInt(customTotalPages, 10);
+            if (parsedCustomPages > 0 && parsedCustomPages !== parseInt(params.totalPages, 10)) {
+                await updateUserTotalPages(params.challengeId, userId, parsedCustomPages);
+            }
+
+            // 4. Aller à la home
             router.replace('/(tabs)');
         } catch (error: any) {
             console.error('Erreur rejoindre challenge:', error);
@@ -200,6 +212,33 @@ export default function OnboardingWelcomeScreen() {
                                 <PopEyes size="large" />
                             </View>
                         </View>
+
+                        {/* Option édition différente */}
+                        {!showCustomPages ? (
+                            <Pressable onPress={() => {
+                                setShowCustomPages(true);
+                                setCustomTotalPages(params.totalPages);
+                            }}>
+                                <Text style={styles.customPagesLink}>
+                                    Tu as une édition différente ?
+                                </Text>
+                            </Pressable>
+                        ) : (
+                            <View style={styles.customPagesContainer}>
+                                <Text style={styles.customPagesLabel}>
+                                    Nombre de pages de ton édition
+                                </Text>
+                                <TextInput
+                                    style={styles.customPagesInput}
+                                    value={customTotalPages}
+                                    onChangeText={setCustomTotalPages}
+                                    keyboardType="number-pad"
+                                    placeholder={params.totalPages}
+                                    placeholderTextColor={colors.textSubtle}
+                                    returnKeyType="done"
+                                />
+                            </View>
+                        )}
                     </View>
                 </ScrollView>
 
@@ -343,6 +382,33 @@ const styles = StyleSheet.create({
         fontWeight: fontWeight.regular,
         color: colors.white,
         lineHeight: 16,
+    },
+    customPagesLink: {
+        fontFamily: 'WorkSans_400Regular',
+        fontSize: fontSize.sm,
+        color: colors.textSecondary,
+        textDecorationLine: 'underline',
+        textAlign: 'center',
+    },
+    customPagesContainer: {
+        gap: spacing.sm,
+    },
+    customPagesLabel: {
+        fontFamily: 'WorkSans_400Regular',
+        fontSize: fontSize.sm,
+        color: colors.textSecondary,
+        lineHeight: 20,
+    },
+    customPagesInput: {
+        fontFamily: 'WorkSans_400Regular',
+        fontSize: fontSize.md,
+        color: colors.textPrimary,
+        backgroundColor: colors.bgSecondary,
+        borderRadius: borderRadius.md,
+        paddingHorizontal: spacing.md,
+        paddingVertical: spacing.sm,
+        borderWidth: 1,
+        borderColor: colors.border,
     },
     footer: {
         paddingHorizontal: spacing.lg,

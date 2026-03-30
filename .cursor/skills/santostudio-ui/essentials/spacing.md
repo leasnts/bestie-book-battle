@@ -1,4 +1,4 @@
-# Spacing System - santostudio ui
+# Spacing System - Santos Studio UI Components
 
 Consistent spacing scale for professional, breathable interfaces.
 
@@ -40,6 +40,31 @@ Use for hero sections, massive breathing space:
 | `spacing-16` | **64px** | Massive section separations |
 
 **Rule:** Never go below `spacing-1` (6px). Never use values outside this scale.
+
+### Fluid Spacing (Web Only)
+
+For web projects, use `clamp()` for spacing that breathes on larger screens:
+
+```css
+--space-section: clamp(24px, 4vw, 48px);
+--space-hero: clamp(32px, 6vw, 80px);
+```
+
+### Visual Rhythm
+
+**Don't use the same spacing everywhere.** Vary spacing to create visual rhythm — tight groupings for related content, generous separations between sections. Monotonous spacing = monotonous design.
+
+### Gap Over Margins
+
+Prefer `gap` for sibling spacing (no margin collapse issues, cleaner code):
+
+```jsx
+// ✅ gap — clean, predictable
+<div className="flex gap-3">...</div>
+
+// ❌ margins — collapse issues, cleanup hacks
+<div><div className="mr-3">...</div></div>
+```
 
 ---
 

@@ -26,6 +26,33 @@ Mobile-first approach for interfaces that work on every device.
 
 **NOT:** Design beautiful desktop → squeeze into mobile
 
+### Container Queries (Component-Level Responsiveness)
+
+Viewport queries are for page layouts. **Container queries are for components:**
+
+```css
+.card-container { container-type: inline-size; }
+@container (min-width: 400px) {
+  .card { grid-template-columns: 120px 1fr; }
+}
+```
+
+A card in a narrow sidebar stays compact; the same card in main content expands — automatically.
+
+### Safe Areas (Modern Devices)
+
+Handle notches, Dynamic Island, and home indicators:
+
+```css
+body {
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.footer { padding-bottom: max(1rem, env(safe-area-inset-bottom)); }
+```
+
+Enable in HTML: `<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">`
+
 ---
 
 ## Breakpoints
@@ -78,6 +105,7 @@ xl:  1280px  (desktops)
 | Platform | Minimum | Recommended |
 |----------|---------|-------------|
 | iOS | 44x44px | 48x48px |
+| Android | 48x48px | 56x56px |
 | Web (mobile) | 44x44px | 48x48px |
 
 ### Spacing Between Targets
@@ -393,6 +421,7 @@ Mobile (stacked):
 - Laptop (1280px) — desktop
 
 **Ideal:**
+- Add Android devices (Samsung Galaxy)
 - Add large phones (iPhone Pro Max, 428px)
 - Add various tablet sizes
 - Test on actual hardware, not just simulators

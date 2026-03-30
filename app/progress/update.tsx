@@ -77,7 +77,11 @@ export default function UpdateProgressScreen() {
   // Initialise avec la page actuelle de l'utilisateur
   const userProgress = user ? getUserProgressById(user.id) : undefined;
   const lastSavedPage = userProgress?.current_page || 0;
-  const totalPages = (currentProject as any)?.total_pages ?? currentProject?.totalPages ?? 100;
+  // Utiliser le total_pages de l'édition du participant, avec fallback sur celui du challenge
+  const totalPages = userProgress?.total_pages
+    ?? (currentProject as any)?.total_pages
+    ?? currentProject?.totalPages
+    ?? 100;
   
   // Initialise l'input avec la dernière page sauvegardée
   useEffect(() => {

@@ -273,7 +273,8 @@ export default function HomeScreen() {
   }, [user?.id, loadUserChallenges, loadChallengeProgress, loadActiveGoals, loadGoalHistory]);
 
   // ===== Données dérivées =====
-  const totalPages = activeChallenge?.total_pages || 100;
+  // totalPages du challenge = édition de référence (pour widget, goals, etc.)
+  const challengeTotalPages = activeChallenge?.total_pages || 100;
 
   // IMPORTANT : on vérifie que les participants correspondent bien au challenge actif.
   // Sans ce guard, quand on switch de livre, participants contient encore les données
@@ -286,6 +287,9 @@ export default function HomeScreen() {
   const myProgress = participantsMatchChallenge && user
     ? getUserProgressById(user.id)
     : undefined;
+
+  // totalPages du user = son édition personnelle (pour le picker et l'affichage)
+  const totalPages = myProgress?.total_pages ?? challengeTotalPages;
 
   // Quand on a les bonnes données, on met en cache la page par challenge
   if (myProgress && activeChallenge?.id) {
@@ -305,12 +309,11 @@ export default function HomeScreen() {
   // Savoir si l'utilisateur a bougé le scroll
   const hasChanged = currentPageInput !== lastSavedPage;
 
-  // Progression moyenne du groupe
-  const totalReadPages = participantsMatchChallenge
-    ? participants.reduce((acc, p) => acc + p.progress.current_page, 0)
-    : 0;
+  // Progression moyenne du groupe (basée sur les pourcentages individuels)
   const averagePercentage = participantsMatchChallenge
-    ? Math.round((totalReadPages / participants.length / totalPages) * 100)
+    ? Math.round(
+        participants.reduce((acc, p) => acc + (p.percentage || 0), 0) / participants.length
+      )
     : 0;
 
   // ===== Callback quand l'utilisateur scrolle le picker de pages =====
@@ -382,72 +385,68 @@ export default function HomeScreen() {
   }, [lastSavedPage]);
 
   // ===== Données participants pour la ProgressCard =====
-  // On ne cherche les participants que si les données correspondent au challenge actif
-  // (même guard que pour averagePercentage, pour éviter les données croisées)
-  const meParticipant = participantsMatchChallenge
-    ? participants.find(p => p.user.id === user?.id)
-    : undefined;
-  const friendParticipant = participantsMatchChallenge
-    ? participants.find(p => p.user.id !== user?.id)
-    : undefined;
-
   // Pour "moi", toujours utiliser authStore (user) pour la photo : les participants
   // du progressStore sont chargés une fois et ne se mettent pas à jour quand on
   // change sa photo de profil. authStore est mis à jour immédiatement.
-  const mePhotoUrl = user?.profile_photo_url || meParticipant?.user.profile_photo_url || null;
+  const mePhotoUrl = user?.profile_photo_url || null;
   const mePhotoUrlWithCacheBust = mePhotoUrl && user?.updated_at
     ? `${mePhotoUrl}${mePhotoUrl.includes('?') ? '&' : '?'}v=${new Date(user.updated_at).getTime()}`
     : mePhotoUrl;
-  const meData = meParticipant ? {
-    id: meParticipant.user.id,
-    name: 'Moi',
-    photoUrl: mePhotoUrlWithCacheBust,
-    score: meParticipant.progress.current_page,
-    streak: getActiveStreak(meParticipant.progress.streak_count, meParticipant.progress.last_streak_date),
-    isLeader: meParticipant.isLeader,
-    streakAtRisk: isStreakAtRisk(meParticipant.progress.last_streak_date),
-  } : {
-    id: user?.id || '',
-    name: 'Moi',
-    photoUrl: user?.profile_photo_url && user?.updated_at
-      ? `${user.profile_photo_url}${user.profile_photo_url.includes('?') ? '&' : '?'}v=${new Date(user.updated_at).getTime()}`
-      : user?.profile_photo_url || null,
-    score: 0,
-    streak: 0,
-    isLeader: false,
-    streakAtRisk: false,
-  };
 
-  const friendPhotoUrl = friendParticipant?.user.profile_photo_url || null;
-  const friendPhotoUrlWithCacheBust = friendPhotoUrl && friendParticipant?.user.updated_at
-    ? `${friendPhotoUrl}${friendPhotoUrl.includes('?') ? '&' : '?'}v=${new Date(friendParticipant.user.updated_at).getTime()}`
-    : friendPhotoUrl;
-  const friendData = friendParticipant ? {
-    id: friendParticipant.user.id,
-    name: friendParticipant.user.first_name || 'Ami.e',
-    photoUrl: friendPhotoUrlWithCacheBust,
-    score: friendParticipant.progress.current_page,
-    streak: getActiveStreak(friendParticipant.progress.streak_count, friendParticipant.progress.last_streak_date),
-    isLeader: friendParticipant.isLeader,
-    streakAtRisk: isStreakAtRisk(friendParticipant.progress.last_streak_date),
-  } : null;
+  // Construire les données de TOUS les participants pour le ProgressCard
+  const allParticipantsData = participantsMatchChallenge
+    ? participants.map(p => {
+        const isMe = p.user.id === user?.id;
+        // Pour "moi", utiliser la photo de authStore (toujours à jour)
+        let photoUrl: string | null;
+        if (isMe) {
+          photoUrl = mePhotoUrlWithCacheBust;
+        } else {
+          const url = p.user.profile_photo_url || null;
+          photoUrl = url && p.user.updated_at
+            ? `${url}${url.includes('?') ? '&' : '?'}v=${new Date(p.user.updated_at).getTime()}`
+            : url;
+        }
+
+        return {
+          id: p.user.id,
+          name: isMe ? 'Moi' : (p.user.first_name || 'Participant'),
+          photoUrl,
+          score: p.progress.current_page,
+          percentage: p.percentage || 0,
+          streak: getActiveStreak(p.progress.streak_count, p.progress.last_streak_date),
+          isLeader: p.isLeader,
+          streakAtRisk: isStreakAtRisk(p.progress.last_streak_date),
+        };
+      })
+    : [{
+        id: user?.id || '',
+        name: 'Moi',
+        photoUrl: mePhotoUrlWithCacheBust,
+        score: 0,
+        percentage: 0,
+        streak: 0,
+        isLeader: false,
+        streakAtRisk: false,
+      }];
 
   // ===== Mise à jour automatique du widget iOS =====
   useEffect(() => {
     if (!activeChallenge || !participantsMatchChallenge) return;
 
     const sorted = [...participants].sort(
-      (a, b) => b.progress.current_page - a.progress.current_page
+      (a, b) => b.percentage - a.percentage
     );
     const top1 = sorted[0];
     const top2 = sorted.length > 1 ? sorted[1] : null;
 
+    // Utiliser les pourcentages individuels (chaque participant a son propre total_pages)
     const avgProgress = participants.reduce(
-      (acc, p) => acc + p.progress.current_page, 0
-    ) / (participants.length * totalPages);
+      (acc, p) => acc + (p.percentage || 0), 0
+    ) / (participants.length * 100);
 
     updateWidgetData({
-      totalPages,
+      totalPages: challengeTotalPages,
       averageProgress: Math.min(avgProgress, 1),
       participant1Name: top1.user.first_name || 'Joueur 1',
       participant1Page: top1.progress.current_page,
@@ -817,8 +816,8 @@ export default function HomeScreen() {
       {activeChallenge && (
         <View style={[styles.progressSection, { paddingBottom: insets.bottom + spacing.md }]}>
           <ProgressCard
-            me={meData}
-            friend={friendData}
+            participants={allParticipantsData}
+            myUserId={user?.id || ''}
             onParticipantPress={handleParticipantPress}
             intermediateGoal={
               secondaryGoal
@@ -896,12 +895,14 @@ export default function HomeScreen() {
         participantName={
           selectedParticipantId === user?.id
             ? 'Moi'
-            : (friendParticipant?.user.first_name || 'Participant')
+            : (participants.find(p => p.user.id === selectedParticipantId)
+                ?.user.first_name || 'Participant')
         }
         participantPhoto={
           selectedParticipantId === user?.id
             ? mePhotoUrlWithCacheBust
-            : (friendPhotoUrlWithCacheBust || null)
+            : (participants.find(p => p.user.id === selectedParticipantId)
+                ?.user.profile_photo_url || null)
         }
         history={participantHistory}
       />

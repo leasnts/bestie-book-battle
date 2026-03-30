@@ -15,6 +15,41 @@ Web Content Accessibility Guidelines (WCAG) 2.1 defines three levels:
 
 **Santos Studio targets WCAG 2.1 AA as the minimum standard.**
 
+### Focus-Visible (NOT Focus)
+
+Use `:focus-visible` instead of `:focus` to show focus rings only for keyboard users. Mouse/touch users don't need them.
+
+```css
+/* ✅ Keyboard users see the ring */
+button:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* ❌ NEVER remove focus without replacement */
+button:focus { outline: none; }  /* Accessibility violation */
+```
+
+### Input Detection (Not Just Screen Size)
+
+Screen size doesn't tell you input method. Use pointer and hover queries:
+
+```css
+@media (pointer: fine) { .button { padding: 8px 16px; } }    /* Mouse/trackpad */
+@media (pointer: coarse) { .button { padding: 12px 20px; } }  /* Touch */
+@media (hover: hover) { .card:hover { transform: translateY(-2px); } }
+@media (hover: none) { /* No hover — use active states instead */ }
+```
+
+### Touch Target Expansion
+
+Small visual elements can have larger touch targets via invisible expansion:
+
+```css
+.icon-button { width: 24px; height: 24px; position: relative; }
+.icon-button::before { content: ''; position: absolute; inset: -10px; } /* 44px touch area */
+```
+
 ## The Four Principles (POUR)
 
 ### 1. Perceivable
@@ -257,7 +292,7 @@ Minimum sizes for comfortable interaction:
 
 | Platform | Minimum Size |
 |----------|--------------|
-| Mobile (iOS) | **44x44px** |
+| Mobile (iOS/Android) | **44x44px** |
 | Desktop | **24x24px** |
 
 **Spacing between targets:** At least 8px to prevent mis-taps.

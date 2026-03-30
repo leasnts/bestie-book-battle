@@ -20,6 +20,26 @@ Communicating system status to users at every moment.
 
 ## Loading States
 
+### Optimistic UI (PREFERRED)
+
+Update the UI immediately, sync with server in background. If it fails, rollback.
+
+**Use for:** Likes, toggles, moves, reorders — low-stakes actions
+**Don't use for:** Payments, destructive actions, account changes
+
+This is the gold standard for perceived speed. Instagram likes work offline — the UI updates instantly, syncs later.
+
+### Skeleton Screens > Spinners
+
+Skeleton screens preview content shape and feel faster than generic spinners. They set expectations for what's coming.
+
+```
+❌ Generic spinner: ◌ Loading...
+✅ Skeleton: ████████ ██████ (shapes matching final layout)
+```
+
+Use skeletons for content areas. Use spinners only for small inline actions (button loading state).
+
 ### Spinner (Short Waits: 300ms-3s)
 
 Use for:
@@ -337,6 +357,28 @@ For major failures:
 ---
 
 ## Confirmation Patterns
+
+### Undo > Confirm (PREFERRED)
+
+Confirmation dialogs are a design failure — users click through them mindlessly.
+
+**Better pattern:**
+1. Remove from UI immediately
+2. Show undo toast (5-10 seconds)
+3. Actually delete after toast expires
+
+```
+┌──────────────────────────────────────┐
+│ ✓ Item deleted    [Undo]    ████░░  │  ← Toast with countdown
+└──────────────────────────────────────┘
+```
+
+**Use confirmation dialogs ONLY for:**
+- Truly irreversible actions (account deletion)
+- High-cost actions (sending to 12K subscribers)
+- Batch operations
+
+When you must confirm: name the action, explain consequences, use specific labels ("Delete project" / "Keep project", NOT "Yes" / "No").
 
 ### Destructive Actions
 

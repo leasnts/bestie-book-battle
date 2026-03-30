@@ -16,6 +16,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
 import { useOnboardingStore } from '../../stores/onboardingStore';
 import {
+    ActionSheetIOS,
     Alert,
     Pressable,
     StyleSheet,
@@ -54,19 +55,24 @@ export default function OnboardingCoverScreen() {
     const [isPickingImage, setIsPickingImage] = useState(false);
     const [pendingImage, setPendingImage] = useState<PendingImage | null>(null);
     
-    // On garde en mémoire si la permission est déjà accordée
-    const hasPermissionRef = useRef(false);
+    // On garde en mémoire si les permissions sont déjà accordées
+    const hasLibraryPermissionRef = useRef(false);
+    const hasCameraPermissionRef = useRef(false);
 
     /**
-     * Pré-demander la permission dès l'affichage de l'écran
-     * Comme ça, quand l'utilisateur tape, la galerie s'ouvre direct sans attente
+     * Pré-demander les permissions dès l'affichage de l'écran
+     * Comme ça, quand l'utilisateur tape, la galerie/caméra s'ouvre direct sans attente
      */
     useEffect(() => {
-        const preRequestPermission = async () => {
-            const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-            hasPermissionRef.current = status === 'granted';
+        const preRequestPermissions = async () => {
+            const [library, camera] = await Promise.all([
+                ImagePicker.requestMediaLibraryPermissionsAsync(),
+                ImagePicker.requestCameraPermissionsAsync(),
+            ]);
+            hasLibraryPermissionRef.current = library.status === 'granted';
+            hasCameraPermissionRef.current = camera.status === 'granted';
         };
-        preRequestPermission();
+        preRequestPermissions();
     }, []);
 
     /**
@@ -77,8 +83,7 @@ export default function OnboardingCoverScreen() {
         try {
             setIsPickingImage(true);
 
-            // Vérifier si la permission est déjà accordée (pré-demandée au montage)
-            if (!hasPermissionRef.current) {
+            if (!hasLibraryPermissionRef.current) {
                 const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
                 if (status !== 'granted') {
                     Alert.alert(
@@ -87,10 +92,9 @@ export default function OnboardingCoverScreen() {
                     );
                     return;
                 }
-                hasPermissionRef.current = true;
+                hasLibraryPermissionRef.current = true;
             }
 
-            // Ouvrir la galerie sans crop natif (iOS force le carré)
             const result = await ImagePicker.launchImageLibraryAsync({
                 mediaTypes: ImagePicker.MediaTypeOptions.Images,
                 allowsEditing: false,
@@ -99,7 +103,6 @@ export default function OnboardingCoverScreen() {
 
             if (!result.canceled && result.assets[0]) {
                 const asset = result.assets[0];
-                // Ouvrir le modal de crop interactif au ratio 5:7
                 setPendingImage({ uri: asset.uri, width: asset.width, height: asset.height });
             }
         } catch (error: any) {
@@ -108,6 +111,59 @@ export default function OnboardingCoverScreen() {
         } finally {
             setIsPickingImage(false);
         }
+    };
+
+    /**
+     * Ouvrir l'appareil photo pour prendre la couverture en photo
+     */
+    const handleTakePhoto = async () => {
+        try {
+            setIsPickingImage(true);
+
+            if (!hasCameraPermissionRef.current) {
+                const { status } = await ImagePicker.requestCameraPermissionsAsync();
+                if (status !== 'granted') {
+                    Alert.alert(
+                        'Permission refusée',
+                        'L\'application a besoin d\'accéder à ton appareil photo pour photographier la couverture.'
+                    );
+                    return;
+                }
+                hasCameraPermissionRef.current = true;
+            }
+
+            const result = await ImagePicker.launchCameraAsync({
+                mediaTypes: ImagePicker.MediaTypeOptions.Images,
+                allowsEditing: false,
+                quality: 0.8,
+            });
+
+            if (!result.canceled && result.assets[0]) {
+                const asset = result.assets[0];
+                setPendingImage({ uri: asset.uri, width: asset.width, height: asset.height });
+            }
+        } catch (error: any) {
+            console.error('Erreur prise de photo:', error);
+            Alert.alert('Erreur', 'Impossible de prendre une photo');
+        } finally {
+            setIsPickingImage(false);
+        }
+    };
+
+    /**
+     * ActionSheet pour changer la cover existante (photothèque ou caméra)
+     */
+    const handleChangeCover = () => {
+        ActionSheetIOS.showActionSheetWithOptions(
+            {
+                options: ['Annuler', 'Choisir depuis la photothèque', 'Prendre une photo'],
+                cancelButtonIndex: 0,
+            },
+            (buttonIndex) => {
+                if (buttonIndex === 1) handlePickImage();
+                if (buttonIndex === 2) handleTakePhoto();
+            }
+        );
     };
 
     /**
@@ -191,23 +247,37 @@ export default function OnboardingCoverScreen() {
                                 />
                             ) : null}
 
-                            {/* Bouton upload au centre — visible seulement si pas encore de cover */}
+                            {/* Boutons d'import — visibles seulement si pas encore de cover */}
                             {!coverUri && (
-                                <Pressable
-                                    style={styles.uploadButton}
-                                    onPress={handlePickImage}
-                                    disabled={isPickingImage}
-                                >
-                                    <View style={styles.uploadButtonInnerShadow} />
-                                    <Ionicons 
-                                        name="cloud-upload-outline" 
-                                        size={24} 
-                                        color={colors.white} 
-                                    />
-                                </Pressable>
+                                <View style={styles.uploadButtons}>
+                                    <Pressable
+                                        style={styles.uploadButton}
+                                        onPress={handlePickImage}
+                                        disabled={isPickingImage}
+                                    >
+                                        <View style={styles.uploadButtonInnerShadow} />
+                                        <Ionicons
+                                            name="image-outline"
+                                            size={24}
+                                            color={colors.white}
+                                        />
+                                    </Pressable>
+                                    <Pressable
+                                        style={styles.uploadButton}
+                                        onPress={handleTakePhoto}
+                                        disabled={isPickingImage}
+                                    >
+                                        <View style={styles.uploadButtonInnerShadow} />
+                                        <Ionicons
+                                            name="camera-outline"
+                                            size={24}
+                                            color={colors.white}
+                                        />
+                                    </Pressable>
+                                </View>
                             )}
 
-                            {/* Bouton "modifier la cover" — SUR la cover, padding 12px en bas à droite */}
+                            {/* Bouton "modifier la cover" — SUR la cover, ouvre ActionSheet */}
                             {coverUri && (
                                 <View style={styles.changeCoverButton}>
                                     <Button3D
@@ -215,7 +285,7 @@ export default function OnboardingCoverScreen() {
                                         iconComponent={<IconRotateCcw size={20} color="#535862" />}
                                         iconOnly
                                         size="compact"
-                                        onPress={handlePickImage}
+                                        onPress={handleChangeCover}
                                     />
                                 </View>
                             )}
@@ -314,8 +384,12 @@ const styles = StyleSheet.create({
         width: '100%',
         height: '100%',
     },
-    uploadButton: {
+    uploadButtons: {
         position: 'absolute',
+        flexDirection: 'row',
+        gap: spacing.lg,
+    },
+    uploadButton: {
         width: 48,
         height: 48,
         backgroundColor: colors.dark900,

@@ -8,6 +8,27 @@ Designing forms that users actually complete.
 
 ## Form Fundamentals
 
+### Labels Are NOT Placeholders
+
+Placeholders disappear on input. Always use visible `<label>` elements.
+
+```jsx
+// ❌ Placeholder as label — disappears when user types
+<input placeholder="Email address" />
+
+// ✅ Visible label + helpful placeholder
+<label htmlFor="email">Email address</label>
+<input id="email" placeholder="you@example.com" />
+```
+
+### All Inputs Need 8 States
+
+Every form field should have: default, hover, focus-visible, active, disabled, loading, error, success. See `santostudio-ui` motion.md for implementation details.
+
+### Validate on Blur, Not on Keystroke
+
+Validate when the user LEAVES the field (blur), not while typing. Exception: password strength meters.
+
 ### Field Reduction
 
 ```

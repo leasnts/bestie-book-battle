@@ -20,6 +20,7 @@ import {
   getChallengeProgress,
   getUserProgress,
   updateUserProgress,
+  updateUserTotalPages as updateUserTotalPagesDb,
   getChallengeParticipants,
   getUserHistory,
   getChallengeHistory,
@@ -61,6 +62,11 @@ interface ProgressStore {
     challengeId: string,
     userId: string,
     newPage: number
+  ) => Promise<UserProgress>;
+  updateUserTotalPages: (
+    challengeId: string,
+    userId: string,
+    totalPages: number
   ) => Promise<UserProgress>;
 
   // Actions - Subscriptions temps réel
@@ -247,6 +253,39 @@ export const useProgressStore = create<ProgressStore>((set, get) => ({
     } catch (error: any) {
       console.error('Update progress error:', error);
       set({ error: error.message, isLoading: false });
+      throw error;
+    }
+  },
+
+  // ===== Action : Mettre à jour le total de pages du participant =====
+  updateUserTotalPages: async (challengeId, userId, totalPages) => {
+    try {
+      const updatedProgress = await updateUserTotalPagesDb(
+        challengeId,
+        userId,
+        totalPages
+      );
+
+      // Mettre à jour la progression dans la liste
+      set((state) => ({
+        progressList: state.progressList.map((p) =>
+          p.user_id === userId && p.challenge_id === challengeId
+            ? updatedProgress
+            : p
+        ),
+        currentUserProgress:
+          state.currentUserProgress?.user_id === userId
+            ? updatedProgress
+            : state.currentUserProgress,
+      }));
+
+      // Recharger les participants pour mettre à jour le classement
+      const participants = await getChallengeParticipants(challengeId);
+      set({ participants });
+
+      return updatedProgress;
+    } catch (error: any) {
+      console.error('Update user total pages error:', error);
       throw error;
     }
   },

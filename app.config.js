@@ -51,6 +51,8 @@ export default {
         {
           photosPermission:
             "bestiebookbattle a besoin d'accéder à tes photos pour ta photo de profil et les couvertures de livres.",
+          cameraPermission:
+            "bestiebookbattle a besoin d'accéder à ton appareil photo pour photographier les couvertures de livres.",
         },
       ],
       "@react-native-community/datetimepicker",

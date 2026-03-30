@@ -8,6 +8,47 @@ Words that guide, delight, and feel human.
 
 ## The Santos Studio Voice
 
+### Button Label Formula: VERB + OBJECT
+
+Never use "OK", "Submit", or "Yes/No" — they're lazy and ambiguous.
+
+| ❌ Bad | ✅ Good |
+|--------|---------|
+| OK | Save changes |
+| Submit | Create account |
+| Yes / No | Delete message / Keep message |
+| Cancel | Keep editing |
+| Click here | Download PDF |
+
+For destructive actions, name the destruction: "Delete 5 items" not "Delete selected".
+
+### Error Message Formula: WHAT + WHY + FIX
+
+Every error should answer three questions:
+
+| Situation | Template |
+|-----------|----------|
+| Format error | "[Field] needs to be [format]. Example: [example]" |
+| Missing required | "Please enter [what's missing]" |
+| Permission denied | "You don't have access to [thing]. [What to do instead]" |
+| Network error | "We couldn't reach [thing]. Check your connection and [action]." |
+| Server error | "Something went wrong on our end. We're looking into it." |
+
+❌ Never blame the user: "You entered an invalid date"
+✅ Reframe: "Please enter a date in DD/MM/YYYY format"
+❌ Never use humor for errors — users are already frustrated
+
+### Terminology Consistency
+
+Pick one term and STICK with it everywhere:
+
+| ❌ Inconsistent | ✅ Consistent |
+|----------------|---------------|
+| Delete / Remove / Trash | Delete |
+| Settings / Preferences / Options | Settings |
+| Sign in / Log in / Enter | Sign in |
+| Create / Add / New | Create |
+
 ### Tone Attributes
 
 | Attribute | Not This | This |

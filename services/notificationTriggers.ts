@@ -36,7 +36,7 @@ import {
   sendStreakAtRiskNotification,
 } from './notifications';
 
-const GAP_THRESHOLD_PAGES = 25;
+const GAP_THRESHOLD_PERCENT = 10; // ~25 pages sur un livre de 250
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -89,10 +89,16 @@ export async function handleRealtimeProgressUpdate(
   const friendName = friendParticipant?.user?.first_name ?? 'Ton ami';
   // Photo du friend résolue maintenant (sera stockée dans le feed)
   const friendPhotoUrl = friendParticipant?.user?.profile_photo_url ?? null;
-  const myCurrentPage = myParticipant.progress.current_page ?? 0;
+
+  // Pourcentages pour comparaisons équitables (chaque édition a son propre total)
+  const myPercentage = myParticipant.percentage ?? 0;
+  const friendPercentage = newProgress.progress_percentage ?? 0;
+  const oldFriendPercentage = oldProgress?.progress_percentage ?? 0;
 
   // ── 1. L'autre a fini le livre ──────────────────────────────────────────────
-  if (newProgress.current_page >= totalPages) {
+  // Utiliser le total_pages de l'ami (son édition), avec fallback sur le total du challenge
+  const friendTotalPages = newProgress.total_pages ?? totalPages;
+  if (newProgress.current_page >= friendTotalPages) {
     await sendOtherFinishedBookNotification(friendName, bookTitle, challengeId);
     saveNotification({
       type: 'friend_finished',
@@ -106,9 +112,9 @@ export async function handleRealtimeProgressUpdate(
 
   let sentCompetitiveAlert = false;
 
-  // ── 2. Dépassement : l'autre nous a passé ──────────────────────────────────
-  const wasBehindMe = oldProgress && oldProgress.current_page < myCurrentPage;
-  const isNowAhead = newProgress.current_page > myCurrentPage;
+  // ── 2. Dépassement : l'autre nous a passé (comparé en pourcentage) ─────────
+  const wasBehindMe = oldFriendPercentage < myPercentage;
+  const isNowAhead = friendPercentage > myPercentage;
   if (oldProgress && wasBehindMe && isNowAhead) {
     await sendOvertakeNotification(friendName, challengeId);
     saveNotification({
@@ -121,13 +127,14 @@ export async function handleRealtimeProgressUpdate(
     sentCompetitiveAlert = true;
   }
 
-  // ── 3. Écart significatif : l'autre a 25+ pages d'avance ──────────────────
-  const gap = newProgress.current_page - myCurrentPage;
-  if (gap >= GAP_THRESHOLD_PAGES && !sentCompetitiveAlert) {
-    await sendGapWideningNotification(friendName, gap, challengeId);
+  // ── 3. Écart significatif : l'autre a 10%+ d'avance ──────────────────────
+  const gapPercent = friendPercentage - myPercentage;
+  if (gapPercent >= GAP_THRESHOLD_PERCENT && !sentCompetitiveAlert) {
+    const gapDisplay = Math.round(gapPercent);
+    await sendGapWideningNotification(friendName, gapDisplay, challengeId);
     saveNotification({
       type: 'gap',
-      title: `${gap} pages de retard`,
+      title: `${gapDisplay}% de retard`,
       body: `Pas de panique... si si un peu`,
       challengeId,
       avatarSource: friendPhotoUrl,
