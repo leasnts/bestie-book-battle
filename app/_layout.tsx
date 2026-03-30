@@ -93,7 +93,7 @@ export default function RootLayout() {
  */
 function RootLayoutNav() {
   const { user, isInitialized, initialize: initAuth, pendingUserData } = useAuthStore();
-  const { challenges, loadUserChallenges } = useProjectStore();
+  const { challenges, loadUserChallenges, _hasHydrated } = useProjectStore();
   const router = useRouter();
   const segments = useSegments();
   const [isMounted, setIsMounted] = useState(false);
@@ -108,14 +108,15 @@ function RootLayoutNav() {
     };
   }, [initAuth]);
 
-  // Recharge les challenges quand le user change (login, retour d'onboarding…).
-  // Au cold start, initialize() lance déjà loadUserChallenges en parallèle du
-  // profile fetch → ce useEffect crée un doublon inoffensif (même résultat).
+  // Single source of truth pour le chargement des challenges.
+  // On attend que le persist middleware ait fini de lire AsyncStorage (_hasHydrated)
+  // pour ne pas flasher un spinner alors que les données en cache arrivent.
+  // authStore.initialize() ne charge plus les challenges — c'est fait ici uniquement.
   useEffect(() => {
-    if (user?.id) {
+    if (user?.id && _hasHydrated) {
       loadUserChallenges(user.id);
     }
-  }, [user?.id, loadUserChallenges]);
+  }, [user?.id, _hasHydrated, loadUserChallenges]);
 
   // Gérer les deep links pour l'authentification
   useEffect(() => {

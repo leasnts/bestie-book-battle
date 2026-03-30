@@ -118,6 +118,7 @@ export default function HomeScreen() {
     updateActiveChallenge,
     challengesLoading,
     challengesLoaded,
+    _hasHydrated,
   } = useProjectStore();
 
   const {
@@ -250,17 +251,26 @@ export default function HomeScreen() {
     }
   }, [activeChallenge?.id]);
 
-  // ===== Recovery au retour du foreground =====
-  // Si le chargement initial a échoué (timeout réseau, requête pendue…),
-  // on retente automatiquement quand l'app revient au premier plan.
+  // ===== Refresh silencieux au retour du foreground =====
+  // Comme Instagram : on refresh TOUJOURS quand l'app revient au premier plan.
+  // Le cache est déjà affiché (pas de spinner), les données fraîches le remplacent
+  // silencieusement. La protection dans loadUserChallenges empêche l'écrasement
+  // du cache par des résultats vides (token expiré + RLS).
+  // On refresh aussi la progression + objectifs pour voir les updates des amis.
   useEffect(() => {
-    const sub = AppState.addEventListener('change', (state) => {
-      if (state === 'active' && user?.id && !challengesLoaded) {
+    const sub = AppState.addEventListener('change', (nextState) => {
+      if (nextState === 'active' && user?.id) {
         loadUserChallenges(user.id);
+        const challengeId = useProjectStore.getState().activeChallenge?.id;
+        if (challengeId) {
+          loadChallengeProgress(challengeId);
+          loadActiveGoals(challengeId);
+          loadGoalHistory(challengeId);
+        }
       }
     });
     return () => sub.remove();
-  }, [user?.id, challengesLoaded, loadUserChallenges]);
+  }, [user?.id, loadUserChallenges, loadChallengeProgress, loadActiveGoals, loadGoalHistory]);
 
   // ===== Données dérivées =====
   const totalPages = activeChallenge?.total_pages || 100;
@@ -752,8 +762,8 @@ export default function HomeScreen() {
             </View>
           </View>
         </View>
-      ) : challenges.length === 0 && (!challengesLoaded || challengesLoading) ? (
-        /* ═══════════ ÉTAT CHARGEMENT : aucun cache local, premier chargement ═══════════ */
+      ) : !_hasHydrated || (challenges.length === 0 && challengesLoading) ? (
+        /* ═══════════ ÉTAT CHARGEMENT : persist pas encore prêt OU fetch en cours sans cache ═══════════ */
         <View style={styles.emptyStateContainer}>
           <ActivityIndicator size="large" color={colors.primary} />
           <Text style={[styles.emptyStateSubtitle, { marginTop: 16 }]}>

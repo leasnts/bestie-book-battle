@@ -37,6 +37,7 @@ interface ProjectStore {
   isLoading: boolean;
   challengesLoading: boolean; // true uniquement pendant loadUserChallenges (pas pollué par les autres actions)
   challengesLoaded: boolean; // true après le premier chargement réussi ou échoué
+  _hasHydrated: boolean; // true quand le persist middleware a fini de lire AsyncStorage
   error: string | null;
 
   // Actions - Création
@@ -90,6 +91,7 @@ export const useProjectStore = create<ProjectStore>()(
   isLoading: false,
   challengesLoading: false,
   challengesLoaded: false,
+  _hasHydrated: false,
   error: null,
 
   // ===== Action : Créer un challenge =====
@@ -234,32 +236,51 @@ export const useProjectStore = create<ProjectStore>()(
   loadUserChallenges: async (userId) => {
     set({ challengesLoading: true, error: null });
     try {
-      const challenges = await getUserChallenges(userId);
+      const freshChallenges = await getUserChallenges(userId);
+
+      const { challenges: cached, activeChallenge: cachedActive } = get();
+
+      // PROTECTION : si l'API retourne 0 résultats mais le cache en a,
+      // c'est probablement un token expiré + RLS qui filtre tout silencieusement.
+      // On garde le cache intact au lieu d'écraser des données valides.
+      if (freshChallenges.length === 0 && cached.length > 0) {
+        console.warn(
+          'loadUserChallenges: API returned 0 but cache has',
+          cached.length, '— keeping cache (likely stale token)'
+        );
+        set({ challengesLoading: false, challengesLoaded: true });
+        return;
+      }
 
       // Auto-sélectionner le challenge actif :
       // On prend le plus récemment mis à jour (updated_at desc)
-      // pour afficher le projet sur lequel l'utilisateur était actif en dernier
-      const { activeChallenge } = get();
-      let newActive = activeChallenge;
+      let newActive = cachedActive;
 
-      if (challenges.length > 0) {
-        // Si pas de challenge actif, ou s'il n'existe plus dans la liste
-        const activeStillExists = activeChallenge && challenges.some(c => c.id === activeChallenge.id);
+      if (freshChallenges.length > 0) {
+        const activeStillExists = cachedActive && freshChallenges.some(c => c.id === cachedActive.id);
         if (!activeStillExists) {
-          // Trier par updated_at desc pour prendre le plus récent
-          const sorted = [...challenges].sort(
+          const sorted = [...freshChallenges].sort(
             (a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
           );
           newActive = sorted[0];
+        } else {
+          // Mettre à jour le challenge actif avec les données fraîches (deadline, etc.)
+          newActive = freshChallenges.find(c => c.id === cachedActive!.id) || cachedActive;
         }
       } else {
         newActive = null;
       }
 
-      set({ challenges, activeChallenge: newActive, challengesLoading: false, challengesLoaded: true });
+      set({ challenges: freshChallenges, activeChallenge: newActive, challengesLoading: false, challengesLoaded: true });
     } catch (error: any) {
       console.error('Load challenges error:', error);
-      set({ error: error.message, challengesLoading: false, challengesLoaded: true });
+      // Si on a du cache, on le garde et on ne montre pas d'erreur
+      const { challenges: cached } = get();
+      if (cached.length > 0) {
+        set({ challengesLoading: false, challengesLoaded: true });
+      } else {
+        set({ error: error.message, challengesLoading: false, challengesLoaded: true });
+      }
     }
   },
 
@@ -458,6 +479,7 @@ export const useProjectStore = create<ProjectStore>()(
       isLoading: false,
       challengesLoading: false,
       challengesLoaded: false,
+      _hasHydrated: false,
       error: null,
     });
   },
@@ -481,6 +503,13 @@ export const useProjectStore = create<ProjectStore>()(
       challenges: state.challenges,
       activeChallenge: state.activeChallenge,
     }),
+    onRehydrateStorage: () => {
+      return () => {
+        // AsyncStorage lu → les données en cache sont disponibles.
+        // Le home screen peut maintenant afficher le contenu caché au lieu du spinner.
+        useProjectStore.setState({ _hasHydrated: true });
+      };
+    },
   }
   )
 );

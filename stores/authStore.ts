@@ -293,51 +293,42 @@ export const useAuthStore = create<AuthStore>()(
           return;
         }
 
-        // Lancer le chargement des challenges dès qu'on a le user ID,
-        // en parallèle avec le fetch du profil. Pas besoin d'attendre
-        // isInitialized — les challenges cachés s'affichent déjà,
-        // et les frais les remplaceront silencieusement.
-        useProjectStore.getState().loadUserChallenges(session.user.id);
+        // Étape 2 : rafraîchir le token AVANT de fetch le profil.
+        // getSession() lit AsyncStorage sans valider — le JWT peut être expiré.
+        // refreshSession() valide avec le serveur → token frais pour les requêtes suivantes.
+        // Si le refresh échoue (réseau), on continue avec la session existante :
+        // le cache de projectStore protège contre les résultats vides RLS.
+        let activeSession = session;
+        try {
+          const { data: { session: refreshed } } = await withTimeout(
+            supabase.auth.refreshSession(), 8000
+          );
+          if (refreshed) {
+            activeSession = refreshed;
+          }
+        } catch (refreshError) {
+          console.warn('Proactive token refresh failed, proceeding with existing session', refreshError);
+        }
 
-        // Étape 2 : session confirmée → récupérer le profil complet depuis la base
-        // Timeout 8s : sur mobile le réseau peut être lent au réveil, mais on ne
-        // doit jamais pendre indéfiniment.
+        // Étape 3 : récupérer le profil complet avec le token (idéalement frais)
         const { data: userProfile, error: profileError } = await withTimeout(
           supabase
             .from('users')
             .select('*')
-            .eq('id', session.user.id)
+            .eq('id', activeSession.user.id)
             .maybeSingle(),
           8000
         );
 
-        // Si la requête profil échoue (token expiré, réseau…), on tente un refresh
-        // plutôt que de déconnecter l'utilisateur à tort.
         if (profileError) {
-          console.warn('Profile fetch failed, refreshing session…', profileError.message);
-          const { data: { session: refreshed } } = await withTimeout(
-            supabase.auth.refreshSession(), 8000
-          );
-          if (refreshed?.user) {
-            const { data: retryProfile } = await withTimeout(
-              supabase
-                .from('users')
-                .select('*')
-                .eq('id', refreshed.user.id)
-                .maybeSingle(),
-              8000
-            );
-            set({ user: retryProfile ?? null, isInitialized: true, isLoading: false });
-            return;
-          }
-          // Refresh échoué → vraiment déconnecté
+          console.warn('Profile fetch failed after refresh', profileError.message);
           set({ user: null, isInitialized: true, isLoading: false });
           return;
         }
 
         set({ user: userProfile ?? null, isInitialized: true, isLoading: false });
-        // Note : loadUserChallenges est déclenché par _layout.tsx via useEffect [user?.id]
-        // — pas besoin de l'appeler ici (évite les appels dupliqués et race conditions).
+        // Note : loadUserChallenges est géré exclusivement par _layout.tsx
+        // via useEffect [user?.id, _hasHydrated] — pas d'appel ici.
       } catch (error) {
         console.error('Session check error:', error);
         set({ user: null, isInitialized: true, isLoading: false });
