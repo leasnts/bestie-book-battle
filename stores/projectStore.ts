@@ -34,6 +34,7 @@ interface ProjectStore {
   challenges: Challenge[]; // Liste de tous les challenges de l'utilisateur
   activeChallenge: Challenge | null; // Challenge affiché sur la homepage
   currentChallenge: ChallengeWithParticipants | null; // Challenge actuellement affiché (page détail)
+  lastProgressChallengeId: string | null; // ID du dernier challenge où l'utilisateur a ajouté des progrès
   isLoading: boolean;
   challengesLoading: boolean; // true uniquement pendant loadUserChallenges (pas pollué par les autres actions)
   challengesLoaded: boolean; // true après le premier chargement réussi ou échoué
@@ -62,6 +63,7 @@ interface ProjectStore {
   // Actions - Sélection
   setActiveChallenge: (challenge: Challenge | null) => void;
   setCurrentChallenge: (challenge: ChallengeWithParticipants | null) => void;
+  setLastProgressChallengeId: (challengeId: string) => void;
 
   // Actions - Modification
   updateCurrentChallenge: (updates: Partial<Challenge>) => Promise<void>;
@@ -88,6 +90,7 @@ export const useProjectStore = create<ProjectStore>()(
   challenges: [],
   activeChallenge: null,
   currentChallenge: null,
+  lastProgressChallengeId: null,
   isLoading: false,
   challengesLoading: false,
   challengesLoaded: false,
@@ -253,19 +256,30 @@ export const useProjectStore = create<ProjectStore>()(
       }
 
       // Auto-sélectionner le challenge actif :
-      // On prend le plus récemment mis à jour (updated_at desc)
+      // Priorité au dernier challenge où l'utilisateur a ajouté des progrès,
+      // sinon le plus récemment mis à jour (updated_at desc)
+      const { lastProgressChallengeId } = get();
       let newActive = cachedActive;
 
       if (freshChallenges.length > 0) {
-        const activeStillExists = cachedActive && freshChallenges.some(c => c.id === cachedActive.id);
-        if (!activeStillExists) {
-          const sorted = [...freshChallenges].sort(
-            (a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
-          );
-          newActive = sorted[0];
+        // Préférer le dernier challenge où l'utilisateur a ajouté des progrès
+        const lastProgressChallenge = lastProgressChallengeId
+          ? freshChallenges.find(c => c.id === lastProgressChallengeId)
+          : null;
+
+        if (lastProgressChallenge) {
+          newActive = lastProgressChallenge;
         } else {
-          // Mettre à jour le challenge actif avec les données fraîches (deadline, etc.)
-          newActive = freshChallenges.find(c => c.id === cachedActive!.id) || cachedActive;
+          const activeStillExists = cachedActive && freshChallenges.some(c => c.id === cachedActive.id);
+          if (activeStillExists) {
+            // Mettre à jour le challenge actif avec les données fraîches (deadline, etc.)
+            newActive = freshChallenges.find(c => c.id === cachedActive!.id) || cachedActive;
+          } else {
+            const sorted = [...freshChallenges].sort(
+              (a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+            );
+            newActive = sorted[0];
+          }
         }
       } else {
         newActive = null;
@@ -340,6 +354,10 @@ export const useProjectStore = create<ProjectStore>()(
    */
   setCurrentChallenge: (challenge) => {
     set({ currentChallenge: challenge });
+  },
+
+  setLastProgressChallengeId: (challengeId) => {
+    set({ lastProgressChallengeId: challengeId });
   },
 
   // ===== Action : Mettre à jour le challenge =====
@@ -476,6 +494,7 @@ export const useProjectStore = create<ProjectStore>()(
       challenges: [],
       activeChallenge: null,
       currentChallenge: null,
+      lastProgressChallengeId: null,
       isLoading: false,
       challengesLoading: false,
       challengesLoaded: false,
@@ -502,6 +521,7 @@ export const useProjectStore = create<ProjectStore>()(
     partialize: (state) => ({
       challenges: state.challenges,
       activeChallenge: state.activeChallenge,
+      lastProgressChallengeId: state.lastProgressChallengeId,
     }),
     onRehydrateStorage: () => {
       return () => {

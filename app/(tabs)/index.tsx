@@ -113,6 +113,7 @@ export default function HomeScreen() {
     challenges,
     activeChallenge,
     setActiveChallenge,
+    setLastProgressChallengeId,
     loadUserChallenges,
     leaveActiveChallenge,
     updateActiveChallenge,
@@ -333,6 +334,7 @@ export default function HomeScreen() {
 
     try {
       await updateProgress(activeChallenge.id, user.id, currentPageInput);
+      setLastProgressChallengeId(activeChallenge.id);
 
       // Lance le toast "feuille qui tombe" avec le delta
       if (delta !== 0) {
