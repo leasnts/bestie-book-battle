@@ -43,6 +43,8 @@ interface ProgressCardProps {
   myUserId: string;
   /** Callback quand on tap sur un participant */
   onParticipantPress?: (participantId: string) => void;
+  /** Si true, les scores sont des pourcentages (éditions différentes entre participants) */
+  showPercentage?: boolean;
   /** Objectif intermédiaire complet (optionnel) */
   intermediateGoal?: {
     target_pages: number;
@@ -135,12 +137,15 @@ function useRollingCounter(target: number, duration = 800): number {
 function ParticipantRow({
   participant,
   onPress,
+  showPercentage,
 }: {
   participant: Participant;
   onPress?: () => void;
+  showPercentage?: boolean;
 }) {
   // Chaque row gère son propre compteur roulant (permet N participants)
-  const displayScore = useRollingCounter(participant.score);
+  // Quand showPercentage est true (éditions différentes), on affiche le % au lieu des pages
+  const displayScore = useRollingCounter(showPercentage ? Math.round(participant.percentage) : participant.score);
 
   return (
     // Animated.View avec layout= pour animer le glissement de position
@@ -182,7 +187,7 @@ function ParticipantRow({
             <Text style={styles.streakText}>{participant.streak}</Text>
           </View>
         )}
-        <Text style={styles.scoreNumber}>{displayScore}</Text>
+        <Text style={styles.scoreNumber}>{displayScore}{showPercentage ? '%' : ''}</Text>
       </View>
     </Pressable>
     </Animated.View>
@@ -197,6 +202,7 @@ export default function ProgressCard({
   participants,
   myUserId,
   onParticipantPress,
+  showPercentage,
   intermediateGoal,
   onGoalPress,
 }: ProgressCardProps) {
@@ -252,6 +258,7 @@ export default function ProgressCard({
               key={participant.id}
               participant={participant}
               onPress={() => onParticipantPress?.(participant.id)}
+              showPercentage={showPercentage}
             />
           ))}
         </View>

@@ -79,8 +79,7 @@ export default function UpdateProgressScreen() {
   const lastSavedPage = userProgress?.current_page || 0;
   // Utiliser le total_pages de l'édition du participant, avec fallback sur celui du challenge
   const totalPages = userProgress?.total_pages
-    ?? (currentProject as any)?.total_pages
-    ?? currentProject?.totalPages
+    ?? currentProject?.total_pages
     ?? 100;
   
   // Initialise l'input avec la dernière page sauvegardée
@@ -177,7 +176,7 @@ export default function UpdateProgressScreen() {
         lastSavedPage,
         currentPageInput,
         totalPages,
-        currentProject?.book_title ?? (currentProject as any)?.bookTitle ?? 'Ton livre',
+        currentProject?.book_title ?? 'Ton livre',
         user.profile_photo_url ?? null
       ).catch(() => {});
       celebrate();
@@ -206,7 +205,7 @@ export default function UpdateProgressScreen() {
         </Pressable>
         <View style={styles.bookInfo}>
           <Text style={styles.bookTitle} numberOfLines={1}>
-            {currentProject?.bookTitle || 'Mon livre'}
+            {currentProject?.book_title || 'Mon livre'}
           </Text>
         </View>
         <View style={{ width: 40 }} />

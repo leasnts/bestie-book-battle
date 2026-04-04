@@ -10,7 +10,9 @@
  * Ce store gère toutes les progressions et l'historique de lecture.
  */
 
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
+import { createJSONStorage, persist } from 'zustand/middleware';
 import {
   UserProgress,
   ParticipantWithProgress,
@@ -44,6 +46,7 @@ interface ProgressStore {
   history: ProgressHistory[]; // Historique de lecture
   isLoading: boolean;
   error: string | null;
+  _hasHydrated: boolean; // true quand le persist middleware a fini de lire AsyncStorage
 
   // Actions - Chargement
   loadChallengeProgress: (challengeId: string) => Promise<void>;
@@ -88,7 +91,9 @@ interface ProgressStore {
  * 
  * Gère toutes les progressions de lecture et leur affichage.
  */
-export const useProgressStore = create<ProgressStore>((set, get) => ({
+export const useProgressStore = create<ProgressStore>()(
+  persist(
+  (set, get) => ({
   // ===== État initial =====
   progressList: [],
   participants: [],
@@ -96,6 +101,7 @@ export const useProgressStore = create<ProgressStore>((set, get) => ({
   history: [],
   isLoading: false,
   error: null,
+  _hasHydrated: false,
 
   // ===== Action : Charger les progressions d'un challenge =====
   /**
@@ -106,7 +112,7 @@ export const useProgressStore = create<ProgressStore>((set, get) => ({
    * @param challengeId - L'ID du challenge
    */
   loadChallengeProgress: async (challengeId) => {
-    set({ isLoading: true, error: null, progressList: [], participants: [] });
+    set({ isLoading: true, error: null });
     try {
       // Charger les participants avec leurs progressions et classement
       const participants = await getChallengeParticipants(challengeId);
@@ -430,4 +436,22 @@ export const useProgressStore = create<ProgressStore>((set, get) => ({
   setError: (error) => {
     set({ error });
   },
-}));
+  }),
+  {
+    name: 'bbb-progress-store',
+    storage: createJSONStorage(() => AsyncStorage),
+    // On ne persiste QUE les données d'affichage (leaderboard instantané au lancement).
+    // history, isLoading, error sont éphémères.
+    partialize: (state) => ({
+      progressList: state.progressList,
+      participants: state.participants,
+      currentUserProgress: state.currentUserProgress,
+    }),
+    onRehydrateStorage: () => {
+      return () => {
+        useProgressStore.setState({ _hasHydrated: true });
+      };
+    },
+  }
+  )
+);

@@ -292,6 +292,11 @@ export default function HomeScreen() {
   // totalPages du user = son édition personnelle (pour le picker et l'affichage)
   const totalPages = myProgress?.total_pages ?? challengeTotalPages;
 
+  // Détecter si les participants ont des éditions différentes (total_pages différent)
+  // → dans ce cas, le leaderboard affichera des pourcentages au lieu de pages brutes
+  const hasDifferentEditions = participantsMatchChallenge && participants.length > 1
+    && new Set(participants.map(p => p.progress.total_pages ?? challengeTotalPages)).size > 1;
+
   // Quand on a les bonnes données, on met en cache la page par challenge
   if (myProgress && activeChallenge?.id) {
     savedPagesByChallenge.current[activeChallenge.id] = myProgress.current_page;
@@ -821,6 +826,7 @@ export default function HomeScreen() {
             participants={allParticipantsData}
             myUserId={user?.id || ''}
             onParticipantPress={handleParticipantPress}
+            showPercentage={hasDifferentEditions}
             intermediateGoal={
               secondaryGoal
                 ? {

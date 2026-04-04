@@ -350,9 +350,10 @@ export const useAuthStore = create<AuthStore>()(
     {
       name: 'bbb-auth-pending',
       storage: createJSONStorage(() => AsyncStorage),
-      // On ne persiste QUE pendingUserData — les autres états sont éphémères
-      // (user est géré par Supabase, isLoading/error ne doivent pas survivre au redémarrage)
-      partialize: (state) => ({ pendingUserData: state.pendingUserData }),
+      // On persiste user (photo, nom → affichage instantané au lancement)
+      // et pendingUserData (données Apple Sign In en attente d'onboarding).
+      // isLoading/error ne doivent pas survivre au redémarrage.
+      partialize: (state) => ({ user: state.user, pendingUserData: state.pendingUserData }),
     }
   )
 );

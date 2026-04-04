@@ -55,8 +55,8 @@ export function useProject(projectId: string | undefined): UseProjectResult {
   // S'abonne aux changements de progression quand le projet est chargé (+ notifications)
   useEffect(() => {
     if (currentProject && isInitialized && user?.id) {
-      const totalPages = (currentProject as any).total_pages ?? currentProject.totalPages ?? 100;
-      const bookTitle = (currentProject as any).book_title ?? (currentProject as any).bookTitle ?? 'Le livre';
+      const totalPages = currentProject.total_pages ?? 100;
+      const bookTitle = currentProject.book_title ?? 'Le livre';
       const unsubscribe = subscribeToProgress(currentProject.id, {
         currentUserId: user.id,
         totalPages,
