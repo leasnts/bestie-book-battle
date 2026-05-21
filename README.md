@@ -1,142 +1,101 @@
-# Bestie Book Battle 📚
+# Bestie Book Battle
 
-Une application React Native (Expo) pour suivre une lecture commune entre amis. Chaque personne met à jour sa progression quotidienne et voit l'avancée des autres.
+Application iOS pour suivre une lecture commune entre amis. Chaque participant met à jour sa progression et voit en temps réel celle des autres, avec classement, streaks et graphiques.
+
+> Voir [`CONTEXT.md`](./CONTEXT.md) pour le détail complet du contexte projet, et [`ROADMAP.md`](./ROADMAP.md) pour les évolutions prévues.
 
 ## Fonctionnalités
 
-- 📖 **Projets de lecture partagés** - Créez un projet avec le titre du livre et le nombre de pages
-- 👥 **Invitations par code** - Invitez vos amis avec un code unique à 6 caractères
-- 📊 **Classement en temps réel** - Voyez qui est en tête avec la couronne 👑
-- 🔥 **Streaks** - Suivez vos jours consécutifs de lecture
-- 📈 **Graphiques** - Visualisez la progression sur 30 jours
-- 🔔 **Notifications** - Rappels quotidiens et alertes quand quelqu'un vous dépasse
+- Challenges de lecture partagés (livre, nombre de pages, deadline)
+- Invitations par code à 6 caractères
+- Classement en temps réel avec couronne pour le leader
+- Streaks de jours consécutifs de lecture
+- Graphiques de progression
+- Notifications push (rappels quotidiens, alertes de dépassement)
+- Widget iOS sur l'écran d'accueil
+- Recherche de livres via l'API Google Books
 
-## Stack Technique
+## Stack technique
 
-- **Framework:** Expo (React Native)
-- **Language:** TypeScript
-- **Navigation:** Expo Router
-- **State:** Zustand
-- **Backend:** Supabase (PostgreSQL, Auth, Storage)
-- **UI:** React Native Paper
-- **Charts:** react-native-chart-kit
+| Catégorie | Techno | Version |
+|---|---|---|
+| Framework | Expo (managed → prebuild) | SDK 55 |
+| Runtime | React Native | 0.83 |
+| Langage | TypeScript (strict) | 5.9 |
+| Navigation | Expo Router (file-based) | 55 |
+| State | Zustand (persist) | 5 |
+| Backend | Supabase (Auth, Postgres, Storage, Realtime) | 2.93 |
+| Auth | Sign in with Apple | — |
+| UI | React Native Paper (Material Design 3) | 5 |
+| Animations | react-native-reanimated + motion | 4 / 12 |
+| Graphiques | @visx + react-native-chart-kit + d3-array | — |
+| OTA Updates | expo-updates | 55 |
+| Storybook | @storybook/react-native | 10 |
+
+Plateforme cible : **iOS**. Android est généré via prebuild mais pas activement supporté.
 
 ## Installation
 
-### 1. Cloner le projet
+### 1. Cloner et installer
 
 ```bash
+git clone https://github.com/leasnts/bestie-book-battle.git
 cd bestie-book-battle
 npm install
 ```
 
-### 2. Configurer Firebase
+### 2. Configurer Supabase
 
-1. Allez sur [Firebase Console](https://console.firebase.google.com/)
-2. Créez un nouveau projet
-3. Ajoutez une app Web
-4. Copiez les credentials dans `services/firebase/config.ts`
-5. Activez **Authentication** (Email/Password)
-6. Créez une base **Firestore Database**
-7. Activez **Storage**
+1. Crée un projet sur [supabase.com](https://supabase.com)
+2. Récupère les credentials dans **Settings → API**
+3. Copie `.env.example` vers `.env` et remplis :
+   ```
+   EXPO_PUBLIC_SUPABASE_URL=https://<ton-ref>.supabase.co
+   EXPO_PUBLIC_SUPABASE_ANON_KEY=eyJ...
+   ```
+4. Active **Apple Sign In** dans Authentication → Providers
+5. Exécute le script de setup SQL : `scripts/supabase-setup.sql` dans le SQL Editor
 
-### 3. Lancer l'application
+### 3. Lancer l'app
 
 ```bash
-# iOS
+# iOS (nécessite Xcode)
 npm run ios
+
+# Storybook on-device
+npm run storybook-generate && npm run ios
 ```
 
-## Structure du Projet
+## Structure
 
 ```
 bestie-book-battle/
-├── app/                      # Écrans (Expo Router)
-│   ├── (tabs)/               # Navigation par onglets
-│   │   ├── index.tsx         # Home - Liste des projets
-│   │   ├── activity.tsx      # Feed d'activité
-│   │   └── profile.tsx       # Profil utilisateur
-│   ├── auth/                 # Authentification
-│   │   ├── login.tsx
-│   │   └── register.tsx
-│   ├── project/              # Gestion des projets
-│   │   ├── [id].tsx          # Détail projet
-│   │   ├── create.tsx        # Créer un projet
-│   │   └── join.tsx          # Rejoindre un projet
-│   └── progress/
-│       └── update.tsx        # Mettre à jour sa progression
-├── components/
-│   ├── ui/                   # Composants UI
-│   │   ├── ProgressBar.tsx
-│   │   ├── ParticipantCard.tsx
-│   │   ├── ProjectCard.tsx
-│   │   └── StreakBadge.tsx
-│   ├── charts/
-│   │   └── ProgressChart.tsx
-│   └── common/
-│       ├── Avatar.tsx
-│       └── Crown.tsx
-├── services/
-│   ├── firebase/             # Services Firebase
-│   │   ├── config.ts
-│   │   ├── auth.ts
-│   │   ├── firestore.ts
-│   │   └── storage.ts
-│   └── notifications.ts
-├── stores/                   # État global (Zustand)
-│   ├── authStore.ts
-│   ├── projectStore.ts
-│   └── progressStore.ts
-├── types/                    # Types TypeScript
-│   └── index.ts
-├── utils/                    # Utilitaires
-│   ├── constants.ts          # Couleurs, espacements
-│   ├── streak.ts             # Calcul des streaks
-│   └── share.ts              # Partage et invitations
-└── hooks/                    # Hooks personnalisés
-    ├── useProject.ts
-    └── useProgress.ts
+├── app/                  # Écrans (Expo Router file-based)
+│   ├── (tabs)/           # Navigation par onglets
+│   ├── auth/             # Authentification
+│   ├── onboarding/       # Premier lancement
+│   ├── progress/         # Mise à jour de progression
+│   └── project/          # Création/détail challenge
+├── components/           # Composants réutilisables (UI, charts, icons)
+├── stores/               # State global Zustand (auth, projects, progress…)
+├── services/             # Supabase, notifications, API livres
+├── hooks/                # Hooks personnalisés
+├── utils/                # Helpers (streak, dates, formatage…)
+├── types/                # Types TypeScript partagés
+├── scripts/              # Migrations SQL, seed, scripts ops
+├── supabase/             # Migrations et config Supabase
+├── ios/                  # Projet natif iOS (prebuild) + widget
+└── assets/               # Fonts, images, icônes
 ```
 
-## Design System
+## Scripts utiles
 
-### Couleurs
-
-| Couleur | Hex | Usage |
-|---------|-----|-------|
-| Primary | `#6366F1` | Couleur principale (indigo) |
-| Secondary | `#EC4899` | Accents (pink) |
-| Success | `#10B981` | Succès, progression |
-| Crown | `#FCD34D` | Couronne du leader |
-| Streak | `#F97316` | Badge de streak |
-
-## Fonctionnement
-
-### Création d'un projet
-1. Cliquez sur "+" sur l'écran d'accueil
-2. Entrez le titre du livre et le nombre de pages
-3. Un code d'invitation unique est généré
-
-### Rejoindre un projet
-1. Allez dans Profil > "Rejoindre un projet"
-2. Entrez le code à 6 caractères
-3. Vous êtes automatiquement ajouté au projet
-
-### Mise à jour de progression
-1. Ouvrez un projet
-2. Cliquez sur "Mettre à jour"
-3. Entrez votre page actuelle
-4. Célébration automatique pour les milestones !
-
-## Améliorations futures
-
-- [ ] Commentaires sur les progressions
-- [ ] Badges et achievements
-- [ ] Mode sombre
-- [ ] Intégration Goodreads API
-- [ ] Export des statistiques
+| Script | Description |
+|---|---|
+| `npm run ios` | Lance l'app sur simulateur iOS |
+| `npm run upload-covers` | Upload de couvertures de livres vers Supabase Storage |
+| `npm run migrate-notifications` | Migration des préférences de notifications |
 
 ## Licence
 
-MIT
-
+Projet personnel — tous droits réservés.
