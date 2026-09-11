@@ -18,7 +18,6 @@ export default function TabLayout() {
       <Tabs.Screen name="index" />
 
       {/* History reste dans les tabs (modal) */}
-      <Tabs.Screen name="history" options={{ href: null }} />
     </Tabs>
   );
 }
