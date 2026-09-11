@@ -32,6 +32,7 @@ import {
   Share,
   StyleSheet,
   Text,
+  useWindowDimensions,
   View,
 } from 'react-native';
 import Animated, {
@@ -256,6 +257,22 @@ export default function BookStack({
   onEditDeadline,
   onSetIntermediateGoal,
 }: BookStackProps) {
+  /*
+    Au-delà d'un certain corps de texte, la carte du livre passe de deux
+    colonnes à une seule.
+
+    En disposition côte à côte, la couverture est en `alignItems: 'stretch'` :
+    elle épouse la hauteur du bloc texte. C'est ce qu'on veut à taille normale.
+    Mais quand le texte double, il entraîne la couverture avec lui — elle occupe
+    alors la moitié de l'écran, et la colonne de droite devient si étroite que
+    le titre se réduit à « La bi… ».
+
+    On restructure au lieu d'étirer : la couverture reprend sa taille fixe et
+    le texte passe dessous, sur toute la largeur.
+  */
+  const { fontScale } = useWindowDimensions();
+  const stackVertically = fontScale >= 1.35;
+
   // État local pour le menu contextuel et la modal d'invitation
   const [menuVisible, setMenuVisible] = useState(false);
   const [inviteVisible, setInviteVisible] = useState(false);
@@ -497,11 +514,11 @@ export default function BookStack({
   return (
     <Pressable onPress={onToggle} style={styles.closedContainer}>
       <Animated.View
-        style={styles.activeCard}
+        style={[styles.activeCard, stackVertically && styles.activeCardStacked]}
         entering={FadeIn.duration(250)}
       >
         {/* Zone couverture : cover active + pile derrière */}
-        <View style={styles.coverArea}>
+        <View style={[styles.coverArea, stackVertically && styles.coverAreaFixed]}>
           {/* Covers empilées — chacune se rétracte vers sa position finale
               avec un léger délai, donnant l'effet de "re-stacking". */}
           {otherCovers.map((cover, index) => {
@@ -579,16 +596,16 @@ export default function BookStack({
 
         {/* Section infos du livre + menu */}
         <Animated.View
-          style={styles.bookInfo}
+          style={[styles.bookInfo, stackVertically && styles.bookInfoStacked]}
           entering={FadeIn.delay(100).duration(250)}
         >
           {/* En-tête : textes à gauche, menu à droite */}
           <View style={styles.bookHeader}>
             <View style={styles.bookTexts}>
-              <Text style={styles.author} numberOfLines={1}>
+              <Text style={styles.author} numberOfLines={2}>
                 {bookAuthor || 'Auteur inconnu'}
               </Text>
-              <Text style={styles.title} numberOfLines={1}>
+              <Text style={styles.title} numberOfLines={2}>
                 {bookTitle}
               </Text>
             </View>
@@ -598,6 +615,8 @@ export default function BookStack({
               onPress={handleMenuPress}
               style={styles.menuButton}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              accessibilityRole="button"
+              accessibilityLabel="Actions du livre"
             >
               <Ionicons name="ellipsis-vertical" size={20} color={colors.textSecondary} />
             </Pressable>
@@ -605,7 +624,7 @@ export default function BookStack({
 
           {/* Ligne du bas : badges (pages + deadline) + barre de progression */}
           <View style={styles.bookFooter}>
-            <View style={styles.badgesRow}>
+            <View style={[styles.badgesRow, stackVertically && styles.badgesRowWrap]}>
               <View style={styles.pagesBadge}>
                 <Text style={styles.pagesText}>{totalPages}p</Text>
               </View>
@@ -672,7 +691,13 @@ export default function BookStack({
                   {bookAuthor || 'Auteur inconnu'}
                 </Text>
               </View>
-              <Pressable onPress={() => setMenuVisible(false)} hitSlop={12} style={styles.sheetCloseBtn}>
+              <Pressable
+                onPress={() => setMenuVisible(false)}
+                hitSlop={12}
+                style={styles.sheetCloseBtn}
+                accessibilityRole="button"
+                accessibilityLabel="Fermer"
+              >
                 <Ionicons name="close" size={22} color={colors.textSubtle} />
               </Pressable>
             </View>
@@ -687,6 +712,7 @@ export default function BookStack({
                   styles.sheetAction,
                   pressed && styles.sheetActionPressed,
                 ]}
+                accessibilityRole="button"
               >
                 <View style={styles.sheetActionIcon}>
                   <IconUserPlus size={20} color={colors.textPrimary} />
@@ -703,6 +729,7 @@ export default function BookStack({
                   styles.sheetAction,
                   pressed && styles.sheetActionPressed,
                 ]}
+                accessibilityRole="button"
               >
                 <View style={styles.sheetActionIcon}>
                   <IconPencil size={20} color={colors.textPrimary} />
@@ -719,6 +746,7 @@ export default function BookStack({
                   styles.sheetAction,
                   pressed && styles.sheetActionPressed,
                 ]}
+                accessibilityRole="button"
               >
                 <View style={styles.sheetActionIcon}>
                   <IconCalendar size={20} color={colors.textPrimary} />
@@ -735,6 +763,7 @@ export default function BookStack({
                   styles.sheetAction,
                   pressed && styles.sheetActionPressed,
                 ]}
+                accessibilityRole="button"
               >
                 <View style={styles.sheetActionIcon}>
                   <Ionicons name="flag-outline" size={20} color={colors.textPrimary} />
@@ -756,6 +785,7 @@ export default function BookStack({
                   styles.sheetAction,
                   pressed && styles.sheetActionPressed,
                 ]}
+                accessibilityRole="button"
               >
                 <View style={[styles.sheetActionIcon, styles.sheetActionIconDanger]}>
                   <IconTrash size={20} color={colors.error} />
@@ -796,7 +826,13 @@ export default function BookStack({
           >
             {/* Croix de fermeture */}
             <View style={styles.inviteCloseRow}>
-              <Pressable onPress={() => setInviteVisible(false)} hitSlop={12} style={styles.sheetCloseBtn}>
+              <Pressable
+                onPress={() => setInviteVisible(false)}
+                hitSlop={12}
+                style={styles.sheetCloseBtn}
+                accessibilityRole="button"
+                accessibilityLabel="Fermer"
+              >
                 <Ionicons name="close" size={22} color={colors.textSubtle} />
               </Pressable>
             </View>
@@ -848,6 +884,8 @@ export default function BookStack({
                       styles.inviteCopyButton,
                       pressed && { opacity: 0.6 },
                     ]}
+                    accessibilityRole="button"
+                    accessibilityLabel="Copier le code d'invitation"
                   >
                     <IconCopy size={20} color={colors.textPlaceholder} />
                   </Pressable>
@@ -893,6 +931,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'stretch',
   },
+  /** En gros corps de texte : une seule colonne, couverture au-dessus */
+  activeCardStacked: {
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+    gap: spacing.md,
+  },
   // Zone de la couverture — s'adapte à la hauteur de la section en gardant le ratio 50:70.
   // Même ratio que les covers de l'étagère (SHELF_COVER_W / SHELF_COVER_H).
   coverArea: {
@@ -900,6 +944,11 @@ const styles = StyleSheet.create({
     alignSelf: 'stretch',
     aspectRatio: COVER_RATIO_W / COVER_RATIO_H,
     overflow: 'visible',
+  },
+  /** Taille arrêtée : la couverture ne suit plus la hauteur du texte */
+  coverAreaFixed: {
+    alignSelf: 'flex-start',
+    height: SHELF_COVER_H,
   },
   // Cover empilée (absolute, derrière la cover active) — remplit coverArea
   stackedCover: {
@@ -951,6 +1000,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     gap: 8,
   },
+  /** En colonne unique, le texte occupe toute la largeur */
+  bookInfoStacked: {
+    flex: 0,
+    alignSelf: 'stretch',
+    paddingHorizontal: 0,
+  },
   // En-tête : textes + menu
   bookHeader: {
     flexDirection: 'row',
@@ -973,7 +1028,18 @@ const styles = StyleSheet.create({
   badgesRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    alignSelf: 'flex-start',
     gap: spacing.sm,
+  },
+  /*
+    En gros corps de texte, les deux badges ne tiennent plus côte à côte.
+    On passe en colonne plutôt qu'en `flexWrap` : dans une rangée qui revient
+    à la ligne, chaque badge s'étire sur toute la largeur et son texte finit
+    rogné. En colonne, chacun garde la largeur de son contenu.
+  */
+  badgesRowWrap: {
+    flexDirection: 'column',
+    alignItems: 'flex-start',
   },
   progressBarRow: {
     flexDirection: 'row',
@@ -988,7 +1054,6 @@ const styles = StyleSheet.create({
     fontFamily: 'WorkSans_400Regular',
     fontSize: 14,
     color: colors.textPlaceholder,
-    lineHeight: 20,
   },
   // Ancien styles maintenant inutilisés mais conservés pour compatibilité
   bookDetails: {
@@ -1002,13 +1067,11 @@ const styles = StyleSheet.create({
     fontFamily: 'WorkSans_400Regular',
     fontSize: 16,
     color: colors.textTertiary,
-    lineHeight: 22,
   },
   title: {
     fontFamily: 'WorkSans_600SemiBold',
     fontSize: 18,
     color: colors.textPrimary,
-    lineHeight: 24,
   },
   pagesBadge: {
     backgroundColor: 'rgba(0,0,0,0.08)',
@@ -1023,7 +1086,6 @@ const styles = StyleSheet.create({
     fontFamily: 'WorkSans_500Medium',
     fontSize: 14,
     color: colors.textPrimary,
-    lineHeight: 20,
     textAlign: 'center',
   },
   deadlineBadge: {
@@ -1042,7 +1104,6 @@ const styles = StyleSheet.create({
     fontFamily: 'WorkSans_500Medium',
     fontSize: 14,
     color: colors.textPrimary,
-    lineHeight: 20,
   },
 
   // ═══ BOTTOM SHEET — ACTIONS DU LIVRE ═══
@@ -1102,13 +1163,11 @@ const styles = StyleSheet.create({
     fontFamily: 'WorkSans_600SemiBold',
     fontSize: 16,
     color: colors.textPrimary,
-    lineHeight: 22,
   },
   sheetSubtitle: {
     fontFamily: 'WorkSans_400Regular',
     fontSize: 13,
     color: colors.textTertiary,
-    lineHeight: 18,
   },
   // Séparateur fin entre les sections
   sheetDivider: {
@@ -1152,13 +1211,11 @@ const styles = StyleSheet.create({
     fontFamily: 'WorkSans_500Medium',
     fontSize: 15,
     color: colors.textPrimary,
-    lineHeight: 20,
   },
   sheetActionDesc: {
     fontFamily: 'WorkSans_400Regular',
     fontSize: 12,
     color: colors.textTertiary,
-    lineHeight: 16,
   },
   sheetActionDanger: {
     color: colors.error,
@@ -1215,13 +1272,11 @@ const styles = StyleSheet.create({
     fontFamily: 'WorkSans_400Regular',
     fontSize: 14,
     color: colors.textSubtle,
-    lineHeight: 20,
   },
   inviteBookTitle: {
     fontFamily: 'WorkSans_600SemiBold',
     fontSize: 16,
     color: colors.white,
-    lineHeight: 24,
   },
   invitePagesBadge: {
     backgroundColor: colors.alphaWhite20,
@@ -1237,7 +1292,6 @@ const styles = StyleSheet.create({
     fontFamily: 'WorkSans_400Regular',
     fontSize: 12,
     color: colors.white,
-    lineHeight: 16,
   },
   // Zone code — fond clair, sous le bloc noir
   inviteCodeZone: {
@@ -1260,7 +1314,6 @@ const styles = StyleSheet.create({
     fontFamily: 'WorkSans_400Regular',
     fontSize: 14,
     color: colors.textPlaceholder,
-    lineHeight: 20,
   },
   inviteCodeRow: {
     flexDirection: 'row',
@@ -1272,7 +1325,6 @@ const styles = StyleSheet.create({
     fontSize: 36,
     color: colors.textPrimary,
     letterSpacing: -0.72,
-    lineHeight: 44,
   },
   inviteCopyButton: {
     padding: spacing.sm,

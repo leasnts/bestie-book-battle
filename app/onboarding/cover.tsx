@@ -254,6 +254,8 @@ export default function OnboardingCoverScreen() {
                                         style={styles.uploadButton}
                                         onPress={handlePickImage}
                                         disabled={isPickingImage}
+                                        accessibilityRole="button"
+                                        accessibilityLabel="Choisir une photo dans la galerie"
                                     >
                                         <View style={styles.uploadButtonInnerShadow} />
                                         <Ionicons
@@ -266,6 +268,8 @@ export default function OnboardingCoverScreen() {
                                         style={styles.uploadButton}
                                         onPress={handleTakePhoto}
                                         disabled={isPickingImage}
+                                        accessibilityRole="button"
+                                        accessibilityLabel="Prendre une photo"
                                     >
                                         <View style={styles.uploadButtonInnerShadow} />
                                         <Ionicons

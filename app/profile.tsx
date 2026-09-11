@@ -17,7 +17,10 @@
 
 import * as Notifications from 'expo-notifications';
 import { Ionicons } from '@expo/vector-icons';
-import { RefreshCcw, SquarePen } from 'lucide-react-native';
+// Icônes maison plutôt que lucide-react-native : même tracé, même API
+// (size / color / strokeWidth), et un jeu d'icônes de moins à maintenir.
+import IconPencil from '../components/icons/IconPencil';
+import IconRotateCcw from '../components/icons/IconRotateCcw';
 import * as Clipboard from 'expo-clipboard';
 import Constants from 'expo-constants';
 import { Image } from 'expo-image';
@@ -426,7 +429,7 @@ function EditButton({ onPress }: { onPress: () => void }) {
           style={StyleSheet.absoluteFillObject}
         />
         <View style={styles.editButtonStroke} />
-        <SquarePen size={15} color={colors.textPrimary} strokeWidth={2.2} />
+        <IconPencil size={15} color={colors.textPrimary} strokeWidth={2.2} />
         <Text style={styles.editButtonText}>Modifier</Text>
       </View>
     </Pressable>
@@ -519,7 +522,13 @@ function EditProfileSheet({ visible, onClose }: { visible: boolean; onClose: () 
         <View style={{ paddingHorizontal: spacing.xl, paddingBottom: isKeyboardVisible ? 12 : Math.max(32, insets.bottom + 16) }}>
           <View style={sheetStyles.titleRow}>
             <Text style={sheetStyles.title}>Modifier le profil</Text>
-            <Pressable onPress={onClose} hitSlop={12} style={sheetStyles.closeBtn}>
+            <Pressable
+              onPress={onClose}
+              hitSlop={12}
+              style={sheetStyles.closeBtn}
+              accessibilityRole="button"
+              accessibilityLabel="Fermer"
+            >
               <Ionicons name="close" size={22} color={colors.textSubtle} />
             </Pressable>
           </View>
@@ -535,7 +544,7 @@ function EditProfileSheet({ visible, onClose }: { visible: boolean; onClose: () 
                 {isUploadingPhoto ? (
                   <ActivityIndicator size="small" color="#FFF" />
                 ) : (
-                  <RefreshCcw size={28} color="#FFF" strokeWidth={2.5} />
+                  <IconRotateCcw size={28} color={colors.white} strokeWidth={2.5} />
                 )}
               </View>
             </View>
@@ -612,7 +621,13 @@ function InviteSheet({ visible, onClose, challenges }: { visible: boolean; onClo
       <View style={{ paddingHorizontal: spacing.xl, paddingBottom: Math.max(32, insets.bottom + 16) }}>
         <View style={sheetStyles.titleRow}>
           <Text style={sheetStyles.title}>Inviter un ami</Text>
-          <Pressable onPress={onClose} hitSlop={12} style={sheetStyles.closeBtn}>
+          <Pressable
+              onPress={onClose}
+              hitSlop={12}
+              style={sheetStyles.closeBtn}
+              accessibilityRole="button"
+              accessibilityLabel="Fermer"
+            >
             <Ionicons name="close" size={22} color={colors.textSubtle} />
           </Pressable>
         </View>

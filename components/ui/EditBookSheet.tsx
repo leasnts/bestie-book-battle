@@ -383,7 +383,13 @@ export default function EditBookSheet({
         {/* ── Titre fixe (ne scroll pas) ── */}
         <View style={styles.titleRow}>
           <Text style={styles.title}>Modifier le livre</Text>
-          <Pressable onPress={onClose} hitSlop={12} style={styles.closeBtn}>
+          <Pressable
+            onPress={onClose}
+            hitSlop={12}
+            style={styles.closeBtn}
+            accessibilityRole="button"
+            accessibilityLabel="Fermer"
+          >
             <Ionicons name="close" size={22} color={colors.textSubtle} />
           </Pressable>
         </View>

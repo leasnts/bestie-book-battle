@@ -130,7 +130,13 @@ export default function ParticipantHistorySheet({
             <Text style={styles.headerName}>{participantName}</Text>
             <Text style={styles.headerSubtitle}>Historique de lecture</Text>
           </View>
-          <Pressable onPress={onClose} hitSlop={12} style={styles.closeBtn}>
+          <Pressable
+            onPress={onClose}
+            hitSlop={12}
+            style={styles.closeBtn}
+            accessibilityRole="button"
+            accessibilityLabel="Fermer"
+          >
             <Ionicons name="close" size={22} color={colors.textSubtle} />
           </Pressable>
         </View>

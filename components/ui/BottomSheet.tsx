@@ -22,6 +22,7 @@ import {
   StyleSheet,
   View,
 } from 'react-native';
+import { useReducedMotion } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '../../utils/constants';
 
@@ -40,6 +41,19 @@ const MAX_HEIGHT_DEFAULT = SCREEN_HEIGHT * 0.88;
 export default function BottomSheet({ visible, onClose, children, overlay }: BottomSheetProps) {
   const insets = useSafeAreaInsets();
   const [modalVisible, setModalVisible] = useState(false);
+
+  /*
+    « Réduire les animations » vise en premier lieu les grands déplacements
+    spatiaux, et un sheet qui monte depuis le bas de l'écran en est l'exemple
+    type : c'est ce qui déclenche le mal des transports chez les personnes
+    sensibles.
+
+    Contrairement aux animations Reanimated — qui respectent le réglage toutes
+    seules — l'API `Animated` de React Native ne le consulte jamais. On le fait
+    donc à la main : le sheet apparaît en place, sans trajet, et seul le fond
+    s'assombrit en fondu.
+  */
+  const reducedMotion = useReducedMotion();
 
   // translateY : animation d'ouverture/fermeture du sheet (de OFFSCREEN → 0)
   const translateY = useRef(new Animated.Value(OFFSCREEN)).current;
@@ -95,7 +109,11 @@ export default function BottomSheet({ visible, onClose, children, overlay }: Bot
       isClosingRef.current = true;
 
       Animated.parallel([
-        Animated.timing(translateY, { toValue: OFFSCREEN, duration: 250, useNativeDriver: false }),
+        Animated.timing(translateY, {
+          toValue: OFFSCREEN,
+          duration: reducedMotion ? 0 : 250,
+          useNativeDriver: false,
+        }),
         // Remet le clavier à zéro pour la prochaine ouverture
         Animated.timing(keyboardOffset, { toValue: 0, duration: 150, useNativeDriver: false }),
         Animated.timing(maxHeightAnim, { toValue: MAX_HEIGHT_DEFAULT, duration: 150, useNativeDriver: false }),
@@ -105,7 +123,7 @@ export default function BottomSheet({ visible, onClose, children, overlay }: Bot
         if (notifyParent) onCloseRef.current?.();
       });
     },
-    [translateY, keyboardOffset, maxHeightAnim],
+    [translateY, keyboardOffset, maxHeightAnim, reducedMotion],
   );
 
   const animateOpen = useCallback(() => {
@@ -115,6 +133,12 @@ export default function BottomSheet({ visible, onClose, children, overlay }: Bot
     keyboardOffset.setValue(0);
     maxHeightAnim.setValue(MAX_HEIGHT_DEFAULT);
 
+    if (reducedMotion) {
+      // Pas de trajet : le sheet est déjà à sa place, le fond fait le fondu.
+      translateY.setValue(0);
+      return;
+    }
+
     Animated.spring(translateY, {
       toValue: 0,
       damping: 20,
@@ -122,7 +146,7 @@ export default function BottomSheet({ visible, onClose, children, overlay }: Bot
       mass: 0.8,
       useNativeDriver: false,
     }).start();
-  }, [translateY, keyboardOffset, maxHeightAnim]);
+  }, [translateY, keyboardOffset, maxHeightAnim, reducedMotion]);
 
   useEffect(() => {
     if (visible) {

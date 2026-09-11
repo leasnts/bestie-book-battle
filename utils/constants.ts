@@ -17,6 +17,7 @@ export const colors = {
   
   // Light colors (backgrounds)
   white: '#ffffff',            // Background inputs, cartes
+  black: '#000000',            // Uniquement pour les ombres portées, jamais pour du texte ni un fond
   bgSecondary: '#fafafa',      // Background cartes non-sélectionnées
   bgLight: '#f5f5f5',          // Bouton back, bouton secondaire
   
@@ -24,7 +25,11 @@ export const colors = {
   textPrimary: '#181d27',      // Texte principal (900)
   textSecondary: '#414651',    // Texte secondaire (700)
   textTertiary: '#535862',     // Texte tertiaire (600)
-  textPlaceholder: '#717680',  // Placeholders (500)
+  textPlaceholder: '#696e78',  // Placeholders (500)
+  // Assombri depuis #717680 : cette valeur tombait à 4,18:1 sur le fond d'app
+  // (#f5f5f5), sous le seuil AA de 4,5. Même teinte exactement — mêmes écarts
+  // entre les canaux — huit crans plus sombre. Passe désormais partout :
+  // 4,70 sur #f5f5f5, 4,90 sur #fafafa, 5,12 sur #ffffff.
   textSubtle: '#d5d7da',       // Texte subtle (300)
   
   // Border colors
@@ -174,6 +179,41 @@ export const animationDuration = {
   fast: 150,
   normal: 300,
   slow: 500,
+};
+
+/**
+ * Tokens de motion (design system Santos Studio).
+ *
+ * Les courbes sont stockées en points de contrôle bruts plutôt qu'en objets
+ * Easing : ça évite d'importer Reanimated dans ce fichier de constantes, qui est
+ * chargé absolument partout. Côté composant : `Easing.bezier(...motion.easeOutQuart)`.
+ *
+ * Règle : jamais de bounce ni d'elastic. Un objet réel ne rebondit pas quand il
+ * s'arrête, il décélère.
+ */
+export const motion = {
+  duration: {
+    /** Feedback immédiat : appui bouton, toggle, changement de couleur */
+    instant: 150,
+    /** Changement d'état : ouverture de menu, hover, tooltip */
+    standard: 200,
+    /** Changement de layout : accordéon, modal, tiroir */
+    slow: 300,
+    /** Animation d'entrée : apparition d'écran, révélation de contenu */
+    entrance: 400,
+  },
+  /** Décalage entre deux éléments d'une même entrée en cascade */
+  stagger: 60,
+  easing: {
+    /** Doux et raffiné — la courbe par défaut */
+    easeOutQuart: [0.25, 1, 0.5, 1] as const,
+    /** Légèrement plus vif */
+    easeOutQuint: [0.22, 1, 0.36, 1] as const,
+    /** Affirmé, décidé */
+    easeOutExpo: [0.16, 1, 0.3, 1] as const,
+    /** Pour les éléments qui sortent */
+    easeInQuart: [0.5, 0, 0.75, 0] as const,
+  },
 };
 
 // Milestones pour les célébrations

@@ -12,6 +12,7 @@
  */
 
 import { Ionicons } from '@expo/vector-icons';
+import { colors } from '../utils/constants';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useState } from 'react';
 import {
@@ -23,6 +24,29 @@ import {
   View,
   ViewStyle,
 } from 'react-native';
+
+/**
+ * Noms par défaut des boutons icône seule.
+ *
+ * Un bouton sans texte ne dit rien au lecteur d'écran : il annonce « bouton »,
+ * point. Plutôt que de répéter un `accessibilityLabel` sur chacun des vingt et
+ * quelques boutons de l'app, on déduit le nom de l'icône. Un libellé explicite
+ * passé en prop l'emporte toujours, et toute icône absente de cette table
+ * demande le sien.
+ */
+const ICON_LABELS: Partial<Record<string, string>> = {
+  'chevron-back': 'Retour',
+  'chevron-forward': 'Suivant',
+  close: 'Fermer',
+  checkmark: 'Valider',
+  add: 'Ajouter',
+  'add-circle-outline': 'Ajouter',
+  trash: 'Supprimer',
+  'trash-outline': 'Supprimer',
+  'copy-outline': 'Copier',
+  share: 'Partager',
+  'share-outline': 'Partager',
+};
 
 interface Button3DProps {
   onPress: () => void;
@@ -38,6 +62,16 @@ interface Button3DProps {
   size?: 'default' | 'compact';
   style?: ViewStyle;
   textStyle?: TextStyle;
+  /**
+   * Nom annoncé par VoiceOver.
+   *
+   * Obligatoire en mode `iconOnly` : sans texte visible, le lecteur d'écran
+   * n'a rien à lire et annonce seulement « bouton ». Quand le bouton porte un
+   * libellé, celui-ci sert automatiquement de nom et cette prop est inutile.
+   */
+  accessibilityLabel?: string;
+  /** Précision lue après le nom, pour le contexte (ex. « enregistre ta page ») */
+  accessibilityHint?: string;
 }
 
 export default function Button3D({
@@ -53,11 +87,20 @@ export default function Button3D({
   size = 'default',
   style,
   textStyle,
+  accessibilityLabel,
+  accessibilityHint,
 }: Button3DProps) {
   const isPrimary = variant === 'primary';
   const isCompact = size === 'compact';
   const showText = !iconOnly && (children !== undefined && children !== null && children !== '');
   const [pressed, setPressed] = useState(false);
+
+  // En mode texte, le libellé visible fait office de nom : on ne le duplique pas.
+  // En mode icône seule, il n'y a rien à lire sans `accessibilityLabel`.
+  const resolvedLabel =
+    accessibilityLabel ??
+    (typeof children === 'string' ? children : undefined) ??
+    (icon ? ICON_LABELS[icon] : undefined);
 
   return (
     <Pressable
@@ -65,6 +108,19 @@ export default function Button3D({
       onPressIn={() => setPressed(true)}
       onPressOut={() => setPressed(false)}
       disabled={disabled || loading}
+      accessibilityRole="button"
+      accessibilityLabel={resolvedLabel}
+      accessibilityHint={accessibilityHint}
+      // Annonce « estompé » quand le bouton est inactif, et « en cours » pendant
+      // une action asynchrone — sinon rien ne signale que l'appui n'a rien fait.
+      accessibilityState={{ disabled: disabled || loading, busy: loading }}
+      /*
+        Le format compact mesure 40 pt, valeur venue du Figma, alors que la HIG
+        demande 44 pt minimum. On garde les 40 pt visuels — les changer
+        décalerait toutes les maquettes — et on étend la zone tactile de 2 pt
+        tout autour. Le bouton se voit pareil et s'attrape mieux.
+      */
+      hitSlop={isCompact ? 2 : undefined}
       style={[
         (disabled || loading) && styles.buttonDisabled,
         isCompact && styles.compactWrapper,
@@ -190,14 +246,14 @@ export default function Button3D({
           {/* ====== CONTENU ====== */}
           <View style={[styles.content, isCompact && styles.contentCompact]}>
             {loading ? (
-              <ActivityIndicator color={isPrimary ? '#FFFFFF' : '#535862'} size="small" />
+              <ActivityIndicator color={isPrimary ? colors.white : colors.textTertiary} size="small" />
             ) : iconOnly && iconComponent ? (
               iconComponent
             ) : iconOnly && icon ? (
               <Ionicons 
                 name={icon} 
                 size={isCompact ? 20 : 24} 
-                color={isPrimary ? '#FFFFFF' : '#535862'} 
+                color={isPrimary ? colors.white : colors.textTertiary} 
               />
             ) : (
               <>
@@ -205,7 +261,7 @@ export default function Button3D({
                   <Ionicons 
                     name={icon} 
                     size={isCompact ? 20 : 24} 
-                    color={isPrimary ? '#FFFFFF' : '#535862'} 
+                    color={isPrimary ? colors.white : colors.textTertiary} 
                     style={styles.iconLeft}
                   />
                 )}
@@ -222,7 +278,7 @@ export default function Button3D({
                   <Ionicons 
                     name={icon} 
                     size={isCompact ? 20 : 24} 
-                    color={isPrimary ? '#FFFFFF' : '#535862'} 
+                    color={isPrimary ? colors.white : colors.textTertiary} 
                     style={styles.iconRight}
                   />
                 )}
@@ -257,14 +313,14 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   primaryShadow: {
-    shadowColor: '#000000',
+    shadowColor: colors.black,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.25,
     shadowRadius: 6,
     elevation: 6,
   },
   secondaryShadow: {
-    shadowColor: '#000000',
+    shadowColor: colors.black,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.06,
     shadowRadius: 4,
@@ -280,10 +336,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   primaryFill: {
-    backgroundColor: '#181d27',
+    backgroundColor: colors.dark900,
   },
   secondaryFill: {
-    backgroundColor: '#f5f5f5',
+    backgroundColor: colors.bgLight,
   },
 
   // Gradients overlay (absoluteFill)
@@ -325,10 +381,10 @@ const styles = StyleSheet.create({
     lineHeight: 24,
   },
   primaryText: {
-    color: '#FFFFFF',
+    color: colors.white,
   },
   secondaryText: {
-    color: '#181d27',
+    color: colors.textPrimary,
   },
   iconLeft: {
     marginRight: 10,

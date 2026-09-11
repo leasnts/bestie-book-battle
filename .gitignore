@@ -42,3 +42,7 @@ expo-env.d.ts
 # @end expo-cli
 *storybook.log
 storybook-static
+
+# Outillage agent installé localement (skills, binaires) — pas du code produit
+.agents/
+.codex/
