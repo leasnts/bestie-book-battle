@@ -18,7 +18,7 @@ import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import React from 'react';
 import {
-  ScrollView,
+  FlatList,
   StyleSheet,
   Text,
   View,
@@ -139,23 +139,32 @@ export default function ActivityScreen() {
         <View style={styles.headerSpacer} />
       </View>
 
-      {/* ── Contenu ── */}
-      <ScrollView
+      {/*
+        Liste virtualisée : le fil d'activité grandit avec chaque enregistrement
+        de chaque participante. Dans un book club de 200 personnes il atteint
+        vite plusieurs milliers d'entrées.
+
+        `ListEmptyComponent` remplace le ternaire : FlatList sait déjà gérer le
+        cas vide, sans dupliquer la structure.
+      */}
+      <FlatList
+        data={filtered}
+        keyExtractor={(item) => item.id}
         style={styles.list}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
-      >
-        {filtered.length === 0 ? (
-          <EmptyState />
-        ) : (
-          filtered.map((item) => {
-            const { source: avatarSrc, fit: avatarFit } = resolveAvatarSource(
-              item.avatarSource,
-              user?.profile_photo_url
-            );
+        ListEmptyComponent={<EmptyState />}
+        initialNumToRender={12}
+        windowSize={7}
+        removeClippedSubviews
+        renderItem={({ item }) => {
+          const { source: avatarSrc, fit: avatarFit } = resolveAvatarSource(
+            item.avatarSource,
+            user?.profile_photo_url
+          );
 
-            return (
-              <View key={item.id} style={styles.row}>
+          return (
+            <View style={styles.row}>
                 {/* Thumbnail carré 48×48 */}
                 <View style={styles.avatarWrapper}>
                   <Image
@@ -179,11 +188,10 @@ export default function ActivityScreen() {
                     {item.body}
                   </Text>
                 </View>
-              </View>
-            );
-          })
-        )}
-      </ScrollView>
+            </View>
+          );
+        }}
+      />
     </SafeAreaView>
     </GestureDetector>
     </PageTransition>

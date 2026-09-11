@@ -10,7 +10,7 @@ import {
   View,
   StyleSheet,
   Text,
-  ScrollView,
+  FlatList,
   Pressable,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -92,14 +92,25 @@ export default function HistoryScreen() {
         <View style={{ width: 40 }} />
       </View>
       
-      {/* Liste des entrées */}
-      <ScrollView style={styles.list} contentContainerStyle={styles.listContent}>
-        {sortedHistory.map((entry, index) => {
+      {/*
+        Liste virtualisée : l'historique couvre toute la durée d'un challenge,
+        soit potentiellement plusieurs centaines de jours. Avec `.map()` chaque
+        jour était monté d'avance, même hors écran.
+      */}
+      <FlatList
+        data={sortedHistory}
+        keyExtractor={(entry) => entry.date}
+        style={styles.list}
+        contentContainerStyle={styles.listContent}
+        ListFooterComponent={
+          <Text style={styles.endText}>Début de ton aventure</Text>
+        }
+        renderItem={({ item: entry }) => {
           const isToday = new Date(entry.date).toDateString() === new Date().toDateString();
           const hasRead = entry.pagesRead > 0;
-          
+
           return (
-            <View key={index} style={styles.entryRow}>
+            <View style={styles.entryRow}>
               {/* Date compacte */}
               <View style={[styles.dateBox, isToday && styles.dateBoxToday]}>
                 <Text style={[styles.dayName, isToday && styles.dayNameToday]}>
@@ -138,13 +149,8 @@ export default function HistoryScreen() {
               )}
             </View>
           );
-        })}
-        
-        {/* Message de fin */}
-        <Text style={styles.endText}>
-          Début de ton aventure
-        </Text>
-      </ScrollView>
+        }}
+      />
     </View>
     </PageTransition>
   );
