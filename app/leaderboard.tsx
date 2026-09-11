@@ -13,6 +13,14 @@
  *
  * Les données viennent directement des stores Zustand, via le même hook que
  * la section de l'accueil : aucune donnée n'est passée en paramètre d'URL.
+ *
+ * Piège à ne pas reproduire : ne pas activer le flag expérimental
+ * `featureFlags.experiment.synchronousScreenUpdatesEnabled` de
+ * react-native-screens pour « corriger » la mise en page d'un formSheet. Il a
+ * une contrepartie native — un binaire déjà compilé l'ignore, un binaire
+ * fraîchement compilé l'applique — et rend l'app entièrement blanche. La mise
+ * en page correcte tient à une seule chose : la liste est l'enfant DIRECT de
+ * l'écran (cf. LeaderboardList), sans `View` intermédiaire.
  */
 
 import React from 'react';

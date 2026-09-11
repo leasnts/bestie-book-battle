@@ -27,21 +27,6 @@ import { useProjectStore } from '../stores/projectStore';
 import { colors } from '../utils/constants';
 import { supabase } from '../supabaseConfig';
 import AnimatedSplash from '../components/AnimatedSplash';
-import { featureFlags } from 'react-native-screens';
-
-/**
- * Mise en page flex à l'intérieur des sheets iOS natifs.
- *
- * Sans ce flag, react-native-screens positionne le contenu d'un `formSheet` en
- * `position: absolute` SANS contrainte de hauteur : tout `flex: 1` s'effondre et
- * l'en-tête se dessine par-dessus la liste.
- *
- * Avec le flag (et React Native >= 0.82, on est en 0.83), le contenu devient un
- * conteneur flex normal et se comporte exactement comme un écran plein écran.
- *
- * À définir une seule fois, au niveau module, avant le premier rendu.
- */
-featureFlags.experiment.synchronousScreenUpdatesEnabled = true;
 
 // Désactivé : expo-splash-screen provoque des erreurs "No native splash screen
 // registered" quand on ouvre une Modal (nouveau view controller iOS). L'app

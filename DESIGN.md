@@ -330,9 +330,14 @@ prénom en gras — jamais par une couleur.
 
 **Sheets iOS natifs**, présentés en route `formSheet`. Poignée, paliers de
 hauteur, glissement élastique, fond assombri et barre de navigation en verre
-viennent du système. Trois conditions non négociables, détaillées dans
-`app/leaderboard.tsx` : une route (pas un composant), le flag
-`synchronousScreenUpdatesEnabled`, et la `ScrollView` en enfant direct de l'écran.
+viennent du système. Deux conditions, détaillées dans `app/leaderboard.tsx` :
+une **route** (pas un composant montant un `ScreenStack`), et la liste en
+**enfant direct de l'écran**, sans `View` intermédiaire — sinon UIKit ne lui
+applique pas l'encart sous la barre de navigation et le contenu passe dessous.
+
+Ne pas activer `featureFlags.experiment.synchronousScreenUpdatesEnabled` : ce
+flag expérimental de react-native-screens a une contrepartie native et rend
+l'app entièrement blanche sur un binaire fraîchement compilé.
 
 Sheets de consultation : poignée seule. Sheets de formulaire : garder une croix,
 qui sert d'affordance « annuler ».
