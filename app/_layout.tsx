@@ -286,16 +286,6 @@ function RootLayoutNav() {
         }}
       />
 
-      {/* Routes progression */}
-      <Stack.Screen
-        name="progress"
-        options={{
-          headerShown: false,
-          presentation: 'modal',
-          animation: 'slide_from_bottom',
-        }}
-      />
-
       {/* Page Profil — glisse depuis la gauche (symétrique au swipe d'ouverture) */}
       {/* Le gesture natif iOS est désactivé car il irait dans le mauvais sens.     */}
       {/* C'est useSwipeBack('left') dans profile.tsx qui gère la fermeture.        */}
