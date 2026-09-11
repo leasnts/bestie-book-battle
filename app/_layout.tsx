@@ -27,6 +27,15 @@ import { useProjectStore } from '../stores/projectStore';
 import { colors } from '../utils/constants';
 import { supabase } from '../supabaseConfig';
 import AnimatedSplash from '../components/AnimatedSplash';
+import { useFonts } from 'expo-font';
+import { Rokkitt_400Regular } from '@expo-google-fonts/rokkitt/400Regular';
+import { Rokkitt_500Medium } from '@expo-google-fonts/rokkitt/500Medium';
+import { Rokkitt_600SemiBold } from '@expo-google-fonts/rokkitt/600SemiBold';
+import { Rokkitt_700Bold } from '@expo-google-fonts/rokkitt/700Bold';
+import { WorkSans_400Regular } from '@expo-google-fonts/work-sans/400Regular';
+import { WorkSans_500Medium } from '@expo-google-fonts/work-sans/500Medium';
+import { WorkSans_600SemiBold } from '@expo-google-fonts/work-sans/600SemiBold';
+import { WorkSans_700Bold } from '@expo-google-fonts/work-sans/700Bold';
 
 // Désactivé : expo-splash-screen provoque des erreurs "No native splash screen
 // registered" quand on ouvre une Modal (nouveau view controller iOS). L'app
@@ -65,8 +74,6 @@ export default function RootLayout() {
   //   return <StorybookUIRoot />;
   // }
 
-  // Polices chargées nativement au build time via le config plugin expo-font
-  // (voir app.json). Plus besoin de useFonts() ni d'attendre le chargement.
 
   // Sur le web, on n'utilise pas GestureHandlerRootView car il n'est pas compatible
   // On utilise un View simple à la place
@@ -98,6 +105,35 @@ function RootLayoutNav() {
   const segments = useSegments();
   const [isMounted, setIsMounted] = useState(false);
   const [showSplash, setShowSplash] = useState(true);
+
+  /*
+    Polices chargées au runtime, et non embarquées dans le binaire.
+
+    Le config plugin expo-font est censé les copier dans le projet natif au
+    prebuild. Ça n'a jamais eu lieu : l'Info.plist déclare bien les neuf
+    fichiers, mais aucun .ttf n'existe dans ios/ ni dans le .app — d'où les
+    « FontParser could not open filePath » au lancement, et une app qui tournait
+    en San Francisco au lieu de Rokkitt et Work Sans.
+
+    Rejouer un prebuild détruirait la cible widget bbbWidgetExtension, ajoutée à
+    la main dans Xcode et qu'aucun config plugin ne recrée. On charge donc les
+    polices depuis JavaScript : zéro intervention sur le projet natif, et le
+    widget lui-même n'utilise que les polices système.
+
+    Seules les huit graisses réellement employées sont importées, par
+    sous-chemin : le barrel du paquet embarquerait les dix-huit.
+  */
+  const [fontsLoaded] = useFonts({
+    Rokkitt_400Regular,
+    Rokkitt_500Medium,
+    Rokkitt_600SemiBold,
+    Rokkitt_700Bold,
+    WorkSans_400Regular,
+    WorkSans_500Medium,
+    WorkSans_600SemiBold,
+    WorkSans_700Bold,
+  });
+
 
   // Initialise l'auth
   useEffect(() => {
@@ -228,7 +264,7 @@ function RootLayoutNav() {
     return (
       <AnimatedSplash
         onFinish={handleSplashFinish}
-        waitFor={isInitialized}
+        waitFor={isInitialized && fontsLoaded}
       />
     );
   }

@@ -68,13 +68,25 @@ de progression.
 **plan gratuit** — le projet se met en pause après environ une semaine sans
 requête.
 
-**Tension produit non tranchée.** L'app est construite autour de la
-**compétition** : classement, couronne du leader, streaks, écarts affichés en
-gros. L'intention est le **lien**. Les deux ne pointent pas dans la même
-direction. Ce n'est pas un bug à corriger d'un coup : la compétition entre
-copines est amusante à 4, elle devient excluante à 80, où il n'y a qu'une
-gagnante et soixante-dix-neuf perdantes. Chaque écran doit trancher
-explicitement plutôt qu'empiler les deux registres.
+**Direction tranchée le 2026-09-11 : BBB est un club, pas une battle.**
+
+L'app a été construite autour de la compétition — classement, couronne du
+leader, streaks, écarts affichés en gros. Ce n'est plus la direction. Le
+collectif passe devant : le classement recule au rang d'information secondaire,
+et ce qui est mis en avant c'est **où en est le groupe** — les caps franchis
+ensemble, la deadline commune, qui lit quoi.
+
+La raison est arithmétique : la compétition entre copines est amusante à 4, elle
+devient excluante à 80, où il n'y a qu'une gagnante et soixante-dix-neuf
+perdantes. Un produit qui vise 200 lectrices ne peut pas faire de la défaite
+l'expérience majoritaire.
+
+Conséquence assumée : le nom porte « Battle ». Il devra probablement changer.
+Ce n'est pas urgent, mais ce n'est plus cohérent avec le produit.
+
+Ce qui reste à faire de cette décision, écran par écran : l'accueil met encore la
+couronne et les scores au premier plan, et la route `/leaderboard` s'appelle
+toujours « Classement ».
 
 **Non décidé** : modération d'un club de 200 personnes, rôle de la créatrice
 (simple participante ou animatrice avec des pouvoirs), modèle économique.

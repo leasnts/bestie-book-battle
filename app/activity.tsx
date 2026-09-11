@@ -291,7 +291,7 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   rowTitle: {
-    fontFamily: 'Inter',
+    fontFamily: 'WorkSans_400Regular',
     fontSize: fontSize.sm,
     fontWeight: fontWeight.bold as any,
     color: colors.textPrimary,
@@ -299,7 +299,7 @@ const styles = StyleSheet.create({
     flexShrink: 1,
   },
   rowTime: {
-    fontFamily: 'Inter',
+    fontFamily: 'WorkSans_400Regular',
     fontSize: fontSize.xs,
     fontWeight: fontWeight.regular as any,
     color: colors.textPlaceholder,
@@ -307,7 +307,7 @@ const styles = StyleSheet.create({
     flexShrink: 0,
   },
   rowDescription: {
-    fontFamily: 'Inter',
+    fontFamily: 'WorkSans_400Regular',
     fontSize: fontSize.sm,
     fontWeight: fontWeight.regular as any,
     color: colors.textSecondary,
@@ -333,7 +333,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   emptySubtitle: {
-    fontFamily: 'Inter',
+    fontFamily: 'WorkSans_400Regular',
     fontSize: fontSize.sm,
     fontWeight: fontWeight.regular as any,
     color: colors.textTertiary,
