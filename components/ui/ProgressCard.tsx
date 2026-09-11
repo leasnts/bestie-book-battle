@@ -1,71 +1,73 @@
 /**
  * Composant ProgressCard
  *
- * Classement vertical des participants dans un challenge de lecture.
- * Supporte N participants (book club). Celui qui a le plus avancé (en %)
- * est en haut, celui qui a le moins avancé est en bas.
+ * Section de classement affichée en bas de l'accueil.
  *
- * Comment ça marche :
- * - On reçoit un tableau de participants + l'ID de l'utilisateur connecté
- * - On les trie par pourcentage décroissant
- * - La liste est scrollable (maxHeight contraint) pour supporter 20+ participants
- * - Chaque participant est affiché sur une ligne horizontale :
- *   → [avatar + couronne si leader] [nom] ........... [badge streak] [score]
- * - Le score utilise un compteur roulant animé (hook useRollingCounter)
- * - Si un objectif intermédiaire existe, il s'affiche en dessous (hors scroll)
+ * Règle d'affichage : 4 lignes maximum, jamais de scroll.
+ * Un scroll imbriqué dans la page d'accueil était impossible à manipuler
+ * (on ne savait jamais si on déplaçait la liste ou la page).
+ *
+ * Ce qu'on montre selon le nombre de participants :
+ * - 4 ou moins        → tout le monde, pas de bouton
+ * - plus de 4, moi sur le podium → le top 4 d'affilée
+ * - plus de 4, moi ailleurs      → le top 3, un séparateur, puis MA ligne
+ *   avec mon rang réel (#7). Je garde toujours un repère sur ma position.
+ *
+ * Le reste du classement s'ouvre dans un bottom sheet via le bouton du bas.
+ *
+ * Sous les participants, une carte optionnelle affiche l'objectif intermédiaire
+ * du groupe (pages visées + deadline + anneau de progression).
  */
 
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
-import React, { useEffect, useRef, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import Animated, { LinearTransition } from 'react-native-reanimated';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { StyleSheet, Text, View } from 'react-native';
+import Animated, {
+  Easing,
+  FadeIn,
+  LinearTransition,
+  useReducedMotion,
+} from 'react-native-reanimated';
 import Svg, { Circle } from 'react-native-svg';
-import { colors, spacing } from '../../utils/constants';
+import {
+  formatScore,
+  LeaderboardParticipant,
+  rankParticipants,
+  RankedParticipant,
+  selectVisibleRows,
+} from '../../utils/leaderboard';
+import { borderRadius, colors, motion, spacing } from '../../utils/constants';
 import IconFlame from '../icons/IconFlame';
+import PressableScale from './PressableScale';
 
-interface Participant {
-  id: string;
-  name: string;
-  photoUrl: string | null;
-  score: number;        // Page actuelle (= score)
-  percentage: number;   // Pourcentage de progression (tient compte du total_pages de chaque édition)
-  streak: number;       // Nombre de jours consécutifs
-  isLeader: boolean;    // Est en tête ?
-  /** true = a lu hier mais pas aujourd'hui, le streak va « mourir » si pas de lecture */
-  streakAtRisk?: boolean;
-}
+// ─── Props ─────────────────────────────────────────────────────────
 
 interface ProgressCardProps {
   /** Tous les participants (y compris l'utilisateur connecté) */
-  participants: Participant[];
-  /** ID de l'utilisateur connecté (pour distinction visuelle) */
+  participants: LeaderboardParticipant[];
+  /** ID de l'utilisateur connecté */
   myUserId: string;
-  /** Callback quand on tap sur un participant */
+  /** Tap sur un participant → ouvre sa timeline de lecture */
   onParticipantPress?: (participantId: string) => void;
-  /** Si true, les scores sont des pourcentages (éditions différentes entre participants) */
+  /** Tap sur « Voir le classement » → ouvre le LeaderboardSheet */
+  onSeeAllPress?: () => void;
+  /** true = les scores sont des pourcentages (éditions différentes entre participants) */
   showPercentage?: boolean;
-  /** Objectif intermédiaire complet (optionnel) */
+  /** Objectif intermédiaire du groupe (optionnel) */
   intermediateGoal?: {
     target_pages: number;
     deadline: string;
     /** Page moyenne des participants au moment de la création de l'objectif */
     baseline: number;
   } | null;
-  /** Callback quand on clique sur la carte objectif */
+  /** Tap sur la carte objectif */
   onGoalPress?: () => void;
 }
 
-// Fallback avatar quand le participant n'a pas de photo (image BBB par défaut)
 const DEFAULT_AVATAR = require('../../assets/images/profile_picture_default.png');
-
-// Image de la couronne (remplace l'emoji 👑 pour un rendu cohérent cross-platform)
 const CROWN_IMAGE = require('../../assets/images/crown.png');
 
-/**
- * Résout l'URL de l'avatar en source Image compatible expo-image.
- * Si l'URL est null ou invalide, on utilise l'avatar par défaut.
- */
 const resolveAvatar = (url: string | null) => {
   if (!url) return DEFAULT_AVATAR;
   if (url.startsWith('http://') || url.startsWith('https://')) return { uri: url };
@@ -75,21 +77,17 @@ const resolveAvatar = (url: string | null) => {
 // ─── Hook : compteur roulant ──────────────────────────────────────
 /**
  * Anime un nombre de sa valeur précédente vers la nouvelle valeur,
- * avec un effet de "compteur qui roule" (odometer).
+ * avec un effet de « compteur qui roule » (odomètre).
  *
  * Comment ça marche :
- * - On garde en mémoire la valeur précédente avec useRef
- * - Quand target change, on lance une boucle requestAnimationFrame
- *   qui interpole entre l'ancienne et la nouvelle valeur
- * - L'interpolation utilise une courbe ease-out cubique :
- *   rapide au début, ralentit vers la fin (naturel et satisfaisant)
- * - Le nombre affiché est arrondi à l'entier le plus proche
- *
- * @param target La valeur cible (nombre entier)
- * @param duration Durée de l'animation en ms (défaut: 800ms)
- * @returns Le nombre actuellement affiché (animé)
+ * - On garde la valeur précédente avec useRef
+ * - Quand `target` change, une boucle requestAnimationFrame interpole
+ *   entre l'ancienne et la nouvelle valeur
+ * - La courbe est une ease-out quart : rapide au début, décélère à la fin
+ * - Si l'utilisateur a activé « Réduire les animations », on saute directement
+ *   à la valeur finale
  */
-function useRollingCounter(target: number, duration = 800): number {
+function useRollingCounter(target: number, duration = 800, enabled = true): number {
   const [display, setDisplay] = useState(target);
   const prev = useRef(target);
   const rafId = useRef<number | undefined>(undefined);
@@ -99,14 +97,19 @@ function useRollingCounter(target: number, duration = 800): number {
     prev.current = target;
     if (from === target) return;
 
+    if (!enabled) {
+      setDisplay(target);
+      return;
+    }
+
     const start = Date.now();
     const diff = target - from;
 
     const tick = () => {
       const elapsed = Date.now() - start;
       const t = Math.min(elapsed / duration, 1);
-      // Ease-out cubique : rapide au début, ralentit à la fin
-      const eased = 1 - Math.pow(1 - t, 3);
+      // Ease-out quart : rapide au début, décélère à la fin
+      const eased = 1 - Math.pow(1 - t, 4);
       setDisplay(Math.round(from + diff * eased));
       if (t < 1) {
         rafId.current = requestAnimationFrame(tick);
@@ -117,181 +120,233 @@ function useRollingCounter(target: number, duration = 800): number {
     return () => {
       if (rafId.current) cancelAnimationFrame(rafId.current);
     };
-  }, [target, duration]);
+  }, [target, duration, enabled]);
 
   return display;
 }
 
-// ─── Ligne d'un participant ──────────────────────────────────────
+// ─── Ligne d'un participant ───────────────────────────────────────
 /**
- * Affiche une ligne pour un participant dans le classement.
+ * Une ligne du classement sur l'accueil.
  *
- * Layout horizontal :
- * [avatar 24×24 + couronne si leader] [nom en WorkSans SemiBold 14px]
- * ........... espace flexible ...........
- * [badge streak : 🔥 + nombre] [score en Rokkitt SemiBold 24px]
+ * [rang si épinglé] [avatar + couronne si leader] [prénom] … [streak] [score]
  *
- * La couronne est centrée verticalement sur l'avatar, droite.
- *
+ * Le rang n'est affiché QUE sur la ligne épinglée : dans le podium, l'ordre
+ * vertical suffit à le comprendre, et trois numéros de plus alourdiraient la
+ * lecture pour rien.
  */
 function ParticipantRow({
   participant,
   onPress,
   showPercentage,
+  showRank = false,
+  animate,
 }: {
-  participant: Participant;
+  participant: RankedParticipant;
   onPress?: () => void;
   showPercentage?: boolean;
+  showRank?: boolean;
+  animate: boolean;
 }) {
-  // Chaque row gère son propre compteur roulant (permet N participants)
-  // Quand showPercentage est true (éditions différentes), on affiche le % au lieu des pages
-  const displayScore = useRollingCounter(showPercentage ? Math.round(participant.percentage) : participant.score);
+  const score = formatScore(participant, showPercentage);
+  const displayScore = useRollingCounter(score, 800, animate);
 
   return (
-    // Animated.View avec layout= pour animer le glissement de position
-    // quand l'ordre des lignes change (LinearTransition = glissement fluide)
+    // `layout` anime le glissement quand l'ordre du classement change
+    // (quelqu'un double quelqu'un d'autre en enregistrant ses pages).
     <Animated.View
-      layout={LinearTransition.springify().damping(18).stiffness(180)}
-      style={styles.rowWrapper}
+      layout={
+        animate
+          ? LinearTransition.springify().damping(20).stiffness(180).mass(0.7)
+          : undefined
+      }
+      entering={
+        animate
+          ? FadeIn.duration(motion.duration.standard).easing(
+              Easing.bezier(...motion.easing.easeOutQuart).factory(),
+            )
+          : undefined
+      }
     >
-    <Pressable style={styles.participantRow} onPress={onPress}>
-      {/* ── Côté gauche : avatar + nom ── */}
-      <View style={styles.participantLeft}>
-        {/* Wrapper avatar : la couronne est positionnée en absolute par rapport à lui */}
-        <View style={styles.avatarWrapper}>
-          <Image
-            source={resolveAvatar(participant.photoUrl)}
-            style={styles.avatar}
-            contentFit="cover"
-          />
-          {/* Couronne du leader — centrée sur l'avatar, droite */}
-          {participant.isLeader && (
-            <View style={styles.crownOverAvatar}>
-              <Image source={CROWN_IMAGE} style={styles.crownImage} contentFit="contain" />
+      <PressableScale
+        style={styles.participantRow}
+        pressedScale={0.98}
+        onPress={onPress}
+        accessibilityRole="button"
+        accessibilityLabel={`${participant.name}, rang ${participant.rank}, ${score}${showPercentage ? ' pour cent' : ' pages'}`}
+      >
+        {/* ── Côté gauche : rang (optionnel) + avatar + prénom ── */}
+        <View style={styles.participantLeft}>
+          {showRank && <Text style={styles.rankBadge}>#{participant.rank}</Text>}
+
+          <View style={styles.avatarWrapper}>
+            <Image
+              source={resolveAvatar(participant.photoUrl)}
+              style={styles.avatar}
+              contentFit="cover"
+            />
+            {participant.isLeader && (
+              <View style={styles.crownOverAvatar}>
+                <Image source={CROWN_IMAGE} style={styles.crownImage} contentFit="contain" />
+              </View>
+            )}
+          </View>
+
+          <Text
+            style={[styles.userName, participant.isMe && styles.userNameMe]}
+            numberOfLines={1}
+          >
+            {participant.name}
+          </Text>
+        </View>
+
+        {/* ── Côté droit : streak + score ── */}
+        <View style={styles.participantRight}>
+          {participant.streak > 0 && (
+            <View
+              style={[
+                styles.streakBadge,
+                participant.streakAtRisk && styles.streakBadgeAtRisk,
+              ]}
+            >
+              <IconFlame size={12} color={colors.textTertiary} />
+              <Text style={styles.streakText}>{participant.streak}</Text>
             </View>
           )}
+          <Text style={styles.scoreNumber}>
+            {displayScore}
+            {showPercentage ? '%' : ''}
+          </Text>
         </View>
-        <Text style={styles.userName} numberOfLines={1}>{participant.name}</Text>
-      </View>
-
-      {/* ── Côté droit : badge streak + score ── */}
-      <View style={styles.participantRight}>
-        {participant.streak > 0 && (
-          <View
-            style={[
-              styles.streakBadge,
-              participant.streakAtRisk && styles.streakBadgeAtRisk,
-            ]}
-          >
-            <IconFlame size={12} color={colors.textTertiary} />
-            <Text style={styles.streakText}>{participant.streak}</Text>
-          </View>
-        )}
-        <Text style={styles.scoreNumber}>{displayScore}{showPercentage ? '%' : ''}</Text>
-      </View>
-    </Pressable>
+      </PressableScale>
     </Animated.View>
   );
 }
 
-// Hauteur max de la liste scrollable (~4 lignes de participants)
-const PARTICIPANT_LIST_MAX_HEIGHT = 180;
-
 // ─── Composant principal ──────────────────────────────────────────
+
 export default function ProgressCard({
   participants,
   myUserId,
   onParticipantPress,
+  onSeeAllPress,
   showPercentage,
   intermediateGoal,
   onGoalPress,
 }: ProgressCardProps) {
-  // Tri décroissant par pourcentage (le plus avancé en haut)
-  const sortedParticipants = [...participants].sort(
-    (a, b) => b.percentage - a.percentage
+  const reducedMotion = useReducedMotion();
+  const animate = !reducedMotion;
+
+  // Classement complet, puis les 4 lignes qui tiennent à l'écran
+  const ranked = useMemo(
+    () => rankParticipants(participants, myUserId),
+    [participants, myUserId],
   );
+  const { rows, pinnedMe, hasMore } = useMemo(() => selectVisibleRows(ranked), [ranked]);
 
   // ═══ CALCULS OBJECTIF INTERMÉDIAIRE ═══
-  const goalData = intermediateGoal ? (() => {
-    const deadline = new Date(intermediateGoal.deadline);
+  const goalData = intermediateGoal
+    ? (() => {
+        const deadline = new Date(intermediateGoal.deadline);
 
-    // Formater la date "Mer. 18 févr."
-    const dateStr = deadline.toLocaleDateString('fr-FR', {
-      weekday: 'short',
-      day: 'numeric',
-      month: 'short',
-    });
-    const formattedDate = dateStr.charAt(0).toUpperCase() + dateStr.slice(1).replace('.', '. ');
+        // Formater la date « Mer. 18 févr. »
+        const dateStr = deadline.toLocaleDateString('fr-FR', {
+          weekday: 'short',
+          day: 'numeric',
+          month: 'short',
+        });
+        const formattedDate =
+          dateStr.charAt(0).toUpperCase() + dateStr.slice(1).replace('.', '. ');
 
-    const totalCurrentPages = sortedParticipants.reduce(
-      (sum, p) => sum + p.score,
-      0
-    );
-    const averageCurrentPage = sortedParticipants.length > 0
-      ? totalCurrentPages / sortedParticipants.length
-      : 0;
+        const averageCurrentPage =
+          ranked.length > 0
+            ? ranked.reduce((sum, p) => sum + p.score, 0) / ranked.length
+            : 0;
 
-    const baseline = intermediateGoal.baseline ?? 0;
-    const range = intermediateGoal.target_pages - baseline;
-    const progressPercentage = range > 0
-      ? Math.min(100, Math.max(0, Math.round(((averageCurrentPage - baseline) / range) * 100)))
-      : 0;
+        const baseline = intermediateGoal.baseline ?? 0;
+        const range = intermediateGoal.target_pages - baseline;
+        const progressPercentage =
+          range > 0
+            ? Math.min(
+                100,
+                Math.max(0, Math.round(((averageCurrentPage - baseline) / range) * 100)),
+              )
+            : 0;
 
-    return {
-      formattedDate,
-      progressPercentage,
-    };
-  })() : null;
+        return { formattedDate, progressPercentage };
+      })()
+    : null;
 
   return (
     <View style={styles.container}>
-      {/* ── Liste scrollable des participants ── */}
-      <ScrollView
-        style={styles.participantList}
-        showsVerticalScrollIndicator={false}
-        nestedScrollEnabled
-        bounces={false}
-      >
-        <View style={styles.participantListInner}>
-          {sortedParticipants.map((participant) => (
-            <ParticipantRow
-              key={participant.id}
-              participant={participant}
-              onPress={() => onParticipantPress?.(participant.id)}
-              showPercentage={showPercentage}
-            />
-          ))}
-        </View>
-      </ScrollView>
+      {/* ── Podium (3 ou 4 lignes selon ma position) ── */}
+      <View style={styles.participantList}>
+        {rows.map((participant) => (
+          <ParticipantRow
+            key={participant.id}
+            participant={participant}
+            onPress={() => onParticipantPress?.(participant.id)}
+            showPercentage={showPercentage}
+            animate={animate}
+          />
+        ))}
+      </View>
 
-      {/* ── Carte objectif intermédiaire (si existe) - EN DESSOUS des participants ── */}
+      {/* ── Ma ligne épinglée, quand je suis hors du podium ── */}
+      {pinnedMe && (
+        <View style={styles.pinnedSection}>
+          {/* Séparateur pointillé : signale visuellement le « saut » de rangs */}
+          <View style={styles.dashedSeparator} />
+          <ParticipantRow
+            participant={pinnedMe}
+            onPress={() => onParticipantPress?.(pinnedMe.id)}
+            showPercentage={showPercentage}
+            showRank
+            animate={animate}
+          />
+        </View>
+      )}
+
+      {/* ── Bouton vers le classement complet ── */}
+      {hasMore && (
+        <PressableScale
+          style={styles.seeAllButton}
+          pressedScale={0.98}
+          onPress={onSeeAllPress}
+          accessibilityRole="button"
+          accessibilityLabel={`Voir le classement complet, ${ranked.length} participants`}
+        >
+          <Text style={styles.seeAllText}>Voir le classement</Text>
+          <View style={styles.seeAllCount}>
+            <Text style={styles.seeAllCountText}>{ranked.length}</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={16} color={colors.textTertiary} />
+        </PressableScale>
+      )}
+
+      {/* ── Carte objectif intermédiaire ── */}
       {intermediateGoal && goalData && (
         <>
-          {/* Ligne de séparation */}
           <View style={styles.separator} />
-          
-          <Pressable style={styles.goalCard} onPress={onGoalPress}>
+
+          <PressableScale style={styles.goalCard} pressedScale={0.98} onPress={onGoalPress}>
             {/* Partie gauche : Objectif + Deadline */}
             <View style={styles.goalLeft}>
-              {/* Colonne Objectif */}
               <View style={styles.goalColumn}>
                 <Text style={styles.goalLabel}>Objectif</Text>
                 <Text style={styles.goalValue}>{intermediateGoal.target_pages}</Text>
               </View>
 
-              {/* Colonne Deadline */}
               <View style={[styles.goalColumn, styles.goalColumnDeadline]}>
                 <Text style={styles.goalLabel}>Deadline</Text>
                 <Text style={styles.goalValue}>{goalData.formattedDate}</Text>
               </View>
             </View>
 
-            {/* Partie droite : Cercle de progression + Chevron */}
+            {/* Partie droite : anneau de progression + chevron */}
             <View style={styles.goalRight}>
-              {/* Cercle de progression */}
               <View style={styles.progressCircle}>
                 <Svg width={44} height={44} viewBox="0 0 44 44">
-                  {/* Cercle de fond (gris clair) */}
                   <Circle
                     cx={22}
                     cy={22}
@@ -300,7 +355,6 @@ export default function ProgressCard({
                     strokeWidth={3}
                     fill="none"
                   />
-                  {/* Cercle de progression (noir) */}
                   <Circle
                     cx={22}
                     cy={22}
@@ -314,98 +368,131 @@ export default function ProgressCard({
                     origin="22, 22"
                   />
                 </Svg>
-                {/* Pourcentage au centre */}
                 <View style={styles.progressPercentageContainer}>
-                  <Text style={styles.progressPercentageText}>{goalData.progressPercentage}%</Text>
+                  <Text style={styles.progressPercentageText}>
+                    {goalData.progressPercentage}%
+                  </Text>
                 </View>
               </View>
 
-              {/* Chevron */}
               <Ionicons name="chevron-forward" size={24} color={colors.textSecondary} />
             </View>
-          </Pressable>
+          </PressableScale>
         </>
       )}
     </View>
   );
 }
 
+// ─── Styles ────────────────────────────────────────────────────────
+
+const AVATAR_SIZE = 28;
+
 const styles = StyleSheet.create({
-  // Conteneur principal : liste verticale avec un gap de 12px entre les sections
   container: {
     width: '100%',
     gap: spacing.md,
   },
 
-  // ScrollView de la liste de participants (contraint en hauteur)
+  // Liste des participants — plus de ScrollView, hauteur libre
   participantList: {
-    maxHeight: PARTICIPANT_LIST_MAX_HEIGHT,
-  },
-
-  // Conteneur interne avec gap entre les lignes
-  participantListInner: {
     gap: spacing.md,
   },
 
-  // ═══ SÉPARATEUR ═══
-  // Ligne grise horizontale qui sépare les participants de l'objectif
-  separator: {
-    height: 1,
-    backgroundColor: 'rgba(0,0,0,0.1)',
+  // ═══ MA LIGNE ÉPINGLÉE ═══
+  pinnedSection: {
+    gap: spacing.md,
+  },
+  /**
+   * Séparateur pointillé plutôt que plein : il ne sépare pas deux sections,
+   * il signale un saut dans le classement (« il y a du monde entre les deux »).
+   * Réalisé avec une bordure dashed sur un bloc de hauteur nulle.
+   */
+  dashedSeparator: {
+    height: 0,
+    borderTopWidth: 1,
+    borderStyle: 'dashed',
+    borderColor: 'rgba(24,29,39,0.18)',
     width: '100%',
   },
 
-  // ═══ SECTION OBJECTIF (sans fond, bordure, radius, padding) ═══
+  // ═══ BOUTON CLASSEMENT COMPLET ═══
+  seeAllButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
+    borderRadius: borderRadius.md,
+    backgroundColor: 'rgba(24,29,39,0.05)',
+    borderWidth: 1,
+    borderColor: 'rgba(24,29,39,0.06)',
+  },
+  seeAllText: {
+    fontFamily: 'WorkSans_600SemiBold',
+    fontSize: 14,
+    color: colors.textSecondary,
+  },
+  /** Pastille du nombre total de participants */
+  seeAllCount: {
+    minWidth: 22,
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+    borderRadius: borderRadius.full,
+    backgroundColor: 'rgba(24,29,39,0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  seeAllCountText: {
+    fontFamily: 'WorkSans_600SemiBold',
+    fontSize: 12,
+    color: colors.textTertiary,
+  },
+
+  // ═══ SÉPARATEUR OBJECTIF ═══
+  separator: {
+    height: 1,
+    backgroundColor: colors.alphaBlack10,
+    width: '100%',
+  },
+
+  // ═══ SECTION OBJECTIF ═══
   goalCard: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: spacing['2xl'],
   },
-
-  // Partie gauche : contient les deux colonnes (Objectif + Deadline)
   goalLeft: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: spacing['2xl'],
   },
-
-  // Une colonne (Objectif ou Deadline)
   goalColumn: {
     flexDirection: 'column',
     gap: spacing.xs,
   },
-  // La colonne Deadline prend plus d'espace
   goalColumnDeadline: {
     flex: 1,
   },
-
-  // Label (texte "Objectif" ou "Deadline")
   goalLabel: {
     fontFamily: 'WorkSans_500Medium',
     fontSize: 14,
     color: colors.textTertiary,
-    lineHeight: 20,
   },
-
-  // Valeur (nombre de pages ou date) - 16px gras
   goalValue: {
     fontFamily: 'WorkSans_700Bold',
     fontSize: 16,
     fontWeight: '700',
     color: colors.textPrimary,
-    lineHeight: 22,
   },
-
-  // Partie droite : cercle de progression + chevron
   goalRight: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.lg,
   },
-
-  // Conteneur du cercle de progression
   progressCircle: {
     width: 44,
     height: 44,
@@ -413,69 +500,62 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-
-  // Conteneur du pourcentage au centre du cercle
   progressPercentageContainer: {
     position: 'absolute',
     justifyContent: 'center',
     alignItems: 'center',
   },
-
-  // Texte du pourcentage
   progressPercentageText: {
     fontFamily: 'Rokkitt_400Regular',
     fontSize: 10,
     color: colors.textTertiary,
-    lineHeight: 14,
   },
 
   // ═══ LIGNE PARTICIPANT ═══
-
-  // Wrapper Animated.View : porte l'animation de layout (glissement de position).
-  rowWrapper: {},
-
-  // Chaque participant occupe une ligne horizontale :
-  // gauche (avatar + nom) ↔ droite (streak + score)
   participantRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: spacing.md,
+    // L'avatar fait 28 pt : sans padding, la ligne tappable tombe à 32 pt,
+    // sous le minimum de 44 pt de la HIG. 8 pt de chaque côté l'y amènent
+    // exactement, sans toucher à l'espacement visuel entre les lignes.
+    paddingVertical: spacing.sm,
+    marginVertical: -spacing.xs,
   },
-
-  // Côté gauche : avatar + nom, alignés horizontalement
   participantLeft: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
     flex: 1,
   },
-
-  // Côté droit : streak badge + score, alignés horizontalement
   participantRight: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.md,
   },
 
-  // ═══ AVATAR + COURONNE ═══
+  /** Rang affiché uniquement sur la ligne épinglée (#7) */
+  rankBadge: {
+    fontFamily: 'Rokkitt_600SemiBold',
+    fontSize: 14,
+    color: colors.textPlaceholder,
+    minWidth: 24,
+  },
 
-  // Le wrapper autour de l'avatar permet de positionner la couronne
-  // en absolute par rapport à l'avatar (pas par rapport au container global)
+  // ═══ AVATAR + COURONNE ═══
   avatarWrapper: {
     position: 'relative',
-    width: 28,
-    height: 28,
+    width: AVATAR_SIZE,
+    height: AVATAR_SIZE,
   },
   avatar: {
-    width: 28,
-    height: 28,
-    borderRadius: 8,
+    width: AVATAR_SIZE,
+    height: AVATAR_SIZE,
+    borderRadius: borderRadius.sm,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.3)',
+    borderColor: colors.alphaWhite30,
   },
-  // Couronne au bord supérieur de l'avatar, droite (sans rotation)
-  // La base de la couronne touche le haut de l'avatar (28×28)
   crownOverAvatar: {
     position: 'absolute',
     top: -19,
@@ -489,40 +569,37 @@ const styles = StyleSheet.create({
     height: 28,
   },
 
-  // ═══ NOM UTILISATEUR ═══
-  // WorkSans SemiBold 18px pour les prénoms
+  // ═══ NOM ═══
   userName: {
     fontFamily: 'WorkSans_600SemiBold',
     fontSize: 18,
     color: colors.textPrimary,
-    lineHeight: 24,
+    flexShrink: 1,
+  },
+  userNameMe: {
+    fontFamily: 'WorkSans_700Bold',
   },
 
   // ═══ SCORE ═══
-  // Rokkitt SemiBold 24px (display-xs dans le Figma)
   scoreNumber: {
     fontFamily: 'Rokkitt_600SemiBold',
     fontSize: 24,
     color: colors.textPrimary,
-    lineHeight: 32,
     textAlign: 'right',
   },
 
   // ═══ BADGE STREAK ═══
-  // Badge avec fond semi-transparent + bordure, contenant l'icône flamme + le nombre
-  // Même style que l'ancien design pour garder la cohérence visuelle
   streakBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 2,
-    backgroundColor: 'rgba(0,0,0,0.1)',
+    backgroundColor: colors.alphaBlack10,
     borderWidth: 1,
-    borderColor: 'rgba(0,0,0,0.1)',
+    borderColor: colors.alphaBlack10,
     paddingHorizontal: 7,
     paddingVertical: 3,
-    borderRadius: 8,
+    borderRadius: borderRadius.sm,
   },
-  /** Streak en danger : badge en opacité réduite + bordure pointillée */
   streakBadgeAtRisk: {
     opacity: 0.6,
     borderStyle: 'dashed',
@@ -532,7 +609,6 @@ const styles = StyleSheet.create({
     fontFamily: 'WorkSans_600SemiBold',
     fontSize: 12,
     color: colors.textTertiary,
-    lineHeight: 16,
     textAlign: 'center',
   },
 });
