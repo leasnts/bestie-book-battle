@@ -1,1 +1,0 @@
-Lis le fichier .cursor/skills/git/SKILL.md et charge la bonne reference selon l'action (commit, branch, worktree, PR, tag, merge, rebase). Suis les safety rules : jamais force push main, jamais commit de secrets, toujours montrer les changements avant action irréversible. $ARGUMENTS

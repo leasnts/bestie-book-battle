@@ -1,1 +1,0 @@
-Lis le fichier .cursor/skills/analyze/SKILL.md pour effectuer une analyse multi-perspective. Détecte le mode (quick/standard/deep) et le domaine automatiquement. Utilise le framework UltraThink et l'analyse first-principles. $ARGUMENTS

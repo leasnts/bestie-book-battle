@@ -1,1 +1,0 @@
-Lis le fichier .cursor/skills/react-best-practices/SKILL.md et les rules pertinentes dans rules/ pour appliquer les best practices React/Next.js (Vercel). Priorité : eliminating waterfalls > bundle size > server perf > client data > rerenders > rendering > JS perf > advanced. $ARGUMENTS

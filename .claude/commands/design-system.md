@@ -1,1 +1,0 @@
-Lis le fichier .cursor/skills/santostudio-design-system/SKILL.md et les fichiers dans process/ et templates/ pour créer un design system. Suis le processus : discovery → foundations (tokens) → components → documentation → export. $ARGUMENTS
