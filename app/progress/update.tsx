@@ -17,6 +17,7 @@ import {
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { useReducedMotion } from 'react-native-reanimated';
 import { useAuthStore } from '../../stores/authStore';
 import { useProjectStore } from '../../stores/projectStore';
 import { useProgressStore } from '../../stores/progressStore';
@@ -59,6 +60,14 @@ export default function UpdateProgressScreen() {
   const [showCelebration, setShowCelebration] = useState(false);
   const [celebrationMessage, setCelebrationMessage] = useState('');
   
+  /*
+    L'API `Animated` de React Native ne consulte jamais « Réduire les
+    animations » — contrairement à Reanimated, qui le fait par défaut.
+    Ici les animations sont des pulsations d'échelle et une célébration ;
+    quand le réglage est actif, on saute directement à l'état final.
+  */
+  const reducedMotion = useReducedMotion();
+
   // Animations
   const numberScale = useRef(new Animated.Value(1)).current;
   const buttonScale = useRef(new Animated.Value(1)).current;
@@ -105,6 +114,7 @@ export default function UpdateProgressScreen() {
   
   // Animation du nombre
   const animateNumber = () => {
+    if (reducedMotion) return;
     Animated.sequence([
       Animated.timing(numberScale, {
         toValue: 1.1,
@@ -141,6 +151,10 @@ export default function UpdateProgressScreen() {
     setShowCelebration(true);
     setCelebrationMessage(getEncouragement(pagesRead).text);
     
+    if (reducedMotion) {
+      celebrationAnim.setValue(1);
+      return;
+    }
     Animated.spring(celebrationAnim, {
       toValue: 1,
       friction: 5,
@@ -157,6 +171,7 @@ export default function UpdateProgressScreen() {
   const handleSave = async () => {
     if (!hasProgress || !user || !projectId) return;
     
+    if (reducedMotion) return;
     Animated.sequence([
       Animated.timing(buttonScale, { toValue: 0.9, duration: 100, useNativeDriver: true }),
       Animated.timing(buttonScale, { toValue: 1, duration: 100, useNativeDriver: true }),

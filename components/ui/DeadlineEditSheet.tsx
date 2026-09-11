@@ -80,7 +80,13 @@ export default function DeadlineEditSheet({
       <View style={[styles.content, { paddingBottom: Math.max(32, insets.bottom + 16) }]}>
         <View style={styles.titleRow}>
           <Text style={styles.title}>La deadline</Text>
-          <Pressable onPress={onClose} hitSlop={12} style={styles.closeBtn}>
+          <Pressable
+            onPress={onClose}
+            hitSlop={12}
+            style={styles.closeBtn}
+            accessibilityRole="button"
+            accessibilityLabel="Fermer"
+          >
             <Ionicons name="close" size={22} color={colors.textSubtle} />
           </Pressable>
         </View>

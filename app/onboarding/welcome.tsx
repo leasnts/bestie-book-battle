@@ -234,7 +234,7 @@ export default function OnboardingWelcomeScreen() {
                                     onChangeText={setCustomTotalPages}
                                     keyboardType="number-pad"
                                     placeholder={params.totalPages}
-                                    placeholderTextColor={colors.textSubtle}
+                                    placeholderTextColor={colors.textPlaceholder}
                                     returnKeyType="done"
                                 />
                             </View>

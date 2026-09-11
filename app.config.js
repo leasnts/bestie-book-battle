@@ -8,7 +8,12 @@ export default {
     orientation: "portrait",
     icon: "./assets/images/app_icon.png",
     scheme: "bestie-book-battle",
-    userInterfaceStyle: "automatic",
+    // "light" et non "automatic" : l'app n'a aucune variante sombre. Déclarer
+    // "automatic" laissait iOS passer ses propres surfaces en sombre — alertes,
+    // clavier, barre de navigation en verre des sheets — au-dessus d'un contenu
+    // resté clair. Tant qu'un vrai thème sombre n'existe pas, mieux vaut
+    // l'assumer que servir un entre-deux incohérent.
+    userInterfaceStyle: "light",
     splash: {
       image: "./assets/images/splash-icon.png",
       resizeMode: "contain",

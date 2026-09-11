@@ -47,7 +47,7 @@ function BookResultItem({
   const edition = formatEdition(book.publisher, book.publishedDate);
 
   return (
-    <Pressable style={styles.resultItem} onPress={onPress}>
+    <Pressable style={styles.resultItem} onPress={onPress} accessibilityRole="button">
       {/* Miniature cover */}
       <View style={styles.coverContainer}>
         {book.coverUrl ? (
@@ -123,7 +123,12 @@ export default function BookSearchSheet({ visible, onClose, onSelectBook }: Book
               returnKeyType="search"
             />
             {query.length > 0 && (
-              <Pressable onPress={clearResults} hitSlop={8}>
+              <Pressable
+                onPress={clearResults}
+                hitSlop={8}
+                accessibilityRole="button"
+                accessibilityLabel="Effacer la recherche"
+              >
                 <Ionicons name="close-circle" size={18} color={colors.textPlaceholder} />
               </Pressable>
             )}

@@ -148,6 +148,15 @@ export default function PageScrollPicker({
               numberOfLines={1}
               adjustsFontSizeToFit
               minimumFontScale={0.5}
+              /*
+                Plafond d'agrandissement.
+                Ce chiffre fait déjà 128 pt, soit sept fois le corps de texte :
+                il est lisible bien au-delà de ce que réclame le réglage
+                d'accessibilité. Le laisser tripler le ferait déborder de sa
+                cellule de 150 pt sans rien gagner en lisibilité. On garde une
+                vraie réponse au réglage, bornée.
+              */
+              maxFontSizeMultiplier={1.3}
             >
               {item}
             </Text>
@@ -172,7 +181,12 @@ export default function PageScrollPicker({
   return (
     <View style={styles.container}>
       <View style={styles.pageLabelContainer}>
-        <Text style={styles.pageLabel}>PAGE</Text>
+        {/*
+          Filigrane décoratif posé derrière le chiffre. S'il s'agrandit, il
+          chevauche le chiffre au lieu de rester en fond : il est exclu de
+          l'échelle système, comme tout élément purement ornemental.
+        */}
+        <Text style={styles.pageLabel} allowFontScaling={false}>PAGE</Text>
       </View>
 
       <FlatList

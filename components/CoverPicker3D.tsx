@@ -232,6 +232,8 @@ export default function CoverPicker3D({ onCoverSelected, initialCover }: CoverPi
                                     <>
                                         <Image source={{ uri: customCover }} style={styles.coverImage} contentFit="cover" />
                                         <TouchableOpacity
+                                            accessibilityRole="button"
+                                            accessibilityLabel="Changer la couverture"
                                             style={styles.editOverlay}
                                             onPress={(e) => {
                                                 e.stopPropagation();

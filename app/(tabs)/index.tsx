@@ -105,7 +105,7 @@ const EDGE_ZONE = 50;
 export default function HomeScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { width: screenWidth } = useWindowDimensions();
+  const { width: screenWidth, fontScale } = useWindowDimensions();
   const { user } = useAuthStore();
 
   // ===== Stores Supabase =====
@@ -732,10 +732,18 @@ export default function HomeScreen() {
       */}
       {activeChallenge ? (
         <View
-          style={[styles.pageSection, showBookShelf && styles.pageSectionDisabled]}
+          style={[
+            styles.pageSection,
+            showBookShelf && styles.pageSectionDisabled,
+          ]}
           pointerEvents={showBookShelf ? 'none' : 'auto'}
         >
-          <View style={styles.pageSectionInner}>
+          <View
+            style={[
+              styles.pageSectionInner,
+              fontScale >= 1.35 && styles.pageSectionInnerCompact,
+            ]}
+          >
             <PageScrollPicker
               key={activeChallenge.id}
               currentPage={currentPageInput}
@@ -754,6 +762,8 @@ export default function HomeScreen() {
                     iconOnly
                     size="compact"
                     iconComponent={<IconRotateCcw size={24} color={colors.dark900} />}
+                    accessibilityLabel="Annuler"
+                    accessibilityHint="Revient à ta dernière page enregistrée"
                     onPress={handleUndo}
                   />
                   <Button3D
@@ -761,6 +771,7 @@ export default function HomeScreen() {
                     iconOnly
                     size="compact"
                     icon="checkmark"
+                    accessibilityLabel="Enregistrer ma page"
                     onPress={handleSave}
                   />
                 </View>
@@ -826,6 +837,7 @@ export default function HomeScreen() {
             participants={allParticipantsData}
             myUserId={user?.id || ''}
             onParticipantPress={handleParticipantPress}
+            onSeeAllPress={() => router.push('/leaderboard')}
             showPercentage={hasDifferentEditions}
             intermediateGoal={
               secondaryGoal
@@ -982,6 +994,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     minHeight: 280,
   },
+  /*
+    En gros corps de texte, la carte du livre au-dessus prend plus de place.
+    Garder 280 pt réservés ici pousserait le classement hors de l'écran :
+    on laisse la zone se comprimer, le sélecteur garde sa taille propre.
+  */
+  pageSectionInnerCompact: {
+    minHeight: 0,
+  },
   // Wrapper de hauteur fixe (29 gap + 40 bouton) pour que le layout ne bouge pas.
   actionButtonsWrapper: {
     minHeight: 69, // 29 (gap) + 40 (Button3D compact)
@@ -1023,7 +1043,6 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     textAlign: 'center',
     marginBottom: 48,
-    lineHeight: 22,
   },
   emptyStateButtons: {
     width: '100%',
@@ -1051,7 +1070,6 @@ const styles = StyleSheet.create({
     fontFamily: 'Rokkitt_700Bold',
     fontSize: 22,
     color: '#FFFFFF',
-    lineHeight: 28,
   },
 
 });

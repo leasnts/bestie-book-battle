@@ -315,6 +315,8 @@ export default function OnboardingCompleteScreen() {
                                     onPress={handleCopyCode}
                                     style={styles.copyButton}
                                     activeOpacity={0.7}
+                                    accessibilityRole="button"
+                                    accessibilityLabel="Copier le code d'invitation"
                                 >
                                     <Ionicons name="copy-outline" size={20} color={colors.textPlaceholder} />
                                 </TouchableOpacity>
