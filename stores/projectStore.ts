@@ -69,6 +69,8 @@ interface ProjectStore {
   updateCurrentChallenge: (updates: Partial<Challenge>) => Promise<void>;
   /** Met à jour le challenge affiché sur la home (activeChallenge) */
   updateActiveChallenge: (updates: Partial<Challenge>) => Promise<void>;
+  /** Applique des changements déjà enregistrés en base à la copie locale d'un challenge */
+  patchChallengeLocally: (challengeId: string, updates: Partial<Challenge>) => void;
   deleteCurrentChallenge: () => Promise<void>;
   /** Quitte le challenge actif (retire l'utilisateur sans supprimer le challenge) */
   leaveActiveChallenge: (userId: string) => Promise<void>;
@@ -344,6 +346,16 @@ export const useProjectStore = create<ProjectStore>()(
    */
   setActiveChallenge: (challenge) => {
     set({ activeChallenge: challenge });
+  },
+
+  patchChallengeLocally: (challengeId, updates) => {
+    set((state) => ({
+      challenges: state.challenges.map((c) => (c.id === challengeId ? { ...c, ...updates } : c)),
+      activeChallenge:
+        state.activeChallenge?.id === challengeId
+          ? { ...state.activeChallenge, ...updates }
+          : state.activeChallenge,
+    }));
   },
 
   // ===== Action : Définir le challenge actuel (page détail) =====

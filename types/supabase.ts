@@ -87,6 +87,7 @@ export interface Database {
           book_author: string | null;
           total_pages: number;
           cover_url: string | null;
+          cover_palette: string[] | null; // 0 à 3 couleurs hex de la couverture, null = pas encore calculée
           admin_id: string; // UUID référence users(id)
           status: 'pending' | 'active' | 'completed';
           created_at: string; // ISO timestamp
@@ -105,6 +106,7 @@ export interface Database {
           book_author?: string | null;
           total_pages: number;
           cover_url?: string | null;
+          cover_palette?: string[] | null;
           admin_id: string;
           status?: 'pending' | 'active' | 'completed';
           created_at?: string;
@@ -123,6 +125,7 @@ export interface Database {
           book_author?: string | null;
           total_pages?: number;
           cover_url?: string | null;
+          cover_palette?: string[] | null;
           admin_id?: string;
           status?: 'pending' | 'active' | 'completed';
           created_at?: string;
@@ -267,7 +270,10 @@ export interface Database {
       [_ in never]: never;
     };
     Functions: {
-      [_ in never]: never;
+      set_cover_palette: {
+        Args: { p_challenge_id: string; p_palette: string[] };
+        Returns: undefined;
+      };
     };
     Enums: {
       [_ in never]: never;
