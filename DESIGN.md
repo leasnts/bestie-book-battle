@@ -229,6 +229,27 @@ Tout ce qui pourrait un jour porter la couleur du club — barres de progression
 états actifs, accents de classement — doit lire cet emplacement dès maintenant.
 L'accent ne doit jamais être la seule information : le club daltonien existe.
 
+### Fond de l'accueil : les couleurs de la couverture
+
+En attendant la couleur du club, c'est **la couverture du livre en cours** qui
+colore l'accueil (`CoverBackdrop`) : sans rien derrière, le verre des cadres ne
+se voit pas. Quatre taches radiales douces sur `paper`, placées comme sur la
+maquette, texture noise par-dessus.
+
+- **Extraction** (`utils/coverPalette.ts`) : vignette de 48 px de large, pixels
+  regroupés par teinte, les **3 couleurs dominantes** gardées. Gris, noirs et
+  blancs ignorés : une couverture noire ne donne jamais un fond noir.
+- **Stockage** : `challenges.cover_palette`, calculée une fois (à la création,
+  au changement de couverture, ou au premier affichage pour les anciennes). Même
+  fond pour tout le club, affiché sans attente.
+- **Dosage** : chaque tache monte au plus à 62 / 42 / 32 / 22 % d'opacité, **moins
+  si la couleur est sombre** : `text-tertiary` doit garder 5:1 dans un cadre en
+  verre posé dessus (voile `glassVeil` à 56 %). Les couleurs sont stockées brutes
+  et dosées à l'affichage : l'intensité se règle sans migration.
+- **Repli noyer** (ambre, noyer, sable) : pas de couverture, couverture en noir et
+  blanc, ou palette pas encore calculée.
+- **Changement de livre** : fondu de 400 ms, sauté avec « Réduire les animations ».
+
 ## Typography
 
 **Deux voix, une ambiance plaid** : Fraunces douce (serif old-style aux
@@ -368,7 +389,10 @@ prénom en gras — jamais par une couleur.
 
 L'accueil tient en un en-tête et **trois blocs**, sans scroll : le livre en
 cours (`ActiveBookCard`), le sélecteur de page, le top 3 du challenge plus ta
-ligne si tu n'y es pas (`ProgressCard`).
+ligne si tu n'y es pas (`ProgressCard`). Refonte en cours (#30) : chaque bloc
+devient un **cadre en verre** `GlassSection` (rayon 24, padding 16, bord crème,
+voile crème à 56 %, tout le cadre touchable à 0,97 quand il ouvre un écran),
+posé sur le fond aux couleurs de la couverture.
 
 L'en-tête porte deux `HeaderIconButton` 40 pt autour de PopEyes :
 **bibliothèque** (`library-big`) à gauche, **activité** (`bell`) à droite.
