@@ -8,6 +8,7 @@ import type { Meta, StoryObj } from '@storybook/react';
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import NotificationButton from './NotificationButton';
+import { colors, fonts } from '../../utils/constants';
 
 const meta: Meta<typeof NotificationButton> = {
   title: 'UI/NotificationButton',
@@ -57,5 +58,5 @@ export const Comparison: Story = {
 
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', gap: 24 },
-  label: { fontFamily: 'WorkSans_400Regular', fontSize: 12, color: '#717680' },
+  label: { fontFamily: fonts.body, fontSize: 12, color: colors.textPlaceholder },
 });

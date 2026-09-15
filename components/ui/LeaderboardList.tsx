@@ -25,8 +25,8 @@ import {
   rankParticipants,
   RankedParticipant,
 } from '../../utils/leaderboard';
-import { borderRadius, colors, motion, spacing } from '../../utils/constants';
-import IconFlame from '../icons/IconFlame';
+import { borderRadius, colors, fonts, inkAlpha, motion, spacing } from '../../utils/constants';
+import { FlameIcon } from 'lucide-react-native';
 
 // ─── Props ─────────────────────────────────────────────────────────
 
@@ -112,7 +112,7 @@ function LeaderboardRow({
             <View
               style={[styles.streakBadge, participant.streakAtRisk && styles.streakBadgeAtRisk]}
             >
-              <IconFlame size={11} color={colors.textTertiary} />
+              <FlameIcon size={11} color={colors.textTertiary} fill={colors.textTertiary} />
               <Text style={styles.streakText}>{participant.streak}</Text>
             </View>
           )}
@@ -214,7 +214,7 @@ const styles = StyleSheet.create({
   headerSubtitle: {
     paddingHorizontal: spacing.md,
     paddingBottom: spacing.sm,
-    fontFamily: 'WorkSans_500Medium',
+    fontFamily: fonts.bodyMedium,
     fontSize: 14,
     color: colors.textTertiary,
   },
@@ -241,14 +241,14 @@ const styles = StyleSheet.create({
   },
   /** Ma ligne : fond teinté pour la repérer d'un coup d'œil */
   rowMe: {
-    backgroundColor: 'rgba(24,29,39,0.06)',
+    backgroundColor: inkAlpha(0.06),
   },
 
   // ═══ RANG ═══
   rank: {
     width: RANK_WIDTH,
-    fontFamily: 'Rokkitt_600SemiBold',
-    fontSize: 16,
+    fontFamily: fonts.display,
+    fontSize: 15,
     color: colors.textPlaceholder,
     textAlign: 'center',
   },
@@ -296,18 +296,18 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   name: {
-    fontFamily: 'WorkSans_500Medium',
+    fontFamily: fonts.bodySemiBold,
     fontSize: 16,
     color: colors.textSecondary,
     flexShrink: 1,
   },
   nameMe: {
-    fontFamily: 'WorkSans_700Bold',
+    fontFamily: fonts.bodyExtraBold,
     color: colors.textPrimary,
   },
   score: {
-    fontFamily: 'Rokkitt_600SemiBold',
-    fontSize: 20,
+    fontFamily: fonts.display,
+    fontSize: 18,
     color: colors.textPrimary,
     textAlign: 'right',
   },
@@ -316,7 +316,7 @@ const styles = StyleSheet.create({
   progressTrack: {
     height: 6,
     borderRadius: borderRadius.full,
-    backgroundColor: 'rgba(24,29,39,0.08)',
+    backgroundColor: inkAlpha(0.08),
     overflow: 'hidden',
   },
   progressFill: {
@@ -346,10 +346,10 @@ const styles = StyleSheet.create({
   streakBadgeAtRisk: {
     opacity: 0.6,
     borderStyle: 'dashed',
-    borderColor: 'rgba(0,0,0,0.3)',
+    borderColor: inkAlpha(0.3),
   },
   streakText: {
-    fontFamily: 'WorkSans_600SemiBold',
+    fontFamily: fonts.bodySemiBold,
     fontSize: 11,
     color: colors.textTertiary,
   },

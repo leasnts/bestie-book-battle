@@ -22,9 +22,10 @@ import {
     View,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, fontSize, fontWeight, spacing } from '../../utils/constants';
+import { colors, fonts, spacing } from '../../utils/constants';
 import Button3D from '../../components/Button3D';
 import { useOnboardingStore } from '../../stores/onboardingStore';
+import { ChevronLeftIcon, XIcon } from 'lucide-react-native';
 
 // Asset : texture de fond (même que les autres écrans)
 const TEXTURE_IMAGE = require('../../assets/images/61ea1e0c638b5b9c8100383a37a5b488848db623.png');
@@ -109,7 +110,7 @@ export default function OnboardingPagesScreen() {
                 <View style={[styles.header, styles.headerRow]}>
                     <Button3D
                         variant="secondary"
-                        icon="chevron-back"
+                        icon={ChevronLeftIcon}
                         iconOnly
                         size="compact"
                         onPress={() => router.back()}
@@ -117,7 +118,7 @@ export default function OnboardingPagesScreen() {
                     {addChallenge === 'true' && (
                         <Button3D
                             variant="primary"
-                            icon="close"
+                            icon={XIcon}
                             iconOnly
                             size="compact"
                             onPress={() => router.navigate('/(tabs)')}
@@ -199,12 +200,11 @@ const styles = StyleSheet.create({
         gap: spacing['6xl'], // 64px entre titre et input
     },
     title: {
-        fontFamily: 'Rokkitt_500Medium',
-        fontSize: fontSize['3xl'],     // 36px
-        fontWeight: fontWeight.medium,
+        fontFamily: fonts.display,
+        fontSize: 30,
         color: colors.textPrimary,
-        letterSpacing: -0.72,
-        lineHeight: 44,
+        letterSpacing: -0.3,
+        lineHeight: 36,
     },
     inputContainer: {
         alignItems: 'center',
@@ -213,11 +213,10 @@ const styles = StyleSheet.create({
         paddingVertical: spacing['2xl'],   // 24px
     },
     input: {
-        fontFamily: 'Rokkitt_700Bold',
-        fontSize: fontSize['5xl'],     // 60px — input géant comme le prénom
-        fontWeight: fontWeight.bold as any,
+        fontFamily: fonts.displayBold,
+        fontSize: 52,
         color: colors.textPrimary,
-        letterSpacing: -1.2,
+        letterSpacing: -1,
         textAlign: 'center',
         textAlignVertical: 'center',
         width: '100%',

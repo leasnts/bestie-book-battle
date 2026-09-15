@@ -5,17 +5,17 @@
  * et pastille rouge quand il y a des notifications non lues.
  * 
  * Comment ça marche :
- * - Le bouton utilise le même style 3D que les Button3D secondary (fond gris #f5f5f5)
- * - Il contient une icône cloche (Ionicons bell-outline)
+ * - Le bouton utilise le même style 3D que les Button3D secondary (fond crème colors.bgLight)
+ * - Il contient une icône cloche (Lucide bell)
  * - Une pastille rouge (dot) s'affiche en haut à droite si hasUnread est true
  * - L'inner shadow est simulée via LinearGradient comme dans Button3D
  */
 
-import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
-import { colors } from '../../utils/constants';
+import { colors, creamAlpha, inkAlpha, shadowAlpha } from '../../utils/constants';
+import { BellIcon } from 'lucide-react-native';
 
 interface NotificationButtonProps {
   /** Callback quand on appuie sur le bouton */
@@ -44,10 +44,10 @@ export default function NotificationButton({
           {!pressed ? (
             <LinearGradient
               colors={[
-                'rgba(255,255,255,0.6)',
-                'rgba(255,255,255,0.0)',
-                'rgba(0,0,0,0.0)',
-                'rgba(30,30,30,0.15)',
+                creamAlpha(0.6),
+                creamAlpha(0),
+                shadowAlpha(0),
+                shadowAlpha(0.15),
               ]}
               locations={[0, 0.3, 0.7, 1]}
               start={{ x: 0, y: 0 }}
@@ -57,10 +57,10 @@ export default function NotificationButton({
           ) : (
             <LinearGradient
               colors={[
-                'rgba(30,30,30,0.15)',
-                'rgba(0,0,0,0.0)',
-                'rgba(255,255,255,0.0)',
-                'rgba(255,255,255,0.6)',
+                shadowAlpha(0.15),
+                shadowAlpha(0),
+                creamAlpha(0),
+                creamAlpha(0.6),
               ]}
               locations={[0, 0.3, 0.7, 1]}
               start={{ x: 0, y: 0 }}
@@ -73,7 +73,7 @@ export default function NotificationButton({
           <View style={styles.strokeBorder} />
 
           {/* Icône cloche */}
-          <Ionicons name="notifications-outline" size={24} color={colors.dark900} />
+          <BellIcon size={24} color={colors.dark900} />
         </View>
       </View>
 
@@ -90,7 +90,7 @@ export default function NotificationButton({
 const styles = StyleSheet.create({
   shadowContainer: {
     borderRadius: 12,
-    shadowColor: '#000000',
+    shadowColor: colors.black,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,
     shadowRadius: 6,
@@ -100,7 +100,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 12,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: colors.bgLight,
     overflow: 'hidden',
     justifyContent: 'center',
     alignItems: 'center',
@@ -109,7 +109,7 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: 'rgba(0,0,0,0.1)',
+    borderColor: inkAlpha(0.1),
   },
   // La pastille rouge en haut à droite du bouton
   badge: {
@@ -119,7 +119,7 @@ const styles = StyleSheet.create({
     width: 12,
     height: 12,
     borderRadius: 6,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.white,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -127,6 +127,6 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#EF4444',
+    backgroundColor: colors.error,
   },
 });

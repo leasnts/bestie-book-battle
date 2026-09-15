@@ -8,8 +8,6 @@
  * Flow : create → pages → deadline → cover (ici) → notifications/complete
  */
 
-import { Ionicons } from '@expo/vector-icons';
-import IconRotateCcw from '../../components/icons/IconRotateCcw';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -26,7 +24,8 @@ import {
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import Button3D from '../../components/Button3D';
 import ImageCropModal, { PendingImage } from '../../components/ui/ImageCropModal';
-import { borderRadius, colors, fontSize, fontWeight, spacing } from '../../utils/constants';
+import { borderRadius, colors, fonts, spacing } from '../../utils/constants';
+import { CameraIcon, ChevronLeftIcon, ImageIcon, RotateCcwIcon, XIcon } from 'lucide-react-native';
 
 // Asset : texture de fond
 const TEXTURE_IMAGE = require('../../assets/images/61ea1e0c638b5b9c8100383a37a5b488848db623.png');
@@ -215,7 +214,7 @@ export default function OnboardingCoverScreen() {
                 <View style={[styles.header, styles.headerRow]}>
                     <Button3D
                         variant="secondary"
-                        icon="chevron-back"
+                        icon={ChevronLeftIcon}
                         iconOnly
                         size="compact"
                         onPress={() => router.back()}
@@ -223,7 +222,7 @@ export default function OnboardingCoverScreen() {
                     {addChallenge === 'true' && (
                         <Button3D
                             variant="primary"
-                            icon="close"
+                            icon={XIcon}
                             iconOnly
                             size="compact"
                             onPress={() => router.navigate('/(tabs)')}
@@ -258,8 +257,7 @@ export default function OnboardingCoverScreen() {
                                         accessibilityLabel="Choisir une photo dans la galerie"
                                     >
                                         <View style={styles.uploadButtonInnerShadow} />
-                                        <Ionicons
-                                            name="image-outline"
+                                        <ImageIcon
                                             size={24}
                                             color={colors.white}
                                         />
@@ -272,8 +270,7 @@ export default function OnboardingCoverScreen() {
                                         accessibilityLabel="Prendre une photo"
                                     >
                                         <View style={styles.uploadButtonInnerShadow} />
-                                        <Ionicons
-                                            name="camera-outline"
+                                        <CameraIcon
                                             size={24}
                                             color={colors.white}
                                         />
@@ -286,7 +283,7 @@ export default function OnboardingCoverScreen() {
                                 <View style={styles.changeCoverButton}>
                                     <Button3D
                                         variant="secondary"
-                                        iconComponent={<IconRotateCcw size={20} color="#535862" />}
+                                        iconComponent={<RotateCcwIcon size={20} color={colors.textTertiary} />}
                                         iconOnly
                                         size="compact"
                                         onPress={handleChangeCover}
@@ -354,12 +351,11 @@ const styles = StyleSheet.create({
         gap: spacing['6xl'], // 64px entre titre et zone
     },
     title: {
-        fontFamily: 'Rokkitt_500Medium',
-        fontSize: fontSize['3xl'], // 36px
-        fontWeight: fontWeight.medium,
+        fontFamily: fonts.display,
+        fontSize: 30,
         color: colors.textPrimary,
-        letterSpacing: -0.72,
-        lineHeight: 44,
+        letterSpacing: -0.3,
+        lineHeight: 36,
     },
     coverZoneWrapper: {
         alignSelf: 'center',
@@ -370,7 +366,7 @@ const styles = StyleSheet.create({
         height: 300,
         borderWidth: 2,
         borderStyle: 'dashed',
-        borderColor: colors.borderLight, // #e9eaeb
+        borderColor: colors.borderLight,
         borderRadius: borderRadius.xs,
         justifyContent: 'center',
         alignItems: 'center',
@@ -408,7 +404,7 @@ const styles = StyleSheet.create({
     uploadButtonInnerShadow: {
         ...StyleSheet.absoluteFillObject,
         borderRadius: borderRadius.md,
-        shadowColor: '#000',
+        shadowColor: colors.black,
         shadowOffset: { width: 0, height: -4 },
         shadowOpacity: 1,
         shadowRadius: 4,

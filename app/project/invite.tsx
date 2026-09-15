@@ -1,4 +1,3 @@
-import { Ionicons } from '@expo/vector-icons';
 import * as Clipboard from 'expo-clipboard';
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -8,6 +7,8 @@ import { ActivityIndicator, Alert, Share, StyleSheet, Text, TouchableOpacity, Vi
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { getChallengeByInviteCode } from '../../services/supabase/database';
 import { Challenge } from '../../types/supabase';
+import { colors, fonts } from '../../utils/constants';
+import { ArrowRightIcon, CopyIcon, ShareIcon } from 'lucide-react-native';
 
 export default function InviteScreen() {
     const router = useRouter();
@@ -64,7 +65,7 @@ export default function InviteScreen() {
     if (loading) {
         return (
             <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color="#000" />
+                <ActivityIndicator size="large" color={colors.dark900} />
             </View>
         );
     }
@@ -97,20 +98,20 @@ export default function InviteScreen() {
                     <Text style={styles.codeLabel}>TON CODE DE CHALLENGE</Text>
                     <TouchableOpacity style={styles.codeBox} onPress={copyToClipboard}>
                         <Text style={styles.codeText}>{code}</Text>
-                        <Ionicons name="copy-outline" size={24} color="#666" />
+                        <CopyIcon size={24} color={colors.textTertiary} />
                     </TouchableOpacity>
                     <Text style={styles.codeHint}>Partage ce code avec tes amis</Text>
                 </View>
 
                 <View style={styles.actions}>
                     <TouchableOpacity style={[styles.button, styles.secondaryButton]} onPress={shareProject}>
-                        <Ionicons name="share-outline" size={20} color="#000" style={{ marginRight: 8 }} />
+                        <ShareIcon size={20} color={colors.dark900} style={{ marginRight: 8 }} />
                         <Text style={styles.secondaryButtonText}>Partager</Text>
                     </TouchableOpacity>
 
                     <TouchableOpacity style={[styles.button, styles.primaryButton]} onPress={startReading}>
                         <Text style={styles.primaryButtonText}>Commencer la lecture</Text>
-                        <Ionicons name="arrow-forward" size={20} color="#FFF" style={{ marginLeft: 8 }} />
+                        <ArrowRightIcon size={20} color={colors.white} style={{ marginLeft: 8 }} />
                     </TouchableOpacity>
                 </View>
             </View>
@@ -121,7 +122,7 @@ export default function InviteScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#FAFAF8',
+        backgroundColor: colors.bgLight,
     },
     loadingContainer: {
         flex: 1,
@@ -136,9 +137,9 @@ const styles = StyleSheet.create({
         paddingBottom: 40,
     },
     title: {
+        fontFamily: fonts.display,
         fontSize: 28,
-        fontWeight: '800',
-        color: '#1A1A1A',
+        color: colors.textPrimary,
         marginTop: 20,
         textAlign: 'center',
     },
@@ -151,22 +152,23 @@ const styles = StyleSheet.create({
         height: 140,
         borderRadius: 12,
         marginBottom: 16,
-        shadowColor: '#000',
+        shadowColor: colors.black,
         shadowOffset: { width: 0, height: 8 },
         shadowOpacity: 0.15,
         shadowRadius: 12,
         elevation: 8,
     },
     bookTitle: {
+        fontFamily: fonts.display,
         fontSize: 20,
-        fontWeight: '700',
-        color: '#1A1A1A',
+        color: colors.textPrimary,
         textAlign: 'center',
         marginBottom: 4,
     },
     bookAuthor: {
+        fontFamily: fonts.body,
         fontSize: 16,
-        color: '#666',
+        color: colors.textTertiary,
         textAlign: 'center',
     },
     codeContainer: {
@@ -175,9 +177,9 @@ const styles = StyleSheet.create({
         marginBottom: 20,
     },
     codeLabel: {
+        fontFamily: fonts.bodyBold,
         fontSize: 12,
-        fontWeight: '700',
-        color: '#888',
+        color: colors.textPlaceholder,
         marginBottom: 8,
         letterSpacing: 1,
     },
@@ -185,28 +187,28 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: '#FFFFFF',
+        backgroundColor: colors.white,
         paddingVertical: 16,
         paddingHorizontal: 32,
         borderRadius: 16,
         borderWidth: 1,
-        borderColor: '#E8E8E4',
-        shadowColor: '#000',
+        borderColor: colors.borderLight,
+        shadowColor: colors.black,
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.05,
         shadowRadius: 4,
         gap: 12,
     },
     codeText: {
-        fontSize: 32,
-        fontWeight: '700',
-        fontFamily: 'Courier New',
-        color: '#1A1A1A',
+        fontSize: 30,
+        fontFamily: fonts.display,
+        color: colors.textPrimary,
         letterSpacing: 2,
     },
     codeHint: {
+        fontFamily: fonts.body,
         fontSize: 14,
-        color: '#999',
+        color: colors.textPlaceholder,
         marginTop: 12,
     },
     actions: {
@@ -222,19 +224,19 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     primaryButton: {
-        backgroundColor: '#1A1A1A',
+        backgroundColor: colors.textPrimary,
     },
     primaryButtonText: {
-        color: '#FFF',
+        fontFamily: fonts.bodyBold,
+        color: colors.white,
         fontSize: 16,
-        fontWeight: '600',
     },
     secondaryButton: {
-        backgroundColor: '#F0F0EE',
+        backgroundColor: colors.bgSecondary,
     },
     secondaryButtonText: {
-        color: '#1A1A1A',
+        fontFamily: fonts.bodyBold,
+        color: colors.textPrimary,
         fontSize: 16,
-        fontWeight: '600',
     },
 });

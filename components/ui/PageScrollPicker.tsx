@@ -4,7 +4,7 @@
  * Sélecteur de page horizontal avec scroll fluide :
  * - Largeur fixe par item pour un scroll fiable + snap
  * - Quand le scroll s'arrête, le numéro le plus proche se centre sur l'écran
- * - Numéro central : 128px, noir. Adjacents : 72px, gris transparent
+ * - Numéro central : 108px, encre noyer. Adjacents : 60px, encre transparente
  * - adjustsFontSizeToFit adapte la taille aux gros numéros (3-4 chiffres)
  *   sans jamais tronquer ni couper le nombre
  */
@@ -19,10 +19,10 @@ import {
   View,
   useWindowDimensions,
 } from 'react-native';
-import { colors } from '../../utils/constants';
+import { colors, fonts, inkAlpha, shadowAlpha } from '../../utils/constants';
 
-// Largeur de chaque cellule. 180px suffit pour afficher 1-2 chiffres à pleine
-// taille (128px). Pour 3-4 chiffres, adjustsFontSizeToFit réduit légèrement
+// Largeur de chaque cellule. 180px suffit pour afficher 1-3 chiffres à pleine
+// taille (108px). Pour 3-4 chiffres, adjustsFontSizeToFit réduit légèrement
 // la taille pour que le nombre entier soit toujours visible.
 // Pas de gap entre les cellules → les nombres adjacents restent bien visibles.
 const ITEM_WIDTH = 180;
@@ -150,7 +150,7 @@ export default function PageScrollPicker({
               minimumFontScale={0.5}
               /*
                 Plafond d'agrandissement.
-                Ce chiffre fait déjà 128 pt, soit sept fois le corps de texte :
+                Ce chiffre fait déjà 108 pt, soit sept fois le corps de texte :
                 il est lisible bien au-delà de ce que réclame le réglage
                 d'accessibilité. Le laisser tripler le ferait déborder de sa
                 cellule de 150 pt sans rien gagner en lisibilité. On garde une
@@ -229,10 +229,10 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
   pageLabel: {
-    fontFamily: 'Rokkitt_700Bold',
-    fontSize: 36,
-    color: 'rgba(0,0,0,0.08)',
-    letterSpacing: -0.72,
+    fontFamily: fonts.displayBold,
+    fontSize: 30,
+    color: inkAlpha(0.08),
+    letterSpacing: -0.3,
     textAlign: 'center',
   },
   itemCell: {
@@ -247,38 +247,37 @@ const styles = StyleSheet.create({
     height: 150,
   },
   pageNumber: {
-    fontFamily: 'Rokkitt_700Bold',
-    fontWeight: '700',
+    fontFamily: fonts.displayHero,
     textAlign: 'center',
     // textAlignVertical + includeFontPadding : corrige le centrage vertical
     // sur Android, où le moteur de texte ajoute un padding fantôme par défaut.
     textAlignVertical: 'center',
     includeFontPadding: false,
   },
-  // Nombre central (sélectionné/en cours) — gros, noir, avec ombre portée.
-  // Pour 1-2 chiffres (0-99) : s'affiche à pleine taille 128px.
-  // Pour 3 chiffres (100-999) : adjustsFontSizeToFit réduit légèrement (~104px).
-  // Pour 4 chiffres (1000+) : réduit à ~78px, mais toujours lisible et complet.
+  // Nombre central (sélectionné/en cours) — gros, encre noyer, avec ombre portée.
+  // 108px et non 128px : Fraunces a des chiffres plus hauts et plus larges que
+  // Rokkitt, 108px garde la même présence. adjustsFontSizeToFit réduit encore
+  // la taille pour les nombres à 4 chiffres (1000+).
   //
   // PAS de lineHeight ici : sur le simulateur iOS, un lineHeight fixe combiné
   // avec adjustsFontSizeToFit provoque un bug où le texte disparaît quand la
   // taille est réduite. Sans lineHeight, le texte prend sa hauteur naturelle
   // et le conteneur (justifyContent: 'center') gère l'alignement vertical.
   pageNumberCenter: {
-    fontSize: 128,
+    fontSize: 108,
     color: colors.dark900,
-    letterSpacing: -2.56,
-    textShadowColor: 'rgba(0,0,0,0.25)',
+    letterSpacing: -1.6,
+    textShadowColor: shadowAlpha(0.25),
     textShadowOffset: { width: 0, height: 4 },
     textShadowRadius: 6,
   },
-  // Nombres adjacents (non sélectionnés) — plus petits, gris transparent.
+  // Nombres adjacents (non sélectionnés) — plus petits, encre transparente.
   // Pas de lineHeight non plus, pour la même raison (compatibilité simulateur).
   // L'alignement vertical est assuré par le conteneur flexbox (150px de haut,
   // justifyContent: 'center'), qui centre chaque texte au même point vertical.
   pageNumberSide: {
-    fontSize: 72,
-    color: 'rgba(0,0,0,0.2)',
-    letterSpacing: -1.44,
+    fontSize: 60,
+    color: inkAlpha(0.2),
+    letterSpacing: -0.9,
   },
 });

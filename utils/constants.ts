@@ -8,41 +8,57 @@
  * - Styles de boutons réutilisables
  */
 
-// Palette de couleurs depuis le design system Figma
+/**
+ * Palette "noyer et crème" : chocolat chaud, plaid, lumière tamisée.
+ *
+ * L'encre est un marron noyer foncé, le papier une crème à peine dorée. Aucun
+ * noir pur ni blanc pur dans l'app : même les ombres et les reflets partent de
+ * ces deux teintes, sinon ils ressortent gris et refroidissent tout.
+ *
+ * Les canaux RGB bruts servent à composer des transparences qui restent dans la
+ * teinte (voir inkAlpha, shadowAlpha, creamAlpha plus bas).
+ */
+const INK_RGB = '51,35,26';     // #33231a
+const SHADOW_RGB = '30,20,14';  // #1e140e
+const CREAM_RGB = '255,251,245'; // #fffbf5
+
+/** Encre noyer transparente : teintes de fond, bordures, séparateurs sur fond clair */
+export const inkAlpha = (alpha: number) => `rgba(${INK_RGB},${alpha})`;
+/** Ombre marron très sombre transparente : ombres portées, ombres internes, voiles */
+export const shadowAlpha = (alpha: number) => `rgba(${SHADOW_RGB},${alpha})`;
+/** Crème transparente : reflets et bordures claires sur fond sombre */
+export const creamAlpha = (alpha: number) => `rgba(${CREAM_RGB},${alpha})`;
+
 export const colors = {
   // Dark colors (onboarding, boutons principaux)
-  dark950: '#0a0d12',          // Fond splash screen
-  dark900: '#181d27',          // Boutons principaux, texte principal
-  dark800: '#13161b',          // Fond carte livre
-  
+  dark950: '#1e140e',          // Fond splash screen
+  dark900: '#33231a',          // Boutons principaux, texte principal — noyer foncé
+  dark800: '#2a1c14',          // Fond carte livre
+
   // Light colors (backgrounds)
-  white: '#ffffff',            // Background inputs, cartes
-  black: '#000000',            // Uniquement pour les ombres portées, jamais pour du texte ni un fond
-  bgSecondary: '#fafafa',      // Background cartes non-sélectionnées
-  bgLight: '#f5f5f5',          // Bouton back, bouton secondaire
-  
-  // Text colors
-  textPrimary: '#181d27',      // Texte principal (900)
-  textSecondary: '#414651',    // Texte secondaire (700)
-  textTertiary: '#535862',     // Texte tertiaire (600)
-  textPlaceholder: '#696e78',  // Placeholders (500)
-  // Assombri depuis #717680 : cette valeur tombait à 4,18:1 sur le fond d'app
-  // (#f5f5f5), sous le seuil AA de 4,5. Même teinte exactement — mêmes écarts
-  // entre les canaux — huit crans plus sombre. Passe désormais partout :
-  // 4,70 sur #f5f5f5, 4,90 sur #fafafa, 5,12 sur #ffffff.
-  textSubtle: '#d5d7da',       // Texte subtle (300)
-  
+  white: '#fffbf5',            // Background inputs, cartes — crème, pas blanc pur
+  black: '#1e140e',            // Uniquement pour les ombres portées, jamais pour du texte ni un fond
+  bgSecondary: '#fbf6ef',      // Background cartes non-sélectionnées
+  bgLight: '#f6efe6',          // Fond d'app, bouton back, bouton secondaire
+
+  // Text colors — contrastes WCAG mesurés sur bgLight / bgSecondary / white
+  textPrimary: '#33231a',      // Texte principal (900) — 13,2 / 14,0 / 14,6
+  textSecondary: '#5a4536',    // Texte secondaire (700) — 7,9 / 8,4 / 8,7
+  textTertiary: '#6b5546',     // Texte tertiaire (600) — 6,1 / 6,5 / 6,8
+  textPlaceholder: '#7a6453',  // Placeholders (500) — 4,9 / 5,2 / 5,4
+  textSubtle: '#e2d7ca',       // Texte subtle (300) — lisible uniquement sur fond sombre (11,6 sur dark800)
+
   // Border colors
-  border: '#d5d7da',           // Bordure inputs (gray-300)
-  borderLight: '#e9eaeb',      // Bordure secondaire
-  
+  border: '#e2d7ca',           // Bordure inputs
+  borderLight: '#eee6db',      // Bordure secondaire
+
   // Alpha colors (pour les ombres et overlays)
-  alphaBlack10: 'rgba(0,0,0,0.1)',
-  alphaBlack02: 'rgba(0,0,0,0.02)',
-  alphaWhite10: 'rgba(255,255,255,0.1)',
-  alphaWhite20: 'rgba(255,255,255,0.2)',
-  alphaWhite30: 'rgba(255,255,255,0.3)',
-  alphaWhite90: 'rgba(255,255,255,0.9)',
+  alphaBlack10: inkAlpha(0.1),
+  alphaBlack02: inkAlpha(0.02),
+  alphaWhite10: creamAlpha(0.1),
+  alphaWhite20: creamAlpha(0.2),
+  alphaWhite30: creamAlpha(0.3),
+  alphaWhite90: creamAlpha(0.9),
   
   // Couleurs sémantiques (conservées de l'ancien)
   success: '#10B981',
@@ -58,7 +74,7 @@ export const colors = {
   streak: '#F97316',
   
   // Overlay
-  overlay: 'rgba(0, 0, 0, 0.5)',
+  overlay: shadowAlpha(0.5),
 };
 
 // Espacements alignés avec Figma (tokens spacing-*)
@@ -84,10 +100,32 @@ export const borderRadius = {
   full: 9999,
 };
 
-// Polices personnalisées (Google Fonts)
+/**
+ * Polices : Fraunces douce pour les titres et les nombres, Nunito pour tout le reste.
+ *
+ * Chaque valeur est un nom de fichier chargé dans app/_layout.tsx (useFonts) :
+ * sur iOS, la graisse vient du fichier, pas de `fontWeight`. Pour mettre du gras,
+ * changer de police (body → bodyBold), jamais ajouter `fontWeight`.
+ *
+ * Les Fraunces sont des instances maison (assets/fonts) du fichier variable
+ * Google Fonts, figées sur SOFT 100 (terminaisons arrondies) et WONK 0.
+ * - display* : taille optique 24, pour les titres et scores jusqu'à ~40 px
+ * - displayHero : taille optique 72, plus fine, réservée aux nombres géants (≥ 56 px)
+ *
+ * Fraunces est plus grande que Rokkitt à taille égale (hauteur de capitale +20 %) :
+ * les tailles de titres ont été réduites d'environ 15 % pour garder la même présence.
+ * Sous 13 px, les nombres passent en Nunito : un serif aussi petit devient illisible.
+ */
 export const fonts = {
-  display: 'Rokkitt',   // Pour les titres et le texte impactant
-  body: 'WorkSans',     // Pour le texte courant
+  display: 'FrauncesSoft_600SemiBold',            // Titres, scores, numéros
+  displayRegular: 'FrauncesSoft_400Regular',      // Logo « bestie book battle »
+  displayBold: 'FrauncesSoft_700Bold',            // Saisies de nombres, toast, lettres « b » du logo
+  displayHero: 'FrauncesSoftDisplay_600SemiBold', // Numéro de page géant, splash
+  body: 'Nunito_400Regular',                      // Texte courant, champs
+  bodyMedium: 'Nunito_500Medium',                 // Libellés discrets
+  bodySemiBold: 'Nunito_600SemiBold',             // Prénoms, titres de ligne, libellés
+  bodyBold: 'Nunito_700Bold',                     // Boutons, valeurs mises en avant
+  bodyExtraBold: 'Nunito_800ExtraBold',           // Mon prénom dans le classement
 };
 
 // Tailles de police Figma
@@ -116,7 +154,7 @@ export const fontWeight = {
 export const shadows = {
   // Shadow-xs (inputs)
   xs: {
-    shadowColor: 'rgba(10,13,18,0.05)',
+    shadowColor: shadowAlpha(0.05),
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 1,
     shadowRadius: 2,
@@ -124,7 +162,7 @@ export const shadows = {
   },
   // Ombre bouton principal
   button: {
-    shadowColor: 'rgba(0,0,0,0.25)',
+    shadowColor: shadowAlpha(0.25),
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 1,
     shadowRadius: 6,
@@ -132,7 +170,7 @@ export const shadows = {
   },
   // Ombre bouton secondaire
   buttonLight: {
-    shadowColor: 'rgba(0,0,0,0.1)',
+    shadowColor: shadowAlpha(0.1),
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 1,
     shadowRadius: 6,
@@ -140,7 +178,7 @@ export const shadows = {
   },
   // Ombre carte sélectionnée
   cardSelected: {
-    shadowColor: 'rgba(0,0,0,0.09)',
+    shadowColor: shadowAlpha(0.09),
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 1,
     shadowRadius: 20,

@@ -32,7 +32,8 @@ import PopEyes from '../components/PopEyes';
 import { useAuthStore } from '../stores/authStore';
 import { useNotificationStore } from '../stores/notificationStore';
 import { useProjectStore } from '../stores/projectStore';
-import { borderRadius, colors, fontSize, fontWeight, spacing } from '../utils/constants';
+import { borderRadius, colors, fonts, fontSize, spacing } from '../utils/constants';
+import { ChevronLeftIcon } from 'lucide-react-native';
 
 // ─── Assets ──────────────────────────────────────────────────────────────────
 
@@ -130,7 +131,7 @@ export default function ActivityScreen() {
       <View style={styles.header}>
         <Button3D
           variant="secondary"
-          icon="chevron-back"
+          icon={ChevronLeftIcon}
           iconOnly
           size="compact"
           onPress={() => router.back()}
@@ -234,11 +235,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
   },
   headerTitle: {
-    fontFamily: 'Rokkitt_400Regular',
-    fontSize: fontSize['2xl'],
-    fontWeight: fontWeight.regular as any,
+    fontFamily: fonts.display,
+    fontSize: 22,
     color: colors.textPrimary,
-    lineHeight: 32,
+    lineHeight: 28,
   },
   headerSpacer: {
     width: 40,
@@ -291,25 +291,22 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   rowTitle: {
-    fontFamily: 'WorkSans_400Regular',
+    fontFamily: fonts.bodyBold,
     fontSize: fontSize.sm,
-    fontWeight: fontWeight.bold as any,
     color: colors.textPrimary,
     lineHeight: 20,
     flexShrink: 1,
   },
   rowTime: {
-    fontFamily: 'WorkSans_400Regular',
+    fontFamily: fonts.body,
     fontSize: fontSize.xs,
-    fontWeight: fontWeight.regular as any,
     color: colors.textPlaceholder,
     lineHeight: 18,
     flexShrink: 0,
   },
   rowDescription: {
-    fontFamily: 'WorkSans_400Regular',
+    fontFamily: fonts.body,
     fontSize: fontSize.sm,
-    fontWeight: fontWeight.regular as any,
     color: colors.textSecondary,
     lineHeight: 20,
   },
@@ -326,16 +323,14 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   emptyTitle: {
-    fontFamily: 'Rokkitt_400Regular',
+    fontFamily: fonts.display,
     fontSize: fontSize.lg,
-    fontWeight: fontWeight.semibold as any,
     color: colors.textPrimary,
     textAlign: 'center',
   },
   emptySubtitle: {
-    fontFamily: 'WorkSans_400Regular',
+    fontFamily: fonts.body,
     fontSize: fontSize.sm,
-    fontWeight: fontWeight.regular as any,
     color: colors.textTertiary,
     textAlign: 'center',
     lineHeight: 20,

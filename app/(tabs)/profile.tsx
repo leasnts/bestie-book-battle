@@ -1,9 +1,9 @@
 /**
  * 👤 Page Profil — v3
  *
- * Structure (layout fixe, aucun scroll) :
- * 1. HEADER   : bouton retour (Button3D) | titre "Profil"
- * 2. PROFIL   : photo + prénom Rokkitt + bouton "Modifier"
+ * Structure (défile si le contenu dépasse, footer poussé en bas sinon) :
+ * 1. HEADER   : titre "Profil" (onglet de la barre native, pas de bouton retour)
+ * 2. PROFIL   : photo + prénom en Fraunces + bouton "Modifier"
  * 3. SETTINGS : notifications (toggle natif), inviter, signaler, déconnexion
  * 4. FOOTER   : liens légaux cliquables + version dynamique
  *
@@ -16,11 +16,8 @@
  */
 
 import * as Notifications from 'expo-notifications';
-import { Ionicons } from '@expo/vector-icons';
 // Icônes maison plutôt que lucide-react-native : même tracé, même API
 // (size / color / strokeWidth), et un jeu d'icônes de moins à maintenir.
-import IconPencil from '../components/icons/IconPencil';
-import IconRotateCcw from '../components/icons/IconRotateCcw';
 import * as Clipboard from 'expo-clipboard';
 import Constants from 'expo-constants';
 import { Image } from 'expo-image';
@@ -37,6 +34,7 @@ import {
   Linking,
   Platform,
   Pressable,
+  ScrollView,
   Share,
   StyleSheet,
   Switch,
@@ -45,27 +43,31 @@ import {
   View,
 } from 'react-native';
 import 'react-native-reanimated';
-import { GestureDetector } from 'react-native-gesture-handler';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useSwipeBack } from '../hooks/useSwipeBack';
-import BottomSheet from '../components/ui/BottomSheet';
-import Button3D from '../components/Button3D';
-import PageTransition from '../components/PageTransition';
-import { pickImage, uploadProfilePhoto } from '../services/supabase/storage';
-import { useAuthStore } from '../stores/authStore';
-import { useProjectStore } from '../stores/projectStore';
+import BottomSheet from '../../components/ui/BottomSheet';
+import Button3D from '../../components/Button3D';
+import PageTransition from '../../components/PageTransition';
+import { pickImage, uploadProfilePhoto } from '../../services/supabase/storage';
+import { useAuthStore } from '../../stores/authStore';
+import { useProjectStore } from '../../stores/projectStore';
 import { Challenge } from '../../types/supabase';
 import {
   borderRadius,
   colors,
+  creamAlpha,
+  fonts,
   fontSize,
+  inkAlpha,
+  shadowAlpha,
   shadows,
   spacing,
-} from '../utils/constants';
+} from '../../utils/constants';
+import { useTabBarInset } from '../../components/ui/GlassTabBar';
+import { BellIcon, BookOpenIcon, ChevronRightIcon, CopyIcon, FlaskConicalIcon, LogOutIcon, PencilIcon, RotateCcwIcon, ShareIcon, Trash2Icon, TriangleAlertIcon, XIcon } from 'lucide-react-native';
 
 // ─── Constantes ────────────────────────────────────────────────────────────────
 
-const TEXTURE_IMAGE = require('../assets/images/61ea1e0c638b5b9c8100383a37a5b488848db623.png');
+const TEXTURE_IMAGE = require('../../assets/images/61ea1e0c638b5b9c8100383a37a5b488848db623.png');
 const APP_VERSION = Constants.expoConfig?.version ?? '1.0';
 const ACCESSORY_ID_PROFILE = 'edit-profile-no-done';
 
@@ -78,7 +80,7 @@ const ACCESSORY_ID_PROFILE = 'edit-profile-no-done';
  * Même logique que resolveAvatarSource sur la home — force expo-image
  * à recharger après un changement de photo.
  */
-const DEFAULT_PROFILE_IMAGE = require('../assets/images/profile_picture_default.png');
+const DEFAULT_PROFILE_IMAGE = require('../../assets/images/profile_picture_default.png');
 
 function resolvePhotoSource(url?: string | null, updatedAt?: string | null) {
   if (!url) return DEFAULT_PROFILE_IMAGE;
@@ -97,11 +99,10 @@ function resolvePhotoSource(url?: string | null, updatedAt?: string | null) {
 export default function ProfileScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const tabBarInset = useTabBarInset();
   const { user, logout, deleteAccount } = useAuthStore();
   const { challenges, loadUserChallenges } = useProjectStore();
 
-  // Swipe vers la gauche pour fermer le profil (symétrique à l'ouverture)
-  const swipeGesture = useSwipeBack('left');
 
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -257,21 +258,23 @@ export default function ProfileScreen() {
 
   return (
     <PageTransition>
-    <GestureDetector gesture={swipeGesture}>
     <View style={styles.container}>
       <Image source={TEXTURE_IMAGE} style={styles.backgroundTexture} contentFit="cover" />
 
+      {/*
+        Défilement : la barre d'onglets flottante prend ~70 pt en bas, le contenu
+        ne tient plus d'un bloc sur les petits écrans ni en gros corps de texte.
+        Marges manuelles : insets en haut, useTabBarInset() en bas.
+      */}
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.scrollContent}
+        contentInsetAdjustmentBehavior="never"
+        showsVerticalScrollIndicator={false}
+      >
       {/* ═══════════ HEADER ═══════════ */}
       <View style={[styles.header, { paddingTop: insets.top + spacing.lg }]}>
-        <Button3D
-          variant="secondary"
-          iconOnly
-          size="compact"
-          icon="chevron-back"
-          onPress={() => router.back()}
-        />
         <Text style={styles.headerTitle}>Profil</Text>
-        <View style={styles.headerSpacer} />
       </View>
 
       {/* ═══════════ SECTION PROFIL ═══════════ */}
@@ -295,14 +298,14 @@ export default function ProfileScreen() {
 
         <View style={[styles.settingRow, styles.settingRowFirst]}>
           <View style={styles.settingLeft}>
-            <Ionicons name="notifications-outline" size={24} color={colors.textSecondary} />
+            <BellIcon size={24} color={colors.textSecondary} />
             <Text style={styles.settingLabel}>Notifications push</Text>
           </View>
           <Switch
             value={notificationsEnabled}
             onValueChange={handleToggleNotifications}
             trackColor={{ false: colors.border, true: colors.dark900 }}
-            thumbColor="#FFFFFF"
+            thumbColor={colors.white}
           />
         </View>
 
@@ -311,10 +314,10 @@ export default function ProfileScreen() {
           onPress={() => setInviteVisible(true)}
         >
           <View style={styles.settingLeft}>
-            <Ionicons name="share-outline" size={24} color={colors.textSecondary} />
+            <ShareIcon size={24} color={colors.textSecondary} />
             <Text style={styles.settingLabel}>Inviter un ami</Text>
           </View>
-          <Ionicons name="chevron-forward" size={24} color={colors.textTertiary} />
+          <ChevronRightIcon size={24} color={colors.textTertiary} />
         </Pressable>
 
         <Pressable
@@ -322,10 +325,10 @@ export default function ProfileScreen() {
           onPress={handleReportIssue}
         >
           <View style={styles.settingLeft}>
-            <Ionicons name="warning-outline" size={24} color={colors.textSecondary} />
+            <TriangleAlertIcon size={24} color={colors.textSecondary} />
             <Text style={styles.settingLabel}>Signaler un problème</Text>
           </View>
-          <Ionicons name="chevron-forward" size={24} color={colors.textTertiary} />
+          <ChevronRightIcon size={24} color={colors.textTertiary} />
         </Pressable>
 
         <Pressable
@@ -334,10 +337,10 @@ export default function ProfileScreen() {
           disabled={isLoggingOut}
         >
           <View style={styles.settingLeft}>
-            <Ionicons name="log-out-outline" size={24} color={colors.textSecondary} />
+            <LogOutIcon size={24} color={colors.textSecondary} />
             <Text style={styles.settingLabel}>Se déconnecter</Text>
           </View>
-          <Ionicons name="chevron-forward" size={24} color={colors.textTertiary} />
+          <ChevronRightIcon size={24} color={colors.textTertiary} />
         </Pressable>
 
       </View>
@@ -350,10 +353,10 @@ export default function ProfileScreen() {
             onPress={() => router.push('/onboarding')}
           >
             <View style={styles.settingLeft}>
-              <Ionicons name="flask-outline" size={24} color={colors.textSecondary} />
+              <FlaskConicalIcon size={24} color={colors.textSecondary} />
               <Text style={styles.settingLabel}>Tester l'onboarding</Text>
             </View>
-            <Ionicons name="chevron-forward" size={24} color={colors.textTertiary} />
+            <ChevronRightIcon size={24} color={colors.textTertiary} />
           </Pressable>
         </View>
       )}
@@ -366,18 +369,18 @@ export default function ProfileScreen() {
           disabled={isDeletingAccount}
         >
           <View style={styles.settingLeft}>
-            <Ionicons name="trash-outline" size={24} color={colors.error} />
+            <Trash2Icon size={24} color={colors.error} />
             <Text style={[styles.settingLabel, styles.settingLabelDanger]}>Supprimer mon compte</Text>
           </View>
-          <Ionicons name="chevron-forward" size={24} color={colors.error} />
+          <ChevronRightIcon size={24} color={colors.error} />
         </Pressable>
       </View>
 
-      {/* Spacer — pousse le footer vers le bas */}
+      {/* Spacer — pousse le footer vers le bas quand le contenu est plus court que l'écran */}
       <View style={{ flex: 1 }} />
 
       {/* ═══════════ FOOTER ═══════════ */}
-      <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 34) + spacing['2xl'] }]}>
+      <View style={[styles.footer, { paddingBottom: tabBarInset + spacing['2xl'] }]}>
         <View style={styles.footerLinks}>
           <Pressable onPress={() => Linking.openURL('https://bbb.leasantos.me/terms')}>
             <Text style={styles.footerLink}>Conditions d'utilisations</Text>
@@ -388,6 +391,7 @@ export default function ProfileScreen() {
         </View>
         <Text style={styles.footerVersion}>bestie book battle v{APP_VERSION}</Text>
       </View>
+      </ScrollView>
 
       {(isLoggingOut || isDeletingAccount) && (
         <View style={styles.logoutOverlay}>
@@ -398,7 +402,6 @@ export default function ProfileScreen() {
       <EditProfileSheet visible={editProfileVisible} onClose={() => setEditProfileVisible(false)} />
       <InviteSheet visible={inviteVisible} onClose={() => setInviteVisible(false)} challenges={challenges} />
     </View>
-    </GestureDetector>
     </PageTransition>
   );
 }
@@ -420,8 +423,8 @@ function EditButton({ onPress }: { onPress: () => void }) {
         <LinearGradient
           colors={
             pressed
-              ? ['rgba(30,30,30,0.15)', 'rgba(0,0,0,0)', 'rgba(255,255,255,0)', 'rgba(255,255,255,0.6)']
-              : ['rgba(255,255,255,0.6)', 'rgba(255,255,255,0)', 'rgba(0,0,0,0)', 'rgba(30,30,30,0.15)']
+              ? [shadowAlpha(0.15), shadowAlpha(0), creamAlpha(0), creamAlpha(0.6)]
+              : [creamAlpha(0.6), creamAlpha(0), shadowAlpha(0), shadowAlpha(0.15)]
           }
           locations={[0, 0.3, 0.7, 1]}
           start={{ x: 0, y: 0 }}
@@ -429,7 +432,7 @@ function EditButton({ onPress }: { onPress: () => void }) {
           style={StyleSheet.absoluteFillObject}
         />
         <View style={styles.editButtonStroke} />
-        <IconPencil size={15} color={colors.textPrimary} strokeWidth={2.2} />
+        <PencilIcon size={15} color={colors.textPrimary} strokeWidth={2.2} />
         <Text style={styles.editButtonText}>Modifier</Text>
       </View>
     </Pressable>
@@ -529,7 +532,7 @@ function EditProfileSheet({ visible, onClose }: { visible: boolean; onClose: () 
               accessibilityRole="button"
               accessibilityLabel="Fermer"
             >
-              <Ionicons name="close" size={22} color={colors.textSubtle} />
+              <XIcon size={22} color={colors.textSubtle} />
             </Pressable>
           </View>
 
@@ -542,9 +545,9 @@ function EditProfileSheet({ visible, onClose }: { visible: boolean; onClose: () 
               <Image source={photoSource} style={sheetStyles.photoCenteredImg} contentFit="cover" />
               <View style={sheetStyles.photoCenteredIconOverlay}>
                 {isUploadingPhoto ? (
-                  <ActivityIndicator size="small" color="#FFF" />
+                  <ActivityIndicator size="small" color={colors.white} />
                 ) : (
-                  <IconRotateCcw size={28} color={colors.white} strokeWidth={2.5} />
+                  <RotateCcwIcon size={28} color={colors.white} strokeWidth={2.5} />
                 )}
               </View>
             </View>
@@ -628,7 +631,7 @@ function InviteSheet({ visible, onClose, challenges }: { visible: boolean; onClo
               accessibilityRole="button"
               accessibilityLabel="Fermer"
             >
-            <Ionicons name="close" size={22} color={colors.textSubtle} />
+            <XIcon size={22} color={colors.textSubtle} />
           </Pressable>
         </View>
 
@@ -655,7 +658,7 @@ function InviteSheet({ visible, onClose, challenges }: { visible: boolean; onClo
                         <Image source={{ uri: c.cover_url }} style={inviteStyles.bookCardCover} contentFit="cover" />
                       ) : (
                         <View style={inviteStyles.bookCardNoCover}>
-                          <Ionicons name="book-outline" size={24} color={colors.textTertiary} />
+                          <BookOpenIcon size={24} color={colors.textTertiary} />
                         </View>
                       )}
                     </Pressable>
@@ -670,7 +673,7 @@ function InviteSheet({ visible, onClose, challenges }: { visible: boolean; onClo
                   <Image source={{ uri: selectedChallenge.cover_url }} style={inviteStyles.singleBookCover} contentFit="cover" />
                 ) : (
                   <View style={[inviteStyles.singleBookCover, inviteStyles.singleBookNoCover]}>
-                    <Ionicons name="book-outline" size={28} color={colors.textTertiary} />
+                    <BookOpenIcon size={28} color={colors.textTertiary} />
                   </View>
                 )}
                 <View style={{ flex: 1 }}>
@@ -688,7 +691,7 @@ function InviteSheet({ visible, onClose, challenges }: { visible: boolean; onClo
                 <View>
                   <Pressable style={inviteStyles.codeBox} onPress={handleCopy}>
                     <Text style={inviteStyles.codeText}>{selectedChallenge.invite_code}</Text>
-                    <Ionicons name="copy-outline" size={20} color={colors.textTertiary} />
+                    <CopyIcon size={20} color={colors.textTertiary} />
                   </Pressable>
                   <RNAnimated.View style={[inviteStyles.copyToast, { opacity: copyToastOpacity }]} pointerEvents="none">
                     <Text style={inviteStyles.copyToastText}>Copié !</Text>
@@ -696,7 +699,7 @@ function InviteSheet({ visible, onClose, challenges }: { visible: boolean; onClo
                 </View>
 
                 <View style={{ marginTop: spacing.lg }}>
-                  <Button3D variant="primary" onPress={handleShare} icon="share-outline" iconPosition="left">
+                  <Button3D variant="primary" onPress={handleShare} icon={ShareIcon} iconPosition="left">
                     Inviter à participer
                   </Button3D>
                 </View>
@@ -716,12 +719,14 @@ function InviteSheet({ visible, onClose, challenges }: { visible: boolean; onClo
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: colors.bgLight,
   },
   backgroundTexture: {
     ...StyleSheet.absoluteFillObject,
     opacity: 0.05,
   },
+  scroll: { flex: 1 },
+  scrollContent: { flexGrow: 1 },
 
   // ─── Header ──────────────────────────────────────────────────────────────────
   header: {
@@ -733,12 +738,11 @@ const styles = StyleSheet.create({
   headerTitle: {
     flex: 1,
     textAlign: 'center',
-    fontFamily: 'Rokkitt_400Regular',
-    fontSize: 24,
-    lineHeight: 32,
+    fontFamily: fonts.display,
+    fontSize: 22,
+    lineHeight: 28,
     color: colors.textPrimary,
   },
-  headerSpacer: { width: 40 },
 
   // ─── Section profil ──────────────────────────────────────────────────────────
   profileSection: {
@@ -758,7 +762,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.3)',
+    borderColor: creamAlpha(0.3),
   },
   photo: { width: 90, height: 90 },
   profileInfo: {
@@ -766,13 +770,13 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   profileName: {
-    fontFamily: 'Rokkitt_700Bold',
-    fontSize: 30,
-    lineHeight: 38,
+    fontFamily: fonts.display,
+    fontSize: 26,
+    lineHeight: 32,
     color: colors.textPrimary,
   },
   profileEmail: {
-    fontFamily: 'WorkSans_400Regular',
+    fontFamily: fonts.body,
     fontSize: 13,
     lineHeight: 18,
     color: colors.textTertiary,
@@ -782,7 +786,7 @@ const styles = StyleSheet.create({
   editButtonShadow: {
     alignSelf: 'flex-start',
     borderRadius: 12,
-    shadowColor: '#000',
+    shadowColor: colors.black,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.06,
     shadowRadius: 4,
@@ -794,7 +798,7 @@ const styles = StyleSheet.create({
     gap: 6,
     paddingHorizontal: spacing.lg,
     paddingVertical: 10,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: colors.bgLight,
     borderRadius: 12,
     overflow: 'hidden',
   },
@@ -802,10 +806,10 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: 'rgba(0,0,0,0.08)',
+    borderColor: inkAlpha(0.08),
   },
   editButtonText: {
-    fontFamily: 'WorkSans_600SemiBold',
+    fontFamily: fonts.bodySemiBold,
     fontSize: 14,
     color: colors.textPrimary,
   },
@@ -835,7 +839,7 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   settingLabel: {
-    fontFamily: 'WorkSans_600SemiBold',
+    fontFamily: fonts.bodySemiBold,
     fontSize: 16,
     lineHeight: 24,
     color: colors.textSecondary,
@@ -853,14 +857,14 @@ const styles = StyleSheet.create({
     gap: 30,
   },
   footerLink: {
-    fontFamily: 'WorkSans_500Medium',
+    fontFamily: fonts.bodyMedium,
     fontSize: 12,
     lineHeight: 18,
     color: colors.textPlaceholder,
     textDecorationLine: 'underline',
   },
   footerVersion: {
-    fontFamily: 'WorkSans_500Medium',
+    fontFamily: fonts.bodyMedium,
     fontSize: 12,
     lineHeight: 18,
     color: colors.textPlaceholder,
@@ -869,7 +873,7 @@ const styles = StyleSheet.create({
   // ─── Overlay déconnexion ─────────────────────────────────────────────────────
   logoutOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(255,255,255,0.75)',
+    backgroundColor: creamAlpha(0.75),
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -892,22 +896,22 @@ const sheetStyles = StyleSheet.create({
   },
   title: {
     flex: 1,
-    fontFamily: 'Rokkitt_500Medium',
-    fontSize: fontSize['2xl'],
+    fontFamily: fonts.display,
+    fontSize: 22,
     color: colors.textPrimary,
-    letterSpacing: -0.72,
+    letterSpacing: -0.2,
     lineHeight: 44,
   },
   closeBtn: { padding: 4 },
   label: {
-    fontFamily: 'WorkSans_600SemiBold',
+    fontFamily: fonts.bodySemiBold,
     fontSize: fontSize.sm,
     color: colors.textTertiary,
     lineHeight: 20,
     marginBottom: spacing.sm,
   },
   input: {
-    fontFamily: 'WorkSans_400Regular',
+    fontFamily: fonts.body,
     fontSize: fontSize.md,
     color: colors.textPrimary,
     backgroundColor: colors.white,
@@ -916,7 +920,6 @@ const sheetStyles = StyleSheet.create({
     borderRadius: borderRadius.lg,
     paddingHorizontal: spacing['2xl'],
     paddingVertical: spacing.xl,
-    letterSpacing: -0.3,
     textAlignVertical: 'center',
     marginBottom: spacing.lg,
     ...shadows.xs,
@@ -937,13 +940,13 @@ const sheetStyles = StyleSheet.create({
   },
   photoCenteredIconOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.35)',
+    backgroundColor: shadowAlpha(0.35),
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 20,
   },
   emptyText: {
-    fontFamily: 'WorkSans_400Regular',
+    fontFamily: fonts.body,
     fontSize: fontSize.md,
     color: colors.textTertiary,
     textAlign: 'center',
@@ -1003,13 +1006,13 @@ const inviteStyles = StyleSheet.create({
     alignItems: 'center',
   },
   singleBookTitle: {
-    fontFamily: 'WorkSans_600SemiBold',
-    fontSize: fontSize.md,
+    fontFamily: fonts.display,
+    fontSize: 18,
     color: colors.textPrimary,
     marginBottom: 4,
   },
   singleBookAuthor: {
-    fontFamily: 'WorkSans_400Regular',
+    fontFamily: fonts.body,
     fontSize: fontSize.sm,
     color: colors.textTertiary,
   },
@@ -1026,7 +1029,7 @@ const inviteStyles = StyleSheet.create({
     ...shadows.xs,
   },
   codeText: {
-    fontFamily: 'WorkSans_600SemiBold',
+    fontFamily: fonts.bodySemiBold,
     fontSize: 28,
     color: colors.textPrimary,
     letterSpacing: 4,
@@ -1043,7 +1046,7 @@ const inviteStyles = StyleSheet.create({
     borderRadius: 9999,
   },
   copyToastText: {
-    fontFamily: 'WorkSans_600SemiBold',
+    fontFamily: fonts.bodySemiBold,
     fontSize: fontSize.sm,
     color: colors.white,
   },

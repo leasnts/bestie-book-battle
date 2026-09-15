@@ -19,7 +19,6 @@
  * du groupe (pages visées + deadline + anneau de progression).
  */
 
-import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
@@ -37,9 +36,9 @@ import {
   RankedParticipant,
   selectVisibleRows,
 } from '../../utils/leaderboard';
-import { borderRadius, colors, motion, spacing } from '../../utils/constants';
-import IconFlame from '../icons/IconFlame';
+import { borderRadius, colors, fonts, inkAlpha, motion, spacing } from '../../utils/constants';
 import PressableScale from './PressableScale';
+import { ChevronRightIcon, FlameIcon } from 'lucide-react-native';
 
 // ─── Props ─────────────────────────────────────────────────────────
 
@@ -209,7 +208,7 @@ function ParticipantRow({
                 participant.streakAtRisk && styles.streakBadgeAtRisk,
               ]}
             >
-              <IconFlame size={12} color={colors.textTertiary} />
+              <FlameIcon size={12} color={colors.textTertiary} fill={colors.textTertiary} />
               <Text style={styles.streakText}>{participant.streak}</Text>
             </View>
           )}
@@ -320,7 +319,7 @@ export default function ProgressCard({
           <View style={styles.seeAllCount}>
             <Text style={styles.seeAllCountText}>{ranked.length}</Text>
           </View>
-          <Ionicons name="chevron-forward" size={16} color={colors.textTertiary} />
+          <ChevronRightIcon size={16} color={colors.textTertiary} />
         </PressableScale>
       )}
 
@@ -351,7 +350,7 @@ export default function ProgressCard({
                     cx={22}
                     cy={22}
                     r={20}
-                    stroke="rgba(0,0,0,0.08)"
+                    stroke={inkAlpha(0.08)}
                     strokeWidth={3}
                     fill="none"
                   />
@@ -375,7 +374,7 @@ export default function ProgressCard({
                 </View>
               </View>
 
-              <Ionicons name="chevron-forward" size={24} color={colors.textSecondary} />
+              <ChevronRightIcon size={24} color={colors.textSecondary} />
             </View>
           </PressableScale>
         </>
@@ -412,7 +411,7 @@ const styles = StyleSheet.create({
     height: 0,
     borderTopWidth: 1,
     borderStyle: 'dashed',
-    borderColor: 'rgba(24,29,39,0.18)',
+    borderColor: inkAlpha(0.18),
     width: '100%',
   },
 
@@ -425,12 +424,12 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md,
     paddingHorizontal: spacing.lg,
     borderRadius: borderRadius.md,
-    backgroundColor: 'rgba(24,29,39,0.05)',
+    backgroundColor: inkAlpha(0.05),
     borderWidth: 1,
-    borderColor: 'rgba(24,29,39,0.06)',
+    borderColor: inkAlpha(0.06),
   },
   seeAllText: {
-    fontFamily: 'WorkSans_600SemiBold',
+    fontFamily: fonts.bodySemiBold,
     fontSize: 14,
     color: colors.textSecondary,
   },
@@ -440,12 +439,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
     paddingVertical: 1,
     borderRadius: borderRadius.full,
-    backgroundColor: 'rgba(24,29,39,0.1)',
+    backgroundColor: inkAlpha(0.1),
     alignItems: 'center',
     justifyContent: 'center',
   },
   seeAllCountText: {
-    fontFamily: 'WorkSans_600SemiBold',
+    fontFamily: fonts.bodySemiBold,
     fontSize: 12,
     color: colors.textTertiary,
   },
@@ -478,14 +477,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   goalLabel: {
-    fontFamily: 'WorkSans_500Medium',
+    fontFamily: fonts.bodyMedium,
     fontSize: 14,
     color: colors.textTertiary,
   },
   goalValue: {
-    fontFamily: 'WorkSans_700Bold',
-    fontSize: 16,
-    fontWeight: '700',
+    fontFamily: fonts.display,
+    fontSize: 18,
     color: colors.textPrimary,
   },
   goalRight: {
@@ -506,8 +504,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   progressPercentageText: {
-    fontFamily: 'Rokkitt_400Regular',
-    fontSize: 10,
+    fontFamily: fonts.bodyBold,
+    fontSize: 11,
     color: colors.textTertiary,
   },
 
@@ -537,8 +535,8 @@ const styles = StyleSheet.create({
 
   /** Rang affiché uniquement sur la ligne épinglée (#7) */
   rankBadge: {
-    fontFamily: 'Rokkitt_600SemiBold',
-    fontSize: 14,
+    fontFamily: fonts.display,
+    fontSize: 13,
     color: colors.textPlaceholder,
     minWidth: 24,
   },
@@ -571,19 +569,19 @@ const styles = StyleSheet.create({
 
   // ═══ NOM ═══
   userName: {
-    fontFamily: 'WorkSans_600SemiBold',
+    fontFamily: fonts.bodySemiBold,
     fontSize: 18,
     color: colors.textPrimary,
     flexShrink: 1,
   },
   userNameMe: {
-    fontFamily: 'WorkSans_700Bold',
+    fontFamily: fonts.bodyExtraBold,
   },
 
   // ═══ SCORE ═══
   scoreNumber: {
-    fontFamily: 'Rokkitt_600SemiBold',
-    fontSize: 24,
+    fontFamily: fonts.display,
+    fontSize: 21,
     color: colors.textPrimary,
     textAlign: 'right',
   },
@@ -603,10 +601,10 @@ const styles = StyleSheet.create({
   streakBadgeAtRisk: {
     opacity: 0.6,
     borderStyle: 'dashed',
-    borderColor: 'rgba(0,0,0,0.3)',
+    borderColor: inkAlpha(0.3),
   },
   streakText: {
-    fontFamily: 'WorkSans_600SemiBold',
+    fontFamily: fonts.bodySemiBold,
     fontSize: 12,
     color: colors.textTertiary,
     textAlign: 'center',

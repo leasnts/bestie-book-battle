@@ -22,10 +22,10 @@ import { useAuthStore } from '../../stores/authStore';
 import { useProjectStore } from '../../stores/projectStore';
 import {
   colors,
-  fontSize,
-  fontWeight,
+  fonts,
   spacing,
 } from '../../utils/constants';
+import AppleLogo from '../../components/brand/AppleLogo';
 
 // Asset : image de fond qui remplit tout l'écran (graphique BB + couvertures)
 const HERO_IMAGE = require('../../assets/images/5189b4a4ab2e5da08302bc27b5d740770b30721f.png');
@@ -139,7 +139,7 @@ export default function WelcomeScreen() {
           onPress={handleAppleLogin}
           variant="primary"
           loading={isLoading}
-          icon="logo-apple"
+          iconComponent={<AppleLogo size={22} color={colors.white} />}
           iconPosition="left"
           style={{ width: screenWidth - 48 }}
         >
@@ -172,16 +172,14 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
   },
   logo: {
-    fontFamily: 'Rokkitt_500Medium',
-    fontSize: fontSize['3xl'],
-    fontWeight: fontWeight.medium as any,
+    fontFamily: fonts.displayRegular,
+    fontSize: 32,
     color: colors.textPrimary,
-    letterSpacing: 3, // espacement généreux entre les lettres
+    letterSpacing: 2,
     textAlign: 'center',
   },
   logoBold: {
-    fontFamily: 'Rokkitt_700Bold',
-    fontWeight: fontWeight.bold as any,
+    fontFamily: fonts.displayBold,
     color: colors.textPrimary, // gris foncé/noir pour les "b"
   },
 });

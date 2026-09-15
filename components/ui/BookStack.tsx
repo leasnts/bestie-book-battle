@@ -18,7 +18,6 @@
  * Ce n'est PAS un modal : c'est un composant inline qui alterne entre 2 rendus.
  */
 
-import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import * as Clipboard from 'expo-clipboard';
 import { Image } from 'expo-image';
@@ -46,16 +45,11 @@ import Animated, {
 } from 'react-native-reanimated';
 import Svg, { Path } from 'react-native-svg';
 import { Challenge, ParticipantWithProgress } from '../../types/supabase';
-import { borderRadius, colors, spacing } from '../../utils/constants';
+import { borderRadius, colors, creamAlpha, fonts, inkAlpha, shadowAlpha, spacing } from '../../utils/constants';
 import Button3D from '../Button3D';
 import PopEyes from '../PopEyes';
-import IconCalendar from '../icons/IconCalendar';
-import IconChevronRight from '../icons/IconChevronRight';
-import IconCopy from '../icons/IconCopy';
-import IconPencil from '../icons/IconPencil';
-import IconTrash from '../icons/IconTrash';
-import IconUserPlus from '../icons/IconUserPlus';
 import { ProgressBar } from './ProgressBar';
+import { CalendarIcon, ChevronRightIcon, CopyIcon, EllipsisVerticalIcon, FlagIcon, PencilIcon, PlusIcon, ShareIcon, Trash2Icon, UserPlusIcon, XIcon } from 'lucide-react-native';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -90,7 +84,7 @@ const BookmarkCheckBadge = () => (
       {/* Checkmark blanc centré dans la partie haute du ruban */}
       <Path
         d="M3.5 6.5L6 9L10.5 4.5"
-        stroke="#FFFFFF"
+        stroke={colors.white}
         strokeWidth={1.5}
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -225,7 +219,8 @@ const SCREW_DATA = Array.from({ length: SCREW_SEGMENTS }, (_, i) => {
   const gray = screwGray(start);
   return {
     d: screwSlice(5, 5, 5, start, end),
-    fill: `rgb(${gray},${gray},${gray})`,
+    // Métal légèrement doré plutôt qu'acier gris, pour rester dans la palette chaude
+    fill: `rgb(${gray},${Math.round(gray * 0.95)},${Math.round(gray * 0.88)})`,
   };
 });
 
@@ -490,7 +485,7 @@ export default function BookStack({
             <Button3D
               onPress={onAddBook}
               variant="primary"
-              icon="add"
+              icon={PlusIcon}
               iconOnly
               size="compact"
             />
@@ -618,7 +613,7 @@ export default function BookStack({
               accessibilityRole="button"
               accessibilityLabel="Actions du livre"
             >
-              <Ionicons name="ellipsis-vertical" size={20} color={colors.textSecondary} />
+              <EllipsisVerticalIcon size={20} color={colors.textSecondary} />
             </Pressable>
           </View>
 
@@ -638,7 +633,7 @@ export default function BookStack({
                   percentage={progressPercentage}
                   height={8}
                   color={colors.dark900}
-                  backgroundColor="rgba(0,0,0,0.05)"
+                  backgroundColor={inkAlpha(0.05)}
                   showPercentage={false}
                   animated
                 />
@@ -698,7 +693,7 @@ export default function BookStack({
                 accessibilityRole="button"
                 accessibilityLabel="Fermer"
               >
-                <Ionicons name="close" size={22} color={colors.textSubtle} />
+                <XIcon size={22} color={colors.textSubtle} />
               </Pressable>
             </View>
 
@@ -715,12 +710,12 @@ export default function BookStack({
                 accessibilityRole="button"
               >
                 <View style={styles.sheetActionIcon}>
-                  <IconUserPlus size={20} color={colors.textPrimary} />
+                  <UserPlusIcon size={20} color={colors.textPrimary} />
                 </View>
                 <View style={styles.sheetActionTexts}>
                   <Text style={styles.sheetActionTitle}>Inviter un ami</Text>
                 </View>
-                <IconChevronRight size={18} color={colors.textSubtle} />
+                <ChevronRightIcon size={18} color={colors.textSubtle} />
               </Pressable>
 
               <Pressable
@@ -732,12 +727,12 @@ export default function BookStack({
                 accessibilityRole="button"
               >
                 <View style={styles.sheetActionIcon}>
-                  <IconPencil size={20} color={colors.textPrimary} />
+                  <PencilIcon size={20} color={colors.textPrimary} />
                 </View>
                 <View style={styles.sheetActionTexts}>
                   <Text style={styles.sheetActionTitle}>Modifier le livre</Text>
                 </View>
-                <IconChevronRight size={18} color={colors.textSubtle} />
+                <ChevronRightIcon size={18} color={colors.textSubtle} />
               </Pressable>
 
               <Pressable
@@ -749,12 +744,12 @@ export default function BookStack({
                 accessibilityRole="button"
               >
                 <View style={styles.sheetActionIcon}>
-                  <IconCalendar size={20} color={colors.textPrimary} />
+                  <CalendarIcon size={20} color={colors.textPrimary} />
                 </View>
                 <View style={styles.sheetActionTexts}>
                   <Text style={styles.sheetActionTitle}>Modifier la deadline</Text>
                 </View>
-                <IconChevronRight size={18} color={colors.textSubtle} />
+                <ChevronRightIcon size={18} color={colors.textSubtle} />
               </Pressable>
 
               <Pressable
@@ -766,12 +761,12 @@ export default function BookStack({
                 accessibilityRole="button"
               >
                 <View style={styles.sheetActionIcon}>
-                  <Ionicons name="flag-outline" size={20} color={colors.textPrimary} />
+                  <FlagIcon size={20} color={colors.textPrimary} />
                 </View>
                 <View style={styles.sheetActionTexts}>
                   <Text style={styles.sheetActionTitle}>Définir un objectif intermédiaire</Text>
                 </View>
-                <IconChevronRight size={18} color={colors.textSubtle} />
+                <ChevronRightIcon size={18} color={colors.textSubtle} />
               </Pressable>
             </View>
 
@@ -788,7 +783,7 @@ export default function BookStack({
                 accessibilityRole="button"
               >
                 <View style={[styles.sheetActionIcon, styles.sheetActionIconDanger]}>
-                  <IconTrash size={20} color={colors.error} />
+                  <Trash2Icon size={20} color={colors.error} />
                 </View>
                 <View style={styles.sheetActionTexts}>
                   <Text style={[styles.sheetActionTitle, styles.sheetActionDanger]}>
@@ -833,7 +828,7 @@ export default function BookStack({
                 accessibilityRole="button"
                 accessibilityLabel="Fermer"
               >
-                <Ionicons name="close" size={22} color={colors.textSubtle} />
+                <XIcon size={22} color={colors.textSubtle} />
               </Pressable>
             </View>
 
@@ -887,7 +882,7 @@ export default function BookStack({
                     accessibilityRole="button"
                     accessibilityLabel="Copier le code d'invitation"
                   >
-                    <IconCopy size={20} color={colors.textPlaceholder} />
+                    <CopyIcon size={20} color={colors.textPlaceholder} />
                   </Pressable>
                 </View>
               </View>
@@ -903,7 +898,7 @@ export default function BookStack({
               <Button3D
                 onPress={handleShareInvite}
                 variant="primary"
-                icon="share-outline"
+                icon={ShareIcon}
                 iconPosition="left"
                 style={{ width: '100%' }}
               >
@@ -963,7 +958,7 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
     borderRadius: 2,
-    shadowColor: '#000',
+    shadowColor: colors.black,
     shadowOffset: { width: -4, height: 0 },
     shadowOpacity: 0.26,
     shadowRadius: 4,
@@ -979,7 +974,7 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
     borderRadius: 2,
-    shadowColor: '#000',
+    shadowColor: colors.black,
     shadowOffset: { width: -4, height: 0 },
     shadowOpacity: 0.26,
     shadowRadius: 4,
@@ -1051,7 +1046,7 @@ const styles = StyleSheet.create({
     minWidth: 0,
   },
   progressBarPercentage: {
-    fontFamily: 'WorkSans_400Regular',
+    fontFamily: fonts.body,
     fontSize: 14,
     color: colors.textPlaceholder,
   },
@@ -1064,26 +1059,27 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   author: {
-    fontFamily: 'WorkSans_400Regular',
+    fontFamily: fonts.body,
     fontSize: 16,
     color: colors.textTertiary,
   },
   title: {
-    fontFamily: 'WorkSans_600SemiBold',
-    fontSize: 18,
+    fontFamily: fonts.display,
+    lineHeight: 26,
+    fontSize: 21,
     color: colors.textPrimary,
   },
   pagesBadge: {
-    backgroundColor: 'rgba(0,0,0,0.08)',
+    backgroundColor: inkAlpha(0.08),
     borderWidth: 1,
-    borderColor: 'rgba(0,0,0,0.08)',
+    borderColor: inkAlpha(0.08),
     borderRadius: 8,
     paddingHorizontal: 8,
     paddingVertical: 2,
     alignSelf: 'flex-start',
   },
   pagesText: {
-    fontFamily: 'WorkSans_500Medium',
+    fontFamily: fonts.bodyMedium,
     fontSize: 14,
     color: colors.textPrimary,
     textAlign: 'center',
@@ -1092,16 +1088,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: 'rgba(0,0,0,0.08)',
+    backgroundColor: inkAlpha(0.08),
     borderWidth: 1,
-    borderColor: 'rgba(0,0,0,0.08)',
+    borderColor: inkAlpha(0.08),
     borderRadius: 8,
     paddingHorizontal: 8,
     paddingVertical: 2,
     alignSelf: 'flex-start',
   },
   deadlineText: {
-    fontFamily: 'WorkSans_500Medium',
+    fontFamily: fonts.bodyMedium,
     fontSize: 14,
     color: colors.textPrimary,
   },
@@ -1111,7 +1107,7 @@ const styles = StyleSheet.create({
   // Overlay sombre couvrant tout l'écran
   sheetOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.45)',
+    backgroundColor: shadowAlpha(0.45),
   },
   // Zone pressable pour fermer le sheet en touchant l'overlay
   sheetBackdrop: {
@@ -1128,7 +1124,7 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 24,
     paddingBottom: 32, // espace pour le home indicator
     // Shadow vers le haut
-    shadowColor: '#000',
+    shadowColor: colors.black,
     shadowOffset: { width: 0, height: -8 },
     shadowOpacity: 0.12,
     shadowRadius: 24,
@@ -1160,12 +1156,12 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   sheetTitle: {
-    fontFamily: 'WorkSans_600SemiBold',
+    fontFamily: fonts.bodySemiBold,
     fontSize: 16,
     color: colors.textPrimary,
   },
   sheetSubtitle: {
-    fontFamily: 'WorkSans_400Regular',
+    fontFamily: fonts.body,
     fontSize: 13,
     color: colors.textTertiary,
   },
@@ -1188,7 +1184,7 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   sheetActionPressed: {
-    backgroundColor: 'rgba(0,0,0,0.04)',
+    backgroundColor: inkAlpha(0.04),
   },
   // Icône dans un cercle léger
   sheetActionIcon: {
@@ -1208,12 +1204,12 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   sheetActionTitle: {
-    fontFamily: 'WorkSans_500Medium',
+    fontFamily: fonts.bodyMedium,
     fontSize: 15,
     color: colors.textPrimary,
   },
   sheetActionDesc: {
-    fontFamily: 'WorkSans_400Regular',
+    fontFamily: fonts.body,
     fontSize: 12,
     color: colors.textTertiary,
   },
@@ -1269,13 +1265,13 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   inviteAuthor: {
-    fontFamily: 'WorkSans_400Regular',
+    fontFamily: fonts.body,
     fontSize: 14,
     color: colors.textSubtle,
   },
   inviteBookTitle: {
-    fontFamily: 'WorkSans_600SemiBold',
-    fontSize: 16,
+    fontFamily: fonts.display,
+    fontSize: 18,
     color: colors.white,
   },
   invitePagesBadge: {
@@ -1289,7 +1285,7 @@ const styles = StyleSheet.create({
     marginTop: spacing.xs,
   },
   invitePagesText: {
-    fontFamily: 'WorkSans_400Regular',
+    fontFamily: fonts.body,
     fontSize: 12,
     color: colors.white,
   },
@@ -1311,7 +1307,7 @@ const styles = StyleSheet.create({
     elevation: 1,
   },
   inviteCodeLabel: {
-    fontFamily: 'WorkSans_400Regular',
+    fontFamily: fonts.body,
     fontSize: 14,
     color: colors.textPlaceholder,
   },
@@ -1321,10 +1317,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   inviteCodeText: {
-    fontFamily: 'Rokkitt_500Medium',
-    fontSize: 36,
+    fontFamily: fonts.display,
+    fontSize: 30,
     color: colors.textPrimary,
-    letterSpacing: -0.72,
   },
   inviteCopyButton: {
     padding: spacing.sm,
@@ -1370,7 +1365,7 @@ const styles = StyleSheet.create({
   },
   shelfCoverShadow: {
     borderRadius: 2,
-    shadowColor: '#000',
+    shadowColor: colors.black,
     shadowOffset: { width: -4, height: 0 },
     shadowOpacity: 0.26,
     shadowRadius: 4,
@@ -1390,7 +1385,7 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
     position: 'relative',
-    shadowColor: '#000',
+    shadowColor: colors.black,
     shadowOffset: { width: -4, height: 0 },
     shadowOpacity: 0.26,
     shadowRadius: 4,
@@ -1423,10 +1418,10 @@ const styles = StyleSheet.create({
     borderLeftWidth: 2,
     borderBottomWidth: 2,
     borderRightWidth: 1,
-    borderTopColor: 'rgba(255,255,255,0.20)',
-    borderLeftColor: 'rgba(255,255,255,0.15)',
-    borderBottomColor: 'rgba(0,0,0,0.35)',
-    borderRightColor: 'rgba(0,0,0,0.20)',
+    borderTopColor: creamAlpha(0.2),
+    borderLeftColor: creamAlpha(0.15),
+    borderBottomColor: shadowAlpha(0.35),
+    borderRightColor: shadowAlpha(0.2),
   },
   // Cover terminée — remplit le parent (fermé = 100% du wrapper, étagère = 100% du conteneur COVER_W×COVER_H)
   shelfCoverDone: {
@@ -1465,13 +1460,13 @@ const styles = StyleSheet.create({
     zIndex: 2,                    // AU-DESSUS des covers
   },
 
-  // Contenu de la barre d'étagère — BlurView avec fond noir 30% d'opacité
-  // L'effet de blur crée une transparence vitrée plutôt qu'un noir plein.
+  // Contenu de la barre d'étagère — BlurView avec fond marron sombre 30% d'opacité
+  // L'effet de blur crée une transparence vitrée plutôt qu'un aplat sombre.
   shelfBar: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.3)',
+    backgroundColor: shadowAlpha(0.3),
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.4)',
+    borderColor: creamAlpha(0.4),
     borderRadius: 10,
     flexDirection: 'row',
     alignItems: 'center',

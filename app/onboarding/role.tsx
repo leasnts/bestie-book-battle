@@ -26,8 +26,9 @@ import Animated, {
   withTiming,
   interpolate,
 } from 'react-native-reanimated';
-import { colors, fontSize, fontWeight, spacing, borderRadius, shadows } from '../../utils/constants';
+import { borderRadius, colors, fonts, fontSize, shadows, spacing } from '../../utils/constants';
 import Button3D from '../../components/Button3D';
+import { ChevronLeftIcon, XIcon } from 'lucide-react-native';
 
 // Asset : texture de fond
 const TEXTURE_IMAGE = require('../../assets/images/61ea1e0c638b5b9c8100383a37a5b488848db623.png');
@@ -118,7 +119,7 @@ export default function OnboardingRoleScreen() {
                 <View style={[styles.header, styles.headerRow]}>
                     <Button3D
                         variant="secondary"
-                        icon="chevron-back"
+                        icon={ChevronLeftIcon}
                         iconOnly
                         size="compact"
                         onPress={() => router.back()}
@@ -126,7 +127,7 @@ export default function OnboardingRoleScreen() {
                     {addChallenge === 'true' && (
                         <Button3D
                             variant="primary"
-                            icon="close"
+                            icon={XIcon}
                             iconOnly
                             size="compact"
                             onPress={() => router.navigate('/(tabs)')}
@@ -257,12 +258,11 @@ const styles = StyleSheet.create({
         gap: spacing['4xl'], // 48px entre titre et cartes
     },
     title: {
-        fontFamily: 'Rokkitt_500Medium',
-        fontSize: fontSize['3xl'], // 36px
-        fontWeight: fontWeight.medium as any,
+        fontFamily: fonts.display,
+        fontSize: 30,
         color: colors.textPrimary,
-        letterSpacing: -0.72,
-        lineHeight: 44,
+        letterSpacing: -0.3,
+        lineHeight: 36,
     },
     cardsContainer: {
         gap: spacing.lg, // 16px entre les deux cartes
@@ -280,7 +280,7 @@ const styles = StyleSheet.create({
         ...shadows.cardSelected,
     },
     cardInactive: {
-        backgroundColor: colors.bgSecondary, // #fafafa
+        backgroundColor: colors.bgSecondary,
         borderColor: colors.alphaBlack10,
     },
     cardIllustration: {
@@ -292,19 +292,17 @@ const styles = StyleSheet.create({
         gap: spacing.xs, // 4px
     },
     cardTitle: {
-        fontFamily: 'Rokkitt_700Bold',
-        fontSize: fontSize['2xl'], // 24px
-        fontWeight: fontWeight.bold as any,
+        fontFamily: fonts.display,
+        fontSize: 21,
         color: colors.textPrimary,
-        lineHeight: 32,
+        lineHeight: 26,
     },
     cardTitleInactive: {
         color: colors.textPlaceholder,
     },
     cardDescription: {
-        fontFamily: 'WorkSans_500Medium',
+        fontFamily: fonts.bodyMedium,
         fontSize: fontSize.sm, // 14px
-        fontWeight: fontWeight.medium as any,
         color: colors.textTertiary,
         lineHeight: 20,
     },

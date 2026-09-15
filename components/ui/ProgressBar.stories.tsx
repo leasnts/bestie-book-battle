@@ -8,7 +8,7 @@ import type { Meta, StoryObj } from '@storybook/react';
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { ProgressBar } from './ProgressBar';
-import { colors } from '../../utils/constants';
+import { colors, fonts } from '../../utils/constants';
 
 const meta: Meta<typeof ProgressBar> = {
   title: 'UI/ProgressBar',
@@ -154,9 +154,9 @@ export const NoAnimation: Story = {
 
 const styles = StyleSheet.create({
   label: {
-    fontFamily: 'WorkSans_500Medium',
+    fontFamily: fonts.bodyMedium,
     fontSize: 12,
-    color: '#717680',
+    color: colors.textPlaceholder,
     marginBottom: 4,
   },
 });

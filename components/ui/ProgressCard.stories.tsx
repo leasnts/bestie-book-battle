@@ -16,6 +16,7 @@ import type { Meta, StoryObj } from '@storybook/react';
 import React from 'react';
 import { View } from 'react-native';
 import ProgressCard from './ProgressCard';
+import { colors } from '../../utils/constants';
 
 // --- MOCK DATA ---
 
@@ -71,10 +72,10 @@ const meta: Meta<typeof ProgressCard> = {
   decorators: [
     (Story) => (
       <View style={{
-        backgroundColor: '#fff',
+        backgroundColor: colors.white,
         borderRadius: 20,
         padding: 16,
-        shadowColor: '#000',
+        shadowColor: colors.black,
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.05,
         shadowRadius: 8,

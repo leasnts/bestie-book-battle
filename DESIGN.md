@@ -1,20 +1,20 @@
 ---
 name: Bestie Book Battle
-description: Le carnet de lecture partagé — encre noire sur papier, animé par des réactions taquines
+description: Le carnet de lecture partagé — encre noyer sur papier crème, animé par des réactions taquines
 colors:
-  ink: "#181d27"
-  ink-deep: "#0a0d12"
-  ink-panel: "#13161b"
-  paper: "#f5f5f5"
-  surface: "#ffffff"
-  surface-raised: "#fafafa"
-  text-primary: "#181d27"
-  text-secondary: "#414651"
-  text-tertiary: "#535862"
-  text-placeholder: "#696e78"
-  text-subtle: "#d5d7da"
-  rule: "#d5d7da"
-  rule-light: "#e9eaeb"
+  ink: "#33231a"
+  ink-deep: "#1e140e"
+  ink-panel: "#2a1c14"
+  paper: "#f6efe6"
+  surface: "#fffbf5"
+  surface-raised: "#fbf6ef"
+  text-primary: "#33231a"
+  text-secondary: "#5a4536"
+  text-tertiary: "#6b5546"
+  text-placeholder: "#7a6453"
+  text-subtle: "#e2d7ca"
+  rule: "#e2d7ca"
+  rule-light: "#eee6db"
   crown: "#FCD34D"
   crown-deep: "#F59E0B"
   streak: "#F97316"
@@ -22,39 +22,48 @@ colors:
   warning: "#F59E0B"
   danger: "#EF4444"
 typography:
-  display:
-    fontFamily: "Rokkitt_700Bold, Georgia, serif"
-    fontSize: "36px"
-    fontWeight: 700
-    lineHeight: "44px"
-    letterSpacing: "-0.72px"
-  headline:
-    fontFamily: "Rokkitt_700Bold, Georgia, serif"
-    fontSize: "24px"
-    fontWeight: 700
-    lineHeight: "30px"
-  score:
-    fontFamily: "Rokkitt_600SemiBold, Georgia, serif"
-    fontSize: "24px"
+  hero:
+    fontFamily: "FrauncesSoftDisplay_600SemiBold, Georgia, serif"
+    fontSize: "108px"
     fontWeight: 600
-    lineHeight: "32px"
+    letterSpacing: "-1.6px"
+  display:
+    fontFamily: "FrauncesSoft_600SemiBold, Georgia, serif"
+    fontSize: "30px"
+    fontWeight: 600
+    lineHeight: "36px"
+    letterSpacing: "-0.3px"
+  headline:
+    fontFamily: "FrauncesSoft_600SemiBold, Georgia, serif"
+    fontSize: "22px"
+    fontWeight: 600
+    lineHeight: "28px"
+  score:
+    fontFamily: "FrauncesSoft_600SemiBold, Georgia, serif"
+    fontSize: "21px"
+    fontWeight: 600
   title:
-    fontFamily: "WorkSans_600SemiBold, system-ui, sans-serif"
+    fontFamily: "Nunito_600SemiBold, system-ui, sans-serif"
     fontSize: "18px"
     fontWeight: 600
     lineHeight: "24px"
   body:
-    fontFamily: "WorkSans_400Regular, system-ui, sans-serif"
+    fontFamily: "Nunito_400Regular, system-ui, sans-serif"
     fontSize: "16px"
     fontWeight: 400
-    lineHeight: "22px"
+    lineHeight: "24px"
   label:
-    fontFamily: "WorkSans_500Medium, system-ui, sans-serif"
+    fontFamily: "Nunito_500Medium, system-ui, sans-serif"
     fontSize: "14px"
     fontWeight: 500
     lineHeight: "20px"
+  button:
+    fontFamily: "Nunito_700Bold, system-ui, sans-serif"
+    fontSize: "16px"
+    fontWeight: 700
+    lineHeight: "24px"
   caption:
-    fontFamily: "WorkSans_600SemiBold, system-ui, sans-serif"
+    fontFamily: "Nunito_600SemiBold, system-ui, sans-serif"
     fontSize: "12px"
     fontWeight: 600
     lineHeight: "16px"
@@ -104,7 +113,7 @@ components:
     rounded: "{rounded.lg}"
     padding: "16px 20px"
   badge-streak:
-    backgroundColor: "rgba(0,0,0,0.1)"
+    backgroundColor: "rgba(51,35,26,0.1)"
     textColor: "{colors.text-tertiary}"
     typography: "{typography.caption}"
     rounded: "{rounded.sm}"
@@ -123,13 +132,15 @@ components:
 
 **North Star : le carnet de lecture partagé.**
 
-Un cahier dans lequel plusieurs personnes écrivent. Encre noire sur papier grené,
-titres à empattements, marges généreuses, aucune décoration gratuite. Le système
+Un cahier dans lequel plusieurs personnes écrivent. Encre noyer sur papier crème
+grené, titres à empattements, marges généreuses, aucune décoration gratuite.
+L'ambiance visée : automne, chocolat chaud, plaid, lumière tamisée. Le système
 est quasi monochrome par choix : la couleur n'apparaît que lorsqu'elle porte du
 sens — une couronne, une flamme, une alerte.
 
-La chaleur ne vient pas de la palette mais de deux autres endroits : les
-**illustrations maison** (PopEyes, couronne, crâne), et le **mouvement** — le
+La chaleur vient de trois endroits : la **palette** elle-même (marron et crème,
+jamais de noir ni de blanc purs), les **illustrations maison** (PopEyes,
+couronne, crâne), et le **mouvement** — le
 compteur qui roule, la feuille qui tombe quand on enregistre des pages, les
 lignes du classement qui glissent quand quelqu'un en double une autre. Le
 système est sobre à l'arrêt et taquin en action.
@@ -150,39 +161,39 @@ Aucune couleur de marque primaire n'existe, et c'est délibéré.
 
 | Token | Valeur | Rôle |
 |---|---|---|
-| `ink` | `#181d27` | Encre. Texte principal, boutons primaires, barres de progression remplies. |
-| `ink-deep` | `#0a0d12` | Fond du splash. |
-| `ink-panel` | `#13161b` | Fond des cartes livre. |
-| `paper` | `#f5f5f5` | Fond d'app. Porte une texture noise à 5% d'opacité. |
-| `surface` | `#ffffff` | Cartes, champs, sheets. |
-| `surface-raised` | `#fafafa` | Cartes non sélectionnées. |
+| `ink` | `#33231a` | Encre noyer foncé. Texte principal, boutons primaires, barres de progression remplies. |
+| `ink-deep` | `#1e140e` | Fond du splash. Base de toutes les ombres. |
+| `ink-panel` | `#2a1c14` | Fond des cartes livre. |
+| `paper` | `#f6efe6` | Fond d'app. Porte une texture noise à 5% d'opacité. |
+| `surface` | `#fffbf5` | Cartes, champs, sheets. |
+| `surface-raised` | `#fbf6ef` | Cartes non sélectionnées. |
 
-Les neutres ne sont pas des gris purs : ils tirent vers le bleu-ardoise
-(`#181d27` est un bleu très sombre désaturé, pas un noir). Toute extension de la
-palette doit rester sur cette teinte plutôt que de dériver vers le chaud.
+Les neutres ne sont pas des gris : ils tirent vers le marron noyer. **Aucun noir
+ni blanc pur dans l'app**, ombres et reflets compris — un `rgba(0,0,0,…)` ressort
+gris sur la crème et refroidit tout. Les transparences passent par trois helpers
+de `utils/constants.ts` : `inkAlpha()` (teintes et bordures sur fond clair),
+`shadowAlpha()` (ombres, voiles), `creamAlpha()` (reflets et bordures claires sur
+fond sombre). Les illustrations PNG sont passées en duotone noyer/crème.
+Toute extension de la palette doit rester sur cette teinte chaude.
 
 ### Texte
 
-`text-primary` `#181d27` → `text-secondary` `#414651` → `text-tertiary` `#535862`
-→ `text-placeholder` `#696e78` → `text-subtle` `#d5d7da`.
+`text-primary` `#33231a` → `text-secondary` `#5a4536` → `text-tertiary` `#6b5546`
+→ `text-placeholder` `#7a6453` → `text-subtle` `#e2d7ca`.
 
 **Contraste mesuré** (ratios WCAG calculés, pas estimés) :
 
-| Texte | sur `paper` #f5f5f5 | sur `surface` #ffffff | sur `surface-raised` #fafafa |
+| Texte | sur `paper` #f6efe6 | sur `surface` #fffbf5 | sur `surface-raised` #fbf6ef |
 |---|---|---|---|
-| `text-primary` | 15,49 ✅ | 16,88 ✅ | 16,17 ✅ |
-| `text-secondary` | 8,68 ✅ | 9,46 ✅ | 9,06 ✅ |
-| `text-tertiary` | 6,55 ✅ | 7,14 ✅ | 6,84 ✅ |
-| `text-placeholder` | 4,70 ✅ | 5,12 ✅ | 4,90 ✅ |
-| `text-subtle` | 1,32 ❌ | 1,44 ❌ | 1,38 ❌ |
+| `text-primary` | 13,19 ✅ | 14,59 ✅ | 13,99 ✅ |
+| `text-secondary` | 7,87 ✅ | 8,71 ✅ | 8,35 ✅ |
+| `text-tertiary` | 6,11 ✅ | 6,76 ✅ | 6,48 ✅ |
+| `text-placeholder` | 4,88 ✅ | 5,40 ✅ | 5,17 ✅ |
+| `text-subtle` | 1,24 ❌ | 1,38 ❌ | 1,32 ❌ |
 
-`text-placeholder` valait `#717680` et tombait à 4,18:1 sur le fond d'app, sous
-le seuil. Il a été assombri à `#696e78` — même teinte exactement, huit crans plus
-sombre — et passe désormais partout avec de la marge.
-
-**`text-subtle` (`#d5d7da`) n'est lisible que sur fond sombre.** À 1,3:1 sur fond
-clair il est invisible ; sur les cartes `ink-panel` (`#13161b`) il atteint
-12,6:1. C'est donc un token à double emploi : bordure sur fond clair, **texte sur
+**`text-subtle` (`#e2d7ca`) n'est lisible que sur fond sombre.** À 1,3:1 sur fond
+clair il est invisible ; sur les cartes `ink-panel` (`#2a1c14`) il atteint
+11,6:1. C'est donc un token à double emploi : bordure sur fond clair, **texte sur
 fond sombre**. Les auteurs de livres sur les cartes sombres de l'onboarding et de
 l'invitation l'utilisent correctement. Ne jamais le poser sur `paper`,
 `surface` ou `surface-raised`.
@@ -220,23 +231,50 @@ L'accent ne doit jamais être la seule information : le club daltonien existe.
 
 ## Typography
 
-**Appariement sur axe de contraste** : Rokkitt (serif à empattements égyptiens)
-pour l'affichage, Work Sans (sans-serif humaniste) pour l'interface. Space Mono
-est chargé mais quasi inutilisé.
+**Deux voix, une ambiance plaid** : Fraunces douce (serif old-style aux
+terminaisons arrondies) pour tout ce qui se lit d'un coup d'œil, Nunito
+(sans-serif aux extrémités arrondies) pour tout ce qui se lit vraiment. Space
+Mono est chargé mais inutilisé.
 
-| Rôle | Famille | Taille | Usage |
+Les noms de police vivent dans `fonts` (`utils/constants.ts`) ; ne jamais écrire
+un nom de fichier de police en dur dans un style.
+
+| Rôle | Token | Taille | Usage |
 |---|---|---|---|
-| display | Rokkitt Bold | 36 px / 44, -0.72px | Titres d'écran, nombres de page géants |
-| headline | Rokkitt Bold | 24 px / 30 | Titres de section, en-têtes de sheet |
-| score | Rokkitt SemiBold | 24 px / 32 | Scores du classement (chiffres alignés à droite) |
-| title | Work Sans SemiBold | 18 px / 24 | Prénoms des participantes, titres de ligne |
-| body | Work Sans Regular | 16 px / 22 | Texte courant |
-| label | Work Sans Medium | 14 px / 20 | Libellés, sous-titres |
-| caption | Work Sans SemiBold | 12 px / 16 | Badges, compteurs |
+| hero | `fonts.displayHero` | 108 px, -1.6 | Numéro de page géant (60 px pour les voisins), splash |
+| display | `fonts.display` | 30 px / 36, -0.3 | Titres d'écran de l'onboarding, codes d'invitation |
+| headline | `fonts.display` | 22 px / 28 | En-têtes d'écran et de sheet, état vide |
+| book | `fonts.display` | 18–21 px | Titre du livre mis en avant |
+| score | `fonts.display` | 21 px (accueil), 18 px (listes) | Scores, rangs, objectif |
+| title | `fonts.bodySemiBold` | 18 px / 24 | Prénoms, titres de ligne |
+| body | `fonts.body` | 16 px / 24 | Texte courant, champs |
+| label | `fonts.bodyMedium` | 14 px / 20 | Libellés, sous-titres, auteurs |
+| button | `fonts.bodyBold` | 16 px / 24 | Boutons |
+| caption | `fonts.bodySemiBold` | 11–12 px / 16 | Badges, compteurs |
 
-**Règle de partage** : Rokkitt porte les **nombres et les titres** — tout ce qui
-se lit d'un coup d'œil. Work Sans porte **tout ce qui se lit vraiment**. Ne pas
-inverser : Rokkitt en texte courant fatigue, Work Sans en score perd l'impact.
+**Règle de partage** : Fraunces porte les **titres et les nombres**, Nunito tout
+le reste. Deux exceptions assumées : les prénoms restent en Nunito (on scanne une
+liste, on ne lit pas un titre), et **sous 13 px les nombres passent en Nunito**
+(pourcentage de l'anneau d'objectif) — un serif aussi petit s'empâte.
+
+**La graisse vient du fichier, pas de `fontWeight`.** Sur iOS, une police chargée
+par alias ignore `fontWeight` : pour du gras, changer de token
+(`body` → `bodyBold`). Ma ligne du classement passe en `bodyExtraBold` pour
+trancher nettement avec les autres prénoms en `bodySemiBold`.
+
+**Fraunces est une instance maison.** Le fichier variable Google Fonts est figé
+dans `assets/fonts` sur SOFT 100 (terminaisons rondes) et WONK 0 (pas de lettres
+penchées), à deux tailles optiques : 24 pour l'interface, 72 pour les nombres
+géants, plus fins et plus contrastés. Pour régénérer une graisse, repartir du
+fichier variable avec `fontTools.varLib.instancer` et donner à chaque instance
+un nom PostScript unique — expo-font mappe chaque alias sur ce nom.
+
+**Pourquoi ces tailles.** À corps égal, Fraunces a une capitale 20 % plus haute
+que Rokkitt, et des chiffres 30 % plus larges. Les titres ont donc été réduits
+d'environ 15 % (36 → 30, 24 → 22, 128 → 108) pour garder la même présence sans
+écraser la hiérarchie. Nunito et Work Sans ont une hauteur d'x équivalente : le
+texte courant garde ses tailles, mais perd le tracking négatif — une police ronde
+serrée s'étouffe.
 
 **Dette connue** : l'échelle est en points figés, hors du système de tailles
 d'iOS. Dynamic Type n'est pas suivi.
@@ -274,10 +312,10 @@ poids typographique, jamais par des ombres décoratives.
 
 | Ombre | Valeur | Porte |
 |---|---|---|
-| `button` | `0 4px 6px rgba(0,0,0,0.25)` | Boutons primaires. Franc, assumé. |
-| `buttonLight` | `0 0 6px rgba(0,0,0,0.1)` | Boutons secondaires. |
-| `cardSelected` | `0 4px 20px rgba(0,0,0,0.09)` | Carte active parmi plusieurs. |
-| `xs` | `0 1px 2px rgba(10,13,18,0.05)` | Champs de saisie. |
+| `button` | `0 4px 6px rgba(30,20,14,0.25)` | Boutons primaires. Franc, assumé. |
+| `buttonLight` | `0 0 6px rgba(30,20,14,0.1)` | Boutons secondaires. |
+| `cardSelected` | `0 4px 20px rgba(30,20,14,0.09)` | Carte active parmi plusieurs. |
+| `xs` | `0 1px 2px rgba(30,20,14,0.05)` | Champs de saisie. |
 
 Le `Button3D` pousse la logique jusqu'au bout : ombre portée + ombres internes,
 et l'élément s'enfonce à l'appui. C'est la signature tactile du système.
@@ -298,8 +336,8 @@ Plus l'élément est grand ou important, plus le rayon est large.
 | `xl` | 24 px | Boutons principaux, cartes, sheets |
 | `full` | 9999 px | Pastilles, barres de progression |
 
-Les bordures sont fines et discrètes : 1 px, en `rule-light` (`#e9eaeb`) ou en
-alpha (`rgba(0,0,0,0.1)`). Les bordures claires sur fond sombre passent par
+Les bordures sont fines et discrètes : 1 px, en `rule-light` (`#eee6db`) ou en
+alpha (`inkAlpha(0.1)`). Les bordures claires sur fond sombre passent par
 `alphaWhite30`.
 
 **Le rayon d'un sheet natif iOS ne se spécifie pas** : laissé vide, iOS 26
@@ -309,8 +347,8 @@ applique son propre rayon, concentrique avec la courbure de l'écran.
 
 ### Boutons — `Button3D`
 
-Deux variantes. **Primaire** : encre pleine, bordure blanche à 30%, rayon 24,
-padding 24h/20v, ombre franche. **Secondaire** : `paper`, bordure noire à 10%,
+Deux variantes. **Primaire** : encre pleine, bordure crème à 30%, rayon 24,
+padding 24h/20v, ombre franche. **Secondaire** : `paper`, bordure encre à 10%,
 ombre légère. Version `compact` en rayon 12 pour les boutons icône.
 
 L'appui enfonce le bouton — pas une simple opacité.
@@ -320,11 +358,52 @@ L'appui enfonce le bouton — pas une simple opacité.
 `[rang] [avatar + couronne si leader] [prénom] … [badge streak] [score]`
 
 Le rang ne s'affiche que lorsqu'il porte de l'information (ligne épinglée hors
-podium) ; dans un podium, l'ordre vertical suffit. Le score est en Rokkitt aligné
+podium) ; dans un podium, l'ordre vertical suffit. Le score est en Fraunces aligné
 à droite, avec compteur roulant à la mise à jour.
 
-La ligne « moi » se distingue par un fond teinté (`rgba(24,29,39,0.06)`) et un
+La ligne « moi » se distingue par un fond teinté (`inkAlpha(0.06)`) et un
 prénom en gras — jamais par une couleur.
+
+### Icônes
+
+**Une seule banque : [Lucide](https://lucide.dev/icons/)** (`lucide-react-native`),
+partout, sans exception. Jamais d'Ionicons, de SF Symbols, de Material ni d'icône
+redessinée à la main : les styles de trait jurent entre eux. Si Lucide n'a pas le
+pictogramme voulu, prendre le plus proche dans Lucide.
+
+- Importer le composant suffixé `Icon` (`ChevronLeftIcon`, `ShareIcon`…) : il
+  n'entre jamais en conflit avec un composant React Native du même nom (`Share`,
+  `Image`).
+- `Button3D` reçoit le composant, pas un nom : `icon={ChevronLeftIcon}`.
+- Une icône « pleine » s'obtient avec `fill={color}` (flamme des séries), à
+  réserver aux pictogrammes dont le tracé reste lisible une fois rempli.
+- Seule exception, et ce n'est pas une icône : le logo Apple du bouton « Se
+  connecter avec Apple » (`components/brand/AppleLogo.tsx`), logo de marque
+  imposé par Apple et absent de Lucide par principe.
+- Les illustrations maison (PopEyes, couronne, crâne) sont des images, pas des
+  icônes.
+
+### Barre d'onglets
+
+**Sur mesure, en verre iOS 26** (`components/ui/GlassTabBar.tsx`) : pilule
+flottante de 190 pt centrée en bas, matériau `GlassView` d'expo-glass-effect
+(vrai UIGlassEffect, repli expo-blur avant iOS 26). Trois onglets, icônes sans
+libellé : **Lecture en cours** (`book-open`), **Inspiration** (`search`),
+**Profil** (`circle-user`). Trait fin `ink` à 50 % d'opacité au repos (3,05:1
+sur le verre, ne pas descendre plus bas), trait épais `ink` une fois actif, en fondu (200 ms), avec une pastille `inkAlpha(0.07)`
+(teinte de la pastille native, mesurée) qui glisse vers l'onglet actif (300 ms,
+ease-out-quart). Pastille et icônes sont posées **par-dessus** le verre, jamais
+dedans : iOS 26 réadapte la couleur du contenu d'un verre avec retard. Pas de
+verre interactif pour la même raison.
+
+La barre native `NativeTabs` a été essayée puis abandonnée : iOS 26 fixe sa
+largeur (~274 pt pour 3 icônes) et ignore `itemWidth`/`itemPositioning`.
+
+- Icônes Lucide à 22 pt, trait 1,75 au repos et 2,25 actif.
+- Chaque onglet a un `tabBarAccessibilityLabel` : c'est le nom lu par VoiceOver.
+- La barre flotte au-dessus du contenu : réserver sa place en bas de chaque
+  écran d'onglet avec `useTabBarInset()`, jamais une valeur fixe.
+- Un écran d'onglet n'a pas de bouton retour : c'est une racine.
 
 ### Sheets
 
@@ -373,8 +452,8 @@ système par ailleurs sobre.
 
 - Laisser iOS dessiner ce qui lui appartient : sheets, barres de navigation,
   transitions, contrôles système.
-- Faire porter la chaleur par les illustrations et le mouvement, pas par la
-  palette.
+- Faire porter la chaleur par la palette noyer/crème, les illustrations et le
+  mouvement.
 - Varier l'espacement pour créer du rythme.
 - Réserver l'accent unique paramétrable pour la future couleur de club.
 - Utiliser `text-tertiary` dès qu'un texte gris doit rester lisible sur le fond
@@ -382,12 +461,15 @@ système par ailleurs sobre.
 
 **À ne pas faire**
 
-- Pas de `text-subtle` (`#d5d7da`) en couleur de texte. C'est une bordure.
+- Pas de `text-subtle` (`#e2d7ca`) en couleur de texte. C'est une bordure.
+- Pas de `#000`, `#fff` ni `rgba(0,0,0,…)` / `rgba(255,255,255,…)` en dur : passer
+  par les tokens et les helpers alpha.
 - Pas de couleur décorative. Chaque couleur non neutre doit répondre à « qu'est-ce
   qu'elle signifie ».
 - Pas de carte dans une carte.
 - Pas de rayon codé en dur sur un sheet natif : iOS 26 gère la concentricité.
-- Pas de Rokkitt en texte courant, pas de Work Sans en score.
+- Pas de Fraunces en texte courant, pas de Nunito en score (sauf sous 13 px).
+- Pas de `fontWeight` pour faire du gras : changer de token `fonts`.
 - Pas de bounce, pas d'elastic, pas d'animation de `width` ou de `height`.
 - Pas de fiche produit ni de note sur 5 — c'est Goodreads, l'anti-référence.
 - Pas d'affordance dépendant du survol : il n'y en a pas sur mobile.

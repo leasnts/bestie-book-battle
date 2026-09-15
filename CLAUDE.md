@@ -1,5 +1,9 @@
 # Project Instructions
 
+## Règles non négociables
+
+- **Icônes : Lucide uniquement** (`lucide-react-native`, https://lucide.dev/icons/). Jamais d'Ionicons, de SF Symbols ni d'autre banque, même pour un seul endroit. Détails dans `DESIGN.md` › Icônes.
+
 ## Skills
 
 Ces skills contiennent des guidelines et best practices à consulter selon le contexte du travail.

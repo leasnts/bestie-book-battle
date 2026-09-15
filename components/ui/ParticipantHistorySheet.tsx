@@ -16,13 +16,13 @@
  * scroller la liste ne déclenche pas le dismiss — seul le handle en haut le fait.
  */
 
-import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import React, { useMemo } from 'react';
 import { Dimensions, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { ProgressHistory } from '../../types/supabase';
-import { borderRadius, colors, spacing } from '../../utils/constants';
+import { borderRadius, colors, fonts, inkAlpha, spacing } from '../../utils/constants';
 import BottomSheet from './BottomSheet';
+import { XIcon } from 'lucide-react-native';
 
 // ─── Props ─────────────────────────────────────────────────────────
 
@@ -137,7 +137,7 @@ export default function ParticipantHistorySheet({
             accessibilityRole="button"
             accessibilityLabel="Fermer"
           >
-            <Ionicons name="close" size={22} color={colors.textSubtle} />
+            <XIcon size={22} color={colors.textSubtle} />
           </Pressable>
         </View>
 
@@ -255,20 +255,20 @@ const styles = StyleSheet.create({
     height: 44,
     borderRadius: borderRadius.sm,
     borderWidth: 2,
-    borderColor: 'rgba(0,0,0,0.06)',
+    borderColor: inkAlpha(0.06),
   },
   headerTexts: {
     flex: 1,
     gap: 2,
   },
   headerName: {
-    fontFamily: 'WorkSans_600SemiBold',
+    fontFamily: fonts.bodySemiBold,
     fontSize: 18,
     color: colors.textPrimary,
     lineHeight: 24,
   },
   headerSubtitle: {
-    fontFamily: 'WorkSans_400Regular',
+    fontFamily: fonts.body,
     fontSize: 13,
     color: colors.textTertiary,
     lineHeight: 18,
@@ -302,13 +302,13 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   emptyTitle: {
-    fontFamily: 'WorkSans_600SemiBold',
+    fontFamily: fonts.bodySemiBold,
     fontSize: 16,
     color: colors.textPrimary,
     lineHeight: 22,
   },
   emptySubtitle: {
-    fontFamily: 'WorkSans_400Regular',
+    fontFamily: fonts.body,
     fontSize: 14,
     color: colors.textPlaceholder,
     lineHeight: 20,
@@ -331,7 +331,7 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
   },
   dayBadgeText: {
-    fontFamily: 'WorkSans_600SemiBold',
+    fontFamily: fonts.bodySemiBold,
     fontSize: 12,
     color: colors.white,
     lineHeight: 16,
@@ -352,7 +352,7 @@ const styles = StyleSheet.create({
     width: DOT_SIZE,
     height: DOT_SIZE,
     borderRadius: DOT_SIZE / 2,
-    backgroundColor: 'rgba(0,0,0,0.06)',
+    backgroundColor: inkAlpha(0.06),
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 5,
@@ -367,7 +367,7 @@ const styles = StyleSheet.create({
   timelineLine: {
     width: LINE_WIDTH,
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.08)',
+    backgroundColor: inkAlpha(0.08),
     minHeight: 24,
     zIndex: 1,
   },
@@ -387,7 +387,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   entryTime: {
-    fontFamily: 'WorkSans_500Medium',
+    fontFamily: fonts.bodyMedium,
     fontSize: 13,
     color: colors.textPlaceholder,
     lineHeight: 18,
@@ -399,7 +399,7 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
   },
   pagesDeltaText: {
-    fontFamily: 'WorkSans_600SemiBold',
+    fontFamily: fonts.bodySemiBold,
     fontSize: 11,
     color: colors.textTertiary,
     lineHeight: 16,
@@ -411,9 +411,9 @@ const styles = StyleSheet.create({
     color: colors.textPlaceholder,
   },
   entryPageNumber: {
-    fontFamily: 'Rokkitt_600SemiBold',
-    fontSize: 20,
+    fontFamily: fonts.display,
+    fontSize: 18,
     color: colors.textTertiary,
-    lineHeight: 28,
+    lineHeight: 24,
   },
 });

@@ -19,7 +19,7 @@ import Animated, {
   withDelay,
   withTiming,
 } from 'react-native-reanimated';
-import { colors, fontSize } from '../utils/constants';
+import { colors, fonts } from '../utils/constants';
 import PopEyes from './PopEyes';
 import TEXTURE_IMAGE from '../assets/images/61ea1e0c638b5b9c8100383a37a5b488848db623.png';
 
@@ -172,12 +172,11 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   text: {
-    fontFamily: 'Rokkitt_700Bold',
-    fontSize: fontSize['6xl'], // 72px
-    fontWeight: '700',
+    fontFamily: fonts.displayHero,
+    fontSize: 60,
     color: colors.white,
-    letterSpacing: -1.44,
-    lineHeight: 86,
+    letterSpacing: -1.2,
+    lineHeight: 72,
   },
   bookLine: {
     flexDirection: 'row',

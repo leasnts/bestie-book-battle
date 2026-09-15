@@ -27,7 +27,7 @@ Application mobile de **lecture partagée entre amis**. Les utilisateurs créent
 | Graphiques | @visx/* + react-native-chart-kit + d3-array | — |
 | Icônes | lucide-react-native | — |
 | Images | expo-image | 3 |
-| Polices | Rokkitt (titres), Work Sans (corps), Space Mono (mono) | — |
+| Polices | Fraunces douce (titres, nombres), Nunito (corps) | — |
 | Bottom Sheet | @gorhom/bottom-sheet | 5 |
 | Utilitaires CSS | class-variance-authority, clsx, tailwind-merge | — |
 

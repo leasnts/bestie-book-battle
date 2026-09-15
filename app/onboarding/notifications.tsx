@@ -24,7 +24,8 @@ import {
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import Button3D from '../../components/Button3D';
-import { colors, fontSize, fontWeight, spacing } from '../../utils/constants';
+import { colors, fonts, fontSize, spacing } from '../../utils/constants';
+import { ChevronLeftIcon } from 'lucide-react-native';
 
 // Assets
 const TEXTURE_IMAGE = require('../../assets/images/61ea1e0c638b5b9c8100383a37a5b488848db623.png');
@@ -137,7 +138,7 @@ export default function OnboardingNotificationsScreen() {
                     <View style={styles.header}>
                         <Button3D
                             variant="secondary"
-                            icon="chevron-back"
+                            icon={ChevronLeftIcon}
                             iconOnly
                             size="compact"
                             onPress={() => router.back()}
@@ -227,17 +228,15 @@ const styles = StyleSheet.create({
         paddingTop: spacing['2xl'],
     },
     mainText: {
-        fontFamily: 'Rokkitt_600SemiBold',
-        fontSize: fontSize['3xl'],
-        fontWeight: fontWeight.semibold as any,
+        fontFamily: fonts.display,
+        fontSize: 30,
         color: colors.textPrimary,
         textAlign: 'center',
-        lineHeight: 44,
+        lineHeight: 36,
     },
     subText: {
-        fontFamily: 'WorkSans_400Regular',
+        fontFamily: fonts.body,
         fontSize: fontSize.sm, // 14px
-        fontWeight: fontWeight.regular as any,
         color: colors.textTertiary,
         textAlign: 'center',
         lineHeight: 20,

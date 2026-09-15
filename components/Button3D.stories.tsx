@@ -8,8 +8,9 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import Button3D from './Button3D';
+import { colors, fonts } from '../utils/constants';
+import { ArrowRightIcon, BellIcon, BookmarkIcon, ChevronLeftIcon, EllipsisIcon, SettingsIcon, ShareIcon, UserPlusIcon } from 'lucide-react-native';
 
 const meta: Meta<typeof Button3D> = {
   title: 'Core/Button3D',
@@ -68,7 +69,7 @@ export const WithIconLeft: Story = {
   args: {
     variant: 'primary',
     children: 'Inviter un ami',
-    icon: 'person-add-outline',
+    icon: UserPlusIcon,
     iconPosition: 'left',
     onPress: () => console.log('Pressed!'),
   },
@@ -79,7 +80,7 @@ export const WithIconRight: Story = {
   args: {
     variant: 'primary',
     children: 'Continuer',
-    icon: 'arrow-forward',
+    icon: ArrowRightIcon,
     iconPosition: 'right',
     onPress: () => console.log('Pressed!'),
   },
@@ -89,7 +90,7 @@ export const WithIconRight: Story = {
 export const IconOnly: Story = {
   args: {
     variant: 'secondary',
-    icon: 'chevron-back',
+    icon: ChevronLeftIcon,
     iconOnly: true,
     size: 'compact',
     onPress: () => console.log('Back!'),
@@ -124,7 +125,7 @@ export const AllVariants: Story = {
       <Button3D variant="primary" onPress={() => {}}>
         Enregistrer ma page
       </Button3D>
-      <Button3D variant="primary" icon="bookmark-outline" onPress={() => {}}>
+      <Button3D variant="primary" icon={BookmarkIcon} onPress={() => {}}>
         Sauvegarder
       </Button3D>
       <Button3D variant="primary" loading onPress={() => {}}>
@@ -138,16 +139,16 @@ export const AllVariants: Story = {
       <Button3D variant="secondary" onPress={() => {}}>
         Annuler
       </Button3D>
-      <Button3D variant="secondary" icon="share-outline" onPress={() => {}}>
+      <Button3D variant="secondary" icon={ShareIcon} onPress={() => {}}>
         Partager le code
       </Button3D>
       
       <Text style={[styles.sectionTitle, { marginTop: 24 }]}>Compact (icon only)</Text>
       <View style={{ flexDirection: 'row', gap: 12 }}>
-        <Button3D variant="secondary" icon="chevron-back" iconOnly size="compact" onPress={() => {}} />
-        <Button3D variant="secondary" icon="settings-outline" iconOnly size="compact" onPress={() => {}} />
-        <Button3D variant="secondary" icon="notifications-outline" iconOnly size="compact" onPress={() => {}} />
-        <Button3D variant="secondary" icon="ellipsis-horizontal" iconOnly size="compact" onPress={() => {}} />
+        <Button3D variant="secondary" icon={ChevronLeftIcon} iconOnly size="compact" onPress={() => {}} />
+        <Button3D variant="secondary" icon={SettingsIcon} iconOnly size="compact" onPress={() => {}} />
+        <Button3D variant="secondary" icon={BellIcon} iconOnly size="compact" onPress={() => {}} />
+        <Button3D variant="secondary" icon={EllipsisIcon} iconOnly size="compact" onPress={() => {}} />
       </View>
     </View>
   ),
@@ -155,9 +156,9 @@ export const AllVariants: Story = {
 
 const styles = StyleSheet.create({
   sectionTitle: {
-    fontFamily: 'WorkSans_600SemiBold',
+    fontFamily: fonts.bodySemiBold,
     fontSize: 14,
-    color: '#717680',
+    color: colors.textPlaceholder,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },

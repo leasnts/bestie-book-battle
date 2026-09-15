@@ -3,7 +3,7 @@
  * 
  * Page d'accueil de l'application, divisée en 4 sections :
  * 
- * 1. HEADER : avatar profil (gauche) | PopEyes mascotte (centre) | bouton notification (droite)
+ * 1. HEADER : PopEyes mascotte (centre) | bouton notification (droite) — le profil est un onglet
  * 2. SECTION LIVRES : pile de couvertures empilées + détails du livre actif + progression circulaire
  * 3. SÉLECTEUR DE PAGE : scroll horizontal pour choisir sa page + boutons undo/valider
  * 4. CARTE DE PROGRESSION : comparaison "Moi" vs "Ami.e" avec scores, streaks, barre duale
@@ -14,7 +14,6 @@
  * Données : tout vient de Supabase via les stores Zustand (authStore, projectStore, progressStore).
  */
 
-import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
@@ -22,7 +21,6 @@ import {
     ActivityIndicator,
     Alert,
     AppState,
-    Pressable,
     StyleSheet,
     Text,
     View,
@@ -42,7 +40,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Button3D from '../../components/Button3D';
 import PageTransition from '../../components/PageTransition';
 import PopEyes from '../../components/PopEyes';
-import IconRotateCcw from '../../components/icons/IconRotateCcw';
 import BookStack from '../../components/ui/BookStack';
 import DeadlineEditSheet from '../../components/ui/DeadlineEditSheet';
 import EditBookSheet from '../../components/ui/EditBookSheet';
@@ -60,8 +57,10 @@ import { useGoalStore } from '../../stores/goalStore';
 import { useProgressStore } from '../../stores/progressStore';
 import { useProjectStore } from '../../stores/projectStore';
 import { ProgressHistory } from '../../types/supabase';
-import { colors, spacing } from '../../utils/constants';
+import { colors, fonts, shadowAlpha, spacing } from '../../utils/constants';
 import { getActiveStreak, isStreakAtRisk } from '../../utils/streak';
+import { useTabBarInset } from '../../components/ui/GlassTabBar';
+import { BookOpenIcon, CheckIcon, CirclePlusIcon, RotateCcwIcon } from 'lucide-react-native';
 
 // Texture de fond "noise" réutilisée depuis l'onboarding
 const TEXTURE_IMAGE = require('../../assets/images/61ea1e0c638b5b9c8100383a37a5b488848db623.png');
@@ -75,29 +74,6 @@ const TEXTURE_IMAGE = require('../../assets/images/61ea1e0c638b5b9c8100383a37a5b
  * Le cache busting (?v=timestamp) force expo-image à recharger l'image
  * au lieu d'afficher une version en cache quand la photo a changé.
  */
-const DEFAULT_PROFILE_IMAGE = require('../../assets/images/profile_picture_default.png');
-
-const resolveAvatarSource = (
-  ref: string | null | undefined,
-  updatedAt?: string | null
-) => {
-  if (!ref) return DEFAULT_PROFILE_IMAGE;
-  if (ref.startsWith('http://') || ref.startsWith('https://')) {
-    let url = ref;
-    if (updatedAt) {
-      const sep = url.includes('?') ? '&' : '?';
-      const v = new Date(updatedAt).getTime();
-      url = `${url}${sep}v=${v}`;
-    }
-    return { uri: url };
-  }
-  switch (ref) {
-    case 'lea': return require('../../assets/images/lea.png');
-    case 'zoe': return require('../../assets/images/zoe.png');
-    default: return DEFAULT_PROFILE_IMAGE;
-  }
-};
-
 // Zone de détection du bord d'écran (en pixels)
 // Le swipe doit démarrer dans les 50px depuis le bord gauche ou droit
 const EDGE_ZONE = 50;
@@ -105,6 +81,8 @@ const EDGE_ZONE = 50;
 export default function HomeScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  // Place réservée sous le contenu pour la barre d'onglets flottante
+  const tabBarInset = useTabBarInset();
   const { width: screenWidth, fontScale } = useWindowDimensions();
   const { user } = useAuthStore();
 
@@ -189,10 +167,6 @@ export default function HomeScreen() {
 
   // Ces callbacks sont appelés depuis un worklet Reanimated (thread UI),
   // donc runOnJS est obligatoire pour traverser vers le thread JS.
-  const navigateToProfile = useCallback(() => {
-    router.push('/profile');
-  }, [router]);
-
   const navigateToActivity = useCallback(() => {
     router.push('/activity');
   }, [router]);
@@ -229,12 +203,9 @@ export default function HomeScreen() {
       const tx = event.translationX;
       const vx = event.velocityX;
 
-      // Bord gauche → swipe vers la droite → Profil
-      if (startX < EDGE_ZONE && tx > 60 && vx > 250) {
-        runOnJS(navigateToProfile)();
-      }
-      // Bord droit → swipe vers la gauche → Activité
-      else if (startX > screenWidth - EDGE_ZONE && tx < -60 && vx < -250) {
+      // Bord droit → swipe vers la gauche → Activité.
+      // Plus de swipe bord gauche → Profil : le profil est un onglet.
+      if (startX > screenWidth - EDGE_ZONE && tx < -60 && vx < -250) {
         runOnJS(navigateToActivity)();
       }
     });
@@ -685,14 +656,8 @@ export default function HomeScreen() {
 
       {/* ═══════════ HEADER ═══════════ */}
       <View style={[styles.header, { paddingTop: insets.top + spacing.lg }]}>
-        {/* Avatar profil — navigue vers /profile */}
-        <Pressable onPress={() => router.push('/profile')}>
-          <Image
-            source={resolveAvatarSource(user?.profile_photo_url, user?.updated_at)}
-            style={styles.headerAvatar}
-            contentFit="cover"
-          />
-        </Pressable>
+        {/* Le profil vit dans la barre d'onglets : cet espace garde PopEyes centré */}
+        <View style={styles.headerSpacer} />
 
         {/* PopEyes mascotte — décoratif */}
         <PopEyes size="small" />
@@ -761,7 +726,7 @@ export default function HomeScreen() {
                     variant="secondary"
                     iconOnly
                     size="compact"
-                    iconComponent={<IconRotateCcw size={24} color={colors.dark900} />}
+                    iconComponent={<RotateCcwIcon size={24} color={colors.dark900} />}
                     accessibilityLabel="Annuler"
                     accessibilityHint="Revient à ta dernière page enregistrée"
                     onPress={handleUndo}
@@ -770,7 +735,7 @@ export default function HomeScreen() {
                     variant="primary"
                     iconOnly
                     size="compact"
-                    icon="checkmark"
+                    icon={CheckIcon}
                     accessibilityLabel="Enregistrer ma page"
                     onPress={handleSave}
                   />
@@ -790,7 +755,7 @@ export default function HomeScreen() {
       ) : (
         /* ═══════════ ÉTAT VIDE : AUCUN PROJET (chargement confirmé, vraiment vide) ═══════════ */
         <View style={styles.emptyStateContainer}>
-          <Ionicons name="book-outline" size={80} color="#D0D0D0" style={{ marginBottom: 24 }} />
+          <BookOpenIcon size={80} color={colors.border} style={{ marginBottom: 24 }} />
           <Text style={styles.emptyStateTitle}>Aucun projet de lecture</Text>
           <Text style={styles.emptyStateSubtitle}>
             Crée un projet ou rejoins celui de tes amis pour commencer
@@ -806,7 +771,7 @@ export default function HomeScreen() {
                 },
               })}
               variant="primary"
-              icon="add-circle-outline"
+              icon={CirclePlusIcon}
               iconPosition="left"
               style={{ width: '100%' }}
             >
@@ -832,7 +797,7 @@ export default function HomeScreen() {
 
       {/* ═══════════ CARTE DE PROGRESSION (bas de page) ═══════════ */}
       {activeChallenge && (
-        <View style={[styles.progressSection, { paddingBottom: insets.bottom + spacing.md }]}>
+        <View style={[styles.progressSection, { paddingBottom: tabBarInset + spacing.md }]}>
           <ProgressCard
             participants={allParticipantsData}
             myUserId={user?.id || ''}
@@ -937,7 +902,7 @@ const styles = StyleSheet.create({
   // ===== CONTAINER PRINCIPAL =====
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: colors.bgLight,
   },
 
   // Texture de fond semi-transparente
@@ -954,12 +919,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingBottom: spacing.lg,
   },
-  headerAvatar: {
+  // Même largeur que le bouton notification, pour que PopEyes reste centré
+  headerSpacer: {
     width: 40,
     height: 40,
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: 'rgba(255,255,255,0.3)',
   },
 
   // ===== SECTION LIVRE =====
@@ -992,20 +955,24 @@ const styles = StyleSheet.create({
   pageSectionInner: {
     width: '100%',
     alignItems: 'center',
-    minHeight: 280,
+    minHeight: 232,
   },
   /*
     En gros corps de texte, la carte du livre au-dessus prend plus de place.
-    Garder 280 pt réservés ici pousserait le classement hors de l'écran :
+    Garder 232 pt réservés ici pousserait le classement hors de l'écran :
     on laisse la zone se comprimer, le sélecteur garde sa taille propre.
   */
   pageSectionInnerCompact: {
     minHeight: 0,
   },
-  // Wrapper de hauteur fixe (29 gap + 40 bouton) pour que le layout ne bouge pas.
+  // Wrapper de hauteur fixe (hauteur du Button3D compact) pour que le layout ne
+  // bouge pas quand les boutons apparaissent. Resserré depuis l'arrivée de la
+  // barre d'onglets flottante, qui prend ~70 pt en bas de l'écran : avec
+  // l'ancienne réserve de 98 pt, la zone débordait et « PAGE » chevauchait le
+  // trait sous la carte du livre.
   actionButtonsWrapper: {
-    minHeight: 69, // 29 (gap) + 40 (Button3D compact)
-    marginTop: 29, // gap Figma entre picker et boutons
+    minHeight: 40, // Button3D compact
+    marginTop: spacing.md,
     width: '100%',
     justifyContent: 'center',
     alignItems: 'center',
@@ -1031,14 +998,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 32,
   },
   emptyStateTitle: {
-    fontFamily: 'Rokkitt_700Bold',
-    fontSize: 24,
+    fontFamily: fonts.display,
+    fontSize: 22,
     color: colors.textPrimary,
     marginBottom: 12,
     textAlign: 'center',
   },
   emptyStateSubtitle: {
-    fontFamily: 'WorkSans_400Regular',
+    fontFamily: fonts.body,
     fontSize: 15,
     color: colors.textSecondary,
     textAlign: 'center',
@@ -1056,20 +1023,20 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: '58%',
     alignSelf: 'center',
-    backgroundColor: 'rgba(10, 13, 18, 0.85)',
+    backgroundColor: shadowAlpha(0.85),
     paddingHorizontal: 16,
     paddingVertical: 5,
     borderRadius: 9999,
-    shadowColor: '#000',
+    shadowColor: colors.black,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.12,
     shadowRadius: 6,
     elevation: 3,
   },
   deltaToastText: {
-    fontFamily: 'Rokkitt_700Bold',
-    fontSize: 22,
-    color: '#FFFFFF',
+    fontFamily: fonts.displayBold,
+    fontSize: 20,
+    color: colors.white,
   },
 
 });

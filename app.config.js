@@ -17,7 +17,7 @@ export default {
     splash: {
       image: "./assets/images/splash-icon.png",
       resizeMode: "contain",
-      backgroundColor: "#ffffff",
+      backgroundColor: "#fffbf5",
     },
     ios: {
       bundleIdentifier: IS_DEV
@@ -37,14 +37,15 @@ export default {
         {
           fonts: [
             "./assets/fonts/SpaceMono-Regular.ttf",
-            "./node_modules/@expo-google-fonts/rokkitt/400Regular/Rokkitt_400Regular.ttf",
-            "./node_modules/@expo-google-fonts/rokkitt/500Medium/Rokkitt_500Medium.ttf",
-            "./node_modules/@expo-google-fonts/rokkitt/600SemiBold/Rokkitt_600SemiBold.ttf",
-            "./node_modules/@expo-google-fonts/rokkitt/700Bold/Rokkitt_700Bold.ttf",
-            "./node_modules/@expo-google-fonts/work-sans/400Regular/WorkSans_400Regular.ttf",
-            "./node_modules/@expo-google-fonts/work-sans/500Medium/WorkSans_500Medium.ttf",
-            "./node_modules/@expo-google-fonts/work-sans/600SemiBold/WorkSans_600SemiBold.ttf",
-            "./node_modules/@expo-google-fonts/work-sans/700Bold/WorkSans_700Bold.ttf",
+            "./assets/fonts/FrauncesSoft_400Regular.ttf",
+            "./assets/fonts/FrauncesSoft_600SemiBold.ttf",
+            "./assets/fonts/FrauncesSoft_700Bold.ttf",
+            "./assets/fonts/FrauncesSoftDisplay_600SemiBold.ttf",
+            "./node_modules/@expo-google-fonts/nunito/400Regular/Nunito_400Regular.ttf",
+            "./node_modules/@expo-google-fonts/nunito/500Medium/Nunito_500Medium.ttf",
+            "./node_modules/@expo-google-fonts/nunito/600SemiBold/Nunito_600SemiBold.ttf",
+            "./node_modules/@expo-google-fonts/nunito/700Bold/Nunito_700Bold.ttf",
+            "./node_modules/@expo-google-fonts/nunito/800ExtraBold/Nunito_800ExtraBold.ttf",
           ],
         },
       ],

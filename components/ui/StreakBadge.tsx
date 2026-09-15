@@ -8,8 +8,8 @@
 
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { colors, borderRadius, spacing } from '../../utils/constants';
-import IconFlame from '../icons/IconFlame';
+import { borderRadius, colors, fonts, inkAlpha, spacing } from '../../utils/constants';
+import { FlameIcon } from 'lucide-react-native';
 
 interface StreakBadgeProps {
   /** Nombre de jours consécutifs */
@@ -62,7 +62,7 @@ export function StreakBadge({
         },
       ]}
     >
-      <IconFlame size={currentSize.iconSize} color={colors.textTertiary} />
+      <FlameIcon size={currentSize.iconSize} color={colors.textTertiary} fill={colors.textTertiary} />
       {!iconOnly && (
         <Text style={[styles.text, { fontSize: currentSize.fontSize }]}>
           {streak}
@@ -76,14 +76,14 @@ const styles = StyleSheet.create({
   badge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.1)',
+    backgroundColor: inkAlpha(0.1),
     borderWidth: 1,
-    borderColor: 'rgba(0,0,0,0.1)',
+    borderColor: inkAlpha(0.1),
     borderRadius: 8,
     gap: 2,
   },
   text: {
-    fontFamily: 'WorkSans_600SemiBold',
+    fontFamily: fonts.bodySemiBold,
     color: colors.textTertiary,
     lineHeight: 16,
   },

@@ -9,6 +9,7 @@ import type { Meta, StoryObj } from '@storybook/react';
 import React, { useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import PageScrollPicker from './PageScrollPicker';
+import { colors, fonts } from '../../utils/constants';
 
 const meta: Meta<typeof PageScrollPicker> = {
   title: 'UI/PageScrollPicker',
@@ -94,9 +95,9 @@ export const Interactive: Story = {
 
 const styles = StyleSheet.create({
   debug: {
-    fontFamily: 'WorkSans_500Medium',
+    fontFamily: fonts.bodyMedium,
     fontSize: 14,
-    color: '#414651',
+    color: colors.textSecondary,
     textAlign: 'center',
   },
 });
