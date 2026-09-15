@@ -24,12 +24,13 @@ import {
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { createOrUpdateUserProfile } from '../../services/supabase/auth';
-import { updateChallenge } from '../../services/supabase/database';
+import { saveCoverPalette, updateChallenge } from '../../services/supabase/database';
 import { uploadBookCover } from '../../services/supabase/storage';
 import { useAuthStore } from '../../stores/authStore';
 import { useOnboardingStore } from '../../stores/onboardingStore';
 import { useProjectStore } from '../../stores/projectStore';
 import { borderRadius, colors, fonts, fontSize, spacing } from '../../utils/constants';
+import { extractCoverPalette } from '../../utils/coverPalette';
 import { BookOpenIcon, ChevronLeftIcon, CopyIcon, ShareIcon, XIcon } from 'lucide-react-native';
 
 // Assets
@@ -147,6 +148,16 @@ export default function OnboardingCompleteScreen() {
                                         : state.activeChallenge,
                             };
                         });
+
+                        // Couleurs du fond de l'accueil, en tâche de fond : le code
+                        // d'invitation s'affiche sans attendre. En cas d'échec, l'accueil
+                        // les recalcule (useCoverPalette).
+                        extractCoverPalette(coverUri)
+                            .then(async (palette) => {
+                                await saveCoverPalette(challenge.id, palette);
+                                useProjectStore.getState().patchChallengeLocally(challenge.id, { cover_palette: palette });
+                            })
+                            .catch((paletteError) => console.warn('[CoverPalette] extraction impossible', paletteError));
                     } catch (coverError) {
                         console.error('Échec upload cover:', coverError);
                     }

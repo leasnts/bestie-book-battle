@@ -43,6 +43,7 @@ import Button3D from '../../components/Button3D';
 import PageTransition from '../../components/PageTransition';
 import PopEyes from '../../components/PopEyes';
 import ActiveBookCard from '../../components/ui/ActiveBookCard';
+import CoverBackdrop from '../../components/ui/CoverBackdrop';
 import DeadlineEditSheet from '../../components/ui/DeadlineEditSheet';
 import EditBookSheet from '../../components/ui/EditBookSheet';
 import GoalFormSheet from '../../components/ui/GoalFormSheet';
@@ -54,6 +55,7 @@ import ProgressCard from '../../components/ui/ProgressCard';
 import { getAllUserPages, getUserHistory } from '../../services/supabase/database';
 import { uploadBookCover } from '../../services/supabase/storage';
 import { updateWidgetData } from '../../utils/widget';
+import { useCoverPalette } from '../../hooks/useCoverPalette';
 import { useNotificationScheduler } from '../../hooks/useNotificationScheduler';
 import { useAuthStore } from '../../stores/authStore';
 import { useGoalStore } from '../../stores/goalStore';
@@ -61,6 +63,7 @@ import { useProgressStore } from '../../stores/progressStore';
 import { useProjectStore } from '../../stores/projectStore';
 import { ProgressHistory } from '../../types/supabase';
 import { colors, fonts, shadowAlpha, spacing } from '../../utils/constants';
+import { extractCoverPalette, type CoverPalette } from '../../utils/coverPalette';
 import { getActiveStreak, isStreakAtRisk } from '../../utils/streak';
 import { useTabBarInset } from '../../components/ui/GlassTabBar';
 import { BookOpenIcon, CheckIcon, CirclePlusIcon, LibraryBigIcon, RotateCcwIcon } from 'lucide-react-native';
@@ -100,6 +103,7 @@ export default function HomeScreen() {
     challengesLoading,
     _hasHydrated,
   } = useProjectStore();
+  const coverPalette = useCoverPalette(activeChallenge);
 
   const {
     loadChallengeProgress,
@@ -474,11 +478,18 @@ export default function HomeScreen() {
       if (!activeChallenge) return;
 
       try {
-        // 1. Upload la nouvelle cover si elle a changé
+        // 1. Nouvelle cover : upload et couleurs du fond en parallèle, depuis le
+        // fichier local. Si l'extraction échoue, la base efface l'ancienne palette
+        // et l'accueil la recalcule (useCoverPalette).
         let coverUrl = activeChallenge.cover_url;
+        let newPalette: CoverPalette | undefined;
         if (data.coverUri) {
-          const { url } = await uploadBookCover(activeChallenge.id, data.coverUri);
+          const [{ url }, palette] = await Promise.all([
+            uploadBookCover(activeChallenge.id, data.coverUri),
+            extractCoverPalette(data.coverUri).catch(() => undefined),
+          ]);
           coverUrl = url;
+          newPalette = palette;
         }
 
         // 2. Met à jour les infos du livre
@@ -487,6 +498,7 @@ export default function HomeScreen() {
           book_author: data.author,
           total_pages: data.totalPages,
           cover_url: coverUrl,
+          ...(newPalette && { cover_palette: newPalette }),
         });
 
         // Recharge les challenges pour afficher les nouvelles données
@@ -606,6 +618,9 @@ export default function HomeScreen() {
     <PageTransition>
     <GestureDetector gesture={swipeGesture}>
     <View style={styles.container}>
+      {/* Fond aux couleurs de la couverture du livre en cours */}
+      <CoverBackdrop palette={coverPalette} />
+
       {/* Texture de fond "noise" semi-transparente */}
       <Image
         source={TEXTURE_IMAGE}

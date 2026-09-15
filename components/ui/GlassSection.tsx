@@ -5,10 +5,9 @@
  * le contenu PAR-DESSUS, jamais dedans : iOS 26 reteinte le contenu d'un verre
  * avec plusieurs secondes de retard (même leçon que `GlassTabBar`).
  *
- * Lisibilité : un voile crème à 56 % recouvre le verre. Avec lui, `text-tertiary`
- * garde au moins 4,9:1 sur le fond ambré de la maquette. Le fond de l'accueil doit
- * donc rester une couverture diluée dans le papier : sur une couverture sombre
- * pleine, le contraste tombe à 2,5:1.
+ * Lisibilité : un voile crème (`glassVeil`, 56 %) recouvre le verre. Le fond tiré
+ * de la couverture dose ses couleurs sur ce voile pour que `text-tertiary` garde
+ * au moins 5:1 dans le cadre (`utils/coverPalette.ts`).
  *
  * Deux usages :
  * - sans `onPress` : simple cadre (Ma page, qui a ses propres zones tactiles) ;
@@ -22,13 +21,11 @@
 
 import React from 'react';
 import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
-import { borderRadius, creamAlpha, spacing } from '../../utils/constants';
+import { borderRadius, creamAlpha, glassVeil, spacing } from '../../utils/constants';
 import GlassMaterial from './GlassMaterial';
 import PressableScale from './PressableScale';
 
 const RADIUS = borderRadius.xl;
-/** Voile crème sur le verre : la valeur de la maquette, calculée pour le contraste */
-const VEIL = 0.56;
 /** Bord clair qui détache le cadre du fond coloré */
 const EDGE = creamAlpha(0.9);
 
@@ -53,7 +50,7 @@ export default function GlassSection({
 }: GlassSectionProps) {
   const layers = (
     <>
-      <GlassMaterial radius={RADIUS} veil={VEIL} edgeColor={EDGE} />
+      <GlassMaterial radius={RADIUS} veil={glassVeil} edgeColor={EDGE} />
       <View style={styles.content}>{children}</View>
     </>
   );

@@ -29,6 +29,13 @@ export const shadowAlpha = (alpha: number) => `rgba(${SHADOW_RGB},${alpha})`;
 /** Blanc chaud transparent : reflets et bordures claires sur fond sombre */
 export const creamAlpha = (alpha: number) => `rgba(${CREAM_RGB},${alpha})`;
 
+/**
+ * Voile crème posé sur le verre des cadres de l'accueil (`GlassSection`). Le fond
+ * tiré de la couverture (`utils/coverPalette.ts`) se règle dessus pour garder
+ * `text-tertiary` lisible dans les cadres : changer l'un, c'est recalculer l'autre.
+ */
+export const glassVeil = 0.56;
+
 export const colors = {
   // Dark colors (onboarding, boutons principaux)
   dark950: '#1e140e',          // Fond splash screen
