@@ -76,7 +76,15 @@ export default function AnimatedSplash({ onFinish, waitFor }: AnimatedSplashProp
 
   // Phase 2 — Lancer le fade-out quand :
   //   (entrée finie ET waitFor prêt) OU forceExit (timeout 8s)
+  //
+  // Le minuteur de fin vit dans une ref et n'est annulé qu'au démontage. Il était
+  // autrefois annulé par le cleanup de cet effet : si `waitFor` passait à true
+  // pendant les 300 ms du fondu (typiquement l'auth qui répond pile au moment du
+  // bailout de 8 s), l'effet se relançait, annulait le minuteur, puis sortait tout
+  // de suite puisque le fondu était déjà lancé. onFinish n'était jamais appelé :
+  // splash invisible posé sur l'app, écran entièrement blanc (2026-09-15).
   const hasStartedFadeOut = useRef(false);
+  const fadeOutTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
     if (hasStartedFadeOut.current) return;
 
@@ -86,10 +94,12 @@ export default function AnimatedSplash({ onFinish, waitFor }: AnimatedSplashProp
 
     hasStartedFadeOut.current = true;
     screenOpacity.value = withTiming(0, { duration: 300 });
-
-    const timer = setTimeout(() => setFadeOutDone(true), 300);
-    return () => clearTimeout(timer);
+    fadeOutTimer.current = setTimeout(() => setFadeOutDone(true), 300);
   }, [entryDone, waitFor, forceExit]);
+
+  useEffect(() => () => {
+    if (fadeOutTimer.current) clearTimeout(fadeOutTimer.current);
+  }, []);
 
   // Phase 3 — Appeler onFinish une seule fois quand le fade-out est terminé
   const hasCalledFinishRef = useRef(false);
