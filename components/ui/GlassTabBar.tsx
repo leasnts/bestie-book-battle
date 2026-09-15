@@ -8,9 +8,9 @@
  * sur l'UITabBar, largeur inchangée). Avec 3 icônes sans texte, elle laissait
  * trop de vide. Ici, chaque onglet fait ITEM_WIDTH et la barre se resserre autour.
  *
- * Ce qui reste natif : le matériau. `GlassView` (expo-glass-effect) pose un vrai
- * UIGlassEffect d'iOS 26, le même verre que les barres système. Avant iOS 26,
- * repli sur un flou expo-blur.
+ * Ce qui reste natif : le matériau. `GlassMaterial` pose un vrai UIGlassEffect
+ * d'iOS 26, le même verre que les barres système. Avant iOS 26, repli sur un
+ * flou expo-blur.
  *
  * Ce qu'on recrée : l'état actif. Pas de pastille derrière l'icône : l'onglet
  * actif se reconnaît à son icône plus foncée, au trait plus épais, en fondu
@@ -32,8 +32,6 @@
  */
 
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
-import { BlurView } from 'expo-blur';
-import { GlassView, isLiquidGlassAvailable } from 'expo-glass-effect';
 import React, { useEffect } from 'react';
 import { PlusIcon, type LucideIcon } from 'lucide-react-native';
 import { StyleSheet, View } from 'react-native';
@@ -45,7 +43,8 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, creamAlpha, inkAlpha, motion } from '../../utils/constants';
+import { colors, motion } from '../../utils/constants';
+import GlassMaterial from './GlassMaterial';
 import PressableScale from './PressableScale';
 
 // ─── Dimensions ────────────────────────────────────────────────────────────────
@@ -123,19 +122,6 @@ export function TabIcon({ icon: Icon, focused }: { icon: LucideIcon; focused: bo
 
 // ─── Barre ─────────────────────────────────────────────────────────────────────
 
-/** Le matériau de la barre et du bouton « + » : verre iOS 26, ou flou avant */
-function Glass({ radius }: { radius: number }) {
-  return isLiquidGlassAvailable() ? (
-    <GlassView style={[styles.material, { borderRadius: radius }]} glassEffectStyle="regular" />
-  ) : (
-    <BlurView
-      style={[styles.material, styles.materialFallback, { borderRadius: radius }]}
-      intensity={40}
-      tint="light"
-    />
-  );
-}
-
 interface GlassTabBarProps extends BottomTabBarProps {
   /** Toucher le bouton « + » à droite de la barre */
   onAddPress: () => void;
@@ -182,7 +168,7 @@ export default function GlassTabBar({ state, descriptors, navigation, onAddPress
 
       <View style={styles.shadow} accessibilityRole="tablist">
         {/* Fond seul : le verre ne contient rien */}
-        <Glass radius={BAR_HEIGHT / 2} />
+        <GlassMaterial radius={BAR_HEIGHT / 2} />
         {/* Icônes au-dessus du verre, hors de son adaptation de couleur */}
         <View style={styles.bar}>{items}</View>
       </View>
@@ -194,7 +180,7 @@ export default function GlassTabBar({ state, descriptors, navigation, onAddPress
         accessibilityRole="button"
         accessibilityLabel="Ajouter un challenge"
       >
-        <Glass radius={ADD_SIZE / 2} />
+        <GlassMaterial radius={ADD_SIZE / 2} />
         <PlusIcon size={24} color={colors.dark900} strokeWidth={ACTIVE_STROKE} />
       </PressableScale>
     </View>
@@ -219,18 +205,9 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.12,
     shadowRadius: 20,
   },
-  material: {
-    ...StyleSheet.absoluteFillObject,
-    overflow: 'hidden',
-  },
   bar: {
     flexDirection: 'row',
     padding: BAR_PADDING,
-  },
-  materialFallback: {
-    backgroundColor: creamAlpha(0.8),
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: inkAlpha(0.08),
   },
   addSpacer: {
     width: ADD_SIZE + ADD_GAP,
