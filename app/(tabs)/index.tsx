@@ -1,12 +1,14 @@
 /**
  * BESTIE BOOK BATTLE - Home Page (refonte Figma)
  * 
- * Page d'accueil de l'application, divisée en 4 sections :
- * 
- * 1. HEADER : PopEyes mascotte (centre) | bouton notification (droite) — le profil est un onglet
- * 2. SECTION LIVRES : pile de couvertures empilées + détails du livre actif + progression circulaire
- * 3. SÉLECTEUR DE PAGE : scroll horizontal pour choisir sa page + boutons undo/valider
- * 4. CARTE DE PROGRESSION : comparaison "Moi" vs "Ami.e" avec scores, streaks, barre duale
+ * Page d'accueil de l'application : un en-tête et trois blocs.
+ *
+ * HEADER : bibliothèque (gauche) | PopEyes mascotte (centre) | notifications (droite)
+ *   La bibliothèque ouvre /library, la liste de tous tes challenges rangés sur
+ *   des étagères : c'est là qu'on change de livre ou qu'on en ajoute un.
+ * 1. LE LIVRE EN COURS : couverture, auteur, titre, pages, deadline, progression
+ * 2. SÉLECTEUR DE PAGE : scroll pour choisir sa page + boutons annuler/valider
+ * 3. TOP 3 : le podium du challenge, plus ta ligne si tu n'y es pas
  * 
  * Le fond utilise une texture "noise" semi-transparente (comme l'onboarding),
  * remplaçant les anciennes lignes de cahier.
@@ -40,10 +42,11 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Button3D from '../../components/Button3D';
 import PageTransition from '../../components/PageTransition';
 import PopEyes from '../../components/PopEyes';
-import BookStack from '../../components/ui/BookStack';
+import ActiveBookCard from '../../components/ui/ActiveBookCard';
 import DeadlineEditSheet from '../../components/ui/DeadlineEditSheet';
 import EditBookSheet from '../../components/ui/EditBookSheet';
 import GoalFormSheet from '../../components/ui/GoalFormSheet';
+import HeaderIconButton from '../../components/ui/HeaderIconButton';
 import NotificationButton from '../../components/ui/NotificationButton';
 import PageScrollPicker from '../../components/ui/PageScrollPicker';
 import ParticipantHistorySheet from '../../components/ui/ParticipantHistorySheet';
@@ -60,7 +63,7 @@ import { ProgressHistory } from '../../types/supabase';
 import { colors, fonts, shadowAlpha, spacing } from '../../utils/constants';
 import { getActiveStreak, isStreakAtRisk } from '../../utils/streak';
 import { useTabBarInset } from '../../components/ui/GlassTabBar';
-import { BookOpenIcon, CheckIcon, CirclePlusIcon, RotateCcwIcon } from 'lucide-react-native';
+import { BookOpenIcon, CheckIcon, CirclePlusIcon, LibraryBigIcon, RotateCcwIcon } from 'lucide-react-native';
 
 // Texture de fond "noise" réutilisée depuis l'onboarding
 const TEXTURE_IMAGE = require('../../assets/images/61ea1e0c638b5b9c8100383a37a5b488848db623.png');
@@ -90,13 +93,11 @@ export default function HomeScreen() {
   const {
     challenges,
     activeChallenge,
-    setActiveChallenge,
     setLastProgressChallengeId,
     loadUserChallenges,
     leaveActiveChallenge,
     updateActiveChallenge,
     challengesLoading,
-    challengesLoaded,
     _hasHydrated,
   } = useProjectStore();
 
@@ -126,7 +127,6 @@ export default function HomeScreen() {
 
   // ===== État local =====
   const [currentPageInput, setCurrentPageInput] = useState(0);
-  const [showBookShelf, setShowBookShelf] = useState(false);
 
   // Cache des pages sauvegardées par challenge.
   // Quand on switch de challenge, les données du store sont rechargées (async).
@@ -434,34 +434,6 @@ export default function HomeScreen() {
     });
   }, [participants, activeChallenge?.id, totalPages]);
 
-  // ===== Callback : basculer l'étagère ouverte/fermée =====
-  const handleBookStackToggle = useCallback(() => {
-    setShowBookShelf((prev) => !prev);
-  }, []);
-
-  // ===== Callback : sélectionner un livre dans l'étagère =====
-  const handleSelectChallenge = useCallback(
-    (challenge: NonNullable<typeof activeChallenge>) => {
-      setActiveChallenge(challenge);
-      setShowBookShelf(false);  // Referme l'étagère après sélection
-    },
-    [setActiveChallenge]
-  );
-
-  // ===== Callback : ajouter un nouveau livre =====
-  // Réutilise les écrans onboarding (role, create, pages, cover, complete)
-  // en mode addChallenge : pas de notifications, flow direct jusqu'au partage
-  const handleAddBook = useCallback(() => {
-    setShowBookShelf(false);
-    router.push({
-      pathname: '/onboarding/role',
-      params: {
-        firstName: user?.first_name || 'Lecteur',
-        addChallenge: 'true',
-      },
-    });
-  }, [router, user?.first_name]);
-
   // ===== Callback : quitter le livre actif =====
   const handleDeleteBook = useCallback(async () => {
     if (!activeChallenge || !user?.id) return;
@@ -485,19 +457,6 @@ export default function HomeScreen() {
       Alert.alert('Erreur', 'Impossible de quitter ce livre. Réessaie.');
     }
   }, [activeChallenge, challenges, user, leaveActiveChallenge, router]);
-
-  // ===== Callback : inviter un ami =====
-  const handleInviteFriend = useCallback(() => {
-    if (!activeChallenge) return;
-    // Navigue vers l'écran d'invitation avec le code du challenge
-    router.push({
-      pathname: '/project/invite',
-      params: {
-        code: activeChallenge.invite_code,
-        challengeId: activeChallenge.id,
-      },
-    });
-  }, [activeChallenge, router]);
 
   // ===== Callback : modifier le livre =====
   const handleEditBook = useCallback(() => {
@@ -656,8 +615,12 @@ export default function HomeScreen() {
 
       {/* ═══════════ HEADER ═══════════ */}
       <View style={[styles.header, { paddingTop: insets.top + spacing.lg }]}>
-        {/* Le profil vit dans la barre d'onglets : cet espace garde PopEyes centré */}
-        <View style={styles.headerSpacer} />
+        {/* Bibliothèque — tous tes challenges, sur des étagères */}
+        <HeaderIconButton
+          icon={LibraryBigIcon}
+          onPress={() => router.push('/library')}
+          accessibilityLabel="Mes challenges"
+        />
 
         {/* PopEyes mascotte — décoratif */}
         <PopEyes size="small" />
@@ -669,20 +632,13 @@ export default function HomeScreen() {
         />
       </View>
 
-      {/* ═══════════ SECTION LIVRE (fermé = pile empilée / ouvert = étagère scroll) ═══════════ */}
+      {/* ═══════════ BLOC 1 : LE LIVRE EN COURS ═══════════ */}
       {activeChallenge && (
         <View style={styles.bookSection}>
-          <BookStack
-            activeChallenge={activeChallenge}
-            allChallenges={challenges}
+          <ActiveBookCard
+            challenge={activeChallenge}
             progressPercentage={averagePercentage}
-            participants={participants}
-            isOpen={showBookShelf}
-            onToggle={handleBookStackToggle}
-            onSelectChallenge={handleSelectChallenge}
-            onAddBook={handleAddBook}
             onDeleteBook={handleDeleteBook}
-            onInviteFriend={handleInviteFriend}
             onEditBook={handleEditBook}
             onEditDeadline={handleEditDeadline}
             onSetIntermediateGoal={handleSetIntermediateGoal}
@@ -690,19 +646,13 @@ export default function HomeScreen() {
         </View>
       )}
 
-      {/* ═══════════ ZONE CENTRALE : SÉLECTEUR DE PAGE ═══════════
+      {/* ═══════════ BLOC 2 : SÉLECTEUR DE PAGE ═══════════
         Hauteur FIXE : les boutons apparaissent/disparaissent sans que les chiffres
         bougent. On réserve toujours la place des boutons (placeholder invisible
         quand hasChanged=false) pour éviter tout décalage vertical.
       */}
       {activeChallenge ? (
-        <View
-          style={[
-            styles.pageSection,
-            showBookShelf && styles.pageSectionDisabled,
-          ]}
-          pointerEvents={showBookShelf ? 'none' : 'auto'}
-        >
+        <View style={styles.pageSection}>
           <View
             style={[
               styles.pageSectionInner,
@@ -795,7 +745,7 @@ export default function HomeScreen() {
         </View>
       )}
 
-      {/* ═══════════ CARTE DE PROGRESSION (bas de page) ═══════════ */}
+      {/* ═══════════ BLOC 3 : TOP 3 DU CHALLENGE + MOI ═══════════ */}
       {activeChallenge && (
         <View style={[styles.progressSection, { paddingBottom: tabBarInset + spacing.md }]}>
           <ProgressCard
@@ -919,23 +869,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingBottom: spacing.lg,
   },
-  // Même largeur que le bouton notification, pour que PopEyes reste centré
-  headerSpacer: {
-    width: 40,
-    height: 40,
-  },
-
-  // ===== SECTION LIVRE =====
-  // overflow: visible pour que les covers de l'étagère puissent
-  // déborder visuellement quand on scrolle (pas coupées par le conteneur)
+  // ===== BLOC 1 : LE LIVRE EN COURS =====
   bookSection: {
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.lg,
     paddingBottom: spacing['2xl'],
     borderBottomWidth: 1,
     borderBottomColor: colors.borderLight,
-    overflow: 'visible',
-    zIndex: 10,
   },
 
   // ===== SECTION SÉLECTEUR DE PAGE =====
@@ -944,12 +884,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  // Quand l'étagère est ouverte, on ne peut pas scroller les pages :
-  // - opacity réduite = signal visuel "section désactivée"
-  // - pointerEvents: 'none' est appliqué côté JSX (pas en stylesheet)
-  pageSectionDisabled: {
-    opacity: 0.25,
   },
   // Conteneur avec hauteur fixe, pleine largeur pour le centrage.
   pageSectionInner: {

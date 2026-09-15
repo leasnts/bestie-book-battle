@@ -322,6 +322,21 @@ function RootLayoutNav() {
         }}
       />
 
+      {/* Bibliothèque de tes challenges — même sheet natif que le classement */}
+      <Stack.Screen
+        name="library"
+        options={{
+          presentation: 'formSheet',
+          sheetAllowedDetents: [0.65, 0.95],
+          sheetGrabberVisible: true,
+          sheetExpandsWhenScrolledToEdge: true,
+          headerShown: true,
+          headerTitle: 'Mes challenges',
+          headerLargeTitle: false,
+          headerTitleStyle: { fontFamily: fonts.display, fontSize: 19, color: colors.textPrimary },
+        }}
+      />
+
       {/* Garde les routes d'auth mais cachées (pour éviter les erreurs) */}
       <Stack.Screen
         name="auth"

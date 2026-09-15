@@ -42,7 +42,7 @@ bestie-book-battle/
 ├── app/                        # Écrans (Expo Router file-based routing)
 │   ├── _layout.tsx             # Layout racine (auth guard, splash, redirections)
 │   ├── (tabs)/                 # Navigation par tabs
-│   │   ├── index.tsx           # Home (pile de livres, progression, classement)
+│   │   ├── index.tsx           # Home (livre en cours, sélecteur de page, top 3)
 │   │   └── history.tsx         # Historique des challenges
 │   ├── auth/login.tsx          # Apple Sign In
 │   ├── onboarding/             # Wizard nouveau user (welcome → role → cover → pages → deadline → create/join → notifications → complete)
@@ -54,7 +54,7 @@ bestie-book-battle/
 │   └── activity.tsx            # Feed d'activité
 │
 ├── components/
-│   ├── ui/                     # Composants UI (ProgressBar, ParticipantCard, BookStack…)
+│   ├── ui/                     # Composants UI (ProgressBar, ActiveBookCard, BookLibrary…)
 │   ├── charts/                 # Graphiques Visx (LineChart, Tooltip, XAxis)
 │   ├── common/                 # Avatar, Crown
 │   ├── icons/                  # Icônes SVG custom

@@ -3,15 +3,14 @@
  *
  * Section de classement affichée en bas de l'accueil.
  *
- * Règle d'affichage : 4 lignes maximum, jamais de scroll.
+ * Règle d'affichage : le top 3 du challenge, plus moi. Jamais de scroll.
  * Un scroll imbriqué dans la page d'accueil était impossible à manipuler
  * (on ne savait jamais si on déplaçait la liste ou la page).
  *
- * Ce qu'on montre selon le nombre de participants :
- * - 4 ou moins        → tout le monde, pas de bouton
- * - plus de 4, moi sur le podium → le top 4 d'affilée
- * - plus de 4, moi ailleurs      → le top 3, un séparateur, puis MA ligne
- *   avec mon rang réel (#7). Je garde toujours un repère sur ma position.
+ * Ce qu'on montre :
+ * - moi sur le podium → le top 3
+ * - moi ailleurs      → le top 3, un séparateur, puis MA ligne avec mon rang
+ *   réel (#7). Je garde toujours un repère sur ma position.
  *
  * Le reste du classement s'ouvre dans un bottom sheet via le bouton du bas.
  *
@@ -236,7 +235,7 @@ export default function ProgressCard({
   const reducedMotion = useReducedMotion();
   const animate = !reducedMotion;
 
-  // Classement complet, puis les 4 lignes qui tiennent à l'écran
+  // Classement complet, puis le top 3 + ma ligne
   const ranked = useMemo(
     () => rankParticipants(participants, myUserId),
     [participants, myUserId],
@@ -278,7 +277,7 @@ export default function ProgressCard({
 
   return (
     <View style={styles.container}>
-      {/* ── Podium (3 ou 4 lignes selon ma position) ── */}
+      {/* ── Podium : le top 3 ── */}
       <View style={styles.participantList}>
         {rows.map((participant) => (
           <ParticipantRow

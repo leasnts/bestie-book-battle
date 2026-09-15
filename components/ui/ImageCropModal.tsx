@@ -27,7 +27,7 @@ import { borderRadius, colors, creamAlpha, fonts, fontSize, shadowAlpha, spacing
 
 const { width: SW } = Dimensions.get('window');
 
-// Cadre de crop — ratio 5:7 exact (= COVER_RATIO_W / COVER_RATIO_H de BookStack)
+// Cadre de crop — ratio 5:7 exact (= COVER_RATIO de BookCover)
 const FRAME_W = SW - 80;
 const FRAME_H = FRAME_W * (7 / 5);
 

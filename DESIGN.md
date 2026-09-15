@@ -364,6 +364,23 @@ podium) ; dans un podium, l'ordre vertical suffit. Le score est en Fraunces alig
 La ligne « moi » se distingue par un fond teinté (`inkAlpha(0.06)`) et un
 prénom en gras — jamais par une couleur.
 
+### Accueil et bibliothèque
+
+L'accueil tient en un en-tête et **trois blocs**, sans scroll : le livre en
+cours (`ActiveBookCard`), le sélecteur de page, le top 3 du challenge plus ta
+ligne si tu n'y es pas (`ProgressCard`).
+
+L'en-tête porte deux `HeaderIconButton` 40 pt autour de PopEyes :
+**bibliothèque** (`library-big`) à gauche, **activité** (`bell`) à droite.
+
+Changer de livre ou en ajouter un se fait dans la **bibliothèque**, route
+`/library` en sheet natif : les challenges rangés trois par trois, sans titre,
+sur l'étagère historique de l'accueil — barre en verre flouté (noyer à 30 %,
+bordure crème à 40 %) avec ses vis, posée **par-dessus** le bas des
+couvertures. Trois états de couverture : **en cours** (le livre de l'accueil)
+bordure encre de 2 pt détachée de 3 pt, **pas commencé** filet `inkAlpha(0.15)`,
+**terminé** cadre sombre + marque-page ✓ (`BookCover`).
+
 ### Icônes
 
 **Une seule banque : [Lucide](https://lucide.dev/icons/)** (`lucide-react-native`),
