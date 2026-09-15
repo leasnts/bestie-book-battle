@@ -403,15 +403,19 @@ pictogramme voulu, prendre le plus proche dans Lucide.
 ### Barre d'onglets
 
 **Sur mesure, en verre iOS 26** (`components/ui/GlassTabBar.tsx`) : pilule
-flottante de 190 pt centrée en bas, matériau `GlassView` d'expo-glass-effect
+flottante de 190 pt **centrée** en bas, matériau `GlassView` d'expo-glass-effect
 (vrai UIGlassEffect, repli expo-blur avant iOS 26). Trois onglets, icônes sans
 libellé : **Lecture en cours** (`book-open`), **Inspiration** (`search`),
-**Profil** (`circle-user`). Trait fin `ink` à 50 % d'opacité au repos (3,05:1
-sur le verre, ne pas descendre plus bas), trait épais `ink` une fois actif, en fondu (200 ms), avec une pastille `inkAlpha(0.07)`
-(teinte de la pastille native, mesurée) qui glisse vers l'onglet actif (300 ms,
-ease-out-quart). Pastille et icônes sont posées **par-dessus** le verre, jamais
-dedans : iOS 26 réadapte la couleur du contenu d'un verre avec retard. Pas de
-verre interactif pour la même raison.
+**Profil** (`circle-user`). **Pas de pastille derrière l'onglet actif** : trait
+fin `ink` à 50 % d'opacité au repos (3,05:1 sur le verre, ne pas descendre plus
+bas), trait épais `ink` à pleine opacité une fois actif, en fondu (200 ms). Lucide
+n'existe qu'en contour : pas d'icône pleine pour l'état actif. Les icônes sont posées
+**par-dessus** le verre, jamais dedans : iOS 26 réadapte la couleur du contenu
+d'un verre avec retard. Pas de verre interactif pour la même raison.
+
+À droite de la barre, à 12 pt, un **bouton rond « + »** de même hauteur et même
+verre ajoute un challenge. Une cale invisible de même largeur à gauche garde la
+barre au centre de l'écran.
 
 La barre native `NativeTabs` a été essayée puis abandonnée : iOS 26 fixe sa
 largeur (~274 pt pour 3 icônes) et ignore `itemWidth`/`itemPositioning`.

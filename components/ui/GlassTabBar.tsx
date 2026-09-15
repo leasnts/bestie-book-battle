@@ -12,12 +12,16 @@
  * UIGlassEffect d'iOS 26, le même verre que les barres système. Avant iOS 26,
  * repli sur un flou expo-blur.
  *
- * Ce qu'on recrée : la pastille de l'onglet actif, qui glisse d'un onglet à
- * l'autre (ease-out-quart, 300 ms, jamais de rebond — cf. DESIGN.md), avec la
- * même teinte que la barre native (mesurée : ~7 % d'encre sur le verre), et le
- * fondu de l'icône entre contour noyer effacé et plein noyer.
+ * Ce qu'on recrée : l'état actif. Pas de pastille derrière l'icône : l'onglet
+ * actif se reconnaît à son icône plus foncée, au trait plus épais, en fondu
+ * (200 ms, ease-out-quart — cf. DESIGN.md). Lucide n'existe qu'en contour : pas
+ * de version pleine à afficher pour l'onglet actif.
  *
- * Pastille et icônes sont posées PAR-DESSUS le verre, pas dedans. Placées comme
+ * À droite de la barre, un bouton rond « + » dans le même verre ajoute un
+ * challenge. La barre reste centrée à l'écran : une cale invisible de la même
+ * largeur équilibre le bouton côté gauche.
+ *
+ * Les icônes sont posées PAR-DESSUS le verre, pas dedans. Placées comme
  * enfants de GlassView, iOS 26 les réadapte à ce qui passe derrière la barre :
  * leur couleur changeait quelques secondes après la sélection. Même raison pour
  * l'absence d'`isInteractive`, qui éclaire et reteinte le verre au toucher.
@@ -31,7 +35,7 @@ import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { BlurView } from 'expo-blur';
 import { GlassView, isLiquidGlassAvailable } from 'expo-glass-effect';
 import React, { useEffect } from 'react';
-import type { LucideIcon } from 'lucide-react-native';
+import { PlusIcon, type LucideIcon } from 'lucide-react-native';
 import { StyleSheet, View } from 'react-native';
 import Animated, {
   Easing,
@@ -51,6 +55,9 @@ const ITEM_WIDTH = 60;
 const ITEM_HEIGHT = 48;
 const BAR_PADDING = 5;
 const BAR_HEIGHT = ITEM_HEIGHT + BAR_PADDING * 2;
+/** Bouton « + » : un rond de la hauteur de la barre, à ADD_GAP pt de son bord droit */
+const ADD_SIZE = BAR_HEIGHT;
+const ADD_GAP = 12;
 
 /**
  * Opacité d'une icône non sélectionnée. Même encre noyer que l'icône active,
@@ -83,9 +90,8 @@ export function useTabBarInset() {
 
 /**
  * Icône Lucide à deux états, empilés et fondus l'un dans l'autre, en encre noyer :
- * trait fin à IDLE_ICON_OPACITY au repos, trait plus épais et pleine opacité une
- * fois actif. Pas de version « remplie » : Lucide n'en a pas, et remplir ses tracés
- * (loupe, silhouette) boucherait le dessin. On anime seulement l'opacité.
+ * trait fin à IDLE_ICON_OPACITY au repos ; trait plus épais et pleine opacité
+ * une fois actif. On anime seulement l'opacité.
  */
 export function TabIcon({ icon: Icon, focused }: { icon: LucideIcon; focused: boolean }) {
   const reducedMotion = useReducedMotion();
@@ -117,22 +123,26 @@ export function TabIcon({ icon: Icon, focused }: { icon: LucideIcon; focused: bo
 
 // ─── Barre ─────────────────────────────────────────────────────────────────────
 
-export default function GlassTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
+/** Le matériau de la barre et du bouton « + » : verre iOS 26, ou flou avant */
+function Glass({ radius }: { radius: number }) {
+  return isLiquidGlassAvailable() ? (
+    <GlassView style={[styles.material, { borderRadius: radius }]} glassEffectStyle="regular" />
+  ) : (
+    <BlurView
+      style={[styles.material, styles.materialFallback, { borderRadius: radius }]}
+      intensity={40}
+      tint="light"
+    />
+  );
+}
+
+interface GlassTabBarProps extends BottomTabBarProps {
+  /** Toucher le bouton « + » à droite de la barre */
+  onAddPress: () => void;
+}
+
+export default function GlassTabBar({ state, descriptors, navigation, onAddPress }: GlassTabBarProps) {
   const insets = useSafeAreaInsets();
-  const reducedMotion = useReducedMotion();
-  const pillX = useSharedValue(state.index * ITEM_WIDTH);
-
-  useEffect(() => {
-    const target = state.index * ITEM_WIDTH;
-    pillX.value = reducedMotion
-      ? target
-      : withTiming(target, {
-          duration: motion.duration.slow,
-          easing: Easing.bezier(...motion.easing.easeOutQuart),
-        });
-  }, [state.index, reducedMotion, pillX]);
-
-  const pillStyle = useAnimatedStyle(() => ({ transform: [{ translateX: pillX.value }] }));
 
   const items = state.routes.map((route, index) => {
     const { options } = descriptors[route.key];
@@ -167,19 +177,26 @@ export default function GlassTabBar({ state, descriptors, navigation }: BottomTa
 
   return (
     <View style={[styles.anchor, { bottom: barBottom(insets.bottom) }]} pointerEvents="box-none">
+      {/* Cale de la largeur du bouton « + » : garde la barre au centre de l'écran */}
+      <View style={styles.addSpacer} pointerEvents="none" />
+
       <View style={styles.shadow} accessibilityRole="tablist">
         {/* Fond seul : le verre ne contient rien */}
-        {isLiquidGlassAvailable() ? (
-          <GlassView style={styles.material} glassEffectStyle="regular" />
-        ) : (
-          <BlurView style={[styles.material, styles.materialFallback]} intensity={40} tint="light" />
-        )}
-        {/* Pastille et icônes au-dessus du verre, hors de son adaptation de couleur */}
-        <View style={styles.bar}>
-          <Animated.View style={[styles.pill, pillStyle]} pointerEvents="none" />
-          {items}
-        </View>
+        <Glass radius={BAR_HEIGHT / 2} />
+        {/* Icônes au-dessus du verre, hors de son adaptation de couleur */}
+        <View style={styles.bar}>{items}</View>
       </View>
+
+      <PressableScale
+        style={[styles.shadow, styles.addButton]}
+        pressedScale={0.9}
+        onPress={onAddPress}
+        accessibilityRole="button"
+        accessibilityLabel="Ajouter un challenge"
+      >
+        <Glass radius={ADD_SIZE / 2} />
+        <PlusIcon size={24} color={colors.dark900} strokeWidth={ACTIVE_STROKE} />
+      </PressableScale>
     </View>
   );
 }
@@ -189,6 +206,8 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 0,
     right: 0,
+    flexDirection: 'row',
+    justifyContent: 'center',
     alignItems: 'center',
   },
   // L'ombre vit sur un parent sans overflow : sur la vue qui arrondit le verre,
@@ -202,7 +221,6 @@ const styles = StyleSheet.create({
   },
   material: {
     ...StyleSheet.absoluteFillObject,
-    borderRadius: BAR_HEIGHT / 2,
     overflow: 'hidden',
   },
   bar: {
@@ -214,14 +232,16 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: inkAlpha(0.08),
   },
-  pill: {
-    position: 'absolute',
-    top: BAR_PADDING,
-    left: BAR_PADDING,
-    width: ITEM_WIDTH,
-    height: ITEM_HEIGHT,
-    borderRadius: ITEM_HEIGHT / 2,
-    backgroundColor: inkAlpha(0.07),
+  addSpacer: {
+    width: ADD_SIZE + ADD_GAP,
+  },
+  addButton: {
+    width: ADD_SIZE,
+    height: ADD_SIZE,
+    borderRadius: ADD_SIZE / 2,
+    marginLeft: ADD_GAP,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   item: {
     width: ITEM_WIDTH,
