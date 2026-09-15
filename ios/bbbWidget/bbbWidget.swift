@@ -199,7 +199,7 @@ struct SmallWidgetView: View {
             }
             .frame(width: geo.size.width, height: geo.size.height)
         }
-        .background(Color(hex: "FFFBF5"))
+        .background(Color(hex: "FDFCFA"))
     }
 }
 
@@ -227,13 +227,13 @@ struct DashedProgressGauge: View {
 
     var body: some View {
         ZStack {
-            // Arc de fond (beige clair) — la totalité de la jauge
+            // Arc de fond (blanc cassé) — la totalité de la jauge
             Circle()
                 .trim(from: 0, to: arcFraction)
                 .stroke(
                     style: StrokeStyle(lineWidth: 5, dash: [5.5, 2.5])
                 )
-                .foregroundColor(Color(hex: "E2D7CA"))
+                .foregroundColor(Color(hex: "E5E0D9"))
                 .rotationEffect(.degrees(startRotation))
 
             // Arc de progression (noyer foncé) — rempli de gauche à droite
@@ -285,7 +285,7 @@ struct bbbWidget: Widget {
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: Provider()) { entry in
             bbbWidgetEntryView(entry: entry)
-                .containerBackground(Color(hex: "FFFBF5"), for: .widget)
+                .containerBackground(Color(hex: "FDFCFA"), for: .widget)
         }
         .configurationDisplayName("Bestie Book Battle")
         .description("Le classement de ton challenge lecture")

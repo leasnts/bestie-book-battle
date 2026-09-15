@@ -9,9 +9,9 @@
  */
 
 /**
- * Palette "noyer et crème" : chocolat chaud, plaid, lumière tamisée.
+ * Palette "noyer sur papier blanc" : chocolat chaud, plaid, lumière tamisée.
  *
- * L'encre est un marron noyer foncé, le papier une crème à peine dorée. Aucun
+ * L'encre est un marron noyer foncé, le papier un blanc à peine chaud. Aucun
  * noir pur ni blanc pur dans l'app : même les ombres et les reflets partent de
  * ces deux teintes, sinon ils ressortent gris et refroidissent tout.
  *
@@ -20,13 +20,13 @@
  */
 const INK_RGB = '51,35,26';     // #33231a
 const SHADOW_RGB = '30,20,14';  // #1e140e
-const CREAM_RGB = '255,251,245'; // #fffbf5
+const CREAM_RGB = '253,252,250'; // #fdfcfa
 
 /** Encre noyer transparente : teintes de fond, bordures, séparateurs sur fond clair */
 export const inkAlpha = (alpha: number) => `rgba(${INK_RGB},${alpha})`;
 /** Ombre marron très sombre transparente : ombres portées, ombres internes, voiles */
 export const shadowAlpha = (alpha: number) => `rgba(${SHADOW_RGB},${alpha})`;
-/** Crème transparente : reflets et bordures claires sur fond sombre */
+/** Blanc chaud transparent : reflets et bordures claires sur fond sombre */
 export const creamAlpha = (alpha: number) => `rgba(${CREAM_RGB},${alpha})`;
 
 export const colors = {
@@ -36,21 +36,21 @@ export const colors = {
   dark800: '#2a1c14',          // Fond carte livre
 
   // Light colors (backgrounds)
-  white: '#fffbf5',            // Background inputs, cartes — crème, pas blanc pur
+  white: '#fdfcfa',            // Background inputs, cartes — blanc à peine chaud, pas blanc pur
   black: '#1e140e',            // Uniquement pour les ombres portées, jamais pour du texte ni un fond
-  bgSecondary: '#fbf6ef',      // Background cartes non-sélectionnées
-  bgLight: '#f6efe6',          // Fond d'app, bouton back, bouton secondaire
+  bgSecondary: '#faf8f5',      // Background cartes non-sélectionnées
+  bgLight: '#f5f3ef',          // Fond d'app, bouton back, bouton secondaire
 
   // Text colors — contrastes WCAG mesurés sur bgLight / bgSecondary / white
-  textPrimary: '#33231a',      // Texte principal (900) — 13,2 / 14,0 / 14,6
-  textSecondary: '#5a4536',    // Texte secondaire (700) — 7,9 / 8,4 / 8,7
-  textTertiary: '#6b5546',     // Texte tertiaire (600) — 6,1 / 6,5 / 6,8
-  textPlaceholder: '#7a6453',  // Placeholders (500) — 4,9 / 5,2 / 5,4
-  textSubtle: '#e2d7ca',       // Texte subtle (300) — lisible uniquement sur fond sombre (11,6 sur dark800)
+  textPrimary: '#33231a',      // Texte principal (900) — 13,6 / 14,2 / 14,7
+  textSecondary: '#5a4536',    // Texte secondaire (700) — 8,1 / 8,5 / 8,8
+  textTertiary: '#6b5546',     // Texte tertiaire (600) — 6,3 / 6,6 / 6,8
+  textPlaceholder: '#7a6453',  // Placeholders (500) — 5,0 / 5,3 / 5,4
+  textSubtle: '#e5e0d9',       // Texte subtle (300) — lisible uniquement sur fond sombre (12,6 sur dark800)
 
   // Border colors
-  border: '#e2d7ca',           // Bordure inputs
-  borderLight: '#eee6db',      // Bordure secondaire
+  border: '#e5e0d9',           // Bordure inputs
+  borderLight: '#eeebe6',      // Bordure secondaire
 
   // Alpha colors (pour les ombres et overlays)
   alphaBlack10: inkAlpha(0.1),

@@ -1,20 +1,20 @@
 ---
 name: Bestie Book Battle
-description: Le carnet de lecture partagé — encre noyer sur papier crème, animé par des réactions taquines
+description: Le carnet de lecture partagé — encre noyer sur papier blanc chaud, animé par des réactions taquines
 colors:
   ink: "#33231a"
   ink-deep: "#1e140e"
   ink-panel: "#2a1c14"
-  paper: "#f6efe6"
-  surface: "#fffbf5"
-  surface-raised: "#fbf6ef"
+  paper: "#f5f3ef"
+  surface: "#fdfcfa"
+  surface-raised: "#faf8f5"
   text-primary: "#33231a"
   text-secondary: "#5a4536"
   text-tertiary: "#6b5546"
   text-placeholder: "#7a6453"
-  text-subtle: "#e2d7ca"
-  rule: "#e2d7ca"
-  rule-light: "#eee6db"
+  text-subtle: "#e5e0d9"
+  rule: "#e5e0d9"
+  rule-light: "#eeebe6"
   crown: "#FCD34D"
   crown-deep: "#F59E0B"
   streak: "#F97316"
@@ -132,13 +132,13 @@ components:
 
 **North Star : le carnet de lecture partagé.**
 
-Un cahier dans lequel plusieurs personnes écrivent. Encre noyer sur papier crème
+Un cahier dans lequel plusieurs personnes écrivent. Encre noyer sur papier blanc chaud
 grené, titres à empattements, marges généreuses, aucune décoration gratuite.
 L'ambiance visée : automne, chocolat chaud, plaid, lumière tamisée. Le système
 est quasi monochrome par choix : la couleur n'apparaît que lorsqu'elle porte du
 sens — une couronne, une flamme, une alerte.
 
-La chaleur vient de trois endroits : la **palette** elle-même (marron et crème,
+La chaleur vient de trois endroits : la **palette** elle-même (marron et blanc chaud,
 jamais de noir ni de blanc purs), les **illustrations maison** (PopEyes,
 couronne, crâne), et le **mouvement** — le
 compteur qui roule, la feuille qui tombe quand on enregistre des pages, les
@@ -164,13 +164,13 @@ Aucune couleur de marque primaire n'existe, et c'est délibéré.
 | `ink` | `#33231a` | Encre noyer foncé. Texte principal, boutons primaires, barres de progression remplies. |
 | `ink-deep` | `#1e140e` | Fond du splash. Base de toutes les ombres. |
 | `ink-panel` | `#2a1c14` | Fond des cartes livre. |
-| `paper` | `#f6efe6` | Fond d'app. Porte une texture noise à 5% d'opacité. |
-| `surface` | `#fffbf5` | Cartes, champs, sheets. |
-| `surface-raised` | `#fbf6ef` | Cartes non sélectionnées. |
+| `paper` | `#f5f3ef` | Fond d'app. Porte une texture noise à 5% d'opacité. |
+| `surface` | `#fdfcfa` | Cartes, champs, sheets. Blanc à peine chaud, ni `#ffffff` ni crème. |
+| `surface-raised` | `#faf8f5` | Cartes non sélectionnées. |
 
 Les neutres ne sont pas des gris : ils tirent vers le marron noyer. **Aucun noir
 ni blanc pur dans l'app**, ombres et reflets compris — un `rgba(0,0,0,…)` ressort
-gris sur la crème et refroidit tout. Les transparences passent par trois helpers
+gris sur le papier et refroidit tout. Les transparences passent par trois helpers
 de `utils/constants.ts` : `inkAlpha()` (teintes et bordures sur fond clair),
 `shadowAlpha()` (ombres, voiles), `creamAlpha()` (reflets et bordures claires sur
 fond sombre). Les illustrations PNG sont passées en duotone noyer/crème.
@@ -179,21 +179,21 @@ Toute extension de la palette doit rester sur cette teinte chaude.
 ### Texte
 
 `text-primary` `#33231a` → `text-secondary` `#5a4536` → `text-tertiary` `#6b5546`
-→ `text-placeholder` `#7a6453` → `text-subtle` `#e2d7ca`.
+→ `text-placeholder` `#7a6453` → `text-subtle` `#e5e0d9`.
 
 **Contraste mesuré** (ratios WCAG calculés, pas estimés) :
 
-| Texte | sur `paper` #f6efe6 | sur `surface` #fffbf5 | sur `surface-raised` #fbf6ef |
+| Texte | sur `paper` #f5f3ef | sur `surface` #fdfcfa | sur `surface-raised` #faf8f5 |
 |---|---|---|---|
-| `text-primary` | 13,19 ✅ | 14,59 ✅ | 13,99 ✅ |
-| `text-secondary` | 7,87 ✅ | 8,71 ✅ | 8,35 ✅ |
-| `text-tertiary` | 6,11 ✅ | 6,76 ✅ | 6,48 ✅ |
-| `text-placeholder` | 4,88 ✅ | 5,40 ✅ | 5,17 ✅ |
-| `text-subtle` | 1,24 ❌ | 1,38 ❌ | 1,32 ❌ |
+| `text-primary` | 13,57 ✅ | 14,67 ✅ | 14,19 ✅ |
+| `text-secondary` | 8,10 ✅ | 8,76 ✅ | 8,47 ✅ |
+| `text-tertiary` | 6,29 ✅ | 6,80 ✅ | 6,57 ✅ |
+| `text-placeholder` | 5,02 ✅ | 5,43 ✅ | 5,25 ✅ |
+| `text-subtle` | 1,18 ❌ | 1,28 ❌ | 1,24 ❌ |
 
-**`text-subtle` (`#e2d7ca`) n'est lisible que sur fond sombre.** À 1,3:1 sur fond
+**`text-subtle` (`#e5e0d9`) n'est lisible que sur fond sombre.** À 1,2:1 sur fond
 clair il est invisible ; sur les cartes `ink-panel` (`#2a1c14`) il atteint
-11,6:1. C'est donc un token à double emploi : bordure sur fond clair, **texte sur
+12,6:1. C'est donc un token à double emploi : bordure sur fond clair, **texte sur
 fond sombre**. Les auteurs de livres sur les cartes sombres de l'onboarding et de
 l'invitation l'utilisent correctement. Ne jamais le poser sur `paper`,
 `surface` ou `surface-raised`.
@@ -336,7 +336,7 @@ Plus l'élément est grand ou important, plus le rayon est large.
 | `xl` | 24 px | Boutons principaux, cartes, sheets |
 | `full` | 9999 px | Pastilles, barres de progression |
 
-Les bordures sont fines et discrètes : 1 px, en `rule-light` (`#eee6db`) ou en
+Les bordures sont fines et discrètes : 1 px, en `rule-light` (`#eeebe6`) ou en
 alpha (`inkAlpha(0.1)`). Les bordures claires sur fond sombre passent par
 `alphaWhite30`.
 
@@ -347,7 +347,7 @@ applique son propre rayon, concentrique avec la courbure de l'écran.
 
 ### Boutons — `Button3D`
 
-Deux variantes. **Primaire** : encre pleine, bordure crème à 30%, rayon 24,
+Deux variantes. **Primaire** : encre pleine, bordure blanc chaud à 30%, rayon 24,
 padding 24h/20v, ombre franche. **Secondaire** : `paper`, bordure encre à 10%,
 ombre légère. Version `compact` en rayon 12 pour les boutons icône.
 
@@ -376,7 +376,7 @@ L'en-tête porte deux `HeaderIconButton` 40 pt autour de PopEyes :
 Changer de livre ou en ajouter un se fait dans la **bibliothèque**, route
 `/library` en sheet natif : les challenges rangés trois par trois, sans titre,
 sur l'étagère historique de l'accueil — barre en verre flouté (noyer à 30 %,
-bordure crème à 40 %) avec ses vis, posée **par-dessus** le bas des
+bordure blanc chaud à 40 %) avec ses vis, posée **par-dessus** le bas des
 couvertures. Trois états de couverture : **en cours** (le livre de l'accueil)
 bordure encre de 2 pt détachée de 3 pt, **pas commencé** filet `inkAlpha(0.15)`,
 **terminé** cadre sombre + marque-page ✓ (`BookCover`).
@@ -473,7 +473,7 @@ système par ailleurs sobre.
 
 - Laisser iOS dessiner ce qui lui appartient : sheets, barres de navigation,
   transitions, contrôles système.
-- Faire porter la chaleur par la palette noyer/crème, les illustrations et le
+- Faire porter la chaleur par la palette noyer/blanc chaud, les illustrations et le
   mouvement.
 - Varier l'espacement pour créer du rythme.
 - Réserver l'accent unique paramétrable pour la future couleur de club.
@@ -482,7 +482,7 @@ système par ailleurs sobre.
 
 **À ne pas faire**
 
-- Pas de `text-subtle` (`#e2d7ca`) en couleur de texte. C'est une bordure.
+- Pas de `text-subtle` (`#e5e0d9`) en couleur de texte. C'est une bordure.
 - Pas de `#000`, `#fff` ni `rgba(0,0,0,…)` / `rgba(255,255,255,…)` en dur : passer
   par les tokens et les helpers alpha.
 - Pas de couleur décorative. Chaque couleur non neutre doit répondre à « qu'est-ce
