@@ -11,18 +11,18 @@
  * - La rangée du bas a une **hauteur fixe** et trois places fixes. Seules les
  *   icônes changent, jamais l'endroit où l'on appuie (DESIGN.md › Boutons-icônes) :
  *
- *   |        | gauche        | centre   | droite            |
- *   |--------|---------------|----------|-------------------|
- *   | repos  | carnet (#48)  | —        | noter la page (#48) |
- *   | défilé | ↺ annuler     | « +14 »  | ✓ enregistrer     |
+ *   |        | gauche                  | centre   | droite                  |
+ *   |--------|-------------------------|----------|-------------------------|
+ *   | repos  | porte du carnet         | —        | post-it : noter ma page |
+ *   | défilé | ↺ annuler               | « +14 »  | ✓ enregistrer           |
  *
- * Tant que le carnet n'existe pas, les deux places du repos restent vides : la
- * rangée garde sa hauteur, rien ne saute quand on fait défiler le sélecteur.
+ * Le post-it note toujours la page **enregistrée** : pendant un défilement il
+ * laisse la place au ✓, il n'y a jamais de doute sur la page notée. La porte du
+ * carnet (`NotesDoor`) montre ce qui compte à ce moment-là.
  */
 
-import { CheckIcon, FlameIcon, RotateCcwIcon, StickyNoteIcon } from 'lucide-react-native';
+import { CheckIcon, ChevronRightIcon, FlameIcon, RotateCcwIcon, StickyNoteIcon } from 'lucide-react-native';
 import React, { useState } from 'react';
-import { ChevronRightIcon } from 'lucide-react-native';
 import { LayoutChangeEvent, StyleSheet, Text, View } from 'react-native';
 import { colors, fonts, inkAlpha, shadowAlpha, spacing } from '../../utils/constants';
 import GlassSection from './GlassSection';
@@ -43,8 +43,10 @@ interface PageSectionProps {
   onUndo: () => void;
   /** « Ma page › » → mon journal */
   onJournalPress: () => void;
-  /** Noter cette page (carnet, #48). Sans elle, la place reste vide. */
+  /** Noter ma page enregistrée. Sans elle, la place reste vide. */
   onNotePress?: () => void;
+  /** La porte du carnet, à gauche au repos. Sans elle, la place reste vide. */
+  notesDoor?: React.ReactNode;
 }
 
 /** Bouton rond de la rangée du bas : même taille et même place, seule l'icône change */
@@ -90,6 +92,7 @@ export default function PageSection({
   onUndo,
   onJournalPress,
   onNotePress,
+  notesDoor,
 }: PageSectionProps) {
   // Le sélecteur centre la page sur la largeur qu'on lui donne : ici celle du
   // cadre, pas celle de l'écran.
@@ -141,9 +144,9 @@ export default function PageSection({
       <Text style={styles.total}>sur {totalPages}</Text>
 
       <View style={styles.row}>
-        {/* Gauche */}
-        <View style={styles.slot}>
-          {hasChanged && (
+        {/* Gauche : la porte du carnet est plus large qu'un rond, la place s'adapte */}
+        <View style={[styles.slot, styles.slotLeft]}>
+          {hasChanged ? (
             <IconButton
               icon={RotateCcwIcon}
               variant="ghost"
@@ -151,6 +154,8 @@ export default function PageSection({
               hint="Revient à ma dernière page enregistrée"
               onPress={onUndo}
             />
+          ) : (
+            notesDoor
           )}
         </View>
 
@@ -177,8 +182,9 @@ export default function PageSection({
             onNotePress && (
               <IconButton
                 icon={StickyNoteIcon}
-                variant="ghost"
-                label="Noter cette page"
+                variant="dark"
+                label="Noter ma page"
+                hint={`Écrit une note à la page ${savedPage}`}
                 onPress={onNotePress}
               />
             )
@@ -253,6 +259,12 @@ const styles = StyleSheet.create({
   slot: {
     width: BUTTON_SIZE,
     height: BUTTON_SIZE,
+  },
+  slotLeft: {
+    width: undefined,
+    minWidth: BUTTON_SIZE,
+    flexShrink: 1,
+    alignItems: 'flex-start',
   },
   delta: {
     flex: 1,

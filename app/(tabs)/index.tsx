@@ -18,7 +18,7 @@
 
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
     ActivityIndicator,
     ScrollView,
@@ -44,6 +44,7 @@ import BookSection from '../../components/ui/BookSection';
 import CoverBackdrop from '../../components/ui/CoverBackdrop';
 import HeaderIconButton from '../../components/ui/HeaderIconButton';
 import NotificationButton from '../../components/ui/NotificationButton';
+import NotesDoor from '../../components/ui/NotesDoor';
 import PageSection from '../../components/ui/PageSection';
 import LeaderboardSection from '../../components/ui/LeaderboardSection';
 import { getAllUserPages } from '../../services/supabase/database';
@@ -55,6 +56,7 @@ import { useNotificationScheduler } from '../../hooks/useNotificationScheduler';
 import { useAuthStore } from '../../stores/authStore';
 import { useGoalStore } from '../../stores/goalStore';
 import { useProgressStore } from '../../stores/progressStore';
+import { useAnnotationStore } from '../../stores/annotationStore';
 import { useProjectStore } from '../../stores/projectStore';
 import { colors, fonts, shadowAlpha, spacing } from '../../utils/constants';
 import { getActiveStreak } from '../../utils/streak';
@@ -91,6 +93,14 @@ export default function HomeScreen() {
     _hasHydrated,
   } = useProjectStore();
   const coverPalette = useCoverPalette(activeChallenge);
+  const loadAnnotations = useAnnotationStore((s) => s.loadAnnotations);
+  const revealAfterSave = useAnnotationStore((s) => s.revealAfterSave);
+  const notesChallengeId = useAnnotationStore((s) => s.challengeId);
+  const notes = useAnnotationStore((s) => s.notes);
+  const notesAhead = useAnnotationStore((s) => s.ahead);
+  const readNoteIds = useAnnotationStore((s) => s.readIds);
+  const revealedNoteIds = useAnnotationStore((s) => s.revealedIds);
+  const revealedAt = useAnnotationStore((s) => s.revealedAt);
 
   const {
     loadChallengeProgress,
@@ -166,6 +176,8 @@ export default function HomeScreen() {
         loadChallengeProgress(activeChallenge.id),
         loadActiveGoals(activeChallenge.id),
         loadGoalHistory(activeChallenge.id),
+        // Le carnet : les notes débloquées changent à chaque page enregistrée
+        loadAnnotations(activeChallenge.id, user?.id),
       ]);
     }
   }, [activeChallenge?.id]);
@@ -185,6 +197,7 @@ export default function HomeScreen() {
           loadChallengeProgress(challengeId);
           loadActiveGoals(challengeId);
           loadGoalHistory(challengeId);
+          loadAnnotations(challengeId, user.id);
         }
       }
     });
@@ -260,6 +273,10 @@ export default function HomeScreen() {
       await updateProgress(activeChallenge.id, user.id, currentPageInput);
       setLastProgressChallengeId(activeChallenge.id);
 
+      // Ma progression a bougé : le serveur ouvre les notes que je viens de
+      // dépasser. Elles arrivent en post-it pendant que la feuille tombe.
+      revealAfterSave(activeChallenge.id, user.id);
+
       // Lance le toast "feuille qui tombe" avec le delta
       if (delta !== 0) {
         setDeltaText(delta > 0 ? `+${delta}` : `${delta}`);
@@ -309,6 +326,19 @@ export default function HomeScreen() {
   const handleUndo = useCallback(() => {
     setCurrentPageInput(lastSavedPage);
   }, [lastSavedPage]);
+
+  // ===== Le carnet, pour la porte de « Ma page » =====
+  // Tant que le carnet chargé est celui d'un autre livre, la porte reste neutre
+  const notesMatchChallenge = notesChallengeId === activeChallenge?.id;
+  const revealedNotes = useMemo(
+    () =>
+      notesMatchChallenge
+        ? notes.filter((note) => revealedNoteIds.includes(note.id) && !readNoteIds.includes(note.id))
+        : [],
+    [notesMatchChallenge, notes, revealedNoteIds, readNoteIds],
+  );
+  // Une arrivée se joue une fois : revenir sur l'accueil plus tard ne la rejoue pas
+  const animateReveal = revealedAt !== null && Date.now() - revealedAt < 3000;
 
   // ===== Membres du club, pour le cadre Classement =====
   // Même hook que le classement complet : mêmes prénoms, mêmes photos, mêmes %.
@@ -429,6 +459,17 @@ export default function HomeScreen() {
             onSave={handleSave}
             onUndo={handleUndo}
             onJournalPress={() => router.push(`/participant/${myUserId}`)}
+            onNotePress={() => router.push('/note/new')}
+            notesDoor={
+              <NotesDoor
+                count={notesMatchChallenge ? notes.length : 0}
+                ahead={notesMatchChallenge ? notesAhead : []}
+                revealed={revealedNotes}
+                myTotalPages={totalPages}
+                animateReveal={animateReveal}
+                onPress={() => router.push('/notes')}
+              />
+            }
           />
         </View>
       ) : !_hasHydrated || (challenges.length === 0 && challengesLoading) ? (

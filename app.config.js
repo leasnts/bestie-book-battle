@@ -63,6 +63,13 @@ export default {
       ],
       "@react-native-community/datetimepicker",
       "expo-image",
+      [
+        "expo-audio",
+        {
+          microphonePermission:
+            "bestiebookbattle a besoin du micro pour enregistrer tes notes vocales.",
+        },
+      ],
     ],
     updates: {
       url: "https://u.expo.dev/47b87edb-68d3-47d9-8b2b-a46859cc2ea1",

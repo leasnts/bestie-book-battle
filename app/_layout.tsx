@@ -322,6 +322,50 @@ function RootLayoutNav() {
         }}
       />
 
+      {/* Le carnet du livre — écran plein, il se parcourt longtemps */}
+      <Stack.Screen
+        name="notes"
+        options={{
+          headerShown: true,
+          headerTitle: 'Carnet',
+          headerLargeTitle: false,
+          headerTitleStyle: { fontFamily: fonts.display, fontSize: 19, color: colors.textPrimary },
+          // Sans ça, iOS écrit le nom de la route précédente — « (tabs) »
+          headerBackButtonDisplayMode: 'minimal',
+          animation: 'slide_from_right',
+        }}
+      />
+
+      {/* Écrire une note — sheet natif, ouvert par le bouton post-it */}
+      <Stack.Screen
+        name="note/[id]"
+        options={{
+          presentation: 'formSheet',
+          sheetAllowedDetents: [0.75, 0.95],
+          sheetGrabberVisible: true,
+          sheetExpandsWhenScrolledToEdge: true,
+          headerShown: true,
+          headerTitle: 'Nouvelle note',
+          headerLargeTitle: false,
+          headerTitleStyle: { fontFamily: fonts.display, fontSize: 19, color: colors.textPrimary },
+        }}
+      />
+
+      {/* Toutes les réactions d'une note — sheet natif, ouvert par « … » */}
+      <Stack.Screen
+        name="reactions/[id]"
+        options={{
+          presentation: 'formSheet',
+          sheetAllowedDetents: [0.6, 0.95],
+          sheetGrabberVisible: true,
+          sheetExpandsWhenScrolledToEdge: true,
+          headerShown: true,
+          headerTitle: 'Réagir',
+          headerLargeTitle: false,
+          headerTitleStyle: { fontFamily: fonts.display, fontSize: 19, color: colors.textPrimary },
+        }}
+      />
+
       {/* Journal d'une personne — sheet natif, posé sur le classement */}
       <Stack.Screen
         name="participant/[id]"

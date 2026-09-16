@@ -84,6 +84,23 @@ export const colors = {
   overlay: shadowAlpha(0.5),
 };
 
+/**
+ * Les six post-it du carnet — des pastels tirés vers le noyer.
+ *
+ * Une couleur = une catégorie, la même pour tout le club. L'encre `ink` garde
+ * au moins 10:1 sur chacune (mesuré), donc le texte d'une note reste lisible
+ * quelle que soit la catégorie. La couleur n'est jamais la seule information :
+ * le nom de la catégorie s'affiche toujours (DESIGN.md › Carnet).
+ */
+export const postIt = {
+  rose: '#efcfca',    // Coup de cœur
+  peche: '#f3cdb0',   // Spicy
+  bleu: '#cadbe6',    // Larmes
+  jaune: '#f3e2a0',   // Mdr
+  sauge: '#d3dfc2',   // Théorie
+  sable: '#e8dbc6',   // À retenir
+};
+
 // Espacements alignés avec Figma (tokens spacing-*)
 export const spacing = {
   xs: 4,

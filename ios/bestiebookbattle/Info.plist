@@ -58,7 +58,7 @@
     <key>NSCameraUsageDescription</key>
     <string>Allow $(PRODUCT_NAME) to access your camera</string>
     <key>NSMicrophoneUsageDescription</key>
-    <string>Allow $(PRODUCT_NAME) to access your microphone</string>
+    <string>bestiebookbattle a besoin du micro pour enregistrer tes notes vocales.</string>
     <key>NSPhotoLibraryUsageDescription</key>
     <string>bestiebookbattle a besoin d'accéder à tes photos pour ta photo de profil et les couvertures de livres.</string>
     <key>NSUserActivityTypes</key>

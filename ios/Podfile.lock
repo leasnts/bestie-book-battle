@@ -185,6 +185,8 @@ PODS:
     - ExpoModulesCore
   - ExpoAsset (55.0.8):
     - ExpoModulesCore
+  - ExpoAudio (55.0.18):
+    - ExpoModulesCore
   - ExpoBlur (55.0.8):
     - ExpoModulesCore
   - ExpoClipboard (55.0.8):
@@ -2561,6 +2563,7 @@ DEPENDENCIES:
   - expo-dev-menu-interface (from `../node_modules/expo-dev-menu-interface/ios`)
   - ExpoAppleAuthentication (from `../node_modules/expo-apple-authentication/ios`)
   - ExpoAsset (from `../node_modules/expo-asset/ios`)
+  - ExpoAudio (from `../node_modules/expo-audio/ios`)
   - ExpoBlur (from `../node_modules/expo-blur/ios`)
   - ExpoClipboard (from `../node_modules/expo-clipboard/ios`)
   - ExpoCrypto (from `../node_modules/expo-crypto/ios`)
@@ -2709,6 +2712,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/expo-apple-authentication/ios"
   ExpoAsset:
     :path: "../node_modules/expo-asset/ios"
+  ExpoAudio:
+    :path: "../node_modules/expo-audio/ios"
   ExpoBlur:
     :path: "../node_modules/expo-blur/ios"
   ExpoClipboard:
@@ -2944,6 +2949,7 @@ SPEC CHECKSUMS:
   expo-dev-menu-interface: bf6f816d29b45bec038080790963c635e8d588c2
   ExpoAppleAuthentication: 86e97b24bd6687c156c55bb448f570bc29081ace
   ExpoAsset: bdc7bc21fe25d197c3aa7547e14c12c42087d9c9
+  ExpoAudio: 507b44eb640d1e0e49d55f38d0b153d3b1fd0f2b
   ExpoBlur: aaa1443160dec73e53850f1f7010463d645c97d9
   ExpoClipboard: 6bb321d2991652e6736d400f1d7c073aa02c41a0
   ExpoCrypto: a3470a45f37ab72cf93113088c5e106fbafa45c7
