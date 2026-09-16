@@ -35,8 +35,6 @@ interface LeaderboardListProps {
   participants: LeaderboardParticipant[];
   /** ID de l'utilisateur connecté, pour surligner sa ligne */
   myUserId: string;
-  /** true = les scores sont des pourcentages (éditions différentes) */
-  showPercentage?: boolean;
 }
 
 const DEFAULT_AVATAR = require('../../assets/images/profile_picture_default.png');
@@ -53,16 +51,14 @@ const resolveAvatar = (url: string | null) => {
 function LeaderboardRow({
   participant,
   index,
-  showPercentage,
   animate,
 }: {
   participant: RankedParticipant;
   index: number;
-  showPercentage?: boolean;
   animate: boolean;
 }) {
   const { isMe, isLeader, rank } = participant;
-  const score = formatScore(participant, showPercentage);
+  const score = formatScore(participant);
 
   // La barre est dessinée pleine largeur puis compressée horizontalement :
   // on anime `transform`, jamais `width`, donc aucun recalcul de layout.
@@ -82,7 +78,7 @@ function LeaderboardRow({
           : undefined
       }
       style={[styles.row, isMe && styles.rowMe]}
-      accessibilityLabel={`${participant.name}, rang ${rank}, ${score}${showPercentage ? ' pour cent' : ' pages'}`}
+      accessibilityLabel={`${participant.name}, rang ${rank}, ${score} pour cent`}
     >
       {/* ── Rang ── */}
       <Text style={[styles.rank, isMe && styles.rankMe]}>{rank}</Text>
@@ -119,10 +115,7 @@ function LeaderboardRow({
 
           <View style={styles.spacer} />
 
-          <Text style={styles.score}>
-            {score}
-            {showPercentage ? '%' : ''}
-          </Text>
+          <Text style={styles.score}>{score}%</Text>
         </View>
 
         <View style={styles.progressTrack}>
@@ -141,11 +134,7 @@ function LeaderboardRow({
 
 // ─── Composant principal ───────────────────────────────────────────
 
-export default function LeaderboardList({
-  participants,
-  myUserId,
-  showPercentage,
-}: LeaderboardListProps) {
+export default function LeaderboardList({ participants, myUserId }: LeaderboardListProps) {
   const reducedMotion = useReducedMotion();
 
   // Même fonction de tri que l'accueil → rangs cohérents entre les deux écrans
@@ -158,7 +147,7 @@ export default function LeaderboardList({
     /*
       FlatList plutôt qu'une ScrollView remplie par `.map()`.
 
-      Un book club vise 20 à 200 lectrices. Avec `.map()`, ouvrir le classement
+      Un book club vise 20 à 200 membres. Avec `.map()`, ouvrir le classement
       monterait les 200 lignes d'un coup — chacune avec son image, sa barre et
       son animation d'entrée — avant le premier affichage. FlatList ne monte que
       ce qui est à l'écran et recycle le reste.
@@ -179,7 +168,6 @@ export default function LeaderboardList({
         <LeaderboardRow
           participant={item}
           index={index}
-          showPercentage={showPercentage}
           animate={!reducedMotion}
         />
       )}

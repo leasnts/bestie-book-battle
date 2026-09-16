@@ -28,13 +28,7 @@ import { useLeaderboardParticipants } from '../hooks/useLeaderboardParticipants'
 import LeaderboardList from '../components/ui/LeaderboardList';
 
 export default function LeaderboardRoute() {
-  const { participants, myUserId, hasDifferentEditions } = useLeaderboardParticipants();
+  const { participants, myUserId } = useLeaderboardParticipants();
 
-  return (
-    <LeaderboardList
-      participants={participants}
-      myUserId={myUserId}
-      showPercentage={hasDifferentEditions}
-    />
-  );
+  return <LeaderboardList participants={participants} myUserId={myUserId} />;
 }

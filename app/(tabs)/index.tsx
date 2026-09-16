@@ -50,21 +50,19 @@ import GoalFormSheet from '../../components/ui/GoalFormSheet';
 import HeaderIconButton from '../../components/ui/HeaderIconButton';
 import NotificationButton from '../../components/ui/NotificationButton';
 import PageScrollPicker from '../../components/ui/PageScrollPicker';
-import ParticipantHistorySheet from '../../components/ui/ParticipantHistorySheet';
-import ProgressCard from '../../components/ui/ProgressCard';
-import { getAllUserPages, getUserHistory } from '../../services/supabase/database';
+import LeaderboardSection from '../../components/ui/LeaderboardSection';
+import { getAllUserPages } from '../../services/supabase/database';
 import { uploadBookCover } from '../../services/supabase/storage';
 import { updateWidgetData } from '../../utils/widget';
 import { useCoverPalette } from '../../hooks/useCoverPalette';
+import { useLeaderboardParticipants } from '../../hooks/useLeaderboardParticipants';
 import { useNotificationScheduler } from '../../hooks/useNotificationScheduler';
 import { useAuthStore } from '../../stores/authStore';
 import { useGoalStore } from '../../stores/goalStore';
 import { useProgressStore } from '../../stores/progressStore';
 import { useProjectStore } from '../../stores/projectStore';
-import { ProgressHistory } from '../../types/supabase';
 import { colors, fonts, shadowAlpha, spacing } from '../../utils/constants';
 import { extractCoverPalette, type CoverPalette } from '../../utils/coverPalette';
-import { getActiveStreak, isStreakAtRisk } from '../../utils/streak';
 import { useTabBarInset } from '../../components/ui/GlassTabBar';
 import { BookOpenIcon, CheckIcon, CirclePlusIcon, LibraryBigIcon, RotateCcwIcon } from 'lucide-react-native';
 
@@ -152,11 +150,6 @@ export default function HomeScreen() {
   const [deadlineModalVisible, setDeadlineModalVisible] = useState(false);
   const [editBookModalVisible, setEditBookModalVisible] = useState(false);
   const [goalModalVisible, setGoalModalVisible] = useState(false);
-  const [historyModalVisible, setHistoryModalVisible] = useState(false);
-
-  // Historique du participant sélectionné (pour la modal timeline)
-  const [selectedParticipantId, setSelectedParticipantId] = useState<string | null>(null);
-  const [participantHistory, setParticipantHistory] = useState<ProgressHistory[]>([]);
 
   // Toast "feuille qui tombe" — affiche "+12" et descend doucement
   const [deltaText, setDeltaText] = useState('');
@@ -267,11 +260,6 @@ export default function HomeScreen() {
   // totalPages du user = son édition personnelle (pour le picker et l'affichage)
   const totalPages = myProgress?.total_pages ?? challengeTotalPages;
 
-  // Détecter si les participants ont des éditions différentes (total_pages différent)
-  // → dans ce cas, le leaderboard affichera des pourcentages au lieu de pages brutes
-  const hasDifferentEditions = participantsMatchChallenge && participants.length > 1
-    && new Set(participants.map(p => p.progress.total_pages ?? challengeTotalPages)).size > 1;
-
   // Quand on a les bonnes données, on met en cache la page par challenge
   if (myProgress && activeChallenge?.id) {
     savedPagesByChallenge.current[activeChallenge.id] = myProgress.current_page;
@@ -305,7 +293,7 @@ export default function HomeScreen() {
   // ===== Enregistrer la progression (bouton check ✓) =====
   // Après la sauvegarde :
   // 1. Toast "feuille" affiche "+12" et descend doucement vers le bas
-  // 2. Le compteur roulant et la barre animée dans ProgressCard se déclenchent
+  // 2. Le compteur roulant et la barre animée du classement se déclenchent
   const handleSave = async () => {
     if (!hasChanged || !activeChallenge || !user) return;
 
@@ -366,51 +354,9 @@ export default function HomeScreen() {
     setCurrentPageInput(lastSavedPage);
   }, [lastSavedPage]);
 
-  // ===== Données participants pour la ProgressCard =====
-  // Pour "moi", toujours utiliser authStore (user) pour la photo : les participants
-  // du progressStore sont chargés une fois et ne se mettent pas à jour quand on
-  // change sa photo de profil. authStore est mis à jour immédiatement.
-  const mePhotoUrl = user?.profile_photo_url || null;
-  const mePhotoUrlWithCacheBust = mePhotoUrl && user?.updated_at
-    ? `${mePhotoUrl}${mePhotoUrl.includes('?') ? '&' : '?'}v=${new Date(user.updated_at).getTime()}`
-    : mePhotoUrl;
-
-  // Construire les données de TOUS les participants pour le ProgressCard
-  const allParticipantsData = participantsMatchChallenge
-    ? participants.map(p => {
-        const isMe = p.user.id === user?.id;
-        // Pour "moi", utiliser la photo de authStore (toujours à jour)
-        let photoUrl: string | null;
-        if (isMe) {
-          photoUrl = mePhotoUrlWithCacheBust;
-        } else {
-          const url = p.user.profile_photo_url || null;
-          photoUrl = url && p.user.updated_at
-            ? `${url}${url.includes('?') ? '&' : '?'}v=${new Date(p.user.updated_at).getTime()}`
-            : url;
-        }
-
-        return {
-          id: p.user.id,
-          name: isMe ? 'Moi' : (p.user.first_name || 'Participant'),
-          photoUrl,
-          score: p.progress.current_page,
-          percentage: p.percentage || 0,
-          streak: getActiveStreak(p.progress.streak_count, p.progress.last_streak_date),
-          isLeader: p.isLeader,
-          streakAtRisk: isStreakAtRisk(p.progress.last_streak_date),
-        };
-      })
-    : [{
-        id: user?.id || '',
-        name: 'Moi',
-        photoUrl: mePhotoUrlWithCacheBust,
-        score: 0,
-        percentage: 0,
-        streak: 0,
-        isLeader: false,
-        streakAtRisk: false,
-      }];
+  // ===== Membres du club, pour le cadre Classement =====
+  // Même hook que le classement complet : mêmes prénoms, mêmes photos, mêmes %.
+  const { participants: leaderboardParticipants, myUserId } = useLeaderboardParticipants();
 
   // ===== Mise à jour automatique du widget iOS =====
   useEffect(() => {
@@ -589,31 +535,6 @@ export default function HomeScreen() {
     ]
   );
 
-  // ===== Callback historique participant =====
-  /**
-   * Quand on clique sur un participant dans la ProgressCard :
-   * 1. On enregistre l'ID du participant sélectionné
-   * 2. On charge son historique depuis Supabase (table progress_history)
-   * 3. On ouvre la modal timeline qui affiche chaque import (date, heure, pages)
-   *
-   * Le chargement est async : la modal s'ouvre tout de suite (UX réactive),
-   * et l'historique s'affiche dès qu'il est chargé.
-   */
-  const handleParticipantPress = useCallback(async (participantId: string) => {
-    if (!activeChallenge) return;
-
-    setSelectedParticipantId(participantId);
-    setHistoryModalVisible(true);
-    setParticipantHistory([]); // Reset pour montrer le loading
-
-    try {
-      const history = await getUserHistory(activeChallenge.id, participantId);
-      setParticipantHistory(history);
-    } catch (error) {
-      console.error('Erreur chargement historique:', error);
-    }
-  }, [activeChallenge]);
-
   return (
     <PageTransition>
     <GestureDetector gesture={swipeGesture}>
@@ -763,22 +684,10 @@ export default function HomeScreen() {
       {/* ═══════════ BLOC 3 : TOP 3 DU CHALLENGE + MOI ═══════════ */}
       {activeChallenge && (
         <View style={[styles.progressSection, { paddingBottom: tabBarInset + spacing.md }]}>
-          <ProgressCard
-            participants={allParticipantsData}
-            myUserId={user?.id || ''}
-            onParticipantPress={handleParticipantPress}
-            onSeeAllPress={() => router.push('/leaderboard')}
-            showPercentage={hasDifferentEditions}
-            intermediateGoal={
-              secondaryGoal
-                ? {
-                    target_pages: secondaryGoal.target_pages,
-                    deadline: secondaryGoal.deadline,
-                    baseline: (secondaryGoal.results as any)?.baseline ?? 0,
-                  }
-                : null
-            }
-            onGoalPress={handleSetIntermediateGoal}
+          <LeaderboardSection
+            participants={leaderboardParticipants}
+            myUserId={myUserId}
+            onPress={() => router.push('/leaderboard')}
           />
         </View>
       )}
@@ -829,33 +738,6 @@ export default function HomeScreen() {
           onSave={handleSaveBookEdit}
         />
       )}
-
-      {/* ═══════════ MODAL HISTORIQUE PARTICIPANT ═══════════
-        Affiche la timeline des imports de pages d'un participant.
-        On détermine le nom et la photo à partir de l'ID sélectionné :
-        - Si c'est l'utilisateur connecté → "Moi" + sa photo depuis authStore
-        - Sinon → prénom de l'ami + sa photo depuis participants
-      */}
-      <ParticipantHistorySheet
-        visible={historyModalVisible}
-        onClose={() => {
-          setHistoryModalVisible(false);
-          setSelectedParticipantId(null);
-        }}
-        participantName={
-          selectedParticipantId === user?.id
-            ? 'Moi'
-            : (participants.find(p => p.user.id === selectedParticipantId)
-                ?.user.first_name || 'Participant')
-        }
-        participantPhoto={
-          selectedParticipantId === user?.id
-            ? mePhotoUrlWithCacheBust
-            : (participants.find(p => p.user.id === selectedParticipantId)
-                ?.user.profile_photo_url || null)
-        }
-        history={participantHistory}
-      />
 
     </View>
     </GestureDetector>

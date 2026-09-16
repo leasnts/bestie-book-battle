@@ -37,12 +37,6 @@ export interface LeaderboardData {
   participants: LeaderboardParticipant[];
   /** ID de l'utilisateur connecté */
   myUserId: string;
-  /**
-   * true quand les participants ne lisent pas tous la même édition.
-   * Dans ce cas on affiche des pourcentages : comparer « page 142 » et
-   * « page 138 » n'aurait aucun sens entre un poche et un grand format.
-   */
-  hasDifferentEditions: boolean;
 }
 
 export function useLeaderboardParticipants(): LeaderboardData {
@@ -74,14 +68,8 @@ export function useLeaderboardParticipants(): LeaderboardData {
           },
         ],
         myUserId,
-        hasDifferentEditions: false,
       };
     }
-
-    const challengeTotalPages = activeChallenge?.total_pages;
-    const hasDifferentEditions =
-      participants.length > 1 &&
-      new Set(participants.map((p) => p.progress.total_pages ?? challengeTotalPages)).size > 1;
 
     const mapped: LeaderboardParticipant[] = participants.map((p) => {
       const isMe = p.user.id === myUserId;
@@ -104,6 +92,6 @@ export function useLeaderboardParticipants(): LeaderboardData {
       };
     });
 
-    return { participants: mapped, myUserId, hasDifferentEditions };
+    return { participants: mapped, myUserId };
   }, [participants, user, activeChallenge]);
 }

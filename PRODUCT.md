@@ -171,5 +171,5 @@ Non retenu comme exigence pour l'instant, mais ouvert vu le public et la
 plateforme : Dynamic Type (la palette de tailles est aujourd'hui en points figés,
 hors système), VoiceOver, et Dark Mode — aucune apparence sombre n'existe, alors
 que la HIG la traite comme une apparence de premier rang. Le réglage « Réduire
-les animations » est respecté dans `ProgressCard`, `LeaderboardList` et
+les animations » est respecté dans `LeaderboardSection`, `LeaderboardList` et
 `PressableScale`, mais pas ailleurs.

@@ -2,7 +2,7 @@
  * Logique de classement des participants.
  *
  * Ce fichier ne contient QUE du calcul (pas de JSX) : il est partagé entre
- * la section d'accueil (ProgressCard) et le classement complet (LeaderboardSheet),
+ * le cadre de l'accueil (LeaderboardSection) et le classement complet (LeaderboardList),
  * ce qui garantit que les deux affichent exactement le même ordre et les mêmes rangs.
  *
  * Deux étapes :
@@ -109,18 +109,17 @@ export function selectVisibleRows(ranked: RankedParticipant[]): VisibleRows {
 // ─── Helpers d'affichage ───────────────────────────────────────────
 
 /**
- * Formate le score d'un participant.
- * Quand les participants lisent des éditions différentes, afficher « 142 » et
- * « 138 » côte à côte n'a aucun sens : on bascule alors sur le pourcentage.
+ * Score affiché d'un participant : **toujours un pourcentage**.
+ *
+ * Chacun lit son édition, et même à édition identique la page n'appartient qu'à
+ * soi. Comparer « page 142 » et « page 138 » ne veut rien dire : dès qu'on
+ * compare, on passe en % (DESIGN.md › Pages ou %).
  */
-export function formatScore(
-  participant: LeaderboardParticipant,
-  showPercentage: boolean | undefined,
-): number {
-  return showPercentage ? Math.round(participant.percentage) : participant.score;
+export function formatScore(participant: LeaderboardParticipant): number {
+  return Math.round(participant.percentage);
 }
 
-/** Libellé du compteur de participants : « 12 lectrices », « 1 lectrice » */
+/** Libellé du compteur de participants : « 12 membres », « 1 membre » */
 export function formatParticipantCount(count: number): string {
-  return `${count} lectrice${count > 1 ? 's' : ''}`;
+  return `${count} membre${count > 1 ? 's' : ''}`;
 }

@@ -376,20 +376,29 @@ L'appui enfonce le bouton — pas une simple opacité.
 
 ### Lignes de participante
 
-`[rang] [avatar + couronne si leader] [prénom] … [badge streak] [score]`
+Accueil (`LeaderboardSection`) : `[rang] [avatar 30] [prénom] … [score %]`, sur
+quatre colonnes fixes, lignes de 36 pt. **Le rang est toujours affiché**, 1-2-3
+compris : le classement complet en montre d'autres, et l'œil doit retrouver les
+mêmes repères. Classement complet (`LeaderboardList`) : mêmes colonnes, plus la
+barre de progression, la couronne et le badge de série.
 
-Le rang ne s'affiche que lorsqu'il porte de l'information (ligne épinglée hors
-podium) ; dans un podium, l'ordre vertical suffit. Le score est en Fraunces aligné
-à droite, avec compteur roulant à la mise à jour.
+Le score est en Fraunces aligné à droite, **toujours en %** (cf. Pages ou %),
+avec compteur roulant à la mise à jour et glissement des lignes quand l'ordre
+change — les deux se coupent avec « Réduire les animations ».
 
 La ligne « moi » se distingue par un fond teinté (`inkAlpha(0.06)`) et un
-prénom en gras — jamais par une couleur.
+prénom en gras — jamais par une couleur. Hors du top 3, elle est rappelée sous
+un trait pointillé, avec son rang réel.
+
+Sur l'accueil, **les lignes ne se touchent pas une par une** : c'est le cadre
+entier qui ouvre le classement complet. Deux cibles imbriquées rendaient le
+geste incertain.
 
 ### Accueil et bibliothèque
 
 L'accueil tient en un en-tête et **trois blocs**, sans scroll : le livre en
-cours (`ActiveBookCard`), le sélecteur de page, le top 3 du challenge plus ta
-ligne si tu n'y es pas (`ProgressCard`). Refonte en cours (#30) : chaque bloc
+cours (`ActiveBookCard`), le sélecteur de page, le classement du club — rangs
+1-2-3 plus ta ligne si tu n'y es pas (`LeaderboardSection`). Refonte en cours (#30) : chaque bloc
 devient un **cadre en verre** `GlassSection` (rayon 24, padding 16, bord crème,
 voile crème à 56 %, tout le cadre touchable à 0,97 quand il ouvre un écran),
 posé sur le fond aux couleurs de la couverture.
@@ -488,7 +497,7 @@ système par ailleurs sobre.
   barres de progression se compressent en `scaleX` avec `transformOrigin: left`,
   jamais en `width`.
 - **Reduce Motion est non négociable** : `useReducedMotion()` de Reanimated coupe
-  tout, compteur roulant compris. Respecté dans `ProgressCard`,
+  tout, compteur roulant compris. Respecté dans `LeaderboardSection`,
   `LeaderboardList` et `PressableScale` — **à propager au reste de l'app**.
 
 ## Do's and Don'ts
