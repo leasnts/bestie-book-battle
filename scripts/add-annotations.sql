@@ -96,6 +96,14 @@ CREATE TABLE IF NOT EXISTS public.annotation_reactions (
   PRIMARY KEY (annotation_id, user_id, emoji)
 );
 
+-- #50 — Une réaction est un emoji, pas un message : quelques caractères au plus
+-- (un emoji composé comme ❤️‍🔥 en compte plusieurs).
+DO $$ BEGIN
+  ALTER TABLE public.annotation_reactions
+    ADD CONSTRAINT annotation_reaction_is_short
+    CHECK (char_length(emoji) BETWEEN 1 AND 16);
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
 -- ─── Notes lues ──────────────────────────────────────────────────────
 -- Sert aux « notes à lire » et aux post-it qui se révèlent sur l'accueil.
 

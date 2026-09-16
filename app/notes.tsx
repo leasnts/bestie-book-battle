@@ -58,7 +58,8 @@ export default function NotesRoute() {
   const { user } = useAuthStore();
   const activeChallenge = useProjectStore((s) => s.activeChallenge);
   const { participants } = useProgressStore();
-  const { notes, ahead, readIds, markRead, dismissRevealed } = useAnnotationStore();
+  const { notes, ahead, readIds, markRead, dismissRevealed, toggleReaction } =
+    useAnnotationStore();
 
   // Les post-it de l'accueil ont mené ici : ils se rangent dans le carnet
   useEffect(() => {
@@ -279,6 +280,17 @@ export default function NotesRoute() {
                 ? () => router.push(`/note/${item.id}`)
                 : () => user?.id && markRead(item.id, user.id)
             }
+            myUserId={user?.id}
+            onToggleReaction={
+              user?.id
+                ? (emoji) => {
+                    toggleReaction(item.id, user.id, emoji);
+                    // Réagir, c'est avoir lu
+                    if (item.user_id !== user.id) markRead(item.id, user.id);
+                  }
+                : undefined
+            }
+            onMoreReactions={() => router.push(`/reactions/${item.id}`)}
           />
         </View>
       )}

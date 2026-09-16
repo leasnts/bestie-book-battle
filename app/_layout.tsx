@@ -351,6 +351,21 @@ function RootLayoutNav() {
         }}
       />
 
+      {/* Toutes les réactions d'une note — sheet natif, ouvert par « … » */}
+      <Stack.Screen
+        name="reactions/[id]"
+        options={{
+          presentation: 'formSheet',
+          sheetAllowedDetents: [0.6, 0.95],
+          sheetGrabberVisible: true,
+          sheetExpandsWhenScrolledToEdge: true,
+          headerShown: true,
+          headerTitle: 'Réagir',
+          headerLargeTitle: false,
+          headerTitleStyle: { fontFamily: fonts.display, fontSize: 19, color: colors.textPrimary },
+        }}
+      />
+
       {/* Journal d'une personne — sheet natif, posé sur le classement */}
       <Stack.Screen
         name="participant/[id]"

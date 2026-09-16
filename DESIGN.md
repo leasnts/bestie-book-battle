@@ -477,6 +477,15 @@ carnet : pastille `creamAlpha(0.55)` posée sur le post-it, rond ▶ encre de
 30 pt, 40 barres d'onde qui se remplissent à l'écoute, durée en chiffres
 tabulaires. Un seul vocal parle à la fois, et il s'entend en mode silencieux.
 
+### Réactions du carnet
+
+Sous une note du club : une pastille par emoji avec son compte (`😭 7`), les
+plus partagées d'abord, **ma réaction cerclée d'encre** — un toucher l'ajoute
+ou la retire. Au bout, `smile-plus` ouvre les six emojis rapides à la place de
+la rangée (`😭 🫶 😂 🔥 😱 👀`), puis `…` le sélecteur complet en sheet natif,
+et ✕ referme. Pastilles de 30 pt de haut au minimum. Pas de réactions sur une
+note privée.
+
 ### Icônes
 
 **Une seule banque : [Lucide](https://lucide.dev/icons/)** (`lucide-react-native`),
