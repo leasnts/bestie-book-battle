@@ -390,6 +390,10 @@ La ligne « moi » se distingue par un fond teinté (`inkAlpha(0.06)`) et un
 prénom en gras — jamais par une couleur. Hors du top 3, elle est rappelée sous
 un trait pointillé, avec son rang réel.
 
+Dans le classement complet, **toucher une ligne ouvre le journal de lecture** de
+la personne (route `/participant/[id]`, sheet natif posé sur celui du
+classement). « Ma page › » ouvre le même écran, avec mon identifiant.
+
 Sur l'accueil, **les lignes ne se touchent pas une par une** : c'est le cadre
 entier qui ouvre le classement complet. Deux cibles imbriquées rendaient le
 geste incertain.

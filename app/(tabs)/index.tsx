@@ -44,9 +44,8 @@ import CoverBackdrop from '../../components/ui/CoverBackdrop';
 import HeaderIconButton from '../../components/ui/HeaderIconButton';
 import NotificationButton from '../../components/ui/NotificationButton';
 import PageSection from '../../components/ui/PageSection';
-import ParticipantHistorySheet from '../../components/ui/ParticipantHistorySheet';
 import LeaderboardSection from '../../components/ui/LeaderboardSection';
-import { getAllUserPages, getUserHistory } from '../../services/supabase/database';
+import { getAllUserPages } from '../../services/supabase/database';
 import { updateWidgetData } from '../../utils/widget';
 import { buildCaps, countAtCap, median } from '../../utils/track';
 import { useCoverPalette } from '../../hooks/useCoverPalette';
@@ -58,7 +57,6 @@ import { useProgressStore } from '../../stores/progressStore';
 import { useProjectStore } from '../../stores/projectStore';
 import { colors, fonts, shadowAlpha, spacing } from '../../utils/constants';
 import { getActiveStreak } from '../../utils/streak';
-import type { ProgressHistory } from '../../types/supabase';
 import { useTabBarInset } from '../../components/ui/GlassTabBar';
 import { BookOpenIcon, CirclePlusIcon, LibraryBigIcon } from 'lucide-react-native';
 
@@ -311,20 +309,6 @@ export default function HomeScreen() {
     setCurrentPageInput(lastSavedPage);
   }, [lastSavedPage]);
 
-  // ===== Mon journal, ouvert depuis « Ma page › » =====
-  const [journalVisible, setJournalVisible] = useState(false);
-  const [myHistory, setMyHistory] = useState<ProgressHistory[]>([]);
-
-  const handleOpenJournal = useCallback(async () => {
-    if (!activeChallenge || !user) return;
-    setJournalVisible(true);
-    try {
-      setMyHistory(await getUserHistory(activeChallenge.id, user.id));
-    } catch (error) {
-      console.error('Erreur chargement du journal:', error);
-    }
-  }, [activeChallenge, user]);
-
   // ===== Membres du club, pour le cadre Classement =====
   // Même hook que le classement complet : mêmes prénoms, mêmes photos, mêmes %.
   const { participants: leaderboardParticipants, myUserId } = useLeaderboardParticipants();
@@ -430,7 +414,7 @@ export default function HomeScreen() {
             onPageChange={handlePageChange}
             onSave={handleSave}
             onUndo={handleUndo}
-            onJournalPress={handleOpenJournal}
+            onJournalPress={() => router.push(`/participant/${myUserId}`)}
           />
         </View>
       ) : !_hasHydrated || (challenges.length === 0 && challengesLoading) ? (
@@ -507,15 +491,6 @@ export default function HomeScreen() {
       <Animated.View style={[styles.deltaToast, leafAnimStyle]} pointerEvents="none">
         <Text style={styles.deltaToastText}>{deltaText}</Text>
       </Animated.View>
-
-      {/* ═══════════ MON JOURNAL ═══════════ */}
-      <ParticipantHistorySheet
-        visible={journalVisible}
-        onClose={() => setJournalVisible(false)}
-        participantName="Moi"
-        participantPhoto={user?.profile_photo_url ?? null}
-        history={myHistory}
-      />
 
     </View>
     </PageTransition>

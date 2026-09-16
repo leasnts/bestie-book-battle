@@ -15,8 +15,9 @@
  */
 
 import { Image } from 'expo-image';
+import { useRouter } from 'expo-router';
 import React, { useMemo } from 'react';
-import { FlatList, StyleSheet, Text, View } from 'react-native';
+import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, { Easing, FadeInDown, useReducedMotion } from 'react-native-reanimated';
 import {
   formatParticipantCount,
@@ -52,10 +53,12 @@ function LeaderboardRow({
   participant,
   index,
   animate,
+  onPress,
 }: {
   participant: RankedParticipant;
   index: number;
   animate: boolean;
+  onPress: () => void;
 }) {
   const { isMe, isLeader, rank } = participant;
   const score = formatScore(participant);
@@ -77,9 +80,14 @@ function LeaderboardRow({
               .easing(Easing.bezier(...motion.easing.easeOutQuart).factory())
           : undefined
       }
-      style={[styles.row, isMe && styles.rowMe]}
-      accessibilityLabel={`${participant.name}, rang ${rank}, ${score} pour cent`}
     >
+      <Pressable
+        onPress={onPress}
+        style={({ pressed }) => [styles.row, isMe && styles.rowMe, pressed && styles.rowPressed]}
+        accessibilityRole="button"
+        accessibilityLabel={`${participant.name}, rang ${rank}, ${score} pour cent`}
+        accessibilityHint="Ouvre son journal de lecture"
+      >
       {/* ── Rang ── */}
       <Text style={[styles.rank, isMe && styles.rankMe]}>{rank}</Text>
 
@@ -128,6 +136,7 @@ function LeaderboardRow({
           />
         </View>
       </View>
+      </Pressable>
     </Animated.View>
   );
 }
@@ -136,6 +145,7 @@ function LeaderboardRow({
 
 export default function LeaderboardList({ participants, myUserId }: LeaderboardListProps) {
   const reducedMotion = useReducedMotion();
+  const router = useRouter();
 
   // Même fonction de tri que l'accueil → rangs cohérents entre les deux écrans
   const ranked = useMemo(
@@ -169,6 +179,7 @@ export default function LeaderboardList({ participants, myUserId }: LeaderboardL
           participant={item}
           index={index}
           animate={!reducedMotion}
+          onPress={() => router.push(`/participant/${item.id}`)}
         />
       )}
       ListHeaderComponent={
@@ -228,6 +239,9 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.md,
   },
   /** Ma ligne : fond teinté pour la repérer d'un coup d'œil */
+  rowPressed: {
+    opacity: 0.6,
+  },
   rowMe: {
     backgroundColor: inkAlpha(0.06),
   },

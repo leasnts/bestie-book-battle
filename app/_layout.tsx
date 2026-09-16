@@ -322,6 +322,21 @@ function RootLayoutNav() {
         }}
       />
 
+      {/* Journal d'une personne — sheet natif, posé sur le classement */}
+      <Stack.Screen
+        name="participant/[id]"
+        options={{
+          presentation: 'formSheet',
+          sheetAllowedDetents: [0.65, 0.95],
+          sheetGrabberVisible: true,
+          sheetExpandsWhenScrolledToEdge: true,
+          headerShown: true,
+          headerTitle: 'Journal',
+          headerLargeTitle: false,
+          headerTitleStyle: { fontFamily: fonts.display, fontSize: 19, color: colors.textPrimary },
+        }}
+      />
+
       {/* Fiche du livre — même sheet natif : fin, caps, club */}
       <Stack.Screen
         name="book"
