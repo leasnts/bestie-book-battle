@@ -17,7 +17,7 @@
 
 import { Stack, useRouter } from 'expo-router';
 import { LockIcon, StickyNoteIcon } from 'lucide-react-native';
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Image } from 'expo-image';
 import {
   Pressable,
@@ -58,7 +58,12 @@ export default function NotesRoute() {
   const { user } = useAuthStore();
   const activeChallenge = useProjectStore((s) => s.activeChallenge);
   const { participants } = useProgressStore();
-  const { notes, ahead, readIds, markRead } = useAnnotationStore();
+  const { notes, ahead, readIds, markRead, dismissRevealed } = useAnnotationStore();
+
+  // Les post-it de l'accueil ont mené ici : ils se rangent dans le carnet
+  useEffect(() => {
+    dismissRevealed();
+  }, [dismissRevealed]);
 
   const [filter, setFilter] = useState<Filter>({ kind: 'all' });
   const listRef = useRef<SectionList<AnnotationWithAuthor>>(null);

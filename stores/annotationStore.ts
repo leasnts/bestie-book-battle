@@ -33,6 +33,14 @@ interface AnnotationStore {
   ahead: AnnotationAhead[];
   /** Les notes que j'ai déjà ouvertes */
   readIds: string[];
+  /**
+   * Les notes que ma dernière page enregistrée vient d'ouvrir : les post-it de
+   * l'accueil. Elles s'y montrent jusqu'à ce que j'ouvre le carnet ou que je
+   * les lise.
+   */
+  revealedIds: string[];
+  /** Quand elles ont été révélées : l'animation ne se joue qu'à ce moment-là */
+  revealedAt: number | null;
   /** Le livre actuellement chargé, pour ne pas mélanger deux carnets */
   challengeId: string | null;
   isLoading: boolean;
@@ -41,6 +49,13 @@ interface AnnotationStore {
   // ═══ Actions ═══
   /** Charge le carnet d'un livre (notes lisibles + ce qui attend plus loin) */
   loadAnnotations: (challengeId: string, userId?: string) => Promise<void>;
+  /**
+   * Après « Enregistrer » : recharge le carnet et retient les notes des autres
+   * qui viennent de s'ouvrir — celles entre mon ancienne page et la nouvelle.
+   */
+  revealAfterSave: (challengeId: string, userId: string) => Promise<void>;
+  /** Les post-it ont fait leur travail : ils se rangent dans le carnet */
+  dismissRevealed: () => void;
   addNote: (note: AnnotationInsert) => Promise<Annotation>;
   editNote: (id: string, patch: AnnotationUpdate) => Promise<void>;
   removeNote: (id: string) => Promise<void>;
@@ -54,6 +69,8 @@ export const useAnnotationStore = create<AnnotationStore>((set, get) => ({
   notes: [],
   ahead: [],
   readIds: [],
+  revealedIds: [],
+  revealedAt: null,
   challengeId: null,
   isLoading: false,
   error: null,
@@ -68,11 +85,48 @@ export const useAnnotationStore = create<AnnotationStore>((set, get) => ({
         getAnnotationsAhead(challengeId),
         userId ? getReadAnnotationIds(userId) : Promise.resolve<string[]>([]),
       ]);
-      set({ notes, ahead, readIds, challengeId, isLoading: false });
+      set((state) => {
+        // Un autre livre : ses post-it n'ont rien à faire ici. Même livre : on
+        // ne garde que ceux qui sont encore lisibles (page enregistrée en arrière).
+        const revealedIds =
+          state.challengeId === challengeId
+            ? state.revealedIds.filter((id) => notes.some((note) => note.id === id))
+            : [];
+        return { notes, ahead, readIds, revealedIds, challengeId, isLoading: false };
+      });
     } catch (error: any) {
       console.error('[Carnet] chargement impossible', error);
       set({ error: error.message, isLoading: false });
     }
+  },
+
+  revealAfterSave: async (challengeId, userId) => {
+    // Ce que je pouvais déjà lire avant d'avancer. Sans carnet chargé pour ce
+    // livre, impossible de savoir ce qui est nouveau : on ne révèle rien.
+    const before =
+      get().challengeId === challengeId ? new Set(get().notes.map((note) => note.id)) : null;
+
+    await get().loadAnnotations(challengeId, userId);
+    if (!before) return;
+
+    const { notes, readIds, revealedIds } = get();
+    const crossed = notes
+      .filter(
+        (note) =>
+          !before.has(note.id) &&
+          note.user_id !== userId &&
+          !readIds.includes(note.id) &&
+          !revealedIds.includes(note.id),
+      )
+      .map((note) => note.id);
+    if (crossed.length === 0) return;
+
+    // Deux pages enregistrées sans ouvrir le carnet : les post-it s'additionnent
+    set({ revealedIds: [...revealedIds, ...crossed], revealedAt: Date.now() });
+  },
+
+  dismissRevealed: () => {
+    if (get().revealedIds.length > 0) set({ revealedIds: [], revealedAt: null });
   },
 
   addNote: async (note) => {
@@ -141,5 +195,14 @@ export const useAnnotationStore = create<AnnotationStore>((set, get) => ({
     }
   },
 
-  reset: () => set({ notes: [], ahead: [], readIds: [], challengeId: null, error: null }),
+  reset: () =>
+    set({
+      notes: [],
+      ahead: [],
+      readIds: [],
+      revealedIds: [],
+      revealedAt: null,
+      challengeId: null,
+      error: null,
+    }),
 }));
