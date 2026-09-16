@@ -40,7 +40,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Button3D from '../../components/Button3D';
 import PageTransition from '../../components/PageTransition';
 import PopEyes from '../../components/PopEyes';
-import ActiveBookCard from '../../components/ui/ActiveBookCard';
+import BookMenuSheet from '../../components/ui/BookMenuSheet';
+import BookSection from '../../components/ui/BookSection';
 import CoverBackdrop from '../../components/ui/CoverBackdrop';
 import DeadlineEditSheet from '../../components/ui/DeadlineEditSheet';
 import EditBookSheet from '../../components/ui/EditBookSheet';
@@ -53,6 +54,7 @@ import LeaderboardSection from '../../components/ui/LeaderboardSection';
 import { getAllUserPages, getUserHistory } from '../../services/supabase/database';
 import { uploadBookCover } from '../../services/supabase/storage';
 import { updateWidgetData } from '../../utils/widget';
+import { buildCaps, countAtCap, median } from '../../utils/track';
 import { useCoverPalette } from '../../hooks/useCoverPalette';
 import { useLeaderboardParticipants } from '../../hooks/useLeaderboardParticipants';
 import { useNotificationScheduler } from '../../hooks/useNotificationScheduler';
@@ -110,6 +112,7 @@ export default function HomeScreen() {
   const {
     primaryGoal,
     secondaryGoal,
+    history: goalHistory,
     loadActiveGoals,
     loadGoalHistory,
     addGoal,
@@ -341,6 +344,21 @@ export default function HomeScreen() {
   // Même hook que le classement complet : mêmes prénoms, mêmes photos, mêmes %.
   const { participants: leaderboardParticipants, myUserId } = useLeaderboardParticipants();
 
+  // ===== La piste du livre =====
+  // Le club avance à la MÉDIANE des pourcentages : trois lectrices rapides ne
+  // doivent pas donner l'impression que tout le monde est loin devant.
+  const clubPercent = median(leaderboardParticipants.map((p) => p.percentage));
+  const myPercent = leaderboardParticipants.find((p) => p.id === myUserId)?.percentage ?? 0;
+  // L'édition de référence du challenge : c'est en elle que les caps sont posés
+  const caps = buildCaps([secondaryGoal, ...goalHistory], activeChallenge?.total_pages ?? 0);
+  const currentCap = caps.find((cap) => cap.state === 'current') ?? null;
+  const membersAtCap = currentCap
+    ? countAtCap(leaderboardParticipants.map((p) => p.percentage), currentCap.percent)
+    : 0;
+
+  const [bookMenuVisible, setBookMenuVisible] = useState(false);
+
+
   // ===== Mise à jour automatique du widget iOS =====
   useEffect(() => {
     if (!activeChallenge || !participantsMatchChallenge) return;
@@ -532,7 +550,7 @@ export default function HomeScreen() {
       />
 
       {/* ═══════════ HEADER ═══════════ */}
-      <View style={[styles.header, { paddingTop: insets.top + spacing.lg }]}>
+      <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
         {/* Bibliothèque — tous tes challenges, sur des étagères */}
         <HeaderIconButton
           icon={LibraryBigIcon}
@@ -550,16 +568,21 @@ export default function HomeScreen() {
         />
       </View>
 
-      {/* ═══════════ BLOC 1 : LE LIVRE EN COURS ═══════════ */}
+      {/* ═══════════ CADRE 1 : LE LIVRE ═══════════ */}
       {activeChallenge && (
         <View style={styles.bookSection}>
-          <ActiveBookCard
+          <BookSection
             challenge={activeChallenge}
-            progressPercentage={averagePercentage}
-            onDeleteBook={handleDeleteBook}
-            onEditBook={handleEditBook}
-            onEditDeadline={handleEditDeadline}
-            onSetIntermediateGoal={handleSetIntermediateGoal}
+            clubPercent={clubPercent}
+            myPercent={myPercent}
+            myPhotoUrl={user?.profile_photo_url ?? null}
+            myInitial={(user?.first_name ?? 'M').charAt(0).toUpperCase()}
+            caps={caps}
+            membersAtCap={membersAtCap}
+            memberCount={leaderboardParticipants.length}
+            // La fiche du livre arrive en #44 : en attendant, le cadre ouvre les
+            // actions de l'ancien menu ⋮ (inviter, modifier, fin, cap, quitter).
+            onPress={() => setBookMenuVisible(true)}
           />
         </View>
       )}
@@ -688,6 +711,19 @@ export default function HomeScreen() {
         />
       )}
 
+      {/* ═══════════ ACTIONS DU LIVRE (en attendant #44) ═══════════ */}
+      {activeChallenge && (
+        <BookMenuSheet
+          visible={bookMenuVisible}
+          onClose={() => setBookMenuVisible(false)}
+          challenge={activeChallenge}
+          onEditBook={handleEditBook}
+          onEditDeadline={handleEditDeadline}
+          onSetCap={handleSetIntermediateGoal}
+          onLeaveBook={handleDeleteBook}
+        />
+      )}
+
       {/* ═══════════ MON JOURNAL ═══════════ */}
       <ParticipantHistorySheet
         visible={journalVisible}
@@ -716,18 +752,20 @@ const styles = StyleSheet.create({
   },
 
   // ===== HEADER =====
+  // En-tête resserré (72 → 56 pt) pour que les trois cadres tiennent sans défiler
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.lg,
+    paddingBottom: spacing.sm,
   },
-  // ===== BLOC 1 : LE LIVRE EN COURS =====
+  // ===== CADRE 1 : LE LIVRE =====
+  // Les trois cadres sont espacés de 12 pt, comme sur la maquette : l'accueil
+  // doit tenir sans défiler.
   bookSection: {
     paddingHorizontal: spacing.lg,
-    paddingTop: spacing.lg,
-    paddingBottom: spacing['2xl'],
+    paddingTop: spacing.md,
     borderBottomWidth: 1,
     borderBottomColor: colors.borderLight,
   },
@@ -737,12 +775,12 @@ const styles = StyleSheet.create({
   // Le cadre « Ma page » occupe toute la largeur, comme les deux autres
   pageSection: {
     paddingHorizontal: spacing.lg,
-    paddingTop: spacing.lg,
+    paddingTop: spacing.md,
   },
   // ===== CARTE DE PROGRESSION (bas) =====
   progressSection: {
     paddingHorizontal: spacing.lg,
-    paddingTop: spacing.lg,
+    paddingTop: spacing.md,
   },
 
   // ===== ÉTAT VIDE =====

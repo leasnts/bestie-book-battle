@@ -1,45 +1,27 @@
 /**
- * Composant ActiveBookCard
+ * BookMenuSheet — les actions du livre (inviter, modifier, fin, cap, quitter).
  *
- * Premier bloc de l'accueil : le livre que tu es en train de lire.
+ * Ce menu vivait dans le ⋮ de l'ancienne carte du livre, retirée de l'accueil
+ * avec la refonte en trois cadres. Il est repris tel quel, ouvert par le cadre
+ * « Le livre », en attendant que la fiche du livre (#44) le remplace.
  *
- * [couverture] [auteur, titre, ⋮]
- *              [pages] [deadline]
- *              [barre de progression du groupe  %]
- *
- * Changer de livre ne se fait plus ici : la pile de couvertures et l'étagère
- * dépliable ont laissé la place au bouton bibliothèque de l'en-tête, qui ouvre
- * la route /library.
- *
- * Le menu ⋮ ouvre les actions du livre (inviter, modifier, deadline, objectif,
- * supprimer) et la modal d'invitation avec le code à partager.
+ * Contient aussi la modale d'invitation, avec le code du club à partager.
  */
 
 import * as Clipboard from 'expo-clipboard';
 import { Image } from 'expo-image';
 import React, { useCallback, useState } from 'react';
-import {
-  Alert,
-  Modal,
-  Pressable,
-  Share,
-  StyleSheet,
-  Text,
-  useWindowDimensions,
-  View,
-} from 'react-native';
+import { Alert, Modal, Pressable, Share, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeIn, FadeOut, SlideInDown, SlideOutDown } from 'react-native-reanimated';
 import { Challenge } from '../../types/supabase';
 import { borderRadius, colors, fonts, inkAlpha, shadowAlpha, spacing } from '../../utils/constants';
 import Button3D from '../Button3D';
 import PopEyes from '../PopEyes';
-import BookCover, { COVER_RATIO, isChallengeDone, resolveCoverImage } from './BookCover';
-import { ProgressBar } from './ProgressBar';
+import { resolveCoverImage } from './BookCover';
 import {
   CalendarIcon,
   ChevronRightIcon,
   CopyIcon,
-  EllipsisVerticalIcon,
   FlagIcon,
   PencilIcon,
   ShareIcon,
@@ -48,58 +30,27 @@ import {
   XIcon,
 } from 'lucide-react-native';
 
-/** Formate une date ISO en JJ/MM/AAAA */
-function formatDateDDMMYYYY(iso: string | null | undefined): string {
-  if (!iso) return '--/--/----';
-  const d = new Date(iso);
-  const day = String(d.getDate()).padStart(2, '0');
-  const month = String(d.getMonth() + 1).padStart(2, '0');
-  const year = d.getFullYear();
-  return `${day}/${month}/${year}`;
-}
-
-// ─── Props ───────────────────────────────────────────────────────────
-
-interface ActiveBookCardProps {
-  /** Le livre en cours */
+interface BookMenuSheetProps {
+  visible: boolean;
+  onClose: () => void;
   challenge: Challenge;
-  /** Pourcentage de progression moyen du groupe */
-  progressPercentage: number;
-  /** Appelé pour supprimer (quitter) le livre */
-  onDeleteBook?: () => void;
-  /** Appelé pour modifier le livre */
   onEditBook?: () => void;
-  /** Appelé pour modifier la deadline globale du livre */
   onEditDeadline?: () => void;
-  /** Appelé pour définir un objectif intermédiaire (ex: lire X pages d'ici mercredi) */
-  onSetIntermediateGoal?: () => void;
+  /** Ajouter ou modifier le cap en cours */
+  onSetCap?: () => void;
+  /** Quitter le livre */
+  onLeaveBook?: () => void;
 }
 
-// Hauteur de la couverture quand le texte passe dessous (gros corps de texte)
-const STACKED_COVER_H = 110;
-
-// ─── Composant principal ──────────────────────────────────────────
-
-export default function ActiveBookCard({
+export default function BookMenuSheet({
+  visible,
+  onClose,
   challenge,
-  progressPercentage,
-  onDeleteBook,
   onEditBook,
   onEditDeadline,
-  onSetIntermediateGoal,
-}: ActiveBookCardProps) {
-  /*
-    Au-delà d'un certain corps de texte, la carte passe de deux colonnes à une.
-
-    Côte à côte, la couverture épouse la hauteur du bloc texte. Quand le texte
-    double, il entraînerait la couverture avec lui — elle occuperait la moitié
-    de l'écran et le titre se réduirait à « La bi… ». On restructure au lieu
-    d'étirer : la couverture reprend une taille fixe et le texte passe dessous.
-  */
-  const { fontScale } = useWindowDimensions();
-  const stackVertically = fontScale >= 1.35;
-
-  const [menuVisible, setMenuVisible] = useState(false);
+  onSetCap,
+  onLeaveBook,
+}: BookMenuSheetProps) {
   const [inviteVisible, setInviteVisible] = useState(false);
 
   const bookTitle = challenge.book_title;
@@ -108,10 +59,8 @@ export default function ActiveBookCard({
   const coverUrl = challenge.cover_url;
   const inviteCode = challenge.invite_code || '';
 
-  // ─── Handlers menu ────────────────────────────────────────────
-
   const handleDeletePress = useCallback(() => {
-    setMenuVisible(false);
+    onClose();
     Alert.alert(
       'Supprimer définitivement le livre',
       `Tu veux retirer « ${bookTitle} » de ta bibliothèque ? Tu pourras toujours le rejoindre plus tard avec le code d'invitation.`,
@@ -120,17 +69,17 @@ export default function ActiveBookCard({
         {
           text: 'Quitter',
           style: 'destructive',
-          onPress: () => onDeleteBook?.(),
+          onPress: () => onLeaveBook?.(),
         },
       ]
     );
-  }, [bookTitle, onDeleteBook]);
+  }, [bookTitle, onClose, onLeaveBook]);
 
   const handleInvitePress = useCallback(() => {
-    setMenuVisible(false);
+    onClose();
     // Petit délai pour laisser le bottom sheet se fermer avant d'ouvrir la modal
     setTimeout(() => setInviteVisible(true), 250);
-  }, []);
+  }, [onClose]);
 
   // Copier le code d'invitation dans le presse-papier
   const handleCopyCode = useCallback(async () => {
@@ -153,93 +102,36 @@ export default function ActiveBookCard({
   }, [inviteCode, bookTitle]);
 
   const handleEditPress = useCallback(() => {
-    setMenuVisible(false);
+    onClose();
     onEditBook?.();
-  }, [onEditBook]);
+  }, [onClose, onEditBook]);
 
   const handleEditDeadlinePress = useCallback(() => {
-    setMenuVisible(false);
+    onClose();
     setTimeout(() => onEditDeadline?.(), 250);
-  }, [onEditDeadline]);
+  }, [onClose, onEditDeadline]);
 
-  const handleSetIntermediateGoalPress = useCallback(() => {
-    setMenuVisible(false);
-    setTimeout(() => onSetIntermediateGoal?.(), 250);
-  }, [onSetIntermediateGoal]);
+  const handleSetCapPress = useCallback(() => {
+    onClose();
+    setTimeout(() => onSetCap?.(), 250);
+  }, [onClose, onSetCap]);
 
   return (
-    <Animated.View
-      style={[styles.card, stackVertically && styles.cardStacked]}
-      entering={FadeIn.duration(250)}
-    >
-      {/* Couverture */}
-      <View style={[styles.coverArea, stackVertically && styles.coverAreaFixed]}>
-        <BookCover coverUrl={coverUrl} done={isChallengeDone(challenge)} />
-      </View>
-
-      {/* Infos du livre + menu */}
-      <View style={[styles.bookInfo, stackVertically && styles.bookInfoStacked]}>
-        <View style={styles.bookHeader}>
-          <View style={styles.bookTexts}>
-            <Text style={styles.author} numberOfLines={2}>
-              {bookAuthor || 'Auteur inconnu'}
-            </Text>
-            <Text style={styles.title} numberOfLines={2}>
-              {bookTitle}
-            </Text>
-          </View>
-
-          <Pressable
-            onPress={() => setMenuVisible(true)}
-            style={styles.menuButton}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            accessibilityRole="button"
-            accessibilityLabel="Actions du livre"
-          >
-            <EllipsisVerticalIcon size={20} color={colors.textSecondary} />
-          </Pressable>
-        </View>
-
-        {/* Badges (pages + deadline) + barre de progression */}
-        <View style={styles.bookFooter}>
-          <View style={[styles.badgesRow, stackVertically && styles.badgesRowWrap]}>
-            <View style={styles.badge}>
-              <Text style={styles.badgeText}>{totalPages}p</Text>
-            </View>
-            <View style={styles.badge}>
-              <Text style={styles.badgeText}>{formatDateDDMMYYYY(challenge.target_end_date)}</Text>
-            </View>
-          </View>
-          <View style={styles.progressBarRow}>
-            <View style={styles.progressBarContainer}>
-              <ProgressBar
-                percentage={progressPercentage}
-                height={8}
-                color={colors.dark900}
-                backgroundColor={inkAlpha(0.05)}
-                showPercentage={false}
-                animated
-              />
-            </View>
-            <Text style={styles.progressBarPercentage}>{Math.round(progressPercentage)}%</Text>
-          </View>
-        </View>
-      </View>
-
+    <>
       {/* Bottom Sheet — Actions du livre */}
       <Modal
-        visible={menuVisible}
+        visible={visible}
         transparent
         animationType="none"
         statusBarTranslucent
-        onRequestClose={() => setMenuVisible(false)}
+        onRequestClose={onClose}
       >
         <Animated.View
           style={styles.sheetOverlay}
           entering={FadeIn.duration(200)}
           exiting={FadeOut.duration(150)}
         >
-          <Pressable style={styles.sheetBackdrop} onPress={() => setMenuVisible(false)} />
+          <Pressable style={styles.sheetBackdrop} onPress={onClose} />
         </Animated.View>
 
         <Animated.View
@@ -263,7 +155,7 @@ export default function ActiveBookCard({
               </Text>
             </View>
             <Pressable
-              onPress={() => setMenuVisible(false)}
+              onPress={onClose}
               hitSlop={12}
               style={styles.sheetCloseBtn}
               accessibilityRole="button"
@@ -280,13 +172,13 @@ export default function ActiveBookCard({
             <SheetAction icon={PencilIcon} label="Modifier le livre" onPress={handleEditPress} />
             <SheetAction
               icon={CalendarIcon}
-              label="Modifier la deadline"
+              label="Modifier la fin"
               onPress={handleEditDeadlinePress}
             />
             <SheetAction
               icon={FlagIcon}
-              label="Définir un objectif intermédiaire"
-              onPress={handleSetIntermediateGoalPress}
+              label="Ajouter un cap"
+              onPress={handleSetCapPress}
             />
           </View>
 
@@ -296,7 +188,7 @@ export default function ActiveBookCard({
           <View style={styles.sheetActions}>
             <SheetAction
               icon={Trash2Icon}
-              label="Supprimer définitivement le livre"
+              label="Quitter le livre"
               onPress={handleDeletePress}
               destructive
             />
@@ -403,7 +295,7 @@ export default function ActiveBookCard({
           </View>
         </Animated.View>
       </Modal>
-    </Animated.View>
+    </>
   );
 }
 
@@ -443,110 +335,6 @@ function SheetAction({
 // ─── Styles ────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
-  // ═══ CARTE ═══
-  // Couverture + infos côte à côte. alignItems: stretch = la couverture prend
-  // la hauteur du bloc texte.
-  card: {
-    flexDirection: 'row',
-    alignItems: 'stretch',
-  },
-  /** En gros corps de texte : une seule colonne, couverture au-dessus */
-  cardStacked: {
-    flexDirection: 'column',
-    alignItems: 'flex-start',
-    gap: spacing.md,
-  },
-  coverArea: {
-    alignSelf: 'stretch',
-    aspectRatio: COVER_RATIO,
-  },
-  /** Taille arrêtée : la couverture ne suit plus la hauteur du texte */
-  coverAreaFixed: {
-    alignSelf: 'flex-start',
-    height: STACKED_COVER_H,
-  },
-  bookInfo: {
-    flex: 1,
-    paddingLeft: spacing.lg,
-    gap: 8,
-  },
-  /** En colonne unique, le texte occupe toute la largeur */
-  bookInfoStacked: {
-    flex: 0,
-    alignSelf: 'stretch',
-    paddingLeft: 0,
-  },
-  bookHeader: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
-  },
-  bookTexts: {
-    flex: 1,
-    gap: 8,
-  },
-  menuButton: {
-    padding: 4,
-    marginLeft: spacing.sm,
-  },
-  bookFooter: {
-    gap: 8,
-  },
-  badgesRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    alignSelf: 'flex-start',
-    gap: spacing.sm,
-  },
-  /*
-    En gros corps de texte, les deux badges ne tiennent plus côte à côte.
-    En colonne plutôt qu'en `flexWrap` : dans une rangée qui revient à la
-    ligne, chaque badge s'étire et son texte finit rogné.
-  */
-  badgesRowWrap: {
-    flexDirection: 'column',
-    alignItems: 'flex-start',
-  },
-  progressBarRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  progressBarContainer: {
-    flex: 1,
-    minWidth: 0,
-  },
-  progressBarPercentage: {
-    fontFamily: fonts.body,
-    fontSize: 14,
-    color: colors.textPlaceholder,
-  },
-  author: {
-    fontFamily: fonts.body,
-    fontSize: 16,
-    color: colors.textTertiary,
-  },
-  title: {
-    fontFamily: fonts.display,
-    lineHeight: 26,
-    fontSize: 21,
-    color: colors.textPrimary,
-  },
-  badge: {
-    backgroundColor: inkAlpha(0.08),
-    borderWidth: 1,
-    borderColor: inkAlpha(0.08),
-    borderRadius: 8,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    alignSelf: 'flex-start',
-  },
-  badgeText: {
-    fontFamily: fonts.bodyMedium,
-    fontSize: 14,
-    color: colors.textPrimary,
-  },
-
   // ═══ BOTTOM SHEET — ACTIONS DU LIVRE ═══
   sheetOverlay: {
     ...StyleSheet.absoluteFillObject,

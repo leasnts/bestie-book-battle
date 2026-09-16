@@ -7,7 +7,7 @@
  * 1. Gros titre « Objectif »
  * 2. Label « Page à atteindre » + input
  * 3. Label « Date butoir » + input pressable → DatePicker
- * 4. Bouton « Enregistrer l'objectif »
+ * 4. Bouton « Enregistrer le cap »
  *
  * Utilise BottomSheet (custom) pour le glissement-pour-fermer natif.
  * Le handle du BottomSheet est la zone de drag — les inputs en dessous
@@ -110,7 +110,7 @@ export default function GoalFormSheet({
     if (pages > totalPages) {
       Alert.alert(
         'Erreur',
-        `Le livre fait ${totalPages} pages, l'objectif ne peut pas dépasser ce nombre.`
+        `Le livre fait ${totalPages} pages, le cap ne peut pas dépasser ce nombre.`
       );
       return;
     }
@@ -136,7 +136,7 @@ export default function GoalFormSheet({
       <BottomSheet visible={visible} onClose={onClose}>
         <View style={[styles.content, { paddingBottom: Math.max(32, insets.bottom + 16) }]}>
           <View style={styles.titleRow}>
-            <Text style={styles.title}>Objectif</Text>
+            <Text style={styles.title}>Cap</Text>
             <Pressable
             onPress={onClose}
             hitSlop={12}

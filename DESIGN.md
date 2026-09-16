@@ -403,6 +403,15 @@ devient un **cadre en verre** `GlassSection` (rayon 24, padding 16, bord crème,
 voile crème à 56 %, tout le cadre touchable à 0,97 quand il ouvre un écran),
 posé sur le fond aux couleurs de la couverture.
 
+Le cadre **Le livre** (`BookSection`) ouvre la fiche du livre d'un toucher :
+couverture, titre, autrice, **J-27** (ou « Prolongations » passée la date, sans
+reproche), puis la **piste** (`GoalTrack`) de 0 à 100 % du livre — remplissage à
+la **médiane** du club (pas la moyenne : trois lectrices rapides fausseraient le
+repère), ma photo posée à mon %, caps passés en points neutres, cap en cours en
+drapeau daté, fin en rond au bout. Dessous, deux repères : `Club · 26 % du livre`
+et `Cap · 9/38` (un cap se compte en **membres**). Un objectif intermédiaire
+s'appelle un **cap** partout dans l'UI.
+
 Le cadre **Ma page** (`PageSection`) porte le geste principal : le sélecteur qui
 défile (pas de − / +), ma page en pages de mon édition, ma série en **jours**, et
 une **rangée du bas à hauteur fixe** — trois places qui ne bougent jamais,

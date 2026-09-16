@@ -266,18 +266,21 @@ export async function scheduleGoalRemindersIfNeeded(
 
     const description =
       goal.type === 'primary'
-        ? 'Le livre est pas encore fini et la deadline arrive'
+        ? 'Le livre est pas encore fini et la fin arrive'
         : `${goal.target_pages} pages pour demain — t'as intérêt`;
+
+    const title = goal.type === 'primary' ? 'Fin du livre demain' : 'Cap demain';
 
     await scheduleGoalDeadlineReminder(
       description,
       new Date(goal.deadline),
       challengeId,
-      goal.id
+      goal.id,
+      title
     );
     saveNotification({
       type: 'goal_deadline',
-      title: 'Deadline demain',
+      title,
       body: description,
       challengeId,
       avatarSource: null,

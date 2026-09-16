@@ -195,7 +195,7 @@ export default function PageSection({
 /** Trois nombres visibles à la fois : le mien au centre, ses deux voisins effacés */
 const PICKER_ITEM_WIDTH = 120;
 /** Le chiffre et sa zone reprennent la maquette (68 et 76 px à l'échelle 0,865) */
-const PICKER_FONT_SIZE = 78;
+const PICKER_FONT_SIZE = 68;
 const BUTTON_SIZE = 42;
 
 const styles = StyleSheet.create({
