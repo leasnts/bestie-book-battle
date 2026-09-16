@@ -30,14 +30,12 @@ import {
 } from 'react-native';
 import Animated, {
     Easing,
-    runOnJS,
     useAnimatedStyle,
     useSharedValue,
     withDelay,
     withSequence,
     withTiming,
 } from 'react-native-reanimated';
-import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Button3D from '../../components/Button3D';
 import PageTransition from '../../components/PageTransition';
@@ -49,9 +47,10 @@ import EditBookSheet from '../../components/ui/EditBookSheet';
 import GoalFormSheet from '../../components/ui/GoalFormSheet';
 import HeaderIconButton from '../../components/ui/HeaderIconButton';
 import NotificationButton from '../../components/ui/NotificationButton';
-import PageScrollPicker from '../../components/ui/PageScrollPicker';
+import PageSection from '../../components/ui/PageSection';
+import ParticipantHistorySheet from '../../components/ui/ParticipantHistorySheet';
 import LeaderboardSection from '../../components/ui/LeaderboardSection';
-import { getAllUserPages } from '../../services/supabase/database';
+import { getAllUserPages, getUserHistory } from '../../services/supabase/database';
 import { uploadBookCover } from '../../services/supabase/storage';
 import { updateWidgetData } from '../../utils/widget';
 import { useCoverPalette } from '../../hooks/useCoverPalette';
@@ -62,9 +61,11 @@ import { useGoalStore } from '../../stores/goalStore';
 import { useProgressStore } from '../../stores/progressStore';
 import { useProjectStore } from '../../stores/projectStore';
 import { colors, fonts, shadowAlpha, spacing } from '../../utils/constants';
+import { getActiveStreak } from '../../utils/streak';
+import type { ProgressHistory } from '../../types/supabase';
 import { extractCoverPalette, type CoverPalette } from '../../utils/coverPalette';
 import { useTabBarInset } from '../../components/ui/GlassTabBar';
-import { BookOpenIcon, CheckIcon, CirclePlusIcon, LibraryBigIcon, RotateCcwIcon } from 'lucide-react-native';
+import { BookOpenIcon, CirclePlusIcon, LibraryBigIcon } from 'lucide-react-native';
 
 // Texture de fond "noise" réutilisée depuis l'onboarding
 const TEXTURE_IMAGE = require('../../assets/images/61ea1e0c638b5b9c8100383a37a5b488848db623.png');
@@ -78,16 +79,12 @@ const TEXTURE_IMAGE = require('../../assets/images/61ea1e0c638b5b9c8100383a37a5b
  * Le cache busting (?v=timestamp) force expo-image à recharger l'image
  * au lieu d'afficher une version en cache quand la photo a changé.
  */
-// Zone de détection du bord d'écran (en pixels)
-// Le swipe doit démarrer dans les 50px depuis le bord gauche ou droit
-const EDGE_ZONE = 50;
-
 export default function HomeScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   // Place réservée sous le contenu pour la barre d'onglets flottante
   const tabBarInset = useTabBarInset();
-  const { width: screenWidth, fontScale } = useWindowDimensions();
+  const { fontScale } = useWindowDimensions();
   const { user } = useAuthStore();
 
   // ===== Stores Supabase =====
@@ -158,16 +155,6 @@ export default function HomeScreen() {
   const leafOpacity = useSharedValue(0);
   const leafRotate = useSharedValue(0);
 
-  // ===== Swipe de navigation latéral (bord d'écran) =====
-  // Shared value pour mémoriser la position X initiale du doigt
-  const swipeStartX = useSharedValue(0);
-
-  // Ces callbacks sont appelés depuis un worklet Reanimated (thread UI),
-  // donc runOnJS est obligatoire pour traverser vers le thread JS.
-  const navigateToActivity = useCallback(() => {
-    router.push('/activity');
-  }, [router]);
-
   // Style animé : combine la descente (Y), le balancement (X),
   // la rotation et l'opacité en un seul transform fluide.
   const leafAnimStyle = useAnimatedStyle(() => ({
@@ -179,33 +166,9 @@ export default function HomeScreen() {
     ],
   }));
 
-  // Gesture de glissement horizontal depuis les bords de l'écran.
-  //
-  // Comment ça fonctionne :
-  // 1. onBegin → on enregistre la position X initiale du doigt
-  // 2. activeOffsetX → le gesture ne s'active qu'après 25px de mouvement horizontal
-  //    (évite les conflits avec les taps et les micro-mouvements)
-  // 3. onEnd → si le doigt a démarré dans la zone du bord ET que le swipe est
-  //    assez long (>60px) ET assez rapide (>250px/s), on navigue
-  //
-  // La vérification du bord (swipeStartX < EDGE_ZONE) est la clé :
-  // elle empêche tout conflit avec le PageScrollPicker au centre de l'écran.
-  const swipeGesture = Gesture.Pan()
-    .activeOffsetX([-25, 25])
-    .onBegin((event) => {
-      swipeStartX.set(event.x);
-    })
-    .onEnd((event) => {
-      const startX = swipeStartX.get();
-      const tx = event.translationX;
-      const vx = event.velocityX;
-
-      // Bord droit → swipe vers la gauche → Activité.
-      // Plus de swipe bord gauche → Profil : le profil est un onglet.
-      if (startX > screenWidth - EDGE_ZONE && tx < -60 && vx < -250) {
-        runOnJS(navigateToActivity)();
-      }
-    });
+  // Plus de glissement depuis les bords : le bord droit ouvrait Activité, mais
+  // il chevauchait le sélecteur de page, maintenant posé dans un cadre plus
+  // étroit. La cloche de l'en-tête suffit.
 
   // ===== Chargement des données au montage =====
   // loadUserChallenges est déjà appelé par _layout.tsx via useEffect [user?.id].
@@ -277,6 +240,12 @@ export default function HomeScreen() {
 
   // Savoir si l'utilisateur a bougé le scroll
   const hasChanged = currentPageInput !== lastSavedPage;
+
+  // Ma série en jours, affichée dans le cadre « Ma page »
+  const myStreak = getActiveStreak(
+    myProgress?.streak_count ?? 0,
+    myProgress?.last_streak_date ?? null,
+  );
 
   // Progression moyenne du groupe (basée sur les pourcentages individuels)
   const averagePercentage = participantsMatchChallenge
@@ -353,6 +322,20 @@ export default function HomeScreen() {
   const handleUndo = useCallback(() => {
     setCurrentPageInput(lastSavedPage);
   }, [lastSavedPage]);
+
+  // ===== Mon journal, ouvert depuis « Ma page › » =====
+  const [journalVisible, setJournalVisible] = useState(false);
+  const [myHistory, setMyHistory] = useState<ProgressHistory[]>([]);
+
+  const handleOpenJournal = useCallback(async () => {
+    if (!activeChallenge || !user) return;
+    setJournalVisible(true);
+    try {
+      setMyHistory(await getUserHistory(activeChallenge.id, user.id));
+    } catch (error) {
+      console.error('Erreur chargement du journal:', error);
+    }
+  }, [activeChallenge, user]);
 
   // ===== Membres du club, pour le cadre Classement =====
   // Même hook que le classement complet : mêmes prénoms, mêmes photos, mêmes %.
@@ -537,7 +520,6 @@ export default function HomeScreen() {
 
   return (
     <PageTransition>
-    <GestureDetector gesture={swipeGesture}>
     <View style={styles.container}>
       {/* Fond aux couleurs de la couverture du livre en cours */}
       <CoverBackdrop palette={coverPalette} />
@@ -582,53 +564,20 @@ export default function HomeScreen() {
         </View>
       )}
 
-      {/* ═══════════ BLOC 2 : SÉLECTEUR DE PAGE ═══════════
-        Hauteur FIXE : les boutons apparaissent/disparaissent sans que les chiffres
-        bougent. On réserve toujours la place des boutons (placeholder invisible
-        quand hasChanged=false) pour éviter tout décalage vertical.
-      */}
+      {/* ═══════════ CADRE 2 : MA PAGE ═══════════ */}
       {activeChallenge ? (
         <View style={styles.pageSection}>
-          <View
-            style={[
-              styles.pageSectionInner,
-              fontScale >= 1.35 && styles.pageSectionInnerCompact,
-            ]}
-          >
-            <PageScrollPicker
-              key={activeChallenge.id}
-              currentPage={currentPageInput}
-              totalPages={totalPages}
-              onPageChange={handlePageChange}
-              savedPage={lastSavedPage}
-            />
-
-            {/* Zone boutons : hauteur fixe (56px boutons + 29px gap) pour éviter
-                tout mouvement vertical quand hasChanged change. */}
-            <View style={styles.actionButtonsWrapper}>
-              {hasChanged ? (
-                <View style={styles.actionButtons}>
-                  <Button3D
-                    variant="secondary"
-                    iconOnly
-                    size="compact"
-                    iconComponent={<RotateCcwIcon size={24} color={colors.dark900} />}
-                    accessibilityLabel="Annuler"
-                    accessibilityHint="Revient à ta dernière page enregistrée"
-                    onPress={handleUndo}
-                  />
-                  <Button3D
-                    variant="primary"
-                    iconOnly
-                    size="compact"
-                    icon={CheckIcon}
-                    accessibilityLabel="Enregistrer ma page"
-                    onPress={handleSave}
-                  />
-                </View>
-              ) : null}
-            </View>
-          </View>
+          <PageSection
+            key={activeChallenge.id}
+            currentPage={currentPageInput}
+            savedPage={lastSavedPage}
+            totalPages={totalPages}
+            streakDays={myStreak}
+            onPageChange={handlePageChange}
+            onSave={handleSave}
+            onUndo={handleUndo}
+            onJournalPress={handleOpenJournal}
+          />
         </View>
       ) : !_hasHydrated || (challenges.length === 0 && challengesLoading) ? (
         /* ═══════════ ÉTAT CHARGEMENT : persist pas encore prêt OU fetch en cours sans cache ═══════════ */
@@ -739,8 +688,16 @@ export default function HomeScreen() {
         />
       )}
 
+      {/* ═══════════ MON JOURNAL ═══════════ */}
+      <ParticipantHistorySheet
+        visible={journalVisible}
+        onClose={() => setJournalVisible(false)}
+        participantName="Moi"
+        participantPhoto={user?.profile_photo_url ?? null}
+        history={myHistory}
+      />
+
     </View>
-    </GestureDetector>
     </PageTransition>
   );
 }
@@ -777,44 +734,11 @@ const styles = StyleSheet.create({
 
   // ===== SECTION SÉLECTEUR DE PAGE =====
   // flex: 1 + center pour que le numéro sélectionné soit au milieu de l'écran.
+  // Le cadre « Ma page » occupe toute la largeur, comme les deux autres
   pageSection: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.lg,
   },
-  // Conteneur avec hauteur fixe, pleine largeur pour le centrage.
-  pageSectionInner: {
-    width: '100%',
-    alignItems: 'center',
-    minHeight: 232,
-  },
-  /*
-    En gros corps de texte, la carte du livre au-dessus prend plus de place.
-    Garder 232 pt réservés ici pousserait le classement hors de l'écran :
-    on laisse la zone se comprimer, le sélecteur garde sa taille propre.
-  */
-  pageSectionInnerCompact: {
-    minHeight: 0,
-  },
-  // Wrapper de hauteur fixe (hauteur du Button3D compact) pour que le layout ne
-  // bouge pas quand les boutons apparaissent. Resserré depuis l'arrivée de la
-  // barre d'onglets flottante, qui prend ~70 pt en bas de l'écran : avec
-  // l'ancienne réserve de 98 pt, la zone débordait et « PAGE » chevauchait le
-  // trait sous la carte du livre.
-  actionButtonsWrapper: {
-    minHeight: 40, // Button3D compact
-    marginTop: spacing.md,
-    width: '100%',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  // Les boutons undo + check, gap 29px (Figma)
-  actionButtons: {
-    flexDirection: 'row',
-    gap: 29,
-    alignItems: 'center',
-  },
-
   // ===== CARTE DE PROGRESSION (bas) =====
   progressSection: {
     paddingHorizontal: spacing.lg,

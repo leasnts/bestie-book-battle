@@ -403,6 +403,16 @@ devient un **cadre en verre** `GlassSection` (rayon 24, padding 16, bord crème,
 voile crème à 56 %, tout le cadre touchable à 0,97 quand il ouvre un écran),
 posé sur le fond aux couleurs de la couverture.
 
+Le cadre **Ma page** (`PageSection`) porte le geste principal : le sélecteur qui
+défile (pas de − / +), ma page en pages de mon édition, ma série en **jours**, et
+une **rangée du bas à hauteur fixe** — trois places qui ne bougent jamais,
+seules les icônes changent : au repos carnet et post-it (#48), pendant un
+défilement ↺ annuler, « +14 », ✓ enregistrer. Les boutons ronds font 42 pt,
+encre pleine pour l'action principale, `inkAlpha(0.07)` pour les autres.
+
+Plus de glissement depuis le bord droit vers Activité : il chevauchait le
+sélecteur. La cloche de l'en-tête suffit.
+
 L'en-tête porte deux `HeaderIconButton` 40 pt autour de PopEyes :
 **bibliothèque** (`library-big`) à gauche, **activité** (`bell`) à droite.
 

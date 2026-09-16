@@ -3,8 +3,10 @@
  *
  * Sélecteur de page horizontal avec scroll fluide :
  * - Largeur fixe par item pour un scroll fiable + snap
- * - Quand le scroll s'arrête, le numéro le plus proche se centre sur l'écran
- * - Numéro central : 108px, encre noyer. Adjacents : 60px, encre transparente
+ * - Quand le scroll s'arrête, le numéro le plus proche se centre dans la zone
+ * - Numéro central en encre noyer, adjacents plus petits et transparents
+ * - Zone et tailles réglables (`width`, `itemWidth`, `fontSize`) : l'accueil le
+ *   pose dans un cadre plus étroit que l'écran (PageSection)
  * - adjustsFontSizeToFit adapte la taille aux gros numéros (3-4 chiffres)
  *   sans jamais tronquer ni couper le nombre
  */
@@ -21,18 +23,25 @@ import {
 } from 'react-native';
 import { colors, fonts, inkAlpha, shadowAlpha } from '../../utils/constants';
 
-// Largeur de chaque cellule. 180px suffit pour afficher 1-3 chiffres à pleine
-// taille (108px). Pour 3-4 chiffres, adjustsFontSizeToFit réduit légèrement
-// la taille pour que le nombre entier soit toujours visible.
+// Largeur d'une cellule. 180 pt laissent 1 à 3 chiffres à pleine taille ;
+// au-delà, adjustsFontSizeToFit réduit le nombre pour qu'il tienne entier.
 // Pas de gap entre les cellules → les nombres adjacents restent bien visibles.
-const ITEM_WIDTH = 180;
-const STEP = ITEM_WIDTH;
+const DEFAULT_ITEM_WIDTH = 180;
+const DEFAULT_FONT_SIZE = 108;
+/** Les voisins font un peu plus de la moitié du chiffre central (ratio de la maquette) */
+const SIDE_RATIO = 0.56;
 
 interface PageScrollPickerProps {
   currentPage: number;
   totalPages: number;
   onPageChange: (page: number) => void;
   savedPage: number;
+  /** Largeur de la zone où le chiffre se centre. Par défaut : tout l'écran. */
+  width?: number;
+  /** Largeur d'une cellule : la resserrer rapproche les voisins */
+  itemWidth?: number;
+  /** Taille du chiffre central */
+  fontSize?: number;
 }
 
 export default function PageScrollPicker({
@@ -40,8 +49,16 @@ export default function PageScrollPicker({
   totalPages,
   onPageChange,
   savedPage,
+  width,
+  itemWidth = DEFAULT_ITEM_WIDTH,
+  fontSize = DEFAULT_FONT_SIZE,
 }: PageScrollPickerProps) {
-  const { width: screenWidth } = useWindowDimensions();
+  const { width: windowWidth } = useWindowDimensions();
+  const screenWidth = width ?? windowWidth;
+  const STEP = itemWidth;
+  const ITEM_WIDTH = itemWidth;
+  // Le filigrane « PAGE » et la hauteur de cellule suivent la taille du chiffre
+  const cellHeight = Math.round(fontSize * 1.13);
   const flatListRef = useRef<FlatList>(null);
   const currentCenterRef = useRef(currentPage);
   const [displayPage, setDisplayPage] = useState(currentPage);
@@ -100,7 +117,7 @@ export default function PageScrollPicker({
         setDisplayPage(clamped);
       }
     },
-    [totalPages]
+    [totalPages, STEP]
   );
 
   const handleMomentumScrollEnd = useCallback(
@@ -114,7 +131,7 @@ export default function PageScrollPicker({
       // On laisse snapToInterval gérer le snap — plus de scrollToOffset manuel
       // pour éviter de bloquer les gestes suivants.
     },
-    [totalPages, onPageChange]
+    [totalPages, onPageChange, STEP]
   );
 
   const handleScrollEndDrag = useCallback(
@@ -127,7 +144,7 @@ export default function PageScrollPicker({
       onPageChange(clamped);
       // snapToInterval fait le snap ; scrollToOffset manuel bloquait les gestes
     },
-    [totalPages, onPageChange]
+    [totalPages, onPageChange, STEP]
   );
 
   const handleScrollBeginDrag = useCallback(() => {
@@ -138,12 +155,14 @@ export default function PageScrollPicker({
     ({ item }: { item: number }) => {
       const isCenter = item === displayPage;
       return (
-        <View style={[styles.itemCell, { width: STEP }]}>
-          <View style={[styles.itemContainer, { width: ITEM_WIDTH }]}>
+        <View style={[styles.itemCell, { width: STEP, height: cellHeight }]}>
+          <View style={[styles.itemContainer, { width: ITEM_WIDTH, height: cellHeight }]}>
             <Text
               style={[
                 styles.pageNumber,
-                isCenter ? styles.pageNumberCenter : styles.pageNumberSide,
+                isCenter
+                  ? [styles.pageNumberCenter, { fontSize }]
+                  : [styles.pageNumberSide, { fontSize: Math.round(fontSize * SIDE_RATIO) }],
               ]}
               numberOfLines={1}
               adjustsFontSizeToFit
@@ -164,7 +183,7 @@ export default function PageScrollPicker({
         </View>
       );
     },
-    [displayPage]
+    [displayPage, STEP, ITEM_WIDTH, cellHeight, fontSize]
   );
 
   const keyExtractor = useCallback((item: number) => item.toString(), []);
@@ -175,7 +194,7 @@ export default function PageScrollPicker({
       offset: horizontalPadding + STEP * index,
       index,
     }),
-    [horizontalPadding]
+    [horizontalPadding, STEP]
   );
 
   return (
@@ -186,7 +205,12 @@ export default function PageScrollPicker({
           chevauche le chiffre au lieu de rester en fond : il est exclu de
           l'échelle système, comme tout élément purement ornemental.
         */}
-        <Text style={styles.pageLabel} allowFontScaling={false}>PAGE</Text>
+        <Text
+          style={[styles.pageLabel, { fontSize: Math.round(fontSize * 0.28) }]}
+          allowFontScaling={false}
+        >
+          PAGE
+        </Text>
       </View>
 
       <FlatList
@@ -230,7 +254,6 @@ const styles = StyleSheet.create({
   },
   pageLabel: {
     fontFamily: fonts.displayBold,
-    fontSize: 30,
     color: inkAlpha(0.08),
     letterSpacing: -0.3,
     textAlign: 'center',
@@ -239,12 +262,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    height: 150,
   },
   itemContainer: {
     justifyContent: 'center',
     alignItems: 'center',
-    height: 150,
   },
   pageNumber: {
     fontFamily: fonts.displayHero,
@@ -264,7 +285,6 @@ const styles = StyleSheet.create({
   // taille est réduite. Sans lineHeight, le texte prend sa hauteur naturelle
   // et le conteneur (justifyContent: 'center') gère l'alignement vertical.
   pageNumberCenter: {
-    fontSize: 108,
     color: colors.dark900,
     letterSpacing: -1.6,
     textShadowColor: shadowAlpha(0.25),
@@ -276,7 +296,6 @@ const styles = StyleSheet.create({
   // L'alignement vertical est assuré par le conteneur flexbox (150px de haut,
   // justifyContent: 'center'), qui centre chaque texte au même point vertical.
   pageNumberSide: {
-    fontSize: 60,
     color: inkAlpha(0.2),
     letterSpacing: -0.9,
   },

@@ -1,0 +1,284 @@
+/**
+ * PageSection — le cadre « Ma page » de l'accueil.
+ *
+ * Deuxième question de l'accueil : où j'en suis. C'est aussi le geste principal
+ * de l'app — enregistrer sa page en un geste.
+ *
+ * - En-tête : « Ma page › » ouvre mon journal ; à droite, ma série en **jours**
+ *   (jamais « soirs » : on ne suppose pas quand les gens lisent).
+ * - Le sélecteur qui défile est gardé (pas de − / +), resserré pour tenir dans
+ *   le cadre. Ma page est en **pages de mon édition**, d'où le « sur 624 ».
+ * - La rangée du bas a une **hauteur fixe** et trois places fixes. Seules les
+ *   icônes changent, jamais l'endroit où l'on appuie (DESIGN.md › Boutons-icônes) :
+ *
+ *   |        | gauche        | centre   | droite            |
+ *   |--------|---------------|----------|-------------------|
+ *   | repos  | carnet (#48)  | —        | noter la page (#48) |
+ *   | défilé | ↺ annuler     | « +14 »  | ✓ enregistrer     |
+ *
+ * Tant que le carnet n'existe pas, les deux places du repos restent vides : la
+ * rangée garde sa hauteur, rien ne saute quand on fait défiler le sélecteur.
+ */
+
+import { CheckIcon, FlameIcon, RotateCcwIcon, StickyNoteIcon } from 'lucide-react-native';
+import React, { useState } from 'react';
+import { ChevronRightIcon } from 'lucide-react-native';
+import { LayoutChangeEvent, StyleSheet, Text, View } from 'react-native';
+import { colors, fonts, inkAlpha, shadowAlpha, spacing } from '../../utils/constants';
+import GlassSection from './GlassSection';
+import PageScrollPicker from './PageScrollPicker';
+import PressableScale from './PressableScale';
+
+interface PageSectionProps {
+  /** Page affichée par le sélecteur */
+  currentPage: number;
+  /** Dernière page enregistrée */
+  savedPage: number;
+  /** Nombre de pages de MON édition */
+  totalPages: number;
+  /** Jours consécutifs de lecture, 0 = pas de série */
+  streakDays: number;
+  onPageChange: (page: number) => void;
+  onSave: () => void;
+  onUndo: () => void;
+  /** « Ma page › » → mon journal */
+  onJournalPress: () => void;
+  /** Noter cette page (carnet, #48). Sans elle, la place reste vide. */
+  onNotePress?: () => void;
+}
+
+/** Bouton rond de la rangée du bas : même taille et même place, seule l'icône change */
+function IconButton({
+  icon: Icon,
+  variant,
+  label,
+  hint,
+  onPress,
+}: {
+  icon: typeof CheckIcon;
+  variant: 'dark' | 'ghost';
+  label: string;
+  hint?: string;
+  onPress: () => void;
+}) {
+  return (
+    <PressableScale
+      style={[styles.iconButton, variant === 'dark' ? styles.iconButtonDark : styles.iconButtonGhost]}
+      pressedScale={0.9}
+      hitSlop={6}
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      accessibilityHint={hint}
+    >
+      <Icon
+        size={20}
+        color={variant === 'dark' ? colors.white : colors.dark900}
+        strokeWidth={2.2}
+      />
+    </PressableScale>
+  );
+}
+
+export default function PageSection({
+  currentPage,
+  savedPage,
+  totalPages,
+  streakDays,
+  onPageChange,
+  onSave,
+  onUndo,
+  onJournalPress,
+  onNotePress,
+}: PageSectionProps) {
+  // Le sélecteur centre la page sur la largeur qu'on lui donne : ici celle du
+  // cadre, pas celle de l'écran.
+  const [pickerWidth, setPickerWidth] = useState(0);
+  const onPickerLayout = (e: LayoutChangeEvent) => setPickerWidth(e.nativeEvent.layout.width);
+
+  const delta = currentPage - savedPage;
+  const hasChanged = delta !== 0;
+
+  return (
+    <GlassSection>
+      <View style={styles.head}>
+        <PressableScale
+          style={styles.journalLink}
+          pressedScale={0.96}
+          hitSlop={8}
+          onPress={onJournalPress}
+          accessibilityRole="button"
+          accessibilityLabel="Ma page"
+          accessibilityHint="Ouvre mon journal de lecture"
+        >
+          <Text style={styles.title}>Ma page</Text>
+          <ChevronRightIcon size={15} color={colors.textPlaceholder} strokeWidth={2} />
+        </PressableScale>
+
+        {streakDays > 0 && (
+          <View style={styles.streak} accessible accessibilityLabel={`Série de ${streakDays} jours`}>
+            <FlameIcon size={14} color={colors.textTertiary} fill={colors.textTertiary} />
+            <Text style={styles.streakText}>{streakDays} j</Text>
+          </View>
+        )}
+      </View>
+
+      {/* Les voisins du chiffre sont coupés au bord du cadre */}
+      <View style={styles.picker} onLayout={onPickerLayout}>
+        {pickerWidth > 0 && (
+          <PageScrollPicker
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={onPageChange}
+            savedPage={savedPage}
+            width={pickerWidth}
+            itemWidth={PICKER_ITEM_WIDTH}
+            fontSize={PICKER_FONT_SIZE}
+          />
+        )}
+      </View>
+
+      <Text style={styles.total}>sur {totalPages}</Text>
+
+      <View style={styles.row}>
+        {/* Gauche */}
+        <View style={styles.slot}>
+          {hasChanged && (
+            <IconButton
+              icon={RotateCcwIcon}
+              variant="ghost"
+              label="Annuler"
+              hint="Revient à ma dernière page enregistrée"
+              onPress={onUndo}
+            />
+          )}
+        </View>
+
+        {/* Centre : ce que je viens de lire */}
+        <View style={styles.delta}>
+          {hasChanged && (
+            <Text style={styles.deltaText}>
+              {delta > 0 ? '+' : '−'}
+              {Math.abs(delta)}
+            </Text>
+          )}
+        </View>
+
+        {/* Droite */}
+        <View style={styles.slot}>
+          {hasChanged ? (
+            <IconButton
+              icon={CheckIcon}
+              variant="dark"
+              label="Enregistrer ma page"
+              onPress={onSave}
+            />
+          ) : (
+            onNotePress && (
+              <IconButton
+                icon={StickyNoteIcon}
+                variant="ghost"
+                label="Noter cette page"
+                onPress={onNotePress}
+              />
+            )
+          )}
+        </View>
+      </View>
+    </GlassSection>
+  );
+}
+
+// ─── Styles ────────────────────────────────────────────────────────
+// Mesures de la maquette (échelle 0,865) ramenées en points.
+
+/** Trois nombres visibles à la fois : le mien au centre, ses deux voisins effacés */
+const PICKER_ITEM_WIDTH = 120;
+/** Le chiffre et sa zone reprennent la maquette (68 et 76 px à l'échelle 0,865) */
+const PICKER_FONT_SIZE = 78;
+const BUTTON_SIZE = 42;
+
+const styles = StyleSheet.create({
+  head: {
+    height: 21,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  journalLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+  },
+  title: {
+    fontFamily: fonts.bodyExtraBold,
+    fontSize: 15,
+    color: colors.textPrimary,
+  },
+  streak: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  streakText: {
+    fontFamily: fonts.bodyBold,
+    fontSize: 14,
+    color: colors.textTertiary,
+    fontVariant: ['tabular-nums'],
+  },
+
+  picker: {
+    marginTop: 2,
+    marginHorizontal: -spacing.lg, // le sélecteur va jusqu'aux bords du cadre
+    overflow: 'hidden',
+  },
+  total: {
+    marginTop: -5,
+    textAlign: 'center',
+    fontFamily: fonts.bodySemiBold,
+    fontSize: 13,
+    color: colors.textPlaceholder,
+    fontVariant: ['tabular-nums'],
+  },
+
+  // Hauteur fixe : les boutons apparaissent sans rien déplacer
+  row: {
+    height: BUTTON_SIZE,
+    marginTop: spacing.sm,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  slot: {
+    width: BUTTON_SIZE,
+    height: BUTTON_SIZE,
+  },
+  delta: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  deltaText: {
+    fontFamily: fonts.bodyExtraBold,
+    fontSize: 17,
+    color: colors.textSecondary,
+    fontVariant: ['tabular-nums'],
+  },
+
+  iconButton: {
+    width: BUTTON_SIZE,
+    height: BUTTON_SIZE,
+    borderRadius: BUTTON_SIZE / 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  iconButtonDark: {
+    backgroundColor: colors.dark900,
+    shadowColor: shadowAlpha(0.25),
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 1,
+    shadowRadius: 6,
+  },
+  iconButtonGhost: {
+    backgroundColor: inkAlpha(0.07),
+  },
+});
