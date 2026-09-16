@@ -267,7 +267,8 @@ export default function HomeScreen() {
     if (!hasChanged || !activeChallenge || !user) return;
 
     // Capture le delta AVANT la sauvegarde (après, lastSavedPage va changer)
-    const delta = currentPageInput - lastSavedPage;
+    const previousPage = lastSavedPage;
+    const delta = currentPageInput - previousPage;
 
     try {
       await updateProgress(activeChallenge.id, user.id, currentPageInput);
@@ -275,7 +276,7 @@ export default function HomeScreen() {
 
       // Ma progression a bougé : le serveur ouvre les notes que je viens de
       // dépasser. Elles arrivent en post-it pendant que la feuille tombe.
-      revealAfterSave(activeChallenge.id, user.id);
+      revealAfterSave(activeChallenge.id, user.id, { from: previousPage, to: currentPageInput });
 
       // Lance le toast "feuille qui tombe" avec le delta
       if (delta !== 0) {

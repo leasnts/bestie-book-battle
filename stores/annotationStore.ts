@@ -38,6 +38,12 @@ export interface VoiceClip {
   levels: number[];
 }
 
+/** Deux pages de mon édition, de la plus ancienne à la plus récente */
+export interface PageRange {
+  from: number;
+  to: number;
+}
+
 interface AnnotationStore {
   // ═══ État ═══
   /** Les notes lisibles du livre affiché, dans l'ordre du livre */
@@ -54,6 +60,11 @@ interface AnnotationStore {
   revealedIds: string[];
   /** Quand elles ont été révélées : l'animation ne se joue qu'à ce moment-là */
   revealedAt: number | null;
+  /**
+   * Les pages de mon édition qui les ont ouvertes : de ma page d'avant à ma
+   * nouvelle page. Le carnet en fait le titre « Nouvelles · p. 157–170 ».
+   */
+  revealedPages: PageRange | null;
   /** Le livre actuellement chargé, pour ne pas mélanger deux carnets */
   challengeId: string | null;
   isLoading: boolean;
@@ -66,7 +77,7 @@ interface AnnotationStore {
    * Après « Enregistrer » : recharge le carnet et retient les notes des autres
    * qui viennent de s'ouvrir — celles entre mon ancienne page et la nouvelle.
    */
-  revealAfterSave: (challengeId: string, userId: string) => Promise<void>;
+  revealAfterSave: (challengeId: string, userId: string, pages: PageRange) => Promise<void>;
   /** Les post-it ont fait leur travail : ils se rangent dans le carnet */
   dismissRevealed: () => void;
   /** Publie une note, avec son vocal s'il y en a un */
@@ -89,6 +100,7 @@ export const useAnnotationStore = create<AnnotationStore>((set, get) => ({
   readIds: [],
   revealedIds: [],
   revealedAt: null,
+  revealedPages: null,
   challengeId: null,
   isLoading: false,
   error: null,
@@ -110,7 +122,8 @@ export const useAnnotationStore = create<AnnotationStore>((set, get) => ({
           state.challengeId === challengeId
             ? state.revealedIds.filter((id) => notes.some((note) => note.id === id))
             : [];
-        return { notes, ahead, readIds, revealedIds, challengeId, isLoading: false };
+        const revealedPages = revealedIds.length > 0 ? state.revealedPages : null;
+        return { notes, ahead, readIds, revealedIds, revealedPages, challengeId, isLoading: false };
       });
     } catch (error: any) {
       console.error('[Carnet] chargement impossible', error);
@@ -118,7 +131,7 @@ export const useAnnotationStore = create<AnnotationStore>((set, get) => ({
     }
   },
 
-  revealAfterSave: async (challengeId, userId) => {
+  revealAfterSave: async (challengeId, userId, pages) => {
     // Ce que je pouvais déjà lire avant d'avancer. Sans carnet chargé pour ce
     // livre, impossible de savoir ce qui est nouveau : on ne révèle rien.
     const before =
@@ -127,7 +140,7 @@ export const useAnnotationStore = create<AnnotationStore>((set, get) => ({
     await get().loadAnnotations(challengeId, userId);
     if (!before) return;
 
-    const { notes, readIds, revealedIds } = get();
+    const { notes, readIds, revealedIds, revealedPages } = get();
     const crossed = notes
       .filter(
         (note) =>
@@ -139,12 +152,20 @@ export const useAnnotationStore = create<AnnotationStore>((set, get) => ({
       .map((note) => note.id);
     if (crossed.length === 0) return;
 
-    // Deux pages enregistrées sans ouvrir le carnet : les post-it s'additionnent
-    set({ revealedIds: [...revealedIds, ...crossed], revealedAt: Date.now() });
+    // Deux pages enregistrées sans ouvrir le carnet : les post-it s'additionnent,
+    // et les pages partent de la première des deux
+    set({
+      revealedIds: [...revealedIds, ...crossed],
+      revealedAt: Date.now(),
+      revealedPages: {
+        from: revealedPages ? Math.min(revealedPages.from, pages.from) : pages.from,
+        to: pages.to,
+      },
+    });
   },
 
   dismissRevealed: () => {
-    if (get().revealedIds.length > 0) set({ revealedIds: [], revealedAt: null });
+    if (get().revealedIds.length > 0) set({ revealedIds: [], revealedAt: null, revealedPages: null });
   },
 
   addNote: async (note, voice) => {
@@ -263,6 +284,7 @@ export const useAnnotationStore = create<AnnotationStore>((set, get) => ({
       readIds: [],
       revealedIds: [],
       revealedAt: null,
+      revealedPages: null,
       challengeId: null,
       error: null,
     }),
