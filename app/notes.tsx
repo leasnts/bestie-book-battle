@@ -6,6 +6,8 @@
  * - En haut, un cadre en verre : combien de notes sont ouvertes, combien
  *   attendent plus loin, et **la piste qui sert d'ascenseur**.
  * - Des filtres courts : Tout, Moi, une personne, une catégorie.
+ * - « Nouvelles · p. 157–170 » : les notes que ma dernière page enregistrée
+ *   vient d'ouvrir (les post-it de l'accueil), avant tout le reste.
  * - La liste, en sections par tranche de pages de MON édition.
  * - En bas, « Plus loin » : les notes encore verrouillées, réduites à leur
  *   autrice et à leur page. Elles ne viennent pas de la liste des notes, mais
@@ -51,6 +53,9 @@ type Filter =
   | { kind: 'member'; userId: string; name: string; photo: string | null }
   | { kind: 'category'; category: AnnotationCategory };
 
+/** Une section de la liste : une tranche de pages, ou les nouvelles (`start: null`) */
+type NoteSection = { title: string; start: number | null; data: AnnotationWithAuthor[] };
+
 const DEFAULT_AVATAR = require('../assets/images/profile_picture_default.png');
 
 export default function NotesRoute() {
@@ -61,13 +66,19 @@ export default function NotesRoute() {
   const { notes, ahead, readIds, markRead, dismissRevealed, toggleReaction } =
     useAnnotationStore();
 
-  // Les post-it de l'accueil ont mené ici : ils se rangent dans le carnet
+  // Les post-it de l'accueil ont mené ici : ils se rangent dans le carnet. Le
+  // carnet en garde une copie tant qu'il est ouvert — lire une nouvelle ne la
+  // fait pas sauter ailleurs dans la liste.
+  const [fresh] = useState(() => {
+    const { revealedIds, revealedPages } = useAnnotationStore.getState();
+    return { ids: new Set(revealedIds), pages: revealedPages };
+  });
   useEffect(() => {
     dismissRevealed();
   }, [dismissRevealed]);
 
   const [filter, setFilter] = useState<Filter>({ kind: 'all' });
-  const listRef = useRef<SectionList<AnnotationWithAuthor>>(null);
+  const listRef = useRef<SectionList<AnnotationWithAuthor, NoteSection>>(null);
 
   const myProgress = participants.find((p) => p.user.id === user?.id);
   const myPages = myProgress?.progress.total_pages ?? activeChallenge?.total_pages ?? 0;
@@ -94,21 +105,31 @@ export default function NotesRoute() {
   const slice = Math.max(10, Math.round(myPages / 10));
 
   const sections = useMemo(() => {
+    const news: AnnotationWithAuthor[] = [];
     const groups = new Map<number, AnnotationWithAuthor[]>();
     for (const note of visible) {
+      // Une nouvelle n'apparaît qu'une fois : en haut, pas aussi dans sa tranche
+      if (fresh.ids.has(note.id)) {
+        news.push(note);
+        continue;
+      }
       const page = Math.ceil(note.position * myPages);
       const start = Math.floor(Math.max(0, page - 1) / slice) * slice;
       if (!groups.has(start)) groups.set(start, []);
       groups.get(start)!.push(note);
     }
-    return [...groups.entries()]
+    const slices: NoteSection[] = [...groups.entries()]
       .sort((a, b) => a[0] - b[0])
       .map(([start, data]) => ({
         title: `p. ${start + 1}–${Math.min(start + slice, myPages)}`,
         start,
         data,
       }));
-  }, [visible, myPages, slice]);
+    if (news.length === 0) return slices;
+
+    const title = fresh.pages ? `Nouvelles · p. ${fresh.pages.from}–${fresh.pages.to}` : 'Nouvelles';
+    return [{ title, start: null, data: news }, ...slices];
+  }, [visible, myPages, slice, fresh]);
 
   /** Les notes que je n'ai pas encore ouvertes : ce sont les « nouvelles » */
   const unread = useMemo(
@@ -126,7 +147,10 @@ export default function NotesRoute() {
     (position: number) => {
       if (sections.length === 0) return;
       const page = position * myPages;
-      let index = sections.findIndex((section) => page < section.start + slice);
+      // Les nouvelles ne sont pas une tranche : la piste mène aux pages
+      let index = sections.findIndex(
+        (section) => section.start !== null && page < section.start + slice,
+      );
       if (index < 0) index = sections.length - 1;
       listRef.current?.scrollToLocation({
         sectionIndex: index,
