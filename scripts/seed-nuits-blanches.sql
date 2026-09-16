@@ -87,3 +87,32 @@ CROSS JOIN (VALUES
 ) AS entry(days_ago, page_number, pages_read)
 WHERE p.challenge_id = '4c6650d1-a213-48d2-8f86-7aaf52cf2be9'
   AND p.user_id = '9b8c837f-0755-4d7a-972f-37cbe51395c1';
+
+-- ─── Les notes du carnet (#45) ───────────────────────────────────────
+-- Chacune est posée dans l'édition de son autrice et stockée en position.
+-- Moi : p. 16 sur 62 → 25,8 %. Avec la marge d'≈ 1 %, je vois les notes
+-- posées jusqu'à ≈ 24,8 % ; celles d'après restent verrouillées.
+DELETE FROM public.annotations WHERE challenge_id = '4c6650d1-a213-48d2-8f86-7aaf52cf2be9';
+
+INSERT INTO public.annotations
+  (challenge_id, user_id, page, edition_total_pages, position, body, emoji, category, visibility)
+VALUES
+  -- Visibles pour moi (avant ma page)
+  ('4c6650d1-a213-48d2-8f86-7aaf52cf2be9', 'aaaaaaaa-1111-4000-a000-000000000001', 4, 58, 0.06897,
+   'Le narrateur qui parle aux maisons de Saint-Pétersbourg, j''étais pas prête', '😭', 'larmes', 'club'),
+  ('4c6650d1-a213-48d2-8f86-7aaf52cf2be9', 'aaaaaaaa-1111-4000-a000-000000000002', 9, 96, 0.09375,
+   'Il tombe amoureux en une nuit, le mec est un projet', '😂', 'mdr', 'club'),
+  ('4c6650d1-a213-48d2-8f86-7aaf52cf2be9', 'aaaaaaaa-1111-4000-a000-000000000003', 13, 74, 0.17568,
+   NULL, '🔥', 'coup_de_coeur', 'club'),
+  ('4c6650d1-a213-48d2-8f86-7aaf52cf2be9', '9b8c837f-0755-4d7a-972f-37cbe51395c1', 12, 62, 0.19355,
+   'Relire ce passage, la description de la nuit blanche', '📌', 'a_retenir', 'club'),
+  -- La mienne, privée : visible de moi seule
+  ('4c6650d1-a213-48d2-8f86-7aaf52cf2be9', '9b8c837f-0755-4d7a-972f-37cbe51395c1', 15, 62, 0.24194,
+   'Note pour moi : demander à Zoé ce qu''elle pense de Nastenka', '🤔', 'theorie', 'private'),
+  -- Verrouillées pour moi (plus loin que ma page + la marge)
+  ('4c6650d1-a213-48d2-8f86-7aaf52cf2be9', 'aaaaaaaa-1111-4000-a000-000000000001', 22, 58, 0.37931,
+   'LA phrase du livre, je la recopie partout', '😭', 'coup_de_coeur', 'club'),
+  ('4c6650d1-a213-48d2-8f86-7aaf52cf2be9', 'aaaaaaaa-1111-4000-a000-000000000002', 40, 96, 0.41667,
+   'Théorie : elle savait depuis le début', NULL, 'theorie', 'club'),
+  ('4c6650d1-a213-48d2-8f86-7aaf52cf2be9', 'aaaaaaaa-1111-4000-a000-000000000004', 60, 112, 0.53571,
+   'Je vous préviens, préparez les mouchoirs', '😭', 'larmes', 'club');

@@ -227,6 +227,86 @@ export interface Database {
           // created_date est généré automatiquement, pas besoin de le fournir
         };
       };
+      annotations: {
+        Row: {
+          id: string; // UUID
+          challenge_id: string;
+          user_id: string;
+          page: number;                 // la page dans l'édition de l'autrice
+          edition_total_pages: number;  // son édition
+          position: number;             // 0 → 1, la part du livre : c'est elle qui voyage
+          chapter: string | null;       // V3
+          quote: string | null;         // V2
+          body: string | null;
+          audio_path: string | null;
+          audio_seconds: number | null;
+          emoji: string | null;
+          category: AnnotationCategory;
+          visibility: AnnotationVisibility;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          challenge_id: string;
+          user_id: string;
+          page: number;
+          edition_total_pages: number;
+          position: number;
+          chapter?: string | null;
+          quote?: string | null;
+          body?: string | null;
+          audio_path?: string | null;
+          audio_seconds?: number | null;
+          emoji?: string | null;
+          category?: AnnotationCategory;
+          visibility?: AnnotationVisibility;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          page?: number;
+          edition_total_pages?: number;
+          position?: number;
+          chapter?: string | null;
+          quote?: string | null;
+          body?: string | null;
+          audio_path?: string | null;
+          audio_seconds?: number | null;
+          emoji?: string | null;
+          category?: AnnotationCategory;
+          visibility?: AnnotationVisibility;
+          updated_at?: string;
+        };
+      };
+      annotation_reactions: {
+        Row: {
+          annotation_id: string;
+          user_id: string;
+          emoji: string;
+          created_at: string;
+        };
+        Insert: {
+          annotation_id: string;
+          user_id: string;
+          emoji: string;
+          created_at?: string;
+        };
+        Update: { emoji?: string };
+      };
+      annotation_reads: {
+        Row: {
+          annotation_id: string;
+          user_id: string;
+          read_at: string;
+        };
+        Insert: {
+          annotation_id: string;
+          user_id: string;
+          read_at?: string;
+        };
+        Update: { read_at?: string };
+      };
       challenge_goals: {
         Row: {
           id: string; // UUID
@@ -270,16 +350,44 @@ export interface Database {
       [_ in never]: never;
     };
     Functions: {
+      /** Les notes posées plus loin que ma progression : qui et à quelle page, jamais le contenu */
+      annotations_ahead: {
+        Args: { p_challenge_id: string };
+        Returns: {
+          id: string;
+          user_id: string;
+          first_name: string | null;
+          profile_photo_url: string | null;
+          book_position: number;
+          my_page: number;
+        }[];
+      };
       set_cover_palette: {
         Args: { p_challenge_id: string; p_palette: string[] };
         Returns: undefined;
       };
     };
     Enums: {
-      [_ in never]: never;
+      annotation_category: AnnotationCategory;
+      annotation_visibility: AnnotationVisibility;
     };
   };
 }
+
+/**
+ * Les six catégories de notes, imposées à tout le club : un bleu doit vouloir
+ * dire la même chose pour tout le monde (leurs noms vivent dans utils/annotations.ts).
+ */
+export type AnnotationCategory =
+  | 'coup_de_coeur'
+  | 'spicy'
+  | 'larmes'
+  | 'mdr'
+  | 'theorie'
+  | 'a_retenir';
+
+/** « club » : tout le club la découvre en arrivant à la page. « private » : moi seule. */
+export type AnnotationVisibility = 'club' | 'private';
 
 /**
  * Types helpers pour faciliter l'utilisation
@@ -292,6 +400,10 @@ export type ChallengeParticipant = Database['public']['Tables']['challenge_parti
 export type UserProgress = Database['public']['Tables']['user_progress']['Row'];
 export type ProgressHistory = Database['public']['Tables']['progress_history']['Row'];
 export type ChallengeGoal = Database['public']['Tables']['challenge_goals']['Row'];
+export type Annotation = Database['public']['Tables']['annotations']['Row'];
+export type AnnotationInsert = Database['public']['Tables']['annotations']['Insert'];
+export type AnnotationUpdate = Database['public']['Tables']['annotations']['Update'];
+export type AnnotationReaction = Database['public']['Tables']['annotation_reactions']['Row'];
 
 // Type pour Insert (création)
 export type UserInsert = Database['public']['Tables']['users']['Insert'];

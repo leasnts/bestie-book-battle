@@ -55,6 +55,7 @@ import { useNotificationScheduler } from '../../hooks/useNotificationScheduler';
 import { useAuthStore } from '../../stores/authStore';
 import { useGoalStore } from '../../stores/goalStore';
 import { useProgressStore } from '../../stores/progressStore';
+import { useAnnotationStore } from '../../stores/annotationStore';
 import { useProjectStore } from '../../stores/projectStore';
 import { colors, fonts, shadowAlpha, spacing } from '../../utils/constants';
 import { getActiveStreak } from '../../utils/streak';
@@ -91,6 +92,7 @@ export default function HomeScreen() {
     _hasHydrated,
   } = useProjectStore();
   const coverPalette = useCoverPalette(activeChallenge);
+  const loadAnnotations = useAnnotationStore((s) => s.loadAnnotations);
 
   const {
     loadChallengeProgress,
@@ -166,6 +168,8 @@ export default function HomeScreen() {
         loadChallengeProgress(activeChallenge.id),
         loadActiveGoals(activeChallenge.id),
         loadGoalHistory(activeChallenge.id),
+        // Le carnet : les notes débloquées changent à chaque page enregistrée
+        loadAnnotations(activeChallenge.id, user?.id),
       ]);
     }
   }, [activeChallenge?.id]);
@@ -185,6 +189,7 @@ export default function HomeScreen() {
           loadChallengeProgress(challengeId);
           loadActiveGoals(challengeId);
           loadGoalHistory(challengeId);
+          loadAnnotations(challengeId, user.id);
         }
       }
     });
