@@ -199,8 +199,9 @@ const PICKER_FONT_SIZE = 68;
 const BUTTON_SIZE = 42;
 
 const styles = StyleSheet.create({
+  // minHeight : le titre grandit avec le réglage système au lieu d'être coupé
   head: {
-    height: 21,
+    minHeight: 21,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',

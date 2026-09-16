@@ -199,8 +199,10 @@ const ROW_HEIGHT = 36;
 const RANK_WIDTH = 23;
 
 const styles = StyleSheet.create({
+  // minHeight, pas height : aux gros corps de texte le titre doit pouvoir
+  // pousser au lieu d'être coupé.
   head: {
-    height: 21,
+    minHeight: 21,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -226,7 +228,8 @@ const styles = StyleSheet.create({
     marginTop: 7,
   },
   row: {
-    height: ROW_HEIGHT,
+    minHeight: ROW_HEIGHT,
+    paddingVertical: 2,
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.md,

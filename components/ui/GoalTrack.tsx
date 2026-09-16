@@ -89,13 +89,23 @@ export default function GoalTrack({
       </View>
 
       <View style={styles.labels}>
+        {/*
+          Les dates sont posées à un endroit précis de la piste : elles suivent
+          le réglage système, mais de façon bornée, sinon elles se chevauchent
+          et ne désignent plus rien. Même règle que le chiffre du sélecteur.
+        */}
         {currentCap && (
-          <Text style={[styles.label, styles.capLabel, { left: `${currentCap.percent}%` }]}>
+          <Text
+            style={[styles.label, styles.capLabel, { left: `${currentCap.percent}%` }]}
+            maxFontSizeMultiplier={1.3}
+          >
             {formatTrackDate(currentCap.deadline)}
           </Text>
         )}
         {endDate && (
-          <Text style={[styles.label, styles.endLabel]}>{formatTrackDate(endDate)}</Text>
+          <Text style={[styles.label, styles.endLabel]} maxFontSizeMultiplier={1.3}>
+            {formatTrackDate(endDate)}
+          </Text>
         )}
       </View>
     </View>
@@ -231,7 +241,7 @@ const styles = StyleSheet.create({
   },
 
   labels: {
-    height: 17,
+    minHeight: 17,
     marginTop: 2,
     marginHorizontal: 7,
   },

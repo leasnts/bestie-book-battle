@@ -72,7 +72,9 @@ export default function BookSection({
           {remaining !== null && (
             <Text style={styles.tag}>{remaining >= 0 ? `J-${remaining}` : 'Prolongations'}</Text>
           )}
-          <Text style={styles.title} numberOfLines={1}>
+          {/* Deux lignes : aux gros corps de texte, « Les nuits blanches » ne
+              doit pas se réduire à « Les nu… ». */}
+          <Text style={styles.title} numberOfLines={2}>
             {challenge.book_title}
           </Text>
           {!!challenge.book_author && (
@@ -168,6 +170,10 @@ const styles = StyleSheet.create({
   stats: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    // Aux gros corps de texte, « Cap · 2/5 » passe sous « Club · 30 % »
+    flexWrap: 'wrap',
+    rowGap: spacing.xs,
+    columnGap: spacing.md,
     marginTop: spacing.md,
     paddingTop: 10,
     borderTopWidth: 1,

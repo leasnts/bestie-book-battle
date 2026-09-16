@@ -423,6 +423,15 @@ seules les icônes changent : au repos carnet et post-it (#48), pendant un
 défilement ↺ annuler, « +14 », ✓ enregistrer. Les boutons ronds font 42 pt,
 encre pleine pour l'action principale, `inkAlpha(0.07)` pour les autres.
 
+**Gros corps de texte** : les trois cadres vivent dans une ScrollView. À taille
+normale rien ne défile (la règle de l'accueil tient), et au réglage
+`accessibility-extra-large` les cadres poussent au lieu d'être écrasés — sans
+elle, chaque cadre se faisait comprimer et les lettres étaient coupées. Dans les
+cadres, les hauteurs de ligne sont des `minHeight`, jamais des `height`. Seuls
+les repères posés à un endroit précis d'un dessin (dates de la piste, chiffre du
+sélecteur) bornent leur agrandissement (`maxFontSizeMultiplier`), sinon ils se
+chevauchent et ne désignent plus rien.
+
 Plus de glissement depuis le bord droit vers Activité : il chevauchait le
 sélecteur. La cloche de l'en-tête suffit.
 

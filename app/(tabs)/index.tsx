@@ -21,6 +21,7 @@ import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
     ActivityIndicator,
+    ScrollView,
     AppState,
     StyleSheet,
     Text,
@@ -385,6 +386,19 @@ export default function HomeScreen() {
         />
       </View>
 
+      {/*
+        Les trois cadres, dans une ScrollView.
+
+        À taille de texte normale, tout tient sans défiler (c'est la règle de
+        l'accueil) : la ScrollView ne bouge pas. Aux gros corps de texte, les
+        textes grandissent et les cadres poussent au lieu d'être écrasés — sans
+        elle, chaque cadre se faisait comprimer et les lettres étaient coupées.
+      */}
+      <ScrollView
+        style={styles.frames}
+        contentContainerStyle={[styles.framesContent, { paddingBottom: tabBarInset + spacing.md }]}
+        showsVerticalScrollIndicator={false}
+      >
       {/* ═══════════ CADRE 1 : LE LIVRE ═══════════ */}
       {activeChallenge && (
         <View style={styles.bookSection}>
@@ -470,7 +484,7 @@ export default function HomeScreen() {
 
       {/* ═══════════ BLOC 3 : TOP 3 DU CHALLENGE + MOI ═══════════ */}
       {activeChallenge && (
-        <View style={[styles.progressSection, { paddingBottom: tabBarInset + spacing.md }]}>
+        <View style={styles.progressSection}>
           <LeaderboardSection
             participants={leaderboardParticipants}
             myUserId={myUserId}
@@ -478,6 +492,7 @@ export default function HomeScreen() {
           />
         </View>
       )}
+      </ScrollView>
 
       {/* ═══════════ TOAST DELTA — FEUILLE QUI TOMBE ═══════════
         Toujours monté dans le DOM mais invisible (opacity: 0 par défaut).
@@ -519,6 +534,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingBottom: spacing.sm,
   },
+  // La zone défilable qui porte les trois cadres
+  frames: {
+    flex: 1,
+  },
+  framesContent: {
+    flexGrow: 1,
+  },
+
   // ===== CADRE 1 : LE LIVRE =====
   // Les trois cadres sont espacés de 12 pt, comme sur la maquette : l'accueil
   // doit tenir sans défiler.
