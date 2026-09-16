@@ -322,6 +322,20 @@ function RootLayoutNav() {
         }}
       />
 
+      {/* Le carnet du livre — écran plein, il se parcourt longtemps */}
+      <Stack.Screen
+        name="notes"
+        options={{
+          headerShown: true,
+          headerTitle: 'Carnet',
+          headerLargeTitle: false,
+          headerTitleStyle: { fontFamily: fonts.display, fontSize: 19, color: colors.textPrimary },
+          // Sans ça, iOS écrit le nom de la route précédente — « (tabs) »
+          headerBackButtonDisplayMode: 'minimal',
+          animation: 'slide_from_right',
+        }}
+      />
+
       {/* Écrire une note — sheet natif, ouvert par le bouton post-it */}
       <Stack.Screen
         name="note/[id]"
