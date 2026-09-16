@@ -425,6 +425,13 @@ sélecteur. La cloche de l'en-tête suffit.
 L'en-tête porte deux `HeaderIconButton` 40 pt autour de PopEyes :
 **bibliothèque** (`library-big`) à gauche, **activité** (`bell`) à droite.
 
+Tout ce qui se règle sur un livre vit dans la **fiche du livre** (route `/book`,
+sheet natif) : la fin et ses jours restants, les caps (celui en cours marqué « en
+cours », les passés avec combien de membres les avaient atteints **à leur date**),
+le club et son code d'invitation, modifier ou quitter le livre. Les pages des caps
+s'affichent dans **mon** édition — un cap est enregistré en %. Plus de menu ⋮ sur
+l'accueil.
+
 Changer de livre ou en ajouter un se fait dans la **bibliothèque**, route
 `/library` en sheet natif : les challenges rangés trois par trois, sans titre,
 sur l'étagère historique de l'accueil — barre en verre flouté (noyer à 30 %,

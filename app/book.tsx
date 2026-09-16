@@ -1,0 +1,651 @@
+/**
+ * Route /book — la fiche du livre, en sheet iOS natif.
+ *
+ * C'est ce que le cadre « Le livre » de l'accueil ouvre d'un toucher. Elle
+ * remplace le menu ⋮ de l'ancienne carte et ses deux modales maison : tout ce
+ * qui se règle sur un livre vit ici.
+ *
+ * - **Fin** : la date, les jours restants, et de quoi la changer.
+ * - **Caps** : le cap en cours, les caps passés avec combien de membres les
+ *   avaient atteints **à leur date** (la progression d'aujourd'hui ne dirait
+ *   rien d'un cap d'il y a deux semaines). Les pages sont affichées dans **mon**
+ *   édition : un cap est enregistré en %, il ne tombe pas à la même page pour
+ *   tout le monde.
+ * - **Club** : les membres, le code d'invitation, le partage.
+ * - Modifier le livre, et le quitter.
+ *
+ * Présentation : `formSheet` déclaré dans `app/_layout.tsx` (recette de #33).
+ * La ScrollView est l'enfant DIRECT de l'écran, sans View intermédiaire, sinon
+ * react-native-screens calcule mal les marges du sheet.
+ */
+
+import { Image } from 'expo-image';
+import { useRouter } from 'expo-router';
+import {
+  CalendarIcon,
+  CircleCheckIcon,
+  FlagIcon,
+  LogOutIcon,
+  PencilIcon,
+  PlusIcon,
+  ShareIcon,
+  UsersIcon,
+} from 'lucide-react-native';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { Alert, Pressable, ScrollView, Share, StyleSheet, Text, View } from 'react-native';
+import DeadlineEditSheet from '../components/ui/DeadlineEditSheet';
+import EditBookSheet from '../components/ui/EditBookSheet';
+import GoalFormSheet from '../components/ui/GoalFormSheet';
+import { resolveCoverImage } from '../components/ui/BookCover';
+import { getChallengeHistory } from '../services/supabase/database';
+import { uploadBookCover } from '../services/supabase/storage';
+import { useAuthStore } from '../stores/authStore';
+import { useGoalStore } from '../stores/goalStore';
+import { useProgressStore } from '../stores/progressStore';
+import { useProjectStore } from '../stores/projectStore';
+import type { ChallengeGoal, ProgressHistory } from '../types/supabase';
+import { borderRadius, colors, fonts, inkAlpha, spacing } from '../utils/constants';
+import { extractCoverPalette, type CoverPalette } from '../utils/coverPalette';
+import {
+  buildCaps,
+  countAtCap,
+  countAtCapOnDate,
+  daysLeft,
+  formatTrackDate,
+  type TrackCap,
+} from '../utils/track';
+
+export default function BookRoute() {
+  const router = useRouter();
+  const { user } = useAuthStore();
+  const {
+    activeChallenge,
+    challenges,
+    updateActiveChallenge,
+    leaveActiveChallenge,
+    loadUserChallenges,
+  } = useProjectStore();
+  const { participants } = useProgressStore();
+  const { secondaryGoal, history: goalHistory, addGoal, editGoal } = useGoalStore();
+
+  const [deadlineVisible, setDeadlineVisible] = useState(false);
+  const [editBookVisible, setEditBookVisible] = useState(false);
+  /** Le cap qu'on modifie, ou `null` pour en ajouter un */
+  const [capForm, setCapForm] = useState<{ open: boolean; goal: ChallengeGoal | null }>({
+    open: false,
+    goal: null,
+  });
+  const [clubHistory, setClubHistory] = useState<ProgressHistory[]>([]);
+
+  const challengeId = activeChallenge?.id;
+  const referencePages = activeChallenge?.total_pages ?? 0;
+
+  // L'historique du club sert à dater les caps passés (« x/y » à leur date)
+  useEffect(() => {
+    if (!challengeId) return;
+    getChallengeHistory(challengeId)
+      .then(setClubHistory)
+      .catch((error) => console.warn('[Fiche du livre] historique indisponible', error));
+  }, [challengeId]);
+
+  const goals = useMemo(
+    () => [secondaryGoal, ...goalHistory],
+    [secondaryGoal, goalHistory],
+  );
+  const caps = useMemo(
+    () => buildCaps(goals, referencePages).slice().reverse(),
+    [goals, referencePages],
+  );
+  const goalById = useMemo(() => {
+    const map = new Map<string, ChallengeGoal>();
+    for (const goal of goals) if (goal) map.set(goal.id, goal);
+    return map;
+  }, [goals]);
+
+  /** Mon édition, pour convertir les caps en pages qui me parlent */
+  const myPages = useMemo(() => {
+    const mine = participants.find((p) => p.user.id === user?.id);
+    return mine?.progress.total_pages ?? referencePages;
+  }, [participants, user?.id, referencePages]);
+
+  /** Le nombre de pages de chacun, pour compter qui avait atteint un cap */
+  const editions = useMemo(() => {
+    const map: Record<string, number> = {};
+    for (const p of participants) {
+      map[p.user.id] = p.progress.total_pages ?? referencePages;
+    }
+    return map;
+  }, [participants, referencePages]);
+
+  const percentages = participants.map((p) => p.percentage || 0);
+  const memberCount = participants.length;
+
+  const remaining = daysLeft(activeChallenge?.target_end_date);
+
+  // ─── Actions ────────────────────────────────────────────────────
+
+  const handleSaveDeadline = useCallback(
+    async (date: Date) => {
+      await updateActiveChallenge({ target_end_date: date.toISOString() });
+    },
+    [updateActiveChallenge],
+  );
+
+  const handleSaveCap = useCallback(
+    async (type: 'primary' | 'secondary', targetPages: number, deadline: Date) => {
+      if (!activeChallenge || !user?.id) return;
+
+      if (type === 'primary') {
+        await updateActiveChallenge({ target_end_date: deadline.toISOString() });
+      } else {
+        // La baseline sert à mesurer le chemin parcouru depuis la pose du cap
+        const baseline =
+          participants.length > 0
+            ? Math.round(
+                participants.reduce((sum, p) => sum + (p.progress?.current_page ?? 0), 0) /
+                  participants.length,
+              )
+            : 0;
+        const edited = capForm.goal;
+
+        if (edited) {
+          await editGoal(edited.id, {
+            target_pages: targetPages,
+            deadline: deadline.toISOString(),
+            results: { baseline },
+          });
+        } else {
+          await addGoal({
+            challenge_id: activeChallenge.id,
+            type: 'secondary',
+            target_pages: targetPages,
+            deadline: deadline.toISOString(),
+            created_by: user.id,
+            results: { baseline },
+          });
+        }
+      }
+      setCapForm({ open: false, goal: null });
+    },
+    [activeChallenge, user?.id, participants, capForm.goal, addGoal, editGoal, updateActiveChallenge],
+  );
+
+  const handleSaveBook = useCallback(
+    async (data: { title: string; author: string; totalPages: number; coverUri?: string }) => {
+      if (!activeChallenge) return;
+
+      // Nouvelle couverture : upload et couleurs du fond en parallèle. Si
+      // l'extraction échoue, la base efface l'ancienne palette et l'accueil la
+      // recalcule (useCoverPalette).
+      let coverUrl = activeChallenge.cover_url;
+      let newPalette: CoverPalette | undefined;
+      if (data.coverUri) {
+        const [{ url }, palette] = await Promise.all([
+          uploadBookCover(activeChallenge.id, data.coverUri),
+          extractCoverPalette(data.coverUri).catch(() => undefined),
+        ]);
+        coverUrl = url;
+        newPalette = palette;
+      }
+
+      await updateActiveChallenge({
+        book_title: data.title,
+        book_author: data.author,
+        total_pages: data.totalPages,
+        cover_url: coverUrl,
+        ...(newPalette && { cover_palette: newPalette }),
+      });
+
+      if (user?.id) await loadUserChallenges(user.id);
+    },
+    [activeChallenge, updateActiveChallenge, user?.id, loadUserChallenges],
+  );
+
+  const handleShareInvite = useCallback(async () => {
+    if (!activeChallenge?.invite_code) return;
+    try {
+      await Share.share({
+        message: `Rejoins-moi pour lire « ${activeChallenge.book_title} » sur bestiebookbattle !\n\nCode d'invitation : ${activeChallenge.invite_code.split('').join(' ')}`,
+      });
+    } catch {
+      // partage annulé
+    }
+  }, [activeChallenge]);
+
+  const handleLeave = useCallback(() => {
+    if (!activeChallenge || !user?.id) return;
+    Alert.alert(
+      'Quitter le livre',
+      `Tu veux retirer « ${activeChallenge.book_title} » de ta bibliothèque ? Tu pourras le rejoindre plus tard avec le code.`,
+      [
+        { text: 'Annuler', style: 'cancel' },
+        {
+          text: 'Quitter',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              const remainingBooks = challenges.filter((c) => c.id !== activeChallenge.id);
+              await leaveActiveChallenge(user.id);
+              router.back();
+              if (remainingBooks.length === 0) {
+                router.push({
+                  pathname: '/onboarding/role',
+                  params: { firstName: user.first_name || 'Lecteur', addChallenge: 'true' },
+                });
+              }
+            } catch (error) {
+              console.error('Erreur en quittant le livre:', error);
+              Alert.alert('Erreur', 'Impossible de quitter ce livre. Réessaie.');
+            }
+          },
+        },
+      ],
+    );
+  }, [activeChallenge, challenges, user, leaveActiveChallenge, router]);
+
+  if (!activeChallenge) return null;
+
+  /** Un cap en pages de MON édition : « p. 28 », ou « ≈ p. 31 » si j'ai une autre édition */
+  const capPages = (cap: TrackCap) => {
+    const pages = Math.round((cap.percent / 100) * myPages);
+    return myPages === referencePages ? `p. ${pages}` : `≈ p. ${pages}`;
+  };
+
+  return (
+    <ScrollView
+      style={styles.screen}
+      contentContainerStyle={styles.content}
+      contentInsetAdjustmentBehavior="automatic"
+    >
+      {/* ─── Le livre ─── */}
+      <View style={styles.header}>
+        <Image
+          source={resolveCoverImage(activeChallenge.cover_url)}
+          style={styles.cover}
+          contentFit="cover"
+        />
+        <View style={styles.headerTexts}>
+          <Text style={styles.title} numberOfLines={2}>
+            {activeChallenge.book_title}
+          </Text>
+          {!!activeChallenge.book_author && (
+            <Text style={styles.author} numberOfLines={1}>
+              {activeChallenge.book_author}
+            </Text>
+          )}
+          <View style={styles.pill}>
+            <Text style={styles.pillText}>{myPages} p.</Text>
+          </View>
+        </View>
+      </View>
+
+      {/* ─── Fin ─── */}
+      <GroupHeader title="Fin">
+        <MiniButton icon={PencilIcon} label="Modifier" onPress={() => setDeadlineVisible(true)} />
+      </GroupHeader>
+      <View style={styles.group}>
+        <Row
+          icon={CalendarIcon}
+          label={
+            activeChallenge.target_end_date
+              ? formatLongDate(activeChallenge.target_end_date)
+              : 'Pas de date'
+          }
+          value={remaining === null ? '' : remaining >= 0 ? `J-${remaining}` : 'Prolongations'}
+        />
+      </View>
+
+      {/* ─── Caps ─── */}
+      <GroupHeader title="Caps">
+        <MiniButton
+          icon={PlusIcon}
+          label="Ajouter"
+          dark
+          onPress={() => setCapForm({ open: true, goal: null })}
+        />
+      </GroupHeader>
+      <View style={styles.group}>
+        {caps.length === 0 ? (
+          <Row icon={FlagIcon} label="Aucun cap" value="" />
+        ) : (
+          caps.map((cap) => {
+            const reached =
+              cap.state === 'past'
+                ? countAtCapOnDate(clubHistory, editions, cap)
+                : countAtCap(percentages, cap.percent);
+            return (
+              <Row
+                key={cap.id}
+                icon={cap.state === 'past' ? CircleCheckIcon : FlagIcon}
+                label={`${capPages(cap)} · ${formatTrackDate(cap.deadline)}`}
+                value={`${reached}/${memberCount}`}
+                tag={cap.state === 'current' ? 'en cours' : undefined}
+                dimmed={cap.state === 'past'}
+                onPress={() => {
+                  const goal = goalById.get(cap.id);
+                  if (goal) setCapForm({ open: true, goal });
+                }}
+              />
+            );
+          })
+        )}
+      </View>
+
+      {/* ─── Club ─── */}
+      <GroupHeader title="Club" />
+      <View style={styles.group}>
+        <Row
+          icon={UsersIcon}
+          label={`${memberCount} membre${memberCount > 1 ? 's' : ''}`}
+          value=""
+          chevron
+          onPress={() => router.push('/leaderboard')}
+        />
+        <Row
+          icon={ShareIcon}
+          label={activeChallenge.invite_code ?? '------'}
+          labelStyle={styles.code}
+          value="Inviter"
+          onPress={handleShareInvite}
+        />
+      </View>
+
+      {/* ─── Le livre lui-même ─── */}
+      <View style={[styles.group, styles.lastGroup]}>
+        <Row
+          icon={PencilIcon}
+          label="Modifier le livre"
+          value=""
+          chevron
+          onPress={() => setEditBookVisible(true)}
+        />
+        <Row icon={LogOutIcon} label="Quitter le livre" value="" onPress={handleLeave} />
+      </View>
+
+      {/* ─── Les formulaires ─── */}
+      <DeadlineEditSheet
+        visible={deadlineVisible}
+        onClose={() => setDeadlineVisible(false)}
+        currentDate={activeChallenge.target_end_date}
+        onSave={handleSaveDeadline}
+      />
+
+      <GoalFormSheet
+        visible={capForm.open}
+        onClose={() => setCapForm({ open: false, goal: null })}
+        currentGoal={capForm.goal}
+        history={goalHistory}
+        onSaveGoal={handleSaveCap}
+        totalPages={referencePages}
+      />
+
+      <EditBookSheet
+        visible={editBookVisible}
+        onClose={() => setEditBookVisible(false)}
+        currentBook={{
+          title: activeChallenge.book_title,
+          author: activeChallenge.book_author || '',
+          totalPages: activeChallenge.total_pages,
+          coverUrl: activeChallenge.cover_url,
+        }}
+        onSave={handleSaveBook}
+      />
+    </ScrollView>
+  );
+}
+
+// ─── Briques ───────────────────────────────────────────────────────
+
+function GroupHeader({ title, children }: { title: string; children?: React.ReactNode }) {
+  return (
+    <View style={styles.groupHeader}>
+      <Text style={styles.groupTitle}>{title}</Text>
+      {children}
+    </View>
+  );
+}
+
+function MiniButton({
+  icon: Icon,
+  label,
+  dark = false,
+  onPress,
+}: {
+  icon: typeof PlusIcon;
+  label: string;
+  dark?: boolean;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      hitSlop={8}
+      style={({ pressed }) => [
+        styles.miniButton,
+        dark ? styles.miniButtonDark : styles.miniButtonGhost,
+        pressed && { opacity: 0.7 },
+      ]}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+    >
+      <Icon size={13} color={dark ? colors.white : colors.dark900} strokeWidth={2.6} />
+      <Text style={[styles.miniButtonText, dark && styles.miniButtonTextDark]}>{label}</Text>
+    </Pressable>
+  );
+}
+
+function Row({
+  icon: Icon,
+  label,
+  value,
+  tag,
+  dimmed = false,
+  chevron = false,
+  labelStyle,
+  onPress,
+}: {
+  icon: typeof FlagIcon;
+  label: string;
+  value: string;
+  /** Petit repère sombre à droite du libellé, pour le cap en cours */
+  tag?: string;
+  dimmed?: boolean;
+  chevron?: boolean;
+  labelStyle?: object;
+  onPress?: () => void;
+}) {
+  const content = (
+    <>
+      <Icon
+        size={17}
+        color={dimmed ? colors.textPlaceholder : colors.textSecondary}
+        strokeWidth={2}
+      />
+      <Text style={[styles.rowLabel, dimmed && styles.rowLabelDimmed, labelStyle]} numberOfLines={1}>
+        {label}
+      </Text>
+      {tag && (
+        <View style={styles.tag}>
+          <Text style={styles.tagText}>{tag}</Text>
+        </View>
+      )}
+      <Text style={styles.rowValue}>{value}</Text>
+      {chevron && <Text style={styles.rowChevron}>›</Text>}
+    </>
+  );
+
+  if (!onPress) return <View style={styles.row}>{content}</View>;
+
+  return (
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
+      accessibilityRole="button"
+      accessibilityLabel={`${label}${value ? `, ${value}` : ''}`}
+    >
+      {content}
+    </Pressable>
+  );
+}
+
+/** « lun. 13 oct. » */
+function formatLongDate(iso: string) {
+  const formatted = new Date(iso).toLocaleDateString('fr-FR', {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+  });
+  return formatted.charAt(0).toUpperCase() + formatted.slice(1);
+}
+
+// ─── Styles ────────────────────────────────────────────────────────
+
+const styles = StyleSheet.create({
+  screen: {
+    backgroundColor: colors.white,
+  },
+  content: {
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing['4xl'],
+  },
+
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.lg,
+    marginBottom: spacing.lg,
+  },
+  cover: {
+    width: 60,
+    height: 85,
+    borderRadius: borderRadius.xs,
+  },
+  headerTexts: {
+    flex: 1,
+  },
+  title: {
+    fontFamily: fonts.display,
+    fontSize: 24,
+    color: colors.textPrimary,
+  },
+  author: {
+    fontFamily: fonts.body,
+    fontSize: 15,
+    color: colors.textTertiary,
+    marginTop: 2,
+  },
+  pill: {
+    alignSelf: 'flex-start',
+    marginTop: 6,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 2,
+    borderRadius: borderRadius.sm,
+    backgroundColor: inkAlpha(0.07),
+  },
+  pillText: {
+    fontFamily: fonts.bodyBold,
+    fontSize: 12,
+    color: colors.textSecondary,
+    fontVariant: ['tabular-nums'],
+  },
+
+  groupHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    height: 28,
+    marginHorizontal: spacing.xs,
+    marginBottom: spacing.sm,
+  },
+  groupTitle: {
+    fontFamily: fonts.bodyExtraBold,
+    fontSize: 12,
+    letterSpacing: 0.8,
+    textTransform: 'uppercase',
+    color: colors.textTertiary,
+  },
+
+  miniButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    height: 28,
+    paddingHorizontal: spacing.md,
+    borderRadius: borderRadius.full,
+  },
+  miniButtonDark: {
+    backgroundColor: colors.dark900,
+  },
+  miniButtonGhost: {
+    backgroundColor: inkAlpha(0.08),
+  },
+  miniButtonText: {
+    fontFamily: fonts.bodyExtraBold,
+    fontSize: 13,
+    color: colors.dark900,
+  },
+  miniButtonTextDark: {
+    color: colors.white,
+  },
+
+  group: {
+    backgroundColor: colors.bgLight,
+    borderRadius: borderRadius.lg,
+    marginBottom: spacing.md,
+    overflow: 'hidden',
+  },
+  lastGroup: {
+    marginTop: spacing.sm,
+  },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    height: 46,
+    paddingHorizontal: spacing.md,
+  },
+  rowPressed: {
+    backgroundColor: inkAlpha(0.04),
+  },
+  rowLabel: {
+    flex: 1,
+    fontFamily: fonts.bodySemiBold,
+    fontSize: 15,
+    color: colors.textPrimary,
+  },
+  rowLabelDimmed: {
+    fontFamily: fonts.body,
+    color: colors.textTertiary,
+  },
+  rowValue: {
+    fontFamily: fonts.bodyBold,
+    fontSize: 14,
+    color: colors.textTertiary,
+    fontVariant: ['tabular-nums'],
+  },
+  rowChevron: {
+    fontFamily: fonts.body,
+    fontSize: 20,
+    color: colors.textPlaceholder,
+    marginLeft: -4,
+  },
+  code: {
+    fontFamily: fonts.display,
+    fontSize: 18,
+    letterSpacing: 2,
+  },
+
+  tag: {
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 1,
+    borderRadius: borderRadius.full,
+    backgroundColor: colors.dark900,
+  },
+  tagText: {
+    fontFamily: fonts.bodyExtraBold,
+    fontSize: 10,
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
+    color: colors.white,
+  },
+});

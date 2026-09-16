@@ -21,7 +21,6 @@ import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
     ActivityIndicator,
-    Alert,
     AppState,
     StyleSheet,
     Text,
@@ -40,19 +39,14 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Button3D from '../../components/Button3D';
 import PageTransition from '../../components/PageTransition';
 import PopEyes from '../../components/PopEyes';
-import BookMenuSheet from '../../components/ui/BookMenuSheet';
 import BookSection from '../../components/ui/BookSection';
 import CoverBackdrop from '../../components/ui/CoverBackdrop';
-import DeadlineEditSheet from '../../components/ui/DeadlineEditSheet';
-import EditBookSheet from '../../components/ui/EditBookSheet';
-import GoalFormSheet from '../../components/ui/GoalFormSheet';
 import HeaderIconButton from '../../components/ui/HeaderIconButton';
 import NotificationButton from '../../components/ui/NotificationButton';
 import PageSection from '../../components/ui/PageSection';
 import ParticipantHistorySheet from '../../components/ui/ParticipantHistorySheet';
 import LeaderboardSection from '../../components/ui/LeaderboardSection';
 import { getAllUserPages, getUserHistory } from '../../services/supabase/database';
-import { uploadBookCover } from '../../services/supabase/storage';
 import { updateWidgetData } from '../../utils/widget';
 import { buildCaps, countAtCap, median } from '../../utils/track';
 import { useCoverPalette } from '../../hooks/useCoverPalette';
@@ -65,7 +59,6 @@ import { useProjectStore } from '../../stores/projectStore';
 import { colors, fonts, shadowAlpha, spacing } from '../../utils/constants';
 import { getActiveStreak } from '../../utils/streak';
 import type { ProgressHistory } from '../../types/supabase';
-import { extractCoverPalette, type CoverPalette } from '../../utils/coverPalette';
 import { useTabBarInset } from '../../components/ui/GlassTabBar';
 import { BookOpenIcon, CirclePlusIcon, LibraryBigIcon } from 'lucide-react-native';
 
@@ -95,8 +88,6 @@ export default function HomeScreen() {
     activeChallenge,
     setLastProgressChallengeId,
     loadUserChallenges,
-    leaveActiveChallenge,
-    updateActiveChallenge,
     challengesLoading,
     _hasHydrated,
   } = useProjectStore();
@@ -110,13 +101,10 @@ export default function HomeScreen() {
   } = useProgressStore();
 
   const {
-    primaryGoal,
     secondaryGoal,
     history: goalHistory,
     loadActiveGoals,
     loadGoalHistory,
-    addGoal,
-    editGoal,
   } = useGoalStore();
 
   // Planifie les notifications (streak en danger, rappels objectifs, inactivité)
@@ -147,9 +135,6 @@ export default function HomeScreen() {
   }, [user?.id]);
 
   // Modals
-  const [deadlineModalVisible, setDeadlineModalVisible] = useState(false);
-  const [editBookModalVisible, setEditBookModalVisible] = useState(false);
-  const [goalModalVisible, setGoalModalVisible] = useState(false);
 
   // Toast "feuille qui tombe" — affiche "+12" et descend doucement
   const [deltaText, setDeltaText] = useState('');
@@ -356,7 +341,6 @@ export default function HomeScreen() {
     ? countAtCap(leaderboardParticipants.map((p) => p.percentage), currentCap.percent)
     : 0;
 
-  const [bookMenuVisible, setBookMenuVisible] = useState(false);
 
 
   // ===== Mise à jour automatique du widget iOS =====
@@ -384,157 +368,6 @@ export default function HomeScreen() {
       lastUpdated: new Date().toISOString(),
     });
   }, [participants, activeChallenge?.id, totalPages]);
-
-  // ===== Callback : quitter le livre actif =====
-  const handleDeleteBook = useCallback(async () => {
-    if (!activeChallenge || !user?.id) return;
-
-    try {
-      await leaveActiveChallenge(user.id);
-
-      // Après avoir quitté, s'il ne reste plus de challenges on redirige vers l'ajout
-      const remaining = challenges.filter((c) => c.id !== activeChallenge.id);
-      if (remaining.length === 0) {
-        router.push({
-          pathname: '/onboarding/role',
-          params: {
-            firstName: user?.first_name || 'Lecteur',
-            addChallenge: 'true',
-          },
-        });
-      }
-    } catch (error: any) {
-      console.error('Erreur en quittant le challenge:', error);
-      Alert.alert('Erreur', 'Impossible de quitter ce livre. Réessaie.');
-    }
-  }, [activeChallenge, challenges, user, leaveActiveChallenge, router]);
-
-  // ===== Callback : modifier le livre =====
-  const handleEditBook = useCallback(() => {
-    if (!activeChallenge) return;
-    setEditBookModalVisible(true);
-  }, [activeChallenge]);
-
-  const handleSaveBookEdit = useCallback(
-    async (data: {
-      title: string;
-      author: string;
-      totalPages: number;
-      coverUri?: string;
-    }) => {
-      if (!activeChallenge) return;
-
-      try {
-        // 1. Nouvelle cover : upload et couleurs du fond en parallèle, depuis le
-        // fichier local. Si l'extraction échoue, la base efface l'ancienne palette
-        // et l'accueil la recalcule (useCoverPalette).
-        let coverUrl = activeChallenge.cover_url;
-        let newPalette: CoverPalette | undefined;
-        if (data.coverUri) {
-          const [{ url }, palette] = await Promise.all([
-            uploadBookCover(activeChallenge.id, data.coverUri),
-            extractCoverPalette(data.coverUri).catch(() => undefined),
-          ]);
-          coverUrl = url;
-          newPalette = palette;
-        }
-
-        // 2. Met à jour les infos du livre
-        await updateActiveChallenge({
-          book_title: data.title,
-          book_author: data.author,
-          total_pages: data.totalPages,
-          cover_url: coverUrl,
-          ...(newPalette && { cover_palette: newPalette }),
-        });
-
-        // Recharge les challenges pour afficher les nouvelles données
-        if (user?.id) {
-          await loadUserChallenges(user.id);
-        }
-      } catch (error) {
-        console.error('Erreur sauvegarde livre:', error);
-        throw error;
-      }
-    },
-    [activeChallenge, updateActiveChallenge, user?.id, loadUserChallenges]
-  );
-
-  // ===== Callback : modifier la deadline =====
-  const handleEditDeadline = useCallback(() => {
-    setDeadlineModalVisible(true);
-  }, []);
-
-  const handleSaveDeadline = useCallback(
-    async (date: Date) => {
-      try {
-        await updateActiveChallenge({ target_end_date: date.toISOString() });
-      } catch (error) {
-        console.error('Erreur mise à jour deadline:', error);
-        throw error;
-      }
-    },
-    [updateActiveChallenge]
-  );
-
-  // ===== Callback : définir un objectif intermédiaire =====
-  const handleSetIntermediateGoal = useCallback(() => {
-    setGoalModalVisible(true);
-  }, []);
-
-  const handleSaveGoal = useCallback(
-    async (type: 'primary' | 'secondary', targetPages: number, deadline: Date) => {
-      if (!activeChallenge || !user?.id) return;
-
-      try {
-        if (type === 'primary') {
-          await updateActiveChallenge({ target_end_date: deadline.toISOString() });
-        } else {
-          // Calculer la baseline (page moyenne actuelle des participants)
-          const totalPages = participants.reduce(
-            (sum, p) => sum + (p.progress?.current_page ?? 0),
-            0
-          );
-          const currentBaseline = participants.length > 0
-            ? Math.round(totalPages / participants.length)
-            : 0;
-
-          if (secondaryGoal) {
-            // Quand on change l'objectif, on recalcule toujours la baseline
-            // pour mesurer la progression depuis la position actuelle.
-            const updates: any = {
-              target_pages: targetPages,
-              deadline: deadline.toISOString(),
-              results: { baseline: currentBaseline },
-            };
-            await editGoal(secondaryGoal.id, updates);
-          } else {
-            await addGoal({
-              challenge_id: activeChallenge.id,
-              type: 'secondary',
-              target_pages: targetPages,
-              deadline: deadline.toISOString(),
-              created_by: user.id,
-              results: { baseline: currentBaseline },
-            });
-          }
-        }
-        setGoalModalVisible(false);
-      } catch (error) {
-        console.error('Erreur sauvegarde objectif:', error);
-        throw error;
-      }
-    },
-    [
-      activeChallenge,
-      user?.id,
-      secondaryGoal,
-      participants,
-      updateActiveChallenge,
-      addGoal,
-      editGoal,
-    ]
-  );
 
   return (
     <PageTransition>
@@ -580,9 +413,7 @@ export default function HomeScreen() {
             caps={caps}
             membersAtCap={membersAtCap}
             memberCount={leaderboardParticipants.length}
-            // La fiche du livre arrive en #44 : en attendant, le cadre ouvre les
-            // actions de l'ancien menu ⋮ (inviter, modifier, fin, cap, quitter).
-            onPress={() => setBookMenuVisible(true)}
+            onPress={() => router.push('/book')}
           />
         </View>
       )}
@@ -676,53 +507,6 @@ export default function HomeScreen() {
       <Animated.View style={[styles.deltaToast, leafAnimStyle]} pointerEvents="none">
         <Text style={styles.deltaToastText}>{deltaText}</Text>
       </Animated.View>
-
-      {/* ═══════════ MODAL DEADLINE ═══════════ */}
-      <DeadlineEditSheet
-        visible={deadlineModalVisible}
-        onClose={() => setDeadlineModalVisible(false)}
-        currentDate={activeChallenge?.target_end_date ?? null}
-        onSave={handleSaveDeadline}
-      />
-
-      {/* ═══════════ MODAL OBJECTIF INTERMÉDIAIRE ═══════════ */}
-      {activeChallenge && (
-        <GoalFormSheet
-          visible={goalModalVisible}
-          onClose={() => setGoalModalVisible(false)}
-          currentGoal={secondaryGoal}
-          onSaveGoal={handleSaveGoal}
-          totalPages={activeChallenge.total_pages}
-        />
-      )}
-
-      {/* ═══════════ MODAL MODIFIER LE LIVRE ═══════════ */}
-      {activeChallenge && (
-        <EditBookSheet
-          visible={editBookModalVisible}
-          onClose={() => setEditBookModalVisible(false)}
-          currentBook={{
-            title: activeChallenge.book_title,
-            author: activeChallenge.book_author || '',
-            totalPages: activeChallenge.total_pages,
-            coverUrl: activeChallenge.cover_url,
-          }}
-          onSave={handleSaveBookEdit}
-        />
-      )}
-
-      {/* ═══════════ ACTIONS DU LIVRE (en attendant #44) ═══════════ */}
-      {activeChallenge && (
-        <BookMenuSheet
-          visible={bookMenuVisible}
-          onClose={() => setBookMenuVisible(false)}
-          challenge={activeChallenge}
-          onEditBook={handleEditBook}
-          onEditDeadline={handleEditDeadline}
-          onSetCap={handleSetIntermediateGoal}
-          onLeaveBook={handleDeleteBook}
-        />
-      )}
 
       {/* ═══════════ MON JOURNAL ═══════════ */}
       <ParticipantHistorySheet

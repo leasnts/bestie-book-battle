@@ -93,6 +93,37 @@ export function buildCaps(
   );
 }
 
+/**
+ * Combien de membres avaient atteint un cap **le jour de sa date**.
+ *
+ * Pour un cap passé, la progression d'aujourd'hui ne veut rien dire : on reprend
+ * la dernière page enregistrée par chacun avant la date, convertie en % de son
+ * édition. Qui n'a rien enregistré avant la date ne compte pas.
+ */
+export function countAtCapOnDate(
+  history: { user_id: string; page_number: number; recorded_at: string | null }[],
+  editions: Record<string, number>,
+  cap: TrackCap,
+): number {
+  const lastPage = new Map<string, number>();
+  const deadline = new Date(cap.deadline).getTime();
+
+  for (const entry of history) {
+    const at = entry.recorded_at ? new Date(entry.recorded_at).getTime() : 0;
+    if (at > deadline) continue;
+    const best = lastPage.get(entry.user_id) ?? 0;
+    if (entry.page_number > best) lastPage.set(entry.user_id, entry.page_number);
+  }
+
+  let count = 0;
+  for (const [userId, page] of lastPage) {
+    const total = editions[userId];
+    if (!total) continue;
+    if ((page / total) * 100 >= cap.percent) count += 1;
+  }
+  return count;
+}
+
 /** Jours restants avant une date. Négatif = date dépassée. */
 export function daysLeft(deadline: string | null | undefined, now: Date = new Date()): number | null {
   if (!deadline) return null;

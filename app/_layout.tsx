@@ -322,6 +322,21 @@ function RootLayoutNav() {
         }}
       />
 
+      {/* Fiche du livre — même sheet natif : fin, caps, club */}
+      <Stack.Screen
+        name="book"
+        options={{
+          presentation: 'formSheet',
+          sheetAllowedDetents: [0.65, 0.95],
+          sheetGrabberVisible: true,
+          sheetExpandsWhenScrolledToEdge: true,
+          headerShown: true,
+          headerTitle: 'Le livre',
+          headerLargeTitle: false,
+          headerTitleStyle: { fontFamily: fonts.display, fontSize: 19, color: colors.textPrimary },
+        }}
+      />
+
       {/* Bibliothèque de tes challenges — même sheet natif que le classement */}
       <Stack.Screen
         name="library"
