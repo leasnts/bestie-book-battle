@@ -11,6 +11,7 @@
  */
 
 import type { AnnotationCategory } from '../types/supabase';
+import { postIt } from './constants';
 
 /**
  * Marge de déblocage : ≈ 1 % du livre, soit ≈ 6 pages sur 600.
@@ -83,12 +84,12 @@ export interface CategoryStyle {
 }
 
 export const ANNOTATION_CATEGORIES: Record<AnnotationCategory, CategoryStyle> = {
-  coup_de_coeur: { label: 'Coup de cœur', color: '#efcfca' },
-  spicy: { label: 'Spicy', color: '#f3cdb0' },
-  larmes: { label: 'Larmes', color: '#cadbe6' },
-  mdr: { label: 'Mdr', color: '#f3e2a0' },
-  theorie: { label: 'Théorie', color: '#d3dfc2' },
-  a_retenir: { label: 'À retenir', color: '#e8dbc6' },
+  coup_de_coeur: { label: 'Coup de cœur', color: postIt.rose },
+  spicy: { label: 'Spicy', color: postIt.peche },
+  larmes: { label: 'Larmes', color: postIt.bleu },
+  mdr: { label: 'Mdr', color: postIt.jaune },
+  theorie: { label: 'Théorie', color: postIt.sauge },
+  a_retenir: { label: 'À retenir', color: postIt.sable },
 };
 
 /** La catégorie par défaut d'une nouvelle note */

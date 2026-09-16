@@ -322,6 +322,21 @@ function RootLayoutNav() {
         }}
       />
 
+      {/* Écrire une note — sheet natif, ouvert par le bouton post-it */}
+      <Stack.Screen
+        name="note/[id]"
+        options={{
+          presentation: 'formSheet',
+          sheetAllowedDetents: [0.75, 0.95],
+          sheetGrabberVisible: true,
+          sheetExpandsWhenScrolledToEdge: true,
+          headerShown: true,
+          headerTitle: 'Nouvelle note',
+          headerLargeTitle: false,
+          headerTitleStyle: { fontFamily: fonts.display, fontSize: 19, color: colors.textPrimary },
+        }}
+      />
+
       {/* Journal d'une personne — sheet natif, posé sur le classement */}
       <Stack.Screen
         name="participant/[id]"
