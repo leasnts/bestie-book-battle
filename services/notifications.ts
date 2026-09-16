@@ -266,14 +266,16 @@ export async function sendBookFinishedNotification(
 }
 
 /**
- * Envoie une notification de rappel d'objectif (deadline demain)
+ * Envoie une notification de rappel de cap (ou de fin du livre) pour demain
  */
 export async function sendGoalDeadlineReminderNotification(
   goalDescription: string,
-  challengeId?: string
+  challengeId?: string,
+  /** « Cap demain » pour un cap, « Fin du livre demain » pour la date de fin */
+  title = 'Cap demain'
 ): Promise<void> {
   await sendLocalNotification(
-    'Deadline demain',
+    title,
     goalDescription,
     { challengeId, type: 'goal_deadline' }
   );
@@ -370,13 +372,14 @@ export async function scheduleStreakAtRiskNotification(
 }
 
 /**
- * Planifie une notification de rappel d'objectif (la veille de la deadline)
+ * Planifie un rappel la veille : un cap, ou la fin du livre
  */
 export async function scheduleGoalDeadlineReminder(
   goalDescription: string,
   deadlineDate: Date,
   challengeId?: string,
-  goalId?: string
+  goalId?: string,
+  title = 'Cap demain'
 ): Promise<string | null> {
   // La veille à 20h
   const dayBefore = new Date(deadlineDate);
@@ -393,7 +396,7 @@ export async function scheduleGoalDeadlineReminder(
   
   const id = await Notifications.scheduleNotificationAsync({
     content: {
-      title: 'Deadline demain',
+      title,
       body: goalDescription,
       data: { challengeId, type: 'goal_deadline' },
       sound: true,

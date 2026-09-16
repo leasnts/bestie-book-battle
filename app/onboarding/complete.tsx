@@ -6,7 +6,6 @@
  * L'utilisateur peut inviter un.e ami.e ou terminer l'onboarding.
  */
 
-import { Ionicons } from '@expo/vector-icons';
 import * as Clipboard from 'expo-clipboard';
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -25,12 +24,14 @@ import {
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { createOrUpdateUserProfile } from '../../services/supabase/auth';
-import { updateChallenge } from '../../services/supabase/database';
+import { saveCoverPalette, updateChallenge } from '../../services/supabase/database';
 import { uploadBookCover } from '../../services/supabase/storage';
 import { useAuthStore } from '../../stores/authStore';
 import { useOnboardingStore } from '../../stores/onboardingStore';
 import { useProjectStore } from '../../stores/projectStore';
-import { borderRadius, colors, fontSize, fontWeight, spacing } from '../../utils/constants';
+import { borderRadius, colors, fonts, fontSize, spacing } from '../../utils/constants';
+import { extractCoverPalette } from '../../utils/coverPalette';
+import { BookOpenIcon, ChevronLeftIcon, CopyIcon, ShareIcon, XIcon } from 'lucide-react-native';
 
 // Assets
 const TEXTURE_IMAGE = require('../../assets/images/61ea1e0c638b5b9c8100383a37a5b488848db623.png');
@@ -147,6 +148,16 @@ export default function OnboardingCompleteScreen() {
                                         : state.activeChallenge,
                             };
                         });
+
+                        // Couleurs du fond de l'accueil, en tâche de fond : le code
+                        // d'invitation s'affiche sans attendre. En cas d'échec, l'accueil
+                        // les recalcule (useCoverPalette).
+                        extractCoverPalette(coverUri)
+                            .then(async (palette) => {
+                                await saveCoverPalette(challenge.id, palette);
+                                useProjectStore.getState().patchChallengeLocally(challenge.id, { cover_palette: palette });
+                            })
+                            .catch((paletteError) => console.warn('[CoverPalette] extraction impossible', paletteError));
                     } catch (coverError) {
                         console.error('Échec upload cover:', coverError);
                     }
@@ -225,7 +236,7 @@ export default function OnboardingCompleteScreen() {
                 <View style={[styles.header, styles.headerRow]}>
                     <Button3D
                         variant="secondary"
-                        icon="chevron-back"
+                        icon={ChevronLeftIcon}
                         iconOnly
                         size="compact"
                         onPress={() => router.back()}
@@ -233,7 +244,7 @@ export default function OnboardingCompleteScreen() {
                     {isAddChallenge && (
                         <Button3D
                             variant="primary"
-                            icon="close"
+                            icon={XIcon}
                             iconOnly
                             size="compact"
                             onPress={() => router.navigate('/(tabs)')}
@@ -285,7 +296,7 @@ export default function OnboardingCompleteScreen() {
                                             },
                                         ]}
                                     >
-                                        <Ionicons name="book" size={40} color={colors.alphaWhite30} />
+                                        <BookOpenIcon size={40} color={colors.alphaWhite30} />
                                     </View>
                                 )}
 
@@ -318,7 +329,7 @@ export default function OnboardingCompleteScreen() {
                                     accessibilityRole="button"
                                     accessibilityLabel="Copier le code d'invitation"
                                 >
-                                    <Ionicons name="copy-outline" size={20} color={colors.textPlaceholder} />
+                                    <CopyIcon size={20} color={colors.textPlaceholder} />
                                 </TouchableOpacity>
                             </View>
                         </View>
@@ -336,7 +347,7 @@ export default function OnboardingCompleteScreen() {
                     <Button3D
                         onPress={handleShareInvite}
                         variant="primary"
-                        icon="share-outline"
+                        icon={ShareIcon}
                         iconPosition="left"
                         style={{ width: '100%' }}
                     >
@@ -382,7 +393,7 @@ const styles = StyleSheet.create({
         gap: spacing.lg,
     },
     loadingText: {
-        fontFamily: 'WorkSans_500Medium',
+        fontFamily: fonts.bodyMedium,
         fontSize: fontSize.md,
         color: colors.textSecondary,
     },
@@ -402,17 +413,15 @@ const styles = StyleSheet.create({
         gap: spacing.lg,
     },
     title: {
-        fontFamily: 'Rokkitt_500Medium',
-        fontSize: fontSize['3xl'], // 36px
-        fontWeight: fontWeight.medium,
+        fontFamily: fonts.display,
+        fontSize: 30,
         color: colors.textPrimary,
-        letterSpacing: -0.72,
-        lineHeight: 44,
+        letterSpacing: -0.3,
+        lineHeight: 36,
     },
     description: {
-        fontFamily: 'WorkSans_400Regular',
+        fontFamily: fonts.body,
         fontSize: fontSize.md,
-        fontWeight: fontWeight.regular,
         color: colors.textSecondary,
         lineHeight: 24,
         marginBottom: spacing['4xl'], // 48px entre le texte et la carte livre
@@ -467,16 +476,14 @@ const styles = StyleSheet.create({
         gap: spacing.xs, // 4px
     },
     bookAuthor: {
-        fontFamily: 'WorkSans_400Regular',
+        fontFamily: fonts.body,
         fontSize: fontSize.sm, // 14px
-        fontWeight: fontWeight.regular,
-        color: colors.textSubtle, // #d5d7da
+        color: colors.textSubtle,
         lineHeight: 20,
     },
     bookTitle: {
-        fontFamily: 'WorkSans_600SemiBold',
-        fontSize: fontSize.md, // 16px
-        fontWeight: fontWeight.semibold,
+        fontFamily: fonts.display,
+        fontSize: 18,
         color: colors.white,
         lineHeight: 24,
     },
@@ -491,9 +498,8 @@ const styles = StyleSheet.create({
         marginTop: spacing.xs,
     },
     pagesText: {
-        fontFamily: 'WorkSans_400Regular',
+        fontFamily: fonts.body,
         fontSize: fontSize.xs, // 12px
-        fontWeight: fontWeight.regular,
         color: colors.white,
         lineHeight: 16,
     },
@@ -514,10 +520,9 @@ const styles = StyleSheet.create({
         elevation: 1,
     },
     codeLabel: {
-        fontFamily: 'WorkSans_400Regular',
+        fontFamily: fonts.body,
         fontSize: fontSize.sm, // 14px
-        fontWeight: fontWeight.regular,
-        color: colors.textPlaceholder, // #717680
+        color: colors.textPlaceholder,
         lineHeight: 20,
     },
     codeRow: {
@@ -531,12 +536,10 @@ const styles = StyleSheet.create({
         backgroundColor: colors.bgLight,
     },
     codeText: {
-        fontFamily: 'Rokkitt_500Medium',
-        fontSize: fontSize['3xl'], // 36px
-        fontWeight: fontWeight.medium,
+        fontFamily: fonts.display,
+        fontSize: 30,
         color: colors.textPrimary,
-        letterSpacing: -0.72,
-        lineHeight: 44,
+        lineHeight: 36,
     },
     footer: {
         paddingHorizontal: spacing.lg,

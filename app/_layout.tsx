@@ -24,18 +24,15 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { scheduleDailyReminder } from '../services/notifications';
 import { useAuthStore } from '../stores/authStore';
 import { useProjectStore } from '../stores/projectStore';
-import { colors } from '../utils/constants';
+import { colors, fonts } from '../utils/constants';
 import { supabase } from '../supabaseConfig';
 import AnimatedSplash from '../components/AnimatedSplash';
 import { useFonts } from 'expo-font';
-import { Rokkitt_400Regular } from '@expo-google-fonts/rokkitt/400Regular';
-import { Rokkitt_500Medium } from '@expo-google-fonts/rokkitt/500Medium';
-import { Rokkitt_600SemiBold } from '@expo-google-fonts/rokkitt/600SemiBold';
-import { Rokkitt_700Bold } from '@expo-google-fonts/rokkitt/700Bold';
-import { WorkSans_400Regular } from '@expo-google-fonts/work-sans/400Regular';
-import { WorkSans_500Medium } from '@expo-google-fonts/work-sans/500Medium';
-import { WorkSans_600SemiBold } from '@expo-google-fonts/work-sans/600SemiBold';
-import { WorkSans_700Bold } from '@expo-google-fonts/work-sans/700Bold';
+import { Nunito_400Regular } from '@expo-google-fonts/nunito/400Regular';
+import { Nunito_500Medium } from '@expo-google-fonts/nunito/500Medium';
+import { Nunito_600SemiBold } from '@expo-google-fonts/nunito/600SemiBold';
+import { Nunito_700Bold } from '@expo-google-fonts/nunito/700Bold';
+import { Nunito_800ExtraBold } from '@expo-google-fonts/nunito/800ExtraBold';
 
 // Désactivé : expo-splash-screen provoque des erreurs "No native splash screen
 // registered" quand on ouvre une Modal (nouveau view controller iOS). L'app
@@ -113,25 +110,29 @@ function RootLayoutNav() {
     prebuild. Ça n'a jamais eu lieu : l'Info.plist déclare bien les neuf
     fichiers, mais aucun .ttf n'existe dans ios/ ni dans le .app — d'où les
     « FontParser could not open filePath » au lancement, et une app qui tournait
-    en San Francisco au lieu de Rokkitt et Work Sans.
+    en San Francisco au lieu des polices de la marque.
 
     Rejouer un prebuild détruirait la cible widget bbbWidgetExtension, ajoutée à
     la main dans Xcode et qu'aucun config plugin ne recrée. On charge donc les
     polices depuis JavaScript : zéro intervention sur le projet natif, et le
     widget lui-même n'utilise que les polices système.
 
-    Seules les huit graisses réellement employées sont importées, par
-    sous-chemin : le barrel du paquet embarquerait les dix-huit.
+    Seules les graisses réellement employées sont importées : Nunito par
+    sous-chemin (le barrel du paquet embarquerait les dix-huit), Fraunces depuis
+    assets/fonts, où vivent nos instances « douces » du fichier variable (voir
+    `fonts` dans utils/constants.ts). Les clés ci-dessous sont les noms utilisés
+    dans les styles.
   */
   const [fontsLoaded] = useFonts({
-    Rokkitt_400Regular,
-    Rokkitt_500Medium,
-    Rokkitt_600SemiBold,
-    Rokkitt_700Bold,
-    WorkSans_400Regular,
-    WorkSans_500Medium,
-    WorkSans_600SemiBold,
-    WorkSans_700Bold,
+    FrauncesSoft_400Regular: require('../assets/fonts/FrauncesSoft_400Regular.ttf'),
+    FrauncesSoft_600SemiBold: require('../assets/fonts/FrauncesSoft_600SemiBold.ttf'),
+    FrauncesSoft_700Bold: require('../assets/fonts/FrauncesSoft_700Bold.ttf'),
+    FrauncesSoftDisplay_600SemiBold: require('../assets/fonts/FrauncesSoftDisplay_600SemiBold.ttf'),
+    Nunito_400Regular,
+    Nunito_500Medium,
+    Nunito_600SemiBold,
+    Nunito_700Bold,
+    Nunito_800ExtraBold,
   });
 
 
@@ -271,7 +272,7 @@ function RootLayoutNav() {
 
   return (
     <Stack screenOptions={{ headerShown: false }}>
-      {/* Routes principales (tabs) */}
+      {/* Onglets : lecture en cours, inspiration, profil (barre native iOS 26) */}
       <Stack.Screen
         name="(tabs)"
         options={{ headerShown: false }}
@@ -283,18 +284,6 @@ function RootLayoutNav() {
         options={{
           headerShown: false,
           animation: 'slide_from_right',
-        }}
-      />
-
-      {/* Page Profil — glisse depuis la gauche (symétrique au swipe d'ouverture) */}
-      {/* Le gesture natif iOS est désactivé car il irait dans le mauvais sens.     */}
-      {/* C'est useSwipeBack('left') dans profile.tsx qui gère la fermeture.        */}
-      <Stack.Screen
-        name="profile"
-        options={{
-          headerShown: false,
-          animation: 'slide_from_left',
-          gestureEnabled: false,
         }}
       />
 
@@ -329,6 +318,52 @@ function RootLayoutNav() {
           headerShown: true,
           headerTitle: 'Classement',
           headerLargeTitle: false,
+          headerTitleStyle: { fontFamily: fonts.display, fontSize: 19, color: colors.textPrimary },
+        }}
+      />
+
+      {/* Journal d'une personne — sheet natif, posé sur le classement */}
+      <Stack.Screen
+        name="participant/[id]"
+        options={{
+          presentation: 'formSheet',
+          sheetAllowedDetents: [0.65, 0.95],
+          sheetGrabberVisible: true,
+          sheetExpandsWhenScrolledToEdge: true,
+          headerShown: true,
+          headerTitle: 'Journal',
+          headerLargeTitle: false,
+          headerTitleStyle: { fontFamily: fonts.display, fontSize: 19, color: colors.textPrimary },
+        }}
+      />
+
+      {/* Fiche du livre — même sheet natif : fin, caps, club */}
+      <Stack.Screen
+        name="book"
+        options={{
+          presentation: 'formSheet',
+          sheetAllowedDetents: [0.65, 0.95],
+          sheetGrabberVisible: true,
+          sheetExpandsWhenScrolledToEdge: true,
+          headerShown: true,
+          headerTitle: 'Le livre',
+          headerLargeTitle: false,
+          headerTitleStyle: { fontFamily: fonts.display, fontSize: 19, color: colors.textPrimary },
+        }}
+      />
+
+      {/* Bibliothèque de tes challenges — même sheet natif que le classement */}
+      <Stack.Screen
+        name="library"
+        options={{
+          presentation: 'formSheet',
+          sheetAllowedDetents: [0.65, 0.95],
+          sheetGrabberVisible: true,
+          sheetExpandsWhenScrolledToEdge: true,
+          headerShown: true,
+          headerTitle: 'Mes challenges',
+          headerLargeTitle: false,
+          headerTitleStyle: { fontFamily: fonts.display, fontSize: 19, color: colors.textPrimary },
         }}
       />
 

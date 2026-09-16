@@ -8,7 +8,6 @@
  * Aucun Modal imbriqué → aucun conflit iOS.
  */
 
-import { Ionicons } from '@expo/vector-icons';
 import * as ImageManipulator from 'expo-image-manipulator';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
@@ -31,13 +30,14 @@ import {
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { borderRadius, colors, fontSize, fontWeight, shadows, spacing } from '../../utils/constants';
+import { borderRadius, colors, creamAlpha, fonts, fontSize, shadowAlpha, shadows, spacing } from '../../utils/constants';
 import Button3D from '../Button3D';
 import BottomSheet from './BottomSheet';
+import { CameraIcon, CloudUploadIcon, XIcon } from 'lucide-react-native';
 
 const { width: SW } = Dimensions.get('window');
 const CROP_RATIO = 5 / 7; // ratio exact de l'étagère
-const OVERLAY_COLOR = 'rgba(0,0,0,0.65)';
+const OVERLAY_COLOR = shadowAlpha(0.65);
 const CORNER_S = 20;
 const CORNER_T = 3;
 
@@ -196,20 +196,21 @@ const cropStyles = StyleSheet.create({
   },
   sideSlot: { width: 72 },
   cancelText: {
+    fontFamily: fonts.bodySemiBold,
     color: colors.alphaWhite90,
-    fontSize: fontSize.base,
-    fontWeight: fontWeight.medium as any,
+    fontSize: fontSize.md,
   },
   title: {
-    color: 'rgba(255,255,255,0.45)',
+    fontFamily: fonts.bodySemiBold,
+    color: creamAlpha(0.45),
     fontSize: fontSize.sm,
-    fontWeight: fontWeight.medium as any,
     textAlign: 'center',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   hint: {
-    color: 'rgba(255,255,255,0.35)',
+    fontFamily: fonts.body,
+    color: creamAlpha(0.35),
     fontSize: fontSize.sm,
     textAlign: 'center',
     marginBottom: spacing.lg,
@@ -233,9 +234,9 @@ const cropStyles = StyleSheet.create({
     alignItems: 'center',
   },
   confirmText: {
+    fontFamily: fonts.bodyBold,
     color: colors.dark900,
-    fontSize: fontSize.base,
-    fontWeight: fontWeight.semibold as any,
+    fontSize: fontSize.md,
   },
 });
 
@@ -390,7 +391,7 @@ export default function EditBookSheet({
             accessibilityRole="button"
             accessibilityLabel="Fermer"
           >
-            <Ionicons name="close" size={22} color={colors.textSubtle} />
+            <XIcon size={22} color={colors.textSubtle} />
           </Pressable>
         </View>
 
@@ -407,13 +408,13 @@ export default function EditBookSheet({
               <View style={styles.coverWrapper}>
                 <Image source={{ uri: displayCoverUrl }} style={styles.coverImage} contentFit="cover" />
                 <View style={styles.coverOverlay}>
-                  <Ionicons name="camera-outline" size={20} color={colors.white} />
+                  <CameraIcon size={20} color={colors.white} />
                   <Text style={styles.coverOverlayText}>Modifier</Text>
                 </View>
               </View>
             ) : (
               <View style={styles.coverPlaceholder}>
-                <Ionicons name="cloud-upload-outline" size={32} color={colors.textTertiary} />
+                <CloudUploadIcon size={32} color={colors.textTertiary} />
                 <Text style={styles.coverPlaceholderText}>Ajouter une couverture</Text>
               </View>
             )}
@@ -482,10 +483,10 @@ const styles = StyleSheet.create({
   },
   title: {
     flex: 1,
-    fontFamily: 'Rokkitt_500Medium',
-    fontSize: fontSize['2xl'],
+    fontFamily: fonts.display,
+    fontSize: 22,
     color: colors.textPrimary,
-    letterSpacing: -0.72,
+    letterSpacing: -0.2,
     lineHeight: 44,
     textAlign: 'left',
   },
@@ -505,13 +506,13 @@ const styles = StyleSheet.create({
   coverImage: { width: '100%', height: '100%' },
   coverOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: shadowAlpha(0.5),
     justifyContent: 'center',
     alignItems: 'center',
     gap: 6,
   },
   coverOverlayText: {
-    fontFamily: 'WorkSans_600SemiBold',
+    fontFamily: fonts.bodySemiBold,
     fontSize: 12,
     color: colors.white,
     letterSpacing: 0.3,
@@ -529,16 +530,15 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   coverPlaceholderText: {
-    fontFamily: 'WorkSans_500Medium',
+    fontFamily: fonts.bodyMedium,
     fontSize: 12,
     color: colors.textTertiary,
     textAlign: 'center',
   },
   formContainer: { gap: spacing.md },
   input: {
-    fontFamily: 'WorkSans_400Regular',
+    fontFamily: fonts.body,
     fontSize: fontSize.md,
-    fontWeight: fontWeight.regular as any,
     color: colors.textPrimary,
     backgroundColor: colors.white,
     borderWidth: 1,
@@ -546,7 +546,6 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.lg,
     paddingHorizontal: spacing['2xl'],
     paddingVertical: spacing.xl,
-    letterSpacing: -0.3,
     ...shadows.xs,
     textAlignVertical: 'center',
   },

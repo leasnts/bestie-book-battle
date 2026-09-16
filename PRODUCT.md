@@ -162,14 +162,14 @@ consultable, rien d'autre n'est obligatoire.
 **Contraste WCAG AA** est l'exigence retenue : 4.5:1 sur le texte courant, 3:1
 sur le texte large (≥18 px, ou gras ≥14 px).
 
-Point d'attention connu : la palette est très grise. `textTertiary` (`#535862`)
-et surtout `textPlaceholder` (`#717680`) servent à du petit texte sur fonds
-clairs (`#f5f5f5`, `#ffffff`) — labels, sous-titres, compteurs. Zone à vérifier
-en priorité.
+Point d'attention : `textTertiary` (`#6b5546`) et surtout `textPlaceholder`
+(`#7a6453`) servent à du petit texte sur les fonds blanc chaud (`#f5f3ef`, `#fdfcfa`)
+— labels, sous-titres, compteurs. Mesurés à 4,88:1 minimum (voir DESIGN.md) :
+toute retouche de la palette doit revérifier ces paires.
 
 Non retenu comme exigence pour l'instant, mais ouvert vu le public et la
 plateforme : Dynamic Type (la palette de tailles est aujourd'hui en points figés,
 hors système), VoiceOver, et Dark Mode — aucune apparence sombre n'existe, alors
 que la HIG la traite comme une apparence de premier rang. Le réglage « Réduire
-les animations » est respecté dans `ProgressCard`, `LeaderboardList` et
+les animations » est respecté dans `LeaderboardSection`, `LeaderboardList` et
 `PressableScale`, mais pas ailleurs.

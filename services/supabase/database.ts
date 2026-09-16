@@ -232,8 +232,23 @@ export async function updateChallenge(
 }
 
 /**
+ * Enregistrer les couleurs de la couverture d'un challenge (fond de l'accueil)
+ *
+ * Passe par la fonction SQL `set_cover_palette` : n'importe quel membre du club
+ * peut enregistrer la palette, mais seulement si elle n'existe pas encore
+ * (scripts/add-cover-palette.sql). Sans effet sinon, et sans erreur.
+ */
+export async function saveCoverPalette(challengeId: string, palette: string[]): Promise<void> {
+  const { error } = await supabase.rpc('set_cover_palette', {
+    p_challenge_id: challengeId,
+    p_palette: palette,
+  });
+  if (error) throw error;
+}
+
+/**
  * Supprimer un challenge
- * 
+ *
  * Seul l'admin du challenge peut le supprimer (vérifié par RLS)
  * La suppression cascade automatiquement vers :
  * - challenge_participants

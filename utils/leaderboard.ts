@@ -2,12 +2,12 @@
  * Logique de classement des participants.
  *
  * Ce fichier ne contient QUE du calcul (pas de JSX) : il est partagé entre
- * la section d'accueil (ProgressCard) et le classement complet (LeaderboardSheet),
+ * le cadre de l'accueil (LeaderboardSection) et le classement complet (LeaderboardList),
  * ce qui garantit que les deux affichent exactement le même ordre et les mêmes rangs.
  *
  * Deux étapes :
  * 1. `rankParticipants` → trie tout le monde et attribue un rang (1, 2, 3…)
- * 2. `selectVisibleRows` → décide lesquels tiennent dans les 4 lignes de l'accueil
+ * 2. `selectVisibleRows` → décide lesquels s'affichent sur l'accueil (top 3 + moi)
  */
 
 // ─── Types ─────────────────────────────────────────────────────────
@@ -36,11 +36,8 @@ export interface RankedParticipant extends LeaderboardParticipant {
   isMe: boolean;
 }
 
-/** Nombre de lignes affichées sur l'accueil avant de basculer sur le sheet */
-export const VISIBLE_SLOTS = 4;
-
-/** Nombre de places du podium gardées quand on épingle la ligne « moi » */
-const PODIUM_SLOTS = VISIBLE_SLOTS - 1;
+/** Taille du podium affiché sur l'accueil : le reste s'ouvre dans le sheet */
+export const PODIUM_SLOTS = 3;
 
 // ─── Étape 1 : classer ─────────────────────────────────────────────
 
@@ -88,55 +85,41 @@ export interface VisibleRows {
 }
 
 /**
- * Décide quoi afficher dans les 4 emplacements de l'accueil.
+ * Décide quoi afficher sur l'accueil : le top 3 du challenge, plus moi.
  *
- * Trois cas :
- * - 4 participants ou moins  → on affiche tout le monde, pas de bouton
- * - Je suis dans le top 3    → on affiche le top 4 d'affilée
- * - Je suis hors du top 3    → on affiche le top 3, puis MA ligne épinglée en dessous
+ * Deux cas :
+ * - Je suis dans le top 3 → le top 3, rien d'autre
+ * - Je suis hors du top 3 → le top 3, puis MA ligne épinglée en dessous
  *
- * Le troisième cas est le plus important : sans lui, une personne classée 9e
+ * Le second cas est le plus important : sans lui, une personne classée 9e
  * ne se verrait jamais dans la section et n'aurait aucun repère sur sa progression.
+ *
+ * Le bouton vers le classement complet n'apparaît que si quelqu'un n'est
+ * affiché nulle part.
  */
 export function selectVisibleRows(ranked: RankedParticipant[]): VisibleRows {
-  if (ranked.length <= VISIBLE_SLOTS) {
-    return { rows: ranked, pinnedMe: null, hasMore: false };
-  }
-
+  const rows = ranked.slice(0, PODIUM_SLOTS);
   const me = ranked.find((p) => p.isMe) ?? null;
+  const pinnedMe = me && me.rank > PODIUM_SLOTS ? me : null;
+  const shownCount = rows.length + (pinnedMe ? 1 : 0);
 
-  // Je suis hors du podium → top 3 + ma ligne épinglée
-  if (me && me.rank > PODIUM_SLOTS) {
-    return {
-      rows: ranked.slice(0, PODIUM_SLOTS),
-      pinnedMe: me,
-      hasMore: true,
-    };
-  }
-
-  // Je suis sur le podium (ou introuvable) → simplement le top 4
-  return {
-    rows: ranked.slice(0, VISIBLE_SLOTS),
-    pinnedMe: null,
-    hasMore: true,
-  };
+  return { rows, pinnedMe, hasMore: ranked.length > shownCount };
 }
 
 // ─── Helpers d'affichage ───────────────────────────────────────────
 
 /**
- * Formate le score d'un participant.
- * Quand les participants lisent des éditions différentes, afficher « 142 » et
- * « 138 » côte à côte n'a aucun sens : on bascule alors sur le pourcentage.
+ * Score affiché d'un participant : **toujours un pourcentage**.
+ *
+ * Chacun lit son édition, et même à édition identique la page n'appartient qu'à
+ * soi. Comparer « page 142 » et « page 138 » ne veut rien dire : dès qu'on
+ * compare, on passe en % (DESIGN.md › Pages ou %).
  */
-export function formatScore(
-  participant: LeaderboardParticipant,
-  showPercentage: boolean | undefined,
-): number {
-  return showPercentage ? Math.round(participant.percentage) : participant.score;
+export function formatScore(participant: LeaderboardParticipant): number {
+  return Math.round(participant.percentage);
 }
 
-/** Libellé du compteur de participants : « 12 lectrices », « 1 lectrice » */
+/** Libellé du compteur de participants : « 12 membres », « 1 membre » */
 export function formatParticipantCount(count: number): string {
-  return `${count} lectrice${count > 1 ? 's' : ''}`;
+  return `${count} membre${count > 1 ? 's' : ''}`;
 }

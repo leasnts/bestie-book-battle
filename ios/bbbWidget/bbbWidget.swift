@@ -199,7 +199,7 @@ struct SmallWidgetView: View {
             }
             .frame(width: geo.size.width, height: geo.size.height)
         }
-        .background(Color.white)
+        .background(Color(hex: "FDFCFA"))
     }
 }
 
@@ -227,22 +227,22 @@ struct DashedProgressGauge: View {
 
     var body: some View {
         ZStack {
-            // Arc de fond (gris clair) — la totalité de la jauge
+            // Arc de fond (blanc cassé) — la totalité de la jauge
             Circle()
                 .trim(from: 0, to: arcFraction)
                 .stroke(
                     style: StrokeStyle(lineWidth: 5, dash: [5.5, 2.5])
                 )
-                .foregroundColor(Color(hex: "D5D7DA"))
+                .foregroundColor(Color(hex: "E5E0D9"))
                 .rotationEffect(.degrees(startRotation))
 
-            // Arc de progression (noir) — rempli de gauche à droite
+            // Arc de progression (noyer foncé) — rempli de gauche à droite
             Circle()
                 .trim(from: 0, to: min(progress, 1.0) * arcFraction)
                 .stroke(
                     style: StrokeStyle(lineWidth: 5, lineCap: .butt, dash: [5.5, 2.5])
                 )
-                .foregroundColor(Color(hex: "181D27"))
+                .foregroundColor(Color(hex: "33231A"))
                 .rotationEffect(.degrees(startRotation))
         }
     }
@@ -260,13 +260,13 @@ struct ParticipantRow: View {
         HStack(spacing: 6) {
             Text(name)
                 .font(.system(size: 13))
-                .foregroundColor(Color(hex: "535862"))
+                .foregroundColor(Color(hex: "6B5546"))
                 .lineLimit(1)
                 .frame(width: 70, alignment: .trailing)
 
             Text("\(page)")
                 .font(.system(size: 22, weight: .bold))
-                .foregroundColor(Color(hex: "181D27"))
+                .foregroundColor(Color(hex: "33231A"))
                 .frame(alignment: .leading)
         }
     }
@@ -285,7 +285,7 @@ struct bbbWidget: Widget {
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: Provider()) { entry in
             bbbWidgetEntryView(entry: entry)
-                .containerBackground(.white, for: .widget)
+                .containerBackground(Color(hex: "FDFCFA"), for: .widget)
         }
         .configurationDisplayName("Bestie Book Battle")
         .description("Le classement de ton challenge lecture")

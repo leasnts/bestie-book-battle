@@ -9,7 +9,7 @@
 
 import React, { useEffect, useRef } from 'react';
 import { View, StyleSheet, Animated, Text } from 'react-native';
-import { colors, borderRadius, animationDuration } from '../../utils/constants';
+import { animationDuration, borderRadius, colors, fonts } from '../../utils/constants';
 
 interface ProgressBarProps {
   /** Pourcentage de progression (0-100) */
@@ -114,9 +114,9 @@ const styles = StyleSheet.create({
     top: 0,
   },
   percentageText: {
-    fontFamily: 'WorkSans_400Regular',
+    fontFamily: fonts.body,
     fontSize: 14,
-    color: colors.textPlaceholder, // gray 500 : #717680
+    color: colors.textPlaceholder,
     lineHeight: 20,
     flexShrink: 0, // Ne jamais comprimer le pourcentage
   },

@@ -11,7 +11,6 @@
  * Structure : input géant centré (même pattern que les autres écrans onboarding).
  */
 
-import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
@@ -31,7 +30,8 @@ import Button3D from '../../components/Button3D';
 import BookSearchSheet from '../../components/ui/BookSearchSheet';
 import { useOnboardingStore } from '../../stores/onboardingStore';
 import type { BookSearchResult } from '../../types/bookSearch';
-import { borderRadius, colors, fontSize, fontWeight, shadows, spacing } from '../../utils/constants';
+import { borderRadius, colors, fonts, fontSize, shadows, spacing } from '../../utils/constants';
+import { ChevronLeftIcon, SearchIcon, XIcon } from 'lucide-react-native';
 
 // Asset : texture de fond
 const TEXTURE_IMAGE = require('../../assets/images/61ea1e0c638b5b9c8100383a37a5b488848db623.png');
@@ -113,7 +113,7 @@ export default function OnboardingBookFormScreen() {
                 <View style={[styles.header, styles.headerRow]}>
                     <Button3D
                         variant="secondary"
-                        icon="chevron-back"
+                        icon={ChevronLeftIcon}
                         iconOnly
                         size="compact"
                         onPress={() => router.back()}
@@ -121,7 +121,7 @@ export default function OnboardingBookFormScreen() {
                     {addChallenge === 'true' && (
                         <Button3D
                             variant="primary"
-                            icon="close"
+                            icon={XIcon}
                             iconOnly
                             size="compact"
                             onPress={() => router.navigate('/(tabs)')}
@@ -145,7 +145,7 @@ export default function OnboardingBookFormScreen() {
                                 setSearchVisible(true);
                             }}
                         >
-                            <Ionicons name="search" size={18} color={colors.textPlaceholder} />
+                            <SearchIcon size={18} color={colors.textPlaceholder} />
                             <Text style={styles.searchButtonText}>Rechercher un livre...</Text>
                         </Pressable>
 
@@ -238,12 +238,11 @@ const styles = StyleSheet.create({
         gap: spacing['6xl'], // 64px entre titre et formulaire
     },
     title: {
-        fontFamily: 'Rokkitt_500Medium',
-        fontSize: fontSize['3xl'],
-        fontWeight: fontWeight.medium,
+        fontFamily: fonts.display,
+        fontSize: 30,
         color: colors.textPrimary,
-        letterSpacing: -0.72,
-        lineHeight: 44,
+        letterSpacing: -0.3,
+        lineHeight: 36,
     },
     formContainer: {
         gap: spacing.xl, // 20px entre les champs
@@ -261,16 +260,14 @@ const styles = StyleSheet.create({
         ...shadows.xs,
     },
     searchButtonText: {
-        fontFamily: 'WorkSans_400Regular',
+        fontFamily: fonts.body,
         fontSize: fontSize.md,
         color: colors.textPlaceholder,
-        letterSpacing: -0.3,
     },
     inputWrapper: {},
     input: {
-        fontFamily: 'WorkSans_400Regular',
+        fontFamily: fonts.body,
         fontSize: fontSize.md,
-        fontWeight: fontWeight.regular as any,
         color: colors.textPrimary,
         backgroundColor: colors.white,
         borderWidth: 1,
@@ -278,7 +275,6 @@ const styles = StyleSheet.create({
         borderRadius: borderRadius.lg,
         paddingHorizontal: spacing['2xl'],
         paddingVertical: spacing.xl,
-        letterSpacing: -0.3,
         ...shadows.xs,
         textAlignVertical: 'center',
     },

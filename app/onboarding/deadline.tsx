@@ -18,8 +18,9 @@ import {
     View,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, fontSize, fontWeight, spacing } from '../../utils/constants';
+import { colors, fonts, fontSize, spacing } from '../../utils/constants';
 import Button3D from '../../components/Button3D';
+import { ChevronLeftIcon, XIcon } from 'lucide-react-native';
 
 // Asset : texture de fond (même que les autres écrans)
 const TEXTURE_IMAGE = require('../../assets/images/61ea1e0c638b5b9c8100383a37a5b488848db623.png');
@@ -149,7 +150,7 @@ export default function OnboardingDeadlineScreen() {
                 <View style={[styles.header, styles.headerRow]}>
                     <Button3D
                         variant="secondary"
-                        icon="chevron-back"
+                        icon={ChevronLeftIcon}
                         iconOnly
                         size="compact"
                         onPress={() => router.back()}
@@ -157,7 +158,7 @@ export default function OnboardingDeadlineScreen() {
                     {addChallenge === 'true' && (
                         <Button3D
                             variant="primary"
-                            icon="close"
+                            icon={XIcon}
                             iconOnly
                             size="compact"
                             onPress={() => router.navigate('/(tabs)')}
@@ -240,12 +241,11 @@ const styles = StyleSheet.create({
         gap: spacing['3xl'],
     },
     title: {
-        fontFamily: 'Rokkitt_500Medium',
-        fontSize: fontSize['3xl'],
-        fontWeight: fontWeight.medium,
+        fontFamily: fonts.display,
+        fontSize: 30,
         color: colors.textPrimary,
-        letterSpacing: -0.72,
-        lineHeight: 44,
+        letterSpacing: -0.3,
+        lineHeight: 36,
     },
     pickerContainer: {
         alignItems: 'center',
@@ -258,12 +258,10 @@ const styles = StyleSheet.create({
         height: 350,
     },
     timeRemainingText: {
-        fontFamily: 'WorkSans_400Regular',
+        fontFamily: fonts.body,
         fontSize: fontSize.sm,
-        fontWeight: fontWeight.regular as any,
         color: colors.textTertiary,
         textAlign: 'center',
-        letterSpacing: -0.28,
         lineHeight: 20,
     },
     footer: {

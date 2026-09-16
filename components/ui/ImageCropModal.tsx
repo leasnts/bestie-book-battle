@@ -23,16 +23,16 @@ import {
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { borderRadius, colors, fontSize, fontWeight, spacing } from '../../utils/constants';
+import { borderRadius, colors, creamAlpha, fonts, fontSize, shadowAlpha, spacing } from '../../utils/constants';
 
 const { width: SW } = Dimensions.get('window');
 
-// Cadre de crop — ratio 5:7 exact (= COVER_RATIO_W / COVER_RATIO_H de BookStack)
+// Cadre de crop — ratio 5:7 exact (= COVER_RATIO de BookCover)
 const FRAME_W = SW - 80;
 const FRAME_H = FRAME_W * (7 / 5);
 
 // Couleur des zones hors-cadre
-const OVERLAY_COLOR = 'rgba(0,0,0,0.65)';
+const OVERLAY_COLOR = shadowAlpha(0.65);
 
 export interface PendingImage {
   uri: string;
@@ -234,20 +234,21 @@ const styles = StyleSheet.create({
     width: 72,
   },
   cancelText: {
+    fontFamily: fonts.bodySemiBold,
     color: colors.alphaWhite90,
-    fontSize: fontSize.base,
-    fontWeight: fontWeight.medium as any,
+    fontSize: fontSize.md,
   },
   title: {
-    color: 'rgba(255,255,255,0.45)',
+    fontFamily: fonts.bodySemiBold,
+    color: creamAlpha(0.45),
     fontSize: fontSize.sm,
-    fontWeight: fontWeight.medium as any,
     textAlign: 'center',
     letterSpacing: 0.5,
     textTransform: 'uppercase',
   },
   hint: {
-    color: 'rgba(255,255,255,0.35)',
+    fontFamily: fonts.body,
+    color: creamAlpha(0.35),
     fontSize: fontSize.sm,
     textAlign: 'center',
     marginBottom: spacing.lg,
@@ -296,8 +297,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   confirmText: {
+    fontFamily: fonts.bodyBold,
     color: colors.dark900,
-    fontSize: fontSize.base,
-    fontWeight: fontWeight.semibold as any,
+    fontSize: fontSize.md,
   },
 });

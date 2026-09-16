@@ -8,6 +8,7 @@ import type { Meta, StoryObj } from '@storybook/react';
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { StreakBadge } from './StreakBadge';
+import { colors, fonts } from '../../utils/constants';
 
 const meta: Meta<typeof StreakBadge> = {
   title: 'UI/StreakBadge',
@@ -121,15 +122,15 @@ export const AllValues: Story = {
 
 const styles = StyleSheet.create({
   label: {
-    fontFamily: 'WorkSans_400Regular',
+    fontFamily: fonts.body,
     fontSize: 13,
-    color: '#717680',
+    color: colors.textPlaceholder,
     width: 160,
   },
   sectionTitle: {
-    fontFamily: 'WorkSans_600SemiBold',
+    fontFamily: fonts.bodySemiBold,
     fontSize: 14,
-    color: '#414651',
+    color: colors.textSecondary,
     marginBottom: 4,
   },
   row: {
@@ -139,7 +140,7 @@ const styles = StyleSheet.create({
   },
   emptyBox: {
     borderWidth: 1,
-    borderColor: '#E9EAEB',
+    borderColor: colors.borderLight,
     borderStyle: 'dashed',
     borderRadius: 12,
     padding: 16,
@@ -147,9 +148,9 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   hint: {
-    fontFamily: 'WorkSans_400Regular',
+    fontFamily: fonts.body,
     fontSize: 12,
-    color: '#D5D7DA',
+    color: colors.textSubtle,
     fontStyle: 'italic',
   },
 });

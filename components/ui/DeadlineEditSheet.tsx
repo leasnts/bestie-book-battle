@@ -9,14 +9,14 @@
  * Utilise BottomSheet (custom) pour le glissement-pour-fermer natif et fluide.
  */
 
-import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import React, { useCallback, useEffect, useState } from 'react';
 import { Alert, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, fontSize, spacing } from '../../utils/constants';
+import { colors, fonts, spacing } from '../../utils/constants';
 import Button3D from '../Button3D';
 import BottomSheet from './BottomSheet';
+import { XIcon } from 'lucide-react-native';
 
 interface DeadlineEditSheetProps {
   visible: boolean;
@@ -87,7 +87,7 @@ export default function DeadlineEditSheet({
             accessibilityRole="button"
             accessibilityLabel="Fermer"
           >
-            <Ionicons name="close" size={22} color={colors.textSubtle} />
+            <XIcon size={22} color={colors.textSubtle} />
           </Pressable>
         </View>
 
@@ -141,10 +141,10 @@ const styles = StyleSheet.create({
   },
   title: {
     flex: 1,
-    fontFamily: 'Rokkitt_500Medium',
-    fontSize: fontSize['2xl'],
+    fontFamily: fonts.display,
+    fontSize: 22,
     color: colors.textPrimary,
-    letterSpacing: -0.72,
+    letterSpacing: -0.2,
     lineHeight: 44,
     textAlign: 'left',
   },

@@ -1,4 +1,3 @@
-import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import React, { useEffect, useRef } from 'react';
 import {
@@ -13,8 +12,9 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useBookSearch } from '../../hooks/useBookSearch';
 import type { BookSearchResult } from '../../types/bookSearch';
-import { borderRadius, colors, fontSize, fontWeight, shadows, spacing } from '../../utils/constants';
+import { borderRadius, colors, fonts, fontSize, shadows, spacing } from '../../utils/constants';
 import BottomSheet from './BottomSheet';
+import { BookOpenIcon, CircleXIcon, SearchIcon } from 'lucide-react-native';
 
 interface BookSearchSheetProps {
   visible: boolean;
@@ -54,7 +54,7 @@ function BookResultItem({
           <Image source={{ uri: book.coverUrl }} style={styles.coverImage} contentFit="cover" />
         ) : (
           <View style={styles.coverPlaceholder}>
-            <Ionicons name="book-outline" size={20} color={colors.textPlaceholder} />
+            <BookOpenIcon size={20} color={colors.textPlaceholder} />
           </View>
         )}
       </View>
@@ -110,7 +110,7 @@ export default function BookSearchSheet({ visible, onClose, onSelectBook }: Book
         {/* Barre de recherche */}
         <View style={styles.searchContainer}>
           <View style={styles.searchInputWrapper}>
-            <Ionicons name="search" size={18} color={colors.textPlaceholder} style={styles.searchIcon} />
+            <SearchIcon size={18} color={colors.textPlaceholder} style={styles.searchIcon} />
             <TextInput
               ref={inputRef}
               style={styles.searchInput}
@@ -129,7 +129,7 @@ export default function BookSearchSheet({ visible, onClose, onSelectBook }: Book
                 accessibilityRole="button"
                 accessibilityLabel="Effacer la recherche"
               >
-                <Ionicons name="close-circle" size={18} color={colors.textPlaceholder} />
+                <CircleXIcon size={18} color={colors.textPlaceholder} />
               </Pressable>
             )}
           </View>
@@ -183,7 +183,7 @@ export default function BookSearchSheet({ visible, onClose, onSelectBook }: Book
               )}
               {!isTrendingLoading && trending.length === 0 && (
                 <View style={styles.centered}>
-                  <Ionicons name="search" size={32} color={colors.borderLight} />
+                  <SearchIcon size={32} color={colors.borderLight} />
                   <Text style={styles.hintText}>Tape le titre du livre</Text>
                 </View>
               )}
@@ -233,12 +233,10 @@ const styles = StyleSheet.create({
   },
   searchInput: {
     flex: 1,
-    fontFamily: 'WorkSans_400Regular',
+    fontFamily: fonts.body,
     fontSize: fontSize.md,
-    fontWeight: fontWeight.regular as any,
     color: colors.textPrimary,
     paddingVertical: spacing.lg,
-    letterSpacing: -0.3,
   },
   content: {
     flex: 1,
@@ -251,23 +249,21 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   emptyText: {
-    fontFamily: 'WorkSans_400Regular',
+    fontFamily: fonts.body,
     fontSize: fontSize.sm,
     color: colors.textSecondary,
     textAlign: 'center',
   },
   hintText: {
-    fontFamily: 'WorkSans_400Regular',
+    fontFamily: fonts.body,
     fontSize: fontSize.sm,
     color: colors.textPlaceholder,
     textAlign: 'center',
   },
   sectionTitle: {
-    fontFamily: 'WorkSans_600SemiBold',
+    fontFamily: fonts.bodySemiBold,
     fontSize: fontSize.sm,
-    fontWeight: fontWeight.semibold as any,
     color: colors.textSecondary,
-    letterSpacing: -0.2,
     marginBottom: spacing.sm,
   },
   listContent: {
@@ -303,25 +299,23 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   resultTitle: {
-    fontFamily: 'WorkSans_600SemiBold',
+    fontFamily: fonts.bodySemiBold,
     fontSize: fontSize.sm,
-    fontWeight: fontWeight.semibold as any,
     color: colors.textPrimary,
-    letterSpacing: -0.2,
   },
   resultAuthor: {
-    fontFamily: 'WorkSans_400Regular',
+    fontFamily: fonts.body,
     fontSize: fontSize.xs,
     color: colors.textSecondary,
   },
   resultEdition: {
-    fontFamily: 'WorkSans_400Regular',
+    fontFamily: fonts.body,
     fontSize: fontSize.xs,
     color: colors.textPlaceholder,
     fontStyle: 'italic',
   },
   resultPages: {
-    fontFamily: 'WorkSans_500Medium',
+    fontFamily: fonts.bodyMedium,
     fontSize: fontSize.xs,
     color: colors.textSecondary,
     marginTop: 2,

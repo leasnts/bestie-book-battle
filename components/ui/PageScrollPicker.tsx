@@ -3,8 +3,10 @@
  *
  * Sélecteur de page horizontal avec scroll fluide :
  * - Largeur fixe par item pour un scroll fiable + snap
- * - Quand le scroll s'arrête, le numéro le plus proche se centre sur l'écran
- * - Numéro central : 128px, noir. Adjacents : 72px, gris transparent
+ * - Quand le scroll s'arrête, le numéro le plus proche se centre dans la zone
+ * - Numéro central en encre noyer, adjacents plus petits et transparents
+ * - Zone et tailles réglables (`width`, `itemWidth`, `fontSize`) : l'accueil le
+ *   pose dans un cadre plus étroit que l'écran (PageSection)
  * - adjustsFontSizeToFit adapte la taille aux gros numéros (3-4 chiffres)
  *   sans jamais tronquer ni couper le nombre
  */
@@ -19,20 +21,27 @@ import {
   View,
   useWindowDimensions,
 } from 'react-native';
-import { colors } from '../../utils/constants';
+import { colors, fonts, inkAlpha, shadowAlpha } from '../../utils/constants';
 
-// Largeur de chaque cellule. 180px suffit pour afficher 1-2 chiffres à pleine
-// taille (128px). Pour 3-4 chiffres, adjustsFontSizeToFit réduit légèrement
-// la taille pour que le nombre entier soit toujours visible.
+// Largeur d'une cellule. 180 pt laissent 1 à 3 chiffres à pleine taille ;
+// au-delà, adjustsFontSizeToFit réduit le nombre pour qu'il tienne entier.
 // Pas de gap entre les cellules → les nombres adjacents restent bien visibles.
-const ITEM_WIDTH = 180;
-const STEP = ITEM_WIDTH;
+const DEFAULT_ITEM_WIDTH = 180;
+const DEFAULT_FONT_SIZE = 108;
+/** Les voisins font un peu plus de la moitié du chiffre central (ratio de la maquette) */
+const SIDE_RATIO = 0.56;
 
 interface PageScrollPickerProps {
   currentPage: number;
   totalPages: number;
   onPageChange: (page: number) => void;
   savedPage: number;
+  /** Largeur de la zone où le chiffre se centre. Par défaut : tout l'écran. */
+  width?: number;
+  /** Largeur d'une cellule : la resserrer rapproche les voisins */
+  itemWidth?: number;
+  /** Taille du chiffre central */
+  fontSize?: number;
 }
 
 export default function PageScrollPicker({
@@ -40,8 +49,16 @@ export default function PageScrollPicker({
   totalPages,
   onPageChange,
   savedPage,
+  width,
+  itemWidth = DEFAULT_ITEM_WIDTH,
+  fontSize = DEFAULT_FONT_SIZE,
 }: PageScrollPickerProps) {
-  const { width: screenWidth } = useWindowDimensions();
+  const { width: windowWidth } = useWindowDimensions();
+  const screenWidth = width ?? windowWidth;
+  const STEP = itemWidth;
+  const ITEM_WIDTH = itemWidth;
+  // Le filigrane « PAGE » et la hauteur de cellule suivent la taille du chiffre
+  const cellHeight = Math.round(fontSize * 1.13);
   const flatListRef = useRef<FlatList>(null);
   const currentCenterRef = useRef(currentPage);
   const [displayPage, setDisplayPage] = useState(currentPage);
@@ -100,7 +117,7 @@ export default function PageScrollPicker({
         setDisplayPage(clamped);
       }
     },
-    [totalPages]
+    [totalPages, STEP]
   );
 
   const handleMomentumScrollEnd = useCallback(
@@ -114,7 +131,7 @@ export default function PageScrollPicker({
       // On laisse snapToInterval gérer le snap — plus de scrollToOffset manuel
       // pour éviter de bloquer les gestes suivants.
     },
-    [totalPages, onPageChange]
+    [totalPages, onPageChange, STEP]
   );
 
   const handleScrollEndDrag = useCallback(
@@ -127,7 +144,7 @@ export default function PageScrollPicker({
       onPageChange(clamped);
       // snapToInterval fait le snap ; scrollToOffset manuel bloquait les gestes
     },
-    [totalPages, onPageChange]
+    [totalPages, onPageChange, STEP]
   );
 
   const handleScrollBeginDrag = useCallback(() => {
@@ -138,19 +155,21 @@ export default function PageScrollPicker({
     ({ item }: { item: number }) => {
       const isCenter = item === displayPage;
       return (
-        <View style={[styles.itemCell, { width: STEP }]}>
-          <View style={[styles.itemContainer, { width: ITEM_WIDTH }]}>
+        <View style={[styles.itemCell, { width: STEP, height: cellHeight }]}>
+          <View style={[styles.itemContainer, { width: ITEM_WIDTH, height: cellHeight }]}>
             <Text
               style={[
                 styles.pageNumber,
-                isCenter ? styles.pageNumberCenter : styles.pageNumberSide,
+                isCenter
+                  ? [styles.pageNumberCenter, { fontSize }]
+                  : [styles.pageNumberSide, { fontSize: Math.round(fontSize * SIDE_RATIO) }],
               ]}
               numberOfLines={1}
               adjustsFontSizeToFit
               minimumFontScale={0.5}
               /*
                 Plafond d'agrandissement.
-                Ce chiffre fait déjà 128 pt, soit sept fois le corps de texte :
+                Ce chiffre fait déjà 108 pt, soit sept fois le corps de texte :
                 il est lisible bien au-delà de ce que réclame le réglage
                 d'accessibilité. Le laisser tripler le ferait déborder de sa
                 cellule de 150 pt sans rien gagner en lisibilité. On garde une
@@ -164,7 +183,7 @@ export default function PageScrollPicker({
         </View>
       );
     },
-    [displayPage]
+    [displayPage, STEP, ITEM_WIDTH, cellHeight, fontSize]
   );
 
   const keyExtractor = useCallback((item: number) => item.toString(), []);
@@ -175,7 +194,7 @@ export default function PageScrollPicker({
       offset: horizontalPadding + STEP * index,
       index,
     }),
-    [horizontalPadding]
+    [horizontalPadding, STEP]
   );
 
   return (
@@ -186,7 +205,12 @@ export default function PageScrollPicker({
           chevauche le chiffre au lieu de rester en fond : il est exclu de
           l'échelle système, comme tout élément purement ornemental.
         */}
-        <Text style={styles.pageLabel} allowFontScaling={false}>PAGE</Text>
+        <Text
+          style={[styles.pageLabel, { fontSize: Math.round(fontSize * 0.28) }]}
+          allowFontScaling={false}
+        >
+          PAGE
+        </Text>
       </View>
 
       <FlatList
@@ -229,56 +253,50 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
   pageLabel: {
-    fontFamily: 'Rokkitt_700Bold',
-    fontSize: 36,
-    color: 'rgba(0,0,0,0.08)',
-    letterSpacing: -0.72,
+    fontFamily: fonts.displayBold,
+    color: inkAlpha(0.08),
+    letterSpacing: -0.3,
     textAlign: 'center',
   },
   itemCell: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    height: 150,
   },
   itemContainer: {
     justifyContent: 'center',
     alignItems: 'center',
-    height: 150,
   },
   pageNumber: {
-    fontFamily: 'Rokkitt_700Bold',
-    fontWeight: '700',
+    fontFamily: fonts.displayHero,
     textAlign: 'center',
     // textAlignVertical + includeFontPadding : corrige le centrage vertical
     // sur Android, où le moteur de texte ajoute un padding fantôme par défaut.
     textAlignVertical: 'center',
     includeFontPadding: false,
   },
-  // Nombre central (sélectionné/en cours) — gros, noir, avec ombre portée.
-  // Pour 1-2 chiffres (0-99) : s'affiche à pleine taille 128px.
-  // Pour 3 chiffres (100-999) : adjustsFontSizeToFit réduit légèrement (~104px).
-  // Pour 4 chiffres (1000+) : réduit à ~78px, mais toujours lisible et complet.
+  // Nombre central (sélectionné/en cours) — gros, encre noyer, avec ombre portée.
+  // 108px et non 128px : Fraunces a des chiffres plus hauts et plus larges que
+  // Rokkitt, 108px garde la même présence. adjustsFontSizeToFit réduit encore
+  // la taille pour les nombres à 4 chiffres (1000+).
   //
   // PAS de lineHeight ici : sur le simulateur iOS, un lineHeight fixe combiné
   // avec adjustsFontSizeToFit provoque un bug où le texte disparaît quand la
   // taille est réduite. Sans lineHeight, le texte prend sa hauteur naturelle
   // et le conteneur (justifyContent: 'center') gère l'alignement vertical.
   pageNumberCenter: {
-    fontSize: 128,
     color: colors.dark900,
-    letterSpacing: -2.56,
-    textShadowColor: 'rgba(0,0,0,0.25)',
+    letterSpacing: -1.6,
+    textShadowColor: shadowAlpha(0.25),
     textShadowOffset: { width: 0, height: 4 },
     textShadowRadius: 6,
   },
-  // Nombres adjacents (non sélectionnés) — plus petits, gris transparent.
+  // Nombres adjacents (non sélectionnés) — plus petits, encre transparente.
   // Pas de lineHeight non plus, pour la même raison (compatibilité simulateur).
   // L'alignement vertical est assuré par le conteneur flexbox (150px de haut,
   // justifyContent: 'center'), qui centre chaque texte au même point vertical.
   pageNumberSide: {
-    fontSize: 72,
-    color: 'rgba(0,0,0,0.2)',
-    letterSpacing: -1.44,
+    color: inkAlpha(0.2),
+    letterSpacing: -0.9,
   },
 });

@@ -6,8 +6,8 @@
 
 import { Link, Stack } from 'expo-router';
 import { View, Text, StyleSheet } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { colors, spacing, borderRadius } from '../utils/constants';
+import { borderRadius, colors, fonts, spacing } from '../utils/constants';
+import { CircleAlertIcon } from 'lucide-react-native';
 
 export default function NotFoundScreen() {
   return (
@@ -15,7 +15,7 @@ export default function NotFoundScreen() {
       <Stack.Screen options={{ title: 'Oups !' }} />
       <View style={styles.container}>
         <View style={styles.iconContainer}>
-          <Ionicons name="alert-circle-outline" size={64} color={colors.textTertiary} />
+          <CircleAlertIcon size={64} color={colors.textTertiary} />
         </View>
         <Text style={styles.title}>Page introuvable</Text>
         <Text style={styles.subtitle}>
@@ -48,12 +48,13 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
   },
   title: {
-    fontSize: 24,
-    fontWeight: '700',
+    fontFamily: fonts.display,
+    fontSize: 22,
     color: colors.text,
     marginBottom: spacing.sm,
   },
   subtitle: {
+    fontFamily: fonts.body,
     fontSize: 15,
     color: colors.textSecondary,
     textAlign: 'center',
@@ -66,8 +67,8 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.md,
   },
   linkText: {
+    fontFamily: fonts.bodyBold,
     fontSize: 16,
-    fontWeight: '600',
     color: colors.textOnPrimary,
   },
 });

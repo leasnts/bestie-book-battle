@@ -1,78 +1,17 @@
 # Roadmap Bestie Book Battle
 
----
+## L'app : tout est dans le GitHub Project
 
-## P0 — Bugs & Bloquants
+La roadmap de l'app vit **uniquement** dans le project **[BBB Roadmap](https://github.com/users/leasnts/projects/1)**. C'est la seule source de vérité : statuts, priorités (labels `P0` à `P3`), jalons et issues détaillées.
 
-- [ ] **Bug déconnexion au retour sur l'app**
-  Dès que tu quittes l'app et que tu reviens, ça te déconnecte et tu dois te reconnecter. Des fixes récents ont été poussés (`fix(auth)`, `fix(loading): protect cache from stale token`) mais faut vérifier si le bug persiste encore sur la dernière build. Si oui → investiguer `authStore.ts` et le listener `onAuthStateChange`.
+Points d'entrée :
 
-- [ ] **Problème des pages**
-  Le système de suivi des pages a des incohérences — quand on met à jour ses pages ça bug dans certains cas. Lié aussi au fait que les participants peuvent avoir des éditions différentes (pas le même nombre de pages total). Si on détecte des nombres de pages différents entre participants, il faudrait basculer sur un pourcentage pour le classement plutôt qu'un nombre de pages brut. La logique pourcentage existe déjà dans `database.ts` mais faut vérifier qu'elle marche correctement.
+- **Jalon [V1 · Accueil club + carnet](https://github.com/leasnts/bestie-book-battle/milestones)**, dans cet ordre :
+  1. [#30 Accueil en trois cadres](https://github.com/leasnts/bestie-book-battle/issues/30) (epic)
+  2. [#12 Carnet partagé](https://github.com/leasnts/bestie-book-battle/issues/12) (epic)
+- **Jalon V2 · Conversation** : commentaires sur les notes, citation par photo, caps planifiés d'avance.
 
-- [ ] **Problème de cache**
-  Des données restent stale / ne se rafraîchissent pas correctement. `projectStore.ts` utilise persist + AsyncStorage avec un système de protection (si l'API retourne 0 résultats le cache est conservé). Malgré les fixes récents, des cas limites subsistent. Besoin de persister certaines infos qui ne sont pas encore persistées.
-
-- [ ] **Placeholder année qui disparaît**
-  Quand tu crées un BBB et que tu cliques sur le champ année, le placeholder disparaît et t'as tout blanc — tu sais plus ce que tu dois écrire. Fichier : `onboarding/create.tsx`.
-
----
-
-## P1 — Core V1
-
-- [ ] **Pile à lire (PAL) individuelle**
-  Chaque user a sa propre liste de livres "à lire". C'est la base pour plus tard pouvoir faire une roulette random, des book clubs, etc. Nécessite une nouvelle table Supabase, un nouveau store Zustand, et un nouvel écran dédié.
-
-- [ ] **@username**
-  Avoir un identifiant unique type @lea pour chaque user. Aujourd'hui y'a juste le prénom via Apple Sign In. Nécessite : migration DB pour ajouter un champ `username` unique, validation (pas de doublons, format), et un écran de setup dans le profil ou l'onboarding.
-
-- [ ] **Recherche de personnes pour ajouter à un challenge**
-  Aujourd'hui pour ajouter quelqu'un tu dois partager un code d'invitation 6 caractères (`project/invite.tsx`). L'idée c'est de pouvoir chercher des gens par @username et les ajouter directement. Requiert le @username comme prérequis.
-
-- [ ] **Date picker natif scroll pour la deadline**
-  Au lieu du date picker actuel, utiliser un scroll natif iOS (style roulette). `onboarding/deadline.tsx` utilise déjà `@react-native-community/datetimepicker` — vérifier que le mode `spinner` natif est bien activé, sinon switcher.
-
-- [ ] **Gérer les éditions différentes (pages vs pourcentage)**
-  Si les participants ont pas le même format / la même édition du livre, le nombre de pages total diffère. Solution : dès qu'on détecte des nombres de pages différents, on affiche un pourcentage de progression pour le classement au lieu du nombre de pages brut. La logique existe partiellement dans `database.ts`, faut la solidifier et l'expliquer clairement dans l'UI.
-
-- [ ] **Modifier la deadline dans "modifier le livre"**
-  Quand tu modifies un livre, tu peux pas changer la deadline. Les composants `EditBookSheet` et `DeadlineEditSheet` existent déjà côté front — vérifier que le lien avec le backend est complet et que la modification se sauvegarde.
-
----
-
-## P2 — Nice to have
-
-- [ ] **Heatmap de lecture sur le profil**
-  Dans la page profil, afficher les dots de l'année avec chaque jour de lecture en noir — comme le calendrier de contributions GitHub. Les données sont disponibles via `progress_history` (chaque mise à jour de page est datée). Le composant heatmap est entièrement à créer.
-
-- [ ] **Bookmarking de pages — corner, emoji, note, note vocale**
-  Pouvoir "corner" une page spécifique (ex: page 568), ajouter un emoji si t'as chialé, écrire une note texte ou une note vocale. Et avoir un menu rapide pour retrouver toutes tes notes/pages cornées. Gros ajout : nouveau modèle de données (table `page_annotations` avec page, type, contenu), nouveau UI overlay sur l'écran de progression.
-
-- [ ] **Chat de groupe + mode no spoil**
-  Avoir un chat pour parler avec son groupe de lecture. Feature clé : le mode "no spoil" — ceux qui sont derrière toi dans la lecture ne peuvent pas voir tes messages (ou ils sont blurrés). Gros chantier : Supabase Realtime pour le messaging, nouveau store, nouveaux écrans, logique de filtrage basée sur la progression de chaque participant.
-
-- [ ] **Roulette random parmi les livres à lire**
-  Une roulette animée qui choisit aléatoirement le prochain livre parmi ta pile à lire. Feature fun et engageante. Dépend de la PAL (P1). Animation avec `react-native-reanimated`.
-
-- [ ] **Mascotte : yeux dans nuage**
-  Le design de la mascotte BBB — des yeux (blancs, contour bleu répliqué) dans un nuage, sur fond noir. `PopEyes.tsx` existe déjà avec les yeux (variants together/left/right). L'idée c'est d'ajouter l'élément nuage autour. C'est principalement une tâche design/illustration.
-
----
-
-## P3 — Vision future
-
-- [ ] **Système de book clubs (multi-clubs, PAL par club)**
-  Un user peut être dans plusieurs book clubs. Chaque club a sa propre PAL commune. L'architecture actuelle est basée sur des "challenges" individuels — il faudrait refondre vers un modèle `book_clubs` > `challenges` où un club contient plusieurs lectures. Dépend de la PAL individuelle (P1).
-
-- [ ] **Gamification : système de maillots (inspiré du vélo)**
-  Comme au Tour de France :
-  - Maillot jaune : celle qui finit le livre en premier
-  - Maillot vert : la plus régulière (lit tous les jours)
-  - Maillot bleu : celle qui a lu le plus la nuit
-  `StreakBadge.tsx` et `Crown.tsx` existent comme base de gamification. Pour le maillot bleu il faut un tracking horaire (champ `read_at` timestamp dans `progress_history`).
-
-- [ ] **Icône d'app dynamique pour le leader**
-  Si t'as la couronne (tu es en tête du classement), ton icône d'app sur l'écran d'accueil change pour un design plus stylé. Motivation pour pas perdre le truc cool. Faisable sur iOS via `CFBundleAlternateIcons` mais nécessite un plugin Expo natif + logique de mise à jour côté backend.
+L'ancienne liste P0 → P3 de ce fichier a été retirée le 15/09/2026 : elle n'était plus à jour. Elle reste consultable dans l'historique git de ce fichier.
 
 ---
 

@@ -12,7 +12,6 @@
  * - Footer fixé en bas (hors ScrollView)
  */
 
-import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useState } from 'react';
@@ -28,11 +27,12 @@ import {
     Text
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, fontSize, fontWeight, spacing, borderRadius } from '../../utils/constants';
+import { borderRadius, colors, fonts, fontSize, spacing } from '../../utils/constants';
 import { useAuthStore } from '../../stores/authStore';
 import { useProjectStore } from '../../stores/projectStore';
 import { useProgressStore } from '../../stores/progressStore';
 import { createOrUpdateUserProfile } from '../../services/supabase/auth';
+import { BookOpenIcon, ChevronLeftIcon, XIcon } from 'lucide-react-native';
 
 // Assets
 const TEXTURE_IMAGE = require('../../assets/images/61ea1e0c638b5b9c8100383a37a5b488848db623.png');
@@ -128,7 +128,7 @@ export default function OnboardingWelcomeScreen() {
                     <View style={[styles.header, styles.headerRow]}>
                         <Button3D
                             variant="secondary"
-                            icon="chevron-back"
+                            icon={ChevronLeftIcon}
                             iconOnly
                             size="compact"
                             onPress={() => router.back()}
@@ -136,7 +136,7 @@ export default function OnboardingWelcomeScreen() {
                         {params.addChallenge === 'true' && (
                             <Button3D
                                 variant="primary"
-                                icon="close"
+                                icon={XIcon}
                                 iconOnly
                                 size="compact"
                                 onPress={() => router.navigate('/(tabs)')}
@@ -186,7 +186,7 @@ export default function OnboardingWelcomeScreen() {
                                                 },
                                             ]}
                                         >
-                                            <Ionicons name="book" size={40} color={colors.alphaWhite30} />
+                                            <BookOpenIcon size={40} color={colors.alphaWhite30} />
                                         </View>
                                     )}
 
@@ -293,17 +293,15 @@ const styles = StyleSheet.create({
         gap: spacing.lg,
     },
     title: {
-        fontFamily: 'Rokkitt_500Medium',
-        fontSize: fontSize['3xl'],
-        fontWeight: fontWeight.medium,
+        fontFamily: fonts.display,
+        fontSize: 30,
         color: colors.textPrimary,
-        letterSpacing: -0.72,
-        lineHeight: 44,
+        letterSpacing: -0.3,
+        lineHeight: 36,
     },
     description: {
-        fontFamily: 'WorkSans_400Regular',
+        fontFamily: fonts.body,
         fontSize: fontSize.md,
-        fontWeight: fontWeight.regular,
         color: colors.textSecondary,
         lineHeight: 24,
         marginBottom: spacing['4xl'],
@@ -353,16 +351,14 @@ const styles = StyleSheet.create({
         gap: spacing.xs,
     },
     bookAuthor: {
-        fontFamily: 'WorkSans_400Regular',
+        fontFamily: fonts.body,
         fontSize: fontSize.sm,
-        fontWeight: fontWeight.regular,
         color: colors.textSubtle,
         lineHeight: 20,
     },
     bookTitle: {
-        fontFamily: 'WorkSans_600SemiBold',
-        fontSize: fontSize.md,
-        fontWeight: fontWeight.semibold,
+        fontFamily: fonts.display,
+        fontSize: 18,
         color: colors.white,
         lineHeight: 24,
     },
@@ -377,14 +373,13 @@ const styles = StyleSheet.create({
         marginTop: spacing.xs,
     },
     pagesText: {
-        fontFamily: 'WorkSans_400Regular',
+        fontFamily: fonts.body,
         fontSize: fontSize.xs,
-        fontWeight: fontWeight.regular,
         color: colors.white,
         lineHeight: 16,
     },
     customPagesLink: {
-        fontFamily: 'WorkSans_400Regular',
+        fontFamily: fonts.body,
         fontSize: fontSize.sm,
         color: colors.textSecondary,
         textDecorationLine: 'underline',
@@ -394,13 +389,13 @@ const styles = StyleSheet.create({
         gap: spacing.sm,
     },
     customPagesLabel: {
-        fontFamily: 'WorkSans_400Regular',
+        fontFamily: fonts.body,
         fontSize: fontSize.sm,
         color: colors.textSecondary,
         lineHeight: 20,
     },
     customPagesInput: {
-        fontFamily: 'WorkSans_400Regular',
+        fontFamily: fonts.body,
         fontSize: fontSize.md,
         color: colors.textPrimary,
         backgroundColor: colors.bgSecondary,

@@ -15,8 +15,9 @@
  */
 
 import { Image } from 'expo-image';
+import { useRouter } from 'expo-router';
 import React, { useMemo } from 'react';
-import { FlatList, StyleSheet, Text, View } from 'react-native';
+import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, { Easing, FadeInDown, useReducedMotion } from 'react-native-reanimated';
 import {
   formatParticipantCount,
@@ -25,8 +26,8 @@ import {
   rankParticipants,
   RankedParticipant,
 } from '../../utils/leaderboard';
-import { borderRadius, colors, motion, spacing } from '../../utils/constants';
-import IconFlame from '../icons/IconFlame';
+import { borderRadius, colors, fonts, inkAlpha, motion, spacing } from '../../utils/constants';
+import { FlameIcon } from 'lucide-react-native';
 
 // ─── Props ─────────────────────────────────────────────────────────
 
@@ -35,8 +36,6 @@ interface LeaderboardListProps {
   participants: LeaderboardParticipant[];
   /** ID de l'utilisateur connecté, pour surligner sa ligne */
   myUserId: string;
-  /** true = les scores sont des pourcentages (éditions différentes) */
-  showPercentage?: boolean;
 }
 
 const DEFAULT_AVATAR = require('../../assets/images/profile_picture_default.png');
@@ -53,16 +52,16 @@ const resolveAvatar = (url: string | null) => {
 function LeaderboardRow({
   participant,
   index,
-  showPercentage,
   animate,
+  onPress,
 }: {
   participant: RankedParticipant;
   index: number;
-  showPercentage?: boolean;
   animate: boolean;
+  onPress: () => void;
 }) {
   const { isMe, isLeader, rank } = participant;
-  const score = formatScore(participant, showPercentage);
+  const score = formatScore(participant);
 
   // La barre est dessinée pleine largeur puis compressée horizontalement :
   // on anime `transform`, jamais `width`, donc aucun recalcul de layout.
@@ -81,9 +80,14 @@ function LeaderboardRow({
               .easing(Easing.bezier(...motion.easing.easeOutQuart).factory())
           : undefined
       }
-      style={[styles.row, isMe && styles.rowMe]}
-      accessibilityLabel={`${participant.name}, rang ${rank}, ${score}${showPercentage ? ' pour cent' : ' pages'}`}
     >
+      <Pressable
+        onPress={onPress}
+        style={({ pressed }) => [styles.row, isMe && styles.rowMe, pressed && styles.rowPressed]}
+        accessibilityRole="button"
+        accessibilityLabel={`${participant.name}, rang ${rank}, ${score} pour cent`}
+        accessibilityHint="Ouvre son journal de lecture"
+      >
       {/* ── Rang ── */}
       <Text style={[styles.rank, isMe && styles.rankMe]}>{rank}</Text>
 
@@ -112,17 +116,14 @@ function LeaderboardRow({
             <View
               style={[styles.streakBadge, participant.streakAtRisk && styles.streakBadgeAtRisk]}
             >
-              <IconFlame size={11} color={colors.textTertiary} />
+              <FlameIcon size={11} color={colors.textTertiary} fill={colors.textTertiary} />
               <Text style={styles.streakText}>{participant.streak}</Text>
             </View>
           )}
 
           <View style={styles.spacer} />
 
-          <Text style={styles.score}>
-            {score}
-            {showPercentage ? '%' : ''}
-          </Text>
+          <Text style={styles.score}>{score}%</Text>
         </View>
 
         <View style={styles.progressTrack}>
@@ -135,18 +136,16 @@ function LeaderboardRow({
           />
         </View>
       </View>
+      </Pressable>
     </Animated.View>
   );
 }
 
 // ─── Composant principal ───────────────────────────────────────────
 
-export default function LeaderboardList({
-  participants,
-  myUserId,
-  showPercentage,
-}: LeaderboardListProps) {
+export default function LeaderboardList({ participants, myUserId }: LeaderboardListProps) {
   const reducedMotion = useReducedMotion();
+  const router = useRouter();
 
   // Même fonction de tri que l'accueil → rangs cohérents entre les deux écrans
   const ranked = useMemo(
@@ -158,7 +157,7 @@ export default function LeaderboardList({
     /*
       FlatList plutôt qu'une ScrollView remplie par `.map()`.
 
-      Un book club vise 20 à 200 lectrices. Avec `.map()`, ouvrir le classement
+      Un book club vise 20 à 200 membres. Avec `.map()`, ouvrir le classement
       monterait les 200 lignes d'un coup — chacune avec son image, sa barre et
       son animation d'entrée — avant le premier affichage. FlatList ne monte que
       ce qui est à l'écran et recycle le reste.
@@ -179,8 +178,8 @@ export default function LeaderboardList({
         <LeaderboardRow
           participant={item}
           index={index}
-          showPercentage={showPercentage}
           animate={!reducedMotion}
+          onPress={() => router.push(`/participant/${item.id}`)}
         />
       )}
       ListHeaderComponent={
@@ -214,7 +213,7 @@ const styles = StyleSheet.create({
   headerSubtitle: {
     paddingHorizontal: spacing.md,
     paddingBottom: spacing.sm,
-    fontFamily: 'WorkSans_500Medium',
+    fontFamily: fonts.bodyMedium,
     fontSize: 14,
     color: colors.textTertiary,
   },
@@ -240,15 +239,18 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.md,
   },
   /** Ma ligne : fond teinté pour la repérer d'un coup d'œil */
+  rowPressed: {
+    opacity: 0.6,
+  },
   rowMe: {
-    backgroundColor: 'rgba(24,29,39,0.06)',
+    backgroundColor: inkAlpha(0.06),
   },
 
   // ═══ RANG ═══
   rank: {
     width: RANK_WIDTH,
-    fontFamily: 'Rokkitt_600SemiBold',
-    fontSize: 16,
+    fontFamily: fonts.display,
+    fontSize: 15,
     color: colors.textPlaceholder,
     textAlign: 'center',
   },
@@ -296,18 +298,18 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   name: {
-    fontFamily: 'WorkSans_500Medium',
+    fontFamily: fonts.bodySemiBold,
     fontSize: 16,
     color: colors.textSecondary,
     flexShrink: 1,
   },
   nameMe: {
-    fontFamily: 'WorkSans_700Bold',
+    fontFamily: fonts.bodyExtraBold,
     color: colors.textPrimary,
   },
   score: {
-    fontFamily: 'Rokkitt_600SemiBold',
-    fontSize: 20,
+    fontFamily: fonts.display,
+    fontSize: 18,
     color: colors.textPrimary,
     textAlign: 'right',
   },
@@ -316,7 +318,7 @@ const styles = StyleSheet.create({
   progressTrack: {
     height: 6,
     borderRadius: borderRadius.full,
-    backgroundColor: 'rgba(24,29,39,0.08)',
+    backgroundColor: inkAlpha(0.08),
     overflow: 'hidden',
   },
   progressFill: {
@@ -346,10 +348,10 @@ const styles = StyleSheet.create({
   streakBadgeAtRisk: {
     opacity: 0.6,
     borderStyle: 'dashed',
-    borderColor: 'rgba(0,0,0,0.3)',
+    borderColor: inkAlpha(0.3),
   },
   streakText: {
-    fontFamily: 'WorkSans_600SemiBold',
+    fontFamily: fonts.bodySemiBold,
     fontSize: 11,
     color: colors.textTertiary,
   },

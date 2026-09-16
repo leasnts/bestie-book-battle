@@ -1,34 +1,24 @@
 /**
- * Composant ParticipantHistorySheet
+ * ParticipantTimeline — le journal de lecture d'une personne.
  *
- * Bottom sheet modal qui affiche l'historique des imports de pages
- * d'un participant dans un challenge.
+ * Les pages enregistrées, regroupées par jour, reliées par un trait vertical :
+ * heure, page atteinte, et de combien elle a avancé.
  *
- * Comment ça marche :
- * - On reçoit la liste d'entrées ProgressHistory[] d'un participant
- * - On les regroupe par jour (created_date)
- * - Chaque jour est une section avec un header date
- * - Chaque entrée montre : heure · page atteinte · badge "+X pages"
- * - Un trait vertical (timeline) relie les entrées visuellement
- *
- * Utilise BottomSheet (custom) pour le glissement-pour-fermer natif.
- * La ScrollView du contenu coexiste avec le handle de drag :
- * scroller la liste ne déclenche pas le dismiss — seul le handle en haut le fait.
+ * Le composant EST la ScrollView de l'écran, sans View autour : c'est la
+ * condition pour qu'un sheet natif (`formSheet`) lui donne les bonnes marges
+ * (même leçon que le classement complet, #33). L'en-tête avec l'avatar défile
+ * donc avec le contenu, comme sur les écrans iOS standard.
  */
-
-import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import React, { useMemo } from 'react';
-import { Dimensions, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { ProgressHistory } from '../../types/supabase';
-import { borderRadius, colors, spacing } from '../../utils/constants';
-import BottomSheet from './BottomSheet';
+import { borderRadius, colors, fonts, inkAlpha, spacing } from '../../utils/constants';
+
 
 // ─── Props ─────────────────────────────────────────────────────────
 
-interface ParticipantHistorySheetProps {
-  visible: boolean;
-  onClose: () => void;
+interface ParticipantTimelineProps {
   participantName: string;
   participantPhoto: string | null;
   history?: ProgressHistory[] | null;
@@ -86,13 +76,11 @@ interface DayGroup {
 
 // ─── Composant principal ───────────────────────────────────────────
 
-export default function ParticipantHistorySheet({
-  visible,
-  onClose,
+export default function ParticipantTimeline({
   participantName,
   participantPhoto,
   history = [],
-}: ParticipantHistorySheetProps) {
+}: ParticipantTimelineProps) {
 
   const dayGroups: DayGroup[] = useMemo(() => {
     const safeHistory = Array.isArray(history) ? history : [];
@@ -117,39 +105,27 @@ export default function ParticipantHistorySheet({
   }, [history]);
 
   return (
-    <BottomSheet visible={visible} onClose={onClose}>
-      <View style={styles.container}>
-        {/* Header : avatar + nom — fixe, pas dans le scroll */}
-        <View style={styles.header}>
-          <Image
-            source={resolveAvatar(participantPhoto)}
-            style={styles.headerAvatar}
-            contentFit="cover"
-          />
-          <View style={styles.headerTexts}>
-            <Text style={styles.headerName}>{participantName}</Text>
-            <Text style={styles.headerSubtitle}>Historique de lecture</Text>
-          </View>
-          <Pressable
-            onPress={onClose}
-            hitSlop={12}
-            style={styles.closeBtn}
-            accessibilityRole="button"
-            accessibilityLabel="Fermer"
-          >
-            <Ionicons name="close" size={22} color={colors.textSubtle} />
-          </Pressable>
+    <ScrollView
+      style={styles.scrollView}
+      contentContainerStyle={styles.scrollContent}
+      contentInsetAdjustmentBehavior="automatic"
+      showsVerticalScrollIndicator={false}
+    >
+      {/* En-tête : avatar + nom, il défile avec le contenu */}
+      <View style={styles.header}>
+        <Image
+          source={resolveAvatar(participantPhoto)}
+          style={styles.headerAvatar}
+          contentFit="cover"
+        />
+        <View style={styles.headerTexts}>
+          <Text style={styles.headerName}>{participantName}</Text>
+          <Text style={styles.headerSubtitle}>Journal de lecture</Text>
         </View>
+      </View>
 
-        <View style={styles.divider} />
+      <View style={styles.divider} />
 
-        {/* Timeline scrollable */}
-        <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-          bounces
-        >
           {dayGroups.length === 0 ? (
             <View style={styles.emptyState}>
               <Text style={styles.emptyEmoji}>📖</Text>
@@ -217,18 +193,11 @@ export default function ParticipantHistorySheet({
               </View>
             ))
           )}
-        </ScrollView>
-      </View>
-    </BottomSheet>
+    </ScrollView>
   );
 }
 
 // ─── Styles ────────────────────────────────────────────────────────
-
-const SCREEN_HEIGHT = Dimensions.get('window').height;
-// Hauteur max de la sheet (88% écran) moins les zones fixes :
-// handle bar (~30px) + header (~76px) + divider (1px) + marge (~16px)
-const SCROLL_MAX_HEIGHT = SCREEN_HEIGHT * 0.88 - 123;
 
 const TIMELINE_TRACK_WIDTH = 32;
 const DOT_SIZE = 12;
@@ -236,39 +205,32 @@ const DOT_INNER_SIZE = 6;
 const LINE_WIDTH = 2;
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-
   // ═══ HEADER ═══
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 24,
     paddingVertical: 16,
     gap: 16,
   },
-  closeBtn: { padding: 4 },
   headerAvatar: {
     width: 44,
     height: 44,
     borderRadius: borderRadius.sm,
     borderWidth: 2,
-    borderColor: 'rgba(0,0,0,0.06)',
+    borderColor: inkAlpha(0.06),
   },
   headerTexts: {
     flex: 1,
     gap: 2,
   },
   headerName: {
-    fontFamily: 'WorkSans_600SemiBold',
+    fontFamily: fonts.bodySemiBold,
     fontSize: 18,
     color: colors.textPrimary,
     lineHeight: 24,
   },
   headerSubtitle: {
-    fontFamily: 'WorkSans_400Regular',
+    fontFamily: fonts.body,
     fontSize: 13,
     color: colors.textTertiary,
     lineHeight: 18,
@@ -278,17 +240,16 @@ const styles = StyleSheet.create({
   divider: {
     height: 1,
     backgroundColor: colors.borderLight,
-    marginHorizontal: 24,
   },
 
   // ═══ SCROLL VIEW ═══
+  // Pas de hauteur imposée : c'est le sheet natif qui donne la sienne
   scrollView: {
-    maxHeight: SCROLL_MAX_HEIGHT,
+    backgroundColor: colors.white,
   },
   scrollContent: {
     paddingHorizontal: 24,
-    paddingTop: 20,
-    paddingBottom: 32,
+    paddingBottom: 48,
   },
 
   // ═══ ÉTAT VIDE ═══
@@ -302,13 +263,13 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   emptyTitle: {
-    fontFamily: 'WorkSans_600SemiBold',
+    fontFamily: fonts.bodySemiBold,
     fontSize: 16,
     color: colors.textPrimary,
     lineHeight: 22,
   },
   emptySubtitle: {
-    fontFamily: 'WorkSans_400Regular',
+    fontFamily: fonts.body,
     fontSize: 14,
     color: colors.textPlaceholder,
     lineHeight: 20,
@@ -331,7 +292,7 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
   },
   dayBadgeText: {
-    fontFamily: 'WorkSans_600SemiBold',
+    fontFamily: fonts.bodySemiBold,
     fontSize: 12,
     color: colors.white,
     lineHeight: 16,
@@ -352,7 +313,7 @@ const styles = StyleSheet.create({
     width: DOT_SIZE,
     height: DOT_SIZE,
     borderRadius: DOT_SIZE / 2,
-    backgroundColor: 'rgba(0,0,0,0.06)',
+    backgroundColor: inkAlpha(0.06),
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 5,
@@ -367,7 +328,7 @@ const styles = StyleSheet.create({
   timelineLine: {
     width: LINE_WIDTH,
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.08)',
+    backgroundColor: inkAlpha(0.08),
     minHeight: 24,
     zIndex: 1,
   },
@@ -387,7 +348,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   entryTime: {
-    fontFamily: 'WorkSans_500Medium',
+    fontFamily: fonts.bodyMedium,
     fontSize: 13,
     color: colors.textPlaceholder,
     lineHeight: 18,
@@ -399,7 +360,7 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
   },
   pagesDeltaText: {
-    fontFamily: 'WorkSans_600SemiBold',
+    fontFamily: fonts.bodySemiBold,
     fontSize: 11,
     color: colors.textTertiary,
     lineHeight: 16,
@@ -411,9 +372,9 @@ const styles = StyleSheet.create({
     color: colors.textPlaceholder,
   },
   entryPageNumber: {
-    fontFamily: 'Rokkitt_600SemiBold',
-    fontSize: 20,
+    fontFamily: fonts.display,
+    fontSize: 18,
     color: colors.textTertiary,
-    lineHeight: 28,
+    lineHeight: 24,
   },
 });
