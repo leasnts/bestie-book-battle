@@ -9,21 +9,34 @@
  * ce que le serveur a bien voulu envoyer.
  */
 
+import { randomUUID } from 'expo-crypto';
 import { create } from 'zustand';
 import {
   addReaction,
   createAnnotation,
   deleteAnnotation,
+  deleteVoice,
   getAnnotations,
   getAnnotationsAhead,
   getReadAnnotationIds,
   markAnnotationRead,
   removeReaction,
   updateAnnotation,
+  uploadVoice,
+  voicePath,
   type AnnotationAhead,
   type AnnotationWithAuthor,
 } from '../services/supabase/annotations';
 import type { Annotation, AnnotationInsert, AnnotationUpdate } from '../types/supabase';
+
+/** Un vocal tout juste enregistré sur le téléphone, pas encore envoyé */
+export interface VoiceClip {
+  /** Le fichier local, en cache */
+  uri: string;
+  seconds: number;
+  /** L'onde : `VOICE_BARS` niveaux de 0 à 100 */
+  levels: number[];
+}
 
 interface AnnotationStore {
   // ═══ État ═══
@@ -56,8 +69,13 @@ interface AnnotationStore {
   revealAfterSave: (challengeId: string, userId: string) => Promise<void>;
   /** Les post-it ont fait leur travail : ils se rangent dans le carnet */
   dismissRevealed: () => void;
-  addNote: (note: AnnotationInsert) => Promise<Annotation>;
-  editNote: (id: string, patch: AnnotationUpdate) => Promise<void>;
+  /** Publie une note, avec son vocal s'il y en a un */
+  addNote: (note: AnnotationInsert, voice?: VoiceClip | null) => Promise<Annotation>;
+  /**
+   * Modifie ma note. `voice` : `undefined` garde le vocal tel quel, `null` le
+   * supprime, un nouvel enregistrement le remplace.
+   */
+  editNote: (id: string, patch: AnnotationUpdate, voice?: VoiceClip | null) => Promise<void>;
   removeNote: (id: string) => Promise<void>;
   /** Ajoute ou retire ma réaction, selon qu'elle existe déjà */
   toggleReaction: (annotationId: string, userId: string, emoji: string) => Promise<void>;
@@ -129,22 +147,65 @@ export const useAnnotationStore = create<AnnotationStore>((set, get) => ({
     if (get().revealedIds.length > 0) set({ revealedIds: [], revealedAt: null });
   },
 
-  addNote: async (note) => {
-    const created = await createAnnotation(note);
-    // On recharge pour récupérer l'autrice et les réactions du même coup
-    await get().loadAnnotations(note.challenge_id, note.user_id);
-    return created;
+  addNote: async (note, voice) => {
+    // L'identifiant est choisi ici : le vocal part AVANT la note, et une note
+    // qui n'a qu'un vocal ne passerait pas la règle « une note dit quelque chose »
+    // sans son chemin.
+    const id = note.id ?? randomUUID();
+    const path = voice ? voicePath(note.challenge_id, id) : null;
+    if (voice && path) await uploadVoice(voice.uri, path);
+
+    try {
+      const created = await createAnnotation({
+        ...note,
+        id,
+        ...(voice && path
+          ? { audio_path: path, audio_seconds: voice.seconds, audio_levels: voice.levels }
+          : {}),
+      });
+      // On recharge pour récupérer l'autrice et les réactions du même coup
+      await get().loadAnnotations(note.challenge_id, note.user_id);
+      return created;
+    } catch (error) {
+      // Pas de vocal orphelin dans le bucket
+      if (path) await deleteVoice(path);
+      throw error;
+    }
   },
 
-  editNote: async (id, patch) => {
-    await updateAnnotation(id, patch);
+  editNote: async (id, patch, voice) => {
+    const current = get().notes.find((note) => note.id === id);
+    const oldPath = current?.audio_path ?? null;
+    let full: AnnotationUpdate = patch;
+    let newPath: string | null = null;
+
+    if (voice === null) {
+      full = { ...patch, audio_path: null, audio_seconds: null, audio_levels: null };
+    } else if (voice && current) {
+      newPath = voicePath(current.challenge_id, id);
+      await uploadVoice(voice.uri, newPath);
+      full = { ...patch, audio_path: newPath, audio_seconds: voice.seconds, audio_levels: voice.levels };
+    }
+
+    try {
+      await updateAnnotation(id, full);
+    } catch (error) {
+      if (newPath) await deleteVoice(newPath);
+      throw error;
+    }
+
+    // L'ancien vocal ne sert plus qu'une fois la note à jour
+    if (voice !== undefined && oldPath) await deleteVoice(oldPath);
+
     set((state) => ({
-      notes: state.notes.map((note) => (note.id === id ? { ...note, ...patch } : note)),
+      notes: state.notes.map((note) => (note.id === id ? { ...note, ...full } : note)),
     }));
   },
 
   removeNote: async (id) => {
+    const audioPath = get().notes.find((note) => note.id === id)?.audio_path;
     await deleteAnnotation(id);
+    if (audioPath) await deleteVoice(audioPath);
     set((state) => ({ notes: state.notes.filter((note) => note.id !== id) }));
   },
 

@@ -49,6 +49,17 @@ check('six catégories', Object.keys(m.ANNOTATION_CATEGORIES).length, 6);
 check('catégorie par défaut', m.DEFAULT_CATEGORY, 'a_retenir');
 check('marge identique à la base', m.UNLOCK_MARGIN, 0.01);
 
+// Les vocaux
+check('silence du micro', m.levelFromMetering(-160), 0);
+check('micro à fond', m.levelFromMetering(0), 1);
+check('micro sans mesure', m.levelFromMetering(undefined), 0);
+check('onde : toujours 40 barres', m.downsampleLevels([0.1, 0.5, 1]).length, 40);
+check('onde : rapportée au plus fort', Math.max(...m.downsampleLevels([0.1, 0.2, 0.25])), 100);
+check('onde sans son : barres au plus bas', m.downsampleLevels([]).every((v) => v === 6), true);
+check('onde : garde le pic de chaque tranche', m.downsampleLevels([0, 1, 0, 0], 2), [100, 6]);
+check('durée 24 s', m.formatVoiceDuration(24), '0:24');
+check('durée 2 min', m.formatVoiceDuration(120), '2:00');
+
 let failures = 0;
 for (const [name, got, want, ok] of cases) {
   if (!ok) failures += 1;

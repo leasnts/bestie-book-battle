@@ -240,6 +240,7 @@ export interface Database {
           body: string | null;
           audio_path: string | null;
           audio_seconds: number | null;
+          audio_levels: number[] | null; // l'onde du vocal : 40 niveaux de 0 à 100
           emoji: string | null;
           category: AnnotationCategory;
           visibility: AnnotationVisibility;
@@ -258,6 +259,7 @@ export interface Database {
           body?: string | null;
           audio_path?: string | null;
           audio_seconds?: number | null;
+          audio_levels?: number[] | null;
           emoji?: string | null;
           category?: AnnotationCategory;
           visibility?: AnnotationVisibility;
@@ -273,6 +275,7 @@ export interface Database {
           body?: string | null;
           audio_path?: string | null;
           audio_seconds?: number | null;
+          audio_levels?: number[] | null;
           emoji?: string | null;
           category?: AnnotationCategory;
           visibility?: AnnotationVisibility;

@@ -20,6 +20,7 @@ import type { AnnotationWithAuthor } from '../../services/supabase/annotations';
 import { ANNOTATION_CATEGORIES, formatNotePage } from '../../utils/annotations';
 import { borderRadius, colors, creamAlpha, fonts, inkAlpha, spacing } from '../../utils/constants';
 import PressableScale from './PressableScale';
+import VoicePlayer from './VoicePlayer';
 
 const DEFAULT_AVATAR = require('../../assets/images/profile_picture_default.png');
 
@@ -69,6 +70,14 @@ export default function NoteCard({ note, myTotalPages, isMine, onPress }: NoteCa
           </Text>
         )}
       </View>
+
+      {!!note.audio_path && (
+        <VoicePlayer
+          path={note.audio_path}
+          seconds={note.audio_seconds ?? 0}
+          levels={note.audio_levels}
+        />
+      )}
 
       <View style={styles.footer}>
         {note.visibility === 'private' && <Text style={styles.private}>Moi seule</Text>}

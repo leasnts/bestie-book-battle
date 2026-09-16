@@ -62,6 +62,18 @@ CREATE TABLE IF NOT EXISTS public.annotations (
   )
 );
 
+-- #49 — L'onde d'un vocal : 40 niveaux de 0 à 100, relevés pendant
+-- l'enregistrement. Sans eux, le lecteur ne saurait dessiner qu'une ligne plate :
+-- lire l'onde dans le fichier demanderait de le télécharger en entier.
+ALTER TABLE public.annotations
+  ADD COLUMN IF NOT EXISTS audio_levels SMALLINT[];
+
+DO $$ BEGIN
+  ALTER TABLE public.annotations
+    ADD CONSTRAINT annotation_audio_levels_size
+    CHECK (audio_levels IS NULL OR cardinality(audio_levels) <= 64);
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
 -- Le carnet se lit par livre, dans l'ordre du livre
 CREATE INDEX IF NOT EXISTS annotations_challenge_position_idx
   ON public.annotations (challenge_id, position);

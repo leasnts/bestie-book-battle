@@ -6,6 +6,8 @@
  * Voir `scripts/add-annotations.sql`.
  */
 
+import { decode } from 'base64-arraybuffer';
+import * as FileSystem from 'expo-file-system/legacy';
 import { supabase } from '../../supabaseConfig';
 import type {
   Annotation,
@@ -139,17 +141,56 @@ export async function getReadAnnotationIds(userId: string): Promise<string[]> {
 
 // ─── Vocaux ─────────────────────────────────────────────────────────
 
+const AUDIO_BUCKET = 'annotation-audio';
+
+/**
+ * Où ranger le vocal d'une note : `{challenge_id}/{annotation_id}-{horodatage}.m4a`.
+ *
+ * L'horodatage donne un nouveau nom à chaque vocal refait : le bucket n'autorise
+ * pas le remplacement d'un fichier, seulement l'ajout et la suppression.
+ */
+export function voicePath(challengeId: string, annotationId: string): string {
+  return `${challengeId}/${annotationId}-${Date.now()}.m4a`;
+}
+
+/** Envoie un vocal enregistré sur le téléphone (AAC mono, .m4a) */
+export async function uploadVoice(localUri: string, path: string): Promise<void> {
+  const base64 = await FileSystem.readAsStringAsync(localUri, { encoding: 'base64' as any });
+  const { error } = await supabase.storage
+    .from(AUDIO_BUCKET)
+    .upload(path, decode(base64), { contentType: 'audio/mp4' });
+  if (error) throw error;
+}
+
+/** Supprime un vocal. Sans conséquence s'il n'existe plus. */
+export async function deleteVoice(path: string): Promise<void> {
+  const { error } = await supabase.storage.from(AUDIO_BUCKET).remove([path]);
+  if (error) console.warn('[Carnet] vocal non supprimé', error);
+}
+
+/** URL signée par chemin, gardée un peu moins longtemps qu'elle ne vaut */
+const signedUrls = new Map<string, { url: string; expiresAt: number }>();
+const SIGNED_URL_SECONDS = 3600;
+
 /**
  * Le bucket des vocaux est PRIVÉ : on ne peut pas en donner l'URL publique.
- * Une URL signée vaut une heure, ce qui suffit largement à écouter une note.
+ * Une URL signée vaut une heure, ce qui suffit largement à écouter une note ;
+ * elle n'est demandée qu'au premier ▶, pas pour chaque note de la liste.
  */
 export async function getAudioUrl(audioPath: string): Promise<string | null> {
+  const cached = signedUrls.get(audioPath);
+  if (cached && cached.expiresAt > Date.now()) return cached.url;
+
   const { data, error } = await supabase.storage
-    .from('annotation-audio')
-    .createSignedUrl(audioPath, 3600);
-  if (error) {
+    .from(AUDIO_BUCKET)
+    .createSignedUrl(audioPath, SIGNED_URL_SECONDS);
+  if (error || !data?.signedUrl) {
     console.warn('[Carnet] vocal illisible', error);
     return null;
   }
-  return data?.signedUrl ?? null;
+  signedUrls.set(audioPath, {
+    url: data.signedUrl,
+    expiresAt: Date.now() + (SIGNED_URL_SECONDS - 300) * 1000,
+  });
+  return data.signedUrl;
 }

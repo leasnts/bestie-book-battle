@@ -465,6 +465,18 @@ couvertures. Trois états de couverture : **en cours** (le livre de l'accueil)
 bordure encre de 2 pt détachée de 3 pt, **pas commencé** filet `inkAlpha(0.15)`,
 **terminé** cadre sombre + marque-page ✓ (`BookCover`).
 
+### Vocaux du carnet
+
+Un vocal s'enregistre comme on écrit : **un toucher pour démarrer, un pour
+arrêter** (jamais d'appui long). Rangée à places fixes sous le post-it de la
+note : 🎙 démarrer → ■ arrêter (onde en direct + `0:12 / 2:00`) → ↺ refaire,
+`0:24`, 🗑 supprimer. 2 minutes au maximum.
+
+Le lecteur (`VoicePlayer`) est le même dans l'écran d'écriture et dans le
+carnet : pastille `creamAlpha(0.55)` posée sur le post-it, rond ▶ encre de
+30 pt, 40 barres d'onde qui se remplissent à l'écoute, durée en chiffres
+tabulaires. Un seul vocal parle à la fois, et il s'entend en mode silencieux.
+
 ### Icônes
 
 **Une seule banque : [Lucide](https://lucide.dev/icons/)** (`lucide-react-native`),

@@ -27,7 +27,9 @@ import {
   View,
 } from 'react-native';
 import PressableScale from '../../components/ui/PressableScale';
-import { useAnnotationStore } from '../../stores/annotationStore';
+import VoicePlayer from '../../components/ui/VoicePlayer';
+import VoiceRecorder from '../../components/ui/VoiceRecorder';
+import { useAnnotationStore, type VoiceClip } from '../../stores/annotationStore';
 import { useAuthStore } from '../../stores/authStore';
 import { useProgressStore } from '../../stores/progressStore';
 import { useProjectStore } from '../../stores/projectStore';
@@ -39,6 +41,14 @@ import {
   positionFromPage,
 } from '../../utils/annotations';
 import { borderRadius, colors, fonts, inkAlpha, spacing } from '../../utils/constants';
+
+/** Le vocal affiché : déjà envoyé (`path`) ou tout juste enregistré (`uri`) */
+interface NoteVoice {
+  path?: string | null;
+  uri?: string;
+  seconds: number;
+  levels?: number[] | null;
+}
 
 /** Les emojis qui reviennent le plus en club de lecture. Le clavier fait le reste. */
 const QUICK_EMOJIS = ['😭', '😂', '🔥', '😱', '🥺', '💀', '📌', '❤️'];
@@ -76,11 +86,34 @@ export default function NoteFormRoute() {
   );
   const [saving, setSaving] = useState(false);
 
-  const hasContent = emoji !== null || body.trim().length > 0;
+  /**
+   * Le vocal : celui déjà envoyé (un chemin), un nouvel enregistrement (un
+   * fichier), ou rien. `voiceChanged` dit s'il faut toucher au vocal en base.
+   */
+  const [voice, setVoice] = useState<NoteVoice | null>(
+    existing?.audio_path
+      ? {
+          path: existing.audio_path,
+          seconds: existing.audio_seconds ?? 0,
+          levels: existing.audio_levels,
+        }
+      : null,
+  );
+  const [voiceChanged, setVoiceChanged] = useState(false);
+  const [recording, setRecording] = useState(false);
+
+  const handleVoiceChange = useCallback((clip: VoiceClip | null) => {
+    setVoice(clip);
+    setVoiceChanged(true);
+  }, []);
+
+  // Un vocal suffit à faire une note, comme un emoji ou un texte
+  const hasContent = emoji !== null || body.trim().length > 0 || voice !== null;
+  const canPublish = hasContent && !recording;
   const style = ANNOTATION_CATEGORIES[category];
 
   const handlePublish = useCallback(async () => {
-    if (!hasContent || !activeChallenge || !user?.id || saving) return;
+    if (!canPublish || !activeChallenge || !user?.id || saving) return;
     setSaving(true);
     try {
       const shared = {
@@ -93,14 +126,21 @@ export default function NoteFormRoute() {
         visibility,
       };
 
+      // Un nouvel enregistrement part avec la note ; sinon on n'y touche pas
+      const clip: VoiceClip | null =
+        voice?.uri ? { uri: voice.uri, seconds: voice.seconds, levels: voice.levels ?? [] } : null;
+
       if (existing) {
-        await editNote(existing.id, shared);
+        await editNote(existing.id, shared, voiceChanged ? clip : undefined);
       } else {
-        await addNote({
-          challenge_id: activeChallenge.id,
-          user_id: user.id,
-          ...shared,
-        });
+        await addNote(
+          {
+            challenge_id: activeChallenge.id,
+            user_id: user.id,
+            ...shared,
+          },
+          clip,
+        );
       }
       router.back();
     } catch (error) {
@@ -109,10 +149,12 @@ export default function NoteFormRoute() {
       setSaving(false);
     }
   }, [
-    hasContent,
+    canPublish,
     activeChallenge,
     user?.id,
     saving,
+    voice,
+    voiceChanged,
     page,
     myPages,
     emoji,
@@ -166,14 +208,14 @@ export default function NoteFormRoute() {
           ),
           headerRight: () => (
             <PressableScale
-              style={[styles.publish, !hasContent && styles.publishOff]}
+              style={[styles.publish, !canPublish && styles.publishOff]}
               pressedScale={0.94}
-              disabled={!hasContent || saving}
+              disabled={!canPublish || saving}
               onPress={handlePublish}
               accessibilityRole="button"
               accessibilityLabel={existing ? 'Enregistrer la note' : 'Publier la note'}
             >
-              <Text style={[styles.publishText, !hasContent && styles.publishTextOff]}>
+              <Text style={[styles.publishText, !canPublish && styles.publishTextOff]}>
                 {existing ? 'Enregistrer' : 'Publier'}
               </Text>
             </PressableScale>
@@ -213,7 +255,27 @@ export default function NoteFormRoute() {
           maxLength={2000}
           accessibilityLabel="Texte de la note"
         />
+        {voice && !recording && (
+          <View style={styles.noteVoice}>
+            <VoicePlayer
+              // Un nouveau vocal remplace le lecteur : il repart du début
+              key={voice.uri ?? voice.path ?? 'voice'}
+              uri={voice.uri}
+              path={voice.path}
+              seconds={voice.seconds}
+              levels={voice.levels}
+            />
+          </View>
+        )}
       </View>
+
+      {/* ─── Vocal ─── */}
+      <Text style={styles.rowTitle}>Vocal</Text>
+      <VoiceRecorder
+        clip={voice}
+        onChange={handleVoiceChange}
+        onRecordingChange={setRecording}
+      />
 
       {/* ─── Emoji ─── */}
       <Text style={styles.rowTitle}>Emoji</Text>
@@ -397,6 +459,9 @@ const styles = StyleSheet.create({
   },
   noteEmoji: {
     fontSize: 30,
+    marginTop: spacing.sm,
+  },
+  noteVoice: {
     marginTop: spacing.sm,
   },
   noteInput: {

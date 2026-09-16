@@ -27,6 +27,7 @@
     "base64-arraybuffer": "^1.0.2",
     "expo": "~55.0.0",
     "expo-apple-authentication": "~55.0.8",
+    "expo-audio": "~55.0.18",
     "expo-auth-session": "~55.0.6",
     "expo-blur": "~55.0.8",
     "expo-clipboard": "~55.0.8",

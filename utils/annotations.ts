@@ -105,6 +105,55 @@ export const CATEGORY_ORDER: AnnotationCategory[] = [
   'a_retenir',
 ];
 
+// ─── Vocaux ────────────────────────────────────────────────────────
+
+/** 2 minutes : assez pour une réaction, trop court pour lire la page à voix haute */
+export const MAX_VOICE_SECONDS = 120;
+
+/** Le nombre de barres de l'onde d'un vocal, en base comme à l'écran */
+export const VOICE_BARS = 40;
+
+/**
+ * Le niveau du micro, en décibels (-160 → 0), ramené de 0 à 1.
+ * En dessous de -50 dB, c'est le silence d'une pièce : la barre reste au plus bas.
+ */
+export function levelFromMetering(decibels: number | undefined): number {
+  if (decibels === undefined || !Number.isFinite(decibels)) return 0;
+  return clamp((decibels + 50) / 50);
+}
+
+/**
+ * Les niveaux relevés pendant l'enregistrement (un tous les 100 ms) → les
+ * `VOICE_BARS` barres de l'onde, de 0 à 100.
+ *
+ * Chaque barre garde le pic de sa tranche : une syllabe forte ne doit pas se
+ * noyer dans le silence qui l'entoure. L'onde est ensuite rapportée à son plus
+ * haut point, pour qu'un vocal chuchoté ait la même allure qu'un vocal crié.
+ */
+export function downsampleLevels(samples: number[], bars = VOICE_BARS): number[] {
+  if (samples.length === 0) return Array.from({ length: bars }, () => MIN_BAR);
+
+  const peaks = Array.from({ length: bars }, (_, index) => {
+    const start = Math.floor((index * samples.length) / bars);
+    const end = Math.max(start + 1, Math.floor(((index + 1) * samples.length) / bars));
+    return Math.max(...samples.slice(start, Math.min(end, samples.length)));
+  });
+
+  const loudest = Math.max(...peaks);
+  return peaks.map((peak) =>
+    loudest > 0 ? Math.max(MIN_BAR, Math.round((peak / loudest) * 100)) : MIN_BAR,
+  );
+}
+
+/** « 0:24 », « 2:00 » */
+export function formatVoiceDuration(seconds: number): string {
+  const total = Math.max(0, Math.round(seconds));
+  return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, '0')}`;
+}
+
+/** Une barre ne disparaît jamais tout à fait : on voit qu'il y a un son */
+const MIN_BAR = 6;
+
 function clamp(value: number) {
   return Math.max(0, Math.min(1, value));
 }
