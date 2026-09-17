@@ -603,7 +603,8 @@ couverture et pend devant elle, bout coupé en V, avec un motif **brodé au poin
 passé**. C'est la direction « maille » : du textile réaliste, pas un pictogramme.
 
 - **Ruban** : gros-grain (côtes horizontales, chaîne fine), lisière un peu plus
-  claire, pli au-dessus du bord, dégradé clair en haut → foncé en bas, ombre portée
+  claire, haut plat sans pli dessiné (le bourrelet alourdissait), dégradé clair en
+  haut → foncé en bas, ombre portée
   douce sur la couverture. **Matière discrète** : trop de relief, de trame et
   d'ombre faisait « old school » (skeuomorphisme des débuts de l'iPhone).
 - **Broderie, effet marqué** (demande de Lea : « pousser l'effet brodé ») :

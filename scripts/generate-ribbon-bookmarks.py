@@ -10,7 +10,8 @@ Réalisme, dans l'ordre du dessin :
 - le ruban : gros-grain (fines côtes horizontales), lisières un peu plus denses,
   léger arrondi sur la largeur, dégradé clair en haut → foncé en bas (DESIGN.md :
   jamais d'aplat) ;
-- le pli au sommet : le ruban passe par-dessus le bord, reflet puis ombre ;
+- pas de pli dessiné au sommet : le bourrelet formait un trait qui alourdissait le
+  haut (retiré à la demande de Lea) ;
 - la broderie : des centaines de fils parallèles, légèrement obliques, chacun
   avec sa propre nuance, un reflet sur le dessus et une ombre portée sur le ruban ;
 - l'ombre du ruban sur la couverture.
@@ -103,11 +104,6 @@ def ribbon_shading(rng):
     columns = np.arange(0, CANVAS_W + 1, 0.33)
     streaks = np.interp(xp, columns, 0.98 + 0.04 * rng.random(len(columns)))
     light *= streaks
-    # Le pli : le haut du ruban s'arrondit vers l'arrière (plus sombre tout en haut),
-    # prend la lumière juste dessous, puis un pli fin là où il passe sur le bord
-    light *= 1 - 0.15 * np.exp(-((yp - TOP) ** 2) / 1.2)
-    light *= 1 + 0.1 * np.exp(-((yp - (TOP + 2.6)) ** 2) / 1.6)
-    light *= 1 - 0.08 * np.exp(-((yp - COVER_TOP) ** 2) / 0.25)
     return light
 
 
