@@ -2,94 +2,102 @@
  * Composant ReadingStateBadge
  *
  * La pastille d'état posée sur le coin d'une couverture, dans la bibliothèque.
- * Toujours au même endroit, calée à droite :
+ * Une seule forme, toujours au même endroit ; elle se remplit à mesure que
+ * j'avance :
  *
- *    pas commencé     en cours        terminé
- *       ( ○ )         ( 58 % )         ( ✓ )
- *    cercle vide     mon avancement   disque encre
- *                                     et coche crème
+ *    pas commencé     en cours          terminé
+ *       ( ✓ )           ( ✓ )            (●✓●)
+ *    anneau gris     anneau encre       disque encre
+ *    coche grise     rempli à mon %     coche crème
  *
- * Même logique qu'une case à cocher : vide, puis cochée. Entre les deux, le
- * pourcentage exact plutôt qu'une jauge : une jauge en anneau se lit comme un
- * indicateur de chargement.
- * La pastille a toujours un fond plein et un liseré crème : elle reste lisible
- * sur n'importe quelle couverture, claire ou sombre.
+ * La coche grise au centre dit « à cocher » : sans elle, un anneau à moitié
+ * rempli se lirait comme un indicateur de chargement.
+ * Fond crème plein et ombre douce : lisible sur n'importe quelle couverture.
  */
 
 import { CheckIcon } from 'lucide-react-native';
-import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
-import Svg, { Circle } from 'react-native-svg';
-import { colors, fonts, inkAlpha } from '../../utils/constants';
+import React, { useId } from 'react';
+import { StyleSheet, View } from 'react-native';
+import Svg, { Circle, Defs, LinearGradient, Stop } from 'react-native-svg';
+import { colors, inkAlpha } from '../../utils/constants';
 import type { BookReading } from '../../utils/library';
 
-export const READING_BADGE_SIZE = 28;
+export const READING_BADGE_SIZE = 30;
 
-/** Liseré crème autour de la pastille */
-const EDGE = 1.5;
-/** L'intérieur du liseré, où se dessine l'anneau */
-const INNER = READING_BADGE_SIZE - 2 * EDGE;
-const RING_STROKE = 2;
-/** Rayon du cercle vide : laisse 4 pt de fond autour de lui */
-const RING_R = INNER / 2 - 4 - RING_STROKE / 2;
+/** Épaisseur de l'anneau : 10 % du diamètre */
+const STROKE = 3;
+const RING_R = (READING_BADGE_SIZE - STROKE) / 2;
+const RING_CIRCUMFERENCE = 2 * Math.PI * RING_R;
+const CHECK_SIZE = 16;
+
+/** L'encre en dégradé, du noyer clair en haut au noyer profond en bas */
+const INK_TOP = colors.textSecondary; // #5a4536
+const INK_BOTTOM = colors.dark950; // #1e140e
+/** Anneau et coche d'un livre pas encore coché */
+const IDLE = inkAlpha(0.12);
 
 export default function ReadingStateBadge({ state, percent }: BookReading) {
-  if (state === 'done') {
-    return (
-      <View style={[styles.badge, styles.done]}>
-        <CheckIcon size={16} color={colors.white} strokeWidth={3.2} />
-      </View>
-    );
-  }
-
-  if (state === 'reading') {
-    return (
-      <View style={[styles.badge, styles.percent]}>
-        <Text style={styles.percentText} maxFontSizeMultiplier={1.2}>
-          {percent} %
-        </Text>
-      </View>
-    );
-  }
-
-  const c = INNER / 2;
+  // Un identifiant de dégradé par pastille ; les « : » de useId cassent `url(#…)`
+  const gradientId = `ink${useId().replace(/[^a-zA-Z0-9]/g, '')}`;
+  const c = READING_BADGE_SIZE / 2;
+  const done = state === 'done';
 
   return (
     <View style={styles.badge}>
-      <Svg width={INNER} height={INNER}>
-        <Circle cx={c} cy={c} r={RING_R} stroke={inkAlpha(0.35)} strokeWidth={RING_STROKE} fill="none" />
+      <Svg width={READING_BADGE_SIZE} height={READING_BADGE_SIZE} style={StyleSheet.absoluteFill}>
+        <Defs>
+          <LinearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
+            <Stop offset="0" stopColor={INK_TOP} />
+            <Stop offset="1" stopColor={INK_BOTTOM} />
+          </LinearGradient>
+        </Defs>
+
+        {done ? (
+          <Circle cx={c} cy={c} r={c} fill={`url(#${gradientId})`} />
+        ) : (
+          <>
+            <Circle cx={c} cy={c} r={c} fill={colors.white} />
+            {/* Piste */}
+            <Circle cx={c} cy={c} r={RING_R} stroke={IDLE} strokeWidth={STROKE} fill="none" />
+            {/* Mon avancement, depuis midi, dans le sens des aiguilles d'une montre */}
+            {state === 'reading' && (
+              <Circle
+                cx={c}
+                cy={c}
+                r={RING_R}
+                stroke={`url(#${gradientId})`}
+                strokeWidth={STROKE}
+                strokeLinecap="round"
+                fill="none"
+                strokeDasharray={`${RING_CIRCUMFERENCE} ${RING_CIRCUMFERENCE}`}
+                strokeDashoffset={RING_CIRCUMFERENCE * (1 - percent / 100)}
+                transform={`rotate(-90 ${c} ${c})`}
+              />
+            )}
+          </>
+        )}
       </Svg>
+
+      <CheckIcon
+        size={CHECK_SIZE}
+        color={done ? colors.white : IDLE}
+        strokeWidth={done ? 2.6 : 2.2}
+        absoluteStrokeWidth
+      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   badge: {
-    minWidth: READING_BADGE_SIZE,
+    width: READING_BADGE_SIZE,
     height: READING_BADGE_SIZE,
     borderRadius: READING_BADGE_SIZE / 2,
-    backgroundColor: colors.white,
     alignItems: 'center',
     justifyContent: 'center',
-    // Détache la pastille de la couverture, quelle que soit sa couleur
-    borderWidth: EDGE,
-    borderColor: colors.white,
     shadowColor: colors.black,
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
+    shadowOpacity: 0.28,
     shadowRadius: 4,
-  },
-  percent: {
-    paddingHorizontal: 7,
-  },
-  percentText: {
-    fontFamily: fonts.bodyExtraBold,
-    fontSize: 12,
-    lineHeight: 16,
-    color: colors.textPrimary,
-    fontVariant: ['tabular-nums'],
-  },
-  done: {
-    backgroundColor: colors.dark900,
   },
 });

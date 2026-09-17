@@ -333,8 +333,8 @@ function RootLayoutNav() {
       {/* Fiche du livre — fin, caps, club */}
       <Stack.Screen name="book" options={sheetScreenOptions('Le livre')} />
 
-      {/* Bibliothèque : tous mes livres, sur des étagères */}
-      <Stack.Screen name="library" options={sheetScreenOptions('Mes livres')} />
+      {/* Bibliothèque : toutes mes lectures, sur des étagères, à la hauteur des étagères */}
+      <Stack.Screen name="library" options={sheetScreenOptions('Mes lectures', 'fitToContents')} />
 
       {/* Garde les routes d'auth mais cachées (pour éviter les erreurs) */}
       <Stack.Screen

@@ -458,25 +458,34 @@ s'affichent dans **mon** édition — un cap est enregistré en %. Plus de menu 
 l'accueil.
 
 Changer de livre ou en ajouter un se fait dans la **bibliothèque**, route
-`/library` en sheet natif titré **Mes livres**, avec le **+** en verre à droite
-du titre (même parcours que le + de la barre d'onglets). Dessous, un bouton texte
-discret **Trier par Lus récemment ⌄** (`SortMenu`) déroule un menu en verre :
-Lus récemment, Plus anciens, Titre ; le choix est retenu. Les livres sont rangés
-trois par trois sur l'étagère historique de l'accueil — barre en verre flouté
-(noyer à 30 %, bordure blanc chaud à 40 %) avec ses vis, posée **par-dessus** le
-bas des couvertures.
+`/library` en sheet natif titré **Mes lectures**, avec le **+** en verre
+(`GlassButton`) à droite du titre (même parcours que le + de la barre d'onglets).
+Dessous, un bouton texte discret **Trier par Dernière activité ⌄** (`SortMenu`)
+déroule un menu en verre : Dernière activité (par défaut : ma progression ou
+celle du club, la plus récente), Plus anciens, Titre ; le choix est retenu. Les
+livres sont rangés trois par trois sur l'étagère historique de l'accueil — barre
+en verre flouté (noyer à 30 %, bordure blanc chaud à 40 %) avec ses vis, posée
+**par-dessus** le bas des couvertures.
 
-**État de lecture** : une pastille `ReadingStateBadge` de 28 pt à cheval sur le
-coin haut droit de chaque couverture, fond plein + liseré crème + ombre, pour
-rester lisible sur toute couverture. Calculée sur **ma** progression, jamais sur
-celle du club :
-- **pas commencé** : cercle vide (comme une case à cocher) ;
-- **en cours** : mon pourcentage, `58 %` — pas de jauge en anneau, qui se lit
-  comme un indicateur de chargement ;
-- **terminé** : disque encre et coche crème.
+**Hauteur** : le sheet prend la hauteur exacte de ses étagères
+(`fitToContents`), sans blanc sous la dernière ; passé 72 % de l'écran il
+arrête de grandir et la liste défile.
 
-Vocabulaire : on parle de **livres**, jamais de « challenges ». Un groupe qui
-lit un livre ensemble n'est pas un challenge (le renommage de l'app suit, #29).
+**État de lecture** : une pastille `ReadingStateBadge` de 30 pt à cheval sur le
+coin haut droit de chaque couverture, avec une ombre douce pour rester lisible
+sur toute couverture. Une seule forme qui se remplit, calculée sur **ma**
+progression, jamais sur celle du club :
+- **pas commencé** : anneau gris, coche grise au centre ;
+- **en cours** : l'anneau se remplit en encre à mon %, depuis midi ;
+- **terminé** : disque encre, coche crème.
+
+L'encre de la pastille est un dégradé vertical `text-secondary` → `ink-deep`.
+La coche grise au centre est indispensable : sans elle, un anneau à moitié
+rempli se lit comme un indicateur de chargement.
+
+Vocabulaire : on parle de **lectures** et de **livres**, jamais de
+« challenges ». Un groupe qui lit un livre ensemble n'est pas un challenge (le
+renommage de l'app suit, #29).
 
 ### Vocaux du carnet
 
@@ -559,7 +568,7 @@ l'app entièrement blanche sur un binaire fraîchement compilé.
 
 **Titre ferré à gauche, jamais centré.** Tous les sheets, sans exception :
 Fraunces 22 (`headline`), le contenu aligné sur lui (marge de 20 pt), actions à
-droite sur la même ligne (rond en verre iOS 26, icône Lucide). La barre native
+droite sur la même ligne (`GlassButton` 44 pt, icône Lucide). La barre native
 centre toujours son titre : on laisse le sien vide et on pose le nôtre en
 premier élément de gauche, sans verre. Tout passe par
 `components/ui/SheetHeader.tsx` : `sheetScreenOptions(titre)` pour la route,
@@ -569,6 +578,16 @@ le titre). Les sheets dessinés à la main suivent la même règle.
 
 Sheets de consultation : poignée seule. Sheets de formulaire : garder une croix,
 qui sert d'affordance « annuler ».
+
+### Bouton en verre — `GlassButton`
+
+Le seul bouton rond en verre de l'app : icône Lucide sur `GlassMaterial`, voile
+crème `glassControlVeil` (50 %) et **liseré** (`rim`) — filet d'encre à 8 % qui
+dessine la forme même sur fond blanc, doublé d'un reflet crème en diagonale —,
+ombre douce. 58 pt pour le + de la barre d'onglets, 44 pt en haut d'un sheet.
+La barre d'onglets porte le même voile et le même liseré. Ne jamais redessiner
+ce verre ailleurs : le fond gris plat qu'iOS 26 met derrière les boutons de
+barre est retiré (`hidesSharedBackground`) au profit de ce composant.
 
 ### Retour au toucher — `PressableScale`
 

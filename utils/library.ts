@@ -36,23 +36,33 @@ export function readingLabel({ state, percent }: BookReading): string {
 
 // ─── Tri ───────────────────────────────────────────────────────────
 
-export type LibrarySort = 'recent' | 'oldest' | 'title';
+export type LibrarySort = 'activity' | 'oldest' | 'title';
 
 export const LIBRARY_SORTS: { key: LibrarySort; label: string }[] = [
-  { key: 'recent', label: 'Lus récemment' },
+  { key: 'activity', label: 'Dernière activité' },
   { key: 'oldest', label: 'Plus anciens' },
   { key: 'title', label: 'Titre' },
 ];
+
+export const DEFAULT_LIBRARY_SORT: LibrarySort = 'activity';
+
+/** Un tri retenu qui n'existe plus (ancienne version de l'app) revient au tri par défaut */
+export function knownLibrarySort(sort: string | null | undefined): LibrarySort {
+  return LIBRARY_SORTS.some((option) => option.key === sort)
+    ? (sort as LibrarySort)
+    : DEFAULT_LIBRARY_SORT;
+}
 
 const time = (iso: string | null | undefined) => (iso ? new Date(iso).getTime() : 0);
 
 /**
  * Range les livres selon le tri choisi.
  *
- * - `recent` : dernier livre où j'ai avancé en premier. Les livres jamais
- *   commencés viennent après, du plus récemment ajouté au plus ancien.
- * - `oldest` : dans l'ordre où ils sont entrés dans ma bibliothèque.
- * - `title`  : alphabétique, à la française (accents et casse ignorés).
+ * - `activity` : le livre qui a bougé le plus récemment en premier. Compte ma
+ *   dernière progression ET celle du club : `updated_at` du livre est remis à
+ *   jour dès qu'un membre avance (trigger `update_challenge_stats`).
+ * - `oldest`   : dans l'ordre où ils sont entrés dans ma bibliothèque.
+ * - `title`    : alphabétique, à la française (accents et casse ignorés).
  */
 export function sortBooks(
   books: Challenge[],
@@ -70,13 +80,9 @@ export function sortBooks(
   } else if (sort === 'oldest') {
     sorted.sort((a, b) => addedAt(a) - addedAt(b));
   } else {
-    sorted.sort((a, b) => {
-      const readA = readingOf(progressById[a.id]).state !== 'unread';
-      const readB = readingOf(progressById[b.id]).state !== 'unread';
-      if (readA !== readB) return readA ? -1 : 1;
-      if (readA) return time(progressById[b.id].last_updated_at) - time(progressById[a.id].last_updated_at);
-      return addedAt(b) - addedAt(a);
-    });
+    const activityAt = (book: Challenge) =>
+      Math.max(time(book.updated_at), time(progressById[book.id]?.last_updated_at));
+    sorted.sort((a, b) => activityAt(b) - activityAt(a));
   }
 
   return sorted;

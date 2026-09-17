@@ -14,7 +14,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import { Challenge, ChallengeWithParticipants, MyBookProgress } from '../types/supabase';
-import type { LibrarySort } from '../utils/library';
+import { DEFAULT_LIBRARY_SORT, type LibrarySort } from '../utils/library';
 import {
   createChallenge,
   getChallengeById,
@@ -101,7 +101,7 @@ export const useProjectStore = create<ProjectStore>()(
   currentChallenge: null,
   lastProgressChallengeId: null,
   myProgress: {},
-  librarySort: 'recent',
+  librarySort: DEFAULT_LIBRARY_SORT,
   isLoading: false,
   challengesLoading: false,
   challengesLoaded: false,
@@ -537,7 +537,7 @@ export const useProjectStore = create<ProjectStore>()(
       currentChallenge: null,
       lastProgressChallengeId: null,
       myProgress: {},
-      librarySort: 'recent',
+      librarySort: DEFAULT_LIBRARY_SORT,
       isLoading: false,
       challengesLoading: false,
       challengesLoaded: false,

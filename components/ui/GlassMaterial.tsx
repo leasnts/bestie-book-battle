@@ -11,12 +11,17 @@
  * - iOS 26 : `GlassView` (expo-glass-effect), le vrai UIGlassEffect des barres système.
  * - Avant iOS 26 : flou expo-blur, toujours voilé de crème à 80 % au moins, car le
  *   flou seul ne suffit pas à rendre le texte lisible.
+ *
+ * `rim` ajoute le liseré des boutons en verre d'iOS 26 : un filet d'encre très fin
+ * qui dessine la forme même sur un fond blanc, doublé à l'intérieur d'un reflet
+ * crème qui accroche la lumière en haut à gauche et en bas à droite.
  */
 
 import { BlurView } from 'expo-blur';
 import { GlassView, isLiquidGlassAvailable } from 'expo-glass-effect';
-import React from 'react';
+import React, { useId, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
+import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
 import { creamAlpha, inkAlpha } from '../../utils/constants';
 
 /** Voile minimum du repli flou */
@@ -37,9 +42,11 @@ interface GlassMaterialProps {
    * natif, un filet d'encre très fin sur le repli.
    */
   edgeColor?: string;
+  /** Liseré des boutons en verre : filet d'encre + reflet crème (voir en tête) */
+  rim?: boolean;
 }
 
-export default function GlassMaterial({ radius, veil = 0, edgeColor }: GlassMaterialProps) {
+export default function GlassMaterial({ radius, veil = 0, edgeColor, rim = false }: GlassMaterialProps) {
   const shape = { borderRadius: radius };
   const native = isLiquidGlassAvailable();
   const veilOpacity = native ? veil : Math.max(veil, FALLBACK_VEIL);
@@ -65,7 +72,61 @@ export default function GlassMaterial({ radius, veil = 0, edgeColor }: GlassMate
           pointerEvents="none"
         />
       )}
+      {rim && <GlassRim radius={radius} />}
     </>
+  );
+}
+
+/**
+ * Le liseré, dessiné en SVG : React Native ne sait pas faire de bordure en dégradé.
+ * Deux contours superposés, mesurés sur le parent :
+ * - dehors, un filet d'encre à 8 % qui détache la forme d'un fond clair ;
+ * - dedans, un reflet crème en diagonale, vif aux deux coins opposés.
+ */
+function GlassRim({ radius }: { radius: number }) {
+  const [size, setSize] = useState<{ width: number; height: number } | null>(null);
+  // Un identifiant de dégradé par liseré ; les « : » de useId cassent `url(#…)`
+  const gradientId = `rim${useId().replace(/[^a-zA-Z0-9]/g, '')}`;
+
+  return (
+    <View
+      style={styles.fill}
+      pointerEvents="none"
+      onLayout={(e) => setSize(e.nativeEvent.layout)}
+    >
+      {size && (
+        <Svg width={size.width} height={size.height}>
+          <Defs>
+            <LinearGradient id={gradientId} x1="0" y1="0" x2="1" y2="1">
+              <Stop offset="0" stopColor={creamAlpha(1)} />
+              <Stop offset="0.35" stopColor={creamAlpha(0.15)} />
+              <Stop offset="0.65" stopColor={creamAlpha(0.1)} />
+              <Stop offset="1" stopColor={creamAlpha(0.8)} />
+            </LinearGradient>
+          </Defs>
+          <Rect
+            x={0.5}
+            y={0.5}
+            width={size.width - 1}
+            height={size.height - 1}
+            rx={radius - 0.5}
+            stroke={inkAlpha(0.08)}
+            strokeWidth={1}
+            fill="none"
+          />
+          <Rect
+            x={1.75}
+            y={1.75}
+            width={size.width - 3.5}
+            height={size.height - 3.5}
+            rx={radius - 1.75}
+            stroke={`url(#${gradientId})`}
+            strokeWidth={1.5}
+            fill="none"
+          />
+        </Svg>
+      )}
+    </View>
   );
 }
 

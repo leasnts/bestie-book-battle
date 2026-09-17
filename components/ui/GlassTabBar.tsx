@@ -17,9 +17,10 @@
  * (200 ms, ease-out-quart — cf. DESIGN.md). Lucide n'existe qu'en contour : pas
  * de version pleine à afficher pour l'onglet actif.
  *
- * À droite de la barre, un bouton rond « + » dans le même verre ajoute un
- * challenge. La barre reste centrée à l'écran : une cale invisible de la même
- * largeur équilibre le bouton côté gauche.
+ * À droite de la barre, un bouton rond « + » (`GlassButton`) ajoute une
+ * lecture. La barre reste centrée à l'écran : une cale invisible de la même
+ * largeur équilibre le bouton côté gauche. Barre et bouton portent le même
+ * liseré de verre.
  *
  * Les icônes sont posées PAR-DESSUS le verre, pas dedans. Placées comme
  * enfants de GlassView, iOS 26 les réadapte à ce qui passe derrière la barre :
@@ -43,7 +44,8 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, motion } from '../../utils/constants';
+import { colors, glassControlVeil, motion } from '../../utils/constants';
+import GlassButton from './GlassButton';
 import GlassMaterial from './GlassMaterial';
 import PressableScale from './PressableScale';
 
@@ -168,21 +170,18 @@ export default function GlassTabBar({ state, descriptors, navigation, onAddPress
 
       <View style={styles.shadow} accessibilityRole="tablist">
         {/* Fond seul : le verre ne contient rien */}
-        <GlassMaterial radius={BAR_HEIGHT / 2} />
+        <GlassMaterial radius={BAR_HEIGHT / 2} veil={glassControlVeil} rim />
         {/* Icônes au-dessus du verre, hors de son adaptation de couleur */}
         <View style={styles.bar}>{items}</View>
       </View>
 
-      <PressableScale
-        style={[styles.shadow, styles.addButton]}
-        pressedScale={0.9}
+      <GlassButton
+        icon={PlusIcon}
+        size={ADD_SIZE}
+        style={styles.addButton}
         onPress={onAddPress}
-        accessibilityRole="button"
-        accessibilityLabel="Ajouter un livre"
-      >
-        <GlassMaterial radius={ADD_SIZE / 2} />
-        <PlusIcon size={24} color={colors.dark900} strokeWidth={ACTIVE_STROKE} />
-      </PressableScale>
+        accessibilityLabel="Ajouter une lecture"
+      />
     </View>
   );
 }
@@ -213,12 +212,7 @@ const styles = StyleSheet.create({
     width: ADD_SIZE + ADD_GAP,
   },
   addButton: {
-    width: ADD_SIZE,
-    height: ADD_SIZE,
-    borderRadius: ADD_SIZE / 2,
     marginLeft: ADD_GAP,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   item: {
     width: ITEM_WIDTH,

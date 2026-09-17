@@ -2,7 +2,7 @@
  * Norme des bottom sheets natifs : l'en-tête
  *
  *    ┌────────────────────────────────┐
- *    │ Mes livres                 (+) │  ← titre ferré à gauche, actions à droite
+ *    │ Mes lectures               (+) │  ← titre ferré à gauche, actions à droite
  *    │                                │
  *
  * Règle non négociable : **le titre d'un sheet n'est jamais centré.** Il est
@@ -16,11 +16,11 @@
  * elle qui porte le verre et qui décale le contenu sous elle.
  *
  * Utilisation :
- * - dans app/_layout.tsx, `sheetScreenOptions('Mes livres')` pour chaque route
+ * - dans app/_layout.tsx, `sheetScreenOptions('Mes lectures')` pour chaque route
  *   `formSheet` ;
  * - un écran qui ajoute un bouton À GAUCHE redonne le titre en tête de liste :
  *   `unstable_headerLeftItems: () => [fermer, sheetTitleItem('Ma note')]`.
- * - à droite, `sheetIconItem(...)` : un rond en verre iOS 26 avec une icône Lucide.
+ * - à droite, `sheetIconItem(...)` : un `GlassButton`, le rond en verre de l'app.
  */
 
 import type {
@@ -31,10 +31,7 @@ import type { LucideIcon } from 'lucide-react-native';
 import React from 'react';
 import { StyleSheet, Text } from 'react-native';
 import { colors, fonts } from '../../utils/constants';
-import PressableScale from './PressableScale';
-
-/** Taille d'un bouton de la barre : le rond en verre d'iOS 26 fait 44 pt */
-const ICON_BUTTON_SIZE = 44;
+import GlassButton from './GlassButton';
 
 // ─── Titre ─────────────────────────────────────────────────────────
 
@@ -65,27 +62,19 @@ interface SheetIconItemProps {
 }
 
 /**
- * Bouton rond de la barre. Le verre vient d'iOS 26 (fond partagé des boutons de
- * barre), pas de notre code : on ne dessine que l'icône.
+ * Bouton rond de la barre : notre `GlassButton`, avec son liseré. Le fond gris
+ * qu'iOS 26 met d'office derrière les boutons de barre est retiré
+ * (`hidesSharedBackground`) : il était plat et sans relief.
  */
 export function sheetIconItem({
-  icon: Icon,
+  icon,
   onPress,
   accessibilityLabel,
 }: SheetIconItemProps): NativeStackHeaderItemCustom {
   return {
     type: 'custom',
-    element: (
-      <PressableScale
-        style={styles.iconButton}
-        pressedScale={0.88}
-        onPress={onPress}
-        accessibilityRole="button"
-        accessibilityLabel={accessibilityLabel}
-      >
-        <Icon size={22} color={colors.dark900} strokeWidth={2.2} />
-      </PressableScale>
-    ),
+    element: <GlassButton icon={icon} onPress={onPress} accessibilityLabel={accessibilityLabel} />,
+    hidesSharedBackground: true,
   };
 }
 
@@ -93,11 +82,13 @@ export function sheetIconItem({
 
 /**
  * Options d'une route présentée en sheet natif, titre ferré à gauche compris.
- * `detents` : les hauteurs d'arrêt, en fraction de l'écran.
+ * `detents` : les hauteurs d'arrêt, en fraction de l'écran, ou `'fitToContents'`
+ * pour un sheet exactement à la hauteur de son contenu (le contenu fixe alors
+ * sa propre hauteur, cf. BookLibrary).
  */
 export function sheetScreenOptions(
   title: string,
-  detents: number[] = [0.65, 0.95],
+  detents: number[] | 'fitToContents' = [0.65, 0.95],
 ): NativeStackNavigationOptions {
   return {
     presentation: 'formSheet',
@@ -120,11 +111,5 @@ const styles = StyleSheet.create({
     lineHeight: 28,
     letterSpacing: -0.2,
     color: colors.textPrimary,
-  },
-  iconButton: {
-    width: ICON_BUTTON_SIZE,
-    height: ICON_BUTTON_SIZE,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
 });

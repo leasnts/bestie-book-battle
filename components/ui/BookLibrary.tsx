@@ -17,13 +17,18 @@
  *
  * Toucher une couverture l'affiche sur l'accueil et ferme le sheet.
  *
+ * Hauteur : le sheet est en `fitToContents`, il prend la hauteur de la liste.
+ * La liste se donne donc la hauteur exacte de ses étagères, plafonnée à
+ * MAX_HEIGHT_RATIO de l'écran ; au-delà, on fait défiler. Pas de blanc inutile
+ * sous la dernière étagère.
+ *
  * Volontairement sans habillage de sheet : c'est la route `/library` qui le
  * présente, et c'est iOS qui dessine le sheet lui-même.
  */
 
 import { BlurView } from 'expo-blur';
-import React, { useMemo } from 'react';
-import { FlatList, StyleSheet, View } from 'react-native';
+import React, { useMemo, useState } from 'react';
+import { FlatList, StyleSheet, useWindowDimensions, View } from 'react-native';
 import Animated, { Easing, FadeInDown, useReducedMotion } from 'react-native-reanimated';
 import Svg, { Path } from 'react-native-svg';
 import { Challenge } from '../../types/supabase';
@@ -56,6 +61,22 @@ const COVER_H = 110;
 const COVER_W = Math.round(COVER_H * COVER_RATIO); // 79
 const SHELF_BAR_H = 24;        // hauteur de la barre d'étagère
 const SHELF_OVERLAP = 14;      // de combien la barre chevauche le bas des couvertures
+/** Espace entre deux étagères, et entre « Trier par » et la première */
+const SHELF_GAP = spacing['3xl'];
+/** Hauteur d'une étagère : couverture + partie de la barre qui dépasse dessous */
+const SHELF_H = COVER_H + SHELF_BAR_H - SHELF_OVERLAP;
+/** Hauteur de la ligne « Trier par » */
+const SORT_ROW_H = 20;
+/** Marge sous la dernière étagère */
+const LIST_BOTTOM = spacing['2xl'];
+/** Au-delà de cette part de l'écran, le sheet arrête de grandir et la liste défile */
+const MAX_HEIGHT_RATIO = 0.72;
+
+/** Hauteur du contenu pour `shelfCount` étagères, avant toute mesure */
+function estimateContentHeight(shelfCount: number): number {
+  return SORT_ROW_H + shelfCount * (SHELF_GAP + SHELF_H) + LIST_BOTTOM;
+}
+
 /** De combien la pastille d'état déborde du coin de la couverture */
 const BADGE_OVERHANG = 9;
 /** Pastille si le livre n'est pas encore dans `readings` (premier chargement) */
@@ -197,6 +218,9 @@ export default function BookLibrary({
   onSortChange,
 }: BookLibraryProps) {
   const reducedMotion = useReducedMotion();
+  const { height: windowHeight } = useWindowDimensions();
+  // Hauteur réelle du contenu, mesurée après le premier rendu (texte agrandi, etc.)
+  const [measuredHeight, setMeasuredHeight] = useState<number | null>(null);
 
   // Livres découpés par étagères de 3
   const shelves = useMemo(() => {
@@ -206,6 +230,11 @@ export default function BookLibrary({
     }
     return rows;
   }, [challenges]);
+
+  const listHeight = Math.min(
+    measuredHeight ?? estimateContentHeight(shelves.length),
+    Math.round(windowHeight * MAX_HEIGHT_RATIO),
+  );
 
   return (
     /*
@@ -231,8 +260,9 @@ export default function BookLibrary({
       }
       // Le menu de tri se déroule PAR-DESSUS les étagères
       ListHeaderComponentStyle={styles.header}
-      style={styles.list}
+      style={[styles.list, { height: listHeight }]}
       contentContainerStyle={styles.listContent}
+      onContentSizeChange={(_width, height) => setMeasuredHeight(height)}
       showsVerticalScrollIndicator={false}
       contentInsetAdjustmentBehavior="automatic"
       bounces
@@ -244,7 +274,6 @@ export default function BookLibrary({
 
 const styles = StyleSheet.create({
   list: {
-    flex: 1,
     backgroundColor: colors.white,
   },
   // Marges alignées sur le titre de la barre du sheet (20 pt)
@@ -254,8 +283,8 @@ const styles = StyleSheet.create({
   listContent: {
     paddingHorizontal: spacing.xl,
     paddingTop: 0,
-    paddingBottom: spacing['4xl'],
-    gap: spacing['3xl'],
+    paddingBottom: LIST_BOTTOM,
+    gap: SHELF_GAP,
   },
 
   // ═══ ÉTAGÈRE ═══

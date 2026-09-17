@@ -21,7 +21,7 @@ import { useAuthStore } from '../stores/authStore';
 import { useProgressStore } from '../stores/progressStore';
 import { useProjectStore } from '../stores/projectStore';
 import { Challenge } from '../types/supabase';
-import { BookReading, readingOf, sortBooks } from '../utils/library';
+import { BookReading, knownLibrarySort, readingOf, sortBooks } from '../utils/library';
 
 export default function LibraryRoute() {
   const router = useRouter();
@@ -30,7 +30,7 @@ export default function LibraryRoute() {
   const setActiveChallenge = useProjectStore((state) => state.setActiveChallenge);
   const myProgress = useProjectStore((state) => state.myProgress);
   const loadMyProgress = useProjectStore((state) => state.loadMyProgress);
-  const sort = useProjectStore((state) => state.librarySort);
+  const sort = useProjectStore((state) => knownLibrarySort(state.librarySort));
   const setSort = useProjectStore((state) => state.setLibrarySort);
   const liveProgress = useProgressStore((state) => state.currentUserProgress);
   const userId = useAuthStore((state) => state.user?.id);
