@@ -56,6 +56,30 @@ export function knownLibrarySort(sort: string | null | undefined): LibrarySort {
 const time = (iso: string | null | undefined) => (iso ? new Date(iso).getTime() : 0);
 
 /**
+ * Entrée d'un livre dans ma bibliothèque : création de ma progression (au moment
+ * où j'ai rejoint), à défaut la création du livre
+ */
+function addedAt(book: Challenge, progressById: Record<string, MyBookProgress>): number {
+  return time(progressById[book.id]?.created_at ?? book.created_at);
+}
+
+/**
+ * Le livre à marquer « Nouveau » : le dernier ajouté à ma bibliothèque, tant que
+ * je ne l'ai pas commencé. `null` si ce dernier livre est déjà entamé.
+ */
+export function newBookId(
+  books: Challenge[],
+  progressById: Record<string, MyBookProgress>,
+): string | null {
+  let latest: Challenge | null = null;
+  for (const book of books) {
+    if (!latest || addedAt(book, progressById) > addedAt(latest, progressById)) latest = book;
+  }
+  if (!latest || readingOf(progressById[latest.id]).state !== 'unread') return null;
+  return latest.id;
+}
+
+/**
  * Range les livres selon le tri choisi.
  *
  * - `activity` : le livre qui a bougé le plus récemment en premier. Compte ma
@@ -69,16 +93,12 @@ export function sortBooks(
   progressById: Record<string, MyBookProgress>,
   sort: LibrarySort,
 ): Challenge[] {
-  // Entrée dans ma bibliothèque : création de ma progression (au moment où
-  // j'ai rejoint), à défaut la création du livre
-  const addedAt = (book: Challenge) => time(progressById[book.id]?.created_at ?? book.created_at);
-
   const sorted = [...books];
 
   if (sort === 'title') {
     sorted.sort((a, b) => a.book_title.localeCompare(b.book_title, 'fr', { sensitivity: 'base' }));
   } else if (sort === 'oldest') {
-    sorted.sort((a, b) => addedAt(a) - addedAt(b));
+    sorted.sort((a, b) => addedAt(a, progressById) - addedAt(b, progressById));
   } else {
     const activityAt = (book: Challenge) =>
       Math.max(time(book.updated_at), time(progressById[book.id]?.last_updated_at));

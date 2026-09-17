@@ -27,8 +27,10 @@ import { GlassView, isLiquidGlassAvailable } from 'expo-glass-effect';
 import React, { useId, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
-import { creamAlpha, inkAlpha } from '../../utils/constants';
+import { colors, creamAlpha, inkAlpha } from '../../utils/constants';
 
+/** Couleur du reflet du liseré */
+const CREAM = colors.white;
 /** Voile minimum du repli flou */
 const FALLBACK_VEIL = 0.8;
 /** Force du flou dépoli (`frosted`) : assez pour que plus rien ne soit net dessous */
@@ -102,7 +104,7 @@ export default function GlassMaterial({
  * - dehors, un filet d'encre à 8 % qui détache la forme d'un fond clair ;
  * - dedans, un reflet crème en diagonale, vif aux deux coins opposés.
  */
-function GlassRim({ radius }: { radius: number }) {
+export function GlassRim({ radius }: { radius: number }) {
   const [size, setSize] = useState<{ width: number; height: number } | null>(null);
   // Un identifiant de dégradé par liseré ; les « : » de useId cassent `url(#…)`
   const gradientId = `rim${useId().replace(/[^a-zA-Z0-9]/g, '')}`;
@@ -116,11 +118,12 @@ function GlassRim({ radius }: { radius: number }) {
       {size && (
         <Svg width={size.width} height={size.height}>
           <Defs>
+            {/* Transparence en stopOpacity : react-native-svg ignore l'alpha d'un rgba() dans stopColor */}
             <LinearGradient id={gradientId} x1="0" y1="0" x2="1" y2="1">
-              <Stop offset="0" stopColor={creamAlpha(1)} />
-              <Stop offset="0.35" stopColor={creamAlpha(0.15)} />
-              <Stop offset="0.65" stopColor={creamAlpha(0.1)} />
-              <Stop offset="1" stopColor={creamAlpha(0.8)} />
+              <Stop offset="0" stopColor={CREAM} stopOpacity={0.9} />
+              <Stop offset="0.35" stopColor={CREAM} stopOpacity={0.1} />
+              <Stop offset="0.65" stopColor={CREAM} stopOpacity={0.05} />
+              <Stop offset="1" stopColor={CREAM} stopOpacity={0.6} />
             </LinearGradient>
           </Defs>
           <Rect

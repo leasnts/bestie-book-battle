@@ -6,16 +6,18 @@
  * j'avance :
  *
  *    pas commencé     en cours          terminé
- *       ( ✓ )           ( ✓ )            (●✓●)
- *    anneau gris     anneau encre       disque encre
- *    coche grise     rempli à mon %     coche crème
+ *      (rien)           ( ✓ )            (●✓●)
+ *                    anneau encre       disque encre
+ *                    rempli à mon %     coche crème
+ *
+ * Pas de pastille sur un livre pas commencé : une rangée d'anneaux vides
+ * n'apprenait rien. Seul le dernier livre ajouté porte « Nouveau » (NewBadge).
  *
  * La coche grise au centre dit « à cocher » : sans elle, un anneau à moitié
  * rempli se lirait comme un indicateur de chargement.
- * Tant que le livre n'est pas fini, le fond est un flou dépoli (`GlassMaterial
- * frosted`) : la couverture dessous devient une tache de couleur, légèrement
- * voilée de crème pour que l'anneau reste lisible sur une couverture sombre.
- * Ombre douce autour.
+ * En cours, le fond est un flou dépoli (`GlassMaterial frosted`) : la couverture
+ * dessous devient une teinte légère, voilée de crème pour que l'anneau reste
+ * lisible sur une couverture sombre. Ombre douce autour.
  */
 
 import { CheckIcon } from 'lucide-react-native';
@@ -46,7 +48,7 @@ const CHECK_SIZE = 16;
 /** L'encre en dégradé, du noyer clair en haut au noyer profond en bas */
 const INK_TOP = colors.textSecondary; // #5a4536
 const INK_BOTTOM = colors.dark950; // #1e140e
-/** Anneau et coche d'un livre pas encore coché */
+/** Piste de l'anneau et coche d'un livre pas encore fini */
 const IDLE = inkAlpha(0.16);
 /** Voile crème sur le flou : garde l'anneau gris lisible sur une couverture sombre */
 const GLASS_VEIL = 0.55;
@@ -54,6 +56,7 @@ const GLASS_VEIL = 0.55;
 export default function ReadingStateBadge({ state, percent }: BookReading) {
   // Un identifiant de dégradé par pastille ; les « : » de useId cassent `url(#…)`
   const gradientId = `ink${useId().replace(/[^a-zA-Z0-9]/g, '')}`;
+  if (state === 'unread') return null;
   const c = READING_BADGE_SIZE / 2;
   const done = state === 'done';
 

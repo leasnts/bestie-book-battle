@@ -11,9 +11,9 @@
  * sombre (flou + noyer à 30 %) posée PAR-DESSUS le bas des couvertures, qui
  * passent donc derrière elle.
  *
- * Chaque couverture porte une pastille d'état dans son coin haut droit (pas
- * commencé, en cours, terminé : cf. ReadingStateBadge), calculée à partir de
- * MA progression.
+ * Coin haut droit de chaque couverture, selon MA progression : l'anneau d'un
+ * livre en cours ou la coche d'un livre terminé (ReadingStateBadge). Un livre
+ * pas commencé n'a rien, sauf le dernier ajouté qui porte « Nouveau » (NewBadge).
  *
  * Toucher une couverture l'affiche sur l'accueil et ferme le sheet.
  *
@@ -35,6 +35,7 @@ import { Challenge } from '../../types/supabase';
 import { colors, creamAlpha, motion, shadowAlpha, spacing } from '../../utils/constants';
 import { BookReading, LibrarySort, LIBRARY_SORTS, readingLabel } from '../../utils/library';
 import BookCover, { COVER_RATIO } from './BookCover';
+import NewBadge from './NewBadge';
 import PressableScale from './PressableScale';
 import ReadingStateBadge from './ReadingStateBadge';
 import SortMenu from './SortMenu';
@@ -46,6 +47,8 @@ interface BookLibraryProps {
   challenges: Challenge[];
   /** Où j'en suis de chaque livre, par id */
   readings: Record<string, BookReading>;
+  /** Le livre qui porte « Nouveau » (cf. `newBookId` dans utils/library.ts) */
+  newBookId: string | null;
   /** ID du livre affiché sur l'accueil */
   activeChallengeId: string | null;
   /** Toucher une couverture */
@@ -138,6 +141,7 @@ function Shelf({
   books,
   index,
   readings,
+  newBookId,
   activeChallengeId,
   onSelect,
   animate,
@@ -145,6 +149,7 @@ function Shelf({
   books: Challenge[];
   index: number;
   readings: Record<string, BookReading>;
+  newBookId: string | null;
   activeChallengeId: string | null;
   onSelect: (challenge: Challenge) => void;
   animate: boolean;
@@ -175,6 +180,7 @@ function Shelf({
 
           const isActive = challenge.id === activeChallengeId;
           const reading = readings[challenge.id] ?? UNREAD;
+          const isNew = challenge.id === newBookId;
 
           return (
             <View key={i} style={styles.column}>
@@ -182,13 +188,13 @@ function Shelf({
                 style={styles.coverSlot}
                 onPress={() => onSelect(challenge)}
                 accessibilityRole="button"
-                accessibilityLabel={`${challenge.book_title}${challenge.book_author ? `, ${challenge.book_author}` : ''}, ${readingLabel(reading)}`}
+                accessibilityLabel={`${challenge.book_title}${challenge.book_author ? `, ${challenge.book_author}` : ''}, ${isNew ? 'nouveau, ' : ''}${readingLabel(reading)}`}
                 accessibilityHint={isActive ? undefined : 'L’affiche sur l’accueil'}
                 accessibilityState={{ selected: isActive }}
               >
                 <BookCover coverUrl={challenge.cover_url} outlined />
                 <View style={styles.badge} pointerEvents="none">
-                  <ReadingStateBadge {...reading} />
+                  {isNew ? <NewBadge /> : <ReadingStateBadge {...reading} />}
                 </View>
               </PressableScale>
             </View>
@@ -212,6 +218,7 @@ function Shelf({
 export default function BookLibrary({
   challenges,
   readings,
+  newBookId,
   activeChallengeId,
   onSelect,
   sort,
@@ -250,6 +257,7 @@ export default function BookLibrary({
           books={item}
           index={index}
           readings={readings}
+          newBookId={newBookId}
           activeChallengeId={activeChallengeId}
           onSelect={onSelect}
           animate={!reducedMotion}

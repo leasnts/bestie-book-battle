@@ -471,16 +471,20 @@ en verre flouté (noyer à 30 %, bordure blanc chaud à 40 %) avec ses vis, pos�
 (`fitToContents`), sans blanc sous la dernière ; passé 72 % de l'écran il
 arrête de grandir et la liste défile.
 
-**État de lecture** : une pastille `ReadingStateBadge` de 30 pt à cheval sur le
-coin haut droit de chaque couverture. Fond en **flou dépoli** (`GlassMaterial frosted`,
-voile crème à 55 %) : la couverture dessous n’est plus qu’une teinte légère.
-Pas le verre d'iOS 26, qui déforme sans flouter et laissait la couverture nette
-au travers. Ombre douce autour. Une seule forme qui se remplit, calculée sur **ma**
+**État de lecture** : en haut à droite de chaque couverture, calculé sur **ma**
 progression, jamais sur celle du club :
-- **pas commencé** : anneau gris, coche grise au centre ;
-- **en cours** : l'anneau (4 pt, au ras du bord : pas de contour clair autour)
-  se remplit en encre à mon %, depuis midi, jamais moins de 10 % d'arc visible ;
+- **pas commencé** : rien. Une rangée d'anneaux vides n'apprenait rien ;
+- **nouveau** : seul le dernier livre ajouté, tant qu'il n'est pas commencé,
+  porte la capsule **Nouveau** (`NewBadge`) — noyer en dégradé sur flou, liseré
+  de verre, texte crème ;
+- **en cours** : pastille `ReadingStateBadge` de 30 pt, fond en **flou dépoli**
+  (`GlassMaterial frosted`, voile crème à 55 %), anneau de 4 pt au ras du bord
+  (pas de contour clair autour) qui se remplit en encre à mon %, depuis midi,
+  jamais moins de 10 % d'arc visible, coche grise au centre ;
 - **terminé** : disque encre, coche crème.
+
+Pas le verre d'iOS 26 sous la pastille : il déforme sans flouter et laissait la
+couverture nette au travers. Ombre douce autour de chaque pastille.
 
 L'encre de la pastille est un dégradé vertical `text-secondary` → `ink-deep`.
 La coche grise au centre est indispensable : sans elle, un anneau à moitié
@@ -587,7 +591,9 @@ qui sert d'affordance « annuler ».
 Le seul bouton rond en verre de l'app : icône Lucide sur `GlassMaterial`, voile
 crème `glassControlVeil` (50 %) et **liseré** (`rim`) — filet d'encre à 8 % qui
 dessine la forme même sur fond blanc, doublé d'un reflet crème en diagonale —,
-ombre douce. 58 pt pour le + de la barre d'onglets, 44 pt en haut d'un sheet.
+ombre douce. Le reflet passe par `stopOpacity` : react-native-svg ignore l'alpha
+d'un `rgba()` dans `stopColor`, et le liseré devenait un anneau blanc uniforme.
+58 pt pour le + de la barre d'onglets, 44 pt en haut d'un sheet.
 La barre d'onglets porte le même voile et le même liseré. Ne jamais redessiner
 ce verre ailleurs : le fond gris plat qu'iOS 26 met derrière les boutons de
 barre est retiré (`hidesSharedBackground`) au profit de ce composant.
