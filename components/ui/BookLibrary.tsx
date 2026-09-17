@@ -1,8 +1,8 @@
 /**
  * Composant BookLibrary
  *
- * La bibliothèque : tous tes challenges, rangés sur des étagères empilées,
- * trois couvertures par étagère.
+ * La bibliothèque : tous mes livres, rangés sur des étagères empilées,
+ * trois couvertures par étagère, sous un bouton « Trier par ».
  *
  *    ▐██▌    ┏━━┓    ▛▀▀▜
  *   ░░░░░░░░░░░░░░░░░░░░░░   ← barre en verre flouté, avec ses vis
@@ -11,36 +11,50 @@
  * sombre (flou + noyer à 30 %) posée PAR-DESSUS le bas des couvertures, qui
  * passent donc derrière elle.
  *
- * Trois états de couverture :
- * - en cours      → le livre affiché sur l'accueil : bordure encre épaisse
- * - pas commencé  → tous les autres : filet fin
- * - terminé       → cadre sombre + marque-page ✓ (cf. BookCover)
+ * Coin haut droit de chaque couverture, selon MA progression : l'anneau d'un
+ * livre en cours ou la coche d'un livre terminé (ReadingStateBadge). Un livre
+ * pas commencé n'a rien, sauf le dernier ajouté qui porte « Nouveau » (NewBadge).
  *
- * Toucher une couverture la passe « en cours » et ferme le sheet.
+ * Toucher une couverture l'affiche sur l'accueil et ferme le sheet.
+ *
+ * Hauteur : le sheet est en `fitToContents`, il prend la hauteur de la liste.
+ * La liste se donne donc la hauteur exacte de ses étagères, plafonnée à
+ * MAX_HEIGHT_RATIO de l'écran ; au-delà, on fait défiler. Pas de blanc inutile
+ * sous la dernière étagère.
  *
  * Volontairement sans habillage de sheet : c'est la route `/library` qui le
  * présente, et c'est iOS qui dessine le sheet lui-même.
  */
 
 import { BlurView } from 'expo-blur';
-import React, { useMemo } from 'react';
-import { FlatList, StyleSheet, Text, View } from 'react-native';
+import React, { useMemo, useState } from 'react';
+import { FlatList, StyleSheet, useWindowDimensions, View } from 'react-native';
 import Animated, { Easing, FadeInDown, useReducedMotion } from 'react-native-reanimated';
 import Svg, { Path } from 'react-native-svg';
 import { Challenge } from '../../types/supabase';
-import { colors, creamAlpha, fonts, motion, shadowAlpha, spacing } from '../../utils/constants';
-import BookCover, { COVER_RATIO, isChallengeDone } from './BookCover';
+import { colors, creamAlpha, motion, shadowAlpha, spacing } from '../../utils/constants';
+import { BookReading, LibrarySort, LIBRARY_SORTS, readingLabel } from '../../utils/library';
+import BookCover, { COVER_RATIO } from './BookCover';
+import NewBadge from './NewBadge';
 import PressableScale from './PressableScale';
+import ReadingStateBadge from './ReadingStateBadge';
+import SortMenu from './SortMenu';
 
 // ─── Props ─────────────────────────────────────────────────────────
 
 interface BookLibraryProps {
-  /** Tous les challenges de l'utilisateur */
+  /** Tous mes livres, déjà triés */
   challenges: Challenge[];
+  /** Où j'en suis de chaque livre, par id */
+  readings: Record<string, BookReading>;
+  /** Le livre qui porte « Nouveau » (cf. `newBookId` dans utils/library.ts) */
+  newBookId: string | null;
   /** ID du livre affiché sur l'accueil */
   activeChallengeId: string | null;
   /** Toucher une couverture */
   onSelect: (challenge: Challenge) => void;
+  sort: LibrarySort;
+  onSortChange: (sort: LibrarySort) => void;
 }
 
 // ─── Constantes (reprises de l'ancienne étagère de l'accueil) ──────
@@ -50,14 +64,26 @@ const COVER_H = 110;
 const COVER_W = Math.round(COVER_H * COVER_RATIO); // 79
 const SHELF_BAR_H = 24;        // hauteur de la barre d'étagère
 const SHELF_OVERLAP = 14;      // de combien la barre chevauche le bas des couvertures
-/** Écart entre la couverture en cours et sa bordure épaisse */
-const ACTIVE_RING_GAP = 3;
-const ACTIVE_RING_W = 2;
+/** Espace entre deux étagères, et entre « Trier par » et la première */
+const SHELF_GAP = spacing['3xl'];
+/** Hauteur d'une étagère : couverture + partie de la barre qui dépasse dessous */
+const SHELF_H = COVER_H + SHELF_BAR_H - SHELF_OVERLAP;
+/** Hauteur de la ligne « Trier par » */
+const SORT_ROW_H = 20;
+/** Marge sous la dernière étagère */
+const LIST_BOTTOM = spacing['2xl'];
+/** Au-delà de cette part de l'écran, le sheet arrête de grandir et la liste défile */
+const MAX_HEIGHT_RATIO = 0.72;
 
-/** « 1 livre », « 4 livres » */
-function formatBookCount(count: number): string {
-  return `${count} livre${count > 1 ? 's' : ''}`;
+/** Hauteur du contenu pour `shelfCount` étagères, avant toute mesure */
+function estimateContentHeight(shelfCount: number): number {
+  return SORT_ROW_H + shelfCount * (SHELF_GAP + SHELF_H) + LIST_BOTTOM;
 }
+
+/** De combien la pastille d'état déborde du coin de la couverture */
+const BADGE_OVERHANG = 9;
+/** Pastille si le livre n'est pas encore dans `readings` (premier chargement) */
+const UNREAD: BookReading = { state: 'unread', percent: 0 };
 
 // ─── Vis métallique de l'étagère ──────────────────────────────────
 // Le design Figma utilise un conic-gradient pour un effet de vis chromée.
@@ -114,12 +140,16 @@ function ShelfScrew() {
 function Shelf({
   books,
   index,
+  readings,
+  newBookId,
   activeChallengeId,
   onSelect,
   animate,
 }: {
   books: Challenge[];
   index: number;
+  readings: Record<string, BookReading>;
+  newBookId: string | null;
   activeChallengeId: string | null;
   onSelect: (challenge: Challenge) => void;
   animate: boolean;
@@ -149,7 +179,8 @@ function Shelf({
           if (!challenge) return <View key={i} style={styles.column} />;
 
           const isActive = challenge.id === activeChallengeId;
-          const isDone = isChallengeDone(challenge);
+          const reading = readings[challenge.id] ?? UNREAD;
+          const isNew = challenge.id === newBookId;
 
           return (
             <View key={i} style={styles.column}>
@@ -157,12 +188,14 @@ function Shelf({
                 style={styles.coverSlot}
                 onPress={() => onSelect(challenge)}
                 accessibilityRole="button"
-                accessibilityLabel={`${challenge.book_title}${challenge.book_author ? `, ${challenge.book_author}` : ''}${isDone ? ', terminé' : isActive ? ', en cours' : ''}`}
-                accessibilityHint={isActive ? undefined : 'Devient ton livre en cours'}
+                accessibilityLabel={`${challenge.book_title}${challenge.book_author ? `, ${challenge.book_author}` : ''}, ${isNew ? 'nouveau, ' : ''}${readingLabel(reading)}`}
+                accessibilityHint={isActive ? undefined : 'L’affiche sur l’accueil'}
                 accessibilityState={{ selected: isActive }}
               >
-                <BookCover coverUrl={challenge.cover_url} done={isDone} outlined={!isActive} />
-                {isActive && <View style={styles.activeRing} pointerEvents="none" />}
+                <BookCover coverUrl={challenge.cover_url} outlined />
+                <View style={styles.badge} pointerEvents="none">
+                  {isNew ? <NewBadge /> : <ReadingStateBadge {...reading} />}
+                </View>
               </PressableScale>
             </View>
           );
@@ -184,10 +217,17 @@ function Shelf({
 
 export default function BookLibrary({
   challenges,
+  readings,
+  newBookId,
   activeChallengeId,
   onSelect,
+  sort,
+  onSortChange,
 }: BookLibraryProps) {
   const reducedMotion = useReducedMotion();
+  const { height: windowHeight } = useWindowDimensions();
+  // Hauteur réelle du contenu, mesurée après le premier rendu (texte agrandi, etc.)
+  const [measuredHeight, setMeasuredHeight] = useState<number | null>(null);
 
   // Livres découpés par étagères de 3
   const shelves = useMemo(() => {
@@ -197,6 +237,11 @@ export default function BookLibrary({
     }
     return rows;
   }, [challenges]);
+
+  const listHeight = Math.min(
+    measuredHeight ?? estimateContentHeight(shelves.length),
+    Math.round(windowHeight * MAX_HEIGHT_RATIO),
+  );
 
   return (
     /*
@@ -211,16 +256,21 @@ export default function BookLibrary({
         <Shelf
           books={item}
           index={index}
+          readings={readings}
+          newBookId={newBookId}
           activeChallengeId={activeChallengeId}
           onSelect={onSelect}
           animate={!reducedMotion}
         />
       )}
       ListHeaderComponent={
-        <Text style={styles.headerSubtitle}>{formatBookCount(challenges.length)}</Text>
+        <SortMenu options={LIBRARY_SORTS} value={sort} onChange={onSortChange} />
       }
-      style={styles.list}
+      // Le menu de tri se déroule PAR-DESSUS les étagères
+      ListHeaderComponentStyle={styles.header}
+      style={[styles.list, { height: listHeight }]}
       contentContainerStyle={styles.listContent}
+      onContentSizeChange={(_width, height) => setMeasuredHeight(height)}
       showsVerticalScrollIndicator={false}
       contentInsetAdjustmentBehavior="automatic"
       bounces
@@ -232,19 +282,17 @@ export default function BookLibrary({
 
 const styles = StyleSheet.create({
   list: {
-    flex: 1,
     backgroundColor: colors.white,
   },
-  listContent: {
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.md,
-    paddingBottom: spacing['4xl'],
-    gap: spacing['3xl'],
+  // Marges alignées sur le titre de la barre du sheet (20 pt)
+  header: {
+    zIndex: 1,
   },
-  headerSubtitle: {
-    fontFamily: fonts.bodyMedium,
-    fontSize: 14,
-    color: colors.textTertiary,
+  listContent: {
+    paddingHorizontal: spacing.xl,
+    paddingTop: 0,
+    paddingBottom: LIST_BOTTOM,
+    gap: SHELF_GAP,
   },
 
   // ═══ ÉTAGÈRE ═══
@@ -266,16 +314,11 @@ const styles = StyleSheet.create({
     width: COVER_W,
     height: COVER_H,
   },
-  /** Bordure épaisse du livre en cours, détachée de la couverture par un fin écart */
-  activeRing: {
+  /** Pastille d'état, à cheval sur le coin haut droit de la couverture */
+  badge: {
     position: 'absolute',
-    top: -(ACTIVE_RING_GAP + ACTIVE_RING_W),
-    left: -(ACTIVE_RING_GAP + ACTIVE_RING_W),
-    right: -(ACTIVE_RING_GAP + ACTIVE_RING_W),
-    bottom: -(ACTIVE_RING_GAP + ACTIVE_RING_W),
-    borderRadius: 5,
-    borderWidth: ACTIVE_RING_W,
-    borderColor: colors.dark900,
+    top: -BADGE_OVERHANG,
+    right: -BADGE_OVERHANG,
   },
   // Barre d'étagère — en absolute, AU PREMIER PLAN pour passer par-dessus le
   // bas des couvertures. overflow: 'hidden' pour que le flou respecte le rayon.

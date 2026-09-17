@@ -401,6 +401,11 @@ export type User = Database['public']['Tables']['users']['Row'];
 export type Challenge = Database['public']['Tables']['challenges']['Row'];
 export type ChallengeParticipant = Database['public']['Tables']['challenge_participants']['Row'];
 export type UserProgress = Database['public']['Tables']['user_progress']['Row'];
+/** Ma progression sur un livre, réduite à ce dont la bibliothèque a besoin (état et tri) */
+export type MyBookProgress = Pick<
+  UserProgress,
+  'challenge_id' | 'current_page' | 'progress_percentage' | 'last_updated_at' | 'created_at'
+>;
 export type ProgressHistory = Database['public']['Tables']['progress_history']['Row'];
 export type ChallengeGoal = Database['public']['Tables']['challenge_goals']['Row'];
 export type Annotation = Database['public']['Tables']['annotations']['Row'];

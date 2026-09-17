@@ -36,6 +36,12 @@ export const creamAlpha = (alpha: number) => `rgba(${CREAM_RGB},${alpha})`;
  */
 export const glassVeil = 0.56;
 
+/**
+ * Voile crème des commandes en verre (`GlassButton`, barre d'onglets). Sans lui,
+ * le verre vire au gris plat sur un fond clair comme celui d'un sheet.
+ */
+export const glassControlVeil = 0.25;
+
 export const colors = {
   // Dark colors (onboarding, boutons principaux)
   dark950: '#1e140e',          // Fond splash screen

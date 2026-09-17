@@ -458,12 +458,52 @@ s'affichent dans **mon** édition — un cap est enregistré en %. Plus de menu 
 l'accueil.
 
 Changer de livre ou en ajouter un se fait dans la **bibliothèque**, route
-`/library` en sheet natif : les challenges rangés trois par trois, sans titre,
-sur l'étagère historique de l'accueil — barre en verre flouté (noyer à 30 %,
-bordure blanc chaud à 40 %) avec ses vis, posée **par-dessus** le bas des
-couvertures. Trois états de couverture : **en cours** (le livre de l'accueil)
-bordure encre de 2 pt détachée de 3 pt, **pas commencé** filet `inkAlpha(0.15)`,
-**terminé** cadre sombre + marque-page ✓ (`BookCover`).
+`/library` en sheet natif titré **Mes lectures**, avec le **+** en verre
+(`GlassButton`) à droite du titre (même parcours que le + de la barre d'onglets).
+Dessous, un bouton texte discret **Trier par Dernière activité ⌄** (`SortMenu`)
+déroule un menu en verre : Dernière activité (par défaut : ma progression ou
+celle du club, la plus récente), Plus anciens, Titre ; le choix est retenu. Les
+livres sont rangés trois par trois sur l'étagère historique de l'accueil — barre
+en verre flouté (noyer à 30 %, bordure blanc chaud à 40 %) avec ses vis, posée
+**par-dessus** le bas des couvertures.
+
+**Aquarelle** (`WatercolorCorner`) : un lavis léger dans le coin haut droit du
+sheet, qui passe **sous le + en verre** pour que le verre se voie, et que le bord
+du sheet coupe net. **Tons neutres** (sable et noyer clair, `NEUTRAL_WASH`) : la
+bibliothèque ne parle d'aucun livre précis, elle n'a donc pas de couleur de
+couverture. Les couleurs d'une couverture (`coverWash`, `utils/watercolor.ts`)
+sont réservées aux écrans qui parlent de ce livre. Textures blanches teintées à l'affichage
+(`assets/images/watercolor/corner-*.png`, `scripts/generate-watercolor.py`). Il
+s'arrête avant la première étagère. Rendu **après** la liste, jamais avant ni en
+`zIndex` négatif : iOS repère la liste en suivant le premier enfant de l'écran,
+et perd sinon sa marge sous la barre.
+
+**Hauteur** : le sheet prend la hauteur exacte de ses étagères
+(`fitToContents`), sans blanc sous la dernière ; passé 72 % de l'écran il
+arrête de grandir et la liste défile.
+
+**État de lecture** : en haut à droite de chaque couverture, calculé sur **ma**
+progression, jamais sur celle du club :
+- **pas commencé** : rien. Une rangée d'anneaux vides n'apprenait rien ;
+- **nouveau** : seul le dernier livre ajouté, tant qu'il n'est pas commencé,
+  porte la capsule **Nouveau** (`NewBadge`) — noyer en dégradé sur flou, liseré
+  de verre, texte crème ;
+- **en cours** : pastille `ReadingStateBadge` de 30 pt, fond en **flou dépoli**
+  (`GlassMaterial frosted`, voile crème à 55 %), anneau de 4 pt au ras du bord
+  (pas de contour clair autour) qui se remplit en encre à mon %, depuis midi,
+  jamais moins de 10 % d'arc visible, coche grise au centre ;
+- **terminé** : disque encre, coche crème.
+
+Pas le verre d'iOS 26 sous la pastille : il déforme sans flouter et laissait la
+couverture nette au travers. Ombre douce autour de chaque pastille.
+
+L'encre de la pastille est un dégradé vertical `text-secondary` → `ink-deep`.
+La coche grise au centre est indispensable : sans elle, un anneau à moitié
+rempli se lit comme un indicateur de chargement.
+
+Vocabulaire : on parle de **lectures** et de **livres**, jamais de
+« challenges ». Un groupe qui lit un livre ensemble n'est pas un challenge (le
+renommage de l'app suit, #29).
 
 ### Vocaux du carnet
 
@@ -544,8 +584,31 @@ Ne pas activer `featureFlags.experiment.synchronousScreenUpdatesEnabled` : ce
 flag expérimental de react-native-screens a une contrepartie native et rend
 l'app entièrement blanche sur un binaire fraîchement compilé.
 
+**Titre ferré à gauche, jamais centré.** Tous les sheets, sans exception :
+Fraunces 22 (`headline`), le contenu aligné sur lui (marge de 20 pt), actions à
+droite sur la même ligne (`GlassButton` 44 pt, icône Lucide). La barre native
+centre toujours son titre : on laisse le sien vide et on pose le nôtre en
+premier élément de gauche, sans verre. Tout passe par
+`components/ui/SheetHeader.tsx` : `sheetScreenOptions(titre)` pour la route,
+`sheetIconItem(...)` pour un bouton à droite, `sheetTitleItem(titre)` si un écran
+remplace les éléments de gauche (ex. la croix de « Nouvelle note », posée avant
+le titre). Les sheets dessinés à la main suivent la même règle.
+
 Sheets de consultation : poignée seule. Sheets de formulaire : garder une croix,
 qui sert d'affordance « annuler ».
+
+### Bouton en verre — `GlassButton`
+
+Le seul bouton rond en verre de l'app : icône Lucide sur `GlassMaterial`, voile
+crème `glassControlVeil` (25 % : assez pour ne pas griser sur fond clair, assez
+peu pour laisser passer la couleur de dessous) et **liseré** (`rim`) — filet d'encre à 8 % qui
+dessine la forme même sur fond blanc, doublé d'un reflet crème en diagonale —,
+ombre douce. Le reflet passe par `stopOpacity` : react-native-svg ignore l'alpha
+d'un `rgba()` dans `stopColor`, et le liseré devenait un anneau blanc uniforme.
+58 pt pour le + de la barre d'onglets, 44 pt en haut d'un sheet.
+La barre d'onglets porte le même voile et le même liseré. Ne jamais redessiner
+ce verre ailleurs : le fond gris plat qu'iOS 26 met derrière les boutons de
+barre est retiré (`hidesSharedBackground`) au profit de ce composant.
 
 ### Retour au toucher — `PressableScale`
 
@@ -594,6 +657,7 @@ système par ailleurs sobre.
   qu'elle signifie ».
 - Pas de carte dans une carte.
 - Pas de rayon codé en dur sur un sheet natif : iOS 26 gère la concentricité.
+- Pas de titre de sheet centré : toujours ferré à gauche (`SheetHeader`).
 - Pas de Fraunces en texte courant, pas de Nunito en score (sauf sous 13 px).
 - Pas de `fontWeight` pour faire du gras : changer de token `fonts`.
 - Pas de bounce, pas d'elastic, pas d'animation de `width` ou de `height`.

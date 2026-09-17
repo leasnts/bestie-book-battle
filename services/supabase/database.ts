@@ -20,6 +20,7 @@ import {
     ChallengeParticipantInsert,
     ChallengeUpdate,
     ChallengeWithParticipants,
+    MyBookProgress,
     ParticipantWithProgress,
     ProgressHistory,
     UserProgress,
@@ -200,6 +201,28 @@ export async function getUserChallenges(userId: string): Promise<Challenge[]> {
     console.error('Erreur lors de la récupération des challenges de l\'utilisateur:', error);
     throw error;
   }
+}
+
+/**
+ * Ma progression sur chacun de mes livres
+ *
+ * Une ligne par livre où j'ai une progression : sert à la bibliothèque pour
+ * afficher l'état de chaque couverture (pas commencé, en cours, terminé) et
+ * pour la trier (lus récemment, plus anciens).
+ *
+ * @param userId - L'ID de l'utilisateur
+ */
+export async function getMyBookProgress(userId: string): Promise<MyBookProgress[]> {
+  const { data, error } = await withTimeout(
+    supabase
+      .from('user_progress')
+      .select('challenge_id, current_page, progress_percentage, last_updated_at, created_at')
+      .eq('user_id', userId),
+    10_000
+  );
+
+  if (error) throw error;
+  return data || [];
 }
 
 /**
