@@ -5,15 +5,18 @@
  * couverture, bout coupé en V, surpiqûre sur tout le tour :
  *
  *     ┌─────────┐  ┌─────────┐  ┌─────────┐
- *     │┆       ┆│  │┆▓▓▓▓▓▓▓┆│  │┆       ┆│
- *     │┆       ┆│  │┆▓▓▓▓▓▓▓┆│  │┆   ✦   ┆│
- *     │┆   ✓   ┆│  │┆       ┆│  │┆       ┆│
+ *     │┆       ┆│  │┆       ┆│  │┆       ┆│
+ *     │┆       ┆│  │┆∿∿∿∿∿∿∿┆│  │┆   ✦   ┆│
+ *     │┆   ✓   ┆│  │┆▓▓▓▓▓▓▓┆│  │┆       ┆│
  *     └──╲ ╱──┘   └──╲ ╱──┘   └──╲ ╱──┘
  *      terminé      en cours     nouveau
  *
  * - `done`    : ruban lie de vin, coche brodée crème ;
- * - `reading` : ruban écru que le lie de vin remplit depuis le haut, à mon % —
- *               à 100 %, c'est le ruban « terminé » ;
+ * - `reading` : ruban écru que le lie de vin imprègne depuis le bout, à mon %,
+ *               comme une teinture qui monte dans le tissu ; à 100 %, c'est le
+ *               ruban « terminé ». Front de teinture ondulé et fondu, avec une
+ *               ligne plus foncée là où la teinture s'accumule (comme le bord
+ *               d'une aquarelle) : une coupe droite faisait abrupte ;
  * - `new`     : ruban écru, étincelle brodée lie de vin (dernier livre ajouté).
  *
  * Les images sont calculées par scripts/generate-ribbon-bookmarks.py (tissu,
@@ -22,8 +25,18 @@
  */
 
 import { Image } from 'expo-image';
-import React from 'react';
-import { StyleSheet, View } from 'react-native';
+import React, { useId, useMemo } from 'react';
+import { StyleSheet } from 'react-native';
+import Svg, {
+  ClipPath,
+  Defs,
+  Image as SvgImage,
+  LinearGradient,
+  Mask,
+  Path,
+  Rect,
+  Stop,
+} from 'react-native-svg';
 
 const RIBBONS = {
   done: require('../../assets/images/ribbons/ribbon-done.png'),
@@ -32,11 +45,19 @@ const RIBBONS = {
   fill: require('../../assets/images/ribbons/ribbon-progress-fill.png'),
 };
 
-/** Taille de l'image, ombre comprise, et bornes du ruban (CANVAS_*, TOP, TAIL_END du script) */
+/** Taille de l'image, ombre comprise, et bornes du ruban (CANVAS_*, RIBBON_*, TOP, TAIL_END du script) */
 const WIDTH = 34;
 const HEIGHT = 66;
+const RIBBON_LEFT = 5;
+const RIBBON_WIDTH = 23;
 const RIBBON_TOP = 1.5;
 const RIBBON_END = 60;
+/** Couleur de la ligne plus foncée au front de teinture (lie de vin profond) */
+const TIDE_LINE = '#4a1622';
+
+/** Hauteur de l'ondulation du front, et largeur du fondu sous elle */
+const WAVE = 0.9;
+const FEATHER = 4.5;
 /** Hauteur du ruban au-dessus du bord de la couverture (COVER_TOP du script) */
 export const RIBBON_ABOVE_COVER = 9;
 /**
@@ -50,22 +71,82 @@ type RibbonBookmarkProps =
   | { kind: 'done' | 'new' }
   | { kind: 'reading'; /** Mon avancement, de 0 à 100 */ percent: number };
 
+/** Le front de teinture : une ondulation irrégulière (deux vagues), à la hauteur `y` */
+function dyeFront(y: number, phase: number): string {
+  const steps = 20;
+  let d = '';
+  for (let i = 0; i <= steps; i++) {
+    const x = RIBBON_LEFT + (RIBBON_WIDTH * i) / steps;
+    const t = (i / steps) * Math.PI * 2;
+    // Trois vagues de plus en plus fines : le tissu boit la teinture inégalement
+    const wy =
+      y +
+      WAVE *
+        (Math.sin(t * 0.9 + phase) * 0.55 +
+          Math.sin(t * 2.3 + phase * 1.7) * 0.3 +
+          Math.sin(t * 5.1 + phase * 2.9) * 0.15);
+    d += `${i === 0 ? 'M' : 'L'}${x.toFixed(2)},${wy.toFixed(2)} `;
+  }
+  return d;
+}
+
 export default function RibbonBookmark(props: RibbonBookmarkProps) {
+  const id = useId().replace(/[^a-zA-Z0-9]/g, '');
+  const percent = props.kind === 'reading' ? Math.min(100, Math.max(MIN_FILL_PERCENT, props.percent)) : 0;
+
+  // Hauteur du front : le lie de vin monte depuis le bout du V
+  const front = RIBBON_END - ((RIBBON_END - RIBBON_TOP) * percent) / 100;
+  // Une ondulation différente selon le %, pour que deux livres ne se ressemblent pas
+  const line = useMemo(() => dyeFront(front, percent * 0.37), [front, percent]);
+
   if (props.kind !== 'reading') {
     return <Image source={RIBBONS[props.kind]} style={styles.ribbon} contentFit="contain" />;
   }
 
-  const percent = Math.min(100, Math.max(MIN_FILL_PERCENT, props.percent));
-  const fillHeight = RIBBON_TOP + ((RIBBON_END - RIBBON_TOP) * percent) / 100;
+  // Zone teinte : sous le front, jusqu'en bas de l'image
+  const dyed = `${line} L${RIBBON_LEFT + RIBBON_WIDTH},${HEIGHT} L${RIBBON_LEFT},${HEIGHT} Z`;
+  const full = percent >= 100;
 
   return (
-    <View style={styles.ribbon}>
-      <Image source={RIBBONS.track} style={StyleSheet.absoluteFill} contentFit="contain" />
-      {/* Le lie de vin, coupé à mon % : même tissu, même surpiqûre, calés au pixel */}
-      <View style={[styles.fill, { height: fillHeight }]}>
-        <Image source={RIBBONS.fill} style={styles.ribbon} contentFit="contain" />
-      </View>
-    </View>
+    <Svg width={WIDTH} height={HEIGHT}>
+      <Defs>
+        {/* Fondu du front : transparent au-dessus des vagues, plein juste dessous */}
+        <LinearGradient
+          id={`fade${id}`}
+          gradientUnits="userSpaceOnUse"
+          x1="0"
+          y1={front - WAVE}
+          x2="0"
+          y2={front + WAVE + FEATHER}
+        >
+          <Stop offset="0" stopColor="#fff" stopOpacity={full ? 1 : 0} />
+          <Stop offset="0.35" stopColor="#fff" stopOpacity={full ? 1 : 0.45} />
+          <Stop offset="1" stopColor="#fff" stopOpacity={1} />
+        </LinearGradient>
+        <Mask id={`dye${id}`} maskUnits="userSpaceOnUse" x={0} y={0} width={WIDTH} height={HEIGHT}>
+          <Path d={full ? `M0,0 H${WIDTH} V${HEIGHT} H0 Z` : dyed} fill={`url(#fade${id})`} />
+        </Mask>
+        <ClipPath id={`ribbon${id}`}>
+          <Rect x={RIBBON_LEFT} y={RIBBON_TOP} width={RIBBON_WIDTH} height={RIBBON_END - RIBBON_TOP} />
+        </ClipPath>
+      </Defs>
+
+      <SvgImage href={RIBBONS.track} width={WIDTH} height={HEIGHT} />
+      {/* Le lie de vin : même tissu, même surpiqûre, calés au pixel, révélés sous le front */}
+      <SvgImage href={RIBBONS.fill} width={WIDTH} height={HEIGHT} mask={`url(#dye${id})`} />
+      {/* La ligne de teinture accumulée, juste au bord du front */}
+      {!full && (
+        <Path
+          d={line}
+          stroke={TIDE_LINE}
+          strokeOpacity={0.16}
+          strokeWidth={1.4}
+          fill="none"
+          clipPath={`url(#ribbon${id})`}
+          transform={`translate(0, ${WAVE * 0.6})`}
+        />
+      )}
+    </Svg>
   );
 }
 
@@ -73,12 +154,5 @@ const styles = StyleSheet.create({
   ribbon: {
     width: WIDTH,
     height: HEIGHT,
-  },
-  fill: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    width: WIDTH,
-    overflow: 'hidden',
   },
 });

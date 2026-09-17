@@ -487,9 +487,11 @@ chaque couverture, calculé sur **ma** progression, jamais sur celle du club :
 - **pas commencé** : rien ;
 - **nouveau** : seul le dernier livre ajouté, tant qu'il n'est pas commencé —
   ruban écru, étincelle brodée lie de vin ;
-- **en cours** : ruban écru que le **lie de vin remplit depuis le haut, à mon %**
-  (10 % au moins, sinon on ne le voit pas) ; dans la partie remplie, la surpiqûre
-  passe en crème ;
+- **en cours** : ruban écru que le **lie de vin imprègne depuis le bout du V, à mon
+  %** (10 % au moins, sinon on ne le voit pas), comme une teinture qui monte dans
+  le tissu. Front **ondulé et fondu**, avec une ligne à peine plus foncée là où la
+  teinture s'accumule (comme le bord d'une aquarelle) : une coupe droite faisait
+  abrupte. Dans la partie teinte, la surpiqûre passe en crème ;
 - **terminé** : ruban entièrement lie de vin — le ruban « en cours » à 100 % —,
   coche brodée crème.
 
@@ -624,8 +626,8 @@ passé**. C'est la direction « maille » : du textile réaliste, pas un pictogr
 
 `reading` superpose deux images calculées avec la même graine — `progress-track`
 (écru, avec ombre) et `progress-fill` (lie de vin, sans ombre pour ne pas la
-doubler) — et coupe la seconde à mon %. Les tissus et la surpiqûre coïncident au
-pixel.
+doubler) — et révèle la seconde sous le front (masque SVG : vagues + fondu). Les
+tissus et la surpiqûre coïncident au pixel.
 
 La coche est **effilée aux deux bouts et pleine au coin**, comme un trait de
 plume, chaque branche brodée à part : pleine largeur et bouts carrés, elle faisait
