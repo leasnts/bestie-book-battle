@@ -2,7 +2,8 @@
  * Composant BookLibrary
  *
  * La bibliothèque : tous mes livres, rangés sur des étagères empilées,
- * trois couvertures par étagère, sous un bouton « Trier par ».
+ * trois couvertures par étagère. Au-dessus, mes chiffres de lecture sur une
+ * tache d'aquarelle (ReadingNumbers), puis un bouton « Trier par ».
  *
  *    ▐██▌    ┏━━┓    ▛▀▀▜
  *   ░░░░░░░░░░░░░░░░░░░░░░   ← barre en verre flouté, avec ses vis
@@ -33,10 +34,18 @@ import Animated, { Easing, FadeInDown, useReducedMotion } from 'react-native-rea
 import Svg, { Path } from 'react-native-svg';
 import { Challenge } from '../../types/supabase';
 import { colors, creamAlpha, motion, shadowAlpha, spacing } from '../../utils/constants';
-import { BookReading, LibrarySort, LIBRARY_SORTS, readingLabel } from '../../utils/library';
+import type { CoverPalette } from '../../utils/coverPalette';
+import {
+  BookReading,
+  LibraryNumbers,
+  LibrarySort,
+  LIBRARY_SORTS,
+  readingLabel,
+} from '../../utils/library';
 import BookCover, { COVER_RATIO } from './BookCover';
 import NewBadge from './NewBadge';
 import PressableScale from './PressableScale';
+import ReadingNumbers from './ReadingNumbers';
 import ReadingStateBadge from './ReadingStateBadge';
 import SortMenu from './SortMenu';
 
@@ -49,6 +58,10 @@ interface BookLibraryProps {
   readings: Record<string, BookReading>;
   /** Le livre qui porte « Nouveau » (cf. `newBookId` dans utils/library.ts) */
   newBookId: string | null;
+  /** Mes chiffres de lecture, en tête de liste */
+  numbers: LibraryNumbers;
+  /** Couleurs de la tache d'aquarelle derrière les chiffres */
+  palette: CoverPalette;
   /** ID du livre affiché sur l'accueil */
   activeChallengeId: string | null;
   /** Toucher une couverture */
@@ -70,6 +83,9 @@ const SHELF_GAP = spacing['3xl'];
 const SHELF_H = COVER_H + SHELF_BAR_H - SHELF_OVERLAP;
 /** Hauteur de la ligne « Trier par » */
 const SORT_ROW_H = 20;
+/** Hauteur du bloc des chiffres (marges + nombre + libellé), et l'espace sous lui */
+const NUMBERS_H = spacing.md + 16 + 34 + 2 + 16 + 16;
+const NUMBERS_GAP = spacing.xl;
 /** Marge sous la dernière étagère */
 const LIST_BOTTOM = spacing['2xl'];
 /** Au-delà de cette part de l'écran, le sheet arrête de grandir et la liste défile */
@@ -77,7 +93,7 @@ const MAX_HEIGHT_RATIO = 0.72;
 
 /** Hauteur du contenu pour `shelfCount` étagères, avant toute mesure */
 function estimateContentHeight(shelfCount: number): number {
-  return SORT_ROW_H + shelfCount * (SHELF_GAP + SHELF_H) + LIST_BOTTOM;
+  return NUMBERS_H + NUMBERS_GAP + SORT_ROW_H + shelfCount * (SHELF_GAP + SHELF_H) + LIST_BOTTOM;
 }
 
 /** De combien la pastille d'état déborde du coin de la couverture */
@@ -219,6 +235,8 @@ export default function BookLibrary({
   challenges,
   readings,
   newBookId,
+  numbers,
+  palette,
   activeChallengeId,
   onSelect,
   sort,
@@ -264,7 +282,10 @@ export default function BookLibrary({
         />
       )}
       ListHeaderComponent={
-        <SortMenu options={LIBRARY_SORTS} value={sort} onChange={onSortChange} />
+        <View style={styles.headerContent}>
+          <ReadingNumbers numbers={numbers} palette={palette} />
+          <SortMenu options={LIBRARY_SORTS} value={sort} onChange={onSortChange} />
+        </View>
       }
       // Le menu de tri se déroule PAR-DESSUS les étagères
       ListHeaderComponentStyle={styles.header}
@@ -287,6 +308,11 @@ const styles = StyleSheet.create({
   // Marges alignées sur le titre de la barre du sheet (20 pt)
   header: {
     zIndex: 1,
+  },
+  headerContent: {
+    gap: NUMBERS_GAP,
+    // La tache d'aquarelle déborde du bloc : on la laisse respirer en haut
+    paddingTop: spacing.md,
   },
   listContent: {
     paddingHorizontal: spacing.xl,

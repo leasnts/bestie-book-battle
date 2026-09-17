@@ -21,7 +21,15 @@ import { useAuthStore } from '../stores/authStore';
 import { useProgressStore } from '../stores/progressStore';
 import { useProjectStore } from '../stores/projectStore';
 import { Challenge } from '../types/supabase';
-import { BookReading, knownLibrarySort, newBookId, readingOf, sortBooks } from '../utils/library';
+import {
+  BookReading,
+  knownLibrarySort,
+  libraryNumbers,
+  libraryPalette,
+  newBookId,
+  readingOf,
+  sortBooks,
+} from '../utils/library';
 
 export default function LibraryRoute() {
   const router = useRouter();
@@ -59,6 +67,8 @@ export default function LibraryRoute() {
   }, [challenges, progressById]);
 
   const newId = useMemo(() => newBookId(challenges, progressById), [challenges, progressById]);
+  const numbers = useMemo(() => libraryNumbers(challenges, progressById), [challenges, progressById]);
+  const palette = useMemo(() => libraryPalette(challenges, progressById), [challenges, progressById]);
 
   // Choisir un livre : il devient le livre en cours, et on revient à l'accueil
   const handleSelect = useCallback(
@@ -92,6 +102,8 @@ export default function LibraryRoute() {
         challenges={books}
         readings={readings}
         newBookId={newId}
+        numbers={numbers}
+        palette={palette}
         activeChallengeId={activeChallengeId}
         onSelect={handleSelect}
         sort={sort}
