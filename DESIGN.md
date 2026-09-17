@@ -1,6 +1,6 @@
 ---
 name: Bestie Book Battle
-description: Le carnet de lecture partagé — encre noyer sur papier blanc chaud, animé par des réactions taquines
+description: Le carnet de lecture partagé — cosy fait main (papier, aquarelle, maille), encre noyer en dégradé sur papier blanc chaud, animé par des réactions taquines
 colors:
   ink: "#33231a"
   ink-deep: "#1e140e"
@@ -67,6 +67,12 @@ typography:
     fontSize: "12px"
     fontWeight: 600
     lineHeight: "16px"
+gradients:
+  # Jamais d'aplat : toute surface remplie est un dégradé vertical, clair en haut, foncé en bas
+  ink:
+    from: "#5a4536"
+    to: "#1e140e"
+    direction: "top-to-bottom"
 rounded:
   xs: "2px"
   sm: "8px"
@@ -86,13 +92,13 @@ spacing:
   6xl: "64px"
 components:
   button-primary:
-    backgroundColor: "{colors.ink}"
+    backgroundColor: "{gradients.ink}"
     textColor: "{colors.surface}"
     typography: "{typography.body}"
     rounded: "{rounded.xl}"
     padding: "20px 24px"
   button-primary-pressed:
-    backgroundColor: "{colors.ink}"
+    backgroundColor: "{gradients.ink}"
     textColor: "{colors.surface}"
     rounded: "{rounded.xl}"
   button-secondary:
@@ -102,7 +108,7 @@ components:
     rounded: "{rounded.xl}"
     padding: "20px 24px"
   button-compact:
-    backgroundColor: "{colors.ink}"
+    backgroundColor: "{gradients.ink}"
     textColor: "{colors.surface}"
     rounded: "{rounded.md}"
     padding: "8px 12px"
@@ -150,12 +156,71 @@ pas de note sur 5, pas de densité de catalogue.
 
 Plateforme : **iOS uniquement**. La HIG gouverne la structure, la navigation et
 l'interaction ; la marque s'exprime dans ce que la plateforme laisse ouvert —
-typographie, mouvement, illustration.
+typographie, mouvement, illustration, matières.
+
+### Direction artistique
+
+**Règle non négociable, posée par Lea le 2026-09-17, valable pour toute l'app.**
+
+**Cosy fait main, mais pas trop.** L'app a la chaleur d'un objet fait main — un
+carnet, un plaid, une écharpe tricotée — posé dans une app iOS 26 nette et
+moderne. Les **matières** apportent la douceur ; la **structure** (navigation,
+grilles, composants, verre natif) reste précise et actuelle.
+
+Les matières de l'app :
+- **Le papier** : la texture grenée du fond, jamais un blanc lisse et numérique.
+- **L'aquarelle** : lavis translucides, bords légèrement chargés de pigment,
+  couleurs qui se fondent l'une dans l'autre. Pour les fonds, les taches de
+  couleur, les zones d'accent.
+- **La maille — crochet, tricot** : points, rangs, fils, pour des motifs et des
+  textures ponctuels (bords, séparateurs, états, illustrations). À explorer.
+
+**D'où vient la couleur** : d'une couverture **seulement quand l'écran parle d'un
+livre précis** (sa fiche, son accueil, son carnet). Ailleurs — bibliothèque,
+profil, réglages, écrans qui mélangent plusieurs livres — aucun livre ne justifie
+une couleur : aquarelle et fonds restent dans des **tons neutres chauds** (papier,
+sable, noyer clair).
+
+Ce que « pas trop » veut dire, concrètement :
+- les matières sont **discrètes** et servent l'écran ; elles ne deviennent jamais
+  le sujet ;
+- une matière par zone, pas un collage : pas de papier + aquarelle + tricot au même
+  endroit ;
+- pas de clichés fait-main (washi tape, boutons cousus, coutures en pointillés
+  partout, polices manuscrites, fleurs séchées) ;
+- **garde-fou** : si un écran évoque une boutique de loisirs créatifs, un
+  scrapbook, un blog DIY ou une carte de vœux, il a dérivé.
+
+**Dégradés, jamais d'aplat** — voir Colors › Dégradés, jamais d'aplat.
 
 ## Colors
 
 **Stratégie : restrained.** Neutres teintés + couleur uniquement porteuse de sens.
 Aucune couleur de marque primaire n'existe, et c'est délibéré.
+
+### Dégradés, jamais d'aplat
+
+**Règle non négociable, posée par Lea le 2026-09-17.** Un aplat de couleur fait
+daté. Toute surface **remplie** de couleur est un **dégradé vertical** : la
+teinte un peu plus claire en haut, la même teinte un peu plus foncée en bas,
+comme éclairée par-dessus.
+
+| Dégradé | Haut | Bas | Pour |
+|---|---|---|---|
+| `ink` | `#5a4536` (`text-secondary`) | `#1e140e` (`ink-deep`) | Boutons primaires, pastilles et disques encre, capsules, remplissages de progression |
+
+- **Concerne** : boutons, boutons ronds, pastilles, disques, capsules, badges,
+  barres et anneaux de progression, puces pleines.
+- **Ne concerne pas** : le texte, les icônes, les filets, les bordures fines, les
+  fonds de page (papier) et de sheet — ils restent unis.
+- **Une autre couleur** suit le même principe : deux valeurs **de la même
+  teinte**, du clair au foncé. Pas un arc-en-ciel.
+- **L'écart reste doux** : on doit sentir le volume, pas voir une bande claire et
+  une bande sombre.
+- En code : `LinearGradient` (expo-linear-gradient) ou un `LinearGradient` SVG,
+  vertical (`start {x:0,y:0}` → `end {x:0,y:1}`). Déjà appliqué : la pastille
+  « terminé » de la bibliothèque. Les aplats restants sont à convertir (issue
+  dédiée sur le BBB Roadmap).
 
 ### Encres et papiers
 
@@ -576,6 +641,10 @@ système par ailleurs sobre.
 
 **À faire**
 
+- Tenir la direction artistique : cosy fait main mais pas trop — papier,
+  aquarelle, maille — dans une structure iOS 26 nette (Overview › Direction
+  artistique).
+- Remplir toute surface colorée d'un dégradé vertical, clair en haut, foncé en bas.
 - Laisser iOS dessiner ce qui lui appartient : sheets, barres de navigation,
   transitions, contrôles système.
 - Faire porter la chaleur par la palette noyer/blanc chaud, les illustrations et le
@@ -587,6 +656,9 @@ système par ailleurs sobre.
 
 **À ne pas faire**
 
+- Pas d'aplat de couleur sur un bouton, une pastille, un disque ou une capsule.
+- Pas de clichés fait-main (washi tape, coutures en pointillés, police
+  manuscrite) ni de collage de matières : ça tourne au scrapbook.
 - Pas de `text-subtle` (`#e5e0d9`) en couleur de texte. C'est une bordure.
 - Pas de `#000`, `#fff` ni `rgba(0,0,0,…)` / `rgba(255,255,255,…)` en dur : passer
   par les tokens et les helpers alpha.
