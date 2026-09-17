@@ -602,9 +602,10 @@ Un signet en ruban qui sort du haut du livre, passe par-dessus le bord de la
 couverture et pend devant elle, bout coupé en V, avec un motif **brodé au point
 passé**. C'est la direction « maille » : du textile réaliste, pas un pictogramme.
 
-- **Ruban** : gros-grain (côtes horizontales, chaîne fine, fils plus clairs ou plus
-  foncés), lisière claire qui le détache d'une couverture sombre, pli au-dessus du
-  bord, dégradé clair en haut → foncé en bas, ombre portée sur la couverture.
+- **Ruban** : gros-grain (côtes horizontales, chaîne fine), lisière un peu plus
+  claire, pli au-dessus du bord, dégradé clair en haut → foncé en bas, ombre portée
+  douce sur la couverture. **Matière discrète** : trop de relief, de trame et
+  d'ombre faisait « old school » (skeuomorphisme des débuts de l'iPhone).
 - **Broderie** : fils serrés et à peine obliques qui traversent tout le trait,
   bouts arrondis, coins adoucis, relief (reflet en haut à gauche) et ombre des fils
   sur le ruban.
@@ -614,8 +615,12 @@ passé**. C'est la direction « maille » : du textile réaliste, pas un pictogr
 
 | Variante | Ruban | Fil | Motif | Pour |
 |---|---|---|---|---|
-| `done` | noyer `#6a5242` → `#3a2a20` | crème | coche | livre terminé |
-| `new` | sable `#eadbc8` → `#cbb399` | noyer | étincelle | dernier livre ajouté |
+| `done` | lie de vin `#8c3b4c` → `#5e1f2e` | crème | coche | livre terminé |
+| `new` | écru `#f3e9df` → `#e1cfbf` | lie de vin | étincelle | dernier livre ajouté |
+
+Le lie de vin est un **essai de couleur d'accent** (issue dédiée sur le BBB
+Roadmap), pas encore adopté pour le reste de l'app. Premier essai en noyer et
+sable : terne, « pas ouf ».
 
 Essai écarté : l'autocollant rond (bord blanc découpé), « pas réaliste, pas
 intéressant ».

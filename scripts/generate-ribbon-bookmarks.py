@@ -43,8 +43,9 @@ NOTCH = 5.5                      # profondeur du V
 ICON_CENTER = (RIBBON_X + RIBBON_W / 2, 38)
 
 VARIANTS = {
-    "done": {"ribbon": ("#6a5242", "#3a2a20"), "thread": "#f4ece1", "motif": "check"},
-    "new": {"ribbon": ("#eadbc8", "#cbb399"), "thread": "#4a372b", "motif": "sparkle"},
+    # Essai d'une couleur d'accent lie de vin (demande de Lea, 2026-09-17)
+    "done": {"ribbon": ("#8c3b4c", "#5e1f2e"), "thread": "#f6ede4", "motif": "check"},
+    "new": {"ribbon": ("#f3e9df", "#e1cfbf"), "thread": "#7a2e3e", "motif": "sparkle"},
 }
 
 
@@ -89,23 +90,23 @@ def ribbon_shading(rng):
     # Lisières : un fil plus clair tout au bord (il détache le ruban d'une couverture
     # sombre), puis un fil plus dense juste à l'intérieur
     edge = np.minimum(u, 1 - u) * RIBBON_W
-    light *= 1 + 0.22 * np.exp(-((edge - 0.35) ** 2) / 0.05)
-    light *= 1 - 0.12 * np.exp(-((edge - 1.0) ** 2) / 0.08)
+    light *= 1 + 0.12 * np.exp(-((edge - 0.35) ** 2) / 0.05)
+    light *= 1 - 0.06 * np.exp(-((edge - 1.0) ** 2) / 0.08)
     # Gros-grain : côtes horizontales tous les 0,6 pt, un peu irrégulières
     phase = fractal_rows(rng, h) * 2.0
-    light *= 1 + 0.13 * np.sin((yp / 0.6) * 2 * math.pi + phase[:, None])
+    light *= 1 + 0.07 * np.sin((yp / 0.6) * 2 * math.pi + phase[:, None])
     # Chaîne : fils verticaux très fins, qu'on devine entre les côtes
-    light *= 1 + 0.05 * np.sin((xp / 0.33) * 2 * math.pi)
+    light *= 1 + 0.03 * np.sin((xp / 0.33) * 2 * math.pi)
     # Grain des fils, et quelques fils plus clairs ou plus foncés sur toute la hauteur
-    light *= 0.93 + 0.14 * rng.random((h, w)).astype(np.float32)
+    light *= 0.96 + 0.08 * rng.random((h, w)).astype(np.float32)
     columns = np.arange(0, CANVAS_W + 1, 0.33)
-    streaks = np.interp(xp, columns, 0.96 + 0.08 * rng.random(len(columns)))
+    streaks = np.interp(xp, columns, 0.98 + 0.04 * rng.random(len(columns)))
     light *= streaks
     # Le pli : le haut du ruban s'arrondit vers l'arrière (plus sombre tout en haut),
     # prend la lumière juste dessous, puis un pli fin là où il passe sur le bord
-    light *= 1 - 0.3 * np.exp(-((yp - TOP) ** 2) / 1.2)
-    light *= 1 + 0.18 * np.exp(-((yp - (TOP + 2.6)) ** 2) / 1.6)
-    light *= 1 - 0.14 * np.exp(-((yp - COVER_TOP) ** 2) / 0.25)
+    light *= 1 - 0.15 * np.exp(-((yp - TOP) ** 2) / 1.2)
+    light *= 1 + 0.1 * np.exp(-((yp - (TOP + 2.6)) ** 2) / 1.6)
+    light *= 1 - 0.08 * np.exp(-((yp - COVER_TOP) ** 2) / 0.25)
     return light
 
 
@@ -214,11 +215,11 @@ def embroidery(kind, thread_hex, rng):
     # Relief : chaque fil s'arrondit, reflet en haut à gauche, creux en bas à droite
     up = np.roll(np.roll(alpha, -int(0.25 * S), 0), -int(0.25 * S), 1)
     down = np.roll(np.roll(alpha, int(0.25 * S), 0), int(0.25 * S), 1)
-    relief = np.clip(alpha - down, 0, 1) * 0.25 - np.clip(alpha - up, 0, 1) * 0.2
+    relief = np.clip(alpha - down, 0, 1) * 0.15 - np.clip(alpha - up, 0, 1) * 0.12
     color = np.clip(color * (1 + relief[..., None]), 0, 1)
 
     # Ombre portée des fils sur le ruban
-    shadow = blur(np.roll(np.roll(alpha, int(0.45 * S), 0), int(0.3 * S), 1), 0.35) * 0.55
+    shadow = blur(np.roll(np.roll(alpha, int(0.45 * S), 0), int(0.3 * S), 1), 0.35) * 0.35
     return color, alpha, shadow
 
 
@@ -237,7 +238,7 @@ def render(name, spec, rng):
     rgb = rgb * (1 - thread_a[..., None]) + thread * thread_a[..., None]
 
     # Ombre du ruban : plus nette sur la couverture (il est posé dessus)
-    shadow = blur(np.roll(np.roll(mask, int(0.9 * S), 0), int(0.7 * S), 1), 1.1) * 0.42
+    shadow = blur(np.roll(np.roll(mask, int(0.9 * S), 0), int(0.7 * S), 1), 1.4) * 0.3
     alpha = np.clip(mask + shadow * (1 - mask), 0, 1)
     shadow_only = (1 - mask) * shadow
     # Là où il n'y a que l'ombre, la couleur est l'ombre elle-même (noyer très sombre)
