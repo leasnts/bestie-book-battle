@@ -28,9 +28,19 @@ import GlassMaterial from './GlassMaterial';
 
 export const READING_BADGE_SIZE = 30;
 
-/** Épaisseur de l'anneau : 10 % du diamètre */
-const STROKE = 3;
-const RING_R = (READING_BADGE_SIZE - STROKE) / 2;
+/** Épaisseur de l'anneau */
+const STROKE = 4;
+/**
+ * Marge claire entre l'anneau et le bord de la pastille. Sans elle, l'arc
+ * marron touche le bord et se fond dans une couverture sombre.
+ */
+const RING_INSET = 2;
+const RING_R = READING_BADGE_SIZE / 2 - RING_INSET - STROKE / 2;
+/**
+ * Arc minimum affiché pour un livre commencé : à 3 %, l'arc n'est qu'un point et
+ * on ne le distingue plus d'un livre pas commencé. Le vrai % reste lu par VoiceOver.
+ */
+const MIN_ARC_PERCENT = 10;
 const RING_CIRCUMFERENCE = 2 * Math.PI * RING_R;
 const CHECK_SIZE = 16;
 
@@ -76,7 +86,7 @@ export default function ReadingStateBadge({ state, percent }: BookReading) {
                 strokeLinecap="round"
                 fill="none"
                 strokeDasharray={`${RING_CIRCUMFERENCE} ${RING_CIRCUMFERENCE}`}
-                strokeDashoffset={RING_CIRCUMFERENCE * (1 - percent / 100)}
+                strokeDashoffset={RING_CIRCUMFERENCE * (1 - Math.max(percent, MIN_ARC_PERCENT) / 100)}
                 transform={`rotate(-90 ${c} ${c})`}
               />
             )}

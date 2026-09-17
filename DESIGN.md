@@ -478,7 +478,9 @@ Pas le verre d'iOS 26, qui déforme sans flouter et laissait la couverture nette
 au travers. Ombre douce autour. Une seule forme qui se remplit, calculée sur **ma**
 progression, jamais sur celle du club :
 - **pas commencé** : anneau gris, coche grise au centre ;
-- **en cours** : l'anneau se remplit en encre à mon %, depuis midi ;
+- **en cours** : l'anneau (4 pt, à 2 pt du bord pour ne pas se fondre dans une
+  couverture sombre) se remplit en encre à mon %, depuis midi, jamais moins de
+  10 % d'arc visible ;
 - **terminé** : disque encre, coche crème.
 
 L'encre de la pastille est un dégradé vertical `text-secondary` → `ink-deep`.
