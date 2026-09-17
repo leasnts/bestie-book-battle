@@ -482,23 +482,19 @@ et perd sinon sa marge sous la barre.
 (`fitToContents`), sans blanc sous la dernière ; passé 72 % de l'écran il
 arrête de grandir et la liste défile.
 
-**État de lecture** : en haut à droite de chaque couverture, calculé sur **ma**
-progression, jamais sur celle du club :
-- **pas commencé** : rien. Une rangée d'anneaux vides n'apprenait rien ;
-- **nouveau** : seul le dernier livre ajouté, tant qu'il n'est pas commencé,
-  porte un **signet brodé** sable, étincelle brodée noyer (`RibbonBookmark new`) ;
-- **en cours** : pastille `ReadingStateBadge` de 30 pt, fond en **flou dépoli**
-  (`GlassMaterial frosted`, voile crème à 55 %), anneau de 4 pt au ras du bord
-  (pas de contour clair autour) qui se remplit en encre à mon %, depuis midi,
-  jamais moins de 10 % d'arc visible, coche grise au centre ;
-- **terminé** : **signet brodé** noyer, coche brodée crème (`RibbonBookmark done`).
+**État de lecture** : un **signet brodé** (`RibbonBookmark`) qui pend du haut de
+chaque couverture, calculé sur **ma** progression, jamais sur celle du club :
+- **pas commencé** : rien ;
+- **nouveau** : seul le dernier livre ajouté, tant qu'il n'est pas commencé —
+  ruban écru, étincelle brodée lie de vin ;
+- **en cours** : ruban écru que le **lie de vin remplit depuis le haut, à mon %**
+  (10 % au moins, sinon on ne le voit pas) ; dans la partie remplie, la surpiqûre
+  passe en crème ;
+- **terminé** : ruban entièrement lie de vin — le ruban « en cours » à 100 % —,
+  coche brodée crème.
 
-Pas le verre d'iOS 26 sous la pastille : il déforme sans flouter et laissait la
-couverture nette au travers. Ombre douce autour de chaque pastille.
-
-L'encre de la pastille est un dégradé vertical `text-secondary` → `ink-deep`.
-La coche grise au centre est indispensable : sans elle, un anneau à moitié
-rempli se lit comme un indicateur de chargement.
+Essais écartés : pastille en pourcentage « 58 % », anneau de progression sur flou
+dépoli, autocollant rond.
 
 Vocabulaire : on parle de **lectures** et de **livres**, jamais de
 « challenges ». Un groupe qui lit un livre ensemble n'est pas un challenge (le
@@ -623,7 +619,17 @@ passé**. C'est la direction « maille » : du textile réaliste, pas un pictogr
 | Variante | Ruban | Fil | Motif | Pour |
 |---|---|---|---|---|
 | `done` | lie de vin `#8c3b4c` → `#5e1f2e` | crème | coche | livre terminé |
+| `reading` | écru, rempli de lie de vin à mon % | lie de vin / crème | — | livre en cours |
 | `new` | écru `#f3e9df` → `#e1cfbf` | lie de vin | étincelle | dernier livre ajouté |
+
+`reading` superpose deux images calculées avec la même graine — `progress-track`
+(écru, avec ombre) et `progress-fill` (lie de vin, sans ombre pour ne pas la
+doubler) — et coupe la seconde à mon %. Les tissus et la surpiqûre coïncident au
+pixel.
+
+La coche est **effilée aux deux bouts et pleine au coin**, comme un trait de
+plume, chaque branche brodée à part : pleine largeur et bouts carrés, elle faisait
+grossière.
 
 Le lie de vin est un **essai de couleur d'accent** (issue dédiée sur le BBB
 Roadmap), pas encore adopté pour le reste de l'app. Premier essai en noyer et

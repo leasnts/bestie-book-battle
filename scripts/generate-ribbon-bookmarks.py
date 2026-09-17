@@ -17,8 +17,11 @@ Réalisme, dans l'ordre du dessin :
 - l'ombre du ruban sur la couverture.
 
 Variantes :
-- done : ruban noyer, coche brodée crème (livre terminé) ;
-- new  : ruban sable, étincelle brodée noyer (dernier livre ajouté).
+- done           : ruban lie de vin, coche brodée crème (livre terminé) ;
+- new            : ruban écru, étincelle brodée lie de vin (dernier livre ajouté) ;
+- progress-track : ruban écru nu (livre en cours, le fond) ;
+- progress-fill  : ruban lie de vin nu, sans ombre (livre en cours, le remplissage
+                   que l'app coupe à mon %).
 
 Usage : python3 scripts/generate-ribbon-bookmarks.py
 Dépendances : numpy, Pillow.
@@ -44,10 +47,19 @@ NOTCH = 6                        # profondeur du V
 ICON_CENTER = (RIBBON_X + RIBBON_W / 2, 38)
 BORDER_INSET = 2.2               # surpiqûre : distance au bord du ruban
 
+WINE = ("#8c3b4c", "#5e1f2e")
+ECRU = ("#f3e9df", "#e1cfbf")
+CREAM_THREAD = "#f6ede4"
+WINE_THREAD = "#7a2e3e"
+
 VARIANTS = {
-    # Essai d'une couleur d'accent lie de vin (demande de Lea, 2026-09-17)
-    "done": {"ribbon": ("#8c3b4c", "#5e1f2e"), "thread": "#f6ede4", "motif": "check"},
-    "new": {"ribbon": ("#f3e9df", "#e1cfbf"), "thread": "#7a2e3e", "motif": "sparkle"},
+    # Couleur d'accent lie de vin : essai (demande de Lea, 2026-09-17)
+    "done": {"ribbon": WINE, "thread": CREAM_THREAD, "motif": "check"},
+    "new": {"ribbon": ECRU, "thread": WINE_THREAD, "motif": "sparkle"},
+    # En cours : l'app superpose le ruban lie de vin (sans ombre) sur le ruban écru,
+    # coupé à mon %. Même graine, même géométrie : les deux tissus coïncident.
+    "progress-track": {"ribbon": ECRU, "thread": WINE_THREAD, "motif": None},
+    "progress-fill": {"ribbon": WINE, "thread": CREAM_THREAD, "motif": None, "shadow": False},
 }
 
 
@@ -148,22 +160,23 @@ def motif_strokes(kind):
     """Le motif : des traits (points en pt), avec la demi-largeur du fil au départ et à l'arrivée."""
     cx, cy = ICON_CENTER
     if kind == "check":
-        k = 0.74  # pt par unité du dessin Lucide (24 × 24)
-        p = [(4, 12), (9, 17), (20, 6)]
-        pts = [(cx + (a - 12) * k, cy + (b - 11.5) * k) for a, b in p]
+        k = 0.68  # pt par unité du dessin Lucide (24 × 24)
+        p = [(4.5, 12), (9, 16.5), (19.5, 6)]
+        pts = [(cx + (a - 12) * k, cy + (b - 11.25) * k) for a, b in p]
         # Comme à la main : chaque branche brodée à part, fils perpendiculaires à
-        # elle. La jonction est couverte par la grande branche, brodée en second.
-        # (Un seul tracé arrondi au coin faisait s'écarter les fils en frange.)
+        # elle, la grande branche en second pour couvrir la jonction. Effilée aux
+        # deux bouts, pleine au coin, comme un trait de plume : la coche pleine
+        # largeur, bouts carrés, faisait grossière.
         (x0, y0), (x1, y1), (x2, y2) = pts
-        hw = 1.95
+        corner = 1.4
 
         def extend(a, b, by):
             length = math.hypot(b[0] - a[0], b[1] - a[1])
             return (b[0] + (b[0] - a[0]) / length * by, b[1] + (b[1] - a[1]) / length * by)
 
-        short = smooth_polyline([(x0, y0), extend((x0, y0), (x1, y1), hw * 0.6)], 0)
-        long_leg = smooth_polyline([extend((x2, y2), (x1, y1), hw * 0.9), (x2, y2)], 0)
-        return [(short, hw, hw), (long_leg, hw, hw)]
+        short = smooth_polyline([(x0, y0), extend((x0, y0), (x1, y1), corner * 0.45)], 0)
+        long_leg = smooth_polyline([extend((x2, y2), (x1, y1), corner * 0.7), (x2, y2)], 0)
+        return [(short, 0.5, corner), (long_leg, corner, 0.28)]
     # Étincelle à quatre branches, fines au bout
     strokes = []
     for angle, length in ((-90, 7.6), (90, 7.6), (0, 6.6), (180, 6.6)):
@@ -243,8 +256,8 @@ def satin_stitches(needle, kind):
             # Fils à peine obliques ; bien droits aux bouts pour ne pas s'écarter
             skew = 0.18 if edge > 1.2 else 0.0
             sx, sy = nx + tx * skew, ny + ty * skew
-            needle.thread((px - sx * hw, py - sy * hw), (px + sx * hw, py + sy * hw), 0.52)
-            next_at += 0.42
+            needle.thread((px - sx * hw, py - sy * hw), (px + sx * hw, py + sy * hw), 0.44)
+            next_at += 0.34
 
 
 def running_stitch_border(needle):
@@ -300,7 +313,8 @@ def embroidery(kind, thread_hex, rng):
     """Motif et surpiqûre : couleur, opacité, et ombre portée des fils sur le ruban."""
     needle = Needle(thread_hex, rng)
     running_stitch_border(needle)
-    satin_stitches(needle, kind)
+    if kind:
+        satin_stitches(needle, kind)
     color, alpha = needle.layers()
     color, shadow = relief_and_shadow(color, alpha, 1.0)
     return color, alpha, shadow
@@ -320,8 +334,10 @@ def render(name, spec, rng):
     rgb = rgb * (1 - thread_shadow[..., None] * mask[..., None])
     rgb = rgb * (1 - thread_a[..., None]) + thread * thread_a[..., None]
 
-    # Ombre du ruban : plus nette sur la couverture (il est posé dessus)
-    shadow = blur(np.roll(np.roll(mask, int(0.9 * S), 0), int(0.7 * S), 1), 1.4) * 0.3
+    # Ombre du ruban : plus nette sur la couverture (il est posé dessus). Pas d'ombre
+    # pour un calque posé sur un autre ruban : elle se doublerait.
+    has_shadow = spec.get("shadow", True)
+    shadow = blur(np.roll(np.roll(mask, int(0.9 * S), 0), int(0.7 * S), 1), 1.4) * 0.3 * has_shadow
     alpha = np.clip(mask + shadow * (1 - mask), 0, 1)
     shadow_only = (1 - mask) * shadow
     # Là où il n'y a que l'ombre, la couleur est l'ombre elle-même (noyer très sombre)

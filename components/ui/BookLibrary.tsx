@@ -11,10 +11,10 @@
  * sombre (flou + noyer à 30 %) posée PAR-DESSUS le bas des couvertures, qui
  * passent donc derrière elle.
  *
- * Sur chaque couverture, selon MA progression : l'anneau d'un livre en cours
- * (ReadingStateBadge, coin haut droit), ou un signet brodé qui pend du haut
- * (RibbonBookmark) — coche pour un livre terminé, étincelle pour le dernier
- * livre ajouté pas encore commencé. Un autre livre pas commencé n'a rien.
+ * Sur chaque couverture, selon MA progression, un signet brodé qui pend du haut
+ * (RibbonBookmark) : rempli de lie de vin à mon % pour un livre en cours, coche
+ * pour un livre terminé, étincelle pour le dernier livre ajouté pas encore
+ * commencé. Un autre livre pas commencé n'a rien.
  *
  * Toucher une couverture l'affiche sur l'accueil et ferme le sheet.
  *
@@ -38,7 +38,6 @@ import { BookReading, LibrarySort, LIBRARY_SORTS, readingLabel } from '../../uti
 import BookCover, { COVER_RATIO } from './BookCover';
 import RibbonBookmark, { RIBBON_ABOVE_COVER } from './RibbonBookmark';
 import PressableScale from './PressableScale';
-import ReadingStateBadge from './ReadingStateBadge';
 import SortMenu from './SortMenu';
 
 // ─── Props ─────────────────────────────────────────────────────────
@@ -81,8 +80,6 @@ function estimateContentHeight(shelfCount: number): number {
   return SORT_ROW_H + shelfCount * (SHELF_GAP + SHELF_H) + LIST_BOTTOM;
 }
 
-/** De combien la pastille d'état déborde du coin de la couverture */
-const BADGE_OVERHANG = 9;
 /** Pastille si le livre n'est pas encore dans `readings` (premier chargement) */
 const UNREAD: BookReading = { state: 'unread', percent: 0 };
 
@@ -194,13 +191,13 @@ function Shelf({
                 accessibilityState={{ selected: isActive }}
               >
                 <BookCover coverUrl={challenge.cover_url} outlined />
-                {isNew || reading.state === 'done' ? (
+                {(isNew || reading.state !== 'unread') && (
                   <View style={styles.ribbon} pointerEvents="none">
-                    <RibbonBookmark kind={isNew ? 'new' : 'done'} />
-                  </View>
-                ) : (
-                  <View style={styles.badge} pointerEvents="none">
-                    <ReadingStateBadge {...reading} />
+                    {reading.state === 'reading' ? (
+                      <RibbonBookmark kind="reading" percent={reading.percent} />
+                    ) : (
+                      <RibbonBookmark kind={isNew ? 'new' : 'done'} />
+                    )}
                   </View>
                 )}
               </PressableScale>
@@ -322,11 +319,6 @@ const styles = StyleSheet.create({
     height: COVER_H,
   },
   /** Pastille d'état, à cheval sur le coin haut droit de la couverture */
-  badge: {
-    position: 'absolute',
-    top: -BADGE_OVERHANG,
-    right: -BADGE_OVERHANG,
-  },
   /** Signet : son pli dépasse au-dessus du bord, il pend près du bord droit */
   ribbon: {
     position: 'absolute',
