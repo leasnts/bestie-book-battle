@@ -175,6 +175,12 @@ Les matières de l'app :
 - **La maille — crochet, tricot** : points, rangs, fils, pour des motifs et des
   textures ponctuels (bords, séparateurs, états, illustrations). À explorer.
 
+**D'où vient la couleur** : d'une couverture **seulement quand l'écran parle d'un
+livre précis** (sa fiche, son accueil, son carnet). Ailleurs — bibliothèque,
+profil, réglages, écrans qui mélangent plusieurs livres — aucun livre ne justifie
+une couleur : aquarelle et fonds restent dans des **tons neutres chauds** (papier,
+sable, noyer clair).
+
 Ce que « pas trop » veut dire, concrètement :
 - les matières sont **discrètes** et servent l'écran ; elles ne deviennent jamais
   le sujet ;

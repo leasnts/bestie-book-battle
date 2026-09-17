@@ -2,7 +2,7 @@
 
 ## Règles non négociables
 
-- **Direction artistique : cosy fait main, mais pas trop.** Papier grené, aquarelle, et la maille d'un crochet ou d'un tricot comme matières de l'app, posées dans une structure iOS 26 nette et moderne. La chaleur vient des matières, jamais de la mièvrerie : si un écran évoque une boutique de loisirs créatifs, un scrapbook ou une carte de vœux, c'est trop. S'applique à tout écran, tout composant, toute illustration. Détails dans `DESIGN.md` › Direction artistique.
+- **Direction artistique : cosy fait main, mais pas trop.** Papier grené, aquarelle, et la maille d'un crochet ou d'un tricot comme matières de l'app, posées dans une structure iOS 26 nette et moderne. La chaleur vient des matières, jamais de la mièvrerie : si un écran évoque une boutique de loisirs créatifs, un scrapbook ou une carte de vœux, c'est trop. Couleur d'une couverture seulement quand l'écran parle d'un livre précis ; sinon tons neutres chauds (papier, sable, noyer clair). S'applique à tout écran, tout composant, toute illustration. Détails dans `DESIGN.md` › Direction artistique.
 - **Jamais d'aplat de couleur : toujours un dégradé.** Toute surface remplie (bouton, pastille, disque, capsule, barre de progression…) va d'une teinte un peu plus claire en haut à la même teinte un peu plus foncée en bas. Marron : noyer clair `#5a4536` → noyer profond `#1e140e`. Texte, icônes, filets et bordures fines restent unis. Détails dans `DESIGN.md` › Dégradés, jamais d'aplat.
 - **Icônes : Lucide uniquement** (`lucide-react-native`, https://lucide.dev/icons/). Jamais d'Ionicons, de SF Symbols ni d'autre banque, même pour un seul endroit. Détails dans `DESIGN.md` › Icônes.
 
