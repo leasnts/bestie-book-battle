@@ -11,9 +11,10 @@
  * sombre (flou + noyer à 30 %) posée PAR-DESSUS le bas des couvertures, qui
  * passent donc derrière elle.
  *
- * Coin haut droit de chaque couverture, selon MA progression : l'anneau d'un
- * livre en cours ou la coche d'un livre terminé (ReadingStateBadge). Un livre
- * pas commencé n'a rien, sauf le dernier ajouté qui porte « Nouveau » (NewBadge).
+ * Sur chaque couverture, selon MA progression, un signet brodé qui pend du haut
+ * (RibbonBookmark) : rempli de lie de vin à mon % pour un livre en cours, coche
+ * pour un livre terminé, étincelle pour le dernier livre ajouté pas encore
+ * commencé. Un autre livre pas commencé n'a rien.
  *
  * Toucher une couverture l'affiche sur l'accueil et ferme le sheet.
  *
@@ -27,17 +28,17 @@
  */
 
 import { BlurView } from 'expo-blur';
+import { LinearGradient } from 'expo-linear-gradient';
 import React, { useMemo, useState } from 'react';
 import { FlatList, StyleSheet, useWindowDimensions, View } from 'react-native';
 import Animated, { Easing, FadeInDown, useReducedMotion } from 'react-native-reanimated';
 import Svg, { Path } from 'react-native-svg';
 import { Challenge } from '../../types/supabase';
-import { colors, creamAlpha, motion, shadowAlpha, spacing } from '../../utils/constants';
+import { colors, creamAlpha, motion, spacing } from '../../utils/constants';
 import { BookReading, LibrarySort, LIBRARY_SORTS, readingLabel } from '../../utils/library';
 import BookCover, { COVER_RATIO } from './BookCover';
-import NewBadge from './NewBadge';
+import RibbonBookmark, { RIBBON_ABOVE_COVER } from './RibbonBookmark';
 import PressableScale from './PressableScale';
-import ReadingStateBadge from './ReadingStateBadge';
 import SortMenu from './SortMenu';
 
 // ─── Props ─────────────────────────────────────────────────────────
@@ -64,6 +65,8 @@ const COVER_H = 110;
 const COVER_W = Math.round(COVER_H * COVER_RATIO); // 79
 const SHELF_BAR_H = 24;        // hauteur de la barre d'étagère
 const SHELF_OVERLAP = 14;      // de combien la barre chevauche le bas des couvertures
+/** Teinte de la barre d'étagère : noyer clair en haut → noyer profond en bas, translucide */
+const SHELF_TINT = ['rgba(176,146,120,0.45)', 'rgba(138,106,82,0.55)'] as const;
 /** Espace entre deux étagères, et entre « Trier par » et la première */
 const SHELF_GAP = spacing['3xl'];
 /** Hauteur d'une étagère : couverture + partie de la barre qui dépasse dessous */
@@ -80,8 +83,6 @@ function estimateContentHeight(shelfCount: number): number {
   return SORT_ROW_H + shelfCount * (SHELF_GAP + SHELF_H) + LIST_BOTTOM;
 }
 
-/** De combien la pastille d'état déborde du coin de la couverture */
-const BADGE_OVERHANG = 9;
 /** Pastille si le livre n'est pas encore dans `readings` (premier chargement) */
 const UNREAD: BookReading = { state: 'unread', percent: 0 };
 
@@ -193,9 +194,15 @@ function Shelf({
                 accessibilityState={{ selected: isActive }}
               >
                 <BookCover coverUrl={challenge.cover_url} outlined />
-                <View style={styles.badge} pointerEvents="none">
-                  {isNew ? <NewBadge /> : <ReadingStateBadge {...reading} />}
-                </View>
+                {(isNew || reading.state !== 'unread') && (
+                  <View style={styles.ribbon} pointerEvents="none">
+                    {reading.state === 'reading' ? (
+                      <RibbonBookmark kind="reading" percent={reading.percent} />
+                    ) : (
+                      <RibbonBookmark kind={isNew ? 'new' : 'done'} />
+                    )}
+                  </View>
+                )}
               </PressableScale>
             </View>
           );
@@ -204,7 +211,9 @@ function Shelf({
 
       {/* ── Barre d'étagère en verre, AU-DESSUS du bas des couvertures ── */}
       <View style={styles.shelfBarOuter} pointerEvents="none">
-        <BlurView intensity={20} tint="dark" style={styles.shelfBar}>
+        <BlurView intensity={20} tint="light" style={styles.shelfBar}>
+          {/* Verre teinté noyer, en dégradé (jamais d'aplat) : brun, pas noir */}
+          <LinearGradient colors={SHELF_TINT} style={StyleSheet.absoluteFill} />
           <ShelfScrew />
           <ShelfScrew />
         </BlurView>
@@ -315,10 +324,11 @@ const styles = StyleSheet.create({
     height: COVER_H,
   },
   /** Pastille d'état, à cheval sur le coin haut droit de la couverture */
-  badge: {
+  /** Signet : son pli dépasse au-dessus du bord, il pend près du bord droit */
+  ribbon: {
     position: 'absolute',
-    top: -BADGE_OVERHANG,
-    right: -BADGE_OVERHANG,
+    top: -RIBBON_ABOVE_COVER,
+    right: 2,
   },
   // Barre d'étagère — en absolute, AU PREMIER PLAN pour passer par-dessus le
   // bas des couvertures. overflow: 'hidden' pour que le flou respecte le rayon.
@@ -335,9 +345,9 @@ const styles = StyleSheet.create({
   // Flou + noyer sombre à 30 % : une transparence vitrée plutôt qu'un aplat
   shelfBar: {
     flex: 1,
-    backgroundColor: shadowAlpha(0.3),
     borderWidth: 1,
-    borderColor: creamAlpha(0.4),
+    borderColor: creamAlpha(0.35),
+    overflow: 'hidden',
     borderRadius: 10,
     flexDirection: 'row',
     alignItems: 'center',

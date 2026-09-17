@@ -464,8 +464,9 @@ Dessous, un bouton texte discret **Trier par Dernière activité ⌄** (`SortMen
 déroule un menu en verre : Dernière activité (par défaut : ma progression ou
 celle du club, la plus récente), Plus anciens, Titre ; le choix est retenu. Les
 livres sont rangés trois par trois sur l'étagère historique de l'accueil — barre
-en verre flouté (noyer à 30 %, bordure blanc chaud à 40 %) avec ses vis, posée
-**par-dessus** le bas des couvertures.
+en verre flouté **teinté noyer clair**, en dégradé (sable noyer → noyer, 45 → 55 %,
+bordure crème à 35 %) avec ses vis, posée **par-dessus** le bas des couvertures.
+Brun clair : noir, elle grisait ; noyer profond, elle pesait trop.
 
 **Aquarelle** (`WatercolorCorner`) : un lavis léger dans le coin haut droit du
 sheet, qui passe **sous le + en verre** pour que le verre se voie, et que le bord
@@ -482,24 +483,20 @@ et perd sinon sa marge sous la barre.
 (`fitToContents`), sans blanc sous la dernière ; passé 72 % de l'écran il
 arrête de grandir et la liste défile.
 
-**État de lecture** : en haut à droite de chaque couverture, calculé sur **ma**
-progression, jamais sur celle du club :
-- **pas commencé** : rien. Une rangée d'anneaux vides n'apprenait rien ;
-- **nouveau** : seul le dernier livre ajouté, tant qu'il n'est pas commencé,
-  porte la capsule **Nouveau** (`NewBadge`) — noyer en dégradé sur flou, liseré
-  de verre, texte crème ;
-- **en cours** : pastille `ReadingStateBadge` de 30 pt, fond en **flou dépoli**
-  (`GlassMaterial frosted`, voile crème à 55 %), anneau de 4 pt au ras du bord
-  (pas de contour clair autour) qui se remplit en encre à mon %, depuis midi,
-  jamais moins de 10 % d'arc visible, coche grise au centre ;
-- **terminé** : disque encre, coche crème.
+**État de lecture** : un **signet brodé** (`RibbonBookmark`) qui pend du haut de
+chaque couverture, calculé sur **ma** progression, jamais sur celle du club :
+- **pas commencé** : rien ;
+- **nouveau** : seul le dernier livre ajouté, tant qu'il n'est pas commencé —
+  ruban écru, surpiqûre et étincelle Lucide (`sparkle`) lie de vin ;
+- **en cours** : ruban écru qu'un **brun noyer imprègne depuis le bout du V, à mon
+  %** (10 % au moins, sinon on ne le voit pas), comme une teinture qui monte dans
+  le tissu. Pas le lie de vin, réservé à « terminé ». Front **ondulé et fondu**, avec une ligne à peine plus foncée là où la
+  teinture s'accumule (comme le bord d'une aquarelle) : une coupe droite faisait
+  abrupte. Dans la partie teinte, la surpiqûre passe en crème ;
+- **terminé** : ruban lie de vin, surpiqûre crème, coche Lucide (`check`) crème.
 
-Pas le verre d'iOS 26 sous la pastille : il déforme sans flouter et laissait la
-couverture nette au travers. Ombre douce autour de chaque pastille.
-
-L'encre de la pastille est un dégradé vertical `text-secondary` → `ink-deep`.
-La coche grise au centre est indispensable : sans elle, un anneau à moitié
-rempli se lit comme un indicateur de chargement.
+Essais écartés : pastille en pourcentage « 58 % », anneau de progression sur flou
+dépoli, autocollant rond.
 
 Vocabulaire : on parle de **lectures** et de **livres**, jamais de
 « challenges ». Un groupe qui lit un livre ensemble n'est pas un challenge (le
@@ -596,6 +593,49 @@ le titre). Les sheets dessinés à la main suivent la même règle.
 
 Sheets de consultation : poignée seule. Sheets de formulaire : garder une croix,
 qui sert d'affordance « annuler ».
+
+### Signets brodés — `RibbonBookmark`
+
+Un signet en ruban qui sort du haut du livre et pend devant la couverture, bout
+coupé en V, **surpiqûre brodée sur tout le tour**. C'est la direction « maille » :
+du textile réaliste.
+
+- **Ruban** : gros-grain (côtes horizontales, chaîne fine), lisière un peu plus
+  claire, haut plat sans pli dessiné (le bourrelet alourdissait), dégradé clair en
+  haut → foncé en bas, ombre portée
+  douce sur la couverture. **Matière discrète** : trop de relief, de trame et
+  d'ombre faisait « old school » (skeuomorphisme des débuts de l'iPhone).
+- **Broderie, effet marqué** (demande de Lea : « pousser l'effet brodé ») :
+  - fils en relief : deux brins visibles, reflet soyeux du fil à broder, ombre
+    des fils sur le ruban ;
+  - **surpiqûre au point avant sur tout le tour** du ruban — haut, côtés et le long
+    du V —, à 2,2 pt du bord : c'est elle qui dit « fait main »
+    au premier coup d'œil.
+- Ruban de 23 pt de large, pour que la broderie se lise à taille réelle.
+- **Images calculées** par `scripts/generate-ribbon-bookmarks.py` (@2x, @3x) : pour
+  une nouvelle couleur, ajouter une variante au script, ne pas
+  dessiner de ruban dans le code.
+
+| Variante | Ruban | Surpiqûre | Icône Lucide | Pour |
+|---|---|---|---|---|
+| `done` | lie de vin `#8c3b4c` → `#5e1f2e` | crème | `check` crème | livre terminé |
+| `reading` | écru, imprégné de noyer `#8a6a52` → `#553d2e` à mon % | noyer / crème | — | livre en cours |
+| `new` | écru `#f3e9df` → `#e1cfbf` | lie de vin | `sparkle` lie de vin, **pleine** | dernier livre ajouté |
+
+**Pictogrammes : icônes Lucide posées sur le ruban**, jamais brodées ni dessinées
+dans l'image (règle « Lucide uniquement » ; la coche brodée faisait grossière). Le
+ruban brodé porte la matière, l'icône porte le sens.
+
+`reading` superpose deux images calculées avec la même graine — `progress-track`
+(écru, avec ombre) et `progress-fill` (noyer, sans ombre pour ne pas la doubler) — et révèle la seconde sous le front (masque SVG : vagues + fondu). Les
+tissus et la surpiqûre coïncident au pixel.
+
+Le lie de vin est un **essai de couleur d'accent** (issue dédiée sur le BBB
+Roadmap), pas encore adopté pour le reste de l'app. Premier essai en noyer et
+sable : terne, « pas ouf ».
+
+Essai écarté : l'autocollant rond (bord blanc découpé), « pas réaliste, pas
+intéressant ».
 
 ### Bouton en verre — `GlassButton`
 
