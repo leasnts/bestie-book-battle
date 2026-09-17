@@ -467,6 +467,24 @@ livres sont rangés trois par trois sur l'étagère historique de l'accueil — 
 en verre flouté (noyer à 30 %, bordure blanc chaud à 40 %) avec ses vis, posée
 **par-dessus** le bas des couvertures.
 
+**Chiffres** (`ReadingNumbers`) : sous le titre, trois chiffres en Fraunces 30
+— terminées, en cours, pages lues (mes pages, toutes éditions confondues). Des
+chiffres, pas des statistiques : ni graphique, ni moyenne, ni comparaison.
+Alignés sur le titre, posés sur une **tache d'aquarelle** (`WatercolorStain`)
+qui déborde dans la marge :
+- une seule flaque où jusqu'à trois couleurs se sont fondues « mouillé sur
+  mouillé » : trois textures blanches superposables (`assets/images/watercolor/`,
+  générées par `scripts/generate-watercolor-stains.py` — bord chargé de pigment,
+  grain du papier), teintées à l'affichage et mêlées en `multiply` ;
+- les couleurs sont celles de mes lectures (`libraryPalette`), du livre le plus
+  récemment actif au moins actif, sans doublon ni couleur terne (taupe, grège) ;
+- chaque couleur est ramenée à un **pigment pastel** qui garde sa teinte (clarté
+  66–82 %, saturation 45 % au moins). Posée telle quelle, une couverture olive ou
+  marine donnait un lavis couleur café ; mêlée au blanc, elle grisait.
+
+Essais écartés : formes SVG (plates, des autocollants), trois flaques séparées
+(diagramme de Venn).
+
 **Hauteur** : le sheet prend la hauteur exacte de ses étagères
 (`fitToContents`), sans blanc sous la dernière ; passé 72 % de l'écran il
 arrête de grandir et la liste défile.
