@@ -273,8 +273,9 @@ export default function BookLibrary({
 // ─── Styles ────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
+  // Aucun fond : le sheet est en verre flouté (cf. app/_layout.tsx)
   list: {
-    backgroundColor: colors.white,
+    backgroundColor: 'transparent',
   },
   // Marges alignées sur le titre de la barre du sheet (20 pt)
   header: {
