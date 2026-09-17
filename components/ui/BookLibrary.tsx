@@ -66,7 +66,7 @@ const COVER_W = Math.round(COVER_H * COVER_RATIO); // 79
 const SHELF_BAR_H = 24;        // hauteur de la barre d'étagère
 const SHELF_OVERLAP = 14;      // de combien la barre chevauche le bas des couvertures
 /** Teinte de la barre d'étagère : noyer clair en haut → noyer profond en bas, translucide */
-const SHELF_TINT = ['rgba(138,106,82,0.62)', 'rgba(85,61,46,0.78)'] as const;
+const SHELF_TINT = ['rgba(176,146,120,0.45)', 'rgba(138,106,82,0.55)'] as const;
 /** Espace entre deux étagères, et entre « Trier par » et la première */
 const SHELF_GAP = spacing['3xl'];
 /** Hauteur d'une étagère : couverture + partie de la barre qui dépasse dessous */

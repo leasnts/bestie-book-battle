@@ -464,9 +464,9 @@ Dessous, un bouton texte discret **Trier par Dernière activité ⌄** (`SortMen
 déroule un menu en verre : Dernière activité (par défaut : ma progression ou
 celle du club, la plus récente), Plus anciens, Titre ; le choix est retenu. Les
 livres sont rangés trois par trois sur l'étagère historique de l'accueil — barre
-en verre flouté **teinté noyer**, en dégradé (noyer clair → noyer profond, 62 → 78 %,
+en verre flouté **teinté noyer clair**, en dégradé (sable noyer → noyer, 45 → 55 %,
 bordure crème à 35 %) avec ses vis, posée **par-dessus** le bas des couvertures.
-Brun, pas noir : la teinte sombre d'avant grisait.
+Brun clair : noir, elle grisait ; noyer profond, elle pesait trop.
 
 **Aquarelle** (`WatercolorCorner`) : un lavis léger dans le coin haut droit du
 sheet, qui passe **sous le + en verre** pour que le verre se voie, et que le bord
