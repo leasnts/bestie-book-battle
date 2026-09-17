@@ -486,14 +486,13 @@ arrête de grandir et la liste défile.
 chaque couverture, calculé sur **ma** progression, jamais sur celle du club :
 - **pas commencé** : rien ;
 - **nouveau** : seul le dernier livre ajouté, tant qu'il n'est pas commencé —
-  ruban écru, étincelle brodée lie de vin ;
-- **en cours** : ruban écru que le **lie de vin imprègne depuis le bout du V, à mon
+  ruban écru, surpiqûre et étincelle Lucide (`sparkle`) lie de vin ;
+- **en cours** : ruban écru qu'un **brun noyer imprègne depuis le bout du V, à mon
   %** (10 % au moins, sinon on ne le voit pas), comme une teinture qui monte dans
-  le tissu. Front **ondulé et fondu**, avec une ligne à peine plus foncée là où la
+  le tissu. Pas le lie de vin, réservé à « terminé ». Front **ondulé et fondu**, avec une ligne à peine plus foncée là où la
   teinture s'accumule (comme le bord d'une aquarelle) : une coupe droite faisait
   abrupte. Dans la partie teinte, la surpiqûre passe en crème ;
-- **terminé** : ruban entièrement lie de vin — le ruban « en cours » à 100 % —,
-  coche brodée crème.
+- **terminé** : ruban lie de vin, surpiqûre crème, coche Lucide (`check`) crème.
 
 Essais écartés : pastille en pourcentage « 58 % », anneau de progression sur flou
 dépoli, autocollant rond.
@@ -596,9 +595,9 @@ qui sert d'affordance « annuler ».
 
 ### Signets brodés — `RibbonBookmark`
 
-Un signet en ruban qui sort du haut du livre, passe par-dessus le bord de la
-couverture et pend devant elle, bout coupé en V, avec un motif **brodé au point
-passé**. C'est la direction « maille » : du textile réaliste, pas un pictogramme.
+Un signet en ruban qui sort du haut du livre et pend devant la couverture, bout
+coupé en V, **surpiqûre brodée sur tout le tour**. C'est la direction « maille » :
+du textile réaliste.
 
 - **Ruban** : gros-grain (côtes horizontales, chaîne fine), lisière un peu plus
   claire, haut plat sans pli dessiné (le bourrelet alourdissait), dégradé clair en
@@ -606,32 +605,29 @@ passé**. C'est la direction « maille » : du textile réaliste, pas un pictogr
   douce sur la couverture. **Matière discrète** : trop de relief, de trame et
   d'ombre faisait « old school » (skeuomorphisme des débuts de l'iPhone).
 - **Broderie, effet marqué** (demande de Lea : « pousser l'effet brodé ») :
-  - motif **au point passé**, gros et bombé : fils serrés qui traversent tout le
-    trait, deux brins visibles, reflet soyeux du fil à broder, bord rembourré,
-    ombre des fils sur le ruban ; chaque branche d'un motif est brodée à part,
-    fils perpendiculaires à elle (un tracé arrondi au coin effilochait les fils) ;
+  - fils en relief : deux brins visibles, reflet soyeux du fil à broder, ombre
+    des fils sur le ruban ;
   - **surpiqûre au point avant sur tout le tour** du ruban — haut, côtés et le long
-    du V —, dans le fil du motif, à 2,2 pt du bord : c'est elle qui dit « fait main »
+    du V —, à 2,2 pt du bord : c'est elle qui dit « fait main »
     au premier coup d'œil.
 - Ruban de 23 pt de large, pour que la broderie se lise à taille réelle.
 - **Images calculées** par `scripts/generate-ribbon-bookmarks.py` (@2x, @3x) : pour
-  une nouvelle couleur ou un nouveau motif, ajouter une variante au script, ne pas
+  une nouvelle couleur, ajouter une variante au script, ne pas
   dessiner de ruban dans le code.
 
-| Variante | Ruban | Fil | Motif | Pour |
+| Variante | Ruban | Surpiqûre | Icône Lucide | Pour |
 |---|---|---|---|---|
-| `done` | lie de vin `#8c3b4c` → `#5e1f2e` | crème | coche | livre terminé |
-| `reading` | écru, rempli de lie de vin à mon % | lie de vin / crème | — | livre en cours |
-| `new` | écru `#f3e9df` → `#e1cfbf` | lie de vin | étincelle | dernier livre ajouté |
+| `done` | lie de vin `#8c3b4c` → `#5e1f2e` | crème | `check` crème | livre terminé |
+| `reading` | écru, imprégné de noyer `#8a6a52` → `#553d2e` à mon % | noyer / crème | — | livre en cours |
+| `new` | écru `#f3e9df` → `#e1cfbf` | lie de vin | `sparkle` lie de vin | dernier livre ajouté |
+
+**Pictogrammes : icônes Lucide posées sur le ruban**, jamais brodées ni dessinées
+dans l'image (règle « Lucide uniquement » ; la coche brodée faisait grossière). Le
+ruban brodé porte la matière, l'icône porte le sens.
 
 `reading` superpose deux images calculées avec la même graine — `progress-track`
-(écru, avec ombre) et `progress-fill` (lie de vin, sans ombre pour ne pas la
-doubler) — et révèle la seconde sous le front (masque SVG : vagues + fondu). Les
+(écru, avec ombre) et `progress-fill` (noyer, sans ombre pour ne pas la doubler) — et révèle la seconde sous le front (masque SVG : vagues + fondu). Les
 tissus et la surpiqûre coïncident au pixel.
-
-La coche est **effilée aux deux bouts et pleine au coin**, comme un trait de
-plume, chaque branche brodée à part : pleine largeur et bouts carrés, elle faisait
-grossière.
 
 Le lie de vin est un **essai de couleur d'accent** (issue dédiée sur le BBB
 Roadmap), pas encore adopté pour le reste de l'app. Premier essai en noyer et

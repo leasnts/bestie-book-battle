@@ -11,22 +11,26 @@
  *     └──╲ ╱──┘   └──╲ ╱──┘   └──╲ ╱──┘
  *      terminé      en cours     nouveau
  *
- * - `done`    : ruban lie de vin, coche brodée crème ;
- * - `reading` : ruban écru que le lie de vin imprègne depuis le bout, à mon %,
- *               comme une teinture qui monte dans le tissu ; à 100 %, c'est le
- *               ruban « terminé ». Front de teinture ondulé et fondu, avec une
- *               ligne plus foncée là où la teinture s'accumule (comme le bord
- *               d'une aquarelle) : une coupe droite faisait abrupte ;
- * - `new`     : ruban écru, étincelle brodée lie de vin (dernier livre ajouté).
+ * - `done`    : ruban lie de vin, coche Lucide crème ;
+ * - `reading` : ruban écru qu'un brun noyer imprègne depuis le bout, à mon %,
+ *               comme une teinture qui monte dans le tissu. Front ondulé et
+ *               fondu, avec une ligne plus foncée là où la teinture s'accumule
+ *               (comme le bord d'une aquarelle) : une coupe droite faisait
+ *               abrupte. Le lie de vin reste réservé à « terminé » ;
+ * - `new`     : ruban écru, étincelle Lucide lie de vin (dernier livre ajouté).
  *
- * Les images sont calculées par scripts/generate-ribbon-bookmarks.py (tissu,
- * broderie en relief, ombre portée) : c'est ce qui les rend réalistes. Pour une
+ * Les pictogrammes sont des icônes Lucide posées sur l'image, pas brodés : règle
+ * « Lucide uniquement », et la coche brodée ne plaisait pas.
+ *
+ * Les rubans sont calculés par scripts/generate-ribbon-bookmarks.py (tissu,
+ * surpiqûre en relief, ombre portée) : c'est ce qui les rend réalistes. Pour une
  * nouvelle variante, l'ajouter au script plutôt que de dessiner un ruban ici.
  */
 
 import { Image } from 'expo-image';
+import { CheckIcon, SparkleIcon, type LucideIcon } from 'lucide-react-native';
 import React, { useId, useMemo } from 'react';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import Svg, {
   ClipPath,
   Defs,
@@ -52,8 +56,16 @@ const RIBBON_LEFT = 5;
 const RIBBON_WIDTH = 23;
 const RIBBON_TOP = 1.5;
 const RIBBON_END = 60;
-/** Couleur de la ligne plus foncée au front de teinture (lie de vin profond) */
-const TIDE_LINE = '#4a1622';
+/** Couleur de la ligne plus foncée au front de teinture (noyer profond) */
+const TIDE_LINE = '#3a2a20';
+
+/** Pictogramme de chaque ruban : icône Lucide, sa couleur, centrée dans le ruban */
+const ICONS: Record<'done' | 'new', { icon: LucideIcon; color: string }> = {
+  done: { icon: CheckIcon, color: '#f6ede4' },
+  new: { icon: SparkleIcon, color: '#7a2e3e' },
+};
+const ICON_SIZE = 15;
+const ICON_CENTER_Y = 38;
 
 /** Hauteur de l'ondulation du front, et largeur du fondu sous elle */
 const WAVE = 0.9;
@@ -100,7 +112,15 @@ export default function RibbonBookmark(props: RibbonBookmarkProps) {
   const line = useMemo(() => dyeFront(front, percent * 0.37), [front, percent]);
 
   if (props.kind !== 'reading') {
-    return <Image source={RIBBONS[props.kind]} style={styles.ribbon} contentFit="contain" />;
+    const { icon: Icon, color } = ICONS[props.kind];
+    return (
+      <View style={styles.ribbon}>
+        <Image source={RIBBONS[props.kind]} style={StyleSheet.absoluteFill} contentFit="contain" />
+        <View style={styles.icon}>
+          <Icon size={ICON_SIZE} color={color} strokeWidth={2.5} absoluteStrokeWidth />
+        </View>
+      </View>
+    );
   }
 
   // Zone teinte : sous le front, jusqu'en bas de l'image
@@ -154,5 +174,15 @@ const styles = StyleSheet.create({
   ribbon: {
     width: WIDTH,
     height: HEIGHT,
+  },
+  // Légère ombre sous l'icône : elle semble posée sur le tissu, pas imprimée dessous
+  icon: {
+    position: 'absolute',
+    left: RIBBON_LEFT + (RIBBON_WIDTH - ICON_SIZE) / 2,
+    top: ICON_CENTER_Y - ICON_SIZE / 2,
+    shadowColor: '#1e140e',
+    shadowOffset: { width: 0, height: 0.5 },
+    shadowOpacity: 0.3,
+    shadowRadius: 0.5,
   },
 });
