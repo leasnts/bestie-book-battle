@@ -40,7 +40,7 @@ const INK_BOTTOM = colors.dark950; // #1e140e
 /** Anneau et coche d'un livre pas encore coché */
 const IDLE = inkAlpha(0.16);
 /** Voile crème sur le flou : garde l'anneau gris lisible sur une couverture sombre */
-const GLASS_VEIL = 0.2;
+const GLASS_VEIL = 0.55;
 
 export default function ReadingStateBadge({ state, percent }: BookReading) {
   // Un identifiant de dégradé par pastille ; les « : » de useId cassent `url(#…)`

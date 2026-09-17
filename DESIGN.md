@@ -473,7 +473,7 @@ arrête de grandir et la liste défile.
 
 **État de lecture** : une pastille `ReadingStateBadge` de 30 pt à cheval sur le
 coin haut droit de chaque couverture. Fond en **flou dépoli** (`GlassMaterial frosted`,
-voile crème à 20 %) : la couverture dessous n'est plus qu'une tache de couleur.
+voile crème à 55 %) : la couverture dessous n’est plus qu’une teinte légère.
 Pas le verre d'iOS 26, qui déforme sans flouter et laissait la couverture nette
 au travers. Ombre douce autour. Une seule forme qui se remplit, calculée sur **ma**
 progression, jamais sur celle du club :
