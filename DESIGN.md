@@ -469,9 +469,10 @@ en verre flouté (noyer à 30 %, bordure blanc chaud à 40 %) avec ses vis, pos�
 
 **Aquarelle** (`WatercolorCorner`) : un lavis léger dans le coin haut droit du
 sheet, qui passe **sous le + en verre** pour que le verre se voie, et que le bord
-du sheet coupe net. Deux couleurs fondues : les deux plus vives de mes lectures
-(`libraryPalette` puis `mostVivid`), ramenées à des pigments pastel (`pigment`,
-`utils/watercolor.ts`). Textures blanches teintées à l'affichage
+du sheet coupe net. **Tons neutres** (sable et noyer clair, `NEUTRAL_WASH`) : la
+bibliothèque ne parle d'aucun livre précis, elle n'a donc pas de couleur de
+couverture. Les couleurs d'une couverture (`coverWash`, `utils/watercolor.ts`)
+sont réservées aux écrans qui parlent de ce livre. Textures blanches teintées à l'affichage
 (`assets/images/watercolor/corner-*.png`, `scripts/generate-watercolor.py`). Il
 s'arrête avant la première étagère. Rendu **après** la liste, jamais avant ni en
 `zIndex` négatif : iOS repère la liste en suivant le premier enfant de l'écran,

@@ -6,7 +6,6 @@
  */
 
 import { Challenge, MyBookProgress } from '../types/supabase';
-import { FALLBACK_PALETTE, hexToRgb, type CoverPalette } from './coverPalette';
 
 // ─── État de lecture ───────────────────────────────────────────────
 
@@ -107,42 +106,4 @@ export function sortBooks(
   }
 
   return sorted;
-}
-
-// ─── Couleurs ──────────────────────────────────────────────────────
-
-/** Distance RGB sous laquelle deux couleurs de couverture font doublon */
-const SAME_COLOR = 60;
-/** Écart minimum entre le canal le plus fort et le plus faible : en dessous, la couleur est terne (taupe, grège) */
-const MIN_CHROMA = 40;
-
-/**
- * Les couleurs de ma bibliothèque, pour son aquarelle : celles de mes lectures,
- * en commençant par le livre le plus récemment actif. D'abord la couleur dominante
- * de chaque couverture, puis les secondaires s'il en manque ; 3 au plus, sans
- * doublon ni couleur terne. Aucune couverture colorée : teintes noyer.
- */
-export function libraryPalette(
-  books: Challenge[],
-  progressById: Record<string, MyBookProgress>,
-): CoverPalette {
-  const ordered = sortBooks(books, progressById, 'activity');
-  const picked: CoverPalette = [];
-  const isVivid = (hex: string) => {
-    const rgb = hexToRgb(hex);
-    return Math.max(...rgb) - Math.min(...rgb) >= MIN_CHROMA;
-  };
-  const isNew = (hex: string) =>
-    picked.every((other) => {
-      const [a, b] = [hexToRgb(hex), hexToRgb(other)];
-      return Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]) >= SAME_COLOR;
-    });
-
-  for (const rank of [0, 1, 2]) {
-    for (const book of ordered) {
-      const hex = book.cover_palette?.[rank];
-      if (hex && picked.length < 3 && isVivid(hex) && isNew(hex)) picked.push(hex);
-    }
-  }
-  return picked.length ? picked : FALLBACK_PALETTE;
 }

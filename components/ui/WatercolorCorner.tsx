@@ -11,7 +11,9 @@
  *
  * Deux textures superposables (assets/images/watercolor/corner-*.png, générées
  * par scripts/generate-watercolor.py), blanches : l'app les teinte avec deux
- * couleurs et les mêle en `multiply`. Le lavis déborde du sheet, qui le coupe
+ * couleurs et les mêle en `multiply`. Tons neutres par défaut ; les couleurs d'une
+ * couverture seulement sur un écran qui parle de ce livre (`coverWash`, cf.
+ * utils/watercolor.ts). Le lavis déborde du sheet, qui le coupe
  * net à son bord, comme une feuille posée sur une tache.
  *
  * Placement : à rendre APRÈS la liste de l'écran, en frère, jamais avant ni avec
@@ -23,8 +25,7 @@
 import { Image } from 'expo-image';
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
-import type { CoverPalette } from '../../utils/coverPalette';
-import { mostVivid, pigment } from '../../utils/watercolor';
+import { NEUTRAL_WASH, type WashTints } from '../../utils/watercolor';
 
 const WASH = require('../../assets/images/watercolor/corner-wash.png');
 const BLEED = require('../../assets/images/watercolor/corner-bleed.png');
@@ -40,18 +41,16 @@ const OVERFLOW_TOP = 62;
 const WASH_OPACITY = 0.85;
 const BLEED_OPACITY = 0.75;
 
-export default function WatercolorCorner({ palette }: { palette: CoverPalette }) {
-  if (!palette.length) return null;
-  // Les deux couleurs les plus vives : une couleur terne ne fait pas ressortir le verre
-  const [first, second = first] = mostVivid(palette, 2);
+export default function WatercolorCorner({ tints = NEUTRAL_WASH }: { tints?: WashTints }) {
+  const [first, second] = tints;
 
   return (
     <View style={styles.corner} pointerEvents="none">
       <View style={[styles.layer, { opacity: WASH_OPACITY }]}>
-        <Image source={WASH} tintColor={pigment(first)} contentFit="fill" style={StyleSheet.absoluteFill} />
+        <Image source={WASH} tintColor={first} contentFit="fill" style={StyleSheet.absoluteFill} />
       </View>
       <View style={[styles.layer, { opacity: BLEED_OPACITY }]}>
-        <Image source={BLEED} tintColor={pigment(second)} contentFit="fill" style={StyleSheet.absoluteFill} />
+        <Image source={BLEED} tintColor={second} contentFit="fill" style={StyleSheet.absoluteFill} />
       </View>
     </View>
   );

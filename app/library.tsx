@@ -25,7 +25,6 @@ import { Challenge } from '../types/supabase';
 import {
   BookReading,
   knownLibrarySort,
-  libraryPalette,
   newBookId,
   readingOf,
   sortBooks,
@@ -67,7 +66,6 @@ export default function LibraryRoute() {
   }, [challenges, progressById]);
 
   const newId = useMemo(() => newBookId(challenges, progressById), [challenges, progressById]);
-  const palette = useMemo(() => libraryPalette(challenges, progressById), [challenges, progressById]);
 
   // Choisir un livre : il devient le livre en cours, et on revient à l'accueil
   const handleSelect = useCallback(
@@ -106,8 +104,8 @@ export default function LibraryRoute() {
         sort={sort}
         onSortChange={setSort}
       />
-      {/* APRÈS la liste, jamais avant : cf. WatercolorCorner */}
-      <WatercolorCorner palette={palette} />
+      {/* APRÈS la liste, jamais avant : cf. WatercolorCorner. Tons neutres : aucun livre précis ici */}
+      <WatercolorCorner />
     </>
   );
 }
