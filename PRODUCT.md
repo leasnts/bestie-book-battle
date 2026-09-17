@@ -102,6 +102,11 @@ culpabilise jamais : un streak perdu est une vanne, pas un échec. L'humour pass
 par les illustrations maison (les PopEyes, la couronne, le crâne) plutôt que par
 le texte, qui reste sobre. Chaleureuse sans être mièvre.
 
+**Univers visuel confirmé : cosy fait main, mais pas trop.** Papier grené,
+aquarelle, maille de crochet ou de tricot, dans une app iOS 26 nette et moderne ;
+jamais d'aplat de couleur, toujours un dégradé. Règles détaillées dans
+`DESIGN.md` › Direction artistique.
+
 **Référence rendue contraignante : BeReal, pour le moment partagé.** Ce qu'on lui
 prend précisément, c'est le **rendez-vous synchronisé** : tout le monde vit la
 même chose en même temps, et c'est ça qui crée le lien — pas l'accumulation, pas
