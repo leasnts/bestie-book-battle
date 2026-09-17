@@ -13,7 +13,7 @@
  *
  * Coin haut droit de chaque couverture, selon MA progression : l'anneau d'un
  * livre en cours ou la coche d'un livre terminé (ReadingStateBadge). Un livre
- * pas commencé n'a rien, sauf le dernier ajouté qui porte « Nouveau » (NewBadge).
+ * pas commencé n'a rien, sauf le dernier ajouté qui porte l'autocollant « Nouveau ».
  *
  * Toucher une couverture l'affiche sur l'accueil et ferme le sheet.
  *
@@ -35,10 +35,10 @@ import { Challenge } from '../../types/supabase';
 import { colors, creamAlpha, motion, shadowAlpha, spacing } from '../../utils/constants';
 import { BookReading, LibrarySort, LIBRARY_SORTS, readingLabel } from '../../utils/library';
 import BookCover, { COVER_RATIO } from './BookCover';
-import NewBadge from './NewBadge';
 import PressableScale from './PressableScale';
 import ReadingStateBadge from './ReadingStateBadge';
 import SortMenu from './SortMenu';
+import Sticker from './Sticker';
 
 // ─── Props ─────────────────────────────────────────────────────────
 
@@ -194,7 +194,7 @@ function Shelf({
               >
                 <BookCover coverUrl={challenge.cover_url} outlined />
                 <View style={styles.badge} pointerEvents="none">
-                  {isNew ? <NewBadge /> : <ReadingStateBadge {...reading} />}
+                  {isNew ? <Sticker size={46} tone="sable" label="Nouveau" tilt={-10} /> : <ReadingStateBadge {...reading} />}
                 </View>
               </PressableScale>
             </View>

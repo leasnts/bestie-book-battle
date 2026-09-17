@@ -486,13 +486,12 @@ arrête de grandir et la liste défile.
 progression, jamais sur celle du club :
 - **pas commencé** : rien. Une rangée d'anneaux vides n'apprenait rien ;
 - **nouveau** : seul le dernier livre ajouté, tant qu'il n'est pas commencé,
-  porte la capsule **Nouveau** (`NewBadge`) — noyer en dégradé sur flou, liseré
-  de verre, texte crème ;
+  porte l'autocollant **Nouveau** (`Sticker` sable, 46 pt, incliné de −10°) ;
 - **en cours** : pastille `ReadingStateBadge` de 30 pt, fond en **flou dépoli**
   (`GlassMaterial frosted`, voile crème à 55 %), anneau de 4 pt au ras du bord
   (pas de contour clair autour) qui se remplit en encre à mon %, depuis midi,
   jamais moins de 10 % d'arc visible, coche grise au centre ;
-- **terminé** : disque encre, coche crème.
+- **terminé** : autocollant noyer coché (`Sticker` encre, 34 pt, incliné de 8°).
 
 Pas le verre d'iOS 26 sous la pastille : il déforme sans flouter et laissait la
 couverture nette au travers. Ombre douce autour de chaque pastille.
@@ -596,6 +595,30 @@ le titre). Les sheets dessinés à la main suivent la même règle.
 
 Sheets de consultation : poignée seule. Sheets de formulaire : garder une croix,
 qui sert d'affordance « annuler ».
+
+### Autocollants — `Sticker`
+
+Des pastilles rondes **qu'on colle**, comme les pastilles de prix littéraire sur
+les couvertures : du papier, pas du plastique. Pour marquer un état ou attirer
+l'œil sur un objet (couverture, avatar, carte). Anatomie, dans cet ordre :
+
+1. **bord blanc découpé** (8 % du diamètre, 2,5 pt minimum), en léger dégradé
+   crème ;
+2. **disque imprimé** en dégradé vertical, jamais en aplat ;
+3. **grain du papier** (la texture du fond de l'accueil) sur le bord et le disque,
+   SOUS le contenu — posé dessus, il grisait le texte ;
+4. **contenu** : une icône Lucide, un mot de 8 lettres au plus, ou un dessin libre ;
+5. **ombre fine et proche** (1,5 pt, flou 2,5) : c'est plat, collé contre la surface ;
+6. **inclinaison** de quelques degrés, fixée par l'usage : jamais parfaitement droit.
+
+| Ton | Dégradé | Contenu | Pour |
+|---|---|---|---|
+| `ink` | `#5a4536` → `#1e140e` | crème | acquis, fini, validé (livre terminé) |
+| `sable` | `#efe4d6` → `#d9c6b0` | encre | attirer l'œil sans crier (Nouveau) |
+| `cream` | `#fdfcfa` → `#ede6dc` | encre | le plus discret |
+
+Tons neutres uniquement : la couleur d'une couverture reste réservée aux écrans
+qui parlent de ce livre. Tout nouvel autocollant passe par ce composant.
 
 ### Bouton en verre — `GlassButton`
 
