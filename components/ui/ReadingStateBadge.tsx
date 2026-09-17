@@ -12,9 +12,10 @@
  *
  * La coche grise au centre dit « à cocher » : sans elle, un anneau à moitié
  * rempli se lirait comme un indicateur de chargement.
- * Tant que le livre n'est pas fini, le fond est du verre flouté (`GlassMaterial`)
- * qui laisse deviner la couverture dessous, voilé de crème pour que l'anneau
- * reste lisible sur une couverture sombre. Ombre douce autour.
+ * Tant que le livre n'est pas fini, le fond est un flou dépoli (`GlassMaterial
+ * frosted`) : la couverture dessous devient une tache de couleur, légèrement
+ * voilée de crème pour que l'anneau reste lisible sur une couverture sombre.
+ * Ombre douce autour.
  */
 
 import { CheckIcon } from 'lucide-react-native';
@@ -38,8 +39,8 @@ const INK_TOP = colors.textSecondary; // #5a4536
 const INK_BOTTOM = colors.dark950; // #1e140e
 /** Anneau et coche d'un livre pas encore coché */
 const IDLE = inkAlpha(0.16);
-/** Voile crème sur le verre : garde l'anneau gris lisible sur une couverture sombre */
-const GLASS_VEIL = 0.45;
+/** Voile crème sur le flou : garde l'anneau gris lisible sur une couverture sombre */
+const GLASS_VEIL = 0.2;
 
 export default function ReadingStateBadge({ state, percent }: BookReading) {
   // Un identifiant de dégradé par pastille ; les « : » de useId cassent `url(#…)`
@@ -49,7 +50,7 @@ export default function ReadingStateBadge({ state, percent }: BookReading) {
 
   return (
     <View style={styles.badge}>
-      {!done && <GlassMaterial radius={c} veil={GLASS_VEIL} />}
+      {!done && <GlassMaterial radius={c} veil={GLASS_VEIL} frosted />}
       <Svg width={READING_BADGE_SIZE} height={READING_BADGE_SIZE} style={StyleSheet.absoluteFill}>
         <Defs>
           <LinearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">

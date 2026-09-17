@@ -12,6 +12,11 @@
  * - Avant iOS 26 : flou expo-blur, toujours voilé de crème à 80 % au moins, car le
  *   flou seul ne suffit pas à rendre le texte lisible.
  *
+ * `frosted` remplace le verre par un vrai flou dépoli (expo-blur), sur toutes les
+ * versions d'iOS. Le verre d'iOS 26 déforme surtout ce qui passe derrière, comme
+ * une lentille, sans le flouter : sur une petite pastille, on voyait la
+ * couverture nette au travers.
+ *
  * `rim` ajoute le liseré des boutons en verre d'iOS 26 : un filet d'encre très fin
  * qui dessine la forme même sur un fond blanc, doublé à l'intérieur d'un reflet
  * crème qui accroche la lumière en haut à gauche et en bas à droite.
@@ -26,6 +31,8 @@ import { creamAlpha, inkAlpha } from '../../utils/constants';
 
 /** Voile minimum du repli flou */
 const FALLBACK_VEIL = 0.8;
+/** Force du flou dépoli (`frosted`) : assez pour que plus rien ne soit net dessous */
+const FROSTED_INTENSITY = 60;
 /** Filet du repli flou quand aucun bord n'est demandé : détache le flou du papier */
 const FALLBACK_EDGE = inkAlpha(0.08);
 
@@ -44,13 +51,21 @@ interface GlassMaterialProps {
   edgeColor?: string;
   /** Liseré des boutons en verre : filet d'encre + reflet crème (voir en tête) */
   rim?: boolean;
+  /** Flou dépoli au lieu du verre d'iOS 26 (voir en tête) ; le voile reste celui demandé */
+  frosted?: boolean;
 }
 
-export default function GlassMaterial({ radius, veil = 0, edgeColor, rim = false }: GlassMaterialProps) {
+export default function GlassMaterial({
+  radius,
+  veil = 0,
+  edgeColor,
+  rim = false,
+  frosted = false,
+}: GlassMaterialProps) {
   const shape = { borderRadius: radius };
-  const native = isLiquidGlassAvailable();
-  const veilOpacity = native ? veil : Math.max(veil, FALLBACK_VEIL);
-  const edge = edgeColor ?? (native ? undefined : FALLBACK_EDGE);
+  const native = isLiquidGlassAvailable() && !frosted;
+  const veilOpacity = native || frosted ? veil : Math.max(veil, FALLBACK_VEIL);
+  const edge = edgeColor ?? (native || frosted ? undefined : FALLBACK_EDGE);
   const edgeWidth = edgeColor ? 1 : StyleSheet.hairlineWidth;
 
   return (
@@ -58,7 +73,11 @@ export default function GlassMaterial({ radius, veil = 0, edgeColor, rim = false
       {native ? (
         <GlassView style={[styles.fill, shape]} glassEffectStyle="regular" />
       ) : (
-        <BlurView style={[styles.fill, shape]} intensity={40} tint="light" />
+        <BlurView
+          style={[styles.fill, shape]}
+          intensity={frosted ? FROSTED_INTENSITY : 40}
+          tint="light"
+        />
       )}
       {veilOpacity > 0 && (
         <View
