@@ -467,6 +467,16 @@ livres sont rangés trois par trois sur l'étagère historique de l'accueil — 
 en verre flouté (noyer à 30 %, bordure blanc chaud à 40 %) avec ses vis, posée
 **par-dessus** le bas des couvertures.
 
+**Aquarelle** (`WatercolorCorner`) : un lavis léger dans le coin haut droit du
+sheet, qui passe **sous le + en verre** pour que le verre se voie, et que le bord
+du sheet coupe net. Deux couleurs fondues : les deux plus vives de mes lectures
+(`libraryPalette` puis `mostVivid`), ramenées à des pigments pastel (`pigment`,
+`utils/watercolor.ts`). Textures blanches teintées à l'affichage
+(`assets/images/watercolor/corner-*.png`, `scripts/generate-watercolor.py`). Il
+s'arrête avant la première étagère. Rendu **après** la liste, jamais avant ni en
+`zIndex` négatif : iOS repère la liste en suivant le premier enfant de l'écran,
+et perd sinon sa marge sous la barre.
+
 **Hauteur** : le sheet prend la hauteur exacte de ses étagères
 (`fitToContents`), sans blanc sous la dernière ; passé 72 % de l'écran il
 arrête de grandir et la liste défile.
@@ -589,7 +599,8 @@ qui sert d'affordance « annuler ».
 ### Bouton en verre — `GlassButton`
 
 Le seul bouton rond en verre de l'app : icône Lucide sur `GlassMaterial`, voile
-crème `glassControlVeil` (50 %) et **liseré** (`rim`) — filet d'encre à 8 % qui
+crème `glassControlVeil` (25 % : assez pour ne pas griser sur fond clair, assez
+peu pour laisser passer la couleur de dessous) et **liseré** (`rim`) — filet d'encre à 8 % qui
 dessine la forme même sur fond blanc, doublé d'un reflet crème en diagonale —,
 ombre douce. Le reflet passe par `stopOpacity` : react-native-svg ignore l'alpha
 d'un `rgba()` dans `stopColor`, et le liseré devenait un anneau blanc uniforme.

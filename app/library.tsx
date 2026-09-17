@@ -17,11 +17,19 @@ import { PlusIcon } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo } from 'react';
 import BookLibrary from '../components/ui/BookLibrary';
 import { sheetIconItem } from '../components/ui/SheetHeader';
+import WatercolorCorner from '../components/ui/WatercolorCorner';
 import { useAuthStore } from '../stores/authStore';
 import { useProgressStore } from '../stores/progressStore';
 import { useProjectStore } from '../stores/projectStore';
 import { Challenge } from '../types/supabase';
-import { BookReading, knownLibrarySort, newBookId, readingOf, sortBooks } from '../utils/library';
+import {
+  BookReading,
+  knownLibrarySort,
+  libraryPalette,
+  newBookId,
+  readingOf,
+  sortBooks,
+} from '../utils/library';
 
 export default function LibraryRoute() {
   const router = useRouter();
@@ -59,6 +67,7 @@ export default function LibraryRoute() {
   }, [challenges, progressById]);
 
   const newId = useMemo(() => newBookId(challenges, progressById), [challenges, progressById]);
+  const palette = useMemo(() => libraryPalette(challenges, progressById), [challenges, progressById]);
 
   // Choisir un livre : il devient le livre en cours, et on revient à l'accueil
   const handleSelect = useCallback(
@@ -84,7 +93,7 @@ export default function LibraryRoute() {
       <Stack.Screen
         options={{
           unstable_headerRightItems: () => [
-            sheetIconItem({ icon: PlusIcon, onPress: handleAdd, accessibilityLabel: 'Ajouter un livre' }),
+            sheetIconItem({ icon: PlusIcon, onPress: handleAdd, accessibilityLabel: 'Ajouter une lecture' }),
           ],
         }}
       />
@@ -97,6 +106,8 @@ export default function LibraryRoute() {
         sort={sort}
         onSortChange={setSort}
       />
+      {/* APRÈS la liste, jamais avant : cf. WatercolorCorner */}
+      <WatercolorCorner palette={palette} />
     </>
   );
 }
