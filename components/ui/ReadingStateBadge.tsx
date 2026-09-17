@@ -28,14 +28,13 @@ import GlassMaterial from './GlassMaterial';
 
 export const READING_BADGE_SIZE = 30;
 
-/** Épaisseur de l'anneau */
-const STROKE = 4;
 /**
- * Marge claire entre l'anneau et le bord de la pastille. Sans elle, l'arc
- * marron touche le bord et se fond dans une couverture sombre.
+ * Épaisseur de l'anneau. Il touche le bord de la pastille : une marge claire
+ * autour le décollait mieux d'une couverture sombre, mais dessinait un contour
+ * blanc disgracieux (retour de Lea, 2026-09-17).
  */
-const RING_INSET = 2;
-const RING_R = READING_BADGE_SIZE / 2 - RING_INSET - STROKE / 2;
+const STROKE = 4;
+const RING_R = (READING_BADGE_SIZE - STROKE) / 2;
 /**
  * Arc minimum affiché pour un livre commencé : à 3 %, l'arc n'est qu'un point et
  * on ne le distingue plus d'un livre pas commencé. Le vrai % reste lu par VoiceOver.
