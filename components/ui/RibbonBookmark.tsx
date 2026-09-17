@@ -28,8 +28,8 @@ const RIBBONS = {
 };
 
 /** Taille de l'image, ombre comprise (cf. CANVAS_W / CANVAS_H du script) */
-const WIDTH = 30;
-const HEIGHT = 62;
+const WIDTH = 34;
+const HEIGHT = 66;
 /** Hauteur du pli au-dessus du bord de la couverture (COVER_TOP du script) */
 export const RIBBON_ABOVE_COVER = 9;
 

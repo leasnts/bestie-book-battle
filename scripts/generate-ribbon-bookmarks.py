@@ -34,13 +34,14 @@ OUT = Path(__file__).resolve().parent.parent / "assets" / "images" / "ribbons"
 S = 8  # pixels par point au dessin (suréchantillonné, réduit ensuite)
 
 # ── Géométrie, en points ──
-CANVAS_W, CANVAS_H = 30, 62
-RIBBON_X, RIBBON_W = 5, 19      # ruban de 19 pt de large
+CANVAS_W, CANVAS_H = 34, 66
+RIBBON_X, RIBBON_W = 5, 23      # ruban de 23 pt de large
 TOP = 1.5                        # haut du pli
 COVER_TOP = 9                    # bord haut de la couverture dans l'image
-TAIL_END = 56                    # pointe des deux bouts du V
-NOTCH = 5.5                      # profondeur du V
+TAIL_END = 60                    # pointe des deux bouts du V
+NOTCH = 6                        # profondeur du V
 ICON_CENTER = (RIBBON_X + RIBBON_W / 2, 38)
+BORDER_INSET = 2.2               # surpiqûre : distance au bord du ruban
 
 VARIANTS = {
     # Essai d'une couleur d'accent lie de vin (demande de Lea, 2026-09-17)
@@ -151,29 +152,78 @@ def motif_strokes(kind):
     """Le motif : des traits (points en pt), avec la demi-largeur du fil au départ et à l'arrivée."""
     cx, cy = ICON_CENTER
     if kind == "check":
-        k = 0.62  # pt par unité du dessin Lucide (24 × 24)
+        k = 0.74  # pt par unité du dessin Lucide (24 × 24)
         p = [(4, 12), (9, 17), (20, 6)]
         pts = [(cx + (a - 12) * k, cy + (b - 11.5) * k) for a, b in p]
-        return [(smooth_polyline(pts, 0.9), 1.45, 1.45)]
+        # Comme à la main : chaque branche brodée à part, fils perpendiculaires à
+        # elle. La jonction est couverte par la grande branche, brodée en second.
+        # (Un seul tracé arrondi au coin faisait s'écarter les fils en frange.)
+        (x0, y0), (x1, y1), (x2, y2) = pts
+        hw = 1.95
+
+        def extend(a, b, by):
+            length = math.hypot(b[0] - a[0], b[1] - a[1])
+            return (b[0] + (b[0] - a[0]) / length * by, b[1] + (b[1] - a[1]) / length * by)
+
+        short = smooth_polyline([(x0, y0), extend((x0, y0), (x1, y1), hw * 0.6)], 0)
+        long_leg = smooth_polyline([extend((x2, y2), (x1, y1), hw * 0.9), (x2, y2)], 0)
+        return [(short, hw, hw), (long_leg, hw, hw)]
     # Étincelle à quatre branches, fines au bout
     strokes = []
-    for angle, length in ((-90, 6.0), (90, 6.0), (0, 5.2), (180, 5.2)):
+    for angle, length in ((-90, 7.6), (90, 7.6), (0, 6.6), (180, 6.6)):
         a = math.radians(angle)
         tip = (cx + math.cos(a) * length, cy + math.sin(a) * length)
-        strokes.append((smooth_polyline([(cx, cy), tip], 0), 1.7, 0.2))
+        strokes.append((smooth_polyline([(cx, cy), tip], 0), 2.3, 0.25))
     return strokes
 
 
-def embroidery(kind, thread_hex, rng):
-    """Couleur (RGB) et opacité de la broderie, avec relief et ombre portée."""
-    w, h = CANVAS_W * S, CANVAS_H * S
-    thread = Image.new("RGB", (w, h), (0, 0, 0))
-    mask = Image.new("L", (w, h), 0)
-    dt, dm = ImageDraw.Draw(thread), ImageDraw.Draw(mask)
-    base = hex_rgb(thread_hex)
+class Needle:
+    """Pose des fils sur deux calques : couleur et opacité."""
 
+    def __init__(self, thread_hex, rng):
+        w, h = CANVAS_W * S, CANVAS_H * S
+        self.color = Image.new("RGB", (w, h), (0, 0, 0))
+        self.mask = Image.new("L", (w, h), 0)
+        self.dc, self.dm = ImageDraw.Draw(self.color), ImageDraw.Draw(self.mask)
+        self.base = hex_rgb(thread_hex)
+        self.rng = rng
+
+    def tone(self, factor):
+        return tuple(int(np.clip(c * factor, 0, 1) * 255) for c in self.base)
+
+    def thread(self, a, b, width):
+        """Un fil de `a` à `b` (en pt), fait de brins, avec le reflet soyeux du fil à broder."""
+        ax, ay = a
+        bx, by = b
+        length = max(1e-6, math.hypot(bx - ax, by - ay))
+        dx, dy = (bx - ax) / length, (by - ay) / length
+        # Côté éclairé (lumière en haut à gauche)
+        px, py = -dy, dx
+        if px + py > 0:
+            px, py = -px, -py
+        shade = 0.88 + 0.16 * self.rng.random()
+        pt = lambda x, y: (x * S, y * S)
+        self.dc.line([pt(ax, ay), pt(bx, by)], fill=self.tone(shade), width=max(1, int(width * S)))
+        self.dm.line([pt(ax, ay), pt(bx, by)], fill=255, width=max(1, int(width * S)))
+        # Deux brins visibles : un creux sombre au milieu du fil
+        self.dc.line([pt(ax, ay), pt(bx, by)], fill=self.tone(shade * 0.78), width=max(1, int(width * 0.14 * S)))
+        # Reflet : une ligne claire, plus courte, du côté de la lumière
+        o = width * 0.26
+        trim = 0.18
+        h0 = (ax + dx * length * trim + px * o, ay + dy * length * trim + py * o)
+        h1 = (bx - dx * length * trim + px * o, by - dy * length * trim + py * o)
+        self.dc.line([pt(*h0), pt(*h1)], fill=self.tone(min(1.6, shade * 1.45)), width=max(1, int(width * 0.22 * S)))
+
+    def layers(self):
+        return (
+            np.asarray(self.color, dtype=np.float32) / 255,
+            np.asarray(self.mask, dtype=np.float32) / 255,
+        )
+
+
+def satin_stitches(needle, kind):
+    """Le motif, au point passé : des fils serrés qui traversent tout le trait."""
     for pts, hw0, hw1 in motif_strokes(kind):
-        # Longueur cumulée, pour poser un fil tous les 0,32 pt le long du tracé
         lengths = [0.0]
         for (xa, ya), (xb, yb) in zip(pts, pts[1:]):
             lengths.append(lengths[-1] + math.hypot(xb - xa, yb - ya))
@@ -188,38 +238,51 @@ def embroidery(kind, thread_hex, rng):
             px, py = xa + (xb - xa) * t, ya + (yb - ya) * t
             tx, ty = (xb - xa) / seg, (yb - ya) / seg
             nx, ny = -ty, tx
-            u = next_at / total
-            hw = hw0 + (hw1 - hw0) * u
-            # Bouts arrondis : le trait s'amincit sur ses derniers 0,8 pt
+            hw = hw0 + (hw1 - hw0) * (next_at / total)
+            # Bouts arrondis : le trait s'amincit un peu sur ses derniers 0,9 pt, sans
+            # s'effilocher (en dessous de 70 % de largeur, les fils s'écartaient en pinceau)
             edge = min(next_at, total - next_at)
-            if hw0 == hw1 and edge < 0.8:
-                hw *= math.sqrt(max(0.05, edge / 0.8))
-            # Point passé : fils serrés, à peine obliques, qui traversent tout le trait
-            sx, sy = nx + tx * 0.12, ny + ty * 0.12
-            a = ((px - sx * hw) * S, (py - sy * hw) * S)
-            b = ((px + sx * hw) * S, (py + sy * hw) * S)
-            shade = 0.9 + 0.14 * rng.random()
-            col = tuple(int(np.clip(c * shade, 0, 1) * 255) for c in base)
-            dt.line([a, b], fill=col, width=int(0.46 * S))
-            dm.line([a, b], fill=255, width=int(0.46 * S))
-            # Le creux entre deux fils : une ligne sombre fine juste après
-            ga = (a[0] + tx * 0.18 * S, a[1] + ty * 0.18 * S)
-            gb = (b[0] + tx * 0.18 * S, b[1] + ty * 0.18 * S)
-            dark = tuple(int(np.clip(c * 0.84, 0, 1) * 255) for c in base)
-            dt.line([ga, gb], fill=dark, width=max(1, int(0.08 * S)))
-            next_at += 0.32
+            if hw0 == hw1 and edge < 0.9:
+                hw *= 0.7 + 0.3 * math.sqrt(edge / 0.9)
+            # Fils à peine obliques ; bien droits aux bouts pour ne pas s'écarter
+            skew = 0.18 if edge > 1.2 else 0.0
+            sx, sy = nx + tx * skew, ny + ty * skew
+            needle.thread((px - sx * hw, py - sy * hw), (px + sx * hw, py + sy * hw), 0.52)
+            next_at += 0.42
 
-    color = np.asarray(thread, dtype=np.float32) / 255
-    alpha = np.asarray(mask, dtype=np.float32) / 255
 
-    # Relief : chaque fil s'arrondit, reflet en haut à gauche, creux en bas à droite
-    up = np.roll(np.roll(alpha, -int(0.25 * S), 0), -int(0.25 * S), 1)
-    down = np.roll(np.roll(alpha, int(0.25 * S), 0), int(0.25 * S), 1)
-    relief = np.clip(alpha - down, 0, 1) * 0.15 - np.clip(alpha - up, 0, 1) * 0.12
-    color = np.clip(color * (1 + relief[..., None]), 0, 1)
+def running_stitch_border(needle):
+    """Surpiqûre au point avant le long des deux bords du ruban, jusqu'au V."""
+    top = TOP + 3.2
+    bottom = TAIL_END - NOTCH - 1.2
+    for x in (RIBBON_X + BORDER_INSET, RIBBON_X + RIBBON_W - BORDER_INSET):
+        y = top
+        while y + 1.5 <= bottom:
+            jitter = (needle.rng.random() - 0.5) * 0.12
+            needle.thread((x + jitter, y), (x - jitter, y + 1.5), 0.6)
+            y += 1.5 + 1.0
 
-    # Ombre portée des fils sur le ruban
-    shadow = blur(np.roll(np.roll(alpha, int(0.45 * S), 0), int(0.3 * S), 1), 0.35) * 0.35
+
+def relief_and_shadow(color, alpha, strength):
+    """Fils bombés (reflet en haut à gauche, creux en bas à droite) et ombre sur le ruban."""
+    step = int(0.3 * S)
+    up = np.roll(np.roll(alpha, -step, 0), -step, 1)
+    down = np.roll(np.roll(alpha, step, 0), step, 1)
+    relief = np.clip(alpha - down, 0, 1) * 0.35 * strength - np.clip(alpha - up, 0, 1) * 0.32 * strength
+    # Bord matelassé : le point passé est rembourré, ses bords plongent un peu
+    padded = np.clip(alpha - blur(alpha, 0.45), 0, 1) * 0.35 * strength
+    color = np.clip(color * (1 + relief[..., None] - padded[..., None]), 0, 1)
+    shadow = blur(np.roll(np.roll(alpha, int(0.6 * S), 0), int(0.45 * S), 1), 0.45) * 0.65 * strength
+    return color, shadow
+
+
+def embroidery(kind, thread_hex, rng):
+    """Motif et surpiqûre : couleur, opacité, et ombre portée des fils sur le ruban."""
+    needle = Needle(thread_hex, rng)
+    running_stitch_border(needle)
+    satin_stitches(needle, kind)
+    color, alpha = needle.layers()
+    color, shadow = relief_and_shadow(color, alpha, 1.0)
     return color, alpha, shadow
 
 

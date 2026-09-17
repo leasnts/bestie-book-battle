@@ -606,9 +606,14 @@ passé**. C'est la direction « maille » : du textile réaliste, pas un pictogr
   claire, pli au-dessus du bord, dégradé clair en haut → foncé en bas, ombre portée
   douce sur la couverture. **Matière discrète** : trop de relief, de trame et
   d'ombre faisait « old school » (skeuomorphisme des débuts de l'iPhone).
-- **Broderie** : fils serrés et à peine obliques qui traversent tout le trait,
-  bouts arrondis, coins adoucis, relief (reflet en haut à gauche) et ombre des fils
-  sur le ruban.
+- **Broderie, effet marqué** (demande de Lea : « pousser l'effet brodé ») :
+  - motif **au point passé**, gros et bombé : fils serrés qui traversent tout le
+    trait, deux brins visibles, reflet soyeux du fil à broder, bord rembourré,
+    ombre des fils sur le ruban ; chaque branche d'un motif est brodée à part,
+    fils perpendiculaires à elle (un tracé arrondi au coin effilochait les fils) ;
+  - **surpiqûre au point avant** le long des deux bords du ruban, dans le fil du
+    motif : c'est elle qui dit « fait main » au premier coup d'œil.
+- Ruban de 23 pt de large, pour que la broderie se lise à taille réelle.
 - **Images calculées** par `scripts/generate-ribbon-bookmarks.py` (@2x, @3x) : pour
   une nouvelle couleur ou un nouveau motif, ajouter une variante au script, ne pas
   dessiner de ruban dans le code.
