@@ -467,9 +467,6 @@ livres sont rangés trois par trois sur l'étagère historique de l'accueil — 
 en verre flouté (noyer à 30 %, bordure blanc chaud à 40 %) avec ses vis, posée
 **par-dessus** le bas des couvertures.
 
-**Fond** : verre flouté natif d'iOS 26, pas de blanc — l'accueil se devine
-derrière. Aucun fond plein dans le contenu, sinon il masque le verre.
-
 **Hauteur** : le sheet prend la hauteur exacte de ses étagères
 (`fitToContents`), sans blanc sous la dernière ; passé 72 % de l'écran il
 arrête de grandir et la liste défile.
@@ -578,10 +575,6 @@ premier élément de gauche, sans verre. Tout passe par
 `sheetIconItem(...)` pour un bouton à droite, `sheetTitleItem(titre)` si un écran
 remplace les éléments de gauche (ex. la croix de « Nouvelle note », posée avant
 le titre). Les sheets dessinés à la main suivent la même règle.
-
-**Fond en verre** : `sheetScreenOptions(titre, { glass: true })` rend le fond de
-l'écran transparent et laisse iOS 26 dessiner son verre flouté. Utilisé par la
-bibliothèque ; les autres sheets sont encore sur fond blanc.
 
 Sheets de consultation : poignée seule. Sheets de formulaire : garder une croix,
 qui sert d'affordance « annuler ».

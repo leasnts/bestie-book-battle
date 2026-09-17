@@ -80,30 +80,19 @@ export function sheetIconItem({
 
 // ─── Options d'écran ───────────────────────────────────────────────
 
-interface SheetOptions {
-  /**
-   * Hauteurs d'arrêt, en fraction de l'écran, ou `'fitToContents'` pour un sheet
-   * exactement à la hauteur de son contenu (le contenu fixe alors sa propre
-   * hauteur, cf. BookLibrary).
-   */
-  detents?: number[] | 'fitToContents';
-  /**
-   * Fond en verre flouté d'iOS 26 au lieu du blanc : on laisse le fond de l'écran
-   * transparent et c'est le sheet natif qui floute ce qui passe derrière. Le
-   * contenu ne doit alors poser AUCUN fond plein.
-   */
-  glass?: boolean;
-}
-
-/** Options d'une route présentée en sheet natif, titre ferré à gauche compris */
+/**
+ * Options d'une route présentée en sheet natif, titre ferré à gauche compris.
+ * `detents` : les hauteurs d'arrêt, en fraction de l'écran, ou `'fitToContents'`
+ * pour un sheet exactement à la hauteur de son contenu (le contenu fixe alors
+ * sa propre hauteur, cf. BookLibrary).
+ */
 export function sheetScreenOptions(
   title: string,
-  { detents = [0.65, 0.95], glass = false }: SheetOptions = {},
+  detents: number[] | 'fitToContents' = [0.65, 0.95],
 ): NativeStackNavigationOptions {
   return {
     presentation: 'formSheet',
     sheetAllowedDetents: detents,
-    ...(glass && { contentStyle: { backgroundColor: 'transparent' } }),
     sheetGrabberVisible: true,
     sheetExpandsWhenScrolledToEdge: true,
     // Rayon des coins volontairement non spécifié : iOS 26 applique le sien,

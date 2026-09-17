@@ -322,10 +322,10 @@ function RootLayoutNav() {
       />
 
       {/* Écrire une note — ouvert par le bouton post-it */}
-      <Stack.Screen name="note/[id]" options={sheetScreenOptions('Nouvelle note', { detents: [0.75, 0.95] })} />
+      <Stack.Screen name="note/[id]" options={sheetScreenOptions('Nouvelle note', [0.75, 0.95])} />
 
       {/* Toutes les réactions d'une note — ouvert par « … » */}
-      <Stack.Screen name="reactions/[id]" options={sheetScreenOptions('Réagir', { detents: [0.6, 0.95] })} />
+      <Stack.Screen name="reactions/[id]" options={sheetScreenOptions('Réagir', [0.6, 0.95])} />
 
       {/* Journal d'une personne — posé sur le classement */}
       <Stack.Screen name="participant/[id]" options={sheetScreenOptions('Journal')} />
@@ -333,11 +333,8 @@ function RootLayoutNav() {
       {/* Fiche du livre — fin, caps, club */}
       <Stack.Screen name="book" options={sheetScreenOptions('Le livre')} />
 
-      {/* Bibliothèque : toutes mes lectures, sur des étagères, à la hauteur des étagères, sur verre */}
-      <Stack.Screen
-        name="library"
-        options={sheetScreenOptions('Mes lectures', { detents: 'fitToContents', glass: true })}
-      />
+      {/* Bibliothèque : toutes mes lectures, sur des étagères, à la hauteur des étagères */}
+      <Stack.Screen name="library" options={sheetScreenOptions('Mes lectures', 'fitToContents')} />
 
       {/* Garde les routes d'auth mais cachées (pour éviter les erreurs) */}
       <Stack.Screen
