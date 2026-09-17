@@ -11,9 +11,10 @@
  * sombre (flou + noyer à 30 %) posée PAR-DESSUS le bas des couvertures, qui
  * passent donc derrière elle.
  *
- * Coin haut droit de chaque couverture, selon MA progression : l'anneau d'un
- * livre en cours ou la coche d'un livre terminé (ReadingStateBadge). Un livre
- * pas commencé n'a rien, sauf le dernier ajouté qui porte « Nouveau » (NewBadge).
+ * Sur chaque couverture, selon MA progression : l'anneau d'un livre en cours
+ * (ReadingStateBadge, coin haut droit), ou un signet brodé qui pend du haut
+ * (RibbonBookmark) — coche pour un livre terminé, étincelle pour le dernier
+ * livre ajouté pas encore commencé. Un autre livre pas commencé n'a rien.
  *
  * Toucher une couverture l'affiche sur l'accueil et ferme le sheet.
  *
@@ -35,7 +36,7 @@ import { Challenge } from '../../types/supabase';
 import { colors, creamAlpha, motion, shadowAlpha, spacing } from '../../utils/constants';
 import { BookReading, LibrarySort, LIBRARY_SORTS, readingLabel } from '../../utils/library';
 import BookCover, { COVER_RATIO } from './BookCover';
-import NewBadge from './NewBadge';
+import RibbonBookmark, { RIBBON_ABOVE_COVER } from './RibbonBookmark';
 import PressableScale from './PressableScale';
 import ReadingStateBadge from './ReadingStateBadge';
 import SortMenu from './SortMenu';
@@ -193,9 +194,15 @@ function Shelf({
                 accessibilityState={{ selected: isActive }}
               >
                 <BookCover coverUrl={challenge.cover_url} outlined />
-                <View style={styles.badge} pointerEvents="none">
-                  {isNew ? <NewBadge /> : <ReadingStateBadge {...reading} />}
-                </View>
+                {isNew || reading.state === 'done' ? (
+                  <View style={styles.ribbon} pointerEvents="none">
+                    <RibbonBookmark kind={isNew ? 'new' : 'done'} />
+                  </View>
+                ) : (
+                  <View style={styles.badge} pointerEvents="none">
+                    <ReadingStateBadge {...reading} />
+                  </View>
+                )}
               </PressableScale>
             </View>
           );
@@ -319,6 +326,12 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: -BADGE_OVERHANG,
     right: -BADGE_OVERHANG,
+  },
+  /** Signet : son pli dépasse au-dessus du bord, il pend près du bord droit */
+  ribbon: {
+    position: 'absolute',
+    top: -RIBBON_ABOVE_COVER,
+    right: 2,
   },
   // Barre d'étagère — en absolute, AU PREMIER PLAN pour passer par-dessus le
   // bas des couvertures. overflow: 'hidden' pour que le flou respecte le rayon.

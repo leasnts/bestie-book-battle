@@ -1,17 +1,13 @@
 /**
  * Composant ReadingStateBadge
  *
- * La pastille d'état posée sur le coin d'une couverture, dans la bibliothèque.
- * Une seule forme, toujours au même endroit ; elle se remplit à mesure que
- * j'avance :
+ * La pastille d'un livre EN COURS, posée sur le coin de sa couverture, dans la
+ * bibliothèque : un anneau qui se remplit à mon %.
  *
- *    pas commencé     en cours          terminé
- *      (rien)           ( ✓ )            (●✓●)
- *                    anneau encre       disque encre
- *                    rempli à mon %     coche crème
+ *       ( ✓ )   anneau encre rempli à mon %, coche grise au centre
  *
- * Pas de pastille sur un livre pas commencé : une rangée d'anneaux vides
- * n'apprenait rien. Seul le dernier livre ajouté porte « Nouveau » (NewBadge).
+ * Les autres états ne passent pas par ici : rien sur un livre pas commencé, et un
+ * signet brodé (RibbonBookmark) sur un livre terminé ou tout juste ajouté.
  *
  * La coche grise au centre dit « à cocher » : sans elle, un anneau à moitié
  * rempli se lirait comme un indicateur de chargement.
@@ -56,13 +52,13 @@ const GLASS_VEIL = 0.55;
 export default function ReadingStateBadge({ state, percent }: BookReading) {
   // Un identifiant de dégradé par pastille ; les « : » de useId cassent `url(#…)`
   const gradientId = `ink${useId().replace(/[^a-zA-Z0-9]/g, '')}`;
-  if (state === 'unread') return null;
+  // Pas commencé : rien. Terminé : c'est le signet brodé qui le dit (RibbonBookmark)
+  if (state !== 'reading') return null;
   const c = READING_BADGE_SIZE / 2;
-  const done = state === 'done';
 
   return (
     <View style={styles.badge}>
-      {!done && <GlassMaterial radius={c} veil={GLASS_VEIL} frosted />}
+      <GlassMaterial radius={c} veil={GLASS_VEIL} frosted />
       <Svg width={READING_BADGE_SIZE} height={READING_BADGE_SIZE} style={StyleSheet.absoluteFill}>
         <Defs>
           <LinearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
@@ -70,38 +66,23 @@ export default function ReadingStateBadge({ state, percent }: BookReading) {
             <Stop offset="1" stopColor={INK_BOTTOM} />
           </LinearGradient>
         </Defs>
-
-        {done ? (
-          <Circle cx={c} cy={c} r={c} fill={`url(#${gradientId})`} />
-        ) : (
-          <>
-            {/* Piste */}
-            <Circle cx={c} cy={c} r={RING_R} stroke={IDLE} strokeWidth={STROKE} fill="none" />
-            {/* Mon avancement, depuis midi, dans le sens des aiguilles d'une montre */}
-            {state === 'reading' && (
-              <Circle
-                cx={c}
-                cy={c}
-                r={RING_R}
-                stroke={`url(#${gradientId})`}
-                strokeWidth={STROKE}
-                strokeLinecap="round"
-                fill="none"
-                strokeDasharray={`${RING_CIRCUMFERENCE} ${RING_CIRCUMFERENCE}`}
-                strokeDashoffset={RING_CIRCUMFERENCE * (1 - Math.max(percent, MIN_ARC_PERCENT) / 100)}
-                transform={`rotate(-90 ${c} ${c})`}
-              />
-            )}
-          </>
-        )}
+        {/* Piste */}
+        <Circle cx={c} cy={c} r={RING_R} stroke={IDLE} strokeWidth={STROKE} fill="none" />
+        {/* Mon avancement, depuis midi, dans le sens des aiguilles d'une montre */}
+        <Circle
+          cx={c}
+          cy={c}
+          r={RING_R}
+          stroke={`url(#${gradientId})`}
+          strokeWidth={STROKE}
+          strokeLinecap="round"
+          fill="none"
+          strokeDasharray={`${RING_CIRCUMFERENCE} ${RING_CIRCUMFERENCE}`}
+          strokeDashoffset={RING_CIRCUMFERENCE * (1 - Math.max(percent, MIN_ARC_PERCENT) / 100)}
+          transform={`rotate(-90 ${c} ${c})`}
+        />
       </Svg>
-
-      <CheckIcon
-        size={CHECK_SIZE}
-        color={done ? colors.white : IDLE}
-        strokeWidth={done ? 2.6 : 2.2}
-        absoluteStrokeWidth
-      />
+      <CheckIcon size={CHECK_SIZE} color={IDLE} strokeWidth={2.2} absoluteStrokeWidth />
     </View>
   );
 }

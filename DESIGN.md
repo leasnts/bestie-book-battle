@@ -486,13 +486,12 @@ arrête de grandir et la liste défile.
 progression, jamais sur celle du club :
 - **pas commencé** : rien. Une rangée d'anneaux vides n'apprenait rien ;
 - **nouveau** : seul le dernier livre ajouté, tant qu'il n'est pas commencé,
-  porte la capsule **Nouveau** (`NewBadge`) — noyer en dégradé sur flou, liseré
-  de verre, texte crème ;
+  porte un **signet brodé** sable, étincelle brodée noyer (`RibbonBookmark new`) ;
 - **en cours** : pastille `ReadingStateBadge` de 30 pt, fond en **flou dépoli**
   (`GlassMaterial frosted`, voile crème à 55 %), anneau de 4 pt au ras du bord
   (pas de contour clair autour) qui se remplit en encre à mon %, depuis midi,
   jamais moins de 10 % d'arc visible, coche grise au centre ;
-- **terminé** : disque encre, coche crème.
+- **terminé** : **signet brodé** noyer, coche brodée crème (`RibbonBookmark done`).
 
 Pas le verre d'iOS 26 sous la pastille : il déforme sans flouter et laissait la
 couverture nette au travers. Ombre douce autour de chaque pastille.
@@ -596,6 +595,30 @@ le titre). Les sheets dessinés à la main suivent la même règle.
 
 Sheets de consultation : poignée seule. Sheets de formulaire : garder une croix,
 qui sert d'affordance « annuler ».
+
+### Signets brodés — `RibbonBookmark`
+
+Un signet en ruban qui sort du haut du livre, passe par-dessus le bord de la
+couverture et pend devant elle, bout coupé en V, avec un motif **brodé au point
+passé**. C'est la direction « maille » : du textile réaliste, pas un pictogramme.
+
+- **Ruban** : gros-grain (côtes horizontales, chaîne fine, fils plus clairs ou plus
+  foncés), lisière claire qui le détache d'une couverture sombre, pli au-dessus du
+  bord, dégradé clair en haut → foncé en bas, ombre portée sur la couverture.
+- **Broderie** : fils serrés et à peine obliques qui traversent tout le trait,
+  bouts arrondis, coins adoucis, relief (reflet en haut à gauche) et ombre des fils
+  sur le ruban.
+- **Images calculées** par `scripts/generate-ribbon-bookmarks.py` (@2x, @3x) : pour
+  une nouvelle couleur ou un nouveau motif, ajouter une variante au script, ne pas
+  dessiner de ruban dans le code.
+
+| Variante | Ruban | Fil | Motif | Pour |
+|---|---|---|---|---|
+| `done` | noyer `#6a5242` → `#3a2a20` | crème | coche | livre terminé |
+| `new` | sable `#eadbc8` → `#cbb399` | noyer | étincelle | dernier livre ajouté |
+
+Essai écarté : l'autocollant rond (bord blanc découpé), « pas réaliste, pas
+intéressant ».
 
 ### Bouton en verre — `GlassButton`
 
