@@ -611,8 +611,9 @@ passé**. C'est la direction « maille » : du textile réaliste, pas un pictogr
     trait, deux brins visibles, reflet soyeux du fil à broder, bord rembourré,
     ombre des fils sur le ruban ; chaque branche d'un motif est brodée à part,
     fils perpendiculaires à elle (un tracé arrondi au coin effilochait les fils) ;
-  - **surpiqûre au point avant** le long des deux bords du ruban, dans le fil du
-    motif : c'est elle qui dit « fait main » au premier coup d'œil.
+  - **surpiqûre au point avant sur tout le tour** du ruban — haut, côtés et le long
+    du V —, dans le fil du motif, à 2,2 pt du bord : c'est elle qui dit « fait main »
+    au premier coup d'œil.
 - Ruban de 23 pt de large, pour que la broderie se lise à taille réelle.
 - **Images calculées** par `scripts/generate-ribbon-bookmarks.py` (@2x, @3x) : pour
   une nouvelle couleur ou un nouveau motif, ajouter une variante au script, ne pas

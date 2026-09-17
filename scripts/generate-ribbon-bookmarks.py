@@ -252,15 +252,39 @@ def satin_stitches(needle, kind):
 
 
 def running_stitch_border(needle):
-    """Surpiqûre au point avant le long des deux bords du ruban, jusqu'au V."""
+    """Surpiqûre au point avant sur TOUT le tour du ruban : haut, côtés, et le V."""
+    i = BORDER_INSET
+    left, right = RIBBON_X + i, RIBBON_X + RIBBON_W - i
+    center = RIBBON_X + RIBBON_W / 2
     top = TOP + 3.2
-    bottom = TAIL_END - NOTCH - 1.2
-    for x in (RIBBON_X + BORDER_INSET, RIBBON_X + RIBBON_W - BORDER_INSET):
-        y = top
-        while y + 1.5 <= bottom:
-            jitter = (needle.rng.random() - 0.5) * 0.12
-            needle.thread((x + jitter, y), (x - jitter, y + 1.5), 0.6)
-            y += 1.5 + 1.0
+    # Le V : les deux pointes descendent à TAIL_END, le creux remonte de NOTCH.
+    # La ligne intérieure suit ces bords à `i` de distance (la pente du V écarte un
+    # peu plus verticalement).
+    slope = NOTCH / (RIBBON_W / 2)
+    lift = i * math.sqrt(1 + slope * slope)
+    tail = TAIL_END - lift - i * slope
+    notch = TAIL_END - NOTCH - lift
+    outline = [(left, top), (right, top), (right, tail), (center, notch), (left, tail), (left, top)]
+
+    # Fil de 1,5 pt, espace de 1 pt, posé le long du contour fermé
+    lengths = [0.0]
+    for (xa, ya), (xb, yb) in zip(outline, outline[1:]):
+        lengths.append(lengths[-1] + math.hypot(xb - xa, yb - ya))
+    total = lengths[-1]
+    period = 2.5
+    count = int(total / period)
+    period = total / count  # tombe juste : pas de demi-point à la jonction
+
+    def at(d):
+        d %= total
+        k = max(j for j in range(len(lengths) - 1) if lengths[j] <= d)
+        (xa, ya), (xb, yb) = outline[k], outline[k + 1]
+        t = (d - lengths[k]) / max(1e-6, lengths[k + 1] - lengths[k])
+        return (xa + (xb - xa) * t, ya + (yb - ya) * t)
+
+    for n in range(count):
+        start = n * period
+        needle.thread(at(start), at(start + period * 0.6), 0.6)
 
 
 def relief_and_shadow(color, alpha, strength):
