@@ -464,8 +464,9 @@ Dessous, un bouton texte discret **Trier par Dernière activité ⌄** (`SortMen
 déroule un menu en verre : Dernière activité (par défaut : ma progression ou
 celle du club, la plus récente), Plus anciens, Titre ; le choix est retenu. Les
 livres sont rangés trois par trois sur l'étagère historique de l'accueil — barre
-en verre flouté (noyer à 30 %, bordure blanc chaud à 40 %) avec ses vis, posée
-**par-dessus** le bas des couvertures.
+en verre flouté **teinté noyer**, en dégradé (noyer clair → noyer profond, 62 → 78 %,
+bordure crème à 35 %) avec ses vis, posée **par-dessus** le bas des couvertures.
+Brun, pas noir : la teinte sombre d'avant grisait.
 
 **Aquarelle** (`WatercolorCorner`) : un lavis léger dans le coin haut droit du
 sheet, qui passe **sous le + en verre** pour que le verre se voie, et que le bord
@@ -619,7 +620,7 @@ du textile réaliste.
 |---|---|---|---|---|
 | `done` | lie de vin `#8c3b4c` → `#5e1f2e` | crème | `check` crème | livre terminé |
 | `reading` | écru, imprégné de noyer `#8a6a52` → `#553d2e` à mon % | noyer / crème | — | livre en cours |
-| `new` | écru `#f3e9df` → `#e1cfbf` | lie de vin | `sparkle` lie de vin | dernier livre ajouté |
+| `new` | écru `#f3e9df` → `#e1cfbf` | lie de vin | `sparkle` lie de vin, **pleine** | dernier livre ajouté |
 
 **Pictogrammes : icônes Lucide posées sur le ruban**, jamais brodées ni dessinées
 dans l'image (règle « Lucide uniquement » ; la coche brodée faisait grossière). Le

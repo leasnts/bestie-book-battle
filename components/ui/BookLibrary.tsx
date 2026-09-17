@@ -28,12 +28,13 @@
  */
 
 import { BlurView } from 'expo-blur';
+import { LinearGradient } from 'expo-linear-gradient';
 import React, { useMemo, useState } from 'react';
 import { FlatList, StyleSheet, useWindowDimensions, View } from 'react-native';
 import Animated, { Easing, FadeInDown, useReducedMotion } from 'react-native-reanimated';
 import Svg, { Path } from 'react-native-svg';
 import { Challenge } from '../../types/supabase';
-import { colors, creamAlpha, motion, shadowAlpha, spacing } from '../../utils/constants';
+import { colors, creamAlpha, motion, spacing } from '../../utils/constants';
 import { BookReading, LibrarySort, LIBRARY_SORTS, readingLabel } from '../../utils/library';
 import BookCover, { COVER_RATIO } from './BookCover';
 import RibbonBookmark, { RIBBON_ABOVE_COVER } from './RibbonBookmark';
@@ -64,6 +65,8 @@ const COVER_H = 110;
 const COVER_W = Math.round(COVER_H * COVER_RATIO); // 79
 const SHELF_BAR_H = 24;        // hauteur de la barre d'étagère
 const SHELF_OVERLAP = 14;      // de combien la barre chevauche le bas des couvertures
+/** Teinte de la barre d'étagère : noyer clair en haut → noyer profond en bas, translucide */
+const SHELF_TINT = ['rgba(138,106,82,0.62)', 'rgba(85,61,46,0.78)'] as const;
 /** Espace entre deux étagères, et entre « Trier par » et la première */
 const SHELF_GAP = spacing['3xl'];
 /** Hauteur d'une étagère : couverture + partie de la barre qui dépasse dessous */
@@ -208,7 +211,9 @@ function Shelf({
 
       {/* ── Barre d'étagère en verre, AU-DESSUS du bas des couvertures ── */}
       <View style={styles.shelfBarOuter} pointerEvents="none">
-        <BlurView intensity={20} tint="dark" style={styles.shelfBar}>
+        <BlurView intensity={20} tint="light" style={styles.shelfBar}>
+          {/* Verre teinté noyer, en dégradé (jamais d'aplat) : brun, pas noir */}
+          <LinearGradient colors={SHELF_TINT} style={StyleSheet.absoluteFill} />
           <ShelfScrew />
           <ShelfScrew />
         </BlurView>
@@ -340,9 +345,9 @@ const styles = StyleSheet.create({
   // Flou + noyer sombre à 30 % : une transparence vitrée plutôt qu'un aplat
   shelfBar: {
     flex: 1,
-    backgroundColor: shadowAlpha(0.3),
     borderWidth: 1,
-    borderColor: creamAlpha(0.4),
+    borderColor: creamAlpha(0.35),
+    overflow: 'hidden',
     borderRadius: 10,
     flexDirection: 'row',
     alignItems: 'center',

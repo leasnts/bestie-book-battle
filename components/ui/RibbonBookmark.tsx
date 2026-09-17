@@ -60,11 +60,12 @@ const RIBBON_END = 60;
 const TIDE_LINE = '#3a2a20';
 
 /** Pictogramme de chaque ruban : icône Lucide, sa couleur, centrée dans le ruban */
-const ICONS: Record<'done' | 'new', { icon: LucideIcon; color: string }> = {
-  done: { icon: CheckIcon, color: '#f6ede4' },
-  new: { icon: SparkleIcon, color: '#7a2e3e' },
+const ICONS: Record<'done' | 'new', { icon: LucideIcon; color: string; filled: boolean }> = {
+  done: { icon: CheckIcon, color: '#f6ede4', filled: false },
+  // Étincelle pleine : en contour, elle faisait une forme cernée d'une bordure
+  new: { icon: SparkleIcon, color: '#7a2e3e', filled: true },
 };
-const ICON_SIZE = 15;
+const ICON_SIZE = 16;
 const ICON_CENTER_Y = 38;
 
 /** Hauteur de l'ondulation du front, et largeur du fondu sous elle */
@@ -112,12 +113,20 @@ export default function RibbonBookmark(props: RibbonBookmarkProps) {
   const line = useMemo(() => dyeFront(front, percent * 0.37), [front, percent]);
 
   if (props.kind !== 'reading') {
-    const { icon: Icon, color } = ICONS[props.kind];
+    const { icon: Icon, color, filled } = ICONS[props.kind];
     return (
       <View style={styles.ribbon}>
         <Image source={RIBBONS[props.kind]} style={StyleSheet.absoluteFill} contentFit="contain" />
         <View style={styles.icon}>
-          <Icon size={ICON_SIZE} color={color} strokeWidth={2.5} absoluteStrokeWidth />
+          <Icon
+            size={ICON_SIZE}
+            color={color}
+            fill={filled ? color : 'none'}
+            // Pleine : un trait quasi nul garde les pointes fines (un trait plus épais
+            // les arrondissait et l'étincelle virait à la croix)
+            strokeWidth={filled ? 0.25 : 2.5}
+            absoluteStrokeWidth
+          />
         </View>
       </View>
     );
