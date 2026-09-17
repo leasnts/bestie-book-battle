@@ -178,7 +178,7 @@ export default function GlassTabBar({ state, descriptors, navigation, onAddPress
         pressedScale={0.9}
         onPress={onAddPress}
         accessibilityRole="button"
-        accessibilityLabel="Ajouter un challenge"
+        accessibilityLabel="Ajouter un livre"
       >
         <GlassMaterial radius={ADD_SIZE / 2} />
         <PlusIcon size={24} color={colors.dark900} strokeWidth={ACTIVE_STROKE} />

@@ -27,6 +27,7 @@ import { useProjectStore } from '../stores/projectStore';
 import { colors, fonts } from '../utils/constants';
 import { supabase } from '../supabaseConfig';
 import AnimatedSplash from '../components/AnimatedSplash';
+import { sheetScreenOptions } from '../components/ui/SheetHeader';
 import { useFonts } from 'expo-font';
 import { Nunito_400Regular } from '@expo-google-fonts/nunito/400Regular';
 import { Nunito_500Medium } from '@expo-google-fonts/nunito/500Medium';
@@ -298,29 +299,13 @@ function RootLayoutNav() {
       />
 
       {/*
-        Classement complet — sheet iOS natif.
-        `formSheet` délègue la présentation à UIKit : la poignée, les deux
-        paliers de hauteur, le glissement pour fermer et l'assombrissement du
-        fond viennent du système, pas de notre code.
-        Le rayon des coins est volontairement non spécifié : iOS 26 applique
-        alors son propre rayon, concentrique avec la courbure de l'écran.
+        Sheets iOS natifs. `formSheet` délègue la présentation à UIKit : la
+        poignée, les paliers de hauteur, le glissement pour fermer et
+        l'assombrissement du fond viennent du système, pas de notre code.
+        Norme commune (titre ferré à gauche, jamais centré) : voir
+        components/ui/SheetHeader.tsx.
       */}
-      <Stack.Screen
-        name="leaderboard"
-        options={{
-          presentation: 'formSheet',
-          sheetAllowedDetents: [0.65, 0.95],
-          sheetGrabberVisible: true,
-          sheetExpandsWhenScrolledToEdge: true,
-          // Barre de navigation native plutôt qu'un en-tête dessiné à la main :
-          // c'est elle qui porte le verre d'iOS 26, et elle donne à
-          // react-native-screens les bonnes marges de sécurité pour le contenu.
-          headerShown: true,
-          headerTitle: 'Classement',
-          headerLargeTitle: false,
-          headerTitleStyle: { fontFamily: fonts.display, fontSize: 19, color: colors.textPrimary },
-        }}
-      />
+      <Stack.Screen name="leaderboard" options={sheetScreenOptions('Classement')} />
 
       {/* Le carnet du livre — écran plein, il se parcourt longtemps */}
       <Stack.Screen
@@ -336,80 +321,20 @@ function RootLayoutNav() {
         }}
       />
 
-      {/* Écrire une note — sheet natif, ouvert par le bouton post-it */}
-      <Stack.Screen
-        name="note/[id]"
-        options={{
-          presentation: 'formSheet',
-          sheetAllowedDetents: [0.75, 0.95],
-          sheetGrabberVisible: true,
-          sheetExpandsWhenScrolledToEdge: true,
-          headerShown: true,
-          headerTitle: 'Nouvelle note',
-          headerLargeTitle: false,
-          headerTitleStyle: { fontFamily: fonts.display, fontSize: 19, color: colors.textPrimary },
-        }}
-      />
+      {/* Écrire une note — ouvert par le bouton post-it */}
+      <Stack.Screen name="note/[id]" options={sheetScreenOptions('Nouvelle note', [0.75, 0.95])} />
 
-      {/* Toutes les réactions d'une note — sheet natif, ouvert par « … » */}
-      <Stack.Screen
-        name="reactions/[id]"
-        options={{
-          presentation: 'formSheet',
-          sheetAllowedDetents: [0.6, 0.95],
-          sheetGrabberVisible: true,
-          sheetExpandsWhenScrolledToEdge: true,
-          headerShown: true,
-          headerTitle: 'Réagir',
-          headerLargeTitle: false,
-          headerTitleStyle: { fontFamily: fonts.display, fontSize: 19, color: colors.textPrimary },
-        }}
-      />
+      {/* Toutes les réactions d'une note — ouvert par « … » */}
+      <Stack.Screen name="reactions/[id]" options={sheetScreenOptions('Réagir', [0.6, 0.95])} />
 
-      {/* Journal d'une personne — sheet natif, posé sur le classement */}
-      <Stack.Screen
-        name="participant/[id]"
-        options={{
-          presentation: 'formSheet',
-          sheetAllowedDetents: [0.65, 0.95],
-          sheetGrabberVisible: true,
-          sheetExpandsWhenScrolledToEdge: true,
-          headerShown: true,
-          headerTitle: 'Journal',
-          headerLargeTitle: false,
-          headerTitleStyle: { fontFamily: fonts.display, fontSize: 19, color: colors.textPrimary },
-        }}
-      />
+      {/* Journal d'une personne — posé sur le classement */}
+      <Stack.Screen name="participant/[id]" options={sheetScreenOptions('Journal')} />
 
-      {/* Fiche du livre — même sheet natif : fin, caps, club */}
-      <Stack.Screen
-        name="book"
-        options={{
-          presentation: 'formSheet',
-          sheetAllowedDetents: [0.65, 0.95],
-          sheetGrabberVisible: true,
-          sheetExpandsWhenScrolledToEdge: true,
-          headerShown: true,
-          headerTitle: 'Le livre',
-          headerLargeTitle: false,
-          headerTitleStyle: { fontFamily: fonts.display, fontSize: 19, color: colors.textPrimary },
-        }}
-      />
+      {/* Fiche du livre — fin, caps, club */}
+      <Stack.Screen name="book" options={sheetScreenOptions('Le livre')} />
 
-      {/* Bibliothèque de tes challenges — même sheet natif que le classement */}
-      <Stack.Screen
-        name="library"
-        options={{
-          presentation: 'formSheet',
-          sheetAllowedDetents: [0.65, 0.95],
-          sheetGrabberVisible: true,
-          sheetExpandsWhenScrolledToEdge: true,
-          headerShown: true,
-          headerTitle: 'Mes challenges',
-          headerLargeTitle: false,
-          headerTitleStyle: { fontFamily: fonts.display, fontSize: 19, color: colors.textPrimary },
-        }}
-      />
+      {/* Bibliothèque : tous mes livres, sur des étagères */}
+      <Stack.Screen name="library" options={sheetScreenOptions('Mes livres')} />
 
       {/* Garde les routes d'auth mais cachées (pour éviter les erreurs) */}
       <Stack.Screen

@@ -2,7 +2,7 @@
  * Composant BookCover
  *
  * Une couverture de livre, partagée entre la carte du livre en cours (accueil)
- * et la bibliothèque (sheet « Mes challenges »).
+ * et la bibliothèque (sheet « Mes livres »).
  *
  * Deux états :
  * - pas fini  → la couverture seule, avec une ombre latérale (et un filet fin

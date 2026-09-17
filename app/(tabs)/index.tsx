@@ -400,11 +400,11 @@ export default function HomeScreen() {
 
       {/* ═══════════ HEADER ═══════════ */}
       <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
-        {/* Bibliothèque — tous tes challenges, sur des étagères */}
+        {/* Bibliothèque — tous mes livres, sur des étagères */}
         <HeaderIconButton
           icon={LibraryBigIcon}
           onPress={() => router.push('/library')}
-          accessibilityLabel="Mes challenges"
+          accessibilityLabel="Mes livres"
         />
 
         {/* PopEyes mascotte — décoratif */}
