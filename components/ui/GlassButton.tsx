@@ -30,14 +30,6 @@ interface GlassButtonProps {
   size?: number;
   /** Marges et placement dans le parent */
   style?: StyleProp<ViewStyle>;
-  /**
-   * Voile crème sur le verre. Par défaut `glassControlVeil` (sans lui, le verre
-   * vire au gris dans un sheet). Plus léger sur l'accueil, pour que le verre se
-   * voie sur le fond neutre.
-   */
-  veil?: number;
-  /** Verre « clear », plus transparent (cf. GlassMaterial) */
-  clear?: boolean;
 }
 
 export default function GlassButton({
@@ -46,8 +38,6 @@ export default function GlassButton({
   accessibilityLabel,
   size = 44,
   style,
-  veil = glassControlVeil,
-  clear = false,
 }: GlassButtonProps) {
   return (
     <PressableScale
@@ -57,7 +47,7 @@ export default function GlassButton({
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
     >
-      <GlassMaterial radius={size / 2} veil={veil} rim clear={clear} />
+      <GlassMaterial radius={size / 2} veil={glassControlVeil} rim />
       <Icon size={Math.round(size * 0.42)} color={colors.dark900} strokeWidth={2.25} />
     </PressableScale>
   );

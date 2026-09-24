@@ -417,9 +417,6 @@ export default function HomeScreen() {
           icon={LibraryBigIcon}
           onPress={() => router.push('/library')}
           accessibilityLabel="Mes lectures"
-          // Verre clair, sans voile : sur le fond neutre, il doit rester translucide
-          veil={0}
-          clear
         />
 
         {/* PopEyes mascotte — décoratif */}
