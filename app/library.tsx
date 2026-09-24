@@ -12,12 +12,16 @@
  * du progressStore, à jour dès que j'enregistre des pages.
  */
 
+import { useHeaderHeight } from '@react-navigation/elements';
 import { Stack, useRouter } from 'expo-router';
 import { PlusIcon } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import BookLibrary from '../components/ui/BookLibrary';
+import BookLibrary, { LIST_SIDE } from '../components/ui/BookLibrary';
 import { sheetIconItem } from '../components/ui/SheetHeader';
-import WatercolorCorner from '../components/ui/WatercolorCorner';
+import WatercolorCorner, {
+  WATERCOLOR_OVERFLOW_RIGHT,
+  WATERCOLOR_OVERFLOW_TOP,
+} from '../components/ui/WatercolorCorner';
 import { useAuthStore } from '../stores/authStore';
 import { useProgressStore } from '../stores/progressStore';
 import { useProjectStore } from '../stores/projectStore';
@@ -26,6 +30,7 @@ import { BookReading, newBookId, readingOf, ReadingState, sortBooks } from '../u
 
 export default function LibraryRoute() {
   const router = useRouter();
+  const headerHeight = useHeaderHeight();
   const challenges = useProjectStore((state) => state.challenges);
   const activeChallengeId = useProjectStore((state) => state.activeChallenge?.id ?? null);
   const setActiveChallenge = useProjectStore((state) => state.setActiveChallenge);
@@ -97,9 +102,18 @@ export default function LibraryRoute() {
         onSelect={handleSelect}
         filter={filter}
         onFilterChange={setFilter}
+        // Dans l'en-tête de la liste, pour que les filtres passent par-dessus.
+        // Recalé sur le coin de l'écran : la liste commence sous la barre, avec
+        // sa marge. Tons neutres : aucun livre précis ici.
+        headerBackground={
+          <WatercolorCorner
+            style={{
+              top: -WATERCOLOR_OVERFLOW_TOP - headerHeight,
+              right: -WATERCOLOR_OVERFLOW_RIGHT - LIST_SIDE,
+            }}
+          />
+        }
       />
-      {/* APRÈS la liste, jamais avant : cf. WatercolorCorner. Tons neutres : aucun livre précis ici */}
-      <WatercolorCorner />
     </>
   );
 }

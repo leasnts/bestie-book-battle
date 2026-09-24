@@ -57,6 +57,8 @@ interface BookLibraryProps {
   /** Filtre actif, `null` = tous les livres */
   filter: ReadingState | null;
   onFilterChange: (filter: ReadingState | null) => void;
+  /** Décor posé SOUS les filtres, dans l'en-tête de la liste (l'aquarelle du coin) */
+  headerBackground?: React.ReactNode;
 }
 
 // ─── Constantes (reprises de l'ancienne étagère de l'accueil) ──────
@@ -77,6 +79,8 @@ const SHELF_GAP = spacing['3xl'];
 const SHELF_H = COVER_H + SHELF_BAR_H - SHELF_OVERLAP;
 /** Hauteur du message quand aucun livre ne correspond au filtre */
 const EMPTY_H = 60;
+/** Marges gauche et droite de la liste, alignées sur le titre du sheet */
+export const LIST_SIDE = spacing.xl;
 /** Marge sous la dernière étagère */
 const LIST_BOTTOM = spacing['2xl'];
 /** Au-delà de cette part de l'écran, le sheet arrête de grandir et la liste défile */
@@ -237,6 +241,7 @@ export default function BookLibrary({
   onSelect,
   filter,
   onFilterChange,
+  headerBackground,
 }: BookLibraryProps) {
   const reducedMotion = useReducedMotion();
   const { height: windowHeight } = useWindowDimensions();
@@ -278,7 +283,11 @@ export default function BookLibrary({
         />
       )}
       ListHeaderComponent={
-        <FilterChips options={LIBRARY_FILTERS} value={filter} onChange={onFilterChange} />
+        <>
+          {/* Le décor d'abord : les filtres passent par-dessus */}
+          {headerBackground}
+          <FilterChips options={LIBRARY_FILTERS} value={filter} onChange={onFilterChange} />
+        </>
       }
       ListEmptyComponent={<Text style={styles.empty}>Aucun livre</Text>}
       style={[styles.list, { height: listHeight }]}
@@ -302,7 +311,7 @@ const styles = StyleSheet.create({
   },
   // Marges alignées sur le titre de la barre du sheet (20 pt)
   listContent: {
-    paddingHorizontal: spacing.xl,
+    paddingHorizontal: LIST_SIDE,
     paddingTop: 0,
     paddingBottom: LIST_BOTTOM,
     gap: SHELF_GAP,

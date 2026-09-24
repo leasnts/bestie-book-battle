@@ -3,20 +3,21 @@
  *
  * Une rangée de capsules de filtre, à choix unique :
  *
- *    ( En cours )  ( Non lus )  (█ Lus █)
+ *    [ En cours ]  [ Non lus ]  [█ Lus █]
  *
  * Toucher une capsule la sélectionne ; toucher celle déjà sélectionnée la
  * désélectionne, et tout s'affiche à nouveau. Pas de capsule « Tous » : rien
  * de sélectionné, c'est tout.
  *
- * Sélectionnée : encre en dégradé (jamais d'aplat), texte crème.
- * Sinon : simple contour encre, sans fond.
+ * Carrés arrondis, pas des pilules. Sélectionnée : encre en dégradé (jamais
+ * d'aplat), texte crème. Sinon : contour encre sur fond blanc, pour rester
+ * lisible par-dessus l'aquarelle du coin.
  */
 
 import { LinearGradient } from 'expo-linear-gradient';
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { colors, fonts, inkAlpha, spacing } from '../../utils/constants';
+import { borderRadius, colors, fonts, inkAlpha, spacing } from '../../utils/constants';
 import PressableScale from './PressableScale';
 
 interface FilterChipsProps<K extends string> {
@@ -66,12 +67,13 @@ const styles = StyleSheet.create({
   chip: {
     height: FILTER_CHIPS_H,
     paddingHorizontal: spacing.lg,
-    borderRadius: FILTER_CHIPS_H / 2,
+    borderRadius: borderRadius.sm,
     overflow: 'hidden',
     alignItems: 'center',
     justifyContent: 'center',
   },
   chipIdle: {
+    backgroundColor: colors.white,
     borderWidth: 1,
     borderColor: inkAlpha(0.14),
   },

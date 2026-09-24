@@ -464,8 +464,9 @@ Changer de livre ou en ajouter un se fait dans la **bibliothèque**, route
 (`GlassButton`) à droite du titre (même parcours que le + de la barre d'onglets).
 Dessous, trois capsules de filtre (`FilterChips`) : **En cours**, **Non lus**,
 **Lus**. Une seule à la fois ; la retoucher la désélectionne et tout revient,
-donc pas de « Tous ». Sélectionnée : encre en dégradé, texte crème ; sinon un
-simple contour. Le filtre n'est pas retenu et le sheet ne rétrécit pas quand on
+donc pas de « Tous ». Carrés arrondis (8 pt), pas des pilules. Sélectionnée :
+encre en dégradé, texte crème ; sinon contour sur fond blanc. Les filtres passent
+**par-dessus** l'aquarelle du coin (elle est dans l'en-tête de la liste, dessous). Le filtre n'est pas retenu et le sheet ne rétrécit pas quand on
 filtre. Plus de « Trier par » : l'ordre est fixe, la dernière activité (la
 mienne ou celle du club) en premier. Les
 livres sont rangés trois par trois sur l'étagère historique de l'accueil — barre

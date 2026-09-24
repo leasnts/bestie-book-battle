@@ -16,15 +16,20 @@
  * utils/watercolor.ts). Le lavis déborde du sheet, qui le coupe
  * net à son bord, comme une feuille posée sur une tache.
  *
- * Placement : à rendre APRÈS la liste de l'écran, en frère, jamais avant ni avec
- * un `zIndex` négatif. iOS cherche la liste en suivant le premier enfant de
- * l'écran ; placée devant elle dans cet ordre, la tache lui fait perdre sa marge
- * sous la barre de navigation.
+ * Placement, deux façons :
+ * - APRÈS la liste de l'écran, en frère, jamais avant ni avec un `zIndex`
+ *   négatif. iOS cherche la liste en suivant le premier enfant de l'écran ;
+ *   placée devant elle, la tache lui fait perdre sa marge sous la barre de
+ *   navigation. Le lavis passe alors par-dessus tout le contenu ;
+ * - dans l'en-tête de la liste, rendue AVANT ce qu'il contient, pour que ce
+ *   contenu passe par-dessus (la bibliothèque : filtres sur le lavis). Il faut
+ *   alors la recaler sur le coin de l'écran avec `style` (hauteur de la barre,
+ *   marge de la liste).
  */
 
 import { Image } from 'expo-image';
 import React from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import { NEUTRAL_WASH, type WashTints } from '../../utils/watercolor';
 
 const WASH = require('../../assets/images/watercolor/corner-wash.png');
@@ -33,19 +38,26 @@ const BLEED = require('../../assets/images/watercolor/corner-bleed.png');
 /** Taille du lavis (ratio des textures 720 × 560) et débordement hors du sheet */
 const WIDTH = 250;
 const HEIGHT = Math.round((WIDTH * 560) / 720);
-const OVERFLOW_RIGHT = 64;
+export const WATERCOLOR_OVERFLOW_RIGHT = 64;
 /** Assez haut pour que le lavis s'arrête avant la première étagère */
-const OVERFLOW_TOP = 62;
+export const WATERCOLOR_OVERFLOW_TOP = 62;
 
 /** Opacité des deux couches : léger, le lavis ne doit jamais devenir le sujet */
 const WASH_OPACITY = 0.85;
 const BLEED_OPACITY = 0.75;
 
-export default function WatercolorCorner({ tints = NEUTRAL_WASH }: { tints?: WashTints }) {
+export default function WatercolorCorner({
+  tints = NEUTRAL_WASH,
+  style,
+}: {
+  tints?: WashTints;
+  /** Recalage quand le lavis n'est pas posé directement sur l'écran */
+  style?: StyleProp<ViewStyle>;
+}) {
   const [first, second] = tints;
 
   return (
-    <View style={styles.corner} pointerEvents="none">
+    <View style={[styles.corner, style]} pointerEvents="none">
       <View style={[styles.layer, { opacity: WASH_OPACITY }]}>
         <Image source={WASH} tintColor={first} contentFit="fill" style={StyleSheet.absoluteFill} />
       </View>
@@ -59,8 +71,8 @@ export default function WatercolorCorner({ tints = NEUTRAL_WASH }: { tints?: Was
 const styles = StyleSheet.create({
   corner: {
     position: 'absolute',
-    top: -OVERFLOW_TOP,
-    right: -OVERFLOW_RIGHT,
+    top: -WATERCOLOR_OVERFLOW_TOP,
+    right: -WATERCOLOR_OVERFLOW_RIGHT,
     width: WIDTH,
     height: HEIGHT,
   },
