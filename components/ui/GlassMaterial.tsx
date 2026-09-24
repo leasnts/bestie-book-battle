@@ -55,6 +55,11 @@ interface GlassMaterialProps {
   rim?: boolean;
   /** Flou dépoli au lieu du verre d'iOS 26 (voir en tête) ; le voile reste celui demandé */
   frosted?: boolean;
+  /**
+   * Verre « clear » d'iOS 26, plus transparent que « regular » (qui devient
+   * laiteux sur un fond clair). Pour un bouton posé sur le fond de l'accueil.
+   */
+  clear?: boolean;
 }
 
 export default function GlassMaterial({
@@ -63,6 +68,7 @@ export default function GlassMaterial({
   edgeColor,
   rim = false,
   frosted = false,
+  clear = false,
 }: GlassMaterialProps) {
   const shape = { borderRadius: radius };
   const native = isLiquidGlassAvailable() && !frosted;
@@ -73,7 +79,7 @@ export default function GlassMaterial({
   return (
     <>
       {native ? (
-        <GlassView style={[styles.fill, shape]} glassEffectStyle="regular" />
+        <GlassView style={[styles.fill, shape]} glassEffectStyle={clear ? 'clear' : 'regular'} />
       ) : (
         <BlurView
           style={[styles.fill, shape]}

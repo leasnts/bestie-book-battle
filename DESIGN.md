@@ -516,6 +516,9 @@ sélecteur.
 
 L'en-tête porte un seul bouton, la **bibliothèque** (`library-big`) à gauche,
 en `GlassButton` 44 pt (le même rond en verre que le +), et PopEyes au centre.
+Sur le fond neutre, le verre « regular » devenait laiteux : ce bouton prend le
+verre **« clear »** d'iOS 26, sans voile crème (`clear`, `veil={0}`), pour rester
+translucide.
 Pas de cloche : les notifications ne servent pas au quotidien, elles vivent
 dans **Profil › Notifications** (route `/activity`).
 
