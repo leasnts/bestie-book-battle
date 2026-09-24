@@ -488,6 +488,11 @@ livre », « Cap · 2/5 ») ; le % du club est passé **à droite de la piste**
   deux premiers si je suis 1re ou 2e), et marges resserrées (12 pt dans les
   cadres, 8 entre eux).
 
+**Grands écrans** (830 pt et plus : 17 Pro, Pro Max) : la place en trop sert à
+respirer. 16 pt entre les cadres, 24 au-dessus de la barre d'onglets, chiffre du
+sélecteur à 80 pt (88 à partir de 900 pt), et « Ma page » prend la place qui
+reste, le chiffre et son « sur 624 » centrés dedans.
+
 **Texte agrandi** (réglages d'accessibilité) : le texte grandit librement, et
 l'accueil **défile seulement dans ce cas**, quand le contenu dépasse vraiment
 l'écran (`scrollEnabled` calculé). À taille normale, rien ne bouge jamais.

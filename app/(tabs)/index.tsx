@@ -84,10 +84,14 @@ export default function HomeScreen() {
   // - sous 830 pt (SE, mini) : chiffre de page plus petit ;
   // - sous 700 pt (SE) : classement réduit au 1er et à moi.
   const compactPage = windowHeight < 830;
+  // Taille du chiffre de page : petite sur SE/mini, plus grosse sur les grands
+  // écrans où il reste de la place (17 Pro, Pro Max)
+  const pickerFontSize = windowHeight < 830 ? 52 : windowHeight < 900 ? 80 : 88;
   const compactLeaderboard = windowHeight < 700;
   // SE : marges resserrées aussi (entre les cadres et dans les cadres)
   const compactSpacing = compactLeaderboard;
-  const frameGap = compactSpacing ? { paddingTop: spacing.sm } : null;
+  // Espace entre les cadres : serré sur SE, plus aéré sur les grands écrans
+  const frameGap = { paddingTop: compactSpacing ? spacing.sm : compactPage ? spacing.md : spacing.lg };
   // Défile seulement si le contenu dépasse vraiment : en pratique, avec le texte
   // agrandi dans les réglages d'accessibilité. Sinon, rien ne bouge.
   const [framesHeight, setFramesHeight] = useState(0);
@@ -431,7 +435,12 @@ export default function HomeScreen() {
       */}
       <ScrollView
         style={styles.frames}
-        contentContainerStyle={{ paddingBottom: tabBarInset + spacing.md }}
+        // flexGrow : « Ma page » peut prendre la place qui reste
+        contentContainerStyle={{
+          flexGrow: 1,
+          // De l'air au-dessus de la barre d'onglets, sauf sur SE où chaque point compte
+          paddingBottom: tabBarInset + (compactSpacing ? spacing.md : spacing['2xl']),
+        }}
         scrollEnabled={framesOverflow}
         showsVerticalScrollIndicator={framesOverflow}
         onLayout={(e) => setFramesHeight(e.nativeEvent.layout.height)}
@@ -467,7 +476,8 @@ export default function HomeScreen() {
             onUndo={handleUndo}
             onJournalPress={() => router.push(`/participant/${myUserId}`)}
             onNotePress={() => router.push('/note/new')}
-            compact={compactPage}
+            compact={compactSpacing}
+            pickerFontSize={pickerFontSize}
             notesDoor={
               <NotesDoor
                 count={notesMatchChallenge ? notes.length : 0}
@@ -605,7 +615,9 @@ const styles = StyleSheet.create({
   // ===== SECTION SÉLECTEUR DE PAGE =====
   // flex: 1 + center pour que le numéro sélectionné soit au milieu de l'écran.
   // Le cadre « Ma page » occupe toute la largeur, comme les deux autres
+  // flexGrow : sur les grands écrans, ce cadre prend la place qui reste en bas
   pageSection: {
+    flexGrow: 1,
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.md,
   },
