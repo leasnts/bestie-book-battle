@@ -1,15 +1,18 @@
 /**
- * CoverBackdrop — le fond de l'accueil, aux couleurs de la couverture.
+ * CoverBackdrop — le fond de l'accueil, en taches douces sur le papier.
  *
  * Pourquoi : du verre posé sur un blanc chaud uni ne se voit presque pas, il n'a
- * rien à flouter. Le fond reprend donc les couleurs du livre en cours, en taches
- * douces sur le papier (mêmes positions que la maquette de l'accueil).
+ * rien à flouter. Le fond pose donc des taches dégradées sur le papier (mêmes
+ * positions que la maquette de l'accueil).
  *
- * - `palette` vient du challenge (`cover_palette`) : même fond pour tout le club.
+ * Par défaut, et c'est ce qu'utilise l'accueil : des tons **neutres** tirés de la
+ * palette (beige, sable, chocolat clair). Les couleurs de la couverture en fond
+ * agaçaient Lea (2026-09-24) : elles faisaient une couleur de plus sur l'écran.
+ *
+ * - `palette` (facultatif) : les couleurs d'une couverture (`cover_palette`),
+ *   pour un écran qui parlerait d'un seul livre. Même fond pour tout le club.
  * - Chaque tache est dosée par `safeOpacity` : une couverture sombre donne une
  *   tache plus légère, jamais un fond qui rendrait les cadres illisibles.
- * - Pas de palette (couverture absente, en noir et blanc, pas encore calculée) :
- *   teintes noyer, affichées tout de suite.
  * - Changement de livre : la nouvelle palette apparaît en fondu (400 ms) par-dessus
  *   l'ancienne. Reanimated saute le fondu si « Réduire les animations » est activé.
  *
@@ -24,7 +27,10 @@ import React, { useEffect, useMemo, useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, { Easing, FadeIn, LayoutAnimationConfig } from 'react-native-reanimated';
 import { colors, motion } from '../../utils/constants';
-import { FALLBACK_PALETTE, hexToRgb, safeOpacity, type CoverPalette } from '../../utils/coverPalette';
+import { hexToRgb, safeOpacity, type CoverPalette } from '../../utils/coverPalette';
+
+/** Beige, sable et chocolat clair : les trois tons de l'app, adoucis (DESIGN.md › Trois tons) */
+export const NEUTRAL_BACKDROP: CoverPalette = ['#cdb8a3', '#a88f7b', '#e2d4c4'];
 
 /** Les taches de la maquette : taille, centre, couleur de la palette, intensité max, fin du fondu */
 const BLOBS = [
@@ -36,7 +42,7 @@ const BLOBS = [
 
 /** Les dégradés CSS du fond pour une palette */
 function backgroundFor(palette: CoverPalette | null | undefined): string {
-  const source = palette?.length ? palette : FALLBACK_PALETTE;
+  const source = palette?.length ? palette : NEUTRAL_BACKDROP;
   return BLOBS.map((blob) => {
     const hex = source[blob.color % source.length];
     const rgb = hexToRgb(hex).join(',');
@@ -51,7 +57,7 @@ const fadeIn = FadeIn.duration(motion.duration.entrance).easing(
   Easing.bezier(...motion.easing.easeOutQuart)
 );
 
-export default function CoverBackdrop({ palette }: { palette: CoverPalette | null | undefined }) {
+export default function CoverBackdrop({ palette }: { palette?: CoverPalette | null }) {
   const background = useMemo(() => backgroundFor(palette), [palette]);
 
   // Fond affiché juste avant : il reste dessous pendant que le nouveau apparaît

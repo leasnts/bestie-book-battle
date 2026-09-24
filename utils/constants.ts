@@ -36,6 +36,12 @@ export const creamAlpha = (alpha: number) => `rgba(${CREAM_RGB},${alpha})`;
  */
 export const glassVeil = 0.56;
 
+/**
+ * Voile crème des commandes en verre (`GlassButton`, barre d'onglets). Sans lui,
+ * le verre vire au gris plat sur un fond clair comme celui d'un sheet.
+ */
+export const glassControlVeil = 0.25;
+
 export const colors = {
   // Dark colors (onboarding, boutons principaux)
   dark950: '#1e140e',          // Fond splash screen
@@ -54,6 +60,9 @@ export const colors = {
   textTertiary: '#6b5546',     // Texte tertiaire (600) — 6,3 / 6,6 / 6,8
   textPlaceholder: '#7a6453',  // Placeholders (500) — 5,0 / 5,3 / 5,4
   textSubtle: '#e5e0d9',       // Texte subtle (300) — lisible uniquement sur fond sombre (12,6 sur dark800)
+
+  // Accent lie de vin, pour les traits (cf. accentGradient pour les surfaces)
+  accent: '#7a2e3e',
 
   // Border colors
   border: '#e5e0d9',           // Bordure inputs
@@ -83,6 +92,19 @@ export const colors = {
   // Overlay
   overlay: shadowAlpha(0.5),
 };
+
+/**
+ * L'accent lie de vin : la seule couleur d'accent de l'app, pour ce qui dit
+ * « état » ou « choisi » (progression, sélection, interrupteur, signets). La
+ * navigation (onglets, +, bibliothèque) reste en encre. Les boutons d'action restent en encre : l'encre agit, l'accent dit
+ * où l'on en est. Un seul emplacement, pour qu'une couleur de club puisse un
+ * jour le remplacer (DESIGN.md › Colors).
+ *
+ * - `accentGradient` pour toute surface remplie (jamais d'aplat), clair en haut →
+ *   foncé en bas ; crème dessus : 7,9:1 sur le clair ;
+ * - `colors.accent` pour les traits : bordures, points, icônes, interrupteur.
+ */
+export const accentGradient = ['#8c3b4c', '#5e1f2e'] as const;
 
 /**
  * Les six post-it du carnet — des pastels tirés vers le noyer.

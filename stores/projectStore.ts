@@ -13,12 +13,13 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
-import { Challenge, ChallengeWithParticipants } from '../types/supabase';
+import { Challenge, ChallengeWithParticipants, MyBookProgress } from '../types/supabase';
 import {
   createChallenge,
   getChallengeById,
   getChallengeByInviteCode,
   getUserChallenges,
+  getMyBookProgress,
   joinChallenge as dbJoinChallenge,
   getChallengeWithParticipants,
   updateChallenge,
@@ -35,6 +36,7 @@ interface ProjectStore {
   activeChallenge: Challenge | null; // Challenge affiché sur la homepage
   currentChallenge: ChallengeWithParticipants | null; // Challenge actuellement affiché (page détail)
   lastProgressChallengeId: string | null; // ID du dernier challenge où l'utilisateur a ajouté des progrès
+  myProgress: Record<string, MyBookProgress>; // Ma progression par livre (id du challenge) : état et tri de la bibliothèque
   isLoading: boolean;
   challengesLoading: boolean; // true uniquement pendant loadUserChallenges (pas pollué par les autres actions)
   challengesLoaded: boolean; // true après le premier chargement réussi ou échoué
@@ -57,6 +59,8 @@ interface ProjectStore {
 
   // Actions - Chargement
   loadUserChallenges: (userId: string) => Promise<void>;
+  /** Recharge ma progression sur chacun de mes livres (bibliothèque) */
+  loadMyProgress: (userId: string) => Promise<void>;
   loadChallenge: (challengeId: string) => Promise<void>;
   refreshCurrentChallenge: () => Promise<void>;
 
@@ -93,6 +97,7 @@ export const useProjectStore = create<ProjectStore>()(
   activeChallenge: null,
   currentChallenge: null,
   lastProgressChallengeId: null,
+  myProgress: {},
   isLoading: false,
   challengesLoading: false,
   challengesLoaded: false,
@@ -240,6 +245,8 @@ export const useProjectStore = create<ProjectStore>()(
    */
   loadUserChallenges: async (userId) => {
     set({ challengesLoading: true, error: null });
+    // En parallèle, sans bloquer : l'état des couvertures de la bibliothèque
+    get().loadMyProgress(userId);
     try {
       const freshChallenges = await getUserChallenges(userId);
 
@@ -497,6 +504,22 @@ export const useProjectStore = create<ProjectStore>()(
     }
   },
 
+  // ===== Action : Charger ma progression par livre =====
+  /**
+   * Ma progression sur chacun de mes livres, indexée par id de challenge.
+   * Silencieux en cas d'échec : la bibliothèque garde la version en cache.
+   */
+  loadMyProgress: async (userId) => {
+    try {
+      const rows = await getMyBookProgress(userId);
+      const myProgress: Record<string, MyBookProgress> = {};
+      for (const row of rows) myProgress[row.challenge_id] = row;
+      set({ myProgress });
+    } catch (error) {
+      console.warn('loadMyProgress:', error);
+    }
+  },
+
   // ===== Action : Réinitialiser =====
   /**
    * Réinitialiser le store (lors de la déconnexion par exemple)
@@ -507,7 +530,8 @@ export const useProjectStore = create<ProjectStore>()(
       activeChallenge: null,
       currentChallenge: null,
       lastProgressChallengeId: null,
-      isLoading: false,
+      myProgress: {},
+          isLoading: false,
       challengesLoading: false,
       challengesLoaded: false,
       _hasHydrated: false,
@@ -534,6 +558,7 @@ export const useProjectStore = create<ProjectStore>()(
       challenges: state.challenges,
       activeChallenge: state.activeChallenge,
       lastProgressChallengeId: state.lastProgressChallengeId,
+      myProgress: state.myProgress,
     }),
     onRehydrateStorage: () => {
       return () => {

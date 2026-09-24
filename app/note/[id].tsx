@@ -27,6 +27,7 @@ import {
   View,
 } from 'react-native';
 import PressableScale from '../../components/ui/PressableScale';
+import { sheetTitleItem } from '../../components/ui/SheetHeader';
 import VoicePlayer from '../../components/ui/VoicePlayer';
 import VoiceRecorder from '../../components/ui/VoiceRecorder';
 import { useAnnotationStore, type VoiceClip } from '../../stores/annotationStore';
@@ -195,17 +196,23 @@ export default function NoteFormRoute() {
       */}
       <Stack.Screen
         options={{
-          headerTitle: existing ? 'Ma note' : 'Nouvelle note',
-          headerLeft: () => (
-            <Pressable
-              onPress={() => router.back()}
-              hitSlop={12}
-              accessibilityRole="button"
-              accessibilityLabel="Fermer"
-            >
-              <XIcon size={20} color={colors.dark900} strokeWidth={2.4} />
-            </Pressable>
-          ),
+          // Fermer, puis le titre ferré à gauche (norme des sheets, SheetHeader.tsx)
+          unstable_headerLeftItems: () => [
+            {
+              type: 'custom',
+              element: (
+                <Pressable
+                  onPress={() => router.back()}
+                  hitSlop={12}
+                  accessibilityRole="button"
+                  accessibilityLabel="Fermer"
+                >
+                  <XIcon size={20} color={colors.dark900} strokeWidth={2.4} />
+                </Pressable>
+              ),
+            },
+            sheetTitleItem(existing ? 'Ma note' : 'Nouvelle note'),
+          ],
           headerRight: () => (
             <PressableScale
               style={[styles.publish, !canPublish && styles.publishOff]}
@@ -500,7 +507,7 @@ const styles = StyleSheet.create({
     borderColor: 'transparent',
   },
   emojiButtonOn: {
-    borderColor: colors.dark900,
+    borderColor: colors.accent,
   },
   emojiText: {
     fontSize: 22,
@@ -523,7 +530,7 @@ const styles = StyleSheet.create({
     borderColor: 'transparent',
   },
   categoryOn: {
-    borderColor: colors.dark900,
+    borderColor: colors.accent,
   },
   categoryText: {
     fontFamily: fonts.bodyExtraBold,

@@ -11,16 +11,35 @@
  * - iOS 26 : `GlassView` (expo-glass-effect), le vrai UIGlassEffect des barres système.
  * - Avant iOS 26 : flou expo-blur, toujours voilé de crème à 80 % au moins, car le
  *   flou seul ne suffit pas à rendre le texte lisible.
+ *
+ * `frosted` remplace le verre par un vrai flou dépoli (expo-blur), sur toutes les
+ * versions d'iOS. Le verre d'iOS 26 déforme surtout ce qui passe derrière, comme
+ * une lentille, sans le flouter : sur une petite pastille, on voyait la
+ * couverture nette au travers.
+ *
+ * Aspect translucide : le verre d'iOS 26 né dans une vue qui apparaît en fondu
+ * (opacité 0 → 1, cf. PageTransition, GlassTabBar) reste transparent ; né à
+ * pleine opacité, il est blanc et laiteux sur un fond clair. C'est le rendu que
+ * Lea veut : poser le verre dans une vue qui apparaît en fondu.
+ *
+ * `rim` ajoute le liseré des boutons en verre d'iOS 26 : un filet d'encre très fin
+ * qui dessine la forme même sur un fond blanc, doublé à l'intérieur d'un reflet
+ * crème qui accroche la lumière en haut à gauche et en bas à droite.
  */
 
 import { BlurView } from 'expo-blur';
 import { GlassView, isLiquidGlassAvailable } from 'expo-glass-effect';
-import React from 'react';
+import React, { useId, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { creamAlpha, inkAlpha } from '../../utils/constants';
+import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
+import { colors, creamAlpha, inkAlpha } from '../../utils/constants';
 
+/** Couleur du reflet du liseré */
+const CREAM = colors.white;
 /** Voile minimum du repli flou */
 const FALLBACK_VEIL = 0.8;
+/** Force du flou dépoli (`frosted`) : assez pour que plus rien ne soit net dessous */
+const FROSTED_INTENSITY = 60;
 /** Filet du repli flou quand aucun bord n'est demandé : détache le flou du papier */
 const FALLBACK_EDGE = inkAlpha(0.08);
 
@@ -37,13 +56,23 @@ interface GlassMaterialProps {
    * natif, un filet d'encre très fin sur le repli.
    */
   edgeColor?: string;
+  /** Liseré des boutons en verre : filet d'encre + reflet crème (voir en tête) */
+  rim?: boolean;
+  /** Flou dépoli au lieu du verre d'iOS 26 (voir en tête) ; le voile reste celui demandé */
+  frosted?: boolean;
 }
 
-export default function GlassMaterial({ radius, veil = 0, edgeColor }: GlassMaterialProps) {
+export default function GlassMaterial({
+  radius,
+  veil = 0,
+  edgeColor,
+  rim = false,
+  frosted = false,
+}: GlassMaterialProps) {
   const shape = { borderRadius: radius };
-  const native = isLiquidGlassAvailable();
-  const veilOpacity = native ? veil : Math.max(veil, FALLBACK_VEIL);
-  const edge = edgeColor ?? (native ? undefined : FALLBACK_EDGE);
+  const native = isLiquidGlassAvailable() && !frosted;
+  const veilOpacity = native || frosted ? veil : Math.max(veil, FALLBACK_VEIL);
+  const edge = edgeColor ?? (native || frosted ? undefined : FALLBACK_EDGE);
   const edgeWidth = edgeColor ? 1 : StyleSheet.hairlineWidth;
 
   return (
@@ -51,7 +80,11 @@ export default function GlassMaterial({ radius, veil = 0, edgeColor }: GlassMate
       {native ? (
         <GlassView style={[styles.fill, shape]} glassEffectStyle="regular" />
       ) : (
-        <BlurView style={[styles.fill, shape]} intensity={40} tint="light" />
+        <BlurView
+          style={[styles.fill, shape]}
+          intensity={frosted ? FROSTED_INTENSITY : 40}
+          tint="light"
+        />
       )}
       {veilOpacity > 0 && (
         <View
@@ -65,7 +98,62 @@ export default function GlassMaterial({ radius, veil = 0, edgeColor }: GlassMate
           pointerEvents="none"
         />
       )}
+      {rim && <GlassRim radius={radius} />}
     </>
+  );
+}
+
+/**
+ * Le liseré, dessiné en SVG : React Native ne sait pas faire de bordure en dégradé.
+ * Deux contours superposés, mesurés sur le parent :
+ * - dehors, un filet d'encre à 8 % qui détache la forme d'un fond clair ;
+ * - dedans, un reflet crème en diagonale, vif aux deux coins opposés.
+ */
+function GlassRim({ radius }: { radius: number }) {
+  const [size, setSize] = useState<{ width: number; height: number } | null>(null);
+  // Un identifiant de dégradé par liseré ; les « : » de useId cassent `url(#…)`
+  const gradientId = `rim${useId().replace(/[^a-zA-Z0-9]/g, '')}`;
+
+  return (
+    <View
+      style={styles.fill}
+      pointerEvents="none"
+      onLayout={(e) => setSize(e.nativeEvent.layout)}
+    >
+      {size && (
+        <Svg width={size.width} height={size.height}>
+          <Defs>
+            {/* Transparence en stopOpacity : react-native-svg ignore l'alpha d'un rgba() dans stopColor */}
+            <LinearGradient id={gradientId} x1="0" y1="0" x2="1" y2="1">
+              <Stop offset="0" stopColor={CREAM} stopOpacity={0.9} />
+              <Stop offset="0.35" stopColor={CREAM} stopOpacity={0.1} />
+              <Stop offset="0.65" stopColor={CREAM} stopOpacity={0.05} />
+              <Stop offset="1" stopColor={CREAM} stopOpacity={0.6} />
+            </LinearGradient>
+          </Defs>
+          <Rect
+            x={0.5}
+            y={0.5}
+            width={size.width - 1}
+            height={size.height - 1}
+            rx={radius - 0.5}
+            stroke={inkAlpha(0.08)}
+            strokeWidth={1}
+            fill="none"
+          />
+          <Rect
+            x={1.75}
+            y={1.75}
+            width={size.width - 3.5}
+            height={size.height - 3.5}
+            rx={radius - 1.75}
+            stroke={`url(#${gradientId})`}
+            strokeWidth={1.5}
+            fill="none"
+          />
+        </Svg>
+      )}
+    </View>
   );
 }
 

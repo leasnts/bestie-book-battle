@@ -154,14 +154,50 @@ typographie, mouvement, illustration.
 
 ## Colors
 
-**Stratégie : restrained.** Neutres teintés + couleur uniquement porteuse de sens.
-Aucune couleur de marque primaire n'existe, et c'est délibéré.
+**Stratégie : restrained.** Neutres teintés + **une seule couleur d'accent, le lie
+de vin**, et des couleurs uniquement porteuses de sens. Décidé par Lea le
+2026-09-24 (#73) : avant, chaque écran prenait sa teinte (noyer, encre, lie de
+vin…) et ça partait dans tous les sens.
+
+### Trois tons, pas plus
+
+La palette de l'app tient en **trois tons** (Lea, 2026-09-24) :
+
+1. **Lie de vin** — l'accent : états et choix (`accent`, `accentGradient`) ;
+2. **Chocolat foncé** — l'encre : texte, actions, boutons (`ink` `#33231a`, dégradé
+   `#5a4536` → `#1e140e`). Le marron reste central, il n'est pas remplacé ;
+3. **Beige / blanc** — le papier : fonds, surfaces, écru des signets, aquarelle
+   (`paper`, `surface`, crème).
+
+Tout nouvel élément prend l'un des trois. Exceptions : les couleurs d'une
+couverture quand l'écran parle de ce livre, et les couleurs porteuses de sens
+ci-dessous (à ramener un jour vers ces tons).
+
+### L'accent lie de vin
+
+| Token | Valeur | Rôle |
+|---|---|---|
+| `accentGradient` | `#8c3b4c` → `#5e1f2e` | Toute surface remplie d'accent, toujours en dégradé. Crème dessus : 7,9:1. |
+| `colors.accent` | `#7a2e3e` | Traits d'accent : bordures, points, icônes, filets, interrupteur. |
+
+**La règle : l'encre agit, l'accent dit où l'on en est.**
+- **Accent** : ce qui dit un **état** ou un **choix** — progression (piste de
+  l'accueil, ma barre au classement, caps passés, signets de la bibliothèque),
+  sélection (filtres, chips du carnet, cartes et catégories choisies, réaction
+  choisie), interrupteur activé.
+- **Encre** : les **actions** (boutons primaires, + en verre), la **navigation**
+  (onglet actif, bouton bibliothèque : la même encre que le chiffre de ma page),
+  le texte, les repères à atteindre (cap en cours, fin du livre).
+- **Neutre** : le décor (étagères, aquarelle, papier).
+
+L'accent est un **emplacement unique** : c'est lui qu'une couleur de club
+remplacera un jour (cf. « La couleur appartient au club »).
 
 ### Encres et papiers
 
 | Token | Valeur | Rôle |
 |---|---|---|
-| `ink` | `#33231a` | Encre noyer foncé. Texte principal, boutons primaires, barres de progression remplies. |
+| `ink` | `#33231a` | Encre noyer foncé. Texte principal, boutons primaires. |
 | `ink-deep` | `#1e140e` | Fond du splash. Base de toutes les ombres. |
 | `ink-panel` | `#2a1c14` | Fond des cartes livre. |
 | `paper` | `#f5f3ef` | Fond d'app. Porte une texture noise à 5% d'opacité. |
@@ -220,8 +256,9 @@ telles — non tranché.
 ### La couleur appartient au club, pas à l'app
 
 Feature à venir, et principe directeur : **chaque book club choisit sa couleur**.
-Le système reste monochrome pour que cette couleur ait de la place, et c'est elle
-qui signe l'identité d'un club donné.
+Le système reste sobre pour que cette couleur ait de la place, et c'est elle
+qui signe l'identité d'un club donné. En attendant, l'emplacement d'accent porte
+le lie de vin (`accent`, `accentGradient`).
 
 Conséquences sur la construction : réserver un emplacement d'accent unique,
 paramétrable par challenge, plutôt que de disséminer des couleurs codées en dur.
@@ -229,26 +266,26 @@ Tout ce qui pourrait un jour porter la couleur du club — barres de progression
 états actifs, accents de classement — doit lire cet emplacement dès maintenant.
 L'accent ne doit jamais être la seule information : le club daltonien existe.
 
-### Fond de l'accueil : les couleurs de la couverture
+### Fond de l'accueil : neutre
 
-En attendant la couleur du club, c'est **la couverture du livre en cours** qui
-colore l'accueil (`CoverBackdrop`) : sans rien derrière, le verre des cadres ne
-se voit pas. Quatre taches radiales douces sur `paper`, placées comme sur la
-maquette, texture noise par-dessus.
+L'accueil a un fond **neutre** (`CoverBackdrop` sans palette) : quatre taches
+radiales douces sur `paper`, placées comme sur la maquette, en beige, sable et
+chocolat clair (`NEUTRAL_BACKDROP` `#cdb8a3` / `#a88f7b` / `#e2d4c4`), texture
+noise par-dessus. Sans rien derrière, le verre des cadres ne se verrait pas.
 
-- **Extraction** (`utils/coverPalette.ts`) : vignette de 48 px de large, pixels
-  regroupés par teinte, les **3 couleurs dominantes** gardées. Gris, noirs et
-  blancs ignorés : une couverture noire ne donne jamais un fond noir.
-- **Stockage** : `challenges.cover_palette`, calculée une fois (à la création,
-  au changement de couverture, ou au premier affichage pour les anciennes). Même
-  fond pour tout le club, affiché sans attente.
-- **Dosage** : chaque tache monte au plus à 62 / 42 / 32 / 22 % d'opacité, **moins
-  si la couleur est sombre** : `text-tertiary` doit garder 5:1 dans un cadre en
-  verre posé dessus (voile `glassVeil` à 56 %). Les couleurs sont stockées brutes
-  et dosées à l'affichage : l'intensité se règle sans migration.
-- **Repli noyer** (ambre, noyer, sable) : pas de couverture, couverture en noir et
-  blanc, ou palette pas encore calculée.
-- **Changement de livre** : fondu de 400 ms, sauté avec « Réduire les animations ».
+Avant, les taches prenaient **les couleurs de la couverture** du livre en cours.
+Retiré le 2026-09-24 : ça faisait une couleur de plus sur l'écran, hors des
+trois tons. La couverture elle-même suffit à dire de quel livre on parle.
+
+La mécanique reste disponible pour un écran qui parlerait d'un seul livre
+(`<CoverBackdrop palette={…} />`) :
+- **Extraction** (`utils/coverPalette.ts`) : vignette de 48 px, les **3 couleurs
+  dominantes**, gris, noirs et blancs ignorés ;
+- **Stockage** : `challenges.cover_palette`, calculée une fois, même fond pour
+  tout le club ;
+- **Dosage** : 62 / 42 / 32 / 22 % d'opacité au plus, moins si la couleur est
+  sombre (`text-tertiary` garde 5:1 dans un cadre en verre posé dessus) ;
+- **Changement de palette** : fondu de 400 ms, sauté avec « Réduire les animations ».
 
 ## Typography
 
@@ -392,7 +429,7 @@ un trait pointillé, avec son rang réel.
 
 Dans le classement complet, **toucher une ligne ouvre le journal de lecture** de
 la personne (route `/participant/[id]`, sheet natif posé sur celui du
-classement). « Ma page › » ouvre le même écran, avec mon identifiant.
+classement). « Ma page » ouvre le même écran, avec mon identifiant. Aucun chevron › sur les trois cadres de l'accueil : toucher suffit, on comprend au premier essai (Lea, 2026-09-24).
 
 Sur l'accueil, **les lignes ne se touchent pas une par une** : c'est le cadre
 entier qui ouvre le classement complet. Deux cibles imbriquées rendaient le
@@ -405,16 +442,28 @@ cours (`ActiveBookCard`), le sélecteur de page, le classement du club — rangs
 1-2-3 plus ta ligne si tu n'y es pas (`LeaderboardSection`). Refonte en cours (#30) : chaque bloc
 devient un **cadre en verre** `GlassSection` (rayon 24, padding 16, bord crème,
 voile crème à 56 %, tout le cadre touchable à 0,97 quand il ouvre un écran),
-posé sur le fond aux couleurs de la couverture.
+posé sur le fond neutre.
 
 Le cadre **Le livre** (`BookSection`) ouvre la fiche du livre d'un toucher :
-couverture, titre, autrice, **J-27** (ou « Prolongations » passée la date, sans
-reproche), puis la **piste** (`GoalTrack`) de 0 à 100 % du livre — remplissage à
-la **médiane** du club (pas la moyenne : trois lectrices rapides fausseraient le
-repère), ma photo posée à mon %, caps passés en points neutres, cap en cours en
-drapeau daté, fin en rond au bout. Dessous, deux repères : `Club · 26 % du livre`
-et `Cap · 9/38` (un cap se compte en **membres**). Un objectif intermédiaire
-s'appelle un **cap** partout dans l'UI.
+la couverture à gauche, **toujours de la hauteur du texte** à côté (mesurée) ; à
+droite le titre (Fraunces 20), l'autrice, puis **juste dessous** la
+**piste** (`GoalTrack`) de 0 à 100 % du livre, avec **deux remplissages
+superposés**, comme la barre d'une vidéo (lu / chargé) : devant, en lie de vin,
+**ma** progression jusqu'à ma photo ; derrière, en lie de vin clair, la
+**médiane** du club (pas la moyenne : trois lectrices rapides fausseraient le
+repère). Une seule barre pour le club faisait croire que j'avais atteint des
+étapes que seul le club avait dépassées. **Étapes** (caps et fin du livre) en
+ronds pleins de 9 pt, un peu plus gros que la barre, qui est **découpée** de
+2 pt tout autour (masque SVG) : un vrai vide où l'on voit le fond, qui détache le
+point. Pas de liseré blanc : il ressortait sur le verre, qui n'est pas blanc : lie de
+vin si **je** les ai dépassées, lie de vin clair (la même couleur que la barre
+du club) si seul le club les a dépassées, gris de la barre, opaque, sinon, cap en cours en
+drapeau daté, date de fin au bout — et **sur la ligne de la
+date de fin**, à gauche sous le départ de la piste, `👥 26 %`, le club (la date
+d'un cap en cours sous 30 % ne s'écrit pas, pour ne pas le chevaucher). Plus de « J-27 » / « Prolongations » ni de ligne de repères
+(Lea, 2026-09-24) : la date de fin suffit, et l'accueil doit tenir sans défiler.
+Le nombre de membres au cap vit dans la fiche du livre. Un objectif
+intermédiaire s'appelle un **cap** partout dans l'UI.
 
 Le cadre **Ma page** (`PageSection`) porte le geste principal : le sélecteur qui
 défile (pas de − / +), ma page en pages de mon édition, ma série en **jours**, et
@@ -435,20 +484,45 @@ toujours touchable, qui montre ce qui compte :
   `🔒 1` pour ce qui reste. Ils arrivent pendant que la feuille « +14 » tombe
   et se rangent dès que j'ouvre le carnet (ou que je les ai lus).
 
-**Gros corps de texte** : les trois cadres vivent dans une ScrollView. À taille
-normale rien ne défile (la règle de l'accueil tient), et au réglage
-`accessibility-extra-large` les cadres poussent au lieu d'être écrasés — sans
-elle, chaque cadre se faisait comprimer et les lettres étaient coupées. Dans les
-cadres, les hauteurs de ligne sont des `minHeight`, jamais des `height`. Seuls
-les repères posés à un endroit précis d'un dessin (dates de la piste, chiffre du
-sélecteur) bornent leur agrandissement (`maxFontSizeMultiplier`), sinon ils se
-chevauchent et ne désignent plus rien.
+**Aucun défilement** (Lea, 2026-09-24) : l'accueil tient sur un seul écran, sur
+tous les iPhone. Plus de ScrollView : le livre, « Ma page » et le classement sont
+posés dans une vue fixe. Pour gagner la place, retirés : le filigrane « PAGE »
+derrière le chiffre et la ligne de repères du cadre livre (« Club · 30 % du
+livre », « Cap · 2/5 ») ; le % du club est passé **à droite de la piste**
+(`👥 30 %`), le nombre de membres au cap reste dans la fiche du livre.
+
+**Petits écrans**, pour tenir quand même (hauteur de fenêtre) :
+- sous 830 pt (SE, mini) : chiffre du sélecteur à 52 pt au lieu de 68 ;
+- sous 700 pt (SE) : classement réduit à **deux lignes**, le 1er puis moi (les
+  deux premiers si je suis 1re ou 2e), et marges resserrées (12 pt dans les
+  cadres, 8 entre eux).
+
+**Grands écrans** (830 pt et plus : 17 Pro, Pro Max) : la place en trop sert à
+respirer. 16 pt entre les cadres, 24 au-dessus de la barre d'onglets, chiffre du
+sélecteur à 80 pt (88 à partir de 900 pt), et « Ma page » prend la place qui
+reste, le chiffre et son « / 624 » centrés dedans.
+
+**Texte agrandi** (réglages d'accessibilité) : le texte grandit librement, et
+l'accueil **défile seulement dans ce cas**, quand le contenu dépasse vraiment
+l'écran (`scrollEnabled` calculé). À taille normale, rien ne bouge jamais.
+
+Dans les cadres, les hauteurs de ligne sont des `minHeight`, jamais des
+`height`. Les repères posés à un endroit précis d'un dessin (dates de la piste,
+% du club, chiffre du sélecteur) bornent leur agrandissement
+(`maxFontSizeMultiplier`), sinon ils se chevauchent et ne désignent plus rien.
 
 Plus de glissement depuis le bord droit vers Activité : il chevauchait le
-sélecteur. La cloche de l'en-tête suffit.
+sélecteur.
 
-L'en-tête porte deux `HeaderIconButton` 40 pt autour de PopEyes :
-**bibliothèque** (`library-big`) à gauche, **activité** (`bell`) à droite.
+L'en-tête porte un seul bouton, la **bibliothèque** (`library-big`) à gauche,
+en `GlassButton` 44 pt (le même rond en verre que le +), et PopEyes au centre.
+**Verre translucide** (bouton bibliothèque, barre d'onglets, +) : le verre d'iOS
+26 né dans une vue qui apparaît **en fondu** reste transparent ; né à pleine
+opacité, il est blanc et laiteux sur le papier. Les écrans ont leur fondu
+(`PageTransition`), la barre d'onglets aussi (`FadeIn`). Constaté sur iOS 26.2,
+à revérifier aux mises à jour d'iOS.
+Pas de cloche : les notifications ne servent pas au quotidien, elles vivent
+dans **Profil › Notifications** (route `/activity`).
 
 Tout ce qui se règle sur un livre vit dans la **fiche du livre** (route `/book`,
 sheet natif) : la fin et ses jours restants, les caps (celui en cours marqué « en
@@ -457,13 +531,71 @@ le club et son code d'invitation, modifier ou quitter le livre. Les pages des ca
 s'affichent dans **mon** édition — un cap est enregistré en %. Plus de menu ⋮ sur
 l'accueil.
 
+**Hauteur des sheets à contenu** (fiche du livre, classement, journal,
+bibliothèque ; Lea, 2026-09-24) : le sheet s'ouvre **à la hauteur de tout son
+contenu** (`fitToContents` + `useFitSheet`). S'il y en a trop, il monte au plus
+**jusque sous l'en-tête de l'accueil** — bouton bibliothèque et mascotte restent
+visibles au-dessus — et l'on fait défiler dedans. Les sheets de saisie (note,
+réactions) gardent leurs hauteurs d'arrêt, à cause du clavier.
+
+**Pas de titre quand le contenu le dit déjà** (Lea, 2026-09-24) : la fiche du
+livre (couverture + titre du livre) et le journal (avatar + nom + « Journal de
+lecture ») n'ont ni titre ni barre : `sheetScreenOptions(null)`, contenu sous la
+poignée (`SHEET_TOP_INSET`). Les autres gardent leur titre ferré à gauche
+(« Mes lectures », « Classement », « Nouvelle note », « Réagir »).
+
 Changer de livre ou en ajouter un se fait dans la **bibliothèque**, route
-`/library` en sheet natif : les challenges rangés trois par trois, sans titre,
-sur l'étagère historique de l'accueil — barre en verre flouté (noyer à 30 %,
-bordure blanc chaud à 40 %) avec ses vis, posée **par-dessus** le bas des
-couvertures. Trois états de couverture : **en cours** (le livre de l'accueil)
-bordure encre de 2 pt détachée de 3 pt, **pas commencé** filet `inkAlpha(0.15)`,
-**terminé** cadre sombre + marque-page ✓ (`BookCover`).
+`/library` en sheet natif titré **Mes lectures**, avec le **+** en verre
+(`GlassButton`) à droite du titre (même parcours que le + de la barre d'onglets).
+Dessous, quatre capsules de filtre (`FilterChips`) : **Tout**, **En cours**,
+**Non lus**, **Lus**, une toujours sélectionnée (Tout par défaut). Carrés arrondis
+(8 pt), pas des pilules. Sélectionnée : **lie de vin** en dégradé (`accentGradient`,
+la couleur d'accent, la même que les signets), texte crème ; sinon contour sur
+fond blanc. Les filtres passent
+**par-dessus** l'aquarelle du coin (elle est dans l'en-tête de la liste, dessous). Le filtre n'est pas retenu et le sheet ne rétrécit pas quand on
+filtre. Plus de « Trier par » : l'ordre est fixe, la dernière activité (la
+mienne ou celle du club) en premier. Les
+livres sont rangés trois par trois sur l'étagère historique de l'accueil — barre
+en verre flouté **teinté noyer grisé**, en dégradé (noyer grisé clair → plus foncé,
+45 → 55 %, bordure crème à 35 %) avec ses vis, posée **par-dessus** le bas des
+couvertures. Noir, elle grisait ; noyer profond, elle pesait trop ; noyer à pleine
+saturation, trop beige/marron : saturation divisée par deux.
+
+**Aquarelle** (`WatercolorCorner`) : un lavis léger dans le coin haut droit du
+sheet, qui passe **sous le + en verre** pour que le verre se voie, et que le bord
+du sheet coupe net. **Tons neutres** (sable et noyer clair, `NEUTRAL_WASH`) : la
+bibliothèque ne parle d'aucun livre précis, elle n'a donc pas de couleur de
+couverture. Les couleurs d'une couverture (`coverWash`, `utils/watercolor.ts`)
+sont réservées aux écrans qui parlent de ce livre. Textures blanches teintées à l'affichage
+(`assets/images/watercolor/corner-*.png`, `scripts/generate-watercolor.py`). Il
+s'arrête avant la première étagère. Rendu **après** la liste, jamais avant ni en
+`zIndex` négatif : iOS repère la liste en suivant le premier enfant de l'écran,
+et perd sinon sa marge sous la barre.
+
+**Hauteur** : le sheet prend la hauteur exacte de ses étagères
+(`fitToContents`), sans blanc sous la dernière ; passé 72 % de l'écran il
+arrête de grandir et la liste défile.
+
+**État de lecture** : un **signet brodé** (`RibbonBookmark`) qui pend du haut de
+chaque couverture, calculé sur **ma** progression, jamais sur celle du club :
+- **pas commencé** : rien ;
+- **nouveau** : seul le dernier livre ajouté, tant qu'il n'est pas commencé —
+  ruban écru, surpiqûre et étincelle Lucide (`sparkle`) lie de vin ;
+- **en cours** : ruban écru que le **lie de vin de « terminé » imprègne depuis le
+  bout du V, à mon %** (10 % au moins, sinon on ne le voit pas), comme une
+  teinture qui monte dans le tissu : à 100 %, c'est le signet « terminé ». Une
+  seule couleur d'accent pour les états (le noyer faisait une couleur de plus).
+  Front **ondulé et net** (le fondu faisait flou), avec une ligne à peine plus
+  foncée là où la teinture s'accumule (comme le bord d'une aquarelle). Dans la
+  partie teinte, la surpiqûre passe en crème ;
+- **terminé** : ruban lie de vin, surpiqûre crème, coche Lucide (`check`) crème.
+
+Essais écartés : pastille en pourcentage « 58 % », anneau de progression sur flou
+dépoli, autocollant rond.
+
+Vocabulaire : on parle de **lectures** et de **livres**, jamais de
+« challenges ». Un groupe qui lit un livre ensemble n'est pas un challenge (le
+renommage de l'app suit, #29).
 
 ### Vocaux du carnet
 
@@ -544,8 +676,74 @@ Ne pas activer `featureFlags.experiment.synchronousScreenUpdatesEnabled` : ce
 flag expérimental de react-native-screens a une contrepartie native et rend
 l'app entièrement blanche sur un binaire fraîchement compilé.
 
+**Titre ferré à gauche, jamais centré.** Tous les sheets, sans exception :
+Fraunces 22 (`headline`), le contenu aligné sur lui (marge de 20 pt), actions à
+droite sur la même ligne (`GlassButton` 44 pt, icône Lucide). La barre native
+centre toujours son titre : on laisse le sien vide et on pose le nôtre en
+premier élément de gauche, sans verre. Tout passe par
+`components/ui/SheetHeader.tsx` : `sheetScreenOptions(titre)` pour la route,
+`sheetIconItem(...)` pour un bouton à droite, `sheetTitleItem(titre)` si un écran
+remplace les éléments de gauche (ex. la croix de « Nouvelle note », posée avant
+le titre). Les sheets dessinés à la main suivent la même règle.
+
 Sheets de consultation : poignée seule. Sheets de formulaire : garder une croix,
 qui sert d'affordance « annuler ».
+
+### Signets brodés — `RibbonBookmark`
+
+Un signet en ruban qui sort du haut du livre et pend devant la couverture, bout
+coupé en V, **surpiqûre brodée sur tout le tour**. C'est la direction « maille » :
+du textile réaliste.
+
+- **Ruban** : gros-grain (côtes horizontales, chaîne fine), lisière un peu plus
+  claire, haut plat sans pli dessiné (le bourrelet alourdissait), dégradé clair en
+  haut → foncé en bas, ombre portée
+  douce sur la couverture. **Matière discrète** : trop de relief, de trame et
+  d'ombre faisait « old school » (skeuomorphisme des débuts de l'iPhone).
+- **Broderie, effet marqué** (demande de Lea : « pousser l'effet brodé ») :
+  - fils en relief : deux brins visibles, reflet soyeux du fil à broder, ombre
+    des fils sur le ruban ;
+  - **surpiqûre au point avant sur tout le tour** du ruban — haut, côtés et le long
+    du V —, à 2,2 pt du bord : c'est elle qui dit « fait main »
+    au premier coup d'œil.
+- Ruban de 23 pt de large, pour que la broderie se lise à taille réelle.
+- **Images calculées** par `scripts/generate-ribbon-bookmarks.py` (@2x, @3x) : pour
+  une nouvelle couleur, ajouter une variante au script, ne pas
+  dessiner de ruban dans le code.
+
+| Variante | Ruban | Surpiqûre | Icône Lucide | Pour |
+|---|---|---|---|---|
+| `done` | lie de vin `#8c3b4c` → `#5e1f2e` | crème | `check` crème | livre terminé |
+| `reading` | écru, imprégné de lie de vin `#8c3b4c` → `#5e1f2e` à mon % | lie de vin / crème | — | livre en cours |
+| `new` | écru `#f3e9df` → `#e1cfbf` | lie de vin | `sparkle` lie de vin, **pleine** | dernier livre ajouté |
+
+**Pictogrammes : icônes Lucide posées sur le ruban**, jamais brodées ni dessinées
+dans l'image (règle « Lucide uniquement » ; la coche brodée faisait grossière). Le
+ruban brodé porte la matière, l'icône porte le sens.
+
+`reading` superpose deux images calculées avec la même graine — `progress-track`
+(écru, avec ombre) et `progress-fill` (noyer, sans ombre pour ne pas la doubler) — et révèle la seconde sous le front (masque SVG : vagues + fondu). Les
+tissus et la surpiqûre coïncident au pixel.
+
+Le lie de vin est un **essai de couleur d'accent** (issue dédiée sur le BBB
+Roadmap), pas encore adopté pour le reste de l'app. Premier essai en noyer et
+sable : terne, « pas ouf ».
+
+Essai écarté : l'autocollant rond (bord blanc découpé), « pas réaliste, pas
+intéressant ».
+
+### Bouton en verre — `GlassButton`
+
+Le seul bouton rond en verre de l'app : icône Lucide sur `GlassMaterial`, voile
+crème `glassControlVeil` (25 % : assez pour ne pas griser sur fond clair, assez
+peu pour laisser passer la couleur de dessous) et **liseré** (`rim`) — filet d'encre à 8 % qui
+dessine la forme même sur fond blanc, doublé d'un reflet crème en diagonale —,
+ombre douce. Le reflet passe par `stopOpacity` : react-native-svg ignore l'alpha
+d'un `rgba()` dans `stopColor`, et le liseré devenait un anneau blanc uniforme.
+58 pt pour le + de la barre d'onglets, 44 pt en haut d'un sheet.
+La barre d'onglets porte le même voile et le même liseré. Ne jamais redessiner
+ce verre ailleurs : le fond gris plat qu'iOS 26 met derrière les boutons de
+barre est retiré (`hidesSharedBackground`) au profit de ce composant.
 
 ### Retour au toucher — `PressableScale`
 
@@ -594,6 +792,7 @@ système par ailleurs sobre.
   qu'elle signifie ».
 - Pas de carte dans une carte.
 - Pas de rayon codé en dur sur un sheet natif : iOS 26 gère la concentricité.
+- Pas de titre de sheet centré : toujours ferré à gauche (`SheetHeader`).
 - Pas de Fraunces en texte courant, pas de Nunito en score (sauf sous 13 px).
 - Pas de `fontWeight` pour faire du gras : changer de token `fonts`.
 - Pas de bounce, pas d'elastic, pas d'animation de `width` ou de `height`.

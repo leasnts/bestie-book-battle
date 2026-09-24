@@ -57,7 +57,7 @@ export default function PageScrollPicker({
   const screenWidth = width ?? windowWidth;
   const STEP = itemWidth;
   const ITEM_WIDTH = itemWidth;
-  // Le filigrane « PAGE » et la hauteur de cellule suivent la taille du chiffre
+  // La hauteur de cellule suit la taille du chiffre
   const cellHeight = Math.round(fontSize * 1.13);
   const flatListRef = useRef<FlatList>(null);
   const currentCenterRef = useRef(currentPage);
@@ -199,20 +199,6 @@ export default function PageScrollPicker({
 
   return (
     <View style={styles.container}>
-      <View style={styles.pageLabelContainer}>
-        {/*
-          Filigrane décoratif posé derrière le chiffre. S'il s'agrandit, il
-          chevauche le chiffre au lieu de rester en fond : il est exclu de
-          l'échelle système, comme tout élément purement ornemental.
-        */}
-        <Text
-          style={[styles.pageLabel, { fontSize: Math.round(fontSize * 0.28) }]}
-          allowFontScaling={false}
-        >
-          PAGE
-        </Text>
-      </View>
-
       <FlatList
         ref={flatListRef}
         data={pages}
@@ -247,16 +233,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     alignSelf: 'stretch',
     width: '100%',
-  },
-  pageLabelContainer: {
-    marginBottom: -12,
-    zIndex: 1,
-  },
-  pageLabel: {
-    fontFamily: fonts.displayBold,
-    color: inkAlpha(0.08),
-    letterSpacing: -0.3,
-    textAlign: 'center',
   },
   itemCell: {
     flexDirection: 'row',

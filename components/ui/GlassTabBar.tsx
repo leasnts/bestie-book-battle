@@ -17,9 +17,10 @@
  * (200 ms, ease-out-quart — cf. DESIGN.md). Lucide n'existe qu'en contour : pas
  * de version pleine à afficher pour l'onglet actif.
  *
- * À droite de la barre, un bouton rond « + » dans le même verre ajoute un
- * challenge. La barre reste centrée à l'écran : une cale invisible de la même
- * largeur équilibre le bouton côté gauche.
+ * À droite de la barre, un bouton rond « + » (`GlassButton`) ajoute une
+ * lecture. La barre reste centrée à l'écran : une cale invisible de la même
+ * largeur équilibre le bouton côté gauche. Barre et bouton portent le même
+ * liseré de verre.
  *
  * Les icônes sont posées PAR-DESSUS le verre, pas dedans. Placées comme
  * enfants de GlassView, iOS 26 les réadapte à ce qui passe derrière la barre :
@@ -37,13 +38,15 @@ import { PlusIcon, type LucideIcon } from 'lucide-react-native';
 import { StyleSheet, View } from 'react-native';
 import Animated, {
   Easing,
+  FadeIn,
   useAnimatedStyle,
   useReducedMotion,
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, motion } from '../../utils/constants';
+import { colors, glassControlVeil, motion } from '../../utils/constants';
+import GlassButton from './GlassButton';
 import GlassMaterial from './GlassMaterial';
 import PressableScale from './PressableScale';
 
@@ -114,6 +117,8 @@ export function TabIcon({ icon: Icon, focused }: { icon: LucideIcon; focused: bo
         <Icon size={ICON_SIZE} color={colors.dark900} strokeWidth={IDLE_STROKE} />
       </Animated.View>
       <Animated.View style={[styles.iconLayer, activeStyle]}>
+        {/* Onglet actif : encre, comme le + et la bibliothèque (pas l'accent : la
+            navigation reste en encre, choix de Lea) */}
         <Icon size={ICON_SIZE} color={colors.dark900} strokeWidth={ACTIVE_STROKE} />
       </Animated.View>
     </View>
@@ -162,28 +167,36 @@ export default function GlassTabBar({ state, descriptors, navigation, onAddPress
   });
 
   return (
-    <View style={[styles.anchor, { bottom: barBottom(insets.bottom) }]} pointerEvents="box-none">
+    /*
+      Apparition en fondu : c'est ce qui donne au verre son aspect translucide.
+      Le verre d'iOS 26 qui naît dans une vue en fondu (opacité 0 → 1) garde un
+      rendu transparent ; né à pleine opacité, il est blanc et laiteux sur le
+      papier. Le bouton bibliothèque l'avait par hasard (PageTransition), Lea
+      l'a préféré. Constaté sur iOS 26.2, à revérifier aux mises à jour d'iOS.
+    */
+    <Animated.View
+      entering={FadeIn.duration(220)}
+      style={[styles.anchor, { bottom: barBottom(insets.bottom) }]}
+      pointerEvents="box-none"
+    >
       {/* Cale de la largeur du bouton « + » : garde la barre au centre de l'écran */}
       <View style={styles.addSpacer} pointerEvents="none" />
 
       <View style={styles.shadow} accessibilityRole="tablist">
         {/* Fond seul : le verre ne contient rien */}
-        <GlassMaterial radius={BAR_HEIGHT / 2} />
+        <GlassMaterial radius={BAR_HEIGHT / 2} veil={glassControlVeil} rim />
         {/* Icônes au-dessus du verre, hors de son adaptation de couleur */}
         <View style={styles.bar}>{items}</View>
       </View>
 
-      <PressableScale
-        style={[styles.shadow, styles.addButton]}
-        pressedScale={0.9}
+      <GlassButton
+        icon={PlusIcon}
+        size={ADD_SIZE}
+        style={styles.addButton}
         onPress={onAddPress}
-        accessibilityRole="button"
-        accessibilityLabel="Ajouter un challenge"
-      >
-        <GlassMaterial radius={ADD_SIZE / 2} />
-        <PlusIcon size={24} color={colors.dark900} strokeWidth={ACTIVE_STROKE} />
-      </PressableScale>
-    </View>
+        accessibilityLabel="Ajouter une lecture"
+      />
+    </Animated.View>
   );
 }
 
@@ -213,12 +226,7 @@ const styles = StyleSheet.create({
     width: ADD_SIZE + ADD_GAP,
   },
   addButton: {
-    width: ADD_SIZE,
-    height: ADD_SIZE,
-    borderRadius: ADD_SIZE / 2,
     marginLeft: ADD_GAP,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   item: {
     width: ITEM_WIDTH,

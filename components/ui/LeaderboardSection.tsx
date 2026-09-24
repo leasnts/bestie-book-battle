@@ -23,7 +23,7 @@
  */
 
 import { Image } from 'expo-image';
-import { ChevronRightIcon, UsersIcon } from 'lucide-react-native';
+import { UsersIcon } from 'lucide-react-native';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import Animated, {
@@ -51,6 +51,8 @@ interface LeaderboardSectionProps {
   myUserId: string;
   /** Toucher le cadre → classement complet */
   onPress?: () => void;
+  /** Petit écran : le 1er et moi seulement (cf. selectVisibleRows) */
+  compact?: boolean;
 }
 
 const DEFAULT_AVATAR = require('../../assets/images/profile_picture_default.png');
@@ -150,15 +152,17 @@ export default function LeaderboardSection({
   participants,
   myUserId,
   onPress,
+  compact = false,
 }: LeaderboardSectionProps) {
   const reducedMotion = useReducedMotion();
   const animate = !reducedMotion;
 
   const ranked = useMemo(() => rankParticipants(participants, myUserId), [participants, myUserId]);
-  const { rows, pinnedMe } = useMemo(() => selectVisibleRows(ranked), [ranked]);
+  const { rows, pinnedMe } = useMemo(() => selectVisibleRows(ranked, compact), [ranked, compact]);
 
   return (
     <GlassSection
+      compact={compact}
       onPress={onPress}
       accessibilityLabel={`Classement, ${ranked.length} membres`}
       accessibilityHint="Ouvre le classement complet"
@@ -168,7 +172,6 @@ export default function LeaderboardSection({
         <View style={styles.count}>
           <UsersIcon size={15} color={colors.textTertiary} strokeWidth={2} />
           <Text style={styles.countText}>{ranked.length}</Text>
-          <ChevronRightIcon size={17} color={colors.textPlaceholder} strokeWidth={2} />
         </View>
       </View>
 

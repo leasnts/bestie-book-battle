@@ -37,8 +37,10 @@ import DeadlineEditSheet from '../components/ui/DeadlineEditSheet';
 import EditBookSheet from '../components/ui/EditBookSheet';
 import GoalFormSheet from '../components/ui/GoalFormSheet';
 import { resolveCoverImage } from '../components/ui/BookCover';
+import { SHEET_TOP_INSET } from '../components/ui/SheetHeader';
 import { getChallengeHistory } from '../services/supabase/database';
 import { uploadBookCover } from '../services/supabase/storage';
+import { useFitSheet } from '../hooks/useFitSheet';
 import { useAuthStore } from '../stores/authStore';
 import { useGoalStore } from '../stores/goalStore';
 import { useProgressStore } from '../stores/progressStore';
@@ -57,6 +59,9 @@ import {
 
 export default function BookRoute() {
   const router = useRouter();
+  // Le sheet s'ouvre à la hauteur de toute la fiche, plafonné sous l'en-tête de l'accueil
+  // Sans barre ni titre : la couverture et le titre du livre suffisent
+  const fit = useFitSheet({ withBar: false });
   const { user } = useAuthStore();
   const {
     activeChallenge,
@@ -253,9 +258,10 @@ export default function BookRoute() {
 
   return (
     <ScrollView
-      style={styles.screen}
+      style={[styles.screen, fit.style]}
       contentContainerStyle={styles.content}
       contentInsetAdjustmentBehavior="automatic"
+      onContentSizeChange={fit.onContentSizeChange}
     >
       {/* ─── Le livre ─── */}
       <View style={styles.header}>
@@ -505,8 +511,10 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
   },
   content: {
+    paddingTop: SHEET_TOP_INSET,
     paddingHorizontal: spacing.lg,
-    paddingBottom: spacing['4xl'],
+    // iOS ajoute déjà la zone du bas de l'écran (34 pt) sous le contenu
+    paddingBottom: spacing.lg,
   },
 
   header: {

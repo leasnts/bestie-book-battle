@@ -96,11 +96,16 @@ export interface VisibleRows {
  *
  * Le bouton vers le classement complet n'apparaît que si quelqu'un n'est
  * affiché nulle part.
+ *
+ * `compact` (petits écrans, pour que l'accueil tienne sans défiler) : deux
+ * lignes seulement, le 1er puis moi. Si je suis 1re ou 2e, les deux premiers.
  */
-export function selectVisibleRows(ranked: RankedParticipant[]): VisibleRows {
-  const rows = ranked.slice(0, PODIUM_SLOTS);
+export function selectVisibleRows(ranked: RankedParticipant[], compact = false): VisibleRows {
+  const slots = compact ? 1 : PODIUM_SLOTS;
   const me = ranked.find((p) => p.isMe) ?? null;
-  const pinnedMe = me && me.rank > PODIUM_SLOTS ? me : null;
+  const pinnedMe = me && me.rank > slots + (compact ? 1 : 0) ? me : null;
+  // En compact, si je suis juste derrière le 1er, j'occupe la 2e place sans pointillé
+  const rows = ranked.slice(0, compact && !pinnedMe ? 2 : slots);
   const shownCount = rows.length + (pinnedMe ? 1 : 0);
 
   return { rows, pinnedMe, hasMore: ranked.length > shownCount };

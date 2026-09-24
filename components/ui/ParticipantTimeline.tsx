@@ -11,6 +11,8 @@
  */
 import { Image } from 'expo-image';
 import React, { useMemo } from 'react';
+import { useFitSheet } from '../../hooks/useFitSheet';
+import { SHEET_TOP_INSET } from './SheetHeader';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { ProgressHistory } from '../../types/supabase';
 import { borderRadius, colors, fonts, inkAlpha, spacing } from '../../utils/constants';
@@ -81,6 +83,9 @@ export default function ParticipantTimeline({
   participantPhoto,
   history = [],
 }: ParticipantTimelineProps) {
+  // Le sheet s'ouvre à la hauteur de tout le journal, plafonné sous l'en-tête de l'accueil
+  // Sans barre ni titre : l'avatar, le nom et « Journal de lecture » suffisent
+  const fit = useFitSheet({ withBar: false });
 
   const dayGroups: DayGroup[] = useMemo(() => {
     const safeHistory = Array.isArray(history) ? history : [];
@@ -106,10 +111,11 @@ export default function ParticipantTimeline({
 
   return (
     <ScrollView
-      style={styles.scrollView}
+      style={[styles.scrollView, fit.style]}
       contentContainerStyle={styles.scrollContent}
       contentInsetAdjustmentBehavior="automatic"
       showsVerticalScrollIndicator={false}
+      onContentSizeChange={fit.onContentSizeChange}
     >
       {/* En-tête : avatar + nom, il défile avec le contenu */}
       <View style={styles.header}>
@@ -248,8 +254,10 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
   },
   scrollContent: {
+    paddingTop: SHEET_TOP_INSET,
     paddingHorizontal: 24,
-    paddingBottom: 48,
+    // iOS ajoute déjà la zone du bas de l'écran (34 pt) sous le contenu
+    paddingBottom: 16,
   },
 
   // ═══ ÉTAT VIDE ═══

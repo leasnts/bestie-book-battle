@@ -63,7 +63,7 @@ import {
   spacing,
 } from '../../utils/constants';
 import { useTabBarInset } from '../../components/ui/GlassTabBar';
-import { BellIcon, BookOpenIcon, ChevronRightIcon, CopyIcon, FlaskConicalIcon, LogOutIcon, PencilIcon, RotateCcwIcon, ShareIcon, Trash2Icon, TriangleAlertIcon, XIcon } from 'lucide-react-native';
+import { BellIcon, BookOpenIcon, ChevronRightIcon, InboxIcon, CopyIcon, FlaskConicalIcon, LogOutIcon, PencilIcon, RotateCcwIcon, ShareIcon, Trash2Icon, TriangleAlertIcon, XIcon } from 'lucide-react-native';
 
 // ─── Constantes ────────────────────────────────────────────────────────────────
 
@@ -304,10 +304,22 @@ export default function ProfileScreen() {
           <Switch
             value={notificationsEnabled}
             onValueChange={handleToggleNotifications}
-            trackColor={{ false: colors.border, true: colors.dark900 }}
+            trackColor={{ false: colors.border, true: colors.accent }}
             thumbColor={colors.white}
           />
         </View>
+
+        {/* Le fil des notifications : avant, une cloche sur l'accueil */}
+        <Pressable
+          style={({ pressed }) => [styles.settingRow, pressed && styles.settingRowPressed]}
+          onPress={() => router.push('/activity')}
+        >
+          <View style={styles.settingLeft}>
+            <InboxIcon size={24} color={colors.textSecondary} />
+            <Text style={styles.settingLabel}>Notifications</Text>
+          </View>
+          <ChevronRightIcon size={24} color={colors.textTertiary} />
+        </Pressable>
 
         <Pressable
           style={({ pressed }) => [styles.settingRow, pressed && styles.settingRowPressed]}
@@ -973,7 +985,7 @@ const inviteStyles = StyleSheet.create({
     backgroundColor: colors.bgSecondary,
   },
   bookCardSelected: {
-    borderColor: colors.dark900,
+    borderColor: colors.accent,
     backgroundColor: colors.white,
   },
   bookCardCover: {
