@@ -445,10 +445,12 @@ sélecteur) bornent leur agrandissement (`maxFontSizeMultiplier`), sinon ils se
 chevauchent et ne désignent plus rien.
 
 Plus de glissement depuis le bord droit vers Activité : il chevauchait le
-sélecteur. La cloche de l'en-tête suffit.
+sélecteur.
 
-L'en-tête porte deux `HeaderIconButton` 40 pt autour de PopEyes :
-**bibliothèque** (`library-big`) à gauche, **activité** (`bell`) à droite.
+L'en-tête porte un seul bouton, la **bibliothèque** (`library-big`) à gauche,
+en `GlassButton` 44 pt (le même rond en verre que le +), et PopEyes au centre.
+Pas de cloche : les notifications ne servent pas au quotidien, elles vivent
+dans **Profil › Notifications** (route `/activity`).
 
 Tout ce qui se règle sur un livre vit dans la **fiche du livre** (route `/book`,
 sheet natif) : la fin et ses jours restants, les caps (celui en cours marqué « en

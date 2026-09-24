@@ -3,7 +3,8 @@
  * 
  * Page d'accueil de l'application : un en-tête et trois blocs.
  *
- * HEADER : bibliothèque (gauche) | PopEyes mascotte (centre) | notifications (droite)
+ * HEADER : bibliothèque (gauche) | PopEyes mascotte (centre)
+ *   Les notifications ne sont plus ici : elles vivent dans Profil.
  *   La bibliothèque ouvre /library, la liste de tous tes challenges rangés sur
  *   des étagères : c'est là qu'on change de livre ou qu'on en ajoute un.
  * 1. LE LIVRE EN COURS : couverture, auteur, titre, pages, deadline, progression
@@ -43,7 +44,6 @@ import PopEyes from '../../components/PopEyes';
 import BookSection from '../../components/ui/BookSection';
 import CoverBackdrop from '../../components/ui/CoverBackdrop';
 import GlassButton from '../../components/ui/GlassButton';
-import NotificationButton from '../../components/ui/NotificationButton';
 import NotesDoor from '../../components/ui/NotesDoor';
 import PageSection from '../../components/ui/PageSection';
 import LeaderboardSection from '../../components/ui/LeaderboardSection';
@@ -411,11 +411,8 @@ export default function HomeScreen() {
         {/* PopEyes mascotte — décoratif */}
         <PopEyes size="small" />
 
-        {/* Bouton notification — navigue vers /activity */}
-        <NotificationButton
-          onPress={() => router.push('/activity')}
-          hasUnread={false}
-        />
+        {/* Cale de la largeur du bouton bibliothèque : garde PopEyes au centre */}
+        <View style={styles.headerSpacer} />
       </View>
 
       {/*
@@ -576,6 +573,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: spacing.lg,
     paddingBottom: spacing.sm,
+  },
+  headerSpacer: {
+    width: 44,
   },
   // La zone défilable qui porte les trois cadres
   frames: {

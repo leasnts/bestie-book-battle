@@ -63,7 +63,7 @@ import {
   spacing,
 } from '../../utils/constants';
 import { useTabBarInset } from '../../components/ui/GlassTabBar';
-import { BellIcon, BookOpenIcon, ChevronRightIcon, CopyIcon, FlaskConicalIcon, LogOutIcon, PencilIcon, RotateCcwIcon, ShareIcon, Trash2Icon, TriangleAlertIcon, XIcon } from 'lucide-react-native';
+import { BellIcon, BookOpenIcon, ChevronRightIcon, InboxIcon, CopyIcon, FlaskConicalIcon, LogOutIcon, PencilIcon, RotateCcwIcon, ShareIcon, Trash2Icon, TriangleAlertIcon, XIcon } from 'lucide-react-native';
 
 // ─── Constantes ────────────────────────────────────────────────────────────────
 
@@ -308,6 +308,18 @@ export default function ProfileScreen() {
             thumbColor={colors.white}
           />
         </View>
+
+        {/* Le fil des notifications : avant, une cloche sur l'accueil */}
+        <Pressable
+          style={({ pressed }) => [styles.settingRow, pressed && styles.settingRowPressed]}
+          onPress={() => router.push('/activity')}
+        >
+          <View style={styles.settingLeft}>
+            <InboxIcon size={24} color={colors.textSecondary} />
+            <Text style={styles.settingLabel}>Notifications</Text>
+          </View>
+          <ChevronRightIcon size={24} color={colors.textTertiary} />
+        </Pressable>
 
         <Pressable
           style={({ pressed }) => [styles.settingRow, pressed && styles.settingRowPressed]}
