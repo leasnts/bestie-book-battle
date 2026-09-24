@@ -176,10 +176,10 @@ function trackLabel(
 const RAIL_TOP = 12;
 const RAIL_HEIGHT = 6;
 const ME_SIZE = 20;
-/** Diamètre des étapes, un peu plus gros que la barre */
-const STEP_SIZE = 10;
-/** Gris des étapes pas encore atteintes, opaque */
-const STEP_AHEAD = '#d2cbc5';
+/** Diamètre des étapes, liseré blanc compris : un peu plus gros que la barre */
+const STEP_SIZE = 13;
+/** Gris des étapes pas encore atteintes : le gris de la barre, mais opaque */
+const STEP_AHEAD = '#e2ddd8';
 /** Le club, derrière ma barre : le lie de vin éclairci sur le papier, opaque */
 const CLUB_GRADIENT = ['#e2c9cd', '#d3b3b9'] as const;
 /** Étape dépassée par le club seulement : la même couleur que sa barre (milieu du dégradé) */
@@ -216,7 +216,7 @@ const styles = StyleSheet.create({
   },
 
   /**
-   * Étapes (caps et fin du livre) : de simples ronds sans bordure, un peu plus
+   * Étapes (caps et fin du livre) : des ronds pleins à liseré blanc, un peu plus
    * gros que la barre, de la couleur de la barre qui l'a dépassée : lie de vin
    * si JE l'ai dépassée, lie de vin clair si seul le club l'a dépassée, gris
    * sinon (cf. stepStyle).
@@ -228,11 +228,14 @@ const styles = StyleSheet.create({
     height: STEP_SIZE,
     marginLeft: -STEP_SIZE / 2,
     borderRadius: STEP_SIZE / 2,
+    // Liseré blanc : le point se détache de la barre, posé dessus
+    borderWidth: 2,
+    borderColor: colors.white,
   },
   stepReached: {
     backgroundColor: colors.accent,
   },
-  // Gris opaque (l'encre à 20 % sur le papier) : un gris transparent laissait
+  // Gris opaque de la même teinte que la barre : un gris transparent laissait
   // voir la barre à travers le point
   stepAhead: {
     backgroundColor: STEP_AHEAD,
