@@ -471,14 +471,17 @@ toujours touchable, qui montre ce qui compte :
   `🔒 1` pour ce qui reste. Ils arrivent pendant que la feuille « +14 » tombe
   et se rangent dès que j'ouvre le carnet (ou que je les ai lus).
 
-**Gros corps de texte** : les trois cadres vivent dans une ScrollView. À taille
-normale rien ne défile (la règle de l'accueil tient), et au réglage
-`accessibility-extra-large` les cadres poussent au lieu d'être écrasés — sans
-elle, chaque cadre se faisait comprimer et les lettres étaient coupées. Dans les
-cadres, les hauteurs de ligne sont des `minHeight`, jamais des `height`. Seuls
-les repères posés à un endroit précis d'un dessin (dates de la piste, chiffre du
-sélecteur) bornent leur agrandissement (`maxFontSizeMultiplier`), sinon ils se
-chevauchent et ne désignent plus rien.
+**Aucun défilement** (Lea, 2026-09-24) : l'accueil tient sur un seul écran, sur
+tous les iPhone. Plus de ScrollView : le livre, « Ma page » et le classement sont
+posés dans une vue fixe. Pour gagner la place, retirés : le filigrane « PAGE »
+derrière le chiffre et la ligne de repères du cadre livre (« Club · 30 % du
+livre », « Cap · 2/5 ») ; le % du club est passé **à droite de la piste**
+(`👥 30 %`), le nombre de membres au cap reste dans la fiche du livre.
+
+Dans les cadres, les hauteurs de ligne sont des `minHeight`, jamais des
+`height`. Les repères posés à un endroit précis d'un dessin (dates de la piste,
+% du club, chiffre du sélecteur) bornent leur agrandissement
+(`maxFontSizeMultiplier`), sinon ils se chevauchent et ne désignent plus rien.
 
 Plus de glissement depuis le bord droit vers Activité : il chevauchait le
 sélecteur.

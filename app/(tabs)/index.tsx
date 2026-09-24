@@ -22,7 +22,6 @@ import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
     ActivityIndicator,
-    ScrollView,
     AppState,
     StyleSheet,
     Text,
@@ -49,7 +48,7 @@ import PageSection from '../../components/ui/PageSection';
 import LeaderboardSection from '../../components/ui/LeaderboardSection';
 import { getAllUserPages } from '../../services/supabase/database';
 import { updateWidgetData } from '../../utils/widget';
-import { buildCaps, countAtCap, median } from '../../utils/track';
+import { buildCaps, median } from '../../utils/track';
 import { useLeaderboardParticipants } from '../../hooks/useLeaderboardParticipants';
 import { useNotificationScheduler } from '../../hooks/useNotificationScheduler';
 import { useAuthStore } from '../../stores/authStore';
@@ -350,10 +349,6 @@ export default function HomeScreen() {
   const myPercent = leaderboardParticipants.find((p) => p.id === myUserId)?.percentage ?? 0;
   // L'édition de référence du challenge : c'est en elle que les caps sont posés
   const caps = buildCaps([secondaryGoal, ...goalHistory], activeChallenge?.total_pages ?? 0);
-  const currentCap = caps.find((cap) => cap.state === 'current') ?? null;
-  const membersAtCap = currentCap
-    ? countAtCap(leaderboardParticipants.map((p) => p.percentage), currentCap.percent)
-    : 0;
 
 
 
@@ -414,18 +409,12 @@ export default function HomeScreen() {
       </View>
 
       {/*
-        Les trois cadres, dans une ScrollView.
-
-        À taille de texte normale, tout tient sans défiler (c'est la règle de
-        l'accueil) : la ScrollView ne bouge pas. Aux gros corps de texte, les
-        textes grandissent et les cadres poussent au lieu d'être écrasés — sans
-        elle, chaque cadre se faisait comprimer et les lettres étaient coupées.
+        Les trois cadres. AUCUN défilement sur l'accueil (règle de Lea) : tout
+        doit tenir sur tous les iPhone, du SE au Pro Max. Le livre et le
+        classement gardent leur hauteur ; « Ma page », au milieu, prend la place
+        qui reste.
       */}
-      <ScrollView
-        style={styles.frames}
-        contentContainerStyle={[styles.framesContent, { paddingBottom: tabBarInset + spacing.md }]}
-        showsVerticalScrollIndicator={false}
-      >
+      <View style={[styles.frames, { paddingBottom: tabBarInset + spacing.md }]}>
       {/* ═══════════ CADRE 1 : LE LIVRE ═══════════ */}
       {activeChallenge && (
         <View style={styles.bookSection}>
@@ -436,8 +425,6 @@ export default function HomeScreen() {
             myPhotoUrl={user?.profile_photo_url ?? null}
             myInitial={(user?.first_name ?? 'M').charAt(0).toUpperCase()}
             caps={caps}
-            membersAtCap={membersAtCap}
-            memberCount={leaderboardParticipants.length}
             onPress={() => router.push('/book')}
           />
         </View>
@@ -530,7 +517,7 @@ export default function HomeScreen() {
           />
         </View>
       )}
-      </ScrollView>
+      </View>
 
       {/* ═══════════ TOAST DELTA — FEUILLE QUI TOMBE ═══════════
         Toujours monté dans le DOM mais invisible (opacity: 0 par défaut).
@@ -575,12 +562,9 @@ const styles = StyleSheet.create({
   headerSpacer: {
     width: 44,
   },
-  // La zone défilable qui porte les trois cadres
+  // La zone fixe qui porte les trois cadres (aucun défilement)
   frames: {
     flex: 1,
-  },
-  framesContent: {
-    flexGrow: 1,
   },
 
   // ===== CADRE 1 : LE LIVRE =====
