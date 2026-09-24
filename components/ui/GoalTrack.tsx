@@ -182,8 +182,8 @@ const STEP_SIZE = 10;
 const STEP_AHEAD = '#d2cbc5';
 /** Le club, derrière ma barre : le lie de vin éclairci sur le papier, opaque */
 const CLUB_GRADIENT = ['#e2c9cd', '#d3b3b9'] as const;
-/** Étape dépassée par le club seulement : un cran plus soutenu que sa barre, pour se voir dessus */
-const STEP_CLUB = '#c49ba3';
+/** Étape dépassée par le club seulement : la même couleur que sa barre (milieu du dégradé) */
+const STEP_CLUB = '#dabec3';
 
 /** Couleur d'une étape : celle de la barre qui l'a dépassée (moi, sinon le club) */
 function stepStyle(percent: number, myPercent: number, clubPercent: number) {
