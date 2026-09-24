@@ -98,7 +98,7 @@ export default function GoalTrack({
               key={cap.id}
               style={[
                 styles.step,
-                cap.percent <= myPercent ? styles.stepReached : styles.stepAhead,
+                stepStyle(cap.percent, myPercent, clubPercent),
                 { left: `${cap.percent}%` },
               ]}
             />
@@ -110,7 +110,7 @@ export default function GoalTrack({
             style={[
               styles.step,
               styles.endStep,
-              myPercent >= 100 ? styles.stepReached : styles.stepAhead,
+              stepStyle(100, myPercent, clubPercent),
             ]}
           />
         )}
@@ -182,6 +182,15 @@ const STEP_SIZE = 10;
 const STEP_AHEAD = '#d2cbc5';
 /** Le club, derrière ma barre : le lie de vin éclairci sur le papier, opaque */
 const CLUB_GRADIENT = ['#e2c9cd', '#d3b3b9'] as const;
+/** Étape dépassée par le club seulement : un cran plus soutenu que sa barre, pour se voir dessus */
+const STEP_CLUB = '#c49ba3';
+
+/** Couleur d'une étape : celle de la barre qui l'a dépassée (moi, sinon le club) */
+function stepStyle(percent: number, myPercent: number, clubPercent: number) {
+  if (percent <= myPercent) return styles.stepReached;
+  if (percent <= clubPercent) return styles.stepClub;
+  return styles.stepAhead;
+}
 
 const styles = StyleSheet.create({
   track: {
@@ -208,8 +217,9 @@ const styles = StyleSheet.create({
 
   /**
    * Étapes (caps et fin du livre) : de simples ronds sans bordure, un peu plus
-   * gros que la barre : lie de vin si JE l'ai dépassée, gris sinon (même si le
-   * club l'a dépassée : les étapes suivent ma barre, pas celle du club).
+   * gros que la barre, de la couleur de la barre qui l'a dépassée : lie de vin
+   * si JE l'ai dépassée, lie de vin clair si seul le club l'a dépassée, gris
+   * sinon (cf. stepStyle).
    */
   step: {
     position: 'absolute',
@@ -226,6 +236,9 @@ const styles = StyleSheet.create({
   // voir la barre à travers le point
   stepAhead: {
     backgroundColor: STEP_AHEAD,
+  },
+  stepClub: {
+    backgroundColor: STEP_CLUB,
   },
   /** Cap en cours : un trait qui traverse la piste, drapeau en haut */
   capMark: {

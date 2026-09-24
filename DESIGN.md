@@ -454,7 +454,8 @@ superposés**, comme la barre d'une vidéo (lu / chargé) : devant, en lie de vi
 repère). Une seule barre pour le club faisait croire que j'avais atteint des
 étapes que seul le club avait dépassées. **Étapes** (caps et fin du livre) en
 ronds de 10 pt, pleins et sans bordure, un peu plus gros que la barre : lie de
-vin si **je** les ai dépassées, gris opaque sinon, cap en cours en
+vin si **je** les ai dépassées, lie de vin clair (un cran plus soutenu que la
+barre du club) si seul le club les a dépassées, gris opaque sinon, cap en cours en
 drapeau daté, date de fin au bout — et **sur la ligne de la
 date de fin**, à gauche sous le départ de la piste, `👥 26 %`, le club (la date
 d'un cap en cours sous 30 % ne s'écrit pas, pour ne pas le chevaucher). Plus de « J-27 » / « Prolongations » ni de ligne de repères
