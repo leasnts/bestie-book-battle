@@ -46,7 +46,7 @@ export const Static: Story = {
       <GlassSection>
         <Text style={styles.label}>Ma page</Text>
         <Text style={styles.big}>156</Text>
-        <Text style={styles.meta}>sur 624</Text>
+        <Text style={styles.meta}>/ 624</Text>
       </GlassSection>
     </Ambient>
   ),

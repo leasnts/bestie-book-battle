@@ -7,7 +7,7 @@
  * - En-tête : « Ma page » (touchable, sans chevron) ouvre mon journal ; à droite, ma série en **jours**
  *   (jamais « soirs » : on ne suppose pas quand les gens lisent).
  * - Le sélecteur qui défile est gardé (pas de − / +), resserré pour tenir dans
- *   le cadre. Ma page est en **pages de mon édition**, d'où le « sur 624 ».
+ *   le cadre. Ma page est en **pages de mon édition**, d'où le « / 624 ».
  * - La rangée du bas a une **hauteur fixe** et trois places fixes. Seules les
  *   icônes changent, jamais l'endroit où l'on appuie (DESIGN.md › Boutons-icônes) :
  *
@@ -132,7 +132,7 @@ export default function PageSection({
         )}
       </View>
 
-      {/* Le chiffre et son « sur 624 », ensemble, centrés dans la place du cadre */}
+      {/* Le chiffre et son « / 624 », ensemble, centrés dans la place du cadre */}
       <View style={styles.center}>
       {/* Les voisins du chiffre sont coupés au bord du cadre */}
       <View style={styles.picker} onLayout={onPickerLayout}>
@@ -149,7 +149,10 @@ export default function PageSection({
         )}
       </View>
 
-      <Text style={styles.total}>sur {totalPages}</Text>
+      {/* « / 624 » à l'écran ; VoiceOver lirait « barre oblique », on lui dit « sur » */}
+      <Text style={styles.total} accessibilityLabel={`sur ${totalPages} pages`}>
+        / {totalPages}
+      </Text>
       </View>
 
       <View style={styles.row}>
