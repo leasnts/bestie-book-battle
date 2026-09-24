@@ -119,10 +119,10 @@ export default function OnboardingWelcomeScreen() {
             }
             loadMyProgress(userId);
 
-            // 4. Aller à la home (brouillon vidé après : pas de retour à la
-            //    couverture du bbb pendant la transition)
+            // 4. Aller à la home. Le brouillon de mon édition n'est pas vidé ici
+            //    (l'écran repasserait sur la couverture du bbb pendant la
+            //    transition) : join.tsx le vide au prochain bbb rejoint.
             router.replace('/(tabs)');
-            useOnboardingStore.getState().setMyEdition(null);
         } catch (error: any) {
             console.error('Erreur rejoindre challenge:', error);
             Alert.alert('Erreur', error.message || 'Impossible de rejoindre le challenge');
