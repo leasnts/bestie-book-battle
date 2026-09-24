@@ -159,6 +159,20 @@ de vin**, et des couleurs uniquement porteuses de sens. Décidé par Lea le
 2026-09-24 (#73) : avant, chaque écran prenait sa teinte (noyer, encre, lie de
 vin…) et ça partait dans tous les sens.
 
+### Trois tons, pas plus
+
+La palette de l'app tient en **trois tons** (Lea, 2026-09-24) :
+
+1. **Lie de vin** — l'accent : états et choix (`accent`, `accentGradient`) ;
+2. **Chocolat foncé** — l'encre : texte, actions, boutons (`ink` `#33231a`, dégradé
+   `#5a4536` → `#1e140e`). Le marron reste central, il n'est pas remplacé ;
+3. **Beige / blanc** — le papier : fonds, surfaces, écru des signets, aquarelle
+   (`paper`, `surface`, crème).
+
+Tout nouvel élément prend l'un des trois. Exceptions : les couleurs d'une
+couverture quand l'écran parle de ce livre, et les couleurs porteuses de sens
+ci-dessous (à ramener un jour vers ces tons).
+
 ### L'accent lie de vin
 
 | Token | Valeur | Rôle |
