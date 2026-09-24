@@ -462,9 +462,12 @@ l'accueil.
 Changer de livre ou en ajouter un se fait dans la **bibliothèque**, route
 `/library` en sheet natif titré **Mes lectures**, avec le **+** en verre
 (`GlassButton`) à droite du titre (même parcours que le + de la barre d'onglets).
-Dessous, un bouton texte discret **Trier par Dernière activité ⌄** (`SortMenu`)
-déroule un menu en verre : Dernière activité (par défaut : ma progression ou
-celle du club, la plus récente), Plus anciens, Titre ; le choix est retenu. Les
+Dessous, trois capsules de filtre (`FilterChips`) : **En cours**, **Non lus**,
+**Lus**. Une seule à la fois ; la retoucher la désélectionne et tout revient,
+donc pas de « Tous ». Sélectionnée : encre en dégradé, texte crème ; sinon un
+simple contour. Le filtre n'est pas retenu et le sheet ne rétrécit pas quand on
+filtre. Plus de « Trier par » : l'ordre est fixe, la dernière activité (la
+mienne ou celle du club) en premier. Les
 livres sont rangés trois par trois sur l'étagère historique de l'accueil — barre
 en verre flouté **teinté noyer grisé**, en dégradé (noyer grisé clair → plus foncé,
 45 → 55 %, bordure crème à 35 %) avec ses vis, posée **par-dessus** le bas des

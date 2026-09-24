@@ -14,7 +14,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import { Challenge, ChallengeWithParticipants, MyBookProgress } from '../types/supabase';
-import { DEFAULT_LIBRARY_SORT, type LibrarySort } from '../utils/library';
 import {
   createChallenge,
   getChallengeById,
@@ -38,7 +37,6 @@ interface ProjectStore {
   currentChallenge: ChallengeWithParticipants | null; // Challenge actuellement affiché (page détail)
   lastProgressChallengeId: string | null; // ID du dernier challenge où l'utilisateur a ajouté des progrès
   myProgress: Record<string, MyBookProgress>; // Ma progression par livre (id du challenge) : état et tri de la bibliothèque
-  librarySort: LibrarySort; // Tri choisi dans la bibliothèque, retenu d'une ouverture à l'autre
   isLoading: boolean;
   challengesLoading: boolean; // true uniquement pendant loadUserChallenges (pas pollué par les autres actions)
   challengesLoaded: boolean; // true après le premier chargement réussi ou échoué
@@ -70,7 +68,6 @@ interface ProjectStore {
   setActiveChallenge: (challenge: Challenge | null) => void;
   setCurrentChallenge: (challenge: ChallengeWithParticipants | null) => void;
   setLastProgressChallengeId: (challengeId: string) => void;
-  setLibrarySort: (sort: LibrarySort) => void;
 
   // Actions - Modification
   updateCurrentChallenge: (updates: Partial<Challenge>) => Promise<void>;
@@ -101,7 +98,6 @@ export const useProjectStore = create<ProjectStore>()(
   currentChallenge: null,
   lastProgressChallengeId: null,
   myProgress: {},
-  librarySort: DEFAULT_LIBRARY_SORT,
   isLoading: false,
   challengesLoading: false,
   challengesLoaded: false,
@@ -524,8 +520,6 @@ export const useProjectStore = create<ProjectStore>()(
     }
   },
 
-  setLibrarySort: (sort) => set({ librarySort: sort }),
-
   // ===== Action : Réinitialiser =====
   /**
    * Réinitialiser le store (lors de la déconnexion par exemple)
@@ -537,8 +531,7 @@ export const useProjectStore = create<ProjectStore>()(
       currentChallenge: null,
       lastProgressChallengeId: null,
       myProgress: {},
-      librarySort: DEFAULT_LIBRARY_SORT,
-      isLoading: false,
+          isLoading: false,
       challengesLoading: false,
       challengesLoaded: false,
       _hasHydrated: false,
@@ -566,7 +559,6 @@ export const useProjectStore = create<ProjectStore>()(
       activeChallenge: state.activeChallenge,
       lastProgressChallengeId: state.lastProgressChallengeId,
       myProgress: state.myProgress,
-      librarySort: state.librarySort,
     }),
     onRehydrateStorage: () => {
       return () => {

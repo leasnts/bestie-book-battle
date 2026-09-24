@@ -14,7 +14,7 @@
 
 import { Stack, useRouter } from 'expo-router';
 import { PlusIcon } from 'lucide-react-native';
-import React, { useCallback, useEffect, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import BookLibrary from '../components/ui/BookLibrary';
 import { sheetIconItem } from '../components/ui/SheetHeader';
 import WatercolorCorner from '../components/ui/WatercolorCorner';
@@ -22,13 +22,7 @@ import { useAuthStore } from '../stores/authStore';
 import { useProgressStore } from '../stores/progressStore';
 import { useProjectStore } from '../stores/projectStore';
 import { Challenge } from '../types/supabase';
-import {
-  BookReading,
-  knownLibrarySort,
-  newBookId,
-  readingOf,
-  sortBooks,
-} from '../utils/library';
+import { BookReading, newBookId, readingOf, ReadingState, sortBooks } from '../utils/library';
 
 export default function LibraryRoute() {
   const router = useRouter();
@@ -37,11 +31,11 @@ export default function LibraryRoute() {
   const setActiveChallenge = useProjectStore((state) => state.setActiveChallenge);
   const myProgress = useProjectStore((state) => state.myProgress);
   const loadMyProgress = useProjectStore((state) => state.loadMyProgress);
-  const sort = useProjectStore((state) => knownLibrarySort(state.librarySort));
-  const setSort = useProjectStore((state) => state.setLibrarySort);
   const liveProgress = useProgressStore((state) => state.currentUserProgress);
   const userId = useAuthStore((state) => state.user?.id);
   const firstName = useAuthStore((state) => state.user?.first_name);
+  // Filtre En cours / Non lus / Lus : pas retenu, chaque ouverture montre tout
+  const [filter, setFilter] = useState<ReadingState | null>(null);
 
   // Rafraîchit ma progression en arrière-plan ; le cache s'affiche tout de suite
   useEffect(() => {
@@ -54,16 +48,16 @@ export default function LibraryRoute() {
     return { ...myProgress, [liveProgress.challenge_id]: liveProgress };
   }, [myProgress, liveProgress, userId]);
 
-  const books = useMemo(
-    () => sortBooks(challenges, progressById, sort),
-    [challenges, progressById, sort],
-  );
-
   const readings = useMemo(() => {
     const byId: Record<string, BookReading> = {};
     for (const book of challenges) byId[book.id] = readingOf(progressById[book.id]);
     return byId;
   }, [challenges, progressById]);
+
+  const books = useMemo(() => {
+    const sorted = sortBooks(challenges, progressById);
+    return filter ? sorted.filter((book) => readings[book.id]?.state === filter) : sorted;
+  }, [challenges, progressById, readings, filter]);
 
   const newId = useMemo(() => newBookId(challenges, progressById), [challenges, progressById]);
 
@@ -101,8 +95,8 @@ export default function LibraryRoute() {
         newBookId={newId}
         activeChallengeId={activeChallengeId}
         onSelect={handleSelect}
-        sort={sort}
-        onSortChange={setSort}
+        filter={filter}
+        onFilterChange={setFilter}
       />
       {/* APRÈS la liste, jamais avant : cf. WatercolorCorner. Tons neutres : aucun livre précis ici */}
       <WatercolorCorner />

@@ -1,5 +1,5 @@
 /**
- * La bibliothèque : état de lecture de chaque livre, et tri des étagères.
+ * La bibliothèque : état de lecture de chaque livre, filtres et ordre des étagères.
  *
  * Tout part de MA progression (table `user_progress`), jamais de celle du club :
  * un livre que le club a fini mais pas moi reste « en cours » dans ma bibliothèque.
@@ -34,24 +34,15 @@ export function readingLabel({ state, percent }: BookReading): string {
   return 'pas commencé';
 }
 
-// ─── Tri ───────────────────────────────────────────────────────────
+// ─── Filtre ────────────────────────────────────────────────────────
 
-export type LibrarySort = 'activity' | 'oldest' | 'title';
-
-export const LIBRARY_SORTS: { key: LibrarySort; label: string }[] = [
-  { key: 'activity', label: 'Dernière activité' },
-  { key: 'oldest', label: 'Plus anciens' },
-  { key: 'title', label: 'Titre' },
+export const LIBRARY_FILTERS: { key: ReadingState; label: string }[] = [
+  { key: 'reading', label: 'En cours' },
+  { key: 'unread', label: 'Non lus' },
+  { key: 'done', label: 'Lus' },
 ];
 
-export const DEFAULT_LIBRARY_SORT: LibrarySort = 'activity';
-
-/** Un tri retenu qui n'existe plus (ancienne version de l'app) revient au tri par défaut */
-export function knownLibrarySort(sort: string | null | undefined): LibrarySort {
-  return LIBRARY_SORTS.some((option) => option.key === sort)
-    ? (sort as LibrarySort)
-    : DEFAULT_LIBRARY_SORT;
-}
+// ─── Ordre ─────────────────────────────────────────────────────────
 
 const time = (iso: string | null | undefined) => (iso ? new Date(iso).getTime() : 0);
 
@@ -80,30 +71,17 @@ export function newBookId(
 }
 
 /**
- * Range les livres selon le tri choisi.
+ * Range les livres : celui qui a bougé le plus récemment en premier. Compte ma
+ * dernière progression ET celle du club : `updated_at` du livre est remis à
+ * jour dès qu'un membre avance (trigger `update_challenge_stats`).
  *
- * - `activity` : le livre qui a bougé le plus récemment en premier. Compte ma
- *   dernière progression ET celle du club : `updated_at` du livre est remis à
- *   jour dès qu'un membre avance (trigger `update_challenge_stats`).
- * - `oldest`   : dans l'ordre où ils sont entrés dans ma bibliothèque.
- * - `title`    : alphabétique, à la française (accents et casse ignorés).
+ * Plus de choix de tri : les filtres (En cours, Non lus, Lus) l'ont remplacé.
  */
 export function sortBooks(
   books: Challenge[],
   progressById: Record<string, MyBookProgress>,
-  sort: LibrarySort,
 ): Challenge[] {
-  const sorted = [...books];
-
-  if (sort === 'title') {
-    sorted.sort((a, b) => a.book_title.localeCompare(b.book_title, 'fr', { sensitivity: 'base' }));
-  } else if (sort === 'oldest') {
-    sorted.sort((a, b) => addedAt(a, progressById) - addedAt(b, progressById));
-  } else {
-    const activityAt = (book: Challenge) =>
-      Math.max(time(book.updated_at), time(progressById[book.id]?.last_updated_at));
-    sorted.sort((a, b) => activityAt(b) - activityAt(a));
-  }
-
-  return sorted;
+  const activityAt = (book: Challenge) =>
+    Math.max(time(book.updated_at), time(progressById[book.id]?.last_updated_at));
+  return [...books].sort((a, b) => activityAt(b) - activityAt(a));
 }

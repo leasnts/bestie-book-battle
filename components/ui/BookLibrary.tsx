@@ -2,7 +2,7 @@
  * Composant BookLibrary
  *
  * La bibliothèque : tous mes livres, rangés sur des étagères empilées,
- * trois couvertures par étagère, sous un bouton « Trier par ».
+ * trois couvertures par étagère, sous des filtres En cours / Non lus / Lus.
  *
  *    ▐██▌    ┏━━┓    ▛▀▀▜
  *   ░░░░░░░░░░░░░░░░░░░░░░   ← barre en verre flouté, avec ses vis
@@ -30,21 +30,21 @@
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useMemo, useState } from 'react';
-import { FlatList, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { FlatList, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import Animated, { Easing, FadeInDown, useReducedMotion } from 'react-native-reanimated';
 import Svg, { Path } from 'react-native-svg';
 import { Challenge } from '../../types/supabase';
-import { colors, creamAlpha, motion, spacing } from '../../utils/constants';
-import { BookReading, LibrarySort, LIBRARY_SORTS, readingLabel } from '../../utils/library';
+import { colors, creamAlpha, fonts, motion, spacing } from '../../utils/constants';
+import { BookReading, LIBRARY_FILTERS, readingLabel, ReadingState } from '../../utils/library';
 import BookCover, { COVER_RATIO } from './BookCover';
 import RibbonBookmark, { RIBBON_ABOVE_COVER } from './RibbonBookmark';
 import PressableScale from './PressableScale';
-import SortMenu from './SortMenu';
+import FilterChips, { FILTER_CHIPS_H } from './FilterChips';
 
 // ─── Props ─────────────────────────────────────────────────────────
 
 interface BookLibraryProps {
-  /** Tous mes livres, déjà triés */
+  /** Mes livres, déjà triés et filtrés */
   challenges: Challenge[];
   /** Où j'en suis de chaque livre, par id */
   readings: Record<string, BookReading>;
@@ -54,8 +54,9 @@ interface BookLibraryProps {
   activeChallengeId: string | null;
   /** Toucher une couverture */
   onSelect: (challenge: Challenge) => void;
-  sort: LibrarySort;
-  onSortChange: (sort: LibrarySort) => void;
+  /** Filtre actif, `null` = tous les livres */
+  filter: ReadingState | null;
+  onFilterChange: (filter: ReadingState | null) => void;
 }
 
 // ─── Constantes (reprises de l'ancienne étagère de l'accueil) ──────
@@ -70,12 +71,12 @@ const SHELF_OVERLAP = 14;      // de combien la barre chevauche le bas des couve
  * translucide. Saturation réduite de moitié : à pleine teinte, trop beige/marron.
  */
 const SHELF_TINT = ['rgba(162,147,134,0.45)', 'rgba(124,108,96,0.55)'] as const;
-/** Espace entre deux étagères, et entre « Trier par » et la première */
+/** Espace entre deux étagères, et entre les filtres et la première */
 const SHELF_GAP = spacing['3xl'];
 /** Hauteur d'une étagère : couverture + partie de la barre qui dépasse dessous */
 const SHELF_H = COVER_H + SHELF_BAR_H - SHELF_OVERLAP;
-/** Hauteur de la ligne « Trier par » */
-const SORT_ROW_H = 20;
+/** Hauteur du message quand aucun livre ne correspond au filtre */
+const EMPTY_H = 60;
 /** Marge sous la dernière étagère */
 const LIST_BOTTOM = spacing['2xl'];
 /** Au-delà de cette part de l'écran, le sheet arrête de grandir et la liste défile */
@@ -83,7 +84,8 @@ const MAX_HEIGHT_RATIO = 0.72;
 
 /** Hauteur du contenu pour `shelfCount` étagères, avant toute mesure */
 function estimateContentHeight(shelfCount: number): number {
-  return SORT_ROW_H + shelfCount * (SHELF_GAP + SHELF_H) + LIST_BOTTOM;
+  if (shelfCount === 0) return FILTER_CHIPS_H + SHELF_GAP + EMPTY_H + LIST_BOTTOM;
+  return FILTER_CHIPS_H + shelfCount * (SHELF_GAP + SHELF_H) + LIST_BOTTOM;
 }
 
 /** Pastille si le livre n'est pas encore dans `readings` (premier chargement) */
@@ -233,8 +235,8 @@ export default function BookLibrary({
   newBookId,
   activeChallengeId,
   onSelect,
-  sort,
-  onSortChange,
+  filter,
+  onFilterChange,
 }: BookLibraryProps) {
   const reducedMotion = useReducedMotion();
   const { height: windowHeight } = useWindowDimensions();
@@ -276,13 +278,15 @@ export default function BookLibrary({
         />
       )}
       ListHeaderComponent={
-        <SortMenu options={LIBRARY_SORTS} value={sort} onChange={onSortChange} />
+        <FilterChips options={LIBRARY_FILTERS} value={filter} onChange={onFilterChange} />
       }
-      // Le menu de tri se déroule PAR-DESSUS les étagères
-      ListHeaderComponentStyle={styles.header}
+      ListEmptyComponent={<Text style={styles.empty}>Aucun livre</Text>}
       style={[styles.list, { height: listHeight }]}
       contentContainerStyle={styles.listContent}
-      onContentSizeChange={(_width, height) => setMeasuredHeight(height)}
+      // On ne rétrécit jamais : filtrer ne doit pas faire sauter le sheet
+      onContentSizeChange={(_width, height) =>
+        setMeasuredHeight((previous) => Math.max(previous ?? 0, height))
+      }
       showsVerticalScrollIndicator={false}
       contentInsetAdjustmentBehavior="automatic"
       bounces
@@ -297,14 +301,21 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
   },
   // Marges alignées sur le titre de la barre du sheet (20 pt)
-  header: {
-    zIndex: 1,
-  },
   listContent: {
     paddingHorizontal: spacing.xl,
     paddingTop: 0,
     paddingBottom: LIST_BOTTOM,
     gap: SHELF_GAP,
+  },
+
+  // Aucun livre pour ce filtre : un repère court, à la place des étagères
+  empty: {
+    height: EMPTY_H,
+    textAlignVertical: 'center',
+    paddingTop: spacing.xl,
+    fontFamily: fonts.bodyMedium,
+    fontSize: 15,
+    color: colors.textTertiary,
   },
 
   // ═══ ÉTAGÈRE ═══
