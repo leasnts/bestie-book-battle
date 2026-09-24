@@ -478,6 +478,16 @@ derrière le chiffre et la ligne de repères du cadre livre (« Club · 30 % du
 livre », « Cap · 2/5 ») ; le % du club est passé **à droite de la piste**
 (`👥 30 %`), le nombre de membres au cap reste dans la fiche du livre.
 
+**Petits écrans**, pour tenir quand même (hauteur de fenêtre) :
+- sous 830 pt (SE, mini) : chiffre du sélecteur à 52 pt au lieu de 68 ;
+- sous 700 pt (SE) : classement réduit à **deux lignes**, le 1er puis moi (les
+  deux premiers si je suis 1re ou 2e), et marges resserrées (12 pt dans les
+  cadres, 8 entre eux).
+
+**Texte agrandi** (réglages d'accessibilité) : le texte grandit librement, et
+l'accueil **défile seulement dans ce cas**, quand le contenu dépasse vraiment
+l'écran (`scrollEnabled` calculé). À taille normale, rien ne bouge jamais.
+
 Dans les cadres, les hauteurs de ligne sont des `minHeight`, jamais des
 `height`. Les repères posés à un endroit précis d'un dessin (dates de la piste,
 % du club, chiffre du sélecteur) bornent leur agrandissement

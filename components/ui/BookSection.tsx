@@ -33,6 +33,8 @@ interface BookSectionProps {
   myPhotoUrl: string | null;
   myInitial: string;
   caps: TrackCap[];
+  /** Petit écran : marges resserrées, pour que l'accueil tienne sans défiler */
+  compact?: boolean;
   /** Toucher le cadre → la fiche du livre */
   onPress: () => void;
 }
@@ -44,12 +46,14 @@ export default function BookSection({
   myPhotoUrl,
   myInitial,
   caps,
+  compact = false,
   onPress,
 }: BookSectionProps) {
   const remaining = daysLeft(challenge.target_end_date);
 
   return (
     <GlassSection
+      compact={compact}
       onPress={onPress}
       accessibilityLabel={`${challenge.book_title}, ${challenge.book_author ?? 'autrice inconnue'}`}
       accessibilityHint="Ouvre la fiche du livre"

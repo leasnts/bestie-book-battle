@@ -47,6 +47,8 @@ interface PageSectionProps {
   onNotePress?: () => void;
   /** La porte du carnet, à gauche au repos. Sans elle, la place reste vide. */
   notesDoor?: React.ReactNode;
+  /** Petit écran : chiffre plus petit, pour que l'accueil tienne sans défiler */
+  compact?: boolean;
 }
 
 /** Bouton rond de la rangée du bas : même taille et même place, seule l'icône change */
@@ -93,6 +95,7 @@ export default function PageSection({
   onJournalPress,
   onNotePress,
   notesDoor,
+  compact = false,
 }: PageSectionProps) {
   // Le sélecteur centre la page sur la largeur qu'on lui donne : ici celle du
   // cadre, pas celle de l'écran.
@@ -103,7 +106,7 @@ export default function PageSection({
   const hasChanged = delta !== 0;
 
   return (
-    <GlassSection>
+    <GlassSection compact={compact}>
       <View style={styles.head}>
         <PressableScale
           style={styles.journalLink}
@@ -136,7 +139,7 @@ export default function PageSection({
             savedPage={savedPage}
             width={pickerWidth}
             itemWidth={PICKER_ITEM_WIDTH}
-            fontSize={PICKER_FONT_SIZE}
+            fontSize={compact ? PICKER_FONT_SIZE_COMPACT : PICKER_FONT_SIZE}
           />
         )}
       </View>
@@ -202,6 +205,8 @@ export default function PageSection({
 const PICKER_ITEM_WIDTH = 120;
 /** Le chiffre et sa zone reprennent la maquette (68 et 76 px à l'échelle 0,865) */
 const PICKER_FONT_SIZE = 68;
+/** Sur les petits écrans (SE, mini) */
+const PICKER_FONT_SIZE_COMPACT = 52;
 const BUTTON_SIZE = 42;
 
 const styles = StyleSheet.create({

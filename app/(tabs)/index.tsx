@@ -23,6 +23,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
     ActivityIndicator,
     AppState,
+    ScrollView,
     StyleSheet,
     Text,
     View,
@@ -78,7 +79,20 @@ export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   // Place réservée sous le contenu pour la barre d'onglets flottante
   const tabBarInset = useTabBarInset();
-  const { fontScale } = useWindowDimensions();
+  const { height: windowHeight } = useWindowDimensions();
+  // Petits écrans : l'accueil doit tenir sans défiler (règle de Lea)
+  // - sous 830 pt (SE, mini) : chiffre de page plus petit ;
+  // - sous 700 pt (SE) : classement réduit au 1er et à moi.
+  const compactPage = windowHeight < 830;
+  const compactLeaderboard = windowHeight < 700;
+  // SE : marges resserrées aussi (entre les cadres et dans les cadres)
+  const compactSpacing = compactLeaderboard;
+  const frameGap = compactSpacing ? { paddingTop: spacing.sm } : null;
+  // Défile seulement si le contenu dépasse vraiment : en pratique, avec le texte
+  // agrandi dans les réglages d'accessibilité. Sinon, rien ne bouge.
+  const [framesHeight, setFramesHeight] = useState(0);
+  const [contentHeight, setContentHeight] = useState(0);
+  const framesOverflow = framesHeight > 0 && contentHeight > framesHeight + 1;
   const { user } = useAuthStore();
 
   // ===== Stores Supabase =====
@@ -410,14 +424,22 @@ export default function HomeScreen() {
 
       {/*
         Les trois cadres. AUCUN défilement sur l'accueil (règle de Lea) : tout
-        doit tenir sur tous les iPhone, du SE au Pro Max. Le livre et le
-        classement gardent leur hauteur ; « Ma page », au milieu, prend la place
-        qui reste.
+        tient sur tous les iPhone, du SE au Pro Max (versions compactes sur les
+        petits écrans). La ScrollView ne s'active que si le contenu dépasse
+        vraiment, c'est-à-dire avec le texte agrandi dans les réglages
+        d'accessibilité : là, défiler vaut mieux que couper les lettres.
       */}
-      <View style={[styles.frames, { paddingBottom: tabBarInset + spacing.md }]}>
+      <ScrollView
+        style={styles.frames}
+        contentContainerStyle={{ paddingBottom: tabBarInset + spacing.md }}
+        scrollEnabled={framesOverflow}
+        showsVerticalScrollIndicator={framesOverflow}
+        onLayout={(e) => setFramesHeight(e.nativeEvent.layout.height)}
+        onContentSizeChange={(_w, h) => setContentHeight(h)}
+      >
       {/* ═══════════ CADRE 1 : LE LIVRE ═══════════ */}
       {activeChallenge && (
-        <View style={styles.bookSection}>
+        <View style={[styles.bookSection, frameGap]}>
           <BookSection
             challenge={activeChallenge}
             clubPercent={clubPercent}
@@ -425,6 +447,7 @@ export default function HomeScreen() {
             myPhotoUrl={user?.profile_photo_url ?? null}
             myInitial={(user?.first_name ?? 'M').charAt(0).toUpperCase()}
             caps={caps}
+            compact={compactSpacing}
             onPress={() => router.push('/book')}
           />
         </View>
@@ -432,7 +455,7 @@ export default function HomeScreen() {
 
       {/* ═══════════ CADRE 2 : MA PAGE ═══════════ */}
       {activeChallenge ? (
-        <View style={styles.pageSection}>
+        <View style={[styles.pageSection, frameGap]}>
           <PageSection
             key={activeChallenge.id}
             currentPage={currentPageInput}
@@ -444,6 +467,7 @@ export default function HomeScreen() {
             onUndo={handleUndo}
             onJournalPress={() => router.push(`/participant/${myUserId}`)}
             onNotePress={() => router.push('/note/new')}
+            compact={compactPage}
             notesDoor={
               <NotesDoor
                 count={notesMatchChallenge ? notes.length : 0}
@@ -509,15 +533,16 @@ export default function HomeScreen() {
 
       {/* ═══════════ BLOC 3 : TOP 3 DU CHALLENGE + MOI ═══════════ */}
       {activeChallenge && (
-        <View style={styles.progressSection}>
+        <View style={[styles.progressSection, frameGap]}>
           <LeaderboardSection
             participants={leaderboardParticipants}
             myUserId={myUserId}
             onPress={() => router.push('/leaderboard')}
+            compact={compactLeaderboard}
           />
         </View>
       )}
-      </View>
+      </ScrollView>
 
       {/* ═══════════ TOAST DELTA — FEUILLE QUI TOMBE ═══════════
         Toujours monté dans le DOM mais invisible (opacity: 0 par défaut).
@@ -562,7 +587,7 @@ const styles = StyleSheet.create({
   headerSpacer: {
     width: 44,
   },
-  // La zone fixe qui porte les trois cadres (aucun défilement)
+  // La zone qui porte les trois cadres (défile seulement si ça dépasse)
   frames: {
     flex: 1,
   },
