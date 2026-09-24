@@ -2,8 +2,7 @@
  * Composant NotificationButton
  *
  * La cloche de l'en-tête de l'accueil, avec pastille rouge quand il y a des
- * notifications non lues. Le style 3D vient de HeaderIconButton, partagé avec
- * le bouton bibliothèque.
+ * notifications non lues. Le style 3D vient de HeaderIconButton.
  */
 
 import { BellIcon } from 'lucide-react-native';

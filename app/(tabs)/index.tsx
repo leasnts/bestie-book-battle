@@ -42,7 +42,7 @@ import PageTransition from '../../components/PageTransition';
 import PopEyes from '../../components/PopEyes';
 import BookSection from '../../components/ui/BookSection';
 import CoverBackdrop from '../../components/ui/CoverBackdrop';
-import HeaderIconButton from '../../components/ui/HeaderIconButton';
+import GlassButton from '../../components/ui/GlassButton';
 import NotificationButton from '../../components/ui/NotificationButton';
 import NotesDoor from '../../components/ui/NotesDoor';
 import PageSection from '../../components/ui/PageSection';
@@ -400,8 +400,9 @@ export default function HomeScreen() {
 
       {/* ═══════════ HEADER ═══════════ */}
       <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
-        {/* Bibliothèque — toutes mes lectures, sur des étagères */}
-        <HeaderIconButton
+        {/* Bibliothèque — toutes mes lectures, sur des étagères. Le même rond en
+            verre que le « + » de la barre d'onglets */}
+        <GlassButton
           icon={LibraryBigIcon}
           onPress={() => router.push('/library')}
           accessibilityLabel="Mes lectures"

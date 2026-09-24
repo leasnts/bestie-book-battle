@@ -4,9 +4,8 @@
  * Bouton carré 40 pt de l'en-tête de l'accueil, avec effet 3D (style Button3D
  * secondary) et pastille optionnelle.
  *
- * Deux usages aujourd'hui :
- * - à gauche, la bibliothèque (liste de tous tes challenges)
- * - à droite, la cloche des notifications (NotificationButton)
+ * Usage aujourd'hui : à droite, la cloche des notifications (NotificationButton).
+ * La bibliothèque, à gauche, est passée au rond en verre (GlassButton).
  *
  * Comment ça marche :
  * - Fond crème colors.bgLight, bordure encre à 10 %
