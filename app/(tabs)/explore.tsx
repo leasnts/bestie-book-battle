@@ -24,8 +24,9 @@
  * Toucher un livre ouvre sa fiche (route /explore-book, sheet natif) : lancer
  * une lecture, le garder en envie, le partager.
  *
- * Même habillage que l'accueil : fond neutre en taches, texture. Titre ferré à
- * gauche, comme tous les titres de l'app.
+ * Fond papier uni + texture, SANS les taches de l'accueil : les étagères
+ * s'effacent aux bords en fondu couleur papier, qui ferait une bande claire
+ * sur les taches. Titre ferré à gauche, comme tous les titres de l'app.
  */
 
 import { Image } from 'expo-image';
@@ -36,7 +37,6 @@ import { FlatList, Keyboard, Pressable, ScrollView, StyleSheet, Text, TextInput,
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import PageTransition from '../../components/PageTransition';
 import BookResultRow, { BookResultSkeleton } from '../../components/ui/BookResultRow';
-import CoverBackdrop from '../../components/ui/CoverBackdrop';
 import ExploreShelf from '../../components/ui/ExploreShelf';
 import { useTabBarInset } from '../../components/ui/GlassTabBar';
 import catalog from '../../constants/exploreCatalog.json';
@@ -83,7 +83,6 @@ export default function ExploreScreen() {
   return (
     <PageTransition>
       <View style={styles.container}>
-        <CoverBackdrop />
         <Image source={TEXTURE_IMAGE} style={styles.backgroundTexture} contentFit="cover" />
 
         <View style={[styles.header, { paddingTop: insets.top + spacing.lg }]}>
