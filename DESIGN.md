@@ -444,7 +444,8 @@ voile crème à 56 %, tout le cadre touchable à 0,97 quand il ouvre un écran),
 posé sur le fond neutre.
 
 Le cadre **Le livre** (`BookSection`) ouvre la fiche du livre d'un toucher :
-la couverture à gauche ; à droite le titre, l'autrice, puis **juste dessous** la
+la couverture à gauche, **toujours de la hauteur du texte** à côté (mesurée) ; à
+droite le titre (Fraunces 20), l'autrice, puis **juste dessous** la
 **piste** (`GoalTrack`) de 0 à 100 % du livre — remplissage lie de vin à la
 **médiane** du club (pas la moyenne : trois lectrices rapides fausseraient le
 repère), ma photo posée à mon %, caps passés en points lie de vin, cap en cours

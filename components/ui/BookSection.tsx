@@ -18,7 +18,7 @@
  */
 
 import { UsersIcon } from 'lucide-react-native';
-import React from 'react';
+import React, { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import type { Challenge } from '../../types/supabase';
 import { colors, fonts, spacing } from '../../utils/constants';
@@ -52,6 +52,9 @@ export default function BookSection({
   compact = false,
   onPress,
 }: BookSectionProps) {
+  // La couverture prend toujours la hauteur du texte à côté d'elle (titre sur
+  // une ou deux lignes, texte agrandi…) : on la mesure.
+  const [textsHeight, setTextsHeight] = useState(0);
   return (
     <GlassSection
       compact={compact}
@@ -60,11 +63,16 @@ export default function BookSection({
       accessibilityHint="Ouvre la fiche du livre"
     >
       <View style={styles.head}>
-        <View style={styles.cover}>
+        <View
+          style={[
+            styles.cover,
+            textsHeight > 0 && { width: textsHeight * COVER_RATIO, height: textsHeight },
+          ]}
+        >
           <BookCover coverUrl={challenge.cover_url} done={isChallengeDone(challenge)} />
         </View>
 
-        <View style={styles.texts}>
+        <View style={styles.texts} onLayout={(e) => setTextsHeight(e.nativeEvent.layout.height)}>
           {/* Deux lignes : aux gros corps de texte, « Les nuits blanches » ne
               doit pas se réduire à « Les nu… ». */}
           <Text style={styles.title} numberOfLines={2}>
@@ -125,7 +133,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontFamily: fonts.display,
-    fontSize: 22,
+    fontSize: 20,
     color: colors.textPrimary,
   },
   author: {
