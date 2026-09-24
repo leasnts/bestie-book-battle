@@ -34,7 +34,15 @@ interface GoalTrackProps {
   caps: TrackCap[];
   /** Date de fin du livre, affichée au bout de la piste */
   endDate: string | null;
+  /** Repère posé au début de la ligne des dates, sous le départ de la piste (le % du club) */
+  leadingLabel?: React.ReactNode;
 }
+
+/**
+ * Sous ce %, la date du cap en cours tomberait sur le repère de gauche : on ne
+ * l'écrit pas (le drapeau reste, et la date est dans la fiche du livre).
+ */
+const LEADING_LABEL_CLEARANCE = 30;
 
 export default function GoalTrack({
   clubPercent,
@@ -43,6 +51,7 @@ export default function GoalTrack({
   myInitial,
   caps,
   endDate,
+  leadingLabel,
 }: GoalTrackProps) {
   const currentCap = caps.find((cap) => cap.state === 'current') ?? null;
 
@@ -101,7 +110,8 @@ export default function GoalTrack({
           le réglage système, mais de façon bornée, sinon elles se chevauchent
           et ne désignent plus rien. Même règle que le chiffre du sélecteur.
         */}
-        {currentCap && (
+        {leadingLabel && <View style={styles.leading}>{leadingLabel}</View>}
+        {currentCap && !(leadingLabel && currentCap.percent < LEADING_LABEL_CLEARANCE) && (
           <Text
             style={[styles.label, styles.capLabel, { left: `${currentCap.percent}%` }]}
             maxFontSizeMultiplier={1.3}
@@ -263,5 +273,10 @@ const styles = StyleSheet.create({
   },
   endLabel: {
     right: -5,
+  },
+  // Aligné sur le départ de la piste (qui déborde de 7 pt de chaque côté)
+  leading: {
+    position: 'absolute',
+    left: -7,
   },
 });

@@ -449,8 +449,9 @@ droite le titre (Fraunces 20), l'autrice, puis **juste dessous** la
 **piste** (`GoalTrack`) de 0 à 100 % du livre — remplissage lie de vin à la
 **médiane** du club (pas la moyenne : trois lectrices rapides fausseraient le
 repère), ma photo posée à mon %, caps passés en points lie de vin, cap en cours
-en drapeau daté, fin en rond au bout avec sa date — et à droite de la piste
-`👥 26 %`, le club. Plus de « J-27 » / « Prolongations » ni de ligne de repères
+en drapeau daté, fin en rond au bout avec sa date — et **sur la ligne de la
+date de fin**, à gauche sous le départ de la piste, `👥 26 %`, le club (la date
+d'un cap en cours sous 30 % ne s'écrit pas, pour ne pas le chevaucher). Plus de « J-27 » / « Prolongations » ni de ligne de repères
 (Lea, 2026-09-24) : la date de fin suffit, et l'accueil doit tenir sans défiler.
 Le nombre de membres au cap vit dans la fiche du livre. Un objectif
 intermédiaire s'appelle un **cap** partout dans l'UI.

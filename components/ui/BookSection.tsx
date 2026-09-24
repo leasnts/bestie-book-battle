@@ -2,9 +2,9 @@
  * BookSection — le cadre « Le livre » de l'accueil.
  *
  * Première question de l'accueil : qu'est-ce qu'on lit, et qu'est-ce qu'on vise.
- * La couverture à gauche ; à droite, le titre, l'autrice, puis la piste du livre
- * avec, à sa droite, où en est le club (`👥 26 %`, la médiane du club sur le
- * livre entier). Pas une phrase.
+ * La couverture à gauche ; à droite, le titre, l'autrice, puis la piste du livre.
+ * Sous la piste, sur la ligne de la date de fin, où en est le club (`👥 26 %`,
+ * la médiane du club sur le livre entier). Pas une phrase.
  *
  * Plus de « J-19 » / « Prolongations » au-dessus du titre (Lea, 2026-09-24) : la
  * date de fin est déjà sous la piste.
@@ -84,25 +84,25 @@ export default function BookSection({
             </Text>
           )}
 
-          {/* La piste sous l'autrice, et à sa droite où en est le club */}
+          {/* La piste sous l'autrice ; le club sur la ligne de la date de fin */}
           <View style={styles.track}>
-            <View style={styles.trackLine}>
-              <GoalTrack
-                clubPercent={clubPercent}
-                myPercent={myPercent}
-                myPhotoUrl={myPhotoUrl}
-                myInitial={myInitial}
-                caps={caps}
-                endDate={challenge.target_end_date}
-              />
-            </View>
-            {/* Déjà lu par VoiceOver dans la phrase de la piste */}
-            <View style={styles.club} importantForAccessibility="no-hide-descendants" accessibilityElementsHidden>
-              <UsersIcon size={14} color={colors.textTertiary} strokeWidth={2} />
-              <Text style={styles.clubText} maxFontSizeMultiplier={1.3}>
-                {Math.round(clubPercent)} %
-              </Text>
-            </View>
+            <GoalTrack
+              clubPercent={clubPercent}
+              myPercent={myPercent}
+              myPhotoUrl={myPhotoUrl}
+              myInitial={myInitial}
+              caps={caps}
+              endDate={challenge.target_end_date}
+              leadingLabel={
+                // Déjà lu par VoiceOver dans la phrase de la piste
+                <View style={styles.club} importantForAccessibility="no-hide-descendants" accessibilityElementsHidden>
+                  <UsersIcon size={14} color={colors.textTertiary} strokeWidth={2} />
+                  <Text style={styles.clubText} maxFontSizeMultiplier={1.3}>
+                    {Math.round(clubPercent)} %
+                  </Text>
+                </View>
+              }
+            />
           </View>
         </View>
       </View>
@@ -145,23 +145,15 @@ const styles = StyleSheet.create({
 
   track: {
     marginTop: spacing.sm,
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: spacing.sm,
   },
-  trackLine: {
-    flex: 1,
-  },
-  // Même hauteur que la piste (28 pt) : le % est centré sur la barre
   club: {
-    height: 28,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 3,
   },
   clubText: {
     fontFamily: fonts.bodyExtraBold,
-    fontSize: 14,
+    fontSize: 13,
     color: colors.textPrimary,
     fontVariant: ['tabular-nums'],
   },
