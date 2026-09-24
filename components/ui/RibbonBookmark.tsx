@@ -13,10 +13,10 @@
  *
  * - `done`    : ruban lie de vin, coche Lucide crème ;
  * - `reading` : ruban écru qu'un brun noyer imprègne depuis le bout, à mon %,
- *               comme une teinture qui monte dans le tissu. Front ondulé et
- *               fondu, avec une ligne plus foncée là où la teinture s'accumule
- *               (comme le bord d'une aquarelle) : une coupe droite faisait
- *               abrupte. Le lie de vin reste réservé à « terminé » ;
+ *               comme une teinture qui monte dans le tissu. Front ondulé et net,
+ *               avec une ligne plus foncée là où la teinture s'accumule (comme
+ *               le bord d'une aquarelle). Pas de fondu : Lea le trouvait flou.
+ *               Le lie de vin reste réservé à « terminé » ;
  * - `new`     : ruban écru, étincelle Lucide lie de vin (dernier livre ajouté).
  *
  * Les pictogrammes sont des icônes Lucide posées sur l'image, pas brodés : règle
@@ -35,11 +35,8 @@ import Svg, {
   ClipPath,
   Defs,
   Image as SvgImage,
-  LinearGradient,
-  Mask,
   Path,
   Rect,
-  Stop,
 } from 'react-native-svg';
 
 const RIBBONS = {
@@ -68,9 +65,8 @@ const ICONS: Record<'done' | 'new', { icon: LucideIcon; color: string; filled: b
 const ICON_SIZE = 16;
 const ICON_CENTER_Y = 38;
 
-/** Hauteur de l'ondulation du front, et largeur du fondu sous elle */
+/** Hauteur de l'ondulation du front */
 const WAVE = 0.9;
-const FEATHER = 4.5;
 /** Hauteur du ruban au-dessus du bord de la couverture (COVER_TOP du script) */
 export const RIBBON_ABOVE_COVER = 9;
 /**
@@ -139,30 +135,18 @@ export default function RibbonBookmark(props: RibbonBookmarkProps) {
   return (
     <Svg width={WIDTH} height={HEIGHT}>
       <Defs>
-        {/* Fondu du front : transparent au-dessus des vagues, plein juste dessous */}
-        <LinearGradient
-          id={`fade${id}`}
-          gradientUnits="userSpaceOnUse"
-          x1="0"
-          y1={front - WAVE}
-          x2="0"
-          y2={front + WAVE + FEATHER}
-        >
-          <Stop offset="0" stopColor="#fff" stopOpacity={full ? 1 : 0} />
-          <Stop offset="0.35" stopColor="#fff" stopOpacity={full ? 1 : 0.45} />
-          <Stop offset="1" stopColor="#fff" stopOpacity={1} />
-        </LinearGradient>
-        <Mask id={`dye${id}`} maskUnits="userSpaceOnUse" x={0} y={0} width={WIDTH} height={HEIGHT}>
-          <Path d={full ? `M0,0 H${WIDTH} V${HEIGHT} H0 Z` : dyed} fill={`url(#fade${id})`} />
-        </Mask>
+        {/* Zone teinte, coupée net sous le front */}
+        <ClipPath id={`dye${id}`}>
+          <Path d={full ? `M0,0 H${WIDTH} V${HEIGHT} H0 Z` : dyed} />
+        </ClipPath>
         <ClipPath id={`ribbon${id}`}>
           <Rect x={RIBBON_LEFT} y={RIBBON_TOP} width={RIBBON_WIDTH} height={RIBBON_END - RIBBON_TOP} />
         </ClipPath>
       </Defs>
 
       <SvgImage href={RIBBONS.track} width={WIDTH} height={HEIGHT} />
-      {/* Le lie de vin : même tissu, même surpiqûre, calés au pixel, révélés sous le front */}
-      <SvgImage href={RIBBONS.fill} width={WIDTH} height={HEIGHT} mask={`url(#dye${id})`} />
+      {/* Le noyer : même tissu, même surpiqûre, calés au pixel, révélés sous le front */}
+      <SvgImage href={RIBBONS.fill} width={WIDTH} height={HEIGHT} clipPath={`url(#dye${id})`} />
       {/* La ligne de teinture accumulée, juste au bord du front */}
       {!full && (
         <Path
