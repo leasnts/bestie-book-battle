@@ -2,9 +2,12 @@
  * BookSection — le cadre « Le livre » de l'accueil.
  *
  * Première question de l'accueil : qu'est-ce qu'on lit, et qu'est-ce qu'on vise.
- * Couverture, titre, autrice, temps restant, et la piste du livre avec, à sa
- * droite, où en est le club (`👥 26 %`, la médiane du club sur le livre entier).
- * Pas une phrase.
+ * La couverture à gauche ; à droite, le titre, l'autrice, puis la piste du livre
+ * avec, à sa droite, où en est le club (`👥 26 %`, la médiane du club sur le
+ * livre entier). Pas une phrase.
+ *
+ * Plus de « J-19 » / « Prolongations » au-dessus du titre (Lea, 2026-09-24) : la
+ * date de fin est déjà sous la piste.
  *
  * Plus de ligne de repères en bas (« Club · 26 % du livre », « Cap · 9/38 ») :
  * l'accueil doit tenir sans défiler. Le nombre de membres au cap reste dans la
@@ -19,7 +22,7 @@ import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import type { Challenge } from '../../types/supabase';
 import { colors, fonts, spacing } from '../../utils/constants';
-import { daysLeft, type TrackCap } from '../../utils/track';
+import type { TrackCap } from '../../utils/track';
 import BookCover, { COVER_RATIO, isChallengeDone } from './BookCover';
 import GlassSection from './GlassSection';
 import GoalTrack from './GoalTrack';
@@ -49,8 +52,6 @@ export default function BookSection({
   compact = false,
   onPress,
 }: BookSectionProps) {
-  const remaining = daysLeft(challenge.target_end_date);
-
   return (
     <GlassSection
       compact={compact}
@@ -64,11 +65,6 @@ export default function BookSection({
         </View>
 
         <View style={styles.texts}>
-          {/* Le temps restant, ou « Prolongations » quand la date est passée —
-              un constat, jamais un reproche. */}
-          {remaining !== null && (
-            <Text style={styles.tag}>{remaining >= 0 ? `J-${remaining}` : 'Prolongations'}</Text>
-          )}
           {/* Deux lignes : aux gros corps de texte, « Les nuits blanches » ne
               doit pas se réduire à « Les nu… ». */}
           <Text style={styles.title} numberOfLines={2}>
@@ -79,28 +75,27 @@ export default function BookSection({
               {challenge.book_author}
             </Text>
           )}
-        </View>
 
-      </View>
-
-      {/* La piste, et à sa droite où en est le club */}
-      <View style={styles.track}>
-        <View style={styles.trackLine}>
-          <GoalTrack
-            clubPercent={clubPercent}
-            myPercent={myPercent}
-            myPhotoUrl={myPhotoUrl}
-            myInitial={myInitial}
-            caps={caps}
-            endDate={challenge.target_end_date}
-          />
-        </View>
-        {/* Déjà lu par VoiceOver dans la phrase de la piste */}
-        <View style={styles.club} importantForAccessibility="no-hide-descendants" accessibilityElementsHidden>
-          <UsersIcon size={14} color={colors.textTertiary} strokeWidth={2} />
-          <Text style={styles.clubText} maxFontSizeMultiplier={1.3}>
-            {Math.round(clubPercent)} %
-          </Text>
+          {/* La piste sous l'autrice, et à sa droite où en est le club */}
+          <View style={styles.track}>
+            <View style={styles.trackLine}>
+              <GoalTrack
+                clubPercent={clubPercent}
+                myPercent={myPercent}
+                myPhotoUrl={myPhotoUrl}
+                myInitial={myInitial}
+                caps={caps}
+                endDate={challenge.target_end_date}
+              />
+            </View>
+            {/* Déjà lu par VoiceOver dans la phrase de la piste */}
+            <View style={styles.club} importantForAccessibility="no-hide-descendants" accessibilityElementsHidden>
+              <UsersIcon size={14} color={colors.textTertiary} strokeWidth={2} />
+              <Text style={styles.clubText} maxFontSizeMultiplier={1.3}>
+                {Math.round(clubPercent)} %
+              </Text>
+            </View>
+          </View>
         </View>
       </View>
     </GlassSection>
@@ -128,18 +123,10 @@ const styles = StyleSheet.create({
   texts: {
     flex: 1,
   },
-  tag: {
-    fontFamily: fonts.bodyExtraBold,
-    fontSize: 13,
-    letterSpacing: 0.4,
-    color: colors.textTertiary,
-    fontVariant: ['tabular-nums'],
-  },
   title: {
     fontFamily: fonts.display,
     fontSize: 22,
     color: colors.textPrimary,
-    marginTop: 2,
   },
   author: {
     fontFamily: fonts.body,
@@ -149,7 +136,7 @@ const styles = StyleSheet.create({
   },
 
   track: {
-    marginTop: spacing.lg,
+    marginTop: spacing.sm,
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: spacing.sm,
