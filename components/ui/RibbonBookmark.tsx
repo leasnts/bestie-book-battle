@@ -12,11 +12,11 @@
  *      terminé      en cours     nouveau
  *
  * - `done`    : ruban lie de vin, coche Lucide crème ;
- * - `reading` : ruban écru qu'un brun noyer imprègne depuis le bout, à mon %,
- *               comme une teinture qui monte dans le tissu. Front ondulé et net,
- *               avec une ligne plus foncée là où la teinture s'accumule (comme
- *               le bord d'une aquarelle). Pas de fondu : Lea le trouvait flou.
- *               Le lie de vin reste réservé à « terminé » ;
+ * - `reading` : ruban écru que le lie de vin de « terminé » imprègne depuis le
+ *               bout, à mon %, comme une teinture qui monte dans le tissu : à
+ *               100 %, c'est le signet « terminé ». Front ondulé et net, avec
+ *               une ligne plus foncée là où la teinture s'accumule (comme le bord
+ *               d'une aquarelle). Pas de fondu : Lea le trouvait flou ;
  * - `new`     : ruban écru, étincelle Lucide lie de vin (dernier livre ajouté).
  *
  * Les pictogrammes sont des icônes Lucide posées sur l'image, pas brodés : règle
@@ -53,8 +53,8 @@ const RIBBON_LEFT = 5;
 const RIBBON_WIDTH = 23;
 const RIBBON_TOP = 1.5;
 const RIBBON_END = 60;
-/** Couleur de la ligne plus foncée au front de teinture (noyer profond) */
-const TIDE_LINE = '#3a2a20';
+/** Couleur de la ligne plus foncée au front de teinture (lie de vin profond) */
+const TIDE_LINE = '#3f1520';
 
 /** Pictogramme de chaque ruban : icône Lucide, sa couleur, centrée dans le ruban */
 const ICONS: Record<'done' | 'new', { icon: LucideIcon; color: string; filled: boolean }> = {
@@ -145,7 +145,7 @@ export default function RibbonBookmark(props: RibbonBookmarkProps) {
       </Defs>
 
       <SvgImage href={RIBBONS.track} width={WIDTH} height={HEIGHT} />
-      {/* Le noyer : même tissu, même surpiqûre, calés au pixel, révélés sous le front */}
+      {/* Le lie de vin : même tissu, même surpiqûre, calés au pixel, révélés sous le front */}
       <SvgImage href={RIBBONS.fill} width={WIDTH} height={HEIGHT} clipPath={`url(#dye${id})`} />
       {/* La ligne de teinture accumulée, juste au bord du front */}
       {!full && (

@@ -2,7 +2,7 @@
  * Composant BookLibrary
  *
  * La bibliothèque : tous mes livres, rangés sur des étagères empilées,
- * trois couvertures par étagère, sous des filtres En cours / Non lus / Lus.
+ * trois couvertures par étagère, sous des filtres Tout / En cours / Non lus / Lus.
  *
  *    ▐██▌    ┏━━┓    ▛▀▀▜
  *   ░░░░░░░░░░░░░░░░░░░░░░   ← barre en verre flouté, avec ses vis
@@ -35,7 +35,7 @@ import Animated, { Easing, FadeInDown, useReducedMotion } from 'react-native-rea
 import Svg, { Path } from 'react-native-svg';
 import { Challenge } from '../../types/supabase';
 import { colors, creamAlpha, fonts, motion, spacing } from '../../utils/constants';
-import { BookReading, LIBRARY_FILTERS, readingLabel, ReadingState } from '../../utils/library';
+import { BookReading, LIBRARY_FILTERS, LibraryFilter, readingLabel } from '../../utils/library';
 import BookCover, { COVER_RATIO } from './BookCover';
 import RibbonBookmark, { RIBBON_ABOVE_COVER } from './RibbonBookmark';
 import PressableScale from './PressableScale';
@@ -54,9 +54,8 @@ interface BookLibraryProps {
   activeChallengeId: string | null;
   /** Toucher une couverture */
   onSelect: (challenge: Challenge) => void;
-  /** Filtre actif, `null` = tous les livres */
-  filter: ReadingState | null;
-  onFilterChange: (filter: ReadingState | null) => void;
+  filter: LibraryFilter;
+  onFilterChange: (filter: LibraryFilter) => void;
   /** Décor posé SOUS les filtres, dans l'en-tête de la liste (l'aquarelle du coin) */
   headerBackground?: React.ReactNode;
 }

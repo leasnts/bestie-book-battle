@@ -91,6 +91,13 @@ export const colors = {
 };
 
 /**
+ * Lie de vin : la seule couleur d'accent, pour ce qui dit « état » ou « choisi »
+ * (signets de la bibliothèque, filtre sélectionné). Toujours en dégradé, clair en
+ * haut → foncé en bas. Crème dessus : 7,9:1 sur le clair (#8c3b4c).
+ */
+export const wineGradient = ['#8c3b4c', '#5e1f2e'] as const;
+
+/**
  * Les six post-it du carnet — des pastels tirés vers le noyer.
  *
  * Une couleur = une catégorie, la même pour tout le club. L'encre `ink` garde

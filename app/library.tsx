@@ -26,7 +26,7 @@ import { useAuthStore } from '../stores/authStore';
 import { useProgressStore } from '../stores/progressStore';
 import { useProjectStore } from '../stores/projectStore';
 import { Challenge } from '../types/supabase';
-import { BookReading, newBookId, readingOf, ReadingState, sortBooks } from '../utils/library';
+import { BookReading, LibraryFilter, newBookId, readingOf, sortBooks } from '../utils/library';
 
 export default function LibraryRoute() {
   const router = useRouter();
@@ -39,8 +39,8 @@ export default function LibraryRoute() {
   const liveProgress = useProgressStore((state) => state.currentUserProgress);
   const userId = useAuthStore((state) => state.user?.id);
   const firstName = useAuthStore((state) => state.user?.first_name);
-  // Filtre En cours / Non lus / Lus : pas retenu, chaque ouverture montre tout
-  const [filter, setFilter] = useState<ReadingState | null>(null);
+  // Filtre Tout / En cours / Non lus / Lus : pas retenu, chaque ouverture montre tout
+  const [filter, setFilter] = useState<LibraryFilter>('all');
 
   // Rafraîchit ma progression en arrière-plan ; le cache s'affiche tout de suite
   useEffect(() => {
@@ -61,7 +61,7 @@ export default function LibraryRoute() {
 
   const books = useMemo(() => {
     const sorted = sortBooks(challenges, progressById);
-    return filter ? sorted.filter((book) => readings[book.id]?.state === filter) : sorted;
+    return filter === 'all' ? sorted : sorted.filter((book) => readings[book.id]?.state === filter);
   }, [challenges, progressById, readings, filter]);
 
   const newId = useMemo(() => newBookId(challenges, progressById), [challenges, progressById]);

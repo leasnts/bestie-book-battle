@@ -36,7 +36,10 @@ export function readingLabel({ state, percent }: BookReading): string {
 
 // ─── Filtre ────────────────────────────────────────────────────────
 
-export const LIBRARY_FILTERS: { key: ReadingState; label: string }[] = [
+export type LibraryFilter = 'all' | ReadingState;
+
+export const LIBRARY_FILTERS: { key: LibraryFilter; label: string }[] = [
+  { key: 'all', label: 'Tout' },
   { key: 'reading', label: 'En cours' },
   { key: 'unread', label: 'Non lus' },
   { key: 'done', label: 'Lus' },
@@ -75,7 +78,7 @@ export function newBookId(
  * dernière progression ET celle du club : `updated_at` du livre est remis à
  * jour dès qu'un membre avance (trigger `update_challenge_stats`).
  *
- * Plus de choix de tri : les filtres (En cours, Non lus, Lus) l'ont remplacé.
+ * Plus de choix de tri : les filtres (Tout, En cours, Non lus, Lus) l'ont remplacé.
  */
 export function sortBooks(
   books: Challenge[],

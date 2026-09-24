@@ -20,9 +20,10 @@ Réalisme, dans l'ordre du dessin :
 Variantes :
 - done           : ruban lie de vin, fil crème (livre terminé) ;
 - new            : ruban écru, fil lie de vin (dernier livre ajouté) ;
-- progress-track : ruban écru, fil noyer (livre en cours, le fond) ;
-- progress-fill  : ruban noyer, fil crème, sans ombre (livre en cours, la teinture
-                   que l'app révèle à mon %).
+- progress-track : ruban écru, fil lie de vin (livre en cours, le fond) ;
+- progress-fill  : ruban lie de vin, fil crème, sans ombre (livre en cours, la
+                   teinture que l'app révèle à mon %). À 100 %, c'est le signet
+                   « terminé » : le ruban se teint jusqu'à devenir celui d'un livre lu.
 
 Usage : python3 scripts/generate-ribbon-bookmarks.py
 Dépendances : numpy, Pillow.
@@ -49,20 +50,19 @@ BORDER_INSET = 2.2               # surpiqûre : distance au bord du ruban
 
 WINE = ("#8c3b4c", "#5e1f2e")
 ECRU = ("#f3e9df", "#e1cfbf")
-WALNUT = ("#8a6a52", "#553d2e")
 CREAM_THREAD = "#f6ede4"
 WINE_THREAD = "#7a2e3e"
-WALNUT_THREAD = "#5e4535"
 
 VARIANTS = {
     # Couleur d'accent lie de vin : essai (demande de Lea, 2026-09-17)
     "done": {"ribbon": WINE, "thread": CREAM_THREAD},
     "new": {"ribbon": ECRU, "thread": WINE_THREAD},
-    # En cours : un brun noyer imprègne le ruban écru (le lie de vin est réservé à
-    # « terminé »). L'app révèle le ruban noyer (sans ombre) sous le front, à mon %.
+    # En cours : le lie de vin de « terminé » imprègne le ruban écru. Une seule
+    # couleur d'accent pour les états (Lea, 2026-09-24). L'app révèle le ruban lie
+    # de vin (sans ombre) sous le front, à mon %.
     # Même graine, même géométrie : les deux tissus coïncident au pixel.
-    "progress-track": {"ribbon": ECRU, "thread": WALNUT_THREAD},
-    "progress-fill": {"ribbon": WALNUT, "thread": CREAM_THREAD, "shadow": False},
+    "progress-track": {"ribbon": ECRU, "thread": WINE_THREAD},
+    "progress-fill": {"ribbon": WINE, "thread": CREAM_THREAD, "shadow": False},
 }
 
 

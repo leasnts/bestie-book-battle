@@ -462,10 +462,11 @@ l'accueil.
 Changer de livre ou en ajouter un se fait dans la **bibliothèque**, route
 `/library` en sheet natif titré **Mes lectures**, avec le **+** en verre
 (`GlassButton`) à droite du titre (même parcours que le + de la barre d'onglets).
-Dessous, trois capsules de filtre (`FilterChips`) : **En cours**, **Non lus**,
-**Lus**. Une seule à la fois ; la retoucher la désélectionne et tout revient,
-donc pas de « Tous ». Carrés arrondis (8 pt), pas des pilules. Sélectionnée :
-encre en dégradé, texte crème ; sinon contour sur fond blanc. Les filtres passent
+Dessous, quatre capsules de filtre (`FilterChips`) : **Tout**, **En cours**,
+**Non lus**, **Lus**, une toujours sélectionnée (Tout par défaut). Carrés arrondis
+(8 pt), pas des pilules. Sélectionnée : **lie de vin** en dégradé (`wineGradient`,
+la couleur d'accent, la même que les signets), texte crème ; sinon contour sur
+fond blanc. Les filtres passent
 **par-dessus** l'aquarelle du coin (elle est dans l'en-tête de la liste, dessous). Le filtre n'est pas retenu et le sheet ne rétrécit pas quand on
 filtre. Plus de « Trier par » : l'ordre est fixe, la dernière activité (la
 mienne ou celle du club) en premier. Les
@@ -495,11 +496,13 @@ chaque couverture, calculé sur **ma** progression, jamais sur celle du club :
 - **pas commencé** : rien ;
 - **nouveau** : seul le dernier livre ajouté, tant qu'il n'est pas commencé —
   ruban écru, surpiqûre et étincelle Lucide (`sparkle`) lie de vin ;
-- **en cours** : ruban écru qu'un **brun noyer imprègne depuis le bout du V, à mon
-  %** (10 % au moins, sinon on ne le voit pas), comme une teinture qui monte dans
-  le tissu. Pas le lie de vin, réservé à « terminé ». Front **ondulé et fondu**, avec une ligne à peine plus foncée là où la
-  teinture s'accumule (comme le bord d'une aquarelle) : une coupe droite faisait
-  abrupte. Dans la partie teinte, la surpiqûre passe en crème ;
+- **en cours** : ruban écru que le **lie de vin de « terminé » imprègne depuis le
+  bout du V, à mon %** (10 % au moins, sinon on ne le voit pas), comme une
+  teinture qui monte dans le tissu : à 100 %, c'est le signet « terminé ». Une
+  seule couleur d'accent pour les états (le noyer faisait une couleur de plus).
+  Front **ondulé et net** (le fondu faisait flou), avec une ligne à peine plus
+  foncée là où la teinture s'accumule (comme le bord d'une aquarelle). Dans la
+  partie teinte, la surpiqûre passe en crème ;
 - **terminé** : ruban lie de vin, surpiqûre crème, coche Lucide (`check`) crème.
 
 Essais écartés : pastille en pourcentage « 58 % », anneau de progression sur flou
@@ -626,7 +629,7 @@ du textile réaliste.
 | Variante | Ruban | Surpiqûre | Icône Lucide | Pour |
 |---|---|---|---|---|
 | `done` | lie de vin `#8c3b4c` → `#5e1f2e` | crème | `check` crème | livre terminé |
-| `reading` | écru, imprégné de noyer `#8a6a52` → `#553d2e` à mon % | noyer / crème | — | livre en cours |
+| `reading` | écru, imprégné de lie de vin `#8c3b4c` → `#5e1f2e` à mon % | lie de vin / crème | — | livre en cours |
 | `new` | écru `#f3e9df` → `#e1cfbf` | lie de vin | `sparkle` lie de vin, **pleine** | dernier livre ajouté |
 
 **Pictogrammes : icônes Lucide posées sur le ruban**, jamais brodées ni dessinées
