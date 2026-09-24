@@ -50,7 +50,6 @@ import LeaderboardSection from '../../components/ui/LeaderboardSection';
 import { getAllUserPages } from '../../services/supabase/database';
 import { updateWidgetData } from '../../utils/widget';
 import { buildCaps, countAtCap, median } from '../../utils/track';
-import { useCoverPalette } from '../../hooks/useCoverPalette';
 import { useLeaderboardParticipants } from '../../hooks/useLeaderboardParticipants';
 import { useNotificationScheduler } from '../../hooks/useNotificationScheduler';
 import { useAuthStore } from '../../stores/authStore';
@@ -92,7 +91,6 @@ export default function HomeScreen() {
     challengesLoading,
     _hasHydrated,
   } = useProjectStore();
-  const coverPalette = useCoverPalette(activeChallenge);
   const loadAnnotations = useAnnotationStore((s) => s.loadAnnotations);
   const revealAfterSave = useAnnotationStore((s) => s.revealAfterSave);
   const notesChallengeId = useAnnotationStore((s) => s.challengeId);
@@ -388,8 +386,8 @@ export default function HomeScreen() {
   return (
     <PageTransition>
     <View style={styles.container}>
-      {/* Fond aux couleurs de la couverture du livre en cours */}
-      <CoverBackdrop palette={coverPalette} />
+      {/* Fond neutre en taches dégradées : plus les couleurs de la couverture */}
+      <CoverBackdrop />
 
       {/* Texture de fond "noise" semi-transparente */}
       <Image

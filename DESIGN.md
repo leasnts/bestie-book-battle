@@ -265,26 +265,26 @@ Tout ce qui pourrait un jour porter la couleur du club — barres de progression
 états actifs, accents de classement — doit lire cet emplacement dès maintenant.
 L'accent ne doit jamais être la seule information : le club daltonien existe.
 
-### Fond de l'accueil : les couleurs de la couverture
+### Fond de l'accueil : neutre
 
-En attendant la couleur du club, c'est **la couverture du livre en cours** qui
-colore l'accueil (`CoverBackdrop`) : sans rien derrière, le verre des cadres ne
-se voit pas. Quatre taches radiales douces sur `paper`, placées comme sur la
-maquette, texture noise par-dessus.
+L'accueil a un fond **neutre** (`CoverBackdrop` sans palette) : quatre taches
+radiales douces sur `paper`, placées comme sur la maquette, en beige, sable et
+chocolat clair (`NEUTRAL_BACKDROP` `#cdb8a3` / `#a88f7b` / `#e2d4c4`), texture
+noise par-dessus. Sans rien derrière, le verre des cadres ne se verrait pas.
 
-- **Extraction** (`utils/coverPalette.ts`) : vignette de 48 px de large, pixels
-  regroupés par teinte, les **3 couleurs dominantes** gardées. Gris, noirs et
-  blancs ignorés : une couverture noire ne donne jamais un fond noir.
-- **Stockage** : `challenges.cover_palette`, calculée une fois (à la création,
-  au changement de couverture, ou au premier affichage pour les anciennes). Même
-  fond pour tout le club, affiché sans attente.
-- **Dosage** : chaque tache monte au plus à 62 / 42 / 32 / 22 % d'opacité, **moins
-  si la couleur est sombre** : `text-tertiary` doit garder 5:1 dans un cadre en
-  verre posé dessus (voile `glassVeil` à 56 %). Les couleurs sont stockées brutes
-  et dosées à l'affichage : l'intensité se règle sans migration.
-- **Repli noyer** (ambre, noyer, sable) : pas de couverture, couverture en noir et
-  blanc, ou palette pas encore calculée.
-- **Changement de livre** : fondu de 400 ms, sauté avec « Réduire les animations ».
+Avant, les taches prenaient **les couleurs de la couverture** du livre en cours.
+Retiré le 2026-09-24 : ça faisait une couleur de plus sur l'écran, hors des
+trois tons. La couverture elle-même suffit à dire de quel livre on parle.
+
+La mécanique reste disponible pour un écran qui parlerait d'un seul livre
+(`<CoverBackdrop palette={…} />`) :
+- **Extraction** (`utils/coverPalette.ts`) : vignette de 48 px, les **3 couleurs
+  dominantes**, gris, noirs et blancs ignorés ;
+- **Stockage** : `challenges.cover_palette`, calculée une fois, même fond pour
+  tout le club ;
+- **Dosage** : 62 / 42 / 32 / 22 % d'opacité au plus, moins si la couleur est
+  sombre (`text-tertiary` garde 5:1 dans un cadre en verre posé dessus) ;
+- **Changement de palette** : fondu de 400 ms, sauté avec « Réduire les animations ».
 
 ## Typography
 
