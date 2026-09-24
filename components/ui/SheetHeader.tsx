@@ -88,22 +88,32 @@ export function sheetIconItem({
  * propre hauteur avec `useFitSheet`, plafonnée sous l'en-tête de l'accueil.
  */
 export function sheetScreenOptions(
-  title: string,
+  title: string | null,
   detents: number[] | 'fitToContents' = [0.65, 0.95],
 ): NativeStackNavigationOptions {
-  return {
+  const base: NativeStackNavigationOptions = {
     presentation: 'formSheet',
     sheetAllowedDetents: detents,
     sheetGrabberVisible: true,
     sheetExpandsWhenScrolledToEdge: true,
     // Rayon des coins volontairement non spécifié : iOS 26 applique le sien,
     // concentrique avec la courbure de l'écran.
+  };
+  // Pas de titre quand le contenu dit déjà ce que c'est (« Le livre » au-dessus
+  // de la couverture et du titre du livre…) : pas de barre du tout, le contenu
+  // commence sous la poignée (SHEET_TOP_INSET).
+  if (title === null) return { ...base, headerShown: false };
+  return {
+    ...base,
     headerShown: true,
     headerTitle: '',
     headerLargeTitle: false,
     unstable_headerLeftItems: () => [sheetTitleItem(title)],
   };
 }
+
+/** Sheet sans barre : marge du haut du contenu, pour passer sous la poignée */
+export const SHEET_TOP_INSET = 28;
 
 const styles = StyleSheet.create({
   title: {

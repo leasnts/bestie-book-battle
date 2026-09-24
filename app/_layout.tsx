@@ -328,10 +328,10 @@ function RootLayoutNav() {
       <Stack.Screen name="reactions/[id]" options={sheetScreenOptions('Réagir', [0.6, 0.95])} />
 
       {/* Journal d'une personne — posé sur le classement */}
-      <Stack.Screen name="participant/[id]" options={sheetScreenOptions('Journal', 'fitToContents')} />
+      <Stack.Screen name="participant/[id]" options={sheetScreenOptions(null, 'fitToContents')} />
 
       {/* Fiche du livre — fin, caps, club */}
-      <Stack.Screen name="book" options={sheetScreenOptions('Le livre', 'fitToContents')} />
+      <Stack.Screen name="book" options={sheetScreenOptions(null, 'fitToContents')} />
 
       {/* Bibliothèque : toutes mes lectures, sur des étagères, à la hauteur des étagères */}
       <Stack.Screen name="library" options={sheetScreenOptions('Mes lectures', 'fitToContents')} />

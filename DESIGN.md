@@ -533,6 +533,12 @@ contenu** (`fitToContents` + `useFitSheet`). S'il y en a trop, il monte au plus
 visibles au-dessus — et l'on fait défiler dedans. Les sheets de saisie (note,
 réactions) gardent leurs hauteurs d'arrêt, à cause du clavier.
 
+**Pas de titre quand le contenu le dit déjà** (Lea, 2026-09-24) : la fiche du
+livre (couverture + titre du livre) et le journal (avatar + nom + « Journal de
+lecture ») n'ont ni titre ni barre : `sheetScreenOptions(null)`, contenu sous la
+poignée (`SHEET_TOP_INSET`). Les autres gardent leur titre ferré à gauche
+(« Mes lectures », « Classement », « Nouvelle note », « Réagir »).
+
 Changer de livre ou en ajouter un se fait dans la **bibliothèque**, route
 `/library` en sheet natif titré **Mes lectures**, avec le **+** en verre
 (`GlassButton`) à droite du titre (même parcours que le + de la barre d'onglets).

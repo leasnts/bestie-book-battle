@@ -28,14 +28,18 @@ import { spacing } from '../utils/constants';
 const HOME_HEADER_HEIGHT = spacing.sm + 44 + spacing.sm;
 /** Barre du sheet (poignée + titre + boutons) : le contenu commence dessous */
 const SHEET_BAR_HEIGHT = 64;
+/** Sheet sans barre : il reste la place de la poignée au-dessus du contenu (mesuré) */
+const SHEET_GRABBER_HEIGHT = 20;
 
-export function useFitSheet() {
+export function useFitSheet({ withBar = true }: { withBar?: boolean } = {}) {
   const { height: windowHeight } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const [contentHeight, setContentHeight] = useState<number | null>(null);
 
   // Le sheet monte au plus jusque sous l'en-tête de l'accueil
-  const maxHeight = windowHeight - insets.top - HOME_HEADER_HEIGHT - SHEET_BAR_HEIGHT;
+  // (moins la barre du sheet quand il en a une : sheetScreenOptions(null) n'en a pas)
+  const maxHeight =
+    windowHeight - insets.top - HOME_HEADER_HEIGHT - (withBar ? SHEET_BAR_HEIGHT : SHEET_GRABBER_HEIGHT);
 
   const onContentSizeChange = useCallback((_width: number, height: number) => {
     setContentHeight(height);
