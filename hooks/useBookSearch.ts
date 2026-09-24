@@ -4,7 +4,8 @@ import type { BookSearchResult } from '../types/bookSearch';
 
 const DEBOUNCE_MS = 400;
 
-export function useBookSearch() {
+/** `withTrending: false` : pas de tendances à charger (l'onglet Explorer a ses étagères) */
+export function useBookSearch({ withTrending = true }: { withTrending?: boolean } = {}) {
   const [query, setQueryState] = useState('');
   const [results, setResults] = useState<BookSearchResult[]>([]);
   const [trending, setTrending] = useState<BookSearchResult[]>([]);
@@ -16,6 +17,7 @@ export function useBookSearch() {
 
   // Charger les trending au premier montage
   useEffect(() => {
+    if (!withTrending) return;
     let cancelled = false;
     setIsTrendingLoading(true);
 
@@ -31,7 +33,7 @@ export function useBookSearch() {
       });
 
     return () => { cancelled = true; };
-  }, []);
+  }, [withTrending]);
 
   const setQuery = useCallback((text: string) => {
     setQueryState(text);

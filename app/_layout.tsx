@@ -273,7 +273,7 @@ function RootLayoutNav() {
 
   return (
     <Stack screenOptions={{ headerShown: false }}>
-      {/* Onglets : lecture en cours, inspiration, profil (barre native iOS 26) */}
+      {/* Onglets : lecture en cours, explorer, profil (barre native iOS 26) */}
       <Stack.Screen
         name="(tabs)"
         options={{ headerShown: false }}
@@ -332,6 +332,9 @@ function RootLayoutNav() {
 
       {/* Fiche du livre — fin, caps, club */}
       <Stack.Screen name="book" options={sheetScreenOptions(null, 'fitToContents')} />
+
+      {/* Fiche d'un livre de l'onglet Explorer — lancer une lecture, envie, partage */}
+      <Stack.Screen name="explore-book" options={sheetScreenOptions(null, 'fitToContents')} />
 
       {/* Bibliothèque : toutes mes lectures, sur des étagères, à la hauteur des étagères */}
       <Stack.Screen name="library" options={sheetScreenOptions('Mes lectures', 'fitToContents')} />

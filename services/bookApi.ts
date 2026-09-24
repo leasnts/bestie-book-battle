@@ -1,7 +1,13 @@
-import type { BookSearchResult, GoogleBooksSearchResponse, OpenLibraryTrendingWork } from '../types/bookSearch';
+import type {
+  BookSearchResult,
+  GoogleBooksSearchResponse,
+  OpenLibrarySearchDoc,
+  OpenLibraryTrendingWork,
+} from '../types/bookSearch';
 import { withTimeout } from '../utils/withTimeout';
 
 const GOOGLE_BOOKS_API = 'https://www.googleapis.com/books/v1/volumes';
+const OPEN_LIBRARY_COVER = 'https://covers.openlibrary.org/b/id';
 
 /**
  * Nettoie une URL de couverture Google Books :
@@ -27,6 +33,16 @@ export async function searchBooks(
   maxResults = 10,
 ): Promise<BookSearchResult[]> {
   if (!query.trim()) return [];
+  // Google Books sans clé tombe parfois à court de quota (429) : Open Library prend le relais
+  try {
+    return await searchGoogleBooks(query, maxResults);
+  } catch (error) {
+    console.warn('[bookApi] Google Books indisponible, repli sur Open Library', error);
+    return searchOpenLibrary(query, maxResults);
+  }
+}
+
+async function searchGoogleBooks(query: string, maxResults: number): Promise<BookSearchResult[]> {
 
   const params = new URLSearchParams({
     q: query.trim(),
@@ -63,10 +79,49 @@ export async function searchBooks(
   });
 }
 
+// ── Recherche (Open Library) ─────────────────────────────────
+
+/**
+ * Recherche via Open Library : titre, auteur ou saga, éditions françaises
+ * d'abord (`lang=fre` : titre et couverture de l'édition française quand elle
+ * existe).
+ */
+export async function searchOpenLibrary(query: string, limit = 10): Promise<BookSearchResult[]> {
+  const params = new URLSearchParams({
+    q: query.trim(),
+    limit: String(limit),
+    lang: 'fre',
+    fields: 'key,title,author_name,cover_i,number_of_pages_median,first_publish_year,editions,editions.title,editions.cover_i,editions.language',
+  });
+
+  const response = await withTimeout(fetch(`https://openlibrary.org/search.json?${params}`), 8_000);
+  if (!response.ok) {
+    throw new Error(`Open Library search error: ${response.status}`);
+  }
+
+  const data: { docs: OpenLibrarySearchDoc[] } = await response.json();
+
+  return data.docs
+    .filter((doc) => doc.title)
+    .map((doc) => {
+      const edition = doc.editions?.docs?.[0];
+      const french = edition?.language?.includes('fre') ? edition : undefined;
+      const coverId = french?.cover_i ?? doc.cover_i;
+      return {
+        id: doc.key,
+        title: french?.title ?? doc.title,
+        author: doc.author_name?.join(', ') ?? '',
+        pageCount: doc.number_of_pages_median ?? null,
+        coverUrl: coverId ? `${OPEN_LIBRARY_COVER}/${coverId}-L.jpg` : null,
+        publisher: null,
+        publishedDate: doc.first_publish_year ? String(doc.first_publish_year) : null,
+      };
+    });
+}
+
 // ── Trending (Open Library) ──────────────────────────────────
 
 const OPEN_LIBRARY_TRENDING = 'https://openlibrary.org/trending/daily.json';
-const OPEN_LIBRARY_COVER = 'https://covers.openlibrary.org/b/id';
 
 /** Cache module-level : trending books + timestamp (TTL 1h) */
 let trendingCache: { books: BookSearchResult[]; fetchedAt: number } | null = null;
