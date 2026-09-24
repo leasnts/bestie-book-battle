@@ -4,21 +4,22 @@
  * Elle répond à « où en est le club, où j'en suis, et qu'est-ce qui m'attend »,
  * sans une phrase :
  *
- * - le **remplissage** va jusqu'à la médiane du club (la moitié du club est là) ;
+ * - deux **remplissages** : moi devant (lie de vin), le club derrière (lie de
+ *   vin clair, jusqu'à la médiane : la moitié du club est là) ;
  * - ma **pastille** (ma photo) est posée à mon pourcentage ;
- * - les **caps passés** sont de petits points neutres, que je les aie atteints ou
- *   non : la piste ne fait jamais de reproche ;
+ * - les **étapes** (caps passés ou à venir, et la fin) sont des ronds pleins,
+ *   de la couleur de la barre qui les a dépassées, dans une découpe de la barre ;
  * - le **cap en cours** est un drapeau, avec sa date dessous ;
- * - la **fin** est un rond au bout, avec sa date.
+ * - la date de fin est au bout.
  *
  * Tout est en pourcentage : les caps aussi, pour tomber au même endroit quelle
  * que soit l'édition de chacun.
  */
 
 import { Image } from 'expo-image';
-import { LinearGradient } from 'expo-linear-gradient';
 import { FlagIcon } from 'lucide-react-native';
-import React from 'react';
+import React, { useState } from 'react';
+import Svg, { Circle, Defs, G, LinearGradient as SvgGradient, Mask, Rect, Stop } from 'react-native-svg';
 import { StyleSheet, Text, View } from 'react-native';
 import { accentGradient, colors, fonts, inkAlpha } from '../../utils/constants';
 import { formatTrackDate, type TrackCap } from '../../utils/track';
@@ -54,34 +55,61 @@ export default function GoalTrack({
   leadingLabel,
 }: GoalTrackProps) {
   const currentCap = caps.find((cap) => cap.state === 'current') ?? null;
+  // Largeur de la piste, pour dessiner la barre découpée en SVG
+  const [railWidth, setRailWidth] = useState(0);
+  // Les étapes rondes (caps hors cap en cours, et la fin) : là où la barre est découpée
+  const stepPercents = [
+    ...caps.filter((cap) => cap.state !== 'current').map((cap) => cap.percent),
+    ...(endDate ? [100] : []),
+  ];
 
   return (
     <View
       accessible
       accessibilityLabel={trackLabel(clubPercent, myPercent, currentCap, endDate)}
     >
-      <View style={styles.track}>
-        <View style={styles.rail}>
-          {/*
-            Deux remplissages superposés, comme la barre d'une vidéo (lu / chargé) :
-            - derrière, en lie de vin clair, le club (médiane) ;
-            - devant, en lie de vin, MOI, jusqu'à ma photo.
-            Une seule barre pour le club faisait croire que j'avais atteint des
-            étapes que seul le club avait dépassées.
-          */}
-          <LinearGradient
-            colors={CLUB_GRADIENT}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={[styles.fill, { width: `${clubPercent}%` }]}
-          />
-          <LinearGradient
-            colors={accentGradient}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={[styles.fill, { width: `${myPercent}%` }]}
-          />
-        </View>
+      <View style={styles.track} onLayout={(e) => setRailWidth(e.nativeEvent.layout.width)}>
+        {/*
+          Deux remplissages superposés, comme la barre d'une vidéo (lu / chargé) :
+          derrière, en lie de vin clair, le club (médiane) ; devant, en lie de
+          vin, MOI, jusqu'à ma photo. Une seule barre pour le club faisait croire
+          que j'avais atteint des étapes que seul le club avait dépassées.
+
+          La barre est découpée autour de chaque étape (masque SVG) : un vrai
+          trou où l'on voit le fond, au lieu d'un liseré blanc qui ressortait
+          sur le verre.
+        */}
+        {railWidth > 0 && (
+          <Svg width={railWidth} height={RAIL_HEIGHT} style={styles.rail}>
+            <Defs>
+              <SvgGradient id="club" x1="0" y1="0" x2="1" y2="0">
+                <Stop offset="0" stopColor={CLUB_GRADIENT[0]} />
+                <Stop offset="1" stopColor={CLUB_GRADIENT[1]} />
+              </SvgGradient>
+              <SvgGradient id="me" x1="0" y1="0" x2="1" y2="0">
+                <Stop offset="0" stopColor={accentGradient[0]} />
+                <Stop offset="1" stopColor={accentGradient[1]} />
+              </SvgGradient>
+              <Mask id="cut" maskUnits="userSpaceOnUse" x={0} y={0} width={railWidth} height={RAIL_HEIGHT}>
+                <Rect x={0} y={0} width={railWidth} height={RAIL_HEIGHT} fill="#fff" />
+                {stepPercents.map((percent) => (
+                  <Circle
+                    key={percent}
+                    cx={(railWidth * percent) / 100}
+                    cy={RAIL_HEIGHT / 2}
+                    r={STEP_SIZE / 2 + STEP_GAP}
+                    fill="#000"
+                  />
+                ))}
+              </Mask>
+            </Defs>
+            <G mask="url(#cut)">
+              <Rect width={railWidth} height={RAIL_HEIGHT} rx={RAIL_HEIGHT / 2} fill={RAIL_COLOR} />
+              <Rect width={(railWidth * clubPercent) / 100} height={RAIL_HEIGHT} rx={RAIL_HEIGHT / 2} fill="url(#club)" />
+              <Rect width={(railWidth * myPercent) / 100} height={RAIL_HEIGHT} rx={RAIL_HEIGHT / 2} fill="url(#me)" />
+            </G>
+          </Svg>
+        )}
 
         {caps.map((cap) =>
           cap.state === 'current' ? (
@@ -176,8 +204,12 @@ function trackLabel(
 const RAIL_TOP = 12;
 const RAIL_HEIGHT = 6;
 const ME_SIZE = 20;
-/** Diamètre des étapes, liseré blanc compris : un peu plus gros que la barre */
-const STEP_SIZE = 13;
+/** Diamètre des étapes : un peu plus gros que la barre */
+const STEP_SIZE = 9;
+/** Le vide découpé dans la barre tout autour d'une étape */
+const STEP_GAP = 2;
+/** Le fond de la barre : l'encre à 10 % */
+const RAIL_COLOR = inkAlpha(0.1);
 /** Gris des étapes pas encore atteintes : le gris de la barre, mais opaque */
 const STEP_AHEAD = '#e2ddd8';
 /** Le club, derrière ma barre : le lie de vin éclairci sur le papier, opaque */
@@ -200,19 +232,7 @@ const styles = StyleSheet.create({
   rail: {
     position: 'absolute',
     left: 0,
-    right: 0,
     top: RAIL_TOP,
-    height: RAIL_HEIGHT,
-    borderRadius: RAIL_HEIGHT / 2,
-    backgroundColor: inkAlpha(0.1),
-    overflow: 'hidden',
-  },
-  fill: {
-    position: 'absolute',
-    left: 0,
-    top: 0,
-    bottom: 0,
-    borderRadius: RAIL_HEIGHT / 2,
   },
 
   /**
@@ -228,9 +248,6 @@ const styles = StyleSheet.create({
     height: STEP_SIZE,
     marginLeft: -STEP_SIZE / 2,
     borderRadius: STEP_SIZE / 2,
-    // Liseré blanc : le point se détache de la barre, posé dessus
-    borderWidth: 2,
-    borderColor: colors.white,
   },
   stepReached: {
     backgroundColor: colors.accent,

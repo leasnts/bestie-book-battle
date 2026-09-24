@@ -453,8 +453,9 @@ superposés**, comme la barre d'une vidéo (lu / chargé) : devant, en lie de vi
 **médiane** du club (pas la moyenne : trois lectrices rapides fausseraient le
 repère). Une seule barre pour le club faisait croire que j'avais atteint des
 étapes que seul le club avait dépassées. **Étapes** (caps et fin du livre) en
-ronds de 13 pt, pleins avec un **liseré blanc** de 2 pt qui les détache de la
-barre, un peu plus gros qu'elle : lie de
+ronds pleins de 9 pt, un peu plus gros que la barre, qui est **découpée** de
+2 pt tout autour (masque SVG) : un vrai vide où l'on voit le fond, qui détache le
+point. Pas de liseré blanc : il ressortait sur le verre, qui n'est pas blanc : lie de
 vin si **je** les ai dépassées, lie de vin clair (la même couleur que la barre
 du club) si seul le club les a dépassées, gris de la barre, opaque, sinon, cap en cours en
 drapeau daté, date de fin au bout — et **sur la ligne de la
