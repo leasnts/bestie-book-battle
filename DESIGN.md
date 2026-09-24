@@ -516,6 +516,11 @@ sélecteur.
 
 L'en-tête porte un seul bouton, la **bibliothèque** (`library-big`) à gauche,
 en `GlassButton` 44 pt (le même rond en verre que le +), et PopEyes au centre.
+**Verre translucide** (bouton bibliothèque, barre d'onglets, +) : le verre d'iOS
+26 né dans une vue qui apparaît **en fondu** reste transparent ; né à pleine
+opacité, il est blanc et laiteux sur le papier. Les écrans ont leur fondu
+(`PageTransition`), la barre d'onglets aussi (`FadeIn`). Constaté sur iOS 26.2,
+à revérifier aux mises à jour d'iOS.
 Pas de cloche : les notifications ne servent pas au quotidien, elles vivent
 dans **Profil › Notifications** (route `/activity`).
 

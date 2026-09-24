@@ -17,6 +17,11 @@
  * une lentille, sans le flouter : sur une petite pastille, on voyait la
  * couverture nette au travers.
  *
+ * Aspect translucide : le verre d'iOS 26 né dans une vue qui apparaît en fondu
+ * (opacité 0 → 1, cf. PageTransition, GlassTabBar) reste transparent ; né à
+ * pleine opacité, il est blanc et laiteux sur un fond clair. C'est le rendu que
+ * Lea veut : poser le verre dans une vue qui apparaît en fondu.
+ *
  * `rim` ajoute le liseré des boutons en verre d'iOS 26 : un filet d'encre très fin
  * qui dessine la forme même sur un fond blanc, doublé à l'intérieur d'un reflet
  * crème qui accroche la lumière en haut à gauche et en bas à droite.
