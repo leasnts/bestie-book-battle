@@ -23,7 +23,7 @@
  */
 
 import { Image } from 'expo-image';
-import { ChevronRightIcon, UsersIcon } from 'lucide-react-native';
+import { UsersIcon } from 'lucide-react-native';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import Animated, {
@@ -172,7 +172,6 @@ export default function LeaderboardSection({
         <View style={styles.count}>
           <UsersIcon size={15} color={colors.textTertiary} strokeWidth={2} />
           <Text style={styles.countText}>{ranked.length}</Text>
-          <ChevronRightIcon size={17} color={colors.textPlaceholder} strokeWidth={2} />
         </View>
       </View>
 

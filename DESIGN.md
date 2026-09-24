@@ -428,7 +428,7 @@ un trait pointillé, avec son rang réel.
 
 Dans le classement complet, **toucher une ligne ouvre le journal de lecture** de
 la personne (route `/participant/[id]`, sheet natif posé sur celui du
-classement). « Ma page › » ouvre le même écran, avec mon identifiant.
+classement). « Ma page » ouvre le même écran, avec mon identifiant. Aucun chevron › sur les trois cadres de l'accueil : toucher suffit, on comprend au premier essai (Lea, 2026-09-24).
 
 Sur l'accueil, **les lignes ne se touchent pas une par une** : c'est le cadre
 entier qui ouvre le classement complet. Deux cibles imbriquées rendaient le

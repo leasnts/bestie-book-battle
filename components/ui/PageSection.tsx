@@ -4,7 +4,7 @@
  * Deuxième question de l'accueil : où j'en suis. C'est aussi le geste principal
  * de l'app — enregistrer sa page en un geste.
  *
- * - En-tête : « Ma page › » ouvre mon journal ; à droite, ma série en **jours**
+ * - En-tête : « Ma page » (touchable, sans chevron) ouvre mon journal ; à droite, ma série en **jours**
  *   (jamais « soirs » : on ne suppose pas quand les gens lisent).
  * - Le sélecteur qui défile est gardé (pas de − / +), resserré pour tenir dans
  *   le cadre. Ma page est en **pages de mon édition**, d'où le « sur 624 ».
@@ -21,7 +21,7 @@
  * carnet (`NotesDoor`) montre ce qui compte à ce moment-là.
  */
 
-import { CheckIcon, ChevronRightIcon, FlameIcon, RotateCcwIcon, StickyNoteIcon } from 'lucide-react-native';
+import { CheckIcon, FlameIcon, RotateCcwIcon, StickyNoteIcon } from 'lucide-react-native';
 import React, { useState } from 'react';
 import { LayoutChangeEvent, StyleSheet, Text, View } from 'react-native';
 import { colors, fonts, inkAlpha, shadowAlpha, spacing } from '../../utils/constants';
@@ -41,7 +41,7 @@ interface PageSectionProps {
   onPageChange: (page: number) => void;
   onSave: () => void;
   onUndo: () => void;
-  /** « Ma page › » → mon journal */
+  /** « Ma page » → mon journal */
   onJournalPress: () => void;
   /** Noter ma page enregistrée. Sans elle, la place reste vide. */
   onNotePress?: () => void;
@@ -118,7 +118,6 @@ export default function PageSection({
           accessibilityHint="Ouvre mon journal de lecture"
         >
           <Text style={styles.title}>Ma page</Text>
-          <ChevronRightIcon size={15} color={colors.textPlaceholder} strokeWidth={2} />
         </PressableScale>
 
         {streakDays > 0 && (

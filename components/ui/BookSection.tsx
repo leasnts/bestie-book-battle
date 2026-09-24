@@ -14,7 +14,7 @@
  * réglages (fin, caps, club), plus aucun menu ⋮ sur l'accueil.
  */
 
-import { ChevronRightIcon, UsersIcon } from 'lucide-react-native';
+import { UsersIcon } from 'lucide-react-native';
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import type { Challenge } from '../../types/supabase';
@@ -81,7 +81,6 @@ export default function BookSection({
           )}
         </View>
 
-        <ChevronRightIcon size={18} color={colors.textPlaceholder} strokeWidth={2} />
       </View>
 
       {/* La piste, et à sa droite où en est le club */}
