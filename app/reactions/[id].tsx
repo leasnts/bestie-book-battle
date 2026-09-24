@@ -109,7 +109,7 @@ const styles = StyleSheet.create({
     borderColor: 'transparent',
   },
   cellOn: {
-    borderColor: colors.dark900,
+    borderColor: colors.accent,
     backgroundColor: colors.bgLight,
   },
   emoji: {

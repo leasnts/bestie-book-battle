@@ -16,10 +16,11 @@
  */
 
 import { Image } from 'expo-image';
+import { LinearGradient } from 'expo-linear-gradient';
 import { FlagIcon } from 'lucide-react-native';
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { colors, fonts, inkAlpha } from '../../utils/constants';
+import { accentGradient, colors, fonts, inkAlpha } from '../../utils/constants';
 import { formatTrackDate, type TrackCap } from '../../utils/track';
 
 interface GoalTrackProps {
@@ -52,7 +53,13 @@ export default function GoalTrack({
     >
       <View style={styles.track}>
         <View style={styles.rail}>
-          <View style={[styles.fill, { width: `${clubPercent}%` }]} />
+          {/* Progression : l'accent, en dégradé (jamais d'aplat) */}
+          <LinearGradient
+            colors={accentGradient}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={[styles.fill, { width: `${clubPercent}%` }]}
+          />
         </View>
 
         {caps.map((cap) =>
@@ -160,10 +167,9 @@ const styles = StyleSheet.create({
     top: 0,
     bottom: 0,
     borderRadius: RAIL_HEIGHT / 2,
-    backgroundColor: colors.dark900,
   },
 
-  /** Cap passé : un point plein, sans jugement */
+  /** Cap passé : un point plein, sans jugement, de l'accent de la progression */
   pastCap: {
     position: 'absolute',
     top: RAIL_TOP - 1,
@@ -171,7 +177,7 @@ const styles = StyleSheet.create({
     height: 8,
     marginLeft: -4,
     borderRadius: 4,
-    backgroundColor: colors.dark900,
+    backgroundColor: colors.accent,
     borderWidth: 1.5,
     borderColor: colors.white,
   },

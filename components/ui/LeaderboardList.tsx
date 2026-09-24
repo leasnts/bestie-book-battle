@@ -329,8 +329,9 @@ const styles = StyleSheet.create({
     // Compression depuis la gauche, pas depuis le centre
     transformOrigin: 'left',
   },
+  // Ma barre : l'accent, comme toute progression (6 pt : un filet, donc uni)
   progressFillMe: {
-    backgroundColor: colors.dark900,
+    backgroundColor: colors.accent,
   },
 
   // ═══ BADGE STREAK ═══

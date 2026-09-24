@@ -276,7 +276,7 @@ const styles = StyleSheet.create({
     },
     cardSelected: {
         backgroundColor: colors.white,
-        borderColor: colors.dark900,
+        borderColor: colors.accent,
         ...shadows.cardSelected,
     },
     cardInactive: {

@@ -154,14 +154,35 @@ typographie, mouvement, illustration.
 
 ## Colors
 
-**Stratégie : restrained.** Neutres teintés + couleur uniquement porteuse de sens.
-Aucune couleur de marque primaire n'existe, et c'est délibéré.
+**Stratégie : restrained.** Neutres teintés + **une seule couleur d'accent, le lie
+de vin**, et des couleurs uniquement porteuses de sens. Décidé par Lea le
+2026-09-24 (#73) : avant, chaque écran prenait sa teinte (noyer, encre, lie de
+vin…) et ça partait dans tous les sens.
+
+### L'accent lie de vin
+
+| Token | Valeur | Rôle |
+|---|---|---|
+| `accentGradient` | `#8c3b4c` → `#5e1f2e` | Toute surface remplie d'accent, toujours en dégradé. Crème dessus : 7,9:1. |
+| `colors.accent` | `#7a2e3e` | Traits d'accent : bordures, points, icônes, filets, interrupteur. |
+
+**La règle : l'encre agit, l'accent dit où l'on en est.**
+- **Accent** : ce qui dit un **état** ou un **choix** — progression (piste de
+  l'accueil, ma barre au classement, caps passés, signets de la bibliothèque),
+  sélection (filtres, chips du carnet, cartes et catégories choisies, réaction
+  choisie), interrupteur activé, onglet actif.
+- **Encre** : les **actions** (boutons primaires, + en verre), le texte, les
+  repères à atteindre (cap en cours, fin du livre).
+- **Neutre** : le décor (étagères, aquarelle, papier).
+
+L'accent est un **emplacement unique** : c'est lui qu'une couleur de club
+remplacera un jour (cf. « La couleur appartient au club »).
 
 ### Encres et papiers
 
 | Token | Valeur | Rôle |
 |---|---|---|
-| `ink` | `#33231a` | Encre noyer foncé. Texte principal, boutons primaires, barres de progression remplies. |
+| `ink` | `#33231a` | Encre noyer foncé. Texte principal, boutons primaires. |
 | `ink-deep` | `#1e140e` | Fond du splash. Base de toutes les ombres. |
 | `ink-panel` | `#2a1c14` | Fond des cartes livre. |
 | `paper` | `#f5f3ef` | Fond d'app. Porte une texture noise à 5% d'opacité. |
@@ -220,8 +241,9 @@ telles — non tranché.
 ### La couleur appartient au club, pas à l'app
 
 Feature à venir, et principe directeur : **chaque book club choisit sa couleur**.
-Le système reste monochrome pour que cette couleur ait de la place, et c'est elle
-qui signe l'identité d'un club donné.
+Le système reste sobre pour que cette couleur ait de la place, et c'est elle
+qui signe l'identité d'un club donné. En attendant, l'emplacement d'accent porte
+le lie de vin (`accent`, `accentGradient`).
 
 Conséquences sur la construction : réserver un emplacement d'accent unique,
 paramétrable par challenge, plutôt que de disséminer des couleurs codées en dur.
@@ -464,7 +486,7 @@ Changer de livre ou en ajouter un se fait dans la **bibliothèque**, route
 (`GlassButton`) à droite du titre (même parcours que le + de la barre d'onglets).
 Dessous, quatre capsules de filtre (`FilterChips`) : **Tout**, **En cours**,
 **Non lus**, **Lus**, une toujours sélectionnée (Tout par défaut). Carrés arrondis
-(8 pt), pas des pilules. Sélectionnée : **lie de vin** en dégradé (`wineGradient`,
+(8 pt), pas des pilules. Sélectionnée : **lie de vin** en dégradé (`accentGradient`,
 la couleur d'accent, la même que les signets), texte crème ; sinon contour sur
 fond blanc. Les filtres passent
 **par-dessus** l'aquarelle du coin (elle est dans l'en-tête de la liste, dessous). Le filtre n'est pas retenu et le sheet ne rétrécit pas quand on

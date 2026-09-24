@@ -304,7 +304,7 @@ export default function ProfileScreen() {
           <Switch
             value={notificationsEnabled}
             onValueChange={handleToggleNotifications}
-            trackColor={{ false: colors.border, true: colors.dark900 }}
+            trackColor={{ false: colors.border, true: colors.accent }}
             thumbColor={colors.white}
           />
         </View>
@@ -985,7 +985,7 @@ const inviteStyles = StyleSheet.create({
     backgroundColor: colors.bgSecondary,
   },
   bookCardSelected: {
-    borderColor: colors.dark900,
+    borderColor: colors.accent,
     backgroundColor: colors.white,
   },
   bookCardCover: {

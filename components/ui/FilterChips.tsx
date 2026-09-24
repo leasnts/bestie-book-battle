@@ -13,7 +13,7 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { borderRadius, colors, fonts, inkAlpha, spacing, wineGradient } from '../../utils/constants';
+import { borderRadius, colors, fonts, inkAlpha, spacing, accentGradient } from '../../utils/constants';
 import PressableScale from './PressableScale';
 
 interface FilterChipsProps<K extends string> {
@@ -42,7 +42,7 @@ export default function FilterChips<K extends string>({ options, value, onChange
             accessibilityState={{ selected }}
           >
             {selected && (
-              <LinearGradient colors={wineGradient} style={StyleSheet.absoluteFill} />
+              <LinearGradient colors={accentGradient} style={StyleSheet.absoluteFill} />
             )}
             <Text style={[styles.label, selected && styles.labelSelected]}>{option.label}</Text>
           </PressableScale>

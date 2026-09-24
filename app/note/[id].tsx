@@ -507,7 +507,7 @@ const styles = StyleSheet.create({
     borderColor: 'transparent',
   },
   emojiButtonOn: {
-    borderColor: colors.dark900,
+    borderColor: colors.accent,
   },
   emojiText: {
     fontSize: 22,
@@ -530,7 +530,7 @@ const styles = StyleSheet.create({
     borderColor: 'transparent',
   },
   categoryOn: {
-    borderColor: colors.dark900,
+    borderColor: colors.accent,
   },
   categoryText: {
     fontFamily: fonts.bodyExtraBold,
