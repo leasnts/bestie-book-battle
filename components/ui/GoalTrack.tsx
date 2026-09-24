@@ -166,6 +166,8 @@ const RAIL_HEIGHT = 6;
 const ME_SIZE = 20;
 /** Diamètre des étapes, un peu plus gros que la barre */
 const STEP_SIZE = 10;
+/** Gris des étapes pas encore atteintes, opaque */
+const STEP_AHEAD = '#d2cbc5';
 
 const styles = StyleSheet.create({
   track: {
@@ -206,8 +208,10 @@ const styles = StyleSheet.create({
   stepReached: {
     backgroundColor: colors.accent,
   },
+  // Gris opaque (l'encre à 20 % sur le papier) : un gris transparent laissait
+  // voir la barre à travers le point
   stepAhead: {
-    backgroundColor: inkAlpha(0.2),
+    backgroundColor: STEP_AHEAD,
   },
   /** Cap en cours : un trait qui traverse la piste, drapeau en haut */
   capMark: {
