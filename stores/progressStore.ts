@@ -22,7 +22,6 @@ import {
   getChallengeProgress,
   getUserProgress,
   updateUserProgress,
-  updateUserTotalPages as updateUserTotalPagesDb,
   getChallengeParticipants,
   getUserHistory,
   getChallengeHistory,
@@ -34,6 +33,8 @@ import {
   unsubscribeChannel,
 } from '../services/supabase/realtime';
 import { handleRealtimeProgressUpdate } from '../services/notificationTriggers';
+import { saveMyEdition as saveMyEditionDb, type MyEditionInput } from '../services/myEdition';
+import { useProjectStore } from './projectStore';
 
 /**
  * Interface du store de progression
@@ -66,10 +67,11 @@ interface ProgressStore {
     userId: string,
     newPage: number
   ) => Promise<UserProgress>;
-  updateUserTotalPages: (
+  /** Mes pages, ma couverture, mon éditeur : mon édition du livre */
+  saveMyEdition: (
     challengeId: string,
     userId: string,
-    totalPages: number
+    edition: MyEditionInput
   ) => Promise<UserProgress>;
 
   // Actions - Subscriptions temps réel
@@ -263,35 +265,33 @@ export const useProgressStore = create<ProgressStore>()(
     }
   },
 
-  // ===== Action : Mettre à jour le total de pages du participant =====
-  updateUserTotalPages: async (challengeId, userId, totalPages) => {
+  // ===== Action : Enregistrer mon édition (pages, couverture, éditeur) =====
+  saveMyEdition: async (challengeId, userId, edition) => {
     try {
-      const updatedProgress = await updateUserTotalPagesDb(
-        challengeId,
-        userId,
-        totalPages
-      );
+      const updatedProgress = await saveMyEditionDb(challengeId, userId, edition);
+      const isMine = (p: UserProgress | null) =>
+        p?.user_id === userId && p.challenge_id === challengeId;
 
-      // Mettre à jour la progression dans la liste
       set((state) => ({
-        progressList: state.progressList.map((p) =>
-          p.user_id === userId && p.challenge_id === challengeId
-            ? updatedProgress
-            : p
-        ),
-        currentUserProgress:
-          state.currentUserProgress?.user_id === userId
-            ? updatedProgress
-            : state.currentUserProgress,
+        progressList: state.progressList.map((p) => (isMine(p) ? updatedProgress : p)),
+        currentUserProgress: isMine(state.currentUserProgress)
+          ? updatedProgress
+          : state.currentUserProgress,
       }));
+      // La bibliothèque et l'accueil lisent ma couverture dans ce cache
+      useProjectStore
+        .getState()
+        .patchMyProgressLocally(challengeId, { cover_url: updatedProgress.cover_url });
 
-      // Recharger les participants pour mettre à jour le classement
-      const participants = await getChallengeParticipants(challengeId);
-      set({ participants });
+      // Recharger les participants : les pages changent le classement
+      if (edition.totalPages !== undefined) {
+        const participants = await getChallengeParticipants(challengeId);
+        set({ participants });
+      }
 
       return updatedProgress;
     } catch (error: any) {
-      console.error('Update user total pages error:', error);
+      console.error('Save my edition error:', error);
       throw error;
     }
   },

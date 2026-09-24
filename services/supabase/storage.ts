@@ -190,18 +190,21 @@ export async function deleteProfilePhoto(userId: string): Promise<void> {
  * Process :
  * 1. Lit le fichier depuis l'URI
  * 2. Upload vers Supabase Storage dans le bucket book-covers
- * 3. Le fichier est stocké sous : {challengeId}/cover.jpg
+ * 3. Le fichier est stocké sous : {challengeId}/cover.jpg (celle du bbb)
+ *    ou {challengeId}/{userId}.jpg (celle de mon édition)
  * 4. Retourne l'URL publique de l'image
  * 
  * Note : Si une couverture existe déjà, elle sera écrasée
  * 
  * @param challengeId - L'ID du challenge
  * @param imageUri - L'URI locale de l'image (depuis ImagePicker)
+ * @param userId - Pour la couverture de MON édition ; absent = celle du bbb
  * @returns L'URL publique de la couverture uploadée
  */
 export async function uploadBookCover(
   challengeId: string,
-  imageUri: string
+  imageUri: string,
+  userId?: string
 ): Promise<UploadResult> {
   try {
     // Lire le fichier en base64 depuis son URI locale
@@ -214,7 +217,7 @@ export async function uploadBookCover(
     // Toujours uploader en JPEG : c'est 3-5x plus léger que PNG
     // et la qualité est largement suffisante pour une couverture de livre
     const mimeType = 'image/jpeg';
-    const fileName = 'cover.jpg';
+    const fileName = userId ? `${userId}.jpg` : 'cover.jpg';
     const filePath = `${challengeId}/${fileName}`;
 
     // Convertir la chaîne base64 en ArrayBuffer
@@ -235,7 +238,7 @@ export async function uploadBookCover(
     }
 
     // Ajoute un timestamp pour invalider le cache expo-image :
-    // l'URL est toujours cover.jpg (même chemin Supabase, upsert)
+    // l'URL est toujours la même (même chemin Supabase, upsert)
     // donc sans le ?t=... le composant Image afficherait l'ancienne version mise en cache.
     const publicUrl = getBookCoverUrl(challengeId, fileName) + `?t=${Date.now()}`;
 

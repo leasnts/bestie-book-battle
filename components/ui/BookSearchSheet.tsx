@@ -20,6 +20,8 @@ interface BookSearchSheetProps {
   visible: boolean;
   onClose: () => void;
   onSelectBook: (book: BookSearchResult) => void;
+  /** Recherche déjà tapée à l'ouverture (ex. : le titre du bbb, pour trouver son édition) */
+  initialQuery?: string;
 }
 
 /** Extrait l'année d'une date Google Books (ex: "2003-06-26" → "2003") */
@@ -82,7 +84,7 @@ function BookResultItem({
   );
 }
 
-export default function BookSearchSheet({ visible, onClose, onSelectBook }: BookSearchSheetProps) {
+export default function BookSearchSheet({ visible, onClose, onSelectBook, initialQuery }: BookSearchSheetProps) {
   const insets = useSafeAreaInsets();
   const { query, setQuery, results, trending, isSearching, isTrendingLoading, error, clearResults } = useBookSearch();
   const inputRef = useRef<TextInput>(null);
@@ -92,12 +94,13 @@ export default function BookSearchSheet({ visible, onClose, onSelectBook }: Book
     if (!visible) clearResults();
   }, [visible, clearResults]);
 
-  // Auto-focus l'input à l'ouverture
+  // Auto-focus l'input à l'ouverture, recherche pré-remplie si on en a une
   useEffect(() => {
     if (visible) {
+      if (initialQuery) setQuery(initialQuery);
       setTimeout(() => inputRef.current?.focus(), 350);
     }
-  }, [visible]);
+  }, [visible, initialQuery, setQuery]);
 
   const handleSelect = (book: BookSearchResult) => {
     onSelectBook(book);

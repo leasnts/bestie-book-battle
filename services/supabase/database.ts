@@ -216,7 +216,7 @@ export async function getMyBookProgress(userId: string): Promise<MyBookProgress[
   const { data, error } = await withTimeout(
     supabase
       .from('user_progress')
-      .select('challenge_id, current_page, progress_percentage, last_updated_at, created_at')
+      .select('challenge_id, current_page, progress_percentage, last_updated_at, created_at, cover_url')
       .eq('user_id', userId),
     10_000
   );
@@ -406,6 +406,8 @@ export async function getChallengeParticipants(
         current_page: item.current_page,
         progress_percentage: item.progress_percentage,
         total_pages: item.total_pages,
+        cover_url: item.cover_url ?? null,
+        publisher: item.publisher ?? null,
         streak_count: item.streak_count,
         last_streak_date: item.last_streak_date,
         last_updated_at: item.last_updated_at,
@@ -482,39 +484,33 @@ export async function updateUserProgress(
 }
 
 /**
- * Mettre à jour le nombre total de pages d'un participant
+ * Enregistrer mon édition d'un livre : pages, couverture, éditeur
  *
- * Permet à chaque participant d'avoir son propre nombre de pages
- * (édition différente : Kindle, poche, broché, etc.)
- * Le trigger recalcule automatiquement le pourcentage de progression.
+ * Seuls les champs fournis sont modifiés. `cover_url: null` = revenir à la
+ * couverture du bbb. Le trigger recalcule le pourcentage si les pages changent.
  *
  * @param challengeId - L'ID du challenge
  * @param userId - L'ID de l'utilisateur
- * @param totalPages - Le nombre de pages de l'édition du participant
+ * @param edition - Les champs de mon édition à enregistrer
  */
-export async function updateUserTotalPages(
+export async function updateMyEdition(
   challengeId: string,
   userId: string,
-  totalPages: number
+  edition: Pick<UserProgressUpdate, 'total_pages' | 'cover_url' | 'publisher'>
 ): Promise<UserProgress> {
-  try {
-    const { data, error } = await supabase
-      .from('user_progress')
-      .update({
-        total_pages: totalPages,
-        last_updated_at: new Date().toISOString(),
-      })
-      .eq('challenge_id', challengeId)
-      .eq('user_id', userId)
-      .select()
-      .single();
+  const { data, error } = await supabase
+    .from('user_progress')
+    .update({ ...edition, last_updated_at: new Date().toISOString() })
+    .eq('challenge_id', challengeId)
+    .eq('user_id', userId)
+    .select()
+    .single();
 
-    if (error) throw error;
-    return data;
-  } catch (error: any) {
-    console.error('Erreur lors de la mise à jour du total de pages:', error);
+  if (error) {
+    console.error("Erreur lors de l'enregistrement de mon édition:", error);
     throw error;
   }
+  return data;
 }
 
 /**

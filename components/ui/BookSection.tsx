@@ -29,6 +29,8 @@ import GoalTrack from './GoalTrack';
 
 interface BookSectionProps {
   challenge: Challenge;
+  /** La couverture de mon édition, sinon celle du bbb */
+  coverUrl: string | null;
   /** Médiane du club, 0 à 100 */
   clubPercent: number;
   /** Ma progression, 0 à 100 */
@@ -44,6 +46,7 @@ interface BookSectionProps {
 
 export default function BookSection({
   challenge,
+  coverUrl,
   clubPercent,
   myPercent,
   myPhotoUrl,
@@ -69,7 +72,7 @@ export default function BookSection({
             textsHeight > 0 && { width: textsHeight * COVER_RATIO, height: textsHeight },
           ]}
         >
-          <BookCover coverUrl={challenge.cover_url} done={isChallengeDone(challenge)} />
+          <BookCover coverUrl={coverUrl} done={isChallengeDone(challenge)} />
         </View>
 
         <View style={styles.texts} onLayout={(e) => setTextsHeight(e.nativeEvent.layout.height)}>

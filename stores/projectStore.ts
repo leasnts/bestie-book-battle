@@ -61,6 +61,8 @@ interface ProjectStore {
   loadUserChallenges: (userId: string) => Promise<void>;
   /** Recharge ma progression sur chacun de mes livres (bibliothèque) */
   loadMyProgress: (userId: string) => Promise<void>;
+  /** Mettre à jour ma progression d'un livre en local (ex. : nouvelle couverture de mon édition) */
+  patchMyProgressLocally: (challengeId: string, updates: Partial<MyBookProgress>) => void;
   loadChallenge: (challengeId: string) => Promise<void>;
   refreshCurrentChallenge: () => Promise<void>;
 
@@ -518,6 +520,14 @@ export const useProjectStore = create<ProjectStore>()(
     } catch (error) {
       console.warn('loadMyProgress:', error);
     }
+  },
+
+  patchMyProgressLocally: (challengeId, updates) => {
+    set((state) => {
+      const current = state.myProgress[challengeId];
+      if (!current) return state;
+      return { myProgress: { ...state.myProgress, [challengeId]: { ...current, ...updates } } };
+    });
   },
 
   // ===== Action : Réinitialiser =====

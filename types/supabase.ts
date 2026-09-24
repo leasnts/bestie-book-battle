@@ -167,6 +167,8 @@ export interface Database {
           streak_count: number;
           last_streak_date: string | null; // Date only (YYYY-MM-DD)
           total_pages: number | null; // Nombre de pages de l'édition du participant
+          cover_url: string | null; // Couverture de son édition, null = celle du bbb
+          publisher: string | null; // Éditeur de son édition, si la recherche l'a donné
           last_updated_at: string; // ISO timestamp
           created_at: string; // ISO timestamp
         };
@@ -177,6 +179,8 @@ export interface Database {
           current_page?: number;
           progress_percentage?: number;
           total_pages?: number | null;
+          cover_url?: string | null;
+          publisher?: string | null;
           streak_count?: number;
           last_streak_date?: string | null;
           last_updated_at?: string;
@@ -189,6 +193,8 @@ export interface Database {
           current_page?: number;
           progress_percentage?: number;
           total_pages?: number | null;
+          cover_url?: string | null;
+          publisher?: string | null;
           streak_count?: number;
           last_streak_date?: string | null;
           last_updated_at?: string;
@@ -404,7 +410,7 @@ export type UserProgress = Database['public']['Tables']['user_progress']['Row'];
 /** Ma progression sur un livre, réduite à ce dont la bibliothèque a besoin (état et tri) */
 export type MyBookProgress = Pick<
   UserProgress,
-  'challenge_id' | 'current_page' | 'progress_percentage' | 'last_updated_at' | 'created_at'
+  'challenge_id' | 'current_page' | 'progress_percentage' | 'last_updated_at' | 'created_at' | 'cover_url'
 >;
 export type ProgressHistory = Database['public']['Tables']['progress_history']['Row'];
 export type ChallengeGoal = Database['public']['Tables']['challenge_goals']['Row'];

@@ -3,6 +3,9 @@
  *
  * Bottom sheet pour modifier les informations d'un livre.
  *
+ * `editionOnly` : pour un membre qui n'a pas créé le bbb. Il ne règle que SON
+ * édition (couverture, pages) ; le titre et l'auteur appartiennent au bbb.
+ *
  * Le crop de la cover est un overlay plein écran rendu à l'intérieur
  * du MÊME Modal (via la prop `overlay` de BottomSheet).
  * Aucun Modal imbriqué → aucun conflit iOS.
@@ -251,6 +254,8 @@ interface EditBookSheetProps {
     totalPages: number;
     coverUrl: string | null;
   };
+  /** Seulement mon édition : couverture et pages, sans titre ni auteur */
+  editionOnly?: boolean;
   onSave: (data: {
     title: string;
     author: string;
@@ -263,6 +268,7 @@ export default function EditBookSheet({
   visible,
   onClose,
   currentBook,
+  editionOnly = false,
   onSave,
 }: EditBookSheetProps) {
   const insets = useSafeAreaInsets();
@@ -334,8 +340,10 @@ export default function EditBookSheet({
   }, []);
 
   const handleSave = useCallback(async () => {
-    if (!title.trim()) { Alert.alert('Titre manquant', 'Entre un titre pour le livre.'); return; }
-    if (!author.trim()) { Alert.alert('Auteur manquant', "Entre un nom d'auteur."); return; }
+    if (!editionOnly) {
+      if (!title.trim()) { Alert.alert('Titre manquant', 'Entre un titre pour le livre.'); return; }
+      if (!author.trim()) { Alert.alert('Auteur manquant', "Entre un nom d'auteur."); return; }
+    }
     const pages = parseInt(totalPages, 10);
     if (!pages || pages <= 0) { Alert.alert('Pages invalides', 'Entre un nombre de pages valide.'); return; }
 
@@ -350,7 +358,7 @@ export default function EditBookSheet({
     } finally {
       setIsSaving(false);
     }
-  }, [title, author, totalPages, coverUri, onSave, onClose]);
+  }, [editionOnly, title, author, totalPages, coverUri, onSave, onClose]);
 
   const displayCoverUrl = coverUri || currentBook.coverUrl;
 
@@ -383,7 +391,7 @@ export default function EditBookSheet({
       <BottomSheet visible={visible} onClose={onClose} overlay={cropOverlay}>
         {/* ── Titre fixe (ne scroll pas) ── */}
         <View style={styles.titleRow}>
-          <Text style={styles.title}>Modifier le livre</Text>
+          <Text style={styles.title}>{editionOnly ? 'Mon édition' : 'Modifier le livre'}</Text>
           <Pressable
             onPress={onClose}
             hitSlop={12}
@@ -421,30 +429,34 @@ export default function EditBookSheet({
           </Pressable>
 
           <View style={styles.formContainer}>
-            <TextInput
-              ref={titleRef}
-              style={styles.input}
-              placeholder="Titre du livre"
-              placeholderTextColor={colors.textPlaceholder}
-              value={title}
-              onChangeText={setTitle}
-              autoCapitalize="words"
-              returnKeyType="next"
-              onSubmitEditing={() => authorRef.current?.focus()}
-              onFocus={() => setTimeout(() => scrollRef.current?.scrollTo({ y: 0, animated: true }), 300)}
-            />
-            <TextInput
-              ref={authorRef}
-              style={styles.input}
-              placeholder="Auteur du livre"
-              placeholderTextColor={colors.textPlaceholder}
-              value={author}
-              onChangeText={setAuthor}
-              autoCapitalize="words"
-              returnKeyType="next"
-              onSubmitEditing={() => pagesRef.current?.focus()}
-              onFocus={() => setTimeout(() => scrollRef.current?.scrollTo({ y: 80, animated: true }), 300)}
-            />
+            {!editionOnly && (
+              <>
+                <TextInput
+                  ref={titleRef}
+                  style={styles.input}
+                  placeholder="Titre du livre"
+                  placeholderTextColor={colors.textPlaceholder}
+                  value={title}
+                  onChangeText={setTitle}
+                  autoCapitalize="words"
+                  returnKeyType="next"
+                  onSubmitEditing={() => authorRef.current?.focus()}
+                  onFocus={() => setTimeout(() => scrollRef.current?.scrollTo({ y: 0, animated: true }), 300)}
+                />
+                <TextInput
+                  ref={authorRef}
+                  style={styles.input}
+                  placeholder="Auteur du livre"
+                  placeholderTextColor={colors.textPlaceholder}
+                  value={author}
+                  onChangeText={setAuthor}
+                  autoCapitalize="words"
+                  returnKeyType="next"
+                  onSubmitEditing={() => pagesRef.current?.focus()}
+                  onFocus={() => setTimeout(() => scrollRef.current?.scrollTo({ y: 80, animated: true }), 300)}
+                />
+              </>
+            )}
             <TextInput
               ref={pagesRef}
               style={styles.input}
