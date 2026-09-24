@@ -2,7 +2,7 @@
  * Onglet Explorer — trouver la prochaine lecture du club.
  *
  *    ┌───────────────────────────────┐
- *    │           Explorer            │
+ *    │ Explorer                      │
  *    │ ( 🔍 Titre, auteur, saga    ) │
  *    │                               │
  *    │ ♥ Mes envies                  │
@@ -24,7 +24,8 @@
  * Toucher un livre ouvre sa fiche (route /explore-book, sheet natif) : lancer
  * une lecture, le garder en envie, le partager.
  *
- * Même habillage que l'accueil : fond neutre en taches, texture, titre centré.
+ * Même habillage que l'accueil : fond neutre en taches, texture. Titre ferré à
+ * gauche, comme tous les titres de l'app.
  */
 
 import { Image } from 'expo-image';
@@ -172,8 +173,8 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.lg,
     gap: spacing.lg,
   },
+  // Ferré à gauche : aucun titre centré dans l'app
   headerTitle: {
-    textAlign: 'center',
     fontFamily: fonts.display,
     fontSize: 22,
     lineHeight: 28,

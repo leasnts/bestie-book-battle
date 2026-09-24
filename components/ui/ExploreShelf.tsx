@@ -9,9 +9,12 @@
  *   ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░   ← barre fixe, les livres glissent derrière
  *
  * La barre ne défile pas : elle reste posée sous la rangée, et les couvertures
- * passent derrière elle comme sur une vraie étagère.
+ * passent derrière elle comme sur une vraie étagère. Aux deux bords de
+ * l'écran, les couvertures s'effacent en fondu dans le papier au lieu d'être
+ * coupées net.
  */
 
+import { LinearGradient } from 'expo-linear-gradient';
 import type { LucideIcon } from 'lucide-react-native';
 import React from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -25,6 +28,10 @@ import PressableScale from './PressableScale';
 const COVER_H = 110;
 const COVER_W = Math.round(COVER_H * COVER_RATIO);
 const SIDE = spacing.lg;
+/** Largeur du fondu aux bords de l'écran */
+const FADE_W = spacing['6xl'];
+/** Le papier (bgLight #f5f3ef) transparent : un fondu vers `transparent` grise */
+const PAPER_CLEAR = 'rgba(245,243,239,0)';
 
 interface ExploreShelfProps {
   label: string;
@@ -64,6 +71,24 @@ export default function ExploreShelf({ label, icon: Icon, books, onSelect }: Exp
           ))}
         </ScrollView>
 
+        {/* Fondus des bords, sous la barre : le papier reprend le dessus */}
+        <LinearGradient
+          colors={[colors.bgLight, colors.bgLight, PAPER_CLEAR]}
+          locations={[0, 0.2, 1]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          style={[styles.fade, styles.fadeLeft]}
+          pointerEvents="none"
+        />
+        <LinearGradient
+          colors={[PAPER_CLEAR, colors.bgLight, colors.bgLight]}
+          locations={[0, 0.8, 1]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          style={[styles.fade, styles.fadeRight]}
+          pointerEvents="none"
+        />
+
         <ShelfBar style={styles.bar} />
       </View>
     </View>
@@ -99,6 +124,18 @@ const styles = StyleSheet.create({
   cover: {
     width: COVER_W,
     height: COVER_H,
+  },
+  fade: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    width: FADE_W,
+  },
+  fadeLeft: {
+    left: 0,
+  },
+  fadeRight: {
+    right: 0,
   },
   bar: {
     left: SIDE,
