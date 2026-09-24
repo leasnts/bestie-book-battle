@@ -39,6 +39,8 @@ interface GlassSectionProps {
   accessibilityHint?: string;
   /** Mise en page du cadre dans l'écran (hauteur, flex, marges) */
   style?: StyleProp<ViewStyle>;
+  /** Marge intérieure resserrée (12 au lieu de 16) : accueil sur petit écran */
+  compact?: boolean;
 }
 
 export default function GlassSection({
@@ -47,11 +49,12 @@ export default function GlassSection({
   accessibilityLabel,
   accessibilityHint,
   style,
+  compact = false,
 }: GlassSectionProps) {
   const layers = (
     <>
       <GlassMaterial radius={RADIUS} veil={glassVeil} edgeColor={EDGE} />
-      <View style={styles.content}>{children}</View>
+      <View style={[styles.content, compact && styles.contentCompact]}>{children}</View>
     </>
   );
 
@@ -82,5 +85,8 @@ const styles = StyleSheet.create({
   content: {
     flexGrow: 1,
     padding: spacing.lg,
+  },
+  contentCompact: {
+    padding: spacing.md,
   },
 });

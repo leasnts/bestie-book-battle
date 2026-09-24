@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "scripts": {
     "start": "expo start",
-    "ios": "expo run:ios",
+    "ios": "./scripts/ios-sim.sh",
     "upload-covers": "node scripts/upload-book-covers.mjs",
     "migrate-notifications": "node scripts/run-notification-migration.mjs",
     "fix-search-path": "node scripts/run-fix-search-path.mjs",

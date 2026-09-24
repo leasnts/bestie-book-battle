@@ -3,7 +3,8 @@
  * 
  * Page d'accueil de l'application : un en-tête et trois blocs.
  *
- * HEADER : bibliothèque (gauche) | PopEyes mascotte (centre) | notifications (droite)
+ * HEADER : bibliothèque (gauche) | PopEyes mascotte (centre)
+ *   Les notifications ne sont plus ici : elles vivent dans Profil.
  *   La bibliothèque ouvre /library, la liste de tous tes challenges rangés sur
  *   des étagères : c'est là qu'on change de livre ou qu'on en ajoute un.
  * 1. LE LIVRE EN COURS : couverture, auteur, titre, pages, deadline, progression
@@ -21,8 +22,8 @@ import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
     ActivityIndicator,
-    ScrollView,
     AppState,
+    ScrollView,
     StyleSheet,
     Text,
     View,
@@ -42,15 +43,13 @@ import PageTransition from '../../components/PageTransition';
 import PopEyes from '../../components/PopEyes';
 import BookSection from '../../components/ui/BookSection';
 import CoverBackdrop from '../../components/ui/CoverBackdrop';
-import HeaderIconButton from '../../components/ui/HeaderIconButton';
-import NotificationButton from '../../components/ui/NotificationButton';
+import GlassButton from '../../components/ui/GlassButton';
 import NotesDoor from '../../components/ui/NotesDoor';
 import PageSection from '../../components/ui/PageSection';
 import LeaderboardSection from '../../components/ui/LeaderboardSection';
 import { getAllUserPages } from '../../services/supabase/database';
 import { updateWidgetData } from '../../utils/widget';
-import { buildCaps, countAtCap, median } from '../../utils/track';
-import { useCoverPalette } from '../../hooks/useCoverPalette';
+import { buildCaps, median } from '../../utils/track';
 import { useLeaderboardParticipants } from '../../hooks/useLeaderboardParticipants';
 import { useNotificationScheduler } from '../../hooks/useNotificationScheduler';
 import { useAuthStore } from '../../stores/authStore';
@@ -80,7 +79,24 @@ export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   // Place réservée sous le contenu pour la barre d'onglets flottante
   const tabBarInset = useTabBarInset();
-  const { fontScale } = useWindowDimensions();
+  const { height: windowHeight } = useWindowDimensions();
+  // Petits écrans : l'accueil doit tenir sans défiler (règle de Lea)
+  // - sous 830 pt (SE, mini) : chiffre de page plus petit ;
+  // - sous 700 pt (SE) : classement réduit au 1er et à moi.
+  const compactPage = windowHeight < 830;
+  // Taille du chiffre de page : petite sur SE/mini, plus grosse sur les grands
+  // écrans où il reste de la place (17 Pro, Pro Max)
+  const pickerFontSize = windowHeight < 830 ? 52 : windowHeight < 900 ? 80 : 88;
+  const compactLeaderboard = windowHeight < 700;
+  // SE : marges resserrées aussi (entre les cadres et dans les cadres)
+  const compactSpacing = compactLeaderboard;
+  // Espace entre les cadres : serré sur SE, plus aéré sur les grands écrans
+  const frameGap = { paddingTop: compactSpacing ? spacing.sm : compactPage ? spacing.md : spacing.lg };
+  // Défile seulement si le contenu dépasse vraiment : en pratique, avec le texte
+  // agrandi dans les réglages d'accessibilité. Sinon, rien ne bouge.
+  const [framesHeight, setFramesHeight] = useState(0);
+  const [contentHeight, setContentHeight] = useState(0);
+  const framesOverflow = framesHeight > 0 && contentHeight > framesHeight + 1;
   const { user } = useAuthStore();
 
   // ===== Stores Supabase =====
@@ -92,7 +108,6 @@ export default function HomeScreen() {
     challengesLoading,
     _hasHydrated,
   } = useProjectStore();
-  const coverPalette = useCoverPalette(activeChallenge);
   const loadAnnotations = useAnnotationStore((s) => s.loadAnnotations);
   const revealAfterSave = useAnnotationStore((s) => s.revealAfterSave);
   const notesChallengeId = useAnnotationStore((s) => s.challengeId);
@@ -352,10 +367,6 @@ export default function HomeScreen() {
   const myPercent = leaderboardParticipants.find((p) => p.id === myUserId)?.percentage ?? 0;
   // L'édition de référence du challenge : c'est en elle que les caps sont posés
   const caps = buildCaps([secondaryGoal, ...goalHistory], activeChallenge?.total_pages ?? 0);
-  const currentCap = caps.find((cap) => cap.state === 'current') ?? null;
-  const membersAtCap = currentCap
-    ? countAtCap(leaderboardParticipants.map((p) => p.percentage), currentCap.percent)
-    : 0;
 
 
 
@@ -388,8 +399,8 @@ export default function HomeScreen() {
   return (
     <PageTransition>
     <View style={styles.container}>
-      {/* Fond aux couleurs de la couverture du livre en cours */}
-      <CoverBackdrop palette={coverPalette} />
+      {/* Fond neutre en taches dégradées : plus les couleurs de la couverture */}
+      <CoverBackdrop />
 
       {/* Texture de fond "noise" semi-transparente */}
       <Image
@@ -400,8 +411,9 @@ export default function HomeScreen() {
 
       {/* ═══════════ HEADER ═══════════ */}
       <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
-        {/* Bibliothèque — toutes mes lectures, sur des étagères */}
-        <HeaderIconButton
+        {/* Bibliothèque — toutes mes lectures, sur des étagères. Le même rond en
+            verre que le « + » de la barre d'onglets */}
+        <GlassButton
           icon={LibraryBigIcon}
           onPress={() => router.push('/library')}
           accessibilityLabel="Mes lectures"
@@ -410,29 +422,33 @@ export default function HomeScreen() {
         {/* PopEyes mascotte — décoratif */}
         <PopEyes size="small" />
 
-        {/* Bouton notification — navigue vers /activity */}
-        <NotificationButton
-          onPress={() => router.push('/activity')}
-          hasUnread={false}
-        />
+        {/* Cale de la largeur du bouton bibliothèque : garde PopEyes au centre */}
+        <View style={styles.headerSpacer} />
       </View>
 
       {/*
-        Les trois cadres, dans une ScrollView.
-
-        À taille de texte normale, tout tient sans défiler (c'est la règle de
-        l'accueil) : la ScrollView ne bouge pas. Aux gros corps de texte, les
-        textes grandissent et les cadres poussent au lieu d'être écrasés — sans
-        elle, chaque cadre se faisait comprimer et les lettres étaient coupées.
+        Les trois cadres. AUCUN défilement sur l'accueil (règle de Lea) : tout
+        tient sur tous les iPhone, du SE au Pro Max (versions compactes sur les
+        petits écrans). La ScrollView ne s'active que si le contenu dépasse
+        vraiment, c'est-à-dire avec le texte agrandi dans les réglages
+        d'accessibilité : là, défiler vaut mieux que couper les lettres.
       */}
       <ScrollView
         style={styles.frames}
-        contentContainerStyle={[styles.framesContent, { paddingBottom: tabBarInset + spacing.md }]}
-        showsVerticalScrollIndicator={false}
+        // flexGrow : « Ma page » peut prendre la place qui reste
+        contentContainerStyle={{
+          flexGrow: 1,
+          // De l'air au-dessus de la barre d'onglets, sauf sur SE où chaque point compte
+          paddingBottom: tabBarInset + (compactSpacing ? spacing.md : spacing['2xl']),
+        }}
+        scrollEnabled={framesOverflow}
+        showsVerticalScrollIndicator={framesOverflow}
+        onLayout={(e) => setFramesHeight(e.nativeEvent.layout.height)}
+        onContentSizeChange={(_w, h) => setContentHeight(h)}
       >
       {/* ═══════════ CADRE 1 : LE LIVRE ═══════════ */}
       {activeChallenge && (
-        <View style={styles.bookSection}>
+        <View style={[styles.bookSection, frameGap]}>
           <BookSection
             challenge={activeChallenge}
             clubPercent={clubPercent}
@@ -440,8 +456,7 @@ export default function HomeScreen() {
             myPhotoUrl={user?.profile_photo_url ?? null}
             myInitial={(user?.first_name ?? 'M').charAt(0).toUpperCase()}
             caps={caps}
-            membersAtCap={membersAtCap}
-            memberCount={leaderboardParticipants.length}
+            compact={compactSpacing}
             onPress={() => router.push('/book')}
           />
         </View>
@@ -449,7 +464,7 @@ export default function HomeScreen() {
 
       {/* ═══════════ CADRE 2 : MA PAGE ═══════════ */}
       {activeChallenge ? (
-        <View style={styles.pageSection}>
+        <View style={[styles.pageSection, frameGap]}>
           <PageSection
             key={activeChallenge.id}
             currentPage={currentPageInput}
@@ -461,6 +476,8 @@ export default function HomeScreen() {
             onUndo={handleUndo}
             onJournalPress={() => router.push(`/participant/${myUserId}`)}
             onNotePress={() => router.push('/note/new')}
+            compact={compactSpacing}
+            pickerFontSize={pickerFontSize}
             notesDoor={
               <NotesDoor
                 count={notesMatchChallenge ? notes.length : 0}
@@ -526,11 +543,12 @@ export default function HomeScreen() {
 
       {/* ═══════════ BLOC 3 : TOP 3 DU CHALLENGE + MOI ═══════════ */}
       {activeChallenge && (
-        <View style={styles.progressSection}>
+        <View style={[styles.progressSection, frameGap]}>
           <LeaderboardSection
             participants={leaderboardParticipants}
             myUserId={myUserId}
             onPress={() => router.push('/leaderboard')}
+            compact={compactLeaderboard}
           />
         </View>
       )}
@@ -576,12 +594,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingBottom: spacing.sm,
   },
-  // La zone défilable qui porte les trois cadres
+  headerSpacer: {
+    width: 44,
+  },
+  // La zone qui porte les trois cadres (défile seulement si ça dépasse)
   frames: {
     flex: 1,
-  },
-  framesContent: {
-    flexGrow: 1,
   },
 
   // ===== CADRE 1 : LE LIVRE =====
@@ -597,7 +615,9 @@ const styles = StyleSheet.create({
   // ===== SECTION SÉLECTEUR DE PAGE =====
   // flex: 1 + center pour que le numéro sélectionné soit au milieu de l'écran.
   // Le cadre « Ma page » occupe toute la largeur, comme les deux autres
+  // flexGrow : sur les grands écrans, ce cadre prend la place qui reste en bas
   pageSection: {
+    flexGrow: 1,
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.md,
   },

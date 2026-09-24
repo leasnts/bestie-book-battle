@@ -4,10 +4,10 @@
  * Deuxième question de l'accueil : où j'en suis. C'est aussi le geste principal
  * de l'app — enregistrer sa page en un geste.
  *
- * - En-tête : « Ma page › » ouvre mon journal ; à droite, ma série en **jours**
+ * - En-tête : « Ma page » (touchable, sans chevron) ouvre mon journal ; à droite, ma série en **jours**
  *   (jamais « soirs » : on ne suppose pas quand les gens lisent).
  * - Le sélecteur qui défile est gardé (pas de − / +), resserré pour tenir dans
- *   le cadre. Ma page est en **pages de mon édition**, d'où le « sur 624 ».
+ *   le cadre. Ma page est en **pages de mon édition**, d'où le « / 624 ».
  * - La rangée du bas a une **hauteur fixe** et trois places fixes. Seules les
  *   icônes changent, jamais l'endroit où l'on appuie (DESIGN.md › Boutons-icônes) :
  *
@@ -21,7 +21,7 @@
  * carnet (`NotesDoor`) montre ce qui compte à ce moment-là.
  */
 
-import { CheckIcon, ChevronRightIcon, FlameIcon, RotateCcwIcon, StickyNoteIcon } from 'lucide-react-native';
+import { CheckIcon, FlameIcon, RotateCcwIcon, StickyNoteIcon } from 'lucide-react-native';
 import React, { useState } from 'react';
 import { LayoutChangeEvent, StyleSheet, Text, View } from 'react-native';
 import { colors, fonts, inkAlpha, shadowAlpha, spacing } from '../../utils/constants';
@@ -41,12 +41,16 @@ interface PageSectionProps {
   onPageChange: (page: number) => void;
   onSave: () => void;
   onUndo: () => void;
-  /** « Ma page › » → mon journal */
+  /** « Ma page » → mon journal */
   onJournalPress: () => void;
   /** Noter ma page enregistrée. Sans elle, la place reste vide. */
   onNotePress?: () => void;
   /** La porte du carnet, à gauche au repos. Sans elle, la place reste vide. */
   notesDoor?: React.ReactNode;
+  /** Petit écran : marges resserrées, pour que l'accueil tienne sans défiler */
+  compact?: boolean;
+  /** Taille du chiffre, choisie par l'accueil selon la hauteur de l'écran */
+  pickerFontSize?: number;
 }
 
 /** Bouton rond de la rangée du bas : même taille et même place, seule l'icône change */
@@ -93,6 +97,8 @@ export default function PageSection({
   onJournalPress,
   onNotePress,
   notesDoor,
+  compact = false,
+  pickerFontSize = PICKER_FONT_SIZE,
 }: PageSectionProps) {
   // Le sélecteur centre la page sur la largeur qu'on lui donne : ici celle du
   // cadre, pas celle de l'écran.
@@ -103,7 +109,8 @@ export default function PageSection({
   const hasChanged = delta !== 0;
 
   return (
-    <GlassSection>
+    // Le cadre remplit la place que l'accueil lui donne ; le chiffre est centré dedans
+    <GlassSection compact={compact} style={styles.frame}>
       <View style={styles.head}>
         <PressableScale
           style={styles.journalLink}
@@ -115,7 +122,6 @@ export default function PageSection({
           accessibilityHint="Ouvre mon journal de lecture"
         >
           <Text style={styles.title}>Ma page</Text>
-          <ChevronRightIcon size={15} color={colors.textPlaceholder} strokeWidth={2} />
         </PressableScale>
 
         {streakDays > 0 && (
@@ -126,6 +132,8 @@ export default function PageSection({
         )}
       </View>
 
+      {/* Le chiffre et son « / 624 », ensemble, centrés dans la place du cadre */}
+      <View style={styles.center}>
       {/* Les voisins du chiffre sont coupés au bord du cadre */}
       <View style={styles.picker} onLayout={onPickerLayout}>
         {pickerWidth > 0 && (
@@ -136,12 +144,16 @@ export default function PageSection({
             savedPage={savedPage}
             width={pickerWidth}
             itemWidth={PICKER_ITEM_WIDTH}
-            fontSize={PICKER_FONT_SIZE}
+            fontSize={pickerFontSize}
           />
         )}
       </View>
 
-      <Text style={styles.total}>sur {totalPages}</Text>
+      {/* « / 624 » à l'écran ; VoiceOver lirait « barre oblique », on lui dit « sur » */}
+      <Text style={styles.total} accessibilityLabel={`sur ${totalPages} pages`}>
+        / {totalPages}
+      </Text>
+      </View>
 
       <View style={styles.row}>
         {/* Gauche : la porte du carnet est plus large qu'un rond, la place s'adapte */}
@@ -234,6 +246,13 @@ const styles = StyleSheet.create({
     fontVariant: ['tabular-nums'],
   },
 
+  frame: {
+    flexGrow: 1,
+  },
+  center: {
+    flexGrow: 1,
+    justifyContent: 'center',
+  },
   picker: {
     marginTop: 2,
     marginHorizontal: -spacing.lg, // le sélecteur va jusqu'aux bords du cadre

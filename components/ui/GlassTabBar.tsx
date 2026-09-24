@@ -38,6 +38,7 @@ import { PlusIcon, type LucideIcon } from 'lucide-react-native';
 import { StyleSheet, View } from 'react-native';
 import Animated, {
   Easing,
+  FadeIn,
   useAnimatedStyle,
   useReducedMotion,
   useSharedValue,
@@ -116,6 +117,8 @@ export function TabIcon({ icon: Icon, focused }: { icon: LucideIcon; focused: bo
         <Icon size={ICON_SIZE} color={colors.dark900} strokeWidth={IDLE_STROKE} />
       </Animated.View>
       <Animated.View style={[styles.iconLayer, activeStyle]}>
+        {/* Onglet actif : encre, comme le + et la bibliothèque (pas l'accent : la
+            navigation reste en encre, choix de Lea) */}
         <Icon size={ICON_SIZE} color={colors.dark900} strokeWidth={ACTIVE_STROKE} />
       </Animated.View>
     </View>
@@ -164,7 +167,18 @@ export default function GlassTabBar({ state, descriptors, navigation, onAddPress
   });
 
   return (
-    <View style={[styles.anchor, { bottom: barBottom(insets.bottom) }]} pointerEvents="box-none">
+    /*
+      Apparition en fondu : c'est ce qui donne au verre son aspect translucide.
+      Le verre d'iOS 26 qui naît dans une vue en fondu (opacité 0 → 1) garde un
+      rendu transparent ; né à pleine opacité, il est blanc et laiteux sur le
+      papier. Le bouton bibliothèque l'avait par hasard (PageTransition), Lea
+      l'a préféré. Constaté sur iOS 26.2, à revérifier aux mises à jour d'iOS.
+    */
+    <Animated.View
+      entering={FadeIn.duration(220)}
+      style={[styles.anchor, { bottom: barBottom(insets.bottom) }]}
+      pointerEvents="box-none"
+    >
       {/* Cale de la largeur du bouton « + » : garde la barre au centre de l'écran */}
       <View style={styles.addSpacer} pointerEvents="none" />
 
@@ -182,7 +196,7 @@ export default function GlassTabBar({ state, descriptors, navigation, onAddPress
         onPress={onAddPress}
         accessibilityLabel="Ajouter une lecture"
       />
-    </View>
+    </Animated.View>
   );
 }
 

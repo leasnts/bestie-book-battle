@@ -2,24 +2,27 @@
  * BookSection — le cadre « Le livre » de l'accueil.
  *
  * Première question de l'accueil : qu'est-ce qu'on lit, et qu'est-ce qu'on vise.
- * Couverture, titre, autrice, temps restant, la piste du livre, et deux repères
- * chiffrés. Pas une phrase.
+ * La couverture à gauche ; à droite, le titre, l'autrice, puis la piste du livre.
+ * Sous la piste, sur la ligne de la date de fin, où en est le club (`👥 26 %`,
+ * la médiane du club sur le livre entier). Pas une phrase.
+ *
+ * Plus de « J-19 » / « Prolongations » au-dessus du titre (Lea, 2026-09-24) : la
+ * date de fin est déjà sous la piste.
+ *
+ * Plus de ligne de repères en bas (« Club · 26 % du livre », « Cap · 9/38 ») :
+ * l'accueil doit tenir sans défiler. Le nombre de membres au cap reste dans la
+ * fiche du livre.
  *
  * Tout le cadre s'ouvre d'un toucher : c'est la fiche du livre qui porte les
  * réglages (fin, caps, club), plus aucun menu ⋮ sur l'accueil.
- *
- * Les deux repères du bas :
- * - `Club · 26 % du livre` : la médiane du club sur le livre entier ;
- * - `Cap · 9/38` : combien de membres ont atteint le cap en cours. Un cap se
- *   compte en membres, pas en pourcentage.
  */
 
-import { ChevronRightIcon, FlagIcon, UsersIcon } from 'lucide-react-native';
-import React from 'react';
+import { UsersIcon } from 'lucide-react-native';
+import React, { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import type { Challenge } from '../../types/supabase';
-import { colors, fonts, inkAlpha, spacing } from '../../utils/constants';
-import { daysLeft, type TrackCap } from '../../utils/track';
+import { colors, fonts, spacing } from '../../utils/constants';
+import type { TrackCap } from '../../utils/track';
 import BookCover, { COVER_RATIO, isChallengeDone } from './BookCover';
 import GlassSection from './GlassSection';
 import GoalTrack from './GoalTrack';
@@ -33,10 +36,8 @@ interface BookSectionProps {
   myPhotoUrl: string | null;
   myInitial: string;
   caps: TrackCap[];
-  /** Membres ayant atteint le cap en cours */
-  membersAtCap: number;
-  /** Membres du club */
-  memberCount: number;
+  /** Petit écran : marges resserrées, pour que l'accueil tienne sans défiler */
+  compact?: boolean;
   /** Toucher le cadre → la fiche du livre */
   onPress: () => void;
 }
@@ -48,30 +49,30 @@ export default function BookSection({
   myPhotoUrl,
   myInitial,
   caps,
-  membersAtCap,
-  memberCount,
+  compact = false,
   onPress,
 }: BookSectionProps) {
-  const remaining = daysLeft(challenge.target_end_date);
-  const hasCurrentCap = caps.some((cap) => cap.state === 'current');
-
+  // La couverture prend toujours la hauteur du texte à côté d'elle (titre sur
+  // une ou deux lignes, texte agrandi…) : on la mesure.
+  const [textsHeight, setTextsHeight] = useState(0);
   return (
     <GlassSection
+      compact={compact}
       onPress={onPress}
       accessibilityLabel={`${challenge.book_title}, ${challenge.book_author ?? 'autrice inconnue'}`}
       accessibilityHint="Ouvre la fiche du livre"
     >
       <View style={styles.head}>
-        <View style={styles.cover}>
+        <View
+          style={[
+            styles.cover,
+            textsHeight > 0 && { width: textsHeight * COVER_RATIO, height: textsHeight },
+          ]}
+        >
           <BookCover coverUrl={challenge.cover_url} done={isChallengeDone(challenge)} />
         </View>
 
-        <View style={styles.texts}>
-          {/* Le temps restant, ou « Prolongations » quand la date est passée —
-              un constat, jamais un reproche. */}
-          {remaining !== null && (
-            <Text style={styles.tag}>{remaining >= 0 ? `J-${remaining}` : 'Prolongations'}</Text>
-          )}
+        <View style={styles.texts} onLayout={(e) => setTextsHeight(e.nativeEvent.layout.height)}>
           {/* Deux lignes : aux gros corps de texte, « Les nuits blanches » ne
               doit pas se réduire à « Les nu… ». */}
           <Text style={styles.title} numberOfLines={2}>
@@ -82,41 +83,28 @@ export default function BookSection({
               {challenge.book_author}
             </Text>
           )}
-        </View>
 
-        <ChevronRightIcon size={18} color={colors.textPlaceholder} strokeWidth={2} />
-      </View>
-
-      <View style={styles.track}>
-        <GoalTrack
-          clubPercent={clubPercent}
-          myPercent={myPercent}
-          myPhotoUrl={myPhotoUrl}
-          myInitial={myInitial}
-          caps={caps}
-          endDate={challenge.target_end_date}
-        />
-      </View>
-
-      <View style={styles.stats}>
-        <View style={styles.stat}>
-          <UsersIcon size={14} color={colors.textTertiary} strokeWidth={2} />
-          <Text style={styles.statText}>
-            Club · <Text style={styles.statValue}>{Math.round(clubPercent)} %</Text> du livre
-          </Text>
-        </View>
-
-        {hasCurrentCap && (
-          <View style={styles.stat}>
-            <FlagIcon size={14} color={colors.textTertiary} strokeWidth={2} />
-            <Text style={styles.statText}>
-              Cap ·{' '}
-              <Text style={styles.statValue}>
-                {membersAtCap}/{memberCount}
-              </Text>
-            </Text>
+          {/* La piste sous l'autrice ; le club sur la ligne de la date de fin */}
+          <View style={styles.track}>
+            <GoalTrack
+              clubPercent={clubPercent}
+              myPercent={myPercent}
+              myPhotoUrl={myPhotoUrl}
+              myInitial={myInitial}
+              caps={caps}
+              endDate={challenge.target_end_date}
+              leadingLabel={
+                // Déjà lu par VoiceOver dans la phrase de la piste
+                <View style={styles.club} importantForAccessibility="no-hide-descendants" accessibilityElementsHidden>
+                  <UsersIcon size={14} color={colors.textTertiary} strokeWidth={2} />
+                  <Text style={styles.clubText} maxFontSizeMultiplier={1.3}>
+                    {Math.round(clubPercent)} %
+                  </Text>
+                </View>
+              }
+            />
           </View>
-        )}
+        </View>
       </View>
     </GlassSection>
   );
@@ -143,18 +131,10 @@ const styles = StyleSheet.create({
   texts: {
     flex: 1,
   },
-  tag: {
-    fontFamily: fonts.bodyExtraBold,
-    fontSize: 13,
-    letterSpacing: 0.4,
-    color: colors.textTertiary,
-    fontVariant: ['tabular-nums'],
-  },
   title: {
     fontFamily: fonts.display,
-    fontSize: 22,
+    fontSize: 20,
     color: colors.textPrimary,
-    marginTop: 2,
   },
   author: {
     fontFamily: fonts.body,
@@ -164,34 +144,17 @@ const styles = StyleSheet.create({
   },
 
   track: {
-    marginTop: spacing.lg,
+    marginTop: spacing.sm,
   },
-
-  stats: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    // Aux gros corps de texte, « Cap · 2/5 » passe sous « Club · 30 % »
-    flexWrap: 'wrap',
-    rowGap: spacing.xs,
-    columnGap: spacing.md,
-    marginTop: spacing.md,
-    paddingTop: 10,
-    borderTopWidth: 1,
-    borderTopColor: inkAlpha(0.09),
-  },
-  stat: {
+  club: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.xs,
+    gap: 3,
   },
-  statText: {
-    fontFamily: fonts.bodyBold,
-    fontSize: 14,
-    color: colors.textTertiary,
-    fontVariant: ['tabular-nums'],
-  },
-  statValue: {
+  clubText: {
     fontFamily: fonts.bodyExtraBold,
+    fontSize: 13,
     color: colors.textPrimary,
+    fontVariant: ['tabular-nums'],
   },
 });

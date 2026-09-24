@@ -61,6 +61,9 @@ export const colors = {
   textPlaceholder: '#7a6453',  // Placeholders (500) — 5,0 / 5,3 / 5,4
   textSubtle: '#e5e0d9',       // Texte subtle (300) — lisible uniquement sur fond sombre (12,6 sur dark800)
 
+  // Accent lie de vin, pour les traits (cf. accentGradient pour les surfaces)
+  accent: '#7a2e3e',
+
   // Border colors
   border: '#e5e0d9',           // Bordure inputs
   borderLight: '#eeebe6',      // Bordure secondaire
@@ -89,6 +92,19 @@ export const colors = {
   // Overlay
   overlay: shadowAlpha(0.5),
 };
+
+/**
+ * L'accent lie de vin : la seule couleur d'accent de l'app, pour ce qui dit
+ * « état » ou « choisi » (progression, sélection, interrupteur, signets). La
+ * navigation (onglets, +, bibliothèque) reste en encre. Les boutons d'action restent en encre : l'encre agit, l'accent dit
+ * où l'on en est. Un seul emplacement, pour qu'une couleur de club puisse un
+ * jour le remplacer (DESIGN.md › Colors).
+ *
+ * - `accentGradient` pour toute surface remplie (jamais d'aplat), clair en haut →
+ *   foncé en bas ; crème dessus : 7,9:1 sur le clair ;
+ * - `colors.accent` pour les traits : bordures, points, icônes, interrupteur.
+ */
+export const accentGradient = ['#8c3b4c', '#5e1f2e'] as const;
 
 /**
  * Les six post-it du carnet — des pastels tirés vers le noyer.

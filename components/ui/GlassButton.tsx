@@ -4,6 +4,7 @@
  * LE bouton rond en verre d'iOS 26 de l'app : une icône Lucide sur du verre,
  * avec son liseré et une ombre douce. Un seul composant pour tous les usages :
  * - le « + » à droite de la barre d'onglets (58 pt) ;
+ * - la bibliothèque, en haut à gauche de l'accueil (44 pt) ;
  * - les actions à droite du titre d'un sheet (44 pt, via `sheetIconItem`).
  *
  * Tout nouveau bouton rond en verre passe par ici : ne pas redessiner le verre,

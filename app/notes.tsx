@@ -21,6 +21,7 @@ import { Stack, useRouter } from 'expo-router';
 import { LockIcon, StickyNoteIcon } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Image } from 'expo-image';
+import { LinearGradient } from 'expo-linear-gradient';
 import {
   Pressable,
   ScrollView,
@@ -44,7 +45,7 @@ import {
   CATEGORY_ORDER,
   positionFromPage,
 } from '../utils/annotations';
-import { borderRadius, colors, fonts, inkAlpha, spacing } from '../utils/constants';
+import { accentGradient, borderRadius, colors, fonts, inkAlpha, spacing } from '../utils/constants';
 
 /** Un filtre : tout, moi, une personne, ou une catégorie */
 type Filter =
@@ -373,6 +374,8 @@ function Chip({
       accessibilityState={{ selected }}
       accessibilityLabel={label}
     >
+      {/* Choisi : l'accent en dégradé, comme les filtres de la bibliothèque */}
+      {selected && <LinearGradient colors={accentGradient} style={StyleSheet.absoluteFill} />}
       {photo !== undefined && (
         <Image source={photo ? { uri: photo } : DEFAULT_AVATAR} style={styles.chipAvatar} />
       )}
@@ -425,14 +428,15 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
     minHeight: 32,
     paddingHorizontal: spacing.md,
-    borderRadius: borderRadius.full,
+    // Carré arrondi, comme les filtres de la bibliothèque (FilterChips)
+    borderRadius: borderRadius.sm,
+    overflow: 'hidden',
     backgroundColor: colors.white,
     borderWidth: 1,
     borderColor: inkAlpha(0.08),
   },
   chipOn: {
-    backgroundColor: colors.dark900,
-    borderColor: colors.dark900,
+    borderColor: colors.accent,
   },
   chipText: {
     fontFamily: fonts.bodyBold,

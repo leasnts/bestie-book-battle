@@ -17,6 +17,11 @@
  * une lentille, sans le flouter : sur une petite pastille, on voyait la
  * couverture nette au travers.
  *
+ * Aspect translucide : le verre d'iOS 26 né dans une vue qui apparaît en fondu
+ * (opacité 0 → 1, cf. PageTransition, GlassTabBar) reste transparent ; né à
+ * pleine opacité, il est blanc et laiteux sur un fond clair. C'est le rendu que
+ * Lea veut : poser le verre dans une vue qui apparaît en fondu.
+ *
  * `rim` ajoute le liseré des boutons en verre d'iOS 26 : un filet d'encre très fin
  * qui dessine la forme même sur un fond blanc, doublé à l'intérieur d'un reflet
  * crème qui accroche la lumière en haut à gauche et en bas à droite.
@@ -104,7 +109,7 @@ export default function GlassMaterial({
  * - dehors, un filet d'encre à 8 % qui détache la forme d'un fond clair ;
  * - dedans, un reflet crème en diagonale, vif aux deux coins opposés.
  */
-export function GlassRim({ radius }: { radius: number }) {
+function GlassRim({ radius }: { radius: number }) {
   const [size, setSize] = useState<{ width: number; height: number } | null>(null);
   // Un identifiant de dégradé par liseré ; les « : » de useId cassent `url(#…)`
   const gradientId = `rim${useId().replace(/[^a-zA-Z0-9]/g, '')}`;
