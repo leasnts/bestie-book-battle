@@ -1,0 +1,488 @@
+{
+  "generatedAt": "2026-09-24",
+  "shelves": [
+    {
+      "key": "now",
+      "label": "En ce moment",
+      "books": [
+        {
+          "id": "/works/OL29226517W",
+          "title": "Fourth Wing",
+          "author": "Rebecca Yarros",
+          "pageCount": 518,
+          "coverUrl": "https://covers.openlibrary.org/b/id/14407898-L.jpg",
+          "publisher": null,
+          "publishedDate": "2023"
+        },
+        {
+          "id": "/works/OL27729743W",
+          "title": "La Femme de ménage",
+          "author": "Freida McFadden",
+          "pageCount": 336,
+          "coverUrl": "https://covers.openlibrary.org/b/id/15105883-L.jpg",
+          "publisher": null,
+          "publishedDate": "2022"
+        },
+        {
+          "id": "/works/OL24441645W",
+          "title": "Tout le bleu du ciel",
+          "author": "Mélissa Da Costa",
+          "pageCount": null,
+          "coverUrl": "https://covers.openlibrary.org/b/id/11028652-L.jpg",
+          "publisher": null,
+          "publishedDate": "2020"
+        },
+        {
+          "id": "/works/OL18020194W",
+          "title": "Jamais plus",
+          "author": "Colleen Hoover",
+          "pageCount": 384,
+          "coverUrl": "https://covers.openlibrary.org/b/id/10473609-L.jpg",
+          "publisher": null,
+          "publishedDate": "2012"
+        },
+        {
+          "id": "/works/OL18203673W",
+          "title": "Les Sept Maris d’Evelyn Hugo",
+          "author": "Taylor Jenkins Reid",
+          "pageCount": 400,
+          "coverUrl": "https://covers.openlibrary.org/b/id/8354226-L.jpg",
+          "publisher": null,
+          "publishedDate": "2017"
+        },
+        {
+          "id": "/works/OL17850410W",
+          "title": "Le Prince cruel",
+          "author": "Holly Black",
+          "pageCount": 370,
+          "coverUrl": "https://covers.openlibrary.org/b/id/8361789-L.jpg",
+          "publisher": null,
+          "publishedDate": "2018"
+        },
+        {
+          "id": "/works/OL26443093W",
+          "title": "Babel",
+          "author": "R. F. Kuang",
+          "pageCount": 577,
+          "coverUrl": "https://covers.openlibrary.org/b/id/12468631-L.jpg",
+          "publisher": null,
+          "publishedDate": "2022"
+        },
+        {
+          "id": "/works/OL20354498W",
+          "title": "Heartstopper",
+          "author": "Alice Oseman",
+          "pageCount": 288,
+          "coverUrl": "https://covers.openlibrary.org/b/id/9020805-L.jpg",
+          "publisher": null,
+          "publishedDate": "2018"
+        }
+      ]
+    },
+    {
+      "key": "contemporary",
+      "label": "Contemporain",
+      "books": [
+        {
+          "id": "/works/OL24441645W",
+          "title": "Tout le bleu du ciel",
+          "author": "Mélissa Da Costa",
+          "pageCount": null,
+          "coverUrl": "https://covers.openlibrary.org/b/id/11028652-L.jpg",
+          "publisher": null,
+          "publishedDate": "2020"
+        },
+        {
+          "id": "/works/OL19849088W",
+          "title": "Changer l’eau des fleurs",
+          "author": "Valérie Perrin",
+          "pageCount": 555,
+          "coverUrl": "https://covers.openlibrary.org/b/id/8647724-L.jpg",
+          "publisher": null,
+          "publishedDate": "2018"
+        },
+        {
+          "id": "/works/OL25377714W",
+          "title": "Trois",
+          "author": "Valérie Perrin",
+          "pageCount": 672,
+          "coverUrl": "https://covers.openlibrary.org/b/id/12019565-L.jpg",
+          "publisher": null,
+          "publishedDate": "2021"
+        },
+        {
+          "id": "/works/OL23017876W",
+          "title": "Il est grand temps de rallumer les étoiles",
+          "author": "Virginie Grimaldi",
+          "pageCount": 390,
+          "coverUrl": "https://covers.openlibrary.org/b/id/10506428-L.jpg",
+          "publisher": null,
+          "publishedDate": "2018"
+        },
+        {
+          "id": "/works/OL19742677W",
+          "title": "La Tresse",
+          "author": "Laetitia Colombani",
+          "pageCount": 221,
+          "coverUrl": "https://covers.openlibrary.org/b/id/15163605-L.jpg",
+          "publisher": null,
+          "publishedDate": "2017"
+        },
+        {
+          "id": "/works/OL18766691W",
+          "title": "Là où chantent les écrevisses",
+          "author": "Delia Owens",
+          "pageCount": 416,
+          "coverUrl": "https://covers.openlibrary.org/b/id/8362947-L.jpg",
+          "publisher": null,
+          "publishedDate": "2018"
+        },
+        {
+          "id": "/works/OL26004554W",
+          "title": "Demain, et demain, et demain",
+          "author": "Gabrielle Zevin",
+          "pageCount": 460,
+          "coverUrl": "https://covers.openlibrary.org/b/id/12859975-L.jpg",
+          "publisher": null,
+          "publishedDate": "2022"
+        }
+      ]
+    },
+    {
+      "key": "thriller",
+      "label": "Thriller",
+      "books": [
+        {
+          "id": "/works/OL27729743W",
+          "title": "La Femme de ménage",
+          "author": "Freida McFadden",
+          "pageCount": 336,
+          "coverUrl": "https://covers.openlibrary.org/b/id/15105883-L.jpg",
+          "publisher": null,
+          "publishedDate": "2022"
+        },
+        {
+          "id": "/works/OL20068530W",
+          "title": "Verity",
+          "author": "Colleen Hoover",
+          "pageCount": 343,
+          "coverUrl": "https://covers.openlibrary.org/b/id/8747160-L.jpg",
+          "publisher": null,
+          "publishedDate": "2018"
+        },
+        {
+          "id": "/works/OL19096402W",
+          "title": "Dans son silence",
+          "author": "Alex Michaelides",
+          "pageCount": 352,
+          "coverUrl": "https://covers.openlibrary.org/b/id/9407338-L.jpg",
+          "publisher": null,
+          "publishedDate": "2018"
+        },
+        {
+          "id": "/works/OL16239762W",
+          "title": "Les Apparences",
+          "author": "Gillian Flynn",
+          "pageCount": 475,
+          "coverUrl": "https://covers.openlibrary.org/b/id/8368314-L.jpg",
+          "publisher": null,
+          "publishedDate": "2011"
+        },
+        {
+          "id": "/works/OL17231165W",
+          "title": "La Vérité sur l’affaire Harry Quebert",
+          "author": "Joël Dicker",
+          "pageCount": 719,
+          "coverUrl": "https://covers.openlibrary.org/b/id/9598330-L.jpg",
+          "publisher": null,
+          "publishedDate": "2012"
+        },
+        {
+          "id": "/works/OL23018147W",
+          "title": "Il était deux fois",
+          "author": "Franck Thilliez",
+          "pageCount": 600,
+          "coverUrl": "https://covers.openlibrary.org/b/id/10506677-L.jpg",
+          "publisher": null,
+          "publishedDate": "2020"
+        },
+        {
+          "id": "/works/OL19658409W",
+          "title": "La Jeune Fille et la Nuit",
+          "author": "Guillaume Musso",
+          "pageCount": 320,
+          "coverUrl": "https://covers.openlibrary.org/b/id/13914195-L.jpg",
+          "publisher": null,
+          "publishedDate": "2018"
+        }
+      ]
+    },
+    {
+      "key": "romance",
+      "label": "Romance",
+      "books": [
+        {
+          "id": "/works/OL18020194W",
+          "title": "Jamais plus",
+          "author": "Colleen Hoover",
+          "pageCount": 384,
+          "coverUrl": "https://covers.openlibrary.org/b/id/10473609-L.jpg",
+          "publisher": null,
+          "publishedDate": "2012"
+        },
+        {
+          "id": "/works/OL20577143W",
+          "title": "Ugly Love",
+          "author": "Colleen Hoover",
+          "pageCount": 344,
+          "coverUrl": "https://covers.openlibrary.org/b/id/12856728-L.jpg",
+          "publisher": null,
+          "publishedDate": "2014"
+        },
+        {
+          "id": "/works/OL24178205W",
+          "title": "Love Hypothesis",
+          "author": "Ali Hazelwood",
+          "pageCount": 398,
+          "coverUrl": "https://covers.openlibrary.org/b/id/10601402-L.jpg",
+          "publisher": null,
+          "publishedDate": "2021"
+        },
+        {
+          "id": "/works/OL24801992W",
+          "title": "Book Lovers",
+          "author": "Emily Henry",
+          "pageCount": 408,
+          "coverUrl": "https://covers.openlibrary.org/b/id/11567819-L.jpg",
+          "publisher": null,
+          "publishedDate": "2022"
+        },
+        {
+          "id": "/works/OL24390422W",
+          "title": "Twisted Love",
+          "author": "Ana Huang",
+          "pageCount": 358,
+          "coverUrl": "https://covers.openlibrary.org/b/id/12940491-L.jpg",
+          "publisher": null,
+          "publishedDate": "2021"
+        },
+        {
+          "id": "/works/OL28952677W",
+          "title": "Icebreaker",
+          "author": "Hannah Grace",
+          "pageCount": 448,
+          "coverUrl": "https://covers.openlibrary.org/b/id/13180728-L.jpg",
+          "publisher": null,
+          "publishedDate": "2020"
+        },
+        {
+          "id": "/works/OL18203673W",
+          "title": "Les Sept Maris d’Evelyn Hugo",
+          "author": "Taylor Jenkins Reid",
+          "pageCount": 400,
+          "coverUrl": "https://covers.openlibrary.org/b/id/8354226-L.jpg",
+          "publisher": null,
+          "publishedDate": "2017"
+        }
+      ]
+    },
+    {
+      "key": "young-adult",
+      "label": "Young adult",
+      "books": [
+        {
+          "id": "/works/OL20354498W",
+          "title": "Heartstopper",
+          "author": "Alice Oseman",
+          "pageCount": 288,
+          "coverUrl": "https://covers.openlibrary.org/b/id/9020805-L.jpg",
+          "publisher": null,
+          "publishedDate": "2018"
+        },
+        {
+          "id": "/works/OL17071448W",
+          "title": "Nous étions les menteurs",
+          "author": "E. Lockhart",
+          "pageCount": 240,
+          "coverUrl": "https://covers.openlibrary.org/b/id/14425312-L.jpg",
+          "publisher": null,
+          "publishedDate": "2014"
+        },
+        {
+          "id": "/works/OL5735363W",
+          "title": "Hunger Games",
+          "author": "Suzanne Collins",
+          "pageCount": 397,
+          "coverUrl": "https://covers.openlibrary.org/b/id/12646537-L.jpg",
+          "publisher": null,
+          "publishedDate": "2008"
+        },
+        {
+          "id": "/works/OL16444438W",
+          "title": "Nos étoiles contraires",
+          "author": "John Green",
+          "pageCount": 318,
+          "coverUrl": "https://covers.openlibrary.org/b/id/7418786-L.jpg",
+          "publisher": null,
+          "publishedDate": "2010"
+        },
+        {
+          "id": "/works/OL16596099W",
+          "title": "Aristote et Dante découvrent les secrets de l’univers",
+          "author": "Benjamin Alire Sáenz",
+          "pageCount": 368,
+          "coverUrl": "https://covers.openlibrary.org/b/id/12313804-L.jpg",
+          "publisher": null,
+          "publishedDate": "2012"
+        },
+        {
+          "id": "/works/OL16361029W",
+          "title": "La Sélection",
+          "author": "Kiera Cass",
+          "pageCount": 328,
+          "coverUrl": "https://covers.openlibrary.org/b/id/7101900-L.jpg",
+          "publisher": null,
+          "publishedDate": "2012"
+        },
+        {
+          "id": "/works/OL17850410W",
+          "title": "Le Prince cruel",
+          "author": "Holly Black",
+          "pageCount": 370,
+          "coverUrl": "https://covers.openlibrary.org/b/id/8361789-L.jpg",
+          "publisher": null,
+          "publishedDate": "2018"
+        }
+      ]
+    },
+    {
+      "key": "fantasy",
+      "label": "Fantasy",
+      "books": [
+        {
+          "id": "/works/OL19794589W",
+          "title": "Les Fiancés de l’hiver",
+          "author": "Christelle Dabos",
+          "pageCount": 510,
+          "coverUrl": "https://covers.openlibrary.org/b/id/8598143-L.jpg",
+          "publisher": null,
+          "publishedDate": "2013"
+        },
+        {
+          "id": "/works/OL26443093W",
+          "title": "Babel",
+          "author": "R. F. Kuang",
+          "pageCount": 577,
+          "coverUrl": "https://covers.openlibrary.org/b/id/12468631-L.jpg",
+          "publisher": null,
+          "publishedDate": "2022"
+        },
+        {
+          "id": "/works/OL8479867W",
+          "title": "Le Nom du vent",
+          "author": "Patrick Rothfuss",
+          "pageCount": 736,
+          "coverUrl": "https://covers.openlibrary.org/b/id/11480483-L.jpg",
+          "publisher": null,
+          "publishedDate": "2007"
+        },
+        {
+          "id": "/works/OL17332479W",
+          "title": "Six of Crows",
+          "author": "Leigh Bardugo",
+          "pageCount": 512,
+          "coverUrl": "https://covers.openlibrary.org/b/id/12667417-L.jpg",
+          "publisher": null,
+          "publishedDate": "2015"
+        },
+        {
+          "id": "/works/OL16509148W",
+          "title": "Le Chant d’Achille",
+          "author": "Madeline Miller",
+          "pageCount": 386,
+          "coverUrl": "https://covers.openlibrary.org/b/id/7098465-L.jpg",
+          "publisher": null,
+          "publishedDate": "2011"
+        },
+        {
+          "id": "/works/OL18012166W",
+          "title": "Circé",
+          "author": "Madeline Miller",
+          "pageCount": 404,
+          "coverUrl": "https://covers.openlibrary.org/b/id/8739376-L.jpg",
+          "publisher": null,
+          "publishedDate": "2018"
+        }
+      ]
+    },
+    {
+      "key": "romantasy",
+      "label": "Romantasy",
+      "books": [
+        {
+          "id": "/works/OL29226517W",
+          "title": "Fourth Wing",
+          "author": "Rebecca Yarros",
+          "pageCount": 518,
+          "coverUrl": "https://covers.openlibrary.org/b/id/14407898-L.jpg",
+          "publisher": null,
+          "publishedDate": "2023"
+        },
+        {
+          "id": "/works/OL34028551W",
+          "title": "Iron Flame",
+          "author": "Rebecca Yarros",
+          "pageCount": 640,
+          "coverUrl": "https://covers.openlibrary.org/b/id/14405746-L.jpg",
+          "publisher": null,
+          "publishedDate": "2023"
+        },
+        {
+          "id": "/works/OL42434087W",
+          "title": "Onyx Storm",
+          "author": "Rebecca Yarros",
+          "pageCount": null,
+          "coverUrl": "https://covers.openlibrary.org/b/id/15103233-L.jpg",
+          "publisher": null,
+          "publishedDate": "2025"
+        },
+        {
+          "id": "/works/OL17352669W",
+          "title": "Un palais d’épines et de roses",
+          "author": "Sarah J. Maas",
+          "pageCount": 454,
+          "coverUrl": "https://covers.openlibrary.org/b/id/15254465-L.jpg",
+          "publisher": null,
+          "publishedDate": "2013"
+        },
+        {
+          "id": "/works/OL16607146W",
+          "title": "Le Trône de verre",
+          "author": "Sarah J. Maas",
+          "pageCount": 432,
+          "coverUrl": "https://covers.openlibrary.org/b/id/13312488-L.jpg",
+          "publisher": null,
+          "publishedDate": "2012"
+        },
+        {
+          "id": "/works/OL27838518W",
+          "title": "De sang et de cendre",
+          "author": "Jennifer L. Armentrout",
+          "pageCount": 493,
+          "coverUrl": "https://covers.openlibrary.org/b/id/14105538-L.jpg",
+          "publisher": null,
+          "publishedDate": "2020"
+        },
+        {
+          "id": "/works/OL34774028W",
+          "title": "Powerless",
+          "author": "Lauren Roberts",
+          "pageCount": 600,
+          "coverUrl": "https://covers.openlibrary.org/b/id/14567864-L.jpg",
+          "publisher": null,
+          "publishedDate": "2023"
+        }
+      ]
+    }
+  ]
+}

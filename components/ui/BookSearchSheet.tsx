@@ -1,4 +1,3 @@
-import { Image } from 'expo-image';
 import React, { useEffect, useRef } from 'react';
 import {
   ActivityIndicator,
@@ -13,8 +12,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useBookSearch } from '../../hooks/useBookSearch';
 import type { BookSearchResult } from '../../types/bookSearch';
 import { borderRadius, colors, fonts, fontSize, shadows, spacing } from '../../utils/constants';
+import BookResultRow from './BookResultRow';
 import BottomSheet from './BottomSheet';
-import { BookOpenIcon, CircleXIcon, SearchIcon } from 'lucide-react-native';
+import { CircleXIcon, SearchIcon } from 'lucide-react-native';
 
 interface BookSearchSheetProps {
   visible: boolean;
@@ -22,66 +22,6 @@ interface BookSearchSheetProps {
   onSelectBook: (book: BookSearchResult) => void;
   /** Recherche déjà tapée à l'ouverture (ex. : le titre du bbb, pour trouver son édition) */
   initialQuery?: string;
-}
-
-/** Extrait l'année d'une date Google Books (ex: "2003-06-26" → "2003") */
-function extractYear(date: string | null): string | null {
-  if (!date) return null;
-  return date.slice(0, 4);
-}
-
-/** Construit la ligne "éditeur, année" pour distinguer les éditions */
-function formatEdition(publisher: string | null, publishedDate: string | null): string | null {
-  const year = extractYear(publishedDate);
-  if (publisher && year) return `${publisher}, ${year}`;
-  if (publisher) return publisher;
-  if (year) return year;
-  return null;
-}
-
-function BookResultItem({
-  book,
-  onPress,
-}: {
-  book: BookSearchResult;
-  onPress: () => void;
-}) {
-  const edition = formatEdition(book.publisher, book.publishedDate);
-
-  return (
-    <Pressable style={styles.resultItem} onPress={onPress} accessibilityRole="button">
-      {/* Miniature cover */}
-      <View style={styles.coverContainer}>
-        {book.coverUrl ? (
-          <Image source={{ uri: book.coverUrl }} style={styles.coverImage} contentFit="cover" />
-        ) : (
-          <View style={styles.coverPlaceholder}>
-            <BookOpenIcon size={20} color={colors.textPlaceholder} />
-          </View>
-        )}
-      </View>
-
-      {/* Infos livre */}
-      <View style={styles.resultInfo}>
-        <Text style={styles.resultTitle} numberOfLines={2}>
-          {book.title}
-        </Text>
-        {book.author ? (
-          <Text style={styles.resultAuthor} numberOfLines={1}>
-            {book.author}
-          </Text>
-        ) : null}
-        {edition ? (
-          <Text style={styles.resultEdition} numberOfLines={1}>
-            {edition}
-          </Text>
-        ) : null}
-        <Text style={styles.resultPages}>
-          {book.pageCount ? `${book.pageCount} pages` : 'Pages non dispo'}
-        </Text>
-      </View>
-    </Pressable>
-  );
 }
 
 export default function BookSearchSheet({ visible, onClose, onSelectBook, initialQuery }: BookSearchSheetProps) {
@@ -177,7 +117,7 @@ export default function BookSearchSheet({ visible, onClose, onSelectBook, initia
                     <Text style={styles.sectionTitle}>Tendances du moment</Text>
                   }
                   renderItem={({ item }) => (
-                    <BookResultItem book={item} onPress={() => handleSelect(item)} />
+                    <BookResultRow book={item} onPress={() => handleSelect(item)} />
                   )}
                   keyboardShouldPersistTaps="handled"
                   showsVerticalScrollIndicator={false}
@@ -199,7 +139,7 @@ export default function BookSearchSheet({ visible, onClose, onSelectBook, initia
               data={results}
               keyExtractor={(item) => item.id}
               renderItem={({ item }) => (
-                <BookResultItem book={item} onPress={() => handleSelect(item)} />
+                <BookResultRow book={item} onPress={() => handleSelect(item)} />
               )}
               keyboardShouldPersistTaps="handled"
               showsVerticalScrollIndicator={false}
@@ -271,56 +211,5 @@ const styles = StyleSheet.create({
   },
   listContent: {
     paddingHorizontal: spacing.xl,
-  },
-  resultItem: {
-    flexDirection: 'row',
-    paddingVertical: spacing.lg,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.borderLight,
-    gap: spacing.lg,
-  },
-  coverContainer: {
-    width: 50,
-    height: 70,
-    borderRadius: borderRadius.xs,
-    overflow: 'hidden',
-    backgroundColor: colors.bgSecondary,
-  },
-  coverImage: {
-    width: '100%',
-    height: '100%',
-  },
-  coverPlaceholder: {
-    width: '100%',
-    height: '100%',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  resultInfo: {
-    flex: 1,
-    justifyContent: 'center',
-    gap: 2,
-  },
-  resultTitle: {
-    fontFamily: fonts.bodySemiBold,
-    fontSize: fontSize.sm,
-    color: colors.textPrimary,
-  },
-  resultAuthor: {
-    fontFamily: fonts.body,
-    fontSize: fontSize.xs,
-    color: colors.textSecondary,
-  },
-  resultEdition: {
-    fontFamily: fonts.body,
-    fontSize: fontSize.xs,
-    color: colors.textPlaceholder,
-    fontStyle: 'italic',
-  },
-  resultPages: {
-    fontFamily: fonts.bodyMedium,
-    fontSize: fontSize.xs,
-    color: colors.textSecondary,
-    marginTop: 2,
   },
 });

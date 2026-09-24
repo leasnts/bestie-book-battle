@@ -1,5 +1,5 @@
 /**
- * Onglets : lecture en cours, inspiration, profil.
+ * Onglets : lecture en cours, explorer, profil.
  *
  * Barre sur mesure (components/ui/GlassTabBar.tsx) : flottante, en verre iOS 26,
  * resserrée autour de ses 3 icônes. La barre native NativeTabs a été essayée puis
@@ -48,9 +48,9 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="inspiration"
+        name="explore"
         options={{
-          tabBarAccessibilityLabel: 'Inspiration',
+          tabBarAccessibilityLabel: 'Explorer',
           tabBarIcon: ({ focused }) => <TabIcon icon={SearchIcon} focused={focused} />,
         }}
       />

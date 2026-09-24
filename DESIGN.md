@@ -637,12 +637,29 @@ pictogramme voulu, prendre le plus proche dans Lucide.
 - Les illustrations maison (PopEyes, couronne, crâne) sont des images, pas des
   icônes.
 
+### Onglet Explorer
+
+Trouver la prochaine lecture du club (`app/(tabs)/explore.tsx`). Même
+habillage que l'accueil (fond neutre en taches, texture, titre centré). Un champ
+de recherche (titre, auteur, saga), puis des **étagères** qui défilent de côté,
+posées sur la barre en verre de la bibliothèque (`ExploreShelf`, `ShelfBar`) :
+**Mes envies** d'abord, puis En ce moment et les genres. Les étagères sont
+choisies à la main et figées dans `constants/exploreCatalog.json`
+(`scripts/build-explore-catalog.mjs`) : elles s'affichent sans réseau.
+Pendant une recherche : des silhouettes de lignes, jamais de spinner.
+
+La fiche d'un livre (`/explore-book`, sheet sans titre) : couverture, titre,
+autrice (la toucher cherche ses livres), `518 p. · 2023`, puis trois places
+fixes : **Lancer une lecture** (ou **Ouvrir** s'il est déjà dans ma
+bibliothèque), ♥ envie (lie de vin quand gardé), partager. Pas de note, pas
+d'avis, pas de résumé.
+
 ### Barre d'onglets
 
 **Sur mesure, en verre iOS 26** (`components/ui/GlassTabBar.tsx`) : pilule
 flottante de 190 pt **centrée** en bas, matériau `GlassView` d'expo-glass-effect
 (vrai UIGlassEffect, repli expo-blur avant iOS 26). Trois onglets, icônes sans
-libellé : **Lecture en cours** (`book-open`), **Inspiration** (`search`),
+libellé : **Lecture en cours** (`book-open`), **Explorer** (`search`),
 **Profil** (`circle-user`). **Pas de pastille derrière l'onglet actif** : trait
 fin `ink` à 50 % d'opacité au repos (3,05:1 sur le verre, ne pas descendre plus
 bas), trait épais `ink` à pleine opacité une fois actif, en fondu (200 ms). Lucide

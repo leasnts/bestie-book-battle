@@ -19,6 +19,19 @@ export interface OpenLibraryTrendingWork {
   publisher?: string[];
 }
 
+/** Élément de la réponse Open Library search (champs demandés seulement) */
+export interface OpenLibrarySearchDoc {
+  key: string;
+  title: string;
+  author_name?: string[];
+  cover_i?: number;
+  number_of_pages_median?: number;
+  first_publish_year?: number;
+  editions?: {
+    docs?: { title?: string; cover_i?: number; language?: string[] }[];
+  };
+}
+
 /** Volume Google Books (partiel — seulement les champs utiles) */
 export interface GoogleBooksVolumeItem {
   id: string;
