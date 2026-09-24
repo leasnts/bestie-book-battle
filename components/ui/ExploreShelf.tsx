@@ -29,9 +29,12 @@ const COVER_H = 110;
 const COVER_W = Math.round(COVER_H * COVER_RATIO);
 const SIDE = spacing.lg;
 /** Largeur du fondu aux bords de l'écran */
-const FADE_W = spacing['6xl'];
-/** Le papier (bgLight #f5f3ef) transparent : un fondu vers `transparent` grise */
-const PAPER_CLEAR = 'rgba(245,243,239,0)';
+const FADE_W = spacing['4xl'];
+/** Le papier (bgLight #f5f3ef) à une opacité donnée : un fondu vers `transparent` grise */
+const paper = (alpha: number) => `rgba(245,243,239,${alpha})`;
+/** Fondu doux, en courbe : le bord garde un peu du livre, jamais un voile blanc net */
+const FADE_COLORS = [paper(0.85), paper(0.55), paper(0.25), paper(0.08), paper(0)] as const;
+const FADE_STOPS = [0, 0.25, 0.5, 0.75, 1] as const;
 
 interface ExploreShelfProps {
   label: string;
@@ -73,18 +76,18 @@ export default function ExploreShelf({ label, icon: Icon, books, onSelect }: Exp
 
         {/* Fondus des bords, sous la barre : le papier reprend le dessus */}
         <LinearGradient
-          colors={[colors.bgLight, colors.bgLight, PAPER_CLEAR]}
-          locations={[0, 0.2, 1]}
+          colors={FADE_COLORS}
+          locations={FADE_STOPS}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
           style={[styles.fade, styles.fadeLeft]}
           pointerEvents="none"
         />
         <LinearGradient
-          colors={[PAPER_CLEAR, colors.bgLight, colors.bgLight]}
-          locations={[0, 0.8, 1]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
+          colors={FADE_COLORS}
+          locations={FADE_STOPS}
+          start={{ x: 1, y: 0 }}
+          end={{ x: 0, y: 0 }}
           style={[styles.fade, styles.fadeRight]}
           pointerEvents="none"
         />
