@@ -38,6 +38,7 @@ import EditBookSheet from '../components/ui/EditBookSheet';
 import GoalFormSheet from '../components/ui/GoalFormSheet';
 import { resolveCoverImage } from '../components/ui/BookCover';
 import { SHEET_TOP_INSET } from '../components/ui/SheetHeader';
+import { myCoverUrl } from '../services/myEdition';
 import { getChallengeHistory } from '../services/supabase/database';
 import { uploadBookCover } from '../services/supabase/storage';
 import { useFitSheet } from '../hooks/useFitSheet';
@@ -70,7 +71,7 @@ export default function BookRoute() {
     leaveActiveChallenge,
     loadUserChallenges,
   } = useProjectStore();
-  const { participants } = useProgressStore();
+  const { participants, saveMyEdition } = useProgressStore();
   const { secondaryGoal, history: goalHistory, addGoal, editGoal } = useGoalStore();
 
   const [deadlineVisible, setDeadlineVisible] = useState(false);
@@ -107,11 +108,15 @@ export default function BookRoute() {
     return map;
   }, [goals]);
 
+  /** Ma progression sur ce livre : mon édition (pages, couverture) */
+  const mine = useMemo(
+    () => participants.find((p) => p.user.id === user?.id)?.progress,
+    [participants, user?.id],
+  );
   /** Mon édition, pour convertir les caps en pages qui me parlent */
-  const myPages = useMemo(() => {
-    const mine = participants.find((p) => p.user.id === user?.id);
-    return mine?.progress.total_pages ?? referencePages;
-  }, [participants, user?.id, referencePages]);
+  const myPages = mine?.total_pages ?? referencePages;
+  /** La personne qui a créé le bbb règle le livre ; les autres, leur édition */
+  const isAdmin = !!user?.id && activeChallenge?.admin_id === user.id;
 
   /** Le nombre de pages de chacun, pour compter qui avait atteint un cap */
   const editions = useMemo(() => {
@@ -177,11 +182,25 @@ export default function BookRoute() {
 
   const handleSaveBook = useCallback(
     async (data: { title: string; author: string; totalPages: number; coverUri?: string }) => {
-      if (!activeChallenge) return;
+      if (!activeChallenge || !user?.id) return;
 
-      // Nouvelle couverture : upload et couleurs du fond en parallèle. Si
-      // l'extraction échoue, la base efface l'ancienne palette et l'accueil la
-      // recalcule (useCoverPalette).
+      // Mes pages, dans tous les cas : c'est ma progression qui en dépend
+      if (data.totalPages !== myPages) {
+        await saveMyEdition(activeChallenge.id, user.id, { totalPages: data.totalPages });
+      }
+
+      if (!isAdmin) {
+        // Membre : sa couverture ne change que la sienne
+        if (data.coverUri) {
+          await saveMyEdition(activeChallenge.id, user.id, { cover: data.coverUri });
+        }
+        return;
+      }
+
+      // Admin : son édition est celle de référence du bbb (celle que voient les
+      // invitées). Nouvelle couverture : upload et couleurs du fond en
+      // parallèle. Si l'extraction échoue, la base efface l'ancienne palette et
+      // l'accueil la recalcule (useCoverPalette).
       let coverUrl = activeChallenge.cover_url;
       let newPalette: CoverPalette | undefined;
       if (data.coverUri) {
@@ -201,9 +220,9 @@ export default function BookRoute() {
         ...(newPalette && { cover_palette: newPalette }),
       });
 
-      if (user?.id) await loadUserChallenges(user.id);
+      await loadUserChallenges(user.id);
     },
-    [activeChallenge, updateActiveChallenge, user?.id, loadUserChallenges],
+    [activeChallenge, user?.id, myPages, isAdmin, saveMyEdition, updateActiveChallenge, loadUserChallenges],
   );
 
   const handleShareInvite = useCallback(async () => {
@@ -266,7 +285,7 @@ export default function BookRoute() {
       {/* ─── Le livre ─── */}
       <View style={styles.header}>
         <Image
-          source={resolveCoverImage(activeChallenge.cover_url)}
+          source={resolveCoverImage(myCoverUrl(activeChallenge, mine))}
           style={styles.cover}
           contentFit="cover"
         />
@@ -360,7 +379,7 @@ export default function BookRoute() {
       <View style={[styles.group, styles.lastGroup]}>
         <Row
           icon={PencilIcon}
-          label="Modifier le livre"
+          label={isAdmin ? 'Modifier le livre' : 'Mon édition'}
           value=""
           chevron
           onPress={() => setEditBookVisible(true)}
@@ -391,9 +410,10 @@ export default function BookRoute() {
         currentBook={{
           title: activeChallenge.book_title,
           author: activeChallenge.book_author || '',
-          totalPages: activeChallenge.total_pages,
-          coverUrl: activeChallenge.cover_url,
+          totalPages: myPages,
+          coverUrl: myCoverUrl(activeChallenge, mine),
         }}
+        editionOnly={!isAdmin}
         onSave={handleSaveBook}
       />
     </ScrollView>

@@ -2,8 +2,8 @@
  * Écran 6b de l'onboarding (branche Rejoindre) : Bienvenue !
  * 
  * Écran final pour la branche "Rejoindre un bbb".
- * Affiche la carte du challenge à rejoindre.
- * L'utilisateur peut rejoindre le challenge et démarrer.
+ * Affiche la carte du challenge à rejoindre, avec MON édition (couverture,
+ * pages) choisie sur edition.tsx. En rejoignant, mon édition est enregistrée.
  * 
  * Structure identique à complete.tsx :
  * - Header avec bouton retour
@@ -19,15 +19,14 @@ import Button3D from '../../components/Button3D';
 import PopEyes from '../../components/PopEyes';
 import {
     Alert,
-    Pressable,
     ScrollView,
     StyleSheet,
-    TextInput,
     View,
     Text
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { borderRadius, colors, fonts, fontSize, spacing } from '../../utils/constants';
+import { useOnboardingStore } from '../../stores/onboardingStore';
 import { useAuthStore } from '../../stores/authStore';
 import { useProjectStore } from '../../stores/projectStore';
 import { useProgressStore } from '../../stores/progressStore';
@@ -54,8 +53,10 @@ export default function OnboardingWelcomeScreen() {
     
     const [isLoading, setIsLoading] = useState(false);
     const [bookInfoHeight, setBookInfoHeight] = useState<number>(80);
-    const [showCustomPages, setShowCustomPages] = useState(false);
-    const [customTotalPages, setCustomTotalPages] = useState('');
+    // Mon édition (edition.tsx), sinon celle du bbb
+    const myEdition = useOnboardingStore((s) => s.myEdition);
+    const coverUrl = myEdition?.cover || params.coverUrl;
+    const totalPages = myEdition?.totalPages ?? parseInt(params.totalPages, 10);
 
     /** Ratio standard couverture livre (largeur / hauteur) */
     const COVER_ASPECT_RATIO = 2 / 3;
@@ -65,7 +66,8 @@ export default function OnboardingWelcomeScreen() {
     const setUser = useAuthStore((state) => state.setUser);
     const setPendingUserData = useAuthStore((state) => state.setPendingUserData);
     const joinChallenge = useProjectStore((state) => state.joinChallenge);
-    const updateUserTotalPages = useProgressStore((state) => state.updateUserTotalPages);
+    const saveMyEdition = useProgressStore((state) => state.saveMyEdition);
+    const loadMyProgress = useProjectStore((state) => state.loadMyProgress);
 
     /**
      * Rejoindre le challenge et terminer l'onboarding
@@ -96,14 +98,31 @@ export default function OnboardingWelcomeScreen() {
             // 2. Rejoindre le challenge
             await joinChallenge(params.challengeId, userId);
 
-            // 3. Mettre à jour le total de pages si édition différente
-            const parsedCustomPages = parseInt(customTotalPages, 10);
-            if (parsedCustomPages > 0 && parsedCustomPages !== parseInt(params.totalPages, 10)) {
-                await updateUserTotalPages(params.challengeId, userId, parsedCustomPages);
+            // 3. Enregistrer mon édition, seulement ce qui diffère de celle du bbb.
+            //    Le bbb est déjà rejoint : un échec ici ne doit pas bloquer, on
+            //    prévient et l'édition reste réglable depuis la fiche du livre.
+            if (myEdition) {
+                const pagesDiffer = myEdition.totalPages !== parseInt(params.totalPages, 10);
+                const coverDiffers = !!myEdition.cover && myEdition.cover !== params.coverUrl;
+                if (pagesDiffer || coverDiffers || myEdition.publisher) {
+                    try {
+                        await saveMyEdition(params.challengeId, userId, {
+                            ...(pagesDiffer && { totalPages: myEdition.totalPages }),
+                            ...(coverDiffers && { cover: myEdition.cover }),
+                            ...(myEdition.publisher && { publisher: myEdition.publisher }),
+                        });
+                    } catch (error) {
+                        console.warn('Mon édition non enregistrée:', error);
+                        Alert.alert('Ton édition', 'Pas enregistrée. Fiche du livre › Mon édition.');
+                    }
+                }
             }
+            loadMyProgress(userId);
 
-            // 4. Aller à la home
+            // 4. Aller à la home (brouillon vidé après : pas de retour à la
+            //    couverture du bbb pendant la transition)
             router.replace('/(tabs)');
+            useOnboardingStore.getState().setMyEdition(null);
         } catch (error: any) {
             console.error('Erreur rejoindre challenge:', error);
             Alert.alert('Erreur', error.message || 'Impossible de rejoindre le challenge');
@@ -164,9 +183,9 @@ export default function OnboardingWelcomeScreen() {
 
                                 <View style={styles.bookCardContent}>
                                     {/* Cover image — hauteur = bloc texte, ratio conservé */}
-                                    {params.coverUrl ? (
+                                    {coverUrl ? (
                                         <Image
-                                            source={{ uri: params.coverUrl }}
+                                            source={{ uri: coverUrl }}
                                             style={[
                                                 styles.coverImage,
                                                 {
@@ -201,7 +220,7 @@ export default function OnboardingWelcomeScreen() {
                                         <Text style={styles.bookAuthor}>{params.author}</Text>
                                         <Text style={styles.bookTitle}>{params.bookTitle}</Text>
                                         <View style={styles.pagesBadge}>
-                                            <Text style={styles.pagesText}>{params.totalPages} pages</Text>
+                                            <Text style={styles.pagesText}>{totalPages} pages</Text>
                                         </View>
                                     </View>
                                 </View>
@@ -213,32 +232,6 @@ export default function OnboardingWelcomeScreen() {
                             </View>
                         </View>
 
-                        {/* Option édition différente */}
-                        {!showCustomPages ? (
-                            <Pressable onPress={() => {
-                                setShowCustomPages(true);
-                                setCustomTotalPages(params.totalPages);
-                            }}>
-                                <Text style={styles.customPagesLink}>
-                                    Tu as une édition différente ?
-                                </Text>
-                            </Pressable>
-                        ) : (
-                            <View style={styles.customPagesContainer}>
-                                <Text style={styles.customPagesLabel}>
-                                    Nombre de pages de ton édition
-                                </Text>
-                                <TextInput
-                                    style={styles.customPagesInput}
-                                    value={customTotalPages}
-                                    onChangeText={setCustomTotalPages}
-                                    keyboardType="number-pad"
-                                    placeholder={params.totalPages}
-                                    placeholderTextColor={colors.textPlaceholder}
-                                    returnKeyType="done"
-                                />
-                            </View>
-                        )}
                     </View>
                 </ScrollView>
 
@@ -377,33 +370,6 @@ const styles = StyleSheet.create({
         fontSize: fontSize.xs,
         color: colors.white,
         lineHeight: 16,
-    },
-    customPagesLink: {
-        fontFamily: fonts.body,
-        fontSize: fontSize.sm,
-        color: colors.textSecondary,
-        textDecorationLine: 'underline',
-        textAlign: 'center',
-    },
-    customPagesContainer: {
-        gap: spacing.sm,
-    },
-    customPagesLabel: {
-        fontFamily: fonts.body,
-        fontSize: fontSize.sm,
-        color: colors.textSecondary,
-        lineHeight: 20,
-    },
-    customPagesInput: {
-        fontFamily: fonts.body,
-        fontSize: fontSize.md,
-        color: colors.textPrimary,
-        backgroundColor: colors.bgSecondary,
-        borderRadius: borderRadius.md,
-        paddingHorizontal: spacing.md,
-        paddingVertical: spacing.sm,
-        borderWidth: 1,
-        borderColor: colors.border,
     },
     footer: {
         paddingHorizontal: spacing.lg,

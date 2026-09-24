@@ -48,6 +48,7 @@ import NotesDoor from '../../components/ui/NotesDoor';
 import PageSection from '../../components/ui/PageSection';
 import LeaderboardSection from '../../components/ui/LeaderboardSection';
 import { getAllUserPages } from '../../services/supabase/database';
+import { myCoverUrl } from '../../services/myEdition';
 import { updateWidgetData } from '../../utils/widget';
 import { buildCaps, median } from '../../utils/track';
 import { useLeaderboardParticipants } from '../../hooks/useLeaderboardParticipants';
@@ -108,6 +109,9 @@ export default function HomeScreen() {
     challengesLoading,
     _hasHydrated,
   } = useProjectStore();
+  const cachedMyProgress = useProjectStore((s) =>
+    s.activeChallenge ? s.myProgress[s.activeChallenge.id] : undefined,
+  );
   const loadAnnotations = useAnnotationStore((s) => s.loadAnnotations);
   const revealAfterSave = useAnnotationStore((s) => s.revealAfterSave);
   const notesChallengeId = useAnnotationStore((s) => s.challengeId);
@@ -451,6 +455,7 @@ export default function HomeScreen() {
         <View style={[styles.bookSection, frameGap]}>
           <BookSection
             challenge={activeChallenge}
+            coverUrl={myCoverUrl(activeChallenge, myProgress ?? cachedMyProgress)}
             clubPercent={clubPercent}
             myPercent={myPercent}
             myPhotoUrl={user?.profile_photo_url ?? null}

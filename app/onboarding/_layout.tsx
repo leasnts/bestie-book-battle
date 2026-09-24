@@ -15,6 +15,7 @@
  *
  * Branche "Rejoindre un bbb" :
  * 3b. join.tsx - Saisie code d'accès
+ * 4b. edition.tsx - Mon édition (couverture, pages)
  * 5b. notifications.tsx - Permission notifications (partagé)
  * 6b. welcome.tsx - Carte challenge + bouton Rejoindre
  *
@@ -39,6 +40,7 @@ export default function OnboardingLayout() {
       <Stack.Screen name="create" />
       <Stack.Screen name="cover" />
       <Stack.Screen name="join" />
+      <Stack.Screen name="edition" />
       <Stack.Screen name="notifications" />
       <Stack.Screen name="complete" />
       <Stack.Screen name="welcome" />

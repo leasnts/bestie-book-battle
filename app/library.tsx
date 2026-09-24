@@ -25,6 +25,7 @@ import WatercolorCorner, {
 import { useAuthStore } from '../stores/authStore';
 import { useProgressStore } from '../stores/progressStore';
 import { useProjectStore } from '../stores/projectStore';
+import { myCoverUrl } from '../services/myEdition';
 import { Challenge } from '../types/supabase';
 import { BookReading, LibraryFilter, newBookId, readingOf, sortBooks } from '../utils/library';
 
@@ -56,6 +57,13 @@ export default function LibraryRoute() {
   const readings = useMemo(() => {
     const byId: Record<string, BookReading> = {};
     for (const book of challenges) byId[book.id] = readingOf(progressById[book.id]);
+    return byId;
+  }, [challenges, progressById]);
+
+  // La couverture de MON édition, sinon celle du bbb
+  const covers = useMemo(() => {
+    const byId: Record<string, string | null> = {};
+    for (const book of challenges) byId[book.id] = myCoverUrl(book, progressById[book.id]);
     return byId;
   }, [challenges, progressById]);
 
@@ -97,6 +105,7 @@ export default function LibraryRoute() {
       <BookLibrary
         challenges={books}
         readings={readings}
+        covers={covers}
         newBookId={newId}
         activeChallengeId={activeChallengeId}
         onSelect={handleSelect}

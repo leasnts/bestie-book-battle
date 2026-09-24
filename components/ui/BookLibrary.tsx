@@ -30,7 +30,7 @@
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useMemo, useState } from 'react';
-import { FlatList, StyleSheet, Text, View } from 'react-native';
+import { FlatList, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 import Animated, { Easing, FadeInDown, useReducedMotion } from 'react-native-reanimated';
 import Svg, { Path } from 'react-native-svg';
 import { useFitSheet } from '../../hooks/useFitSheet';
@@ -49,6 +49,8 @@ interface BookLibraryProps {
   challenges: Challenge[];
   /** Où j'en suis de chaque livre, par id */
   readings: Record<string, BookReading>;
+  /** La couverture de chaque livre, par id : celle de mon édition, sinon celle du bbb */
+  covers: Record<string, string | null>;
   /** Le livre qui porte « Nouveau » (cf. `newBookId` dans utils/library.ts) */
   newBookId: string | null;
   /** ID du livre affiché sur l'accueil */
@@ -143,12 +145,34 @@ function ShelfScrew() {
   );
 }
 
+/**
+ * La barre d'étagère en verre flouté, avec ses vis. Posée en absolute au bas de
+ * son parent, PAR-DESSUS le bas des couvertures. Partagée avec les étagères
+ * de l'onglet Explorer (ExploreShelf).
+ */
+export function ShelfBar({ style }: { style?: StyleProp<ViewStyle> }) {
+  return (
+    <View style={[styles.shelfBarOuter, style]} pointerEvents="none">
+      <BlurView intensity={20} tint="light" style={styles.shelfBar}>
+        {/* Verre teinté noyer, en dégradé (jamais d'aplat) : brun, pas noir */}
+        <LinearGradient colors={SHELF_TINT} style={StyleSheet.absoluteFill} />
+        <ShelfScrew />
+        <ShelfScrew />
+      </BlurView>
+    </View>
+  );
+}
+
+/** Hauteur de la barre, et de combien elle chevauche le bas des couvertures */
+export { SHELF_BAR_H, SHELF_OVERLAP };
+
 // ─── Une étagère ───────────────────────────────────────────────────
 
 function Shelf({
   books,
   index,
   readings,
+  covers,
   newBookId,
   activeChallengeId,
   onSelect,
@@ -157,6 +181,7 @@ function Shelf({
   books: Challenge[];
   index: number;
   readings: Record<string, BookReading>;
+  covers: Record<string, string | null>;
   newBookId: string | null;
   activeChallengeId: string | null;
   onSelect: (challenge: Challenge) => void;
@@ -200,7 +225,7 @@ function Shelf({
                 accessibilityHint={isActive ? undefined : 'L’affiche sur l’accueil'}
                 accessibilityState={{ selected: isActive }}
               >
-                <BookCover coverUrl={challenge.cover_url} outlined />
+                <BookCover coverUrl={covers[challenge.id] ?? challenge.cover_url} outlined />
                 {(isNew || reading.state !== 'unread') && (
                   <View style={styles.ribbon} pointerEvents="none">
                     {reading.state === 'reading' ? (
@@ -217,14 +242,7 @@ function Shelf({
       </View>
 
       {/* ── Barre d'étagère en verre, AU-DESSUS du bas des couvertures ── */}
-      <View style={styles.shelfBarOuter} pointerEvents="none">
-        <BlurView intensity={20} tint="light" style={styles.shelfBar}>
-          {/* Verre teinté noyer, en dégradé (jamais d'aplat) : brun, pas noir */}
-          <LinearGradient colors={SHELF_TINT} style={StyleSheet.absoluteFill} />
-          <ShelfScrew />
-          <ShelfScrew />
-        </BlurView>
-      </View>
+      <ShelfBar />
     </Animated.View>
   );
 }
@@ -234,6 +252,7 @@ function Shelf({
 export default function BookLibrary({
   challenges,
   readings,
+  covers,
   newBookId,
   activeChallengeId,
   onSelect,
@@ -275,6 +294,7 @@ export default function BookLibrary({
           books={item}
           index={index}
           readings={readings}
+          covers={covers}
           newBookId={newBookId}
           activeChallengeId={activeChallengeId}
           onSelect={onSelect}

@@ -24,6 +24,7 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { colors, fonts, spacing } from '../../utils/constants';
 import Button3D from '../../components/Button3D';
 import { supabase } from '../../supabaseConfig';
+import { useOnboardingStore } from '../../stores/onboardingStore';
 import { ChevronLeftIcon, XIcon } from 'lucide-react-native';
 
 // Asset : texture de fond
@@ -82,32 +83,22 @@ export default function OnboardingJoinScreen() {
                 return;
             }
 
-            // addChallenge : aller direct à welcome (pas notifications)
-            // onboarding : aller à notifications → welcome
-            const nextParams = {
-                firstName,
-                challengeId: challenge.id,
-                bookTitle: challenge.book_title,
-                author: challenge.book_author || '',
-                totalPages: challenge.total_pages?.toString() || '',
-                coverUrl: challenge.cover_url || '',
-                adminFirstName: challenge.admin_first_name || 'L\'admin',
-                ...(addChallenge && { addChallenge }),
-            };
-            if (addChallenge) {
-                router.push({
-                    pathname: '/onboarding/welcome',
-                    params: nextParams,
-                });
-            } else {
-                router.push({
-                    pathname: '/onboarding/notifications',
-                    params: {
-                        ...nextParams,
-                        flow: 'join',
-                    },
-                });
-            }
+            // Étape suivante : régler mon édition (edition.tsx), qui enchaîne
+            // sur notifications → welcome (ou direct welcome en addChallenge)
+            useOnboardingStore.getState().setMyEdition(null);
+            router.push({
+                pathname: '/onboarding/edition',
+                params: {
+                    firstName,
+                    challengeId: challenge.id,
+                    bookTitle: challenge.book_title,
+                    author: challenge.book_author || '',
+                    totalPages: challenge.total_pages?.toString() || '',
+                    coverUrl: challenge.cover_url || '',
+                    adminFirstName: challenge.admin_first_name || 'L\'admin',
+                    ...(addChallenge && { addChallenge }),
+                },
+            });
         } catch (error: any) {
             console.error('Erreur recherche challenge:', error);
             Alert.alert('Erreur', 'Impossible de vérifier le code. Réessaie plus tard.');

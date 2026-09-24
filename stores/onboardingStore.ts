@@ -1,5 +1,5 @@
 /**
- * Store temporaire pour l'onboarding (flow "Créer un bbb")
+ * Store temporaire pour l'onboarding (flows "Créer un bbb" et "Rejoindre")
  *
  * Pourquoi ce store ?
  * Le coverUri (chemin fichier local, ex: file:///var/mobile/.../ImagePicker/xxx.jpg)
@@ -12,6 +12,13 @@
 
 import { create } from 'zustand';
 
+export interface MyEditionDraft {
+  /** Photo locale (file://…) ou URL trouvée par la recherche */
+  cover: string | null;
+  totalPages: number;
+  publisher: string | null;
+}
+
 interface OnboardingStore {
   /** URI locale de la cover importée (cover.tsx → complete.tsx) */
   coverUri: string | null;
@@ -19,10 +26,13 @@ interface OnboardingStore {
   apiPageCount: number | null;
   /** URL de la cover récupérée via l'API Google Books (create.tsx → cover.tsx) */
   apiCoverUrl: string | null;
+  /** Rejoindre : mon édition, choisie sur edition.tsx, enregistrée par welcome.tsx */
+  myEdition: MyEditionDraft | null;
 
   setCoverUri: (uri: string | null) => void;
   setApiPageCount: (count: number | null) => void;
   setApiCoverUrl: (url: string | null) => void;
+  setMyEdition: (edition: MyEditionDraft | null) => void;
   /** Réinitialiser après la création du projet (complete.tsx) */
   reset: () => void;
 }
@@ -31,9 +41,11 @@ export const useOnboardingStore = create<OnboardingStore>((set) => ({
   coverUri: null,
   apiPageCount: null,
   apiCoverUrl: null,
+  myEdition: null,
 
   setCoverUri: (uri) => set({ coverUri: uri }),
   setApiPageCount: (count) => set({ apiPageCount: count }),
   setApiCoverUrl: (url) => set({ apiCoverUrl: url }),
-  reset: () => set({ coverUri: null, apiPageCount: null, apiCoverUrl: null }),
+  setMyEdition: (edition) => set({ myEdition: edition }),
+  reset: () => set({ coverUri: null, apiPageCount: null, apiCoverUrl: null, myEdition: null }),
 }));
