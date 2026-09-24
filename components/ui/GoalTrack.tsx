@@ -62,12 +62,24 @@ export default function GoalTrack({
     >
       <View style={styles.track}>
         <View style={styles.rail}>
-          {/* Progression : l'accent, en dégradé (jamais d'aplat) */}
+          {/*
+            Deux remplissages superposés, comme la barre d'une vidéo (lu / chargé) :
+            - derrière, en lie de vin clair, le club (médiane) ;
+            - devant, en lie de vin, MOI, jusqu'à ma photo.
+            Une seule barre pour le club faisait croire que j'avais atteint des
+            étapes que seul le club avait dépassées.
+          */}
+          <LinearGradient
+            colors={CLUB_GRADIENT}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={[styles.fill, { width: `${clubPercent}%` }]}
+          />
           <LinearGradient
             colors={accentGradient}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
-            style={[styles.fill, { width: `${clubPercent}%` }]}
+            style={[styles.fill, { width: `${myPercent}%` }]}
           />
         </View>
 
@@ -86,7 +98,7 @@ export default function GoalTrack({
               key={cap.id}
               style={[
                 styles.step,
-                cap.percent <= clubPercent ? styles.stepReached : styles.stepAhead,
+                cap.percent <= myPercent ? styles.stepReached : styles.stepAhead,
                 { left: `${cap.percent}%` },
               ]}
             />
@@ -98,7 +110,7 @@ export default function GoalTrack({
             style={[
               styles.step,
               styles.endStep,
-              clubPercent >= 100 ? styles.stepReached : styles.stepAhead,
+              myPercent >= 100 ? styles.stepReached : styles.stepAhead,
             ]}
           />
         )}
@@ -168,6 +180,8 @@ const ME_SIZE = 20;
 const STEP_SIZE = 10;
 /** Gris des étapes pas encore atteintes, opaque */
 const STEP_AHEAD = '#d2cbc5';
+/** Le club, derrière ma barre : le lie de vin éclairci sur le papier, opaque */
+const CLUB_GRADIENT = ['#e2c9cd', '#d3b3b9'] as const;
 
 const styles = StyleSheet.create({
   track: {
@@ -194,8 +208,8 @@ const styles = StyleSheet.create({
 
   /**
    * Étapes (caps et fin du livre) : de simples ronds sans bordure, un peu plus
-   * gros que la barre, de la couleur de la barre à cet endroit : lie de vin si
-   * le club l'a dépassée, gris sinon.
+   * gros que la barre : lie de vin si JE l'ai dépassée, gris sinon (même si le
+   * club l'a dépassée : les étapes suivent ma barre, pas celle du club).
    */
   step: {
     position: 'absolute',

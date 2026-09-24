@@ -447,11 +447,14 @@ posé sur le fond neutre.
 Le cadre **Le livre** (`BookSection`) ouvre la fiche du livre d'un toucher :
 la couverture à gauche, **toujours de la hauteur du texte** à côté (mesurée) ; à
 droite le titre (Fraunces 20), l'autrice, puis **juste dessous** la
-**piste** (`GoalTrack`) de 0 à 100 % du livre — remplissage lie de vin à la
+**piste** (`GoalTrack`) de 0 à 100 % du livre, avec **deux remplissages
+superposés**, comme la barre d'une vidéo (lu / chargé) : devant, en lie de vin,
+**ma** progression jusqu'à ma photo ; derrière, en lie de vin clair, la
 **médiane** du club (pas la moyenne : trois lectrices rapides fausseraient le
-repère), ma photo posée à mon %, **étapes** (caps et fin du livre) en ronds de 10 pt
-sans bordure, un peu plus gros que la barre, de la couleur de la barre à cet
-endroit (lie de vin si le club l'a dépassée, gris sinon), cap en cours en
+repère). Une seule barre pour le club faisait croire que j'avais atteint des
+étapes que seul le club avait dépassées. **Étapes** (caps et fin du livre) en
+ronds de 10 pt, pleins et sans bordure, un peu plus gros que la barre : lie de
+vin si **je** les ai dépassées, gris opaque sinon, cap en cours en
 drapeau daté, date de fin au bout — et **sur la ligne de la
 date de fin**, à gauche sous le départ de la piste, `👥 26 %`, le club (la date
 d'un cap en cours sous 30 % ne s'écrit pas, pour ne pas le chevaucher). Plus de « J-27 » / « Prolongations » ni de ligne de repères
