@@ -85,14 +85,23 @@ export default function GoalTrack({
             <View
               key={cap.id}
               style={[
-                cap.state === 'past' ? styles.pastCap : styles.futureCap,
+                styles.step,
+                cap.percent <= clubPercent ? styles.stepReached : styles.stepAhead,
                 { left: `${cap.percent}%` },
               ]}
             />
           ),
         )}
 
-        {endDate && <View style={styles.endMark} />}
+        {endDate && (
+          <View
+            style={[
+              styles.step,
+              styles.endStep,
+              clubPercent >= 100 ? styles.stepReached : styles.stepAhead,
+            ]}
+          />
+        )}
 
         {/* Ma pastille passe au-dessus des caps : c'est le repère qu'on cherche d'abord */}
         <View style={[styles.me, { left: `${myPercent}%` }]}>
@@ -155,6 +164,8 @@ function trackLabel(
 const RAIL_TOP = 12;
 const RAIL_HEIGHT = 6;
 const ME_SIZE = 20;
+/** Diamètre des étapes, un peu plus gros que la barre */
+const STEP_SIZE = 10;
 
 const styles = StyleSheet.create({
   track: {
@@ -179,29 +190,24 @@ const styles = StyleSheet.create({
     borderRadius: RAIL_HEIGHT / 2,
   },
 
-  /** Cap passé : un point plein, sans jugement, de l'accent de la progression */
-  pastCap: {
+  /**
+   * Étapes (caps et fin du livre) : de simples ronds sans bordure, un peu plus
+   * gros que la barre, de la couleur de la barre à cet endroit : lie de vin si
+   * le club l'a dépassée, gris sinon.
+   */
+  step: {
     position: 'absolute',
-    top: RAIL_TOP - 1,
-    width: 8,
-    height: 8,
-    marginLeft: -4,
-    borderRadius: 4,
-    backgroundColor: colors.accent,
-    borderWidth: 1.5,
-    borderColor: colors.white,
+    top: RAIL_TOP + RAIL_HEIGHT / 2 - STEP_SIZE / 2,
+    width: STEP_SIZE,
+    height: STEP_SIZE,
+    marginLeft: -STEP_SIZE / 2,
+    borderRadius: STEP_SIZE / 2,
   },
-  /** Cap planifié plus loin (#38) : un point creux */
-  futureCap: {
-    position: 'absolute',
-    top: RAIL_TOP - 1.5,
-    width: 9,
-    height: 9,
-    marginLeft: -4.5,
-    borderRadius: 4.5,
-    backgroundColor: colors.white,
-    borderWidth: 1.5,
-    borderColor: inkAlpha(0.45),
+  stepReached: {
+    backgroundColor: colors.accent,
+  },
+  stepAhead: {
+    backgroundColor: inkAlpha(0.2),
   },
   /** Cap en cours : un trait qui traverse la piste, drapeau en haut */
   capMark: {
@@ -218,17 +224,11 @@ const styles = StyleSheet.create({
     left: 1,
     top: -4,
   },
-  /** La fin du livre */
-  endMark: {
-    position: 'absolute',
-    right: -5,
-    top: RAIL_TOP - 2,
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    borderWidth: 2,
-    borderColor: colors.dark900,
-    backgroundColor: colors.white,
+  /** La fin du livre : au bout de la piste */
+  endStep: {
+    left: undefined,
+    right: -STEP_SIZE / 2,
+    marginLeft: 0,
   },
 
   me: {

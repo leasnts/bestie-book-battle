@@ -449,8 +449,10 @@ la couverture à gauche, **toujours de la hauteur du texte** à côté (mesurée
 droite le titre (Fraunces 20), l'autrice, puis **juste dessous** la
 **piste** (`GoalTrack`) de 0 à 100 % du livre — remplissage lie de vin à la
 **médiane** du club (pas la moyenne : trois lectrices rapides fausseraient le
-repère), ma photo posée à mon %, caps passés en points lie de vin, cap en cours
-en drapeau daté, fin en rond au bout avec sa date — et **sur la ligne de la
+repère), ma photo posée à mon %, **étapes** (caps et fin du livre) en ronds de 10 pt
+sans bordure, un peu plus gros que la barre, de la couleur de la barre à cet
+endroit (lie de vin si le club l'a dépassée, gris sinon), cap en cours en
+drapeau daté, date de fin au bout — et **sur la ligne de la
 date de fin**, à gauche sous le départ de la piste, `👥 26 %`, le club (la date
 d'un cap en cours sous 30 % ne s'écrit pas, pour ne pas le chevaucher). Plus de « J-27 » / « Prolongations » ni de ligne de repères
 (Lea, 2026-09-24) : la date de fin suffit, et l'accueil doit tenir sans défiler.
