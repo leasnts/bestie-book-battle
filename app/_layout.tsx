@@ -305,7 +305,7 @@ function RootLayoutNav() {
         Norme commune (titre ferré à gauche, jamais centré) : voir
         components/ui/SheetHeader.tsx.
       */}
-      <Stack.Screen name="leaderboard" options={sheetScreenOptions('Classement')} />
+      <Stack.Screen name="leaderboard" options={sheetScreenOptions('Classement', 'fitToContents')} />
 
       {/* Le carnet du livre — écran plein, il se parcourt longtemps */}
       <Stack.Screen
@@ -328,10 +328,10 @@ function RootLayoutNav() {
       <Stack.Screen name="reactions/[id]" options={sheetScreenOptions('Réagir', [0.6, 0.95])} />
 
       {/* Journal d'une personne — posé sur le classement */}
-      <Stack.Screen name="participant/[id]" options={sheetScreenOptions('Journal')} />
+      <Stack.Screen name="participant/[id]" options={sheetScreenOptions('Journal', 'fitToContents')} />
 
       {/* Fiche du livre — fin, caps, club */}
-      <Stack.Screen name="book" options={sheetScreenOptions('Le livre')} />
+      <Stack.Screen name="book" options={sheetScreenOptions('Le livre', 'fitToContents')} />
 
       {/* Bibliothèque : toutes mes lectures, sur des étagères, à la hauteur des étagères */}
       <Stack.Screen name="library" options={sheetScreenOptions('Mes lectures', 'fitToContents')} />

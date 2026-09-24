@@ -19,9 +19,9 @@
  * Toucher une couverture l'affiche sur l'accueil et ferme le sheet.
  *
  * Hauteur : le sheet est en `fitToContents`, il prend la hauteur de la liste.
- * La liste se donne donc la hauteur exacte de ses étagères, plafonnée à
- * MAX_HEIGHT_RATIO de l'écran ; au-delà, on fait défiler. Pas de blanc inutile
- * sous la dernière étagère.
+ * La liste se donne donc la hauteur exacte de ses étagères, plafonnée sous
+ * l'en-tête de l'accueil (useFitSheet, règle commune des sheets à contenu) ;
+ * au-delà, on fait défiler. Pas de blanc inutile sous la dernière étagère.
  *
  * Volontairement sans habillage de sheet : c'est la route `/library` qui le
  * présente, et c'est iOS qui dessine le sheet lui-même.
@@ -30,9 +30,10 @@
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useMemo, useState } from 'react';
-import { FlatList, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { FlatList, StyleSheet, Text, View } from 'react-native';
 import Animated, { Easing, FadeInDown, useReducedMotion } from 'react-native-reanimated';
 import Svg, { Path } from 'react-native-svg';
+import { useFitSheet } from '../../hooks/useFitSheet';
 import { Challenge } from '../../types/supabase';
 import { colors, creamAlpha, fonts, motion, spacing } from '../../utils/constants';
 import { BookReading, LIBRARY_FILTERS, LibraryFilter, readingLabel } from '../../utils/library';
@@ -82,8 +83,6 @@ const EMPTY_H = 60;
 export const LIST_SIDE = spacing.xl;
 /** Marge sous la dernière étagère */
 const LIST_BOTTOM = spacing['2xl'];
-/** Au-delà de cette part de l'écran, le sheet arrête de grandir et la liste défile */
-const MAX_HEIGHT_RATIO = 0.72;
 
 /** Hauteur du contenu pour `shelfCount` étagères, avant toute mesure */
 function estimateContentHeight(shelfCount: number): number {
@@ -243,7 +242,8 @@ export default function BookLibrary({
   headerBackground,
 }: BookLibraryProps) {
   const reducedMotion = useReducedMotion();
-  const { height: windowHeight } = useWindowDimensions();
+  // Plafond commun des sheets à contenu : sous l'en-tête de l'accueil
+  const { maxHeight } = useFitSheet();
   // Hauteur réelle du contenu, mesurée après le premier rendu (texte agrandi, etc.)
   const [measuredHeight, setMeasuredHeight] = useState<number | null>(null);
 
@@ -258,7 +258,7 @@ export default function BookLibrary({
 
   const listHeight = Math.min(
     measuredHeight ?? estimateContentHeight(shelves.length),
-    Math.round(windowHeight * MAX_HEIGHT_RATIO),
+    maxHeight,
   );
 
   return (

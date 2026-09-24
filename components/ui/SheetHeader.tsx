@@ -83,8 +83,9 @@ export function sheetIconItem({
 /**
  * Options d'une route présentée en sheet natif, titre ferré à gauche compris.
  * `detents` : les hauteurs d'arrêt, en fraction de l'écran, ou `'fitToContents'`
- * pour un sheet exactement à la hauteur de son contenu (le contenu fixe alors
- * sa propre hauteur, cf. BookLibrary).
+ * pour un sheet exactement à la hauteur de son contenu. C'est la règle des
+ * sheets à contenu (livre, classement, journal, bibliothèque) : la liste fixe sa
+ * propre hauteur avec `useFitSheet`, plafonnée sous l'en-tête de l'accueil.
  */
 export function sheetScreenOptions(
   title: string,

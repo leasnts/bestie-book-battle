@@ -39,6 +39,7 @@ import GoalFormSheet from '../components/ui/GoalFormSheet';
 import { resolveCoverImage } from '../components/ui/BookCover';
 import { getChallengeHistory } from '../services/supabase/database';
 import { uploadBookCover } from '../services/supabase/storage';
+import { useFitSheet } from '../hooks/useFitSheet';
 import { useAuthStore } from '../stores/authStore';
 import { useGoalStore } from '../stores/goalStore';
 import { useProgressStore } from '../stores/progressStore';
@@ -57,6 +58,8 @@ import {
 
 export default function BookRoute() {
   const router = useRouter();
+  // Le sheet s'ouvre à la hauteur de toute la fiche, plafonné sous l'en-tête de l'accueil
+  const fit = useFitSheet();
   const { user } = useAuthStore();
   const {
     activeChallenge,
@@ -253,9 +256,10 @@ export default function BookRoute() {
 
   return (
     <ScrollView
-      style={styles.screen}
+      style={[styles.screen, fit.style]}
       contentContainerStyle={styles.content}
       contentInsetAdjustmentBehavior="automatic"
+      onContentSizeChange={fit.onContentSizeChange}
     >
       {/* ─── Le livre ─── */}
       <View style={styles.header}>

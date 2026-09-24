@@ -11,6 +11,7 @@
  */
 import { Image } from 'expo-image';
 import React, { useMemo } from 'react';
+import { useFitSheet } from '../../hooks/useFitSheet';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { ProgressHistory } from '../../types/supabase';
 import { borderRadius, colors, fonts, inkAlpha, spacing } from '../../utils/constants';
@@ -81,6 +82,8 @@ export default function ParticipantTimeline({
   participantPhoto,
   history = [],
 }: ParticipantTimelineProps) {
+  // Le sheet s'ouvre à la hauteur de tout le journal, plafonné sous l'en-tête de l'accueil
+  const fit = useFitSheet();
 
   const dayGroups: DayGroup[] = useMemo(() => {
     const safeHistory = Array.isArray(history) ? history : [];
@@ -106,10 +109,11 @@ export default function ParticipantTimeline({
 
   return (
     <ScrollView
-      style={styles.scrollView}
+      style={[styles.scrollView, fit.style]}
       contentContainerStyle={styles.scrollContent}
       contentInsetAdjustmentBehavior="automatic"
       showsVerticalScrollIndicator={false}
+      onContentSizeChange={fit.onContentSizeChange}
     >
       {/* En-tête : avatar + nom, il défile avec le contenu */}
       <View style={styles.header}>

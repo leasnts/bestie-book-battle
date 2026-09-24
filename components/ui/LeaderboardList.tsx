@@ -17,6 +17,7 @@
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import React, { useMemo } from 'react';
+import { useFitSheet } from '../../hooks/useFitSheet';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, { Easing, FadeInDown, useReducedMotion } from 'react-native-reanimated';
 import {
@@ -144,6 +145,8 @@ function LeaderboardRow({
 // ─── Composant principal ───────────────────────────────────────────
 
 export default function LeaderboardList({ participants, myUserId }: LeaderboardListProps) {
+  // Le sheet s'ouvre à la hauteur de tout le classement, plafonné sous l'en-tête de l'accueil
+  const fit = useFitSheet();
   const reducedMotion = useReducedMotion();
   const router = useRouter();
 
@@ -185,10 +188,11 @@ export default function LeaderboardList({ participants, myUserId }: LeaderboardL
       ListHeaderComponent={
         <Text style={styles.headerSubtitle}>{formatParticipantCount(ranked.length)}</Text>
       }
-      style={styles.scrollView}
+      style={[styles.scrollView, fit.style]}
       contentContainerStyle={styles.scrollContent}
       showsVerticalScrollIndicator={false}
       contentInsetAdjustmentBehavior="automatic"
+      onContentSizeChange={fit.onContentSizeChange}
       /*
         Pas de `getItemLayout` : il suppose une hauteur de ligne constante, or
         les lignes grandissent avec le corps de texte système, et l'en-tête
@@ -219,7 +223,6 @@ const styles = StyleSheet.create({
   },
   // ═══ SCROLL ═══
   scrollView: {
-    flex: 1,
     backgroundColor: colors.white,
   },
   scrollContent: {

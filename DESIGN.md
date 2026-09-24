@@ -526,6 +526,13 @@ le club et son code d'invitation, modifier ou quitter le livre. Les pages des ca
 s'affichent dans **mon** édition — un cap est enregistré en %. Plus de menu ⋮ sur
 l'accueil.
 
+**Hauteur des sheets à contenu** (fiche du livre, classement, journal,
+bibliothèque ; Lea, 2026-09-24) : le sheet s'ouvre **à la hauteur de tout son
+contenu** (`fitToContents` + `useFitSheet`). S'il y en a trop, il monte au plus
+**jusque sous l'en-tête de l'accueil** — bouton bibliothèque et mascotte restent
+visibles au-dessus — et l'on fait défiler dedans. Les sheets de saisie (note,
+réactions) gardent leurs hauteurs d'arrêt, à cause du clavier.
+
 Changer de livre ou en ajouter un se fait dans la **bibliothèque**, route
 `/library` en sheet natif titré **Mes lectures**, avec le **+** en verre
 (`GlassButton`) à droite du titre (même parcours que le + de la barre d'onglets).
