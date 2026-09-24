@@ -32,7 +32,17 @@ import {
   UsersIcon,
 } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Alert, Pressable, ScrollView, Share, StyleSheet, Text, View } from 'react-native';
+import {
+  Alert,
+  Pressable,
+  ScrollView,
+  Share,
+  StyleSheet,
+  Text,
+  View,
+  type StyleProp,
+  type ViewStyle,
+} from 'react-native';
 import DeadlineEditSheet from '../components/ui/DeadlineEditSheet';
 import EditBookSheet from '../components/ui/EditBookSheet';
 import GoalFormSheet from '../components/ui/GoalFormSheet';
@@ -47,7 +57,7 @@ import { useGoalStore } from '../stores/goalStore';
 import { useProgressStore } from '../stores/progressStore';
 import { useProjectStore } from '../stores/projectStore';
 import type { ChallengeGoal, ProgressHistory } from '../types/supabase';
-import { borderRadius, colors, fonts, inkAlpha, spacing } from '../utils/constants';
+import { borderRadius, colors, fonts, inkAlpha, shadows, spacing } from '../utils/constants';
 import { extractCoverPalette, type CoverPalette } from '../utils/coverPalette';
 import {
   buildCaps,
@@ -308,7 +318,7 @@ export default function BookRoute() {
       <GroupHeader title="Fin">
         <MiniButton icon={PencilIcon} label="Modifier" onPress={() => setDeadlineVisible(true)} />
       </GroupHeader>
-      <View style={styles.group}>
+      <Group>
         <Row
           icon={CalendarIcon}
           label={
@@ -318,7 +328,7 @@ export default function BookRoute() {
           }
           value={remaining === null ? '' : remaining >= 0 ? `J-${remaining}` : 'Prolongations'}
         />
-      </View>
+      </Group>
 
       {/* ─── Caps ─── */}
       <GroupHeader title="Caps">
@@ -329,7 +339,7 @@ export default function BookRoute() {
           onPress={() => setCapForm({ open: true, goal: null })}
         />
       </GroupHeader>
-      <View style={styles.group}>
+      <Group>
         {caps.length === 0 ? (
           <Row icon={FlagIcon} label="Aucun cap" value="" />
         ) : (
@@ -354,17 +364,17 @@ export default function BookRoute() {
             );
           })
         )}
-      </View>
+      </Group>
 
       {/* ─── Club ─── */}
       <GroupHeader title="Club" />
-      <View style={styles.group}>
+      <Group>
         <Row
           icon={UsersIcon}
           label={`${memberCount} membre${memberCount > 1 ? 's' : ''}`}
           value=""
           chevron
-          onPress={() => router.push('/leaderboard')}
+          onPress={() => router.push('/leaderboard?from=book')}
         />
         <Row
           icon={ShareIcon}
@@ -373,10 +383,10 @@ export default function BookRoute() {
           value="Inviter"
           onPress={handleShareInvite}
         />
-      </View>
+      </Group>
 
       {/* ─── Le livre lui-même ─── */}
-      <View style={[styles.group, styles.lastGroup]}>
+      <Group style={styles.lastGroup}>
         <Row
           icon={PencilIcon}
           label={isAdmin ? 'Modifier le livre' : 'Mon édition'}
@@ -385,7 +395,7 @@ export default function BookRoute() {
           onPress={() => setEditBookVisible(true)}
         />
         <Row icon={LogOutIcon} label="Quitter le livre" value="" onPress={handleLeave} />
-      </View>
+      </Group>
 
       {/* ─── Les formulaires ─── */}
       <DeadlineEditSheet
@@ -427,6 +437,17 @@ function GroupHeader({ title, children }: { title: string; children?: React.Reac
     <View style={styles.groupHeader}>
       <Text style={styles.groupTitle}>{title}</Text>
       {children}
+    </View>
+  );
+}
+
+/** Une section de la fiche : carte blanche, bordure claire, petite ombre.
+ * Deux vues, car `overflow: 'hidden'` (pour arrondir le fond des lignes
+ * pressées) couperait l'ombre sur iOS. */
+function Group({ style, children }: { style?: StyleProp<ViewStyle>; children: React.ReactNode }) {
+  return (
+    <View style={[styles.group, style]}>
+      <View style={styles.groupClip}>{children}</View>
     </View>
   );
 }
@@ -617,9 +638,15 @@ const styles = StyleSheet.create({
   },
 
   group: {
-    backgroundColor: colors.bgLight,
+    backgroundColor: colors.white,
     borderRadius: borderRadius.lg,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.border,
     marginBottom: spacing.md,
+    ...shadows.xs,
+  },
+  groupClip: {
+    borderRadius: borderRadius.lg,
     overflow: 'hidden',
   },
   lastGroup: {

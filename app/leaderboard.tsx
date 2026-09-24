@@ -21,14 +21,39 @@
  * fraîchement compilé l'applique — et rend l'app entièrement blanche. La mise
  * en page correcte tient à une seule chose : la liste est l'enfant DIRECT de
  * l'écran (cf. LeaderboardList), sans `View` intermédiaire.
+ *
+ * Ouvert depuis la fiche du livre (`?from=book`), le classement se pose
+ * par-dessus elle : un bouton retour, à gauche du titre, y ramène.
  */
 
-import React from 'react';
+import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
+import { ChevronLeftIcon } from 'lucide-react-native';
+import React, { useLayoutEffect } from 'react';
 import { useLeaderboardParticipants } from '../hooks/useLeaderboardParticipants';
 import LeaderboardList from '../components/ui/LeaderboardList';
+import { sheetIconItem, sheetTitleItem } from '../components/ui/SheetHeader';
 
 export default function LeaderboardRoute() {
   const { participants, myUserId } = useLeaderboardParticipants();
+  const { from } = useLocalSearchParams<{ from?: string }>();
+  const navigation = useNavigation();
+  const router = useRouter();
+
+  // Via setOptions et pas <Stack.Screen> : la liste doit rester l'enfant
+  // direct de l'écran.
+  useLayoutEffect(() => {
+    if (from !== 'book') return;
+    navigation.setOptions({
+      unstable_headerLeftItems: () => [
+        sheetIconItem({
+          icon: ChevronLeftIcon,
+          onPress: () => router.back(),
+          accessibilityLabel: 'Retour à la fiche du livre',
+        }),
+        sheetTitleItem('Classement'),
+      ],
+    });
+  }, [from, navigation, router]);
 
   return <LeaderboardList participants={participants} myUserId={myUserId} />;
 }
