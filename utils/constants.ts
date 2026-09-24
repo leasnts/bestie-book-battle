@@ -95,8 +95,8 @@ export const colors = {
 
 /**
  * L'accent lie de vin : la seule couleur d'accent de l'app, pour ce qui dit
- * « état » ou « choisi » (progression, sélection, interrupteur, onglet actif,
- * signets). Les boutons d'action restent en encre : l'encre agit, l'accent dit
+ * « état » ou « choisi » (progression, sélection, interrupteur, signets). La
+ * navigation (onglets, +, bibliothèque) reste en encre. Les boutons d'action restent en encre : l'encre agit, l'accent dit
  * où l'on en est. Un seul emplacement, pour qu'une couleur de club puisse un
  * jour le remplacer (DESIGN.md › Colors).
  *

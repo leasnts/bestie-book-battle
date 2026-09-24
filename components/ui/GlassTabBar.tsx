@@ -116,8 +116,9 @@ export function TabIcon({ icon: Icon, focused }: { icon: LucideIcon; focused: bo
         <Icon size={ICON_SIZE} color={colors.dark900} strokeWidth={IDLE_STROKE} />
       </Animated.View>
       <Animated.View style={[styles.iconLayer, activeStyle]}>
-        {/* Onglet actif : l'accent, comme toute sélection */}
-        <Icon size={ICON_SIZE} color={colors.accent} strokeWidth={ACTIVE_STROKE} />
+        {/* Onglet actif : encre, comme le + et la bibliothèque (pas l'accent : la
+            navigation reste en encre, choix de Lea) */}
+        <Icon size={ICON_SIZE} color={colors.dark900} strokeWidth={ACTIVE_STROKE} />
       </Animated.View>
     </View>
   );

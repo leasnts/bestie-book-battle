@@ -184,9 +184,10 @@ ci-dessous (à ramener un jour vers ces tons).
 - **Accent** : ce qui dit un **état** ou un **choix** — progression (piste de
   l'accueil, ma barre au classement, caps passés, signets de la bibliothèque),
   sélection (filtres, chips du carnet, cartes et catégories choisies, réaction
-  choisie), interrupteur activé, onglet actif.
-- **Encre** : les **actions** (boutons primaires, + en verre), le texte, les
-  repères à atteindre (cap en cours, fin du livre).
+  choisie), interrupteur activé.
+- **Encre** : les **actions** (boutons primaires, + en verre), la **navigation**
+  (onglet actif, bouton bibliothèque : la même encre que le chiffre de ma page),
+  le texte, les repères à atteindre (cap en cours, fin du livre).
 - **Neutre** : le décor (étagères, aquarelle, papier).
 
 L'accent est un **emplacement unique** : c'est lui qu'une couleur de club
