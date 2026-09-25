@@ -56,6 +56,7 @@ import { getChallengeHistory } from '../services/supabase/database';
 import { uploadBookCover } from '../services/supabase/storage';
 import { useFitSheet } from '../hooks/useFitSheet';
 import { useAnnotationStore } from '../stores/annotationStore';
+import { ANNOTATION_CATEGORIES } from '../utils/annotations';
 import { useAuthStore } from '../stores/authStore';
 import { useGoalStore } from '../stores/goalStore';
 import { useProgressStore } from '../stores/progressStore';
@@ -152,20 +153,26 @@ export default function BookRoute() {
 
   const percentages = participants.map((p) => p.percentage || 0);
 
-  // Le carnet en chiffres : ce que je lis déjà (les miennes, celles du club),
-  // et ce qui m'attend plus loin (verrouillé)
+  // Le carnet : combien de notes, dont les miennes, et où elles sont dans le
+  // livre. Celles que je peux lire gardent leur couleur ; les verrouillées ne
+  // montrent que leur place (règle du carnet : rien de leur contenu)
   const { notes: allNotes, ahead: allAhead, challengeId: notesBookId } = useAnnotationStore();
   const noteCounts = useMemo(() => {
     // Le carnet chargé est peut-être celui d'un autre livre
     const sameBook = notesBookId === challengeId;
-    const bookNotes = sameBook ? allNotes : [];
-    const notesAhead = sameBook ? allAhead : [];
-    const mine = bookNotes.filter((n) => n.user_id === user?.id);
+    const readable = sameBook ? allNotes : [];
+    const locked = sameBook ? allAhead : [];
     return {
-      mine: mine.length,
-      minePrivate: mine.filter((n) => n.visibility === 'private').length,
-      club: bookNotes.length - mine.length,
-      ahead: notesAhead.length,
+      total: readable.length + locked.length,
+      mine: readable.filter((n) => n.user_id === user?.id).length,
+      stickers: [
+        ...readable.map((n) => ({
+          id: n.id,
+          position: n.position,
+          color: ANNOTATION_CATEGORIES[n.category]?.color ?? null,
+        })),
+        ...locked.map((n) => ({ id: n.id, position: n.book_position, color: null })),
+      ],
     };
   }, [allNotes, allAhead, notesBookId, challengeId, user?.id]);
   /** Pour colorer les ronds des caps comme sur la piste de l'accueil */

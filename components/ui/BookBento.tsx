@@ -10,7 +10,8 @@
  *    │ 21 / 62      │ 5 ●●●●●      │
  *    ├──────────────┴──────────────┤
  *    │ CARNET                    › │
- *    │ 4 à moi │ 12 du club │ 3 plus loin │
+ *    │ 8 notes · 2 à toi           │
+ *    │ ─◆──◆◆────◆───◆◆──────◆──── │   ← chaque note en autocollant, à sa page
  *    ├─────────────────────────────┤
  *    │ INVITER                     │
  *    │ [5][2][8][1][8][7]      [⇪] │   ← une case par lettre (à la Opal)
@@ -24,15 +25,15 @@
 
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
-import { ChevronRightIcon, LockIcon, PencilIcon, ShareIcon } from 'lucide-react-native';
+import { ChevronRightIcon, PencilIcon, ShareIcon } from 'lucide-react-native';
 import React, { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import NoteSticker from './NoteSticker';
 import ProgressGauge from './ProgressGauge';
 import {
   borderRadius,
   colors,
   fonts,
-  inkAlpha,
   inkGradient,
   shadows,
   spacing,
@@ -56,8 +57,13 @@ interface BookBentoProps {
   onOpenMembers: () => void;
   /** Ouvre mon journal de lecture */
   onOpenJournal: () => void;
-  /** Le carnet du livre, en chiffres */
-  notes: { mine: number; minePrivate: number; club: number; ahead: number };
+  /** Le carnet du livre : combien de notes, dont les miennes, et où elles sont */
+  notes: {
+    total: number;
+    mine: number;
+    /** Chaque note à sa place dans le livre (0 → 1) ; couleur `null` si verrouillée */
+    stickers: { id: string; position: number; color: string | null }[];
+  };
   onOpenNotes: () => void;
   inviteCode: string | null;
   onInvite: () => void;
@@ -181,31 +187,25 @@ export default function BookBento({
         </Pressable>
       </View>
 
-      {/* ── Le carnet : mes notes, celles du club, celles qui m'attendent ── */}
+      {/* ── Le carnet : combien le livre est annoté, et où ── */}
       <Pressable
         onPress={onOpenNotes}
         style={({ pressed }) => [styles.tile, styles.paper, pressed && styles.pressed]}
         accessibilityRole="button"
-        accessibilityLabel={`Carnet : ${notes.mine} notes à moi dont ${notes.minePrivate} privées, ${notes.club} du club, ${notes.ahead} plus loin. Ouvrir le carnet`}
+        accessibilityLabel={`Carnet : ${notes.total} notes, dont ${notes.mine} à toi. Ouvrir le carnet`}
       >
         <View style={styles.tileTop}>
           <Text style={styles.kicker}>Carnet</Text>
           <ChevronRightIcon size={15} color={colors.textTertiary} strokeWidth={2.2} />
         </View>
-        <View style={styles.notesRow}>
-          <NoteStat value={notes.mine} label="à moi">
-            {notes.minePrivate > 0 && (
-              <View style={styles.privateTag}>
-                <LockIcon size={10} color={colors.textTertiary} strokeWidth={2.4} />
-                <Text style={styles.privateText}>{notes.minePrivate}</Text>
-              </View>
-            )}
-          </NoteStat>
-          <View style={styles.notesDivider} />
-          <NoteStat value={notes.club} label="du club" />
-          <View style={styles.notesDivider} />
-          <NoteStat value={notes.ahead} label="plus loin" />
+        <View style={styles.notesHead}>
+          <Text style={styles.bigNumberInline}>{notes.total}</Text>
+          <Text style={styles.notesLabel}>
+            note{notes.total > 1 ? 's' : ''}
+            {notes.mine > 0 ? ` · ${notes.mine} à toi` : ''}
+          </Text>
         </View>
+        <StickerStrip stickers={notes.stickers} />
       </Pressable>
 
       {/* ── Inviter : le code, une lettre par case, et le partage à droite ── */}
@@ -240,25 +240,46 @@ export default function BookBento({
   );
 }
 
-/** Un chiffre du carnet, son libellé dessous */
-function NoteStat({
-  value,
-  label,
-  children,
-}: {
-  value: number;
-  label: string;
-  children?: React.ReactNode;
-}) {
+const STICKER = 26;
+
+/**
+ * Le livre de la première à la dernière page, et chaque note posée à sa page
+ * en autocollant : un peu de travers, en quinconce, comme collés à la main.
+ */
+function StickerStrip({ stickers }: { stickers: BookBentoProps['notes']['stickers'] }) {
+  const [width, setWidth] = useState(0);
+  const sorted = [...stickers].sort((a, b) => a.position - b.position);
   return (
-    <View style={styles.noteStat}>
-      <View style={styles.noteValueRow}>
-        <Text style={styles.bigNumberInline}>{value}</Text>
-        {children}
-      </View>
-      <Text style={styles.noteLabel}>{label}</Text>
+    <View style={styles.strip} onLayout={(e) => setWidth(e.nativeEvent.layout.width)}>
+      <View style={styles.stripLine} />
+      {width > 0 &&
+        sorted.map((sticker, i) => {
+          const seed = hash(sticker.id);
+          return (
+            <View
+              key={sticker.id}
+              style={[
+                styles.sticker,
+                {
+                  left: Math.max(0, Math.min(1, sticker.position)) * (width - STICKER),
+                  top: i % 2 ? 16 : 2 + (seed % 5),
+                  transform: [{ rotate: `${(seed % 21) - 10}deg` }],
+                },
+              ]}
+            >
+              <NoteSticker id={sticker.id} color={sticker.color} size={STICKER} />
+            </View>
+          );
+        })}
     </View>
   );
+}
+
+/** Un petit nombre stable tiré d'un identifiant : même travers à chaque affichage */
+function hash(id: string) {
+  let h = 0;
+  for (let k = 0; k < id.length; k++) h = (h * 31 + id.charCodeAt(k)) >>> 0;
+  return h;
 }
 
 // ─── Styles ────────────────────────────────────────────────────────
@@ -377,44 +398,33 @@ const styles = StyleSheet.create({
     color: colors.textTertiary,
     fontVariant: ['tabular-nums'],
   },
-  notesRow: {
+  notesHead: {
     flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: spacing.md,
+    alignItems: 'baseline',
+    gap: spacing.sm,
+    marginTop: spacing.sm,
   },
-  noteStat: {
-    flex: 1,
-  },
-  noteValueRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-  },
-  noteLabel: {
+  notesLabel: {
     fontFamily: fonts.bodyBold,
     fontSize: 13,
     color: colors.textTertiary,
   },
-  notesDivider: {
-    width: StyleSheet.hairlineWidth,
-    alignSelf: 'stretch',
-    marginHorizontal: spacing.md,
+  strip: {
+    height: 46,
+    marginTop: spacing.sm,
+  },
+  /** Le livre, de la première à la dernière page */
+  stripLine: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 22,
+    height: 1,
     backgroundColor: colors.border,
   },
-  /** Combien de mes notes sont privées : un cadenas et le nombre */
-  privateTag: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 2,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: borderRadius.full,
-    backgroundColor: inkAlpha(0.06),
-  },
-  privateText: {
-    fontFamily: fonts.bodyBold,
-    fontSize: 11,
-    color: colors.textTertiary,
+  sticker: {
+    position: 'absolute',
+    ...shadows.xs,
   },
   membersRow: {
     marginTop: 'auto',
