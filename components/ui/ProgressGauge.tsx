@@ -45,7 +45,7 @@ const BAR_WIDTH = 2.5;
 /** Longueur d'un trait, centré sur la courbe */
 const BAR_LENGTH = 12;
 /** Hauteur de l'arche par rapport à sa demi-largeur : plus c'est petit, plus c'est plat */
-const FLATNESS = 0.75;
+const FLATNESS = 0.3;
 
 /**
  * Les traits, à la taille réelle de la place qu'on leur donne : le premier
@@ -56,9 +56,9 @@ function geometry(width: number, height: number) {
   const step = (width - BAR_WIDTH) / (BAR_COUNT - 1);
   const rx = (width - BAR_WIDTH) / 2;
   const centerX = width / 2;
-  const baseY = height - BAR_LENGTH / 2;
-  // Aplati, sans jamais dépasser la hauteur donnée
-  const ry = Math.max(1, Math.min(baseY - BAR_LENGTH / 2, rx * FLATNESS));
+  // Aplati, sans jamais dépasser la hauteur donnée ; le sommet en haut
+  const ry = Math.max(1, Math.min(height - BAR_LENGTH, rx * FLATNESS));
+  const baseY = ry + BAR_LENGTH / 2;
   return Array.from({ length: BAR_COUNT }, (_, i) => {
     const x = i * step;
     const dx = (x + BAR_WIDTH / 2 - centerX) / rx;
@@ -146,7 +146,7 @@ export default function ProgressGauge({ clubPercent, myPercent, style }: Progres
         </Svg>
       )}
 
-      {/* Sous l'arche, l'un sous l'autre */}
+      {/* Sous l'arche, entre ses deux bouts, l'un sous l'autre */}
       <View style={styles.legend}>
         <View style={styles.legendColumn}>
           <Legend label="Toi" value={me} dot={accentGradient[0]} />
