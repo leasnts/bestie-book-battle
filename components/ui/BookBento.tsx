@@ -9,6 +9,9 @@
  *    │ PAGES        │ MEMBRES    › │
  *    │ 21 / 62      │ 5 ●●●●●      │
  *    ├──────────────┴──────────────┤
+ *    │ CARNET                    › │
+ *    │ 4 à moi │ 12 du club │ 3 plus loin │
+ *    ├─────────────────────────────┤
  *    │ INVITER                     │
  *    │ [5][2][8][1][8][7]      [⇪] │   ← une case par lettre (à la Opal)
  *    └─────────────────────────────┘
@@ -21,7 +24,7 @@
 
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
-import { ChevronRightIcon, PencilIcon, ShareIcon } from 'lucide-react-native';
+import { ChevronRightIcon, LockIcon, PencilIcon, ShareIcon } from 'lucide-react-native';
 import React, { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import ProgressGauge from './ProgressGauge';
@@ -29,6 +32,7 @@ import {
   borderRadius,
   colors,
   fonts,
+  inkAlpha,
   inkGradient,
   shadows,
   spacing,
@@ -50,6 +54,11 @@ interface BookBentoProps {
   pages: number;
   members: { id: string; photoUrl: string | null }[];
   onOpenMembers: () => void;
+  /** Ouvre mon journal de lecture */
+  onOpenJournal: () => void;
+  /** Le carnet du livre, en chiffres */
+  notes: { mine: number; minePrivate: number; club: number; ahead: number };
+  onOpenNotes: () => void;
   inviteCode: string | null;
   onInvite: () => void;
 }
@@ -64,6 +73,9 @@ export default function BookBento({
   pages,
   members,
   onOpenMembers,
+  onOpenJournal,
+  notes,
+  onOpenNotes,
   inviteCode,
   onInvite,
 }: BookBentoProps) {
@@ -114,17 +126,27 @@ export default function BookBento({
 
       <View style={styles.row}>
         {/* ── Mes pages ── */}
-        <View
-          style={[styles.tile, halfStyle, styles.short, styles.paper]}
-          accessible
-          accessibilityLabel={`Page ${currentPage} sur ${pages}`}
+        <Pressable
+          onPress={onOpenJournal}
+          style={({ pressed }) => [
+            styles.tile,
+            halfStyle,
+            styles.short,
+            styles.paper,
+            pressed && styles.pressed,
+          ]}
+          accessibilityRole="button"
+          accessibilityLabel={`Page ${currentPage} sur ${pages}, voir mon journal`}
         >
-          <Text style={styles.kicker}>Pages</Text>
+          <View style={styles.tileTop}>
+            <Text style={styles.kicker}>Pages</Text>
+            <ChevronRightIcon size={15} color={colors.textTertiary} strokeWidth={2.2} />
+          </View>
           <View style={styles.pagesRow}>
             <Text style={styles.bigNumberInline}>{currentPage}</Text>
             <Text style={styles.total}>/ {pages}</Text>
           </View>
-        </View>
+        </Pressable>
 
         {/* ── Les membres ── */}
         <Pressable
@@ -159,6 +181,33 @@ export default function BookBento({
         </Pressable>
       </View>
 
+      {/* ── Le carnet : mes notes, celles du club, celles qui m'attendent ── */}
+      <Pressable
+        onPress={onOpenNotes}
+        style={({ pressed }) => [styles.tile, styles.paper, pressed && styles.pressed]}
+        accessibilityRole="button"
+        accessibilityLabel={`Carnet : ${notes.mine} notes à moi dont ${notes.minePrivate} privées, ${notes.club} du club, ${notes.ahead} plus loin. Ouvrir le carnet`}
+      >
+        <View style={styles.tileTop}>
+          <Text style={styles.kicker}>Carnet</Text>
+          <ChevronRightIcon size={15} color={colors.textTertiary} strokeWidth={2.2} />
+        </View>
+        <View style={styles.notesRow}>
+          <NoteStat value={notes.mine} label="à moi">
+            {notes.minePrivate > 0 && (
+              <View style={styles.privateTag}>
+                <LockIcon size={10} color={colors.textTertiary} strokeWidth={2.4} />
+                <Text style={styles.privateText}>{notes.minePrivate}</Text>
+              </View>
+            )}
+          </NoteStat>
+          <View style={styles.notesDivider} />
+          <NoteStat value={notes.club} label="du club" />
+          <View style={styles.notesDivider} />
+          <NoteStat value={notes.ahead} label="plus loin" />
+        </View>
+      </Pressable>
+
       {/* ── Inviter : le code, une lettre par case, et le partage à droite ── */}
       <View
         style={[styles.tile, styles.paper]}
@@ -187,6 +236,27 @@ export default function BookBento({
           </Pressable>
         </View>
       </View>
+    </View>
+  );
+}
+
+/** Un chiffre du carnet, son libellé dessous */
+function NoteStat({
+  value,
+  label,
+  children,
+}: {
+  value: number;
+  label: string;
+  children?: React.ReactNode;
+}) {
+  return (
+    <View style={styles.noteStat}>
+      <View style={styles.noteValueRow}>
+        <Text style={styles.bigNumberInline}>{value}</Text>
+        {children}
+      </View>
+      <Text style={styles.noteLabel}>{label}</Text>
     </View>
   );
 }
@@ -306,6 +376,45 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: colors.textTertiary,
     fontVariant: ['tabular-nums'],
+  },
+  notesRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: spacing.md,
+  },
+  noteStat: {
+    flex: 1,
+  },
+  noteValueRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  noteLabel: {
+    fontFamily: fonts.bodyBold,
+    fontSize: 13,
+    color: colors.textTertiary,
+  },
+  notesDivider: {
+    width: StyleSheet.hairlineWidth,
+    alignSelf: 'stretch',
+    marginHorizontal: spacing.md,
+    backgroundColor: colors.border,
+  },
+  /** Combien de mes notes sont privées : un cadenas et le nombre */
+  privateTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: borderRadius.full,
+    backgroundColor: inkAlpha(0.06),
+  },
+  privateText: {
+    fontFamily: fonts.bodyBold,
+    fontSize: 11,
+    color: colors.textTertiary,
   },
   membersRow: {
     marginTop: 'auto',
