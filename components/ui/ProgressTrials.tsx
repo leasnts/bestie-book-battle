@@ -1,25 +1,24 @@
 /**
- * TEMP-ESSAI — trois idées de progression « page de livre », à comparer dans
- * la fiche du livre. On en garde une, le reste de ce fichier disparaît.
+ * TEMP-ESSAI — la progression en tranche de livre, vue en perspective.
  *
- * A. Livre ouvert : deux pages, le tas de gauche (lu) grossit, celui de droite
- *    (à lire) fond ; un marque-page pour moi, un pour le club.
- * B. Tranche : le bloc de pages vu de côté, fines pages colorées jusqu'à ma
- *    page, un repère pour le club.
- * C. Page cornée : une page réglée qui se remplit ligne à ligne jusqu'à mon %,
- *    coin corné, le club noté dans la marge.
+ *     ▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁      ← couverture du dessus (toile chocolat)
+ *    ┃▌▌▌▌▌▌▌▌▌▌│││││││││││││││││││      ← la tranche : pages lues teintées,
+ *    ┃▌▌▌▌▌▌▌▌▌▌││││││││││││││││ ╱          plus haute devant, plus basse au fond
+ *     ▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔
+ *             ▼ toi  ▽ club                ← les marque-pages qui dépassent
+ *
+ * On en garde une version, le reste de ce fichier disparaît.
  */
 
-import { LinearGradient } from 'expo-linear-gradient';
-import React from 'react';
+import React, { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
+import Svg, { ClipPath, Defs, G, Line, LinearGradient, Path, Rect, Stop } from 'react-native-svg';
 import {
   accentGradient,
   borderRadius,
   colors,
   fonts,
-  inkAlpha,
-  shadowAlpha,
+  inkGradient,
   shadows,
   spacing,
 } from '../../utils/constants';
@@ -35,24 +34,11 @@ const clamp = (p: number) => Math.max(0, Math.min(100, p));
 export default function ProgressTrials(props: TrialProps) {
   return (
     <View style={styles.list}>
-      <Trial title="A · Livre ouvert">
-        <OpenBook {...props} />
-      </Trial>
-      <Trial title="B · Tranche">
-        <PageBlock {...props} />
-      </Trial>
-      <Trial title="C · Page cornée">
-        <RuledPage {...props} />
-      </Trial>
-    </View>
-  );
-}
-
-function Trial({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <View style={styles.tile}>
-      <Text style={styles.kicker}>{title}</Text>
-      {children}
+      <View style={styles.tile}>
+        <Text style={styles.kicker}>Essai · tranche en perspective</Text>
+        <PageEdge {...props} />
+        <LegendRow {...props} />
+      </View>
     </View>
   );
 }
@@ -74,162 +60,157 @@ function LegendRow({ myPercent, clubPercent }: TrialProps) {
   );
 }
 
-// ─── A. Livre ouvert ───────────────────────────────────────────────
+// ─── La tranche ────────────────────────────────────────────────────
 
-/** Nombre maximal de feuillets dessinés sur le bord d'un tas */
-const STACK_MAX = 10;
+const HEIGHT = 112;
+/** Nombre de feuillets dessinés sur la tranche */
+const PAGES = 110;
+/** Hauteur de la tranche devant (à gauche) et au fond (à droite) */
+const NEAR = 58;
+const FAR = 40;
+/** Épaisseur d'une couverture, devant */
+const BOARD = 7;
+/** La tranche est un peu creusée au milieu, comme sur un vrai livre */
+const SAG = 3;
+/** Perspective : les pages se serrent vers le fond */
+const DEPTH = 0.9;
+/** Où finit la tranche (le reste en bas : les marque-pages qui dépassent) */
+const CENTER_Y = 46;
 
-function OpenBook({ myPercent, clubPercent }: TrialProps) {
-  const read = Math.round((clamp(myPercent) / 100) * STACK_MAX);
-  const left = Math.max(1, read);
-  const right = Math.max(1, STACK_MAX - read);
+/** 0 → 1 le long du livre, compressé vers le fond */
+function warp(u: number) {
+  return (u * (1 + DEPTH)) / (1 + DEPTH * u);
+}
+
+function PageEdge({ myPercent, clubPercent }: TrialProps) {
+  const [width, setWidth] = useState(0);
+  const w = width;
+
+  // La tranche, point par point : hauteur qui diminue au fond, bords creusés
+  const edgeAt = (u: number) => {
+    const h = NEAR + (FAR - NEAR) * u;
+    const sag = SAG * Math.sin(Math.PI * u);
+    return { top: CENTER_Y - h / 2 + sag, bottom: CENTER_Y + h / 2 - sag };
+  };
+  const xAt = (u: number) => 2 + (w - 4) * warp(u);
+
+  const curve = (side: 'top' | 'bottom', offset = 0) => {
+    const pts: string[] = [];
+    for (let i = 0; i <= 24; i++) {
+      const u = i / 24;
+      pts.push(`${xAt(u).toFixed(1)} ${(edgeAt(u)[side] + offset).toFixed(1)}`);
+    }
+    return pts;
+  };
+
+  // Couverture du dessus : une bande sombre qui suit le haut de la tranche
+  const boardTop = () => {
+    const top = curve('top', -BOARD);
+    const bottom = curve('top').reverse();
+    return `M ${top.join(' L ')} L ${bottom.join(' L ')} Z`;
+  };
+  const boardBottom = () => {
+    const top = curve('bottom');
+    const bottom = curve('bottom', BOARD).reverse();
+    return `M ${top.join(' L ')} L ${bottom.join(' L ')} Z`;
+  };
+  const block = () => {
+    const top = curve('top');
+    const bottom = curve('bottom').reverse();
+    return `M ${top.join(' L ')} L ${bottom.join(' L ')} Z`;
+  };
+
+  const read = Math.round((clamp(myPercent) / 100) * PAGES);
+
+  /** Un marque-page qui dépasse sous la couverture, à `percent` */
+  const ribbon = (percent: number, length: number, ribbonWidth: number) => {
+    const u = clamp(percent) / 100;
+    const x = xAt(u);
+    const y = edgeAt(u).bottom + BOARD - 2;
+    const half = ribbonWidth / 2;
+    // Bout fendu en V
+    return `M ${x - half} ${y} L ${x + half} ${y} L ${x + half} ${y + length} L ${x} ${y + length - 5} L ${x - half} ${y + length} Z`;
+  };
+
   return (
-    <>
-      <View style={styles.bookWrap}>
-        <View style={styles.book}>
-          {/* Page de gauche : le lu, feuillets empilés sur le bord */}
-          <View style={[styles.page, styles.pageLeft]}>
-            <LinearGradient
-              colors={['#fbf8f3', '#efe8dd']}
-              start={{ x: 0, y: 0.5 }}
-              end={{ x: 1, y: 0.5 }}
-              style={StyleSheet.absoluteFill}
-            />
-            <View style={[styles.stack, styles.stackLeft]}>
-              {Array.from({ length: left }, (_, i) => (
-                <View key={i} style={[styles.leaf, { left: i * 1.6, top: 4 + i * 0.6 }]} />
-              ))}
-            </View>
-            <Text style={styles.pageNote}>lu</Text>
-          </View>
-          {/* Le pli */}
-          <LinearGradient
-            colors={['rgba(0,0,0,0)', shadowAlpha(0.16), 'rgba(0,0,0,0)']}
-            start={{ x: 0, y: 0.5 }}
-            end={{ x: 1, y: 0.5 }}
-            style={styles.gutter}
+    <View style={styles.edge} onLayout={(e) => setWidth(e.nativeEvent.layout.width)}>
+      {w > 0 && (
+        <Svg width={w} height={HEIGHT}>
+          <Defs>
+            <LinearGradient id="paper" x1="0" y1="0" x2="0" y2="1">
+              <Stop offset="0" stopColor="#fbf7f0" />
+              <Stop offset="0.55" stopColor="#f1e9dc" />
+              <Stop offset="1" stopColor="#ddd1bf" />
+            </LinearGradient>
+            <LinearGradient id="board" x1="0" y1="0" x2="0" y2="1">
+              <Stop offset="0" stopColor={inkGradient[0]} />
+              <Stop offset="1" stopColor={inkGradient[1]} />
+            </LinearGradient>
+            <LinearGradient id="depth" x1="0" y1="0" x2="1" y2="0">
+              <Stop offset="0" stopColor="#000" stopOpacity={0} />
+              <Stop offset="1" stopColor="#000" stopOpacity={0.12} />
+            </LinearGradient>
+            <ClipPath id="blockClip">
+              <Path d={block()} />
+            </ClipPath>
+            <LinearGradient id="readTint" x1="0" y1="0" x2="0" y2="1">
+              <Stop offset="0" stopColor={accentGradient[0]} stopOpacity={0.22} />
+              <Stop offset="1" stopColor={accentGradient[1]} stopOpacity={0.42} />
+            </LinearGradient>
+            <LinearGradient id="ribbonMe" x1="0" y1="0" x2="0" y2="1">
+              <Stop offset="0" stopColor={accentGradient[0]} />
+              <Stop offset="1" stopColor={accentGradient[1]} />
+            </LinearGradient>
+            <LinearGradient id="ribbonClub" x1="0" y1="0" x2="0" y2="1">
+              <Stop offset="0" stopColor={CLUB_GRADIENT[0]} />
+              <Stop offset="1" stopColor={CLUB_GRADIENT[1]} />
+            </LinearGradient>
+          </Defs>
+
+          {/* Les marque-pages passent derrière la couverture du dessous */}
+          <Path d={ribbon(clubPercent, 30, 7)} fill="url(#ribbonClub)" />
+          <Path d={ribbon(myPercent, 40, 9)} fill="url(#ribbonMe)" />
+
+          {/* Le bloc de pages */}
+          <Path d={block()} fill="url(#paper)" />
+          {/* Les pages lues : une tranche teintée, comme peinte */}
+          <Rect
+            x={0}
+            y={0}
+            width={xAt(clamp(myPercent) / 100)}
+            height={HEIGHT}
+            fill="url(#readTint)"
+            clipPath="url(#blockClip)"
           />
-          {/* Page de droite : ce qui reste */}
-          <View style={[styles.page, styles.pageRight]}>
-            <LinearGradient
-              colors={['#efe8dd', '#fbf8f3']}
-              start={{ x: 0, y: 0.5 }}
-              end={{ x: 1, y: 0.5 }}
-              style={StyleSheet.absoluteFill}
-            />
-            <View style={[styles.stack, styles.stackRight]}>
-              {Array.from({ length: right }, (_, i) => (
-                <View key={i} style={[styles.leaf, { right: i * 1.6, top: 4 + i * 0.6 }]} />
-              ))}
-            </View>
-            <Text style={[styles.pageNote, styles.pageNoteRight]}>à lire</Text>
-          </View>
-        </View>
-        {/* Les marque-pages, posés à leur % sur toute la largeur du livre */}
-        <Ribbon percent={clubPercent} colors={CLUB_GRADIENT} short />
-        <Ribbon percent={myPercent} colors={accentGradient} />
-      </View>
-      <LegendRow myPercent={myPercent} clubPercent={clubPercent} />
-    </>
-  );
-}
-
-function Ribbon({
-  percent,
-  colors: ribbon,
-  short = false,
-}: {
-  percent: number;
-  colors: readonly [string, string];
-  short?: boolean;
-}) {
-  return (
-    <View style={[styles.ribbon, short && styles.ribbonShort, { left: `${clamp(percent)}%` }]}>
-      <LinearGradient colors={ribbon} style={StyleSheet.absoluteFill} />
-    </View>
-  );
-}
-
-// ─── B. Tranche ────────────────────────────────────────────────────
-
-const PAGE_LINES = 60;
-
-function PageBlock({ myPercent, clubPercent }: TrialProps) {
-  const mine = Math.round((clamp(myPercent) / 100) * PAGE_LINES);
-  return (
-    <>
-      <View style={styles.block}>
-        <LinearGradient
-          colors={['#f7f2ea', '#ece3d6']}
-          style={[StyleSheet.absoluteFill, styles.blockRadius]}
-        />
-        <View style={styles.blockLines}>
-          {Array.from({ length: PAGE_LINES }, (_, i) => (
-            <View
-              key={i}
-              style={[
-                styles.blockLine,
-                i < mine && { backgroundColor: i % 2 ? accentGradient[1] : accentGradient[0] },
-              ]}
-            />
-          ))}
-        </View>
-        {/* Reliure en haut et en bas du bloc */}
-        <View style={[styles.blockBand, styles.blockBandTop]} />
-        <View style={[styles.blockBand, styles.blockBandBottom]} />
-      </View>
-      {/* Le club, repéré sous le bloc */}
-      <View style={styles.markerRow}>
-        <View style={[styles.marker, { left: `${clamp(clubPercent)}%` }]} />
-      </View>
-      <LegendRow myPercent={myPercent} clubPercent={clubPercent} />
-    </>
-  );
-}
-
-// ─── C. Page cornée ────────────────────────────────────────────────
-
-const RULED_LINES = 6;
-
-function RuledPage({ myPercent, clubPercent }: TrialProps) {
-  // Mon % se lit comme un texte : lignes pleines, puis la ligne en cours
-  const written = (clamp(myPercent) / 100) * RULED_LINES;
-  const clubLine = Math.min(RULED_LINES - 1, Math.floor((clamp(clubPercent) / 100) * RULED_LINES));
-  return (
-    <>
-      <View style={styles.sheet}>
-        <LinearGradient colors={['#fdfbf7', '#f3ede3']} style={[StyleSheet.absoluteFill, styles.sheetRadius]} />
-        {/* La marge, comme une copie */}
-        <View style={styles.margin} />
-        {Array.from({ length: RULED_LINES }, (_, i) => {
-          const fill = Math.max(0, Math.min(1, written - i));
-          return (
-            <View key={i} style={styles.ruledLine}>
-              {i === clubLine && <View style={styles.clubTick} />}
-              <View style={styles.rule} />
-              {fill > 0 && (
-                <LinearGradient
-                  colors={accentGradient}
-                  start={{ x: 0, y: 0.5 }}
-                  end={{ x: 1, y: 0.5 }}
-                  style={[styles.ink, { width: `${fill * 100}%` }]}
+          <G>
+            {Array.from({ length: PAGES }, (_, i) => {
+              const u = (i + 0.5) / PAGES;
+              const x = xAt(u);
+              const { top, bottom } = edgeAt(u);
+              const isRead = i < read;
+              return (
+                <Line
+                  key={i}
+                  x1={x}
+                  y1={top + 1}
+                  x2={x}
+                  y2={bottom - 1}
+                  stroke={isRead ? (i % 3 === 0 ? accentGradient[1] : accentGradient[0]) : '#000'}
+                  strokeOpacity={isRead ? 0.55 + (i % 2) * 0.2 : 0.07 + (i % 3) * 0.03}
+                  strokeWidth={0.7 * (1 - 0.35 * u)}
                 />
-              )}
-            </View>
-          );
-        })}
-        {/* Le coin corné */}
-        <View style={styles.dogEar}>
-          <LinearGradient
-            colors={['#e6dccd', '#fdfbf7']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={StyleSheet.absoluteFill}
-          />
-        </View>
-      </View>
-      <LegendRow myPercent={myPercent} clubPercent={clubPercent} />
-    </>
+              );
+            })}
+          </G>
+          {/* Le fond s'assombrit un peu : il s'éloigne */}
+          <Path d={block()} fill="url(#depth)" />
+
+          {/* Les couvertures */}
+          <Path d={boardTop()} fill="url(#board)" />
+          <Path d={boardBottom()} fill="url(#board)" />
+        </Svg>
+      )}
+    </View>
   );
 }
 
@@ -256,6 +237,9 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     color: colors.textTertiary,
   },
+  edge: {
+    height: HEIGHT,
+  },
   legend: {
     flexDirection: 'row',
     gap: spacing.xl,
@@ -280,191 +264,5 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: colors.textPrimary,
     fontVariant: ['tabular-nums'],
-  },
-
-  // A
-  bookWrap: {
-    height: 92,
-  },
-  book: {
-    flex: 1,
-    flexDirection: 'row',
-    borderRadius: 6,
-    ...shadows.cardSelected,
-  },
-  page: {
-    flex: 1,
-    overflow: 'hidden',
-  },
-  pageLeft: {
-    borderTopLeftRadius: 6,
-    borderBottomLeftRadius: 10,
-  },
-  pageRight: {
-    borderTopRightRadius: 6,
-    borderBottomRightRadius: 10,
-  },
-  gutter: {
-    position: 'absolute',
-    left: '46%',
-    width: '8%',
-    top: 0,
-    bottom: 0,
-    zIndex: 1,
-  },
-  stack: {
-    position: 'absolute',
-    top: 0,
-    bottom: 0,
-    width: 24,
-  },
-  stackLeft: {
-    left: 2,
-  },
-  stackRight: {
-    right: 2,
-  },
-  leaf: {
-    position: 'absolute',
-    bottom: 3,
-    width: 1,
-    backgroundColor: inkAlpha(0.14),
-  },
-  pageNote: {
-    position: 'absolute',
-    bottom: 8,
-    left: 28,
-    fontFamily: fonts.bodyBold,
-    fontSize: 11,
-    color: colors.textTertiary,
-  },
-  pageNoteRight: {
-    left: undefined,
-    right: 28,
-  },
-  ribbon: {
-    position: 'absolute',
-    top: -4,
-    width: 10,
-    height: 56,
-    marginLeft: -5,
-    borderTopLeftRadius: 2,
-    borderTopRightRadius: 2,
-    overflow: 'hidden',
-    zIndex: 2,
-  },
-  ribbonShort: {
-    height: 40,
-  },
-
-  // B
-  block: {
-    height: 44,
-    justifyContent: 'center',
-    ...shadows.xs,
-  },
-  blockRadius: {
-    borderRadius: 4,
-  },
-  blockLines: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginHorizontal: 4,
-    height: 32,
-  },
-  blockLine: {
-    width: 1.5,
-    borderRadius: 1,
-    backgroundColor: inkAlpha(0.13),
-  },
-  blockBand: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    height: 5,
-    backgroundColor: inkAlpha(0.06),
-  },
-  blockBandTop: {
-    top: 0,
-    borderTopLeftRadius: 4,
-    borderTopRightRadius: 4,
-  },
-  blockBandBottom: {
-    bottom: 0,
-    borderBottomLeftRadius: 4,
-    borderBottomRightRadius: 4,
-  },
-  markerRow: {
-    height: 8,
-    marginTop: -spacing.sm,
-    marginHorizontal: 4,
-  },
-  marker: {
-    position: 'absolute',
-    top: 0,
-    width: 0,
-    height: 0,
-    marginLeft: -5,
-    borderLeftWidth: 5,
-    borderRightWidth: 5,
-    borderBottomWidth: 7,
-    borderLeftColor: 'transparent',
-    borderRightColor: 'transparent',
-    borderBottomColor: CLUB_GRADIENT[1],
-  },
-
-  // C
-  sheet: {
-    paddingVertical: spacing.md,
-    paddingLeft: 30,
-    paddingRight: spacing.lg,
-    gap: 9,
-    ...shadows.xs,
-  },
-  sheetRadius: {
-    borderRadius: 4,
-  },
-  margin: {
-    position: 'absolute',
-    left: 22,
-    top: 0,
-    bottom: 0,
-    width: 1,
-    backgroundColor: CLUB_GRADIENT[1],
-  },
-  ruledLine: {
-    height: 6,
-    justifyContent: 'center',
-  },
-  rule: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
-    height: 1,
-    backgroundColor: inkAlpha(0.1),
-  },
-  ink: {
-    height: 4,
-    borderRadius: 2,
-  },
-  /** Le club, noté dans la marge à sa ligne */
-  clubTick: {
-    position: 'absolute',
-    left: -20,
-    width: 12,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: CLUB_GRADIENT[1],
-  },
-  dogEar: {
-    position: 'absolute',
-    right: 0,
-    bottom: 0,
-    width: 20,
-    height: 20,
-    borderTopLeftRadius: 4,
-    overflow: 'hidden',
-    ...shadows.xs,
   },
 });
