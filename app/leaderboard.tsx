@@ -23,7 +23,8 @@
  * l'écran (cf. LeaderboardList), sans `View` intermédiaire.
  *
  * Ouvert depuis la fiche du livre (`?from=book`), le classement se pose
- * par-dessus elle : un bouton retour, à gauche du titre, y ramène.
+ * par-dessus elle : un bouton retour, à gauche du titre, y ramène. Les lignes
+ * n'y ouvrent pas le journal de chacun : ça ne se fait que depuis l'accueil.
  */
 
 import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
@@ -55,5 +56,7 @@ export default function LeaderboardRoute() {
     });
   }, [from, navigation, router]);
 
-  return <LeaderboardList participants={participants} myUserId={myUserId} />;
+  return (
+    <LeaderboardList participants={participants} myUserId={myUserId} readOnly={from === 'book'} />
+  );
 }
