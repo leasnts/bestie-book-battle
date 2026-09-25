@@ -31,6 +31,7 @@ import { Pressable, ScrollView, Share, StyleSheet, Text, View } from 'react-nati
 import Button3D from '../components/Button3D';
 import BookCover, { COVER_RATIO } from '../components/ui/BookCover';
 import { SHEET_TOP_INSET } from '../components/ui/SheetHeader';
+import { SHEET_GUTTER } from '../components/ui/SheetPage';
 import { useFitSheet } from '../hooks/useFitSheet';
 import { useAuthStore } from '../stores/authStore';
 import { useExploreStore } from '../stores/exploreStore';
@@ -52,7 +53,7 @@ function normalizeTitle(title: string): string {
 
 export default function ExploreBookRoute() {
   const router = useRouter();
-  const fit = useFitSheet({ withBar: false });
+  const fit = useFitSheet();
   const book = useExploreStore((state) => state.selectedBook);
   const isFavorite = useExploreStore(
     (state) => !!book && state.favorites.some((f) => f.id === book.id),
@@ -202,7 +203,8 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingTop: SHEET_TOP_INSET,
-    paddingHorizontal: spacing.xl,
+    // La marge de tous les sheets
+    paddingHorizontal: SHEET_GUTTER,
     paddingBottom: spacing.lg,
     gap: spacing['2xl'],
   },
@@ -221,8 +223,8 @@ const styles = StyleSheet.create({
   },
   title: {
     fontFamily: fonts.display,
-    fontSize: 24,
-    lineHeight: 30,
+    fontSize: 26,
+    lineHeight: 31,
     color: colors.textPrimary,
   },
   authorRow: {
