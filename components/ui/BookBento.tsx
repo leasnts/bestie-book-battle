@@ -9,9 +9,9 @@
  *    │ PAGES      › │ MEMBRES    › │
  *    │ 21 / 62      │ 5 ●●●●●      │
  *    ├──────────────┼──────────────┤
- *    │ CARNET     › │ INVITER   [⇪]│   ← les notes en autocollants, dans l'ordre
- *    │ 8 notes      │              │     du livre ; le code, une lettre par case
- *    │ ◆◆◆◆◆◆ +2    │ [5][2][8][1][8][7] │
+ *    │ CARNET     › │ INVITER    ⇪ │   ← les notes en pile d'autocollants ;
+ *    │              │              │     le code, une lettre par case
+ *    │ 8 ◆◆◆◆◆◆◆◆   │ [5][2][8][1][8][7] │
  *    └──────────────┴──────────────┘
  *
  * Tout en % dès qu'on compare (le club, moi) ; les pages sont celles de MON
@@ -21,7 +21,6 @@
  */
 
 import { Image } from 'expo-image';
-import { LinearGradient } from 'expo-linear-gradient';
 import { ChevronRightIcon, PencilIcon, ShareIcon } from 'lucide-react-native';
 import React, { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
@@ -31,7 +30,6 @@ import {
   borderRadius,
   colors,
   fonts,
-  inkGradient,
   shadows,
   spacing,
 } from '../../utils/constants';
@@ -86,8 +84,7 @@ export default function BookBento({
   // contenu est le plus large (l'anneau du club) prenait plus que sa moitié
   const [half, setHalf] = useState<number | undefined>(undefined);
   const halfStyle = half === undefined ? null : { flex: 0, width: half };
-  /** Carnet et invitation : même hauteur, compacte */
-  const squareStyle = { height: 128 };
+
 
   const countdown =
     remaining === null ? '—' : remaining >= 0 ? `J-${remaining}` : 'Prolong.';
@@ -193,12 +190,12 @@ export default function BookBento({
           style={({ pressed }) => [
             styles.tile,
             halfStyle,
-            squareStyle,
+            styles.short,
             styles.paper,
             pressed && styles.pressed,
           ]}
           accessibilityRole="button"
-          accessibilityLabel={`Carnet : ${notes.total} notes, dont ${notes.mine} à toi. Ouvrir le carnet`}
+          accessibilityLabel={`Carnet : ${notes.total} notes. Ouvrir le carnet`}
         >
           <View style={styles.tileTop}>
             <Text style={styles.kicker}>Carnet</Text>
@@ -206,33 +203,27 @@ export default function BookBento({
           </View>
           <View style={styles.notesHead}>
             <Text style={styles.bigNumberInline}>{notes.total}</Text>
-            <Text style={styles.notesLabel}>
-              note{notes.total > 1 ? 's' : ''}
-              {notes.mine > 0 ? ` · ${notes.mine} à toi` : ''}
-            </Text>
+            <StickerStrip stickers={notes.stickers} />
           </View>
-          <StickerStrip stickers={notes.stickers} />
         </Pressable>
 
-        {/* ── Inviter : le code, une lettre par case, le partage en haut à droite ── */}
-        <View
-          style={[styles.tile, halfStyle, squareStyle, styles.paper]}
-          accessible
-          accessibilityLabel={`Code d'invitation ${inviteCode?.split('').join(' ') ?? 'indisponible'}`}
+        {/* ── Inviter : le code, une lettre par case ; toucher la tuile partage ── */}
+        <Pressable
+          onPress={onInvite}
+          style={({ pressed }) => [
+            styles.tile,
+            halfStyle,
+            styles.short,
+            styles.paper,
+            pressed && styles.pressed,
+          ]}
+          accessibilityRole="button"
+          accessibilityLabel={`Inviter, code ${inviteCode?.split('').join(' ') ?? 'indisponible'}. Partager`}
         >
-          <Text style={styles.kicker}>Inviter</Text>
-          {/* Une case pleine : c'est l'action */}
-          <Pressable
-            onPress={onInvite}
-            hitSlop={6}
-            style={({ pressed }) => [styles.shareBox, pressed && styles.pressed]}
-            accessibilityRole="button"
-            accessibilityLabel="Partager le code"
-          >
-            <LinearGradient colors={inkGradient} style={styles.shareFill}>
-              <ShareIcon size={15} color={colors.white} strokeWidth={2.2} />
-            </LinearGradient>
-          </Pressable>
+          <View style={styles.tileTop}>
+            <Text style={styles.kicker}>Inviter</Text>
+            <ShareIcon size={15} color={colors.textTertiary} strokeWidth={2.2} />
+          </View>
           <View style={styles.letters}>
             {(inviteCode ?? '------').split('').map((letter, i) => (
               <View key={i} style={styles.letterBox}>
@@ -240,20 +231,20 @@ export default function BookBento({
               </View>
             ))}
           </View>
-        </View>
+        </Pressable>
       </View>
     </View>
   );
 }
 
 const STICKER = 24;
-/** D'un autocollant au suivant : ils se chevauchent d'un tiers */
-const STICKER_STEP = 16;
+/** D'un autocollant au suivant : ils se chevauchent largement, en pile */
+const STICKER_STEP = 10;
 const LETTER_GAP = 3;
 
 /**
- * Les notes en autocollants, rangées dans l'ordre du livre : une rangée qui se
- * chevauche un peu, inclinée à peine, un coup à gauche, un coup à droite. Ce
+ * Les notes en autocollants, rangées dans l'ordre du livre : une pile qui se
+ * chevauche largement, inclinée à peine, un coup à gauche, un coup à droite. Ce
  * qui ne tient pas se résume en « +3 ».
  */
 function StickerStrip({ stickers }: { stickers: BookBentoProps['notes']['stickers'] }) {
@@ -341,22 +332,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  /** Le partage, en haut à droite : la place des icônes des autres tuiles */
-  shareBox: {
-    position: 'absolute',
-    top: spacing.md,
-    right: spacing.md,
-    width: 28,
-    height: 28,
-    borderRadius: borderRadius.sm,
-    ...shadows.xs,
-  },
-  shareFill: {
-    flex: 1,
-    borderRadius: borderRadius.sm,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   letter: {
     fontFamily: fonts.display,
     fontSize: 16,
@@ -401,21 +376,17 @@ const styles = StyleSheet.create({
     color: colors.textTertiary,
     fontVariant: ['tabular-nums'],
   },
+  /** Le nombre de notes, et leur pile d'autocollants à côté, en bas de la tuile */
   notesHead: {
     flexDirection: 'row',
-    alignItems: 'baseline',
-    gap: spacing.sm,
-    marginTop: spacing.sm,
-  },
-  notesLabel: {
-    fontFamily: fonts.bodyBold,
-    fontSize: 13,
-    color: colors.textTertiary,
+    alignItems: 'center',
+    gap: spacing.md,
+    marginTop: 'auto',
   },
   /** Posée en bas de la tuile, comme les cases du code à côté */
   strip: {
+    flex: 1,
     height: 28,
-    marginTop: 'auto',
   },
   sticker: {
     position: 'absolute',

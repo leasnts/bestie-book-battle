@@ -1,9 +1,10 @@
 /**
  * NoteSticker — une note du carnet en autocollant brodé.
  *
- *    ╭┄┄┄┄┄◥
- *    ┆      ◣ ┆      ← la couleur de sa catégorie, une couture en pointillés
- *    ┆        ┆        tout autour, et le coin en haut à droite qui se décolle
+ *    ◤┄┄┄┄┄╮
+ *    ┆ ◢      ┆      ← la couleur de sa catégorie, une couture en pointillés
+ *    ┆        ┆        tout autour, et le coin en haut à gauche qui se décolle
+ *                      (en pile, c'est le coin qui reste visible)
  *    ╰┄┄┄┄┄┄┄┄╯
  *
  * Une note encore verrouillée est un autocollant de papier nu : on sait qu'elle
@@ -11,7 +12,7 @@
  */
 
 import React from 'react';
-import Svg, { Defs, LinearGradient, Path, Stop } from 'react-native-svg';
+import Svg, { Defs, G, LinearGradient, Path, Stop } from 'react-native-svg';
 import { inkAlpha, shadowAlpha } from '../../utils/constants';
 
 /** Papier nu des notes verrouillées */
@@ -57,18 +58,21 @@ export default function NoteSticker({ color, size = 26, id }: NoteStickerProps) 
           <Stop offset="1" stopColor="#d8d1c6" />
         </LinearGradient>
       </Defs>
-      <Path d={shape} fill={fill} />
-      {/* Jamais d'aplat : un voile clair en haut, plus sombre en bas */}
-      <Path d={shape} fill={`url(#shade-${id})`} />
-      <Path
-        d={stitch}
-        fill="none"
-        stroke={inkAlpha(color ? 0.32 : 0.2)}
-        strokeWidth={0.9}
-        strokeDasharray="2 1.6"
-      />
-      <Path d={flapShadow} fill={shadowAlpha(0.18)} />
-      <Path d={flap} fill={`url(#flap-${id})`} />
+      {/* Dessiné coin à droite, puis retourné : le coin décollé passe à gauche */}
+      <G transform={`translate(${s} 0) scale(-1 1)`}>
+        <Path d={shape} fill={fill} />
+        {/* Jamais d'aplat : un voile clair en haut, plus sombre en bas */}
+        <Path d={shape} fill={`url(#shade-${id})`} />
+        <Path
+          d={stitch}
+          fill="none"
+          stroke={inkAlpha(color ? 0.32 : 0.2)}
+          strokeWidth={0.9}
+          strokeDasharray="2 1.6"
+        />
+        <Path d={flapShadow} fill={shadowAlpha(0.18)} />
+        <Path d={flap} fill={`url(#flap-${id})`} />
+      </G>
     </Svg>
   );
 }
