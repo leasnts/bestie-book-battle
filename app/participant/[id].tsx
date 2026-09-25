@@ -30,13 +30,6 @@ export default function ParticipantRoute() {
   const isMe = id === user?.id;
   const participant = participants.find((p) => p.user.id === id);
 
-  // Ma photo vient de authStore : le progressStore ne se rafraîchit pas quand je
-  // change ma photo de profil.
-  const name = isMe ? 'Moi' : participant?.user.first_name || 'Participant';
-  const photo = isMe
-    ? user?.profile_photo_url ?? null
-    : participant?.user.profile_photo_url ?? null;
-
   useEffect(() => {
     if (!activeChallenge?.id || !id) return;
     getUserHistory(activeChallenge.id, id)
@@ -46,8 +39,7 @@ export default function ParticipantRoute() {
 
   return (
     <ParticipantTimeline
-      participantName={name}
-      participantPhoto={photo}
+      ownerName={isMe ? undefined : participant?.user.first_name || undefined}
       history={history}
       // Posé sur un autre sheet (fiche du livre, classement) : un retour
       onBack={from ? () => router.back() : undefined}
