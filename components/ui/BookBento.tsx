@@ -9,9 +9,9 @@
  *    │ PAGES      › │ MEMBRES    › │
  *    │ 21 / 62      │ 5 ●●●●●      │
  *    ├──────────────┼──────────────┤
- *    │ CARNET     › │ INVITER   [⇪]│   ← deux carrés : les notes en autocollants,
- *    │ 8 notes      │ [5][2][8]    │     à leur page ; le code, une lettre par case
- *    │ ◆─◆◆──◆──◆── │ [1][8][7]    │
+ *    │ CARNET     › │ INVITER   [⇪]│   ← les notes en autocollants, dans l'ordre
+ *    │ 8 notes      │ [5][2][8]    │     du livre ; le code, une lettre par case
+ *    │ ◆◆◆◆◆◆ +2    │ [1][8][7]    │
  *    └──────────────┴──────────────┘
  *
  * Tout en % dès qu'on compare (le club, moi) ; les pages sont celles de MON
@@ -86,8 +86,8 @@ export default function BookBento({
   // contenu est le plus large (l'anneau du club) prenait plus que sa moitié
   const [half, setHalf] = useState<number | undefined>(undefined);
   const halfStyle = half === undefined ? null : { flex: 0, width: half };
-  /** Les tuiles carrées (carnet, invitation) */
-  const squareStyle = { height: half ?? 160 };
+  /** Carnet et invitation : même hauteur, compacte */
+  const squareStyle = { height: 128 };
   /** Trois cases par rangée, dans la largeur de la tuile moins sa marge */
   const letterStyle =
     half === undefined
@@ -253,47 +253,44 @@ export default function BookBento({
   );
 }
 
-const STICKER = 22;
-const LETTER_GAP = 6;
+const STICKER = 24;
+/** D'un autocollant au suivant : ils se chevauchent d'un tiers */
+const STICKER_STEP = 16;
+const LETTER_GAP = 5;
 
 /**
- * Le livre de la première à la dernière page, et chaque note posée à sa page
- * en autocollant : un peu de travers, en quinconce, comme collés à la main.
+ * Les notes en autocollants, rangées dans l'ordre du livre : une rangée qui se
+ * chevauche un peu, inclinée à peine, un coup à gauche, un coup à droite. Ce
+ * qui ne tient pas se résume en « +3 ».
  */
 function StickerStrip({ stickers }: { stickers: BookBentoProps['notes']['stickers'] }) {
   const [width, setWidth] = useState(0);
   const sorted = [...stickers].sort((a, b) => a.position - b.position);
+  // Combien tiennent, la place du « +n » gardée s'il en faut un
+  const fit = Math.max(1, Math.floor((width - STICKER) / STICKER_STEP) + 1);
+  const overflow = sorted.length > fit;
+  const shown = overflow ? sorted.slice(0, Math.max(1, fit - 1)) : sorted;
   return (
     <View style={styles.strip} onLayout={(e) => setWidth(e.nativeEvent.layout.width)}>
-      <View style={styles.stripLine} />
       {width > 0 &&
-        sorted.map((sticker, i) => {
-          const seed = hash(sticker.id);
-          return (
-            <View
-              key={sticker.id}
-              style={[
-                styles.sticker,
-                {
-                  left: Math.max(0, Math.min(1, sticker.position)) * (width - STICKER),
-                  top: (i % 3) * 13 + (seed % 4),
-                  transform: [{ rotate: `${(seed % 21) - 10}deg` }],
-                },
-              ]}
-            >
-              <NoteSticker id={sticker.id} color={sticker.color} size={STICKER} />
-            </View>
-          );
-        })}
+        shown.map((sticker, i) => (
+          <View
+            key={sticker.id}
+            style={[
+              styles.sticker,
+              { left: i * STICKER_STEP, transform: [{ rotate: i % 2 ? '5deg' : '-4deg' }] },
+            ]}
+          >
+            <NoteSticker id={sticker.id} color={sticker.color} size={STICKER} />
+          </View>
+        ))}
+      {width > 0 && overflow && (
+        <Text style={[styles.more, { left: shown.length * STICKER_STEP + 4 }]}>
+          +{sorted.length - shown.length}
+        </Text>
+      )}
     </View>
   );
-}
-
-/** Un petit nombre stable tiré d'un identifiant : même travers à chaque affichage */
-function hash(id: string) {
-  let h = 0;
-  for (let k = 0; k < id.length; k++) h = (h * 31 + id.charCodeAt(k)) >>> 0;
-  return h;
 }
 
 // ─── Styles ────────────────────────────────────────────────────────
@@ -343,7 +340,7 @@ const styles = StyleSheet.create({
   },
   /** Une case par lettre, comme un code à saisir */
   letterBox: {
-    height: 40,
+    height: 28,
     borderRadius: borderRadius.md,
     backgroundColor: colors.bgLight,
     borderWidth: StyleSheet.hairlineWidth,
@@ -356,8 +353,8 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: spacing.md,
     right: spacing.md,
-    width: 32,
-    height: 32,
+    width: 28,
+    height: 28,
     borderRadius: borderRadius.sm,
     ...shadows.xs,
   },
@@ -369,7 +366,7 @@ const styles = StyleSheet.create({
   },
   letter: {
     fontFamily: fonts.display,
-    fontSize: 20,
+    fontSize: 16,
     color: colors.textPrimary,
   },
   pressed: {
@@ -424,21 +421,20 @@ const styles = StyleSheet.create({
   },
   /** Posée en bas de la tuile, comme les cases du code à côté */
   strip: {
-    height: 52,
+    height: 28,
     marginTop: 'auto',
-  },
-  /** Le livre, de la première à la dernière page */
-  stripLine: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    top: 25,
-    height: 1,
-    backgroundColor: colors.border,
   },
   sticker: {
     position: 'absolute',
+    top: 2,
     ...shadows.xs,
+  },
+  more: {
+    position: 'absolute',
+    top: 5,
+    fontFamily: fonts.bodyBold,
+    fontSize: 13,
+    color: colors.textTertiary,
   },
   membersRow: {
     marginTop: 'auto',
