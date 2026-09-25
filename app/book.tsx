@@ -390,9 +390,9 @@ export default function BookRoute() {
         pages={myPages}
         members={members}
         onOpenMembers={() => router.push('/leaderboard?from=book')}
-        onOpenJournal={() => user?.id && router.push(`/participant/${user.id}`)}
+        onOpenJournal={() => user?.id && router.push(`/participant/${user.id}?from=book`)}
         notes={noteCounts}
-        onOpenNotes={() => router.push('/notes')}
+        onOpenNotes={() => router.push('/notes?from=book')}
         inviteCode={activeChallenge.invite_code}
         onInvite={handleShareInvite}
       />

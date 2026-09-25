@@ -190,7 +190,9 @@ export default function LeaderboardList({
           participant={item}
           index={index}
           animate={!reducedMotion}
-          onPress={readOnly ? undefined : () => router.push(`/participant/${item.id}`)}
+          onPress={
+            readOnly ? undefined : () => router.push(`/participant/${item.id}?from=leaderboard`)
+          }
         />
       )}
       ListHeaderComponent={

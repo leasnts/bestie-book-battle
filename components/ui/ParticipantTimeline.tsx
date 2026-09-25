@@ -12,6 +12,8 @@
 import { Image } from 'expo-image';
 import React, { useMemo } from 'react';
 import { useFitSheet } from '../../hooks/useFitSheet';
+import { ChevronLeftIcon } from 'lucide-react-native';
+import GlassButton from './GlassButton';
 import { SHEET_TOP_INSET } from './SheetHeader';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { ProgressHistory } from '../../types/supabase';
@@ -24,6 +26,8 @@ interface ParticipantTimelineProps {
   participantName: string;
   participantPhoto: string | null;
   history?: ProgressHistory[] | null;
+  /** Ouvert depuis un autre sheet (fiche du livre, classement) : un retour */
+  onBack?: () => void;
 }
 
 const DEFAULT_AVATAR = require('../../assets/images/profile_picture_default.png');
@@ -82,6 +86,7 @@ export default function ParticipantTimeline({
   participantName,
   participantPhoto,
   history = [],
+  onBack,
 }: ParticipantTimelineProps) {
   // Le sheet s'ouvre à la hauteur de tout le journal, plafonné sous l'en-tête de l'accueil
   // Sans barre ni titre : l'avatar, le nom et « Journal de lecture » suffisent
@@ -119,6 +124,14 @@ export default function ParticipantTimeline({
     >
       {/* En-tête : avatar + nom, il défile avec le contenu */}
       <View style={styles.header}>
+        {onBack && (
+          <GlassButton
+            icon={ChevronLeftIcon}
+            size={36}
+            onPress={onBack}
+            accessibilityLabel="Retour"
+          />
+        )}
         <Image
           source={resolveAvatar(participantPhoto)}
           style={styles.headerAvatar}

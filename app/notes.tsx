@@ -17,8 +17,8 @@
  * plusieurs centaines de notes sur un livre.
  */
 
-import { Stack, useRouter } from 'expo-router';
-import { LockIcon, StickyNoteIcon } from 'lucide-react-native';
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
+import { ChevronLeftIcon, LockIcon, StickyNoteIcon } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -34,6 +34,7 @@ import GlassSection from '../components/ui/GlassSection';
 import NoteCard from '../components/ui/NoteCard';
 import NotesTrack, { type TrackDot } from '../components/ui/NotesTrack';
 import PressableScale from '../components/ui/PressableScale';
+import { sheetIconItem, sheetTitleItem } from '../components/ui/SheetHeader';
 import type { AnnotationWithAuthor } from '../services/supabase/annotations';
 import { useAnnotationStore } from '../stores/annotationStore';
 import { useAuthStore } from '../stores/authStore';
@@ -61,6 +62,8 @@ const DEFAULT_AVATAR = require('../assets/images/profile_picture_default.png');
 
 export default function NotesRoute() {
   const router = useRouter();
+  /** Ouvert depuis la fiche du livre : il s'affiche dans son sheet, sans retour natif */
+  const { from } = useLocalSearchParams<{ from?: string }>();
   const { user } = useAuthStore();
   const activeChallenge = useProjectStore((s) => s.activeChallenge);
   const { participants } = useProgressStore();
@@ -194,6 +197,18 @@ export default function NotesRoute() {
           {/* Écrire une note depuis le carnet : même bouton post-it qu'ailleurs */}
           <Stack.Screen
             options={{
+              // Depuis un autre sheet : un retour, et le titre ferré à gauche
+              ...(from === 'book' && {
+                headerTitle: '',
+                unstable_headerLeftItems: () => [
+                  sheetIconItem({
+                    icon: ChevronLeftIcon,
+                    onPress: () => router.back(),
+                    accessibilityLabel: 'Retour à la fiche du livre',
+                  }),
+                  sheetTitleItem('Carnet'),
+                ],
+              }),
               headerRight: () => (
                 <PressableScale
                   style={styles.write}

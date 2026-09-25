@@ -9,7 +9,7 @@
  * Les données viennent des stores, sauf l'historique, chargé ici à l'ouverture.
  */
 
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import ParticipantTimeline from '../../components/ui/ParticipantTimeline';
 import { getUserHistory } from '../../services/supabase/database';
@@ -19,7 +19,8 @@ import { useProjectStore } from '../../stores/projectStore';
 import type { ProgressHistory } from '../../types/supabase';
 
 export default function ParticipantRoute() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, from } = useLocalSearchParams<{ id: string; from?: string }>();
+  const router = useRouter();
   const { user } = useAuthStore();
   const { participants } = useProgressStore();
   const activeChallenge = useProjectStore((s) => s.activeChallenge);
@@ -43,5 +44,13 @@ export default function ParticipantRoute() {
       .catch((error) => console.warn('[Journal] historique indisponible', error));
   }, [activeChallenge?.id, id]);
 
-  return <ParticipantTimeline participantName={name} participantPhoto={photo} history={history} />;
+  return (
+    <ParticipantTimeline
+      participantName={name}
+      participantPhoto={photo}
+      history={history}
+      // Posé sur un autre sheet (fiche du livre, classement) : un retour
+      onBack={from ? () => router.back() : undefined}
+    />
+  );
 }
