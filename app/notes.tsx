@@ -64,6 +64,11 @@ export default function NotesRoute() {
   const router = useRouter();
   /** Ouvert depuis la fiche du livre : il s'affiche dans son sheet, sans retour natif */
   const { from } = useLocalSearchParams<{ from?: string }>();
+  /**
+   * Depuis la fiche du livre, le carnet est une consultation : on voit les
+   * notes et leurs réactions, sans rien y faire (ni écrire, ni réagir, ni
+   * modifier, ni marquer comme lu). Écrire se fait depuis l'accueil.
+   */
   const inSheet = from === 'book';
   const { user } = useAuthStore();
   const activeChallenge = useProjectStore((s) => s.activeChallenge);
@@ -213,7 +218,7 @@ export default function NotesRoute() {
                   sheetTitleItem('Carnet'),
                 ],
               }),
-              headerRight: () => (
+              headerRight: inSheet ? undefined : () => (
                 <PressableScale
                   style={styles.write}
                   pressedScale={0.9}
@@ -297,7 +302,7 @@ export default function NotesRoute() {
             ))}
           </ScrollView>
 
-          {unread.length > 0 && (
+          {!inSheet && unread.length > 0 && (
             <Pressable
               onPress={markAllRead}
               style={({ pressed }) => [styles.markAll, pressed && { opacity: 0.6 }]}
@@ -320,13 +325,15 @@ export default function NotesRoute() {
             myTotalPages={myPages}
             isMine={item.user_id === user?.id}
             onPress={
-              item.user_id === user?.id
-                ? () => router.push(`/note/${item.id}`)
-                : () => user?.id && markRead(item.id, user.id)
+              inSheet
+                ? undefined
+                : item.user_id === user?.id
+                  ? () => router.push(`/note/${item.id}`)
+                  : () => user?.id && markRead(item.id, user.id)
             }
             myUserId={user?.id}
             onToggleReaction={
-              user?.id
+              !inSheet && user?.id
                 ? (emoji) => {
                     toggleReaction(item.id, user.id, emoji);
                     // Réagir, c'est avoir lu
@@ -334,7 +341,7 @@ export default function NotesRoute() {
                   }
                 : undefined
             }
-            onMoreReactions={() => router.push(`/reactions/${item.id}`)}
+            onMoreReactions={inSheet ? undefined : () => router.push(`/reactions/${item.id}`)}
           />
         </View>
       )}
