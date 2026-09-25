@@ -231,6 +231,7 @@ const styles = StyleSheet.create({
   },
   picker: {
     height: 150,
+    alignSelf: 'center',
   },
   delete: {
     flexDirection: 'row',

@@ -82,5 +82,6 @@ export default function EndDateRoute() {
 const styles = StyleSheet.create({
   picker: {
     height: 200,
+    alignSelf: 'center',
   },
 });
