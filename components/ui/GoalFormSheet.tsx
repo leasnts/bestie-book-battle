@@ -50,6 +50,14 @@ interface GoalFormSheetProps {
 
 // ─── Helpers ─────────────────────────────────────────────────────────
 
+/** La confirmation avant de supprimer un cap : depuis sa fiche, ou en le glissant */
+export function confirmDeleteCap(onConfirm: () => void) {
+  Alert.alert('Supprimer ce cap ?', 'Il disparaît pour tout le club.', [
+    { text: 'Annuler', style: 'cancel' },
+    { text: 'Supprimer', style: 'destructive', onPress: onConfirm },
+  ]);
+}
+
 function getDefaultDeadline(): Date {
   const d = new Date();
   d.setDate(d.getDate() + 7);
@@ -129,17 +137,10 @@ export default function GoalFormSheet({
 
   const handleDelete = useCallback(() => {
     if (!onDeleteGoal) return;
-    Alert.alert('Supprimer ce cap ?', 'Il disparaît pour tout le club.', [
-      { text: 'Annuler', style: 'cancel' },
-      {
-        text: 'Supprimer',
-        style: 'destructive',
-        onPress: () => {
-          onDeleteGoal();
-          onClose();
-        },
-      },
-    ]);
+    confirmDeleteCap(() => {
+      onDeleteGoal();
+      onClose();
+    });
   }, [onDeleteGoal, onClose]);
 
   return (

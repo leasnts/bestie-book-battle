@@ -19,10 +19,12 @@
  * react-native-screens calcule mal les marges du sheet.
  */
 
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import {
   EllipsisIcon,
   FlagIcon,
+  Trash2Icon,
   PlusIcon,
   UsersIcon,
 } from 'lucide-react-native';
@@ -39,9 +41,10 @@ import {
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
+import ReanimatedSwipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
 import DeadlineEditSheet from '../components/ui/DeadlineEditSheet';
 import EditBookSheet from '../components/ui/EditBookSheet';
-import GoalFormSheet from '../components/ui/GoalFormSheet';
+import GoalFormSheet, { confirmDeleteCap } from '../components/ui/GoalFormSheet';
 import BookBento from '../components/ui/BookBento';
 import BookSpine from '../components/ui/BookSpine';
 import GlassButton from '../components/ui/GlassButton';
@@ -59,6 +62,7 @@ import type { ChallengeGoal, ProgressHistory } from '../types/supabase';
 import {
   borderRadius,
   colors,
+  dangerGradient,
   fonts,
   inkAlpha,
   shadows,
@@ -308,6 +312,9 @@ export default function BookRoute() {
     );
   }, [isAdmin, handleLeave]);
 
+  /** Comme la base : seule la personne qui a posé le cap, ou l'admin du livre */
+  const canDeleteCap = (goal: ChallengeGoal) => goal.created_by === user?.id || isAdmin;
+
   if (!activeChallenge) return null;
 
   /** Un cap en pages de MON édition : « p. 28 », ou « ≈ p. 31 » si j'ai une autre édition */
@@ -376,7 +383,8 @@ export default function BookRoute() {
               cap.state === 'past'
                 ? countAtCapOnDate(clubHistory, editions, cap)
                 : countAtCap(percentages, cap.percent);
-            return (
+            const goal = goalById.get(cap.id);
+            const row = (
               <Row
                 key={cap.id}
                 icon={FlagIcon}
@@ -396,10 +404,37 @@ export default function BookRoute() {
                 tag={cap.state === 'current' ? 'en cours' : undefined}
                 dimmed={cap.state === 'past'}
                 onPress={() => {
-                  const goal = goalById.get(cap.id);
                   if (goal) setCapForm({ open: true, goal });
                 }}
               />
+            );
+            // Glisser vers la gauche pour supprimer, si on en a le droit
+            if (!goal || !canDeleteCap(goal)) return row;
+            return (
+              <ReanimatedSwipeable
+                key={cap.id}
+                friction={2}
+                rightThreshold={40}
+                overshootRight={false}
+                childrenContainerStyle={styles.swipeRow}
+                renderRightActions={(_progress, _drag, swipe) => (
+                  <Pressable
+                    onPress={() => {
+                      swipe.close();
+                      confirmDeleteCap(() => removeGoal(goal.id));
+                    }}
+                    style={styles.swipeDelete}
+                    accessibilityRole="button"
+                    accessibilityLabel="Supprimer le cap"
+                  >
+                    <LinearGradient colors={dangerGradient} style={styles.swipeDeleteFill}>
+                      <Trash2Icon size={20} color={colors.white} strokeWidth={2.2} />
+                    </LinearGradient>
+                  </Pressable>
+                )}
+              >
+                {row}
+              </ReanimatedSwipeable>
             );
           })
         )}
@@ -420,8 +455,7 @@ export default function BookRoute() {
         history={goalHistory}
         onSaveGoal={handleSaveCap}
         onDeleteGoal={
-          // Comme la base : seule la personne qui a posé le cap, ou l'admin du livre
-          capForm.goal && (capForm.goal.created_by === user?.id || isAdmin)
+          capForm.goal && canDeleteCap(capForm.goal)
             ? () => removeGoal(capForm.goal!.id)
             : undefined
         }
@@ -609,6 +643,18 @@ const styles = StyleSheet.create({
     gap: spacing.md,
     height: 46,
     paddingHorizontal: spacing.lg,
+  },
+  /** La ligne glisse par-dessus le rouge : il lui faut un fond */
+  swipeRow: {
+    backgroundColor: colors.white,
+  },
+  swipeDelete: {
+    width: 72,
+  },
+  swipeDeleteFill: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   rowLeading: {
     width: 18,

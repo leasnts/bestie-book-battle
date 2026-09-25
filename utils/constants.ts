@@ -106,6 +106,12 @@ export const colors = {
  */
 export const accentGradient = ['#8c3b4c', '#5e1f2e'] as const;
 
+/**
+ * Le rouge des suppressions (glisser pour supprimer) : le seul rouge de l'app,
+ * réservé à ce geste, comme sur iOS. Blanc dessus : 4,9:1 au plus clair.
+ */
+export const dangerGradient = ['#d4453f', '#a92f2a'] as const;
+
 /** L'encre en surface (boutons d'action) : chocolat, clair en haut → foncé en bas */
 export const inkGradient = ['#5a4536', '#1e140e'] as const;
 
