@@ -22,6 +22,7 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import {
+  EllipsisIcon,
   FlagIcon,
   Trash2Icon,
   PlusIcon,
@@ -46,7 +47,6 @@ import DeadlineEditSheet from '../components/ui/DeadlineEditSheet';
 import EditBookSheet from '../components/ui/EditBookSheet';
 import GoalFormSheet, { confirmDeleteCap } from '../components/ui/GoalFormSheet';
 import BookBento from '../components/ui/BookBento';
-import BookSpine from '../components/ui/BookSpine';
 import GlassButton from '../components/ui/GlassButton';
 import { CapDot } from '../components/ui/GoalTrack';
 import { SHEET_TOP_INSET } from '../components/ui/SheetHeader';
@@ -355,11 +355,23 @@ export default function BookRoute() {
       contentInsetAdjustmentBehavior="automatic"
       onContentSizeChange={fit.onContentSizeChange}
     >
-      {/* ─── Le livre : sa tranche, et le menu ─── */}
-      <View style={styles.spine}>
-        <BookSpine
-          title={activeChallenge.book_title}
-          onMenu={handleMenu}
+      {/* ─── Le livre : titre, auteur, et le menu ─── */}
+      <View style={styles.header}>
+        <View style={styles.headerTexts}>
+          <Text style={styles.title} numberOfLines={2} accessibilityRole="header">
+            {activeChallenge.book_title}
+          </Text>
+          {!!activeChallenge.book_author && (
+            <Text style={styles.author} numberOfLines={1}>
+              {activeChallenge.book_author}
+            </Text>
+          )}
+        </View>
+        <GlassButton
+          icon={EllipsisIcon}
+          size={36}
+          onPress={handleMenu}
+          accessibilityLabel="Plus d'options"
         />
       </View>
 
@@ -671,8 +683,26 @@ const styles = StyleSheet.create({
   },
 
 
-  spine: {
+  header: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: spacing.md,
     marginBottom: spacing.xl,
+  },
+  headerTexts: {
+    flex: 1,
+  },
+  title: {
+    fontFamily: fonts.display,
+    fontSize: 26,
+    lineHeight: 31,
+    color: colors.textPrimary,
+  },
+  author: {
+    fontFamily: fonts.body,
+    fontSize: 15,
+    color: colors.textTertiary,
+    marginTop: 2,
   },
 
   groupHeader: {
