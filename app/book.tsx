@@ -41,8 +41,8 @@ import {
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
-import ReanimatedSwipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
-import Animated, { useAnimatedStyle, type SharedValue } from 'react-native-reanimated';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import DeadlineEditSheet from '../components/ui/DeadlineEditSheet';
 import EditBookSheet from '../components/ui/EditBookSheet';
 import GoalFormSheet, { confirmDeleteCap } from '../components/ui/GoalFormSheet';
@@ -412,24 +412,12 @@ export default function BookRoute() {
             // Glisser vers la gauche pour supprimer, si on en a le droit
             if (!goal || !canDeleteCap(goal)) return row;
             return (
-              <ReanimatedSwipeable
+              <SwipeToDelete
                 key={cap.id}
-                friction={2}
-                rightThreshold={40}
-                overshootRight={false}
-                childrenContainerStyle={styles.swipeRow}
-                renderRightActions={(_progress, drag, swipe) => (
-                  <SwipeDelete
-                    drag={drag}
-                    onPress={() => {
-                      swipe.close();
-                      confirmDeleteCap(() => removeGoal(goal.id));
-                    }}
-                  />
-                )}
+                onDelete={() => confirmDeleteCap(() => removeGoal(goal.id))}
               >
                 {row}
-              </ReanimatedSwipeable>
+              </SwipeToDelete>
             );
           })
         )}
@@ -496,26 +484,70 @@ function Group({ style, children }: { style?: StyleProp<ViewStyle>; children: Re
 }
 
 /**
- * Le bouton rouge du glisser-pour-supprimer, accroché au bout de la ligne : il
- * entre par la droite en suivant le doigt, toute la ligne avance d'un bloc.
+ * Glisser vers la gauche pour supprimer, sans rien couper : la ligne reste en
+ * place et se resserre (le libellé garde son début, la valeur se pousse), le
+ * rouge s'élargit depuis la droite. Relâché au-delà de la moitié, il reste
+ * ouvert ; un toucher sur la ligne le referme.
  */
-function SwipeDelete({ drag, onPress }: { drag: SharedValue<number>; onPress: () => void }) {
-  const follow = useAnimatedStyle(() => ({
-    transform: [{ translateX: drag.value + SWIPE_DELETE_WIDTH }],
-  }));
+function SwipeToDelete({
+  onDelete,
+  children,
+}: {
+  onDelete: () => void;
+  children: React.ReactNode;
+}) {
+  const offset = useSharedValue(0);
+  const start = useSharedValue(0);
+
+  const close = () => {
+    offset.value = withSpring(0, SWIPE_SPRING);
+  };
+
+  const pan = Gesture.Pan()
+    // Horizontal seulement : le défilement vertical du sheet reste libre
+    .activeOffsetX([-12, 12])
+    .failOffsetY([-10, 10])
+    .onBegin(() => {
+      start.value = offset.value;
+    })
+    .onUpdate((e) => {
+      offset.value = Math.min(0, Math.max(-SWIPE_DELETE_WIDTH, start.value + e.translationX));
+    })
+    .onEnd((e) => {
+      const open = offset.value + e.velocityX * 0.1 < -SWIPE_DELETE_WIDTH / 2;
+      offset.value = withSpring(open ? -SWIPE_DELETE_WIDTH : 0, SWIPE_SPRING);
+    });
+
+  const action = useAnimatedStyle(() => ({ width: -offset.value }));
+
   return (
-    <Animated.View style={[styles.swipeDelete, follow]}>
-      <Pressable
-        onPress={onPress}
-        style={styles.swipeDeletePress}
-        accessibilityRole="button"
-        accessibilityLabel="Supprimer le cap"
-      >
-        <LinearGradient colors={dangerGradient} style={styles.swipeDeleteFill}>
-          <Trash2Icon size={20} color={colors.white} strokeWidth={2.2} />
-        </LinearGradient>
-      </Pressable>
-    </Animated.View>
+    <GestureDetector gesture={pan}>
+      <View style={styles.swipe}>
+        <View
+          style={styles.swipeContent}
+          // Ouvert, un toucher sur la ligne referme au lieu d'ouvrir le cap
+          onStartShouldSetResponderCapture={() => offset.value < 0}
+          onResponderRelease={close}
+        >
+          {children}
+        </View>
+        <Animated.View style={[styles.swipeDelete, action]}>
+          <Pressable
+            onPress={() => {
+              close();
+              onDelete();
+            }}
+            style={styles.swipeDeletePress}
+            accessibilityRole="button"
+            accessibilityLabel="Supprimer le cap"
+          >
+            <LinearGradient colors={dangerGradient} style={styles.swipeDeleteFill}>
+              <Trash2Icon size={20} color={colors.white} strokeWidth={2.2} />
+            </LinearGradient>
+          </Pressable>
+        </Animated.View>
+      </View>
+    </GestureDetector>
   );
 }
 
@@ -606,6 +638,7 @@ function formatLongDate(iso: string) {
 // ─── Styles ────────────────────────────────────────────────────────
 
 const SWIPE_DELETE_WIDTH = 72;
+const SWIPE_SPRING = { damping: 22, stiffness: 260 };
 
 const styles = StyleSheet.create({
   screen: {
@@ -665,12 +698,14 @@ const styles = StyleSheet.create({
     height: 46,
     paddingHorizontal: spacing.lg,
   },
-  /** La ligne glisse par-dessus le rouge : il lui faut un fond */
-  swipeRow: {
-    backgroundColor: colors.white,
+  swipe: {
+    flexDirection: 'row',
+  },
+  swipeContent: {
+    flex: 1,
   },
   swipeDelete: {
-    width: SWIPE_DELETE_WIDTH,
+    overflow: 'hidden',
   },
   swipeDeletePress: {
     flex: 1,
