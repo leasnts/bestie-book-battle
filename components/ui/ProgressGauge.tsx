@@ -1,13 +1,15 @@
 /**
- * ProgressGauge — la progression du club en demi-cercle, pour la fiche du livre.
+ * ProgressGauge — la progression du club en arche de pages, pour la fiche du livre.
  *
- *          ╭┊┊┊┊┊┊┊╮
- *        ┊▮▮▮▮┊┊┊┊┊┊┊       ← un cadran gradué, comme la tranche des pages :
- *       ┊   ● Toi 34 %  ┊      les graduations se colorent, le club derrière
- *       ┊   ● Club 30 % ┊      (lie de vin clair), moi devant (lie de vin)
+ *         ╷╷╷╷╷╷╷╷╷╷╷
+ *      ╷╷╷           ╷╷╷      ← des traits verticaux, comme la tranche des pages,
+ *    ▮▮    ● Toi 34 %    ╷╷      posés le long d'une arche aplatie ; ceux des
+ *    ▮     ● Club 30 %    ╷      bouts touchent les côtés de la tuile
  *
- * À l'apparition, les graduations se remplissent (le club, puis moi, décalé)
- * et les pourcentages comptent jusqu'à leur valeur, sur la même courbe. Avec « Réduire les animations », tout est posé d'emblée.
+ * Les traits se colorent de gauche à droite : le club derrière (lie de vin
+ * clair), moi devant (lie de vin). À l'apparition, ils se remplissent (le club,
+ * puis moi, décalé) et les pourcentages comptent jusqu'à leur valeur, sur la
+ * même courbe. Avec « Réduire les animations », tout est posé d'emblée.
  */
 
 import React, { useEffect, useState } from 'react';
@@ -23,11 +25,11 @@ import Animated, {
   withTiming,
   type SharedValue,
 } from 'react-native-reanimated';
-import Svg, { Defs, G, LinearGradient, Mask, Path, Stop } from 'react-native-svg';
+import Svg, { Defs, G, LinearGradient, Mask, Rect, Stop } from 'react-native-svg';
 import { accentGradient, colors, fonts, inkAlpha, motion, spacing } from '../../utils/constants';
 import { CLUB_GRADIENT } from './GoalTrack';
 
-const AnimatedPath = Animated.createAnimatedComponent(Path);
+const AnimatedRect = Animated.createAnimatedComponent(Rect);
 
 interface ProgressGaugeProps {
   /** Médiane du club, 0 à 100 */
@@ -37,38 +39,34 @@ interface ProgressGaugeProps {
   style?: StyleProp<ViewStyle>;
 }
 
-const STROKE = 12;
-/** Une marge d'un point tout autour : aucun trait ne touche le bord du dessin */
-const PAD = 1;
-/**
- * Les graduations : un trait plein, un vide, le long de l'arc. L'écart est
- * calculé pour qu'un nombre entier de traits tombe pile de bout en bout : un
- * trait plein à chaque extrémité, jamais un demi-trait coupé.
- */
-const TICK_COUNT = 36;
-/** Part du trait dans une graduation (le reste est le vide) */
-const TICK_RATIO = 0.45;
-/** Hauteur du demi-ovale par rapport à sa demi-largeur : plus c'est petit, plus c'est plat */
-const FLATNESS = 0.7;
+/** Nombre de traits, de bord à bord */
+const BAR_COUNT = 34;
+const BAR_WIDTH = 2.5;
+/** Longueur d'un trait, centré sur la courbe */
+const BAR_LENGTH = 12;
+/** Hauteur de l'arche par rapport à sa demi-largeur : plus c'est petit, plus c'est plat */
+const FLATNESS = 0.75;
 
 /**
- * Le demi-ovale, dessiné à la taille réelle de la place qu'on lui donne : il
- * touche les deux côtés, aplati, posé en bas de la place donnée.
+ * Les traits, à la taille réelle de la place qu'on leur donne : le premier
+ * contre le bord gauche, le dernier contre le bord droit, régulièrement espacés,
+ * chacun centré sur l'arche.
  */
 function geometry(width: number, height: number) {
-  const rx = (width - STROKE) / 2 - PAD;
-  const centerY = height - PAD;
-  // Aplati : la courbe s'étale en largeur, sans jamais dépasser la hauteur donnée
-  const ry = Math.max(1, Math.min(centerY - STROKE / 2 - PAD, rx * FLATNESS));
-  // Longueur du demi-ovale (approximation de Ramanujan, précise à 1e-5 près)
-  const length = (Math.PI / 2) * (3 * (rx + ry) - Math.sqrt((3 * rx + ry) * (rx + 3 * ry)));
-  const period = length / (TICK_COUNT - 1 + TICK_RATIO);
-  return {
-    // De gauche à droite, en passant par le haut
-    arc: `M ${PAD + STROKE / 2} ${centerY} A ${rx} ${ry} 0 0 1 ${width - PAD - STROKE / 2} ${centerY}`,
-    length,
-    ticks: `${period * TICK_RATIO} ${period * (1 - TICK_RATIO)}`,
-  };
+  const step = (width - BAR_WIDTH) / (BAR_COUNT - 1);
+  const rx = (width - BAR_WIDTH) / 2;
+  const centerX = width / 2;
+  const baseY = height - BAR_LENGTH / 2;
+  // Aplati, sans jamais dépasser la hauteur donnée
+  const ry = Math.max(1, Math.min(baseY - BAR_LENGTH / 2, rx * FLATNESS));
+  return Array.from({ length: BAR_COUNT }, (_, i) => {
+    const x = i * step;
+    const dx = (x + BAR_WIDTH / 2 - centerX) / rx;
+    // Une parabole plutôt qu'un ovale : un ovale est vertical à ses bouts, et
+    // les derniers traits y tombaient d'un coup
+    const y = baseY - ry * (1 - dx * dx);
+    return { x, y: y - BAR_LENGTH / 2 };
+  });
 }
 
 const DURATION = 1100;
@@ -90,14 +88,12 @@ export default function ProgressGauge({ clubPercent, myPercent, style }: Progres
   }, [clubPercent, myPercent, reducedMotion, club, me]);
 
   const [size, setSize] = useState<{ width: number; height: number } | null>(null);
-  const { arc, length, ticks } = geometry(size?.width ?? 120, size?.height ?? 60);
+  const width = size?.width ?? 0;
+  const bars = size ? geometry(size.width, size.height) : [];
 
-  const clubArc = useAnimatedProps(() => ({
-    strokeDashoffset: length * (1 - club.value / 100),
-  }));
-  const meArc = useAnimatedProps(() => ({
-    strokeDashoffset: length * (1 - me.value / 100),
-  }));
+  // Les remplissages avancent de gauche à droite sous les traits
+  const clubFill = useAnimatedProps(() => ({ width: (width * club.value) / 100 }));
+  const meFill = useAnimatedProps(() => ({ width: (width * me.value) / 100 }));
 
   return (
     <View
@@ -120,51 +116,37 @@ export default function ProgressGauge({ clubPercent, myPercent, style }: Progres
               <Stop offset="0" stopColor={CLUB_GRADIENT[0]} />
               <Stop offset="1" stopColor={CLUB_GRADIENT[1]} />
             </LinearGradient>
-            {/* Seules les graduations laissent voir ce qu'il y a dessous */}
-            {/*
-            Zone du masque = tout le dessin. Par défaut, elle suit le tracé
-            sans son épaisseur, et rognait le haut des graduations.
-          */}
+            {/* Seuls les traits laissent voir les remplissages qui passent dessous */}
             <Mask
-              id="gaugeTicks"
+              id="gaugeBars"
               maskUnits="userSpaceOnUse"
               x={0}
               y={0}
               width={size.width}
               height={size.height}
             >
-              <Path
-                d={arc}
-                stroke="#fff"
-                strokeWidth={STROKE}
-                strokeDasharray={ticks}
-                fill="none"
-              />
+              {bars.map((bar, i) => (
+                <Rect
+                  key={i}
+                  x={bar.x}
+                  y={bar.y}
+                  width={BAR_WIDTH}
+                  height={BAR_LENGTH}
+                  rx={BAR_WIDTH / 2}
+                  fill="#fff"
+                />
+              ))}
             </Mask>
           </Defs>
-          <G mask="url(#gaugeTicks)">
-            <Path d={arc} stroke={inkAlpha(0.12)} strokeWidth={STROKE} fill="none" />
-            <AnimatedPath
-              d={arc}
-              stroke="url(#gaugeClub)"
-              strokeWidth={STROKE}
-              strokeDasharray={`${length} ${length}`}
-              fill="none"
-              animatedProps={clubArc}
-            />
-            <AnimatedPath
-              d={arc}
-              stroke="url(#gaugeMe)"
-              strokeWidth={STROKE}
-              strokeDasharray={`${length} ${length}`}
-              fill="none"
-              animatedProps={meArc}
-            />
+          <G mask="url(#gaugeBars)">
+            <Rect width={size.width} height={size.height} fill={inkAlpha(0.12)} />
+            <AnimatedRect height={size.height} fill="url(#gaugeClub)" animatedProps={clubFill} />
+            <AnimatedRect height={size.height} fill="url(#gaugeMe)" animatedProps={meFill} />
           </G>
         </Svg>
       )}
 
-      {/* Dans le creux du demi-ovale, l'un sous l'autre */}
+      {/* Sous l'arche, l'un sous l'autre */}
       <View style={styles.legend}>
         <View style={styles.legendColumn}>
           <Legend label="Toi" value={me} dot={accentGradient[0]} />
@@ -175,7 +157,7 @@ export default function ProgressGauge({ clubPercent, myPercent, style }: Progres
   );
 }
 
-/** Un pourcentage qui compte en même temps que son arc */
+/** Un pourcentage qui compte en même temps que ses traits */
 function Legend({ label, value, dot }: { label: string; value: SharedValue<number>; dot: string }) {
   const [shown, setShown] = useState(() => Math.round(value.value));
   useAnimatedReaction(
