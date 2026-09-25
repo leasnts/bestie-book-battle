@@ -25,7 +25,7 @@ import Animated, {
   type SharedValue,
 } from 'react-native-reanimated';
 import Svg, { Defs, G, LinearGradient, Mask, Rect, Stop } from 'react-native-svg';
-import { accentGradient, colors, fonts, inkAlpha, motion, spacing } from '../../utils/constants';
+import { accentGradient, colors, fonts, inkAlpha, motion } from '../../utils/constants';
 import { CLUB_GRADIENT } from './GoalTrack';
 
 const AnimatedRect = Animated.createAnimatedComponent(Rect);
@@ -77,7 +77,7 @@ export default function ProgressGauge({
     me.value = withDelay(reducedMotion ? 0 : ME_DELAY, withTiming(clamp(myPercent), timing));
   }, [clubPercent, myPercent, reducedMotion, club, me]);
 
-  const [size, setSize] = useState<{ width: number; height: number } | null>(null);
+  const [size, setSize] = useState<{ width: number } | null>(null);
   const width = size?.width ?? 0;
   const bars = size ? barsFor(size.width) : [];
 
@@ -89,55 +89,58 @@ export default function ProgressGauge({
     <View
       style={[styles.container, style]}
       onLayout={(e) => {
-        const { width, height } = e.nativeEvent.layout;
-        setSize({ width, height });
+        const { width } = e.nativeEvent.layout;
+        setSize({ width });
       }}
       accessible
       accessibilityLabel={`La moitié du club est à ${Math.round(clubPercent)} %, toi à ${Math.round(myPercent)} %`}
     >
-      {size && (
-        <Svg width={size.width} height={size.height} style={StyleSheet.absoluteFill}>
-          <Defs>
-            <LinearGradient id="gaugeMe" x1="0" y1="0" x2="0" y2="1">
-              <Stop offset="0" stopColor={accentGradient[0]} />
-              <Stop offset="1" stopColor={accentGradient[1]} />
-            </LinearGradient>
-            <LinearGradient id="gaugeClub" x1="0" y1="0" x2="0" y2="1">
-              <Stop offset="0" stopColor={CLUB_GRADIENT[0]} />
-              <Stop offset="1" stopColor={CLUB_GRADIENT[1]} />
-            </LinearGradient>
-            {/* Seuls les traits laissent voir les remplissages qui passent dessous */}
-            <Mask
-              id="gaugeBars"
-              maskUnits="userSpaceOnUse"
-              x={0}
-              y={0}
-              width={size.width}
-              height={size.height}
-            >
-              {bars.map((x, i) => (
-                <Rect
-                  key={i}
-                  x={x}
-                  y={0}
-                  width={BAR_WIDTH}
-                  height={BAR_LENGTH}
-                  rx={BAR_WIDTH / 2}
-                  fill="#fff"
-                />
-              ))}
-            </Mask>
-          </Defs>
-          <G mask="url(#gaugeBars)">
-            <Rect width={size.width} height={size.height} fill={inkAlpha(0.12)} />
-            <AnimatedRect height={size.height} fill="url(#gaugeClub)" animatedProps={clubFill} />
-            <AnimatedRect height={size.height} fill="url(#gaugeMe)" animatedProps={meFill} />
-          </G>
-        </Svg>
-      )}
+      {/* Les traits, centrés dans la place entre le titre et la légende */}
+      <View style={styles.barsArea}>
+        {size && (
+          <Svg width={size.width} height={BAR_LENGTH}>
+            <Defs>
+              <LinearGradient id="gaugeMe" x1="0" y1="0" x2="0" y2="1">
+                <Stop offset="0" stopColor={accentGradient[0]} />
+                <Stop offset="1" stopColor={accentGradient[1]} />
+              </LinearGradient>
+              <LinearGradient id="gaugeClub" x1="0" y1="0" x2="0" y2="1">
+                <Stop offset="0" stopColor={CLUB_GRADIENT[0]} />
+                <Stop offset="1" stopColor={CLUB_GRADIENT[1]} />
+              </LinearGradient>
+              {/* Seuls les traits laissent voir les remplissages qui passent dessous */}
+              <Mask
+                id="gaugeBars"
+                maskUnits="userSpaceOnUse"
+                x={0}
+                y={0}
+                width={size.width}
+                height={BAR_LENGTH}
+              >
+                {bars.map((x, i) => (
+                  <Rect
+                    key={i}
+                    x={x}
+                    y={0}
+                    width={BAR_WIDTH}
+                    height={BAR_LENGTH}
+                    rx={BAR_WIDTH / 2}
+                    fill="#fff"
+                  />
+                ))}
+              </Mask>
+            </Defs>
+            <G mask="url(#gaugeBars)">
+              <Rect width={size.width} height={BAR_LENGTH} fill={inkAlpha(0.12)} />
+              <AnimatedRect height={BAR_LENGTH} fill="url(#gaugeClub)" animatedProps={clubFill} />
+              <AnimatedRect height={BAR_LENGTH} fill="url(#gaugeMe)" animatedProps={meFill} />
+            </G>
+          </Svg>
+        )}
+      </View>
 
       {/* Sous les traits, côte à côte */}
-      <View style={[styles.legend, { paddingHorizontal: legendInset }]}>
+      <View style={{ paddingHorizontal: legendInset }}>
         <View style={styles.legendColumn}>
           <Legend label="Toi" value={me} dot={accentGradient[0]} />
           <Legend label="Club" value={club} dot={CLUB_GRADIENT[1]} />
@@ -168,13 +171,10 @@ function Legend({ label, value, dot }: { label: string; value: SharedValue<numbe
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    marginTop: spacing.sm,
   },
-  legend: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
+  barsArea: {
+    flex: 1,
+    justifyContent: 'center',
   },
   /** Toi à gauche, le club à droite */
   legendColumn: {
