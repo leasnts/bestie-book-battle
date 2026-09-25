@@ -17,7 +17,7 @@
  */
 
 import { Image } from 'expo-image';
-import { FlagIcon } from 'lucide-react-native';
+import { CheckIcon, FlagIcon } from 'lucide-react-native';
 import React, { useState } from 'react';
 import Svg, { Circle, Defs, G, LinearGradient as SvgGradient, Mask, Rect, Stop } from 'react-native-svg';
 import { StyleSheet, Text, View } from 'react-native';
@@ -202,20 +202,50 @@ function trackLabel(
 // Mesures de la maquette (échelle 0,865) ramenées en points.
 
 const RAIL_TOP = 12;
-const RAIL_HEIGHT = 6;
+export const RAIL_HEIGHT = 6;
 const ME_SIZE = 20;
 /** Diamètre des étapes : un peu plus gros que la barre */
-const STEP_SIZE = 9;
+export const STEP_SIZE = 9;
 /** Le vide découpé dans la barre tout autour d'une étape */
-const STEP_GAP = 2;
+export const STEP_GAP = 2;
 /** Le fond de la barre : l'encre à 10 % */
-const RAIL_COLOR = inkAlpha(0.1);
+export const RAIL_COLOR = inkAlpha(0.1);
 /** Gris des étapes pas encore atteintes : le gris de la barre, mais opaque */
 const STEP_AHEAD = '#e2ddd8';
 /** Le club, derrière ma barre : le lie de vin éclairci sur le papier, opaque */
-const CLUB_GRADIENT = ['#e2c9cd', '#d3b3b9'] as const;
+export const CLUB_GRADIENT = ['#e2c9cd', '#d3b3b9'] as const;
 /** Étape dépassée par le club seulement : la même couleur que sa barre (milieu du dégradé) */
 const STEP_CLUB = '#dabec3';
+
+/**
+ * Une étape de la piste, en plus gros, hors de la piste (la liste des caps de
+ * la fiche du livre) : même rond, même couleur, et une coche quand c'est MOI
+ * qui l'ai dépassée — pas quand seul le club l'a fait.
+ */
+export function CapDot({
+  percent,
+  myPercent,
+  clubPercent,
+  size = 18,
+}: {
+  percent: number;
+  myPercent: number;
+  clubPercent: number;
+  size?: number;
+}) {
+  const mine = percent <= myPercent;
+  return (
+    <View
+      style={[
+        styles.capDot,
+        { width: size, height: size, borderRadius: size / 2 },
+        stepStyle(percent, myPercent, clubPercent),
+      ]}
+    >
+      {mine && <CheckIcon size={size * 0.6} color={colors.white} strokeWidth={3.2} />}
+    </View>
+  );
+}
 
 /** Couleur d'une étape : celle de la barre qui l'a dépassée (moi, sinon le club) */
 function stepStyle(percent: number, myPercent: number, clubPercent: number) {
@@ -248,6 +278,10 @@ const styles = StyleSheet.create({
     height: STEP_SIZE,
     marginLeft: -STEP_SIZE / 2,
     borderRadius: STEP_SIZE / 2,
+  },
+  capDot: {
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   stepReached: {
     backgroundColor: colors.accent,

@@ -32,7 +32,7 @@ import { ChallengeGoal } from '../../types/supabase';
 import { borderRadius, colors, fonts, fontSize, shadows, spacing } from '../../utils/constants';
 import Button3D from '../Button3D';
 import BottomSheet from './BottomSheet';
-import { XIcon } from 'lucide-react-native';
+import { Trash2Icon, XIcon } from 'lucide-react-native';
 
 // ─── Props ───────────────────────────────────────────────────────────
 
@@ -43,10 +43,20 @@ interface GoalFormSheetProps {
   primaryGoal?: ChallengeGoal | null;
   history?: ChallengeGoal[];
   onSaveGoal: (type: 'primary' | 'secondary', targetPages: number, deadline: Date) => void;
+  /** Supprimer le cap ouvert (ajouté par erreur, ou plus voulu) ; absent : pas de suppression */
+  onDeleteGoal?: () => void;
   totalPages: number;
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────
+
+/** La confirmation avant de supprimer un cap : depuis sa fiche, ou en le glissant */
+export function confirmDeleteCap(onConfirm: () => void) {
+  Alert.alert('Supprimer ce cap ?', 'Il disparaît pour tout le club.', [
+    { text: 'Annuler', style: 'cancel' },
+    { text: 'Supprimer', style: 'destructive', onPress: onConfirm },
+  ]);
+}
 
 function getDefaultDeadline(): Date {
   const d = new Date();
@@ -73,6 +83,7 @@ export default function GoalFormSheet({
   onClose,
   currentGoal,
   onSaveGoal,
+  onDeleteGoal,
   totalPages,
 }: GoalFormSheetProps) {
   const insets = useSafeAreaInsets();
@@ -123,6 +134,14 @@ export default function GoalFormSheet({
       setIsSaving(false);
     }
   }, [targetPage, deadline, totalPages, onSaveGoal, onClose]);
+
+  const handleDelete = useCallback(() => {
+    if (!onDeleteGoal) return;
+    confirmDeleteCap(() => {
+      onDeleteGoal();
+      onClose();
+    });
+  }, [onDeleteGoal, onClose]);
 
   return (
     <>
@@ -208,6 +227,20 @@ export default function GoalFormSheet({
             >
               Enregistrer l'objectif
             </Button3D>
+
+            {/* Seulement pour un cap existant */}
+            {currentGoal && onDeleteGoal && (
+              <Pressable
+                onPress={handleDelete}
+                hitSlop={8}
+                style={({ pressed }) => [styles.delete, pressed && { opacity: 0.6 }]}
+                accessibilityRole="button"
+                accessibilityLabel="Supprimer le cap"
+              >
+                <Trash2Icon size={16} color={colors.accent} strokeWidth={2.2} />
+                <Text style={styles.deleteText}>Supprimer le cap</Text>
+              </Pressable>
+            )}
           </View>
         </View>
       </BottomSheet>
@@ -282,5 +315,17 @@ const styles = StyleSheet.create({
   },
   footer: {
     paddingTop: spacing.lg,
+  },
+  delete: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.xs,
+    marginTop: spacing.lg,
+  },
+  deleteText: {
+    fontFamily: fonts.bodyBold,
+    fontSize: 15,
+    color: colors.accent,
   },
 });

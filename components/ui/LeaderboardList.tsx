@@ -37,6 +37,8 @@ interface LeaderboardListProps {
   participants: LeaderboardParticipant[];
   /** ID de l'utilisateur connecté, pour surligner sa ligne */
   myUserId: string;
+  /** Lignes non touchables : le journal de chacun ne s'ouvre que depuis l'accueil */
+  readOnly?: boolean;
 }
 
 const DEFAULT_AVATAR = require('../../assets/images/profile_picture_default.png');
@@ -59,7 +61,8 @@ function LeaderboardRow({
   participant: RankedParticipant;
   index: number;
   animate: boolean;
-  onPress: () => void;
+  /** Absent : la ligne ne s'ouvre pas */
+  onPress?: () => void;
 }) {
   const { isMe, isLeader, rank } = participant;
   const score = formatScore(participant);
@@ -84,10 +87,11 @@ function LeaderboardRow({
     >
       <Pressable
         onPress={onPress}
+        disabled={!onPress}
         style={({ pressed }) => [styles.row, isMe && styles.rowMe, pressed && styles.rowPressed]}
-        accessibilityRole="button"
+        accessibilityRole={onPress ? 'button' : undefined}
         accessibilityLabel={`${participant.name}, rang ${rank}, ${score} pour cent`}
-        accessibilityHint="Ouvre son journal de lecture"
+        accessibilityHint={onPress ? 'Ouvre son journal de lecture' : undefined}
       >
       {/* ── Rang ── */}
       <Text style={[styles.rank, isMe && styles.rankMe]}>{rank}</Text>
@@ -144,7 +148,11 @@ function LeaderboardRow({
 
 // ─── Composant principal ───────────────────────────────────────────
 
-export default function LeaderboardList({ participants, myUserId }: LeaderboardListProps) {
+export default function LeaderboardList({
+  participants,
+  myUserId,
+  readOnly = false,
+}: LeaderboardListProps) {
   // Le sheet s'ouvre à la hauteur de tout le classement, plafonné sous l'en-tête de l'accueil
   const fit = useFitSheet();
   const reducedMotion = useReducedMotion();
@@ -182,7 +190,9 @@ export default function LeaderboardList({ participants, myUserId }: LeaderboardL
           participant={item}
           index={index}
           animate={!reducedMotion}
-          onPress={() => router.push(`/participant/${item.id}`)}
+          onPress={
+            readOnly ? undefined : () => router.push(`/participant/${item.id}?from=leaderboard`)
+          }
         />
       )}
       ListHeaderComponent={

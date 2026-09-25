@@ -19,35 +19,51 @@
  * react-native-screens calcule mal les marges du sheet.
  */
 
-import { Image } from 'expo-image';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import {
-  CalendarIcon,
-  CircleCheckIcon,
-  FlagIcon,
-  LogOutIcon,
-  PencilIcon,
-  PlusIcon,
-  ShareIcon,
-  UsersIcon,
-} from 'lucide-react-native';
+import { EllipsisIcon, FlagIcon, Trash2Icon, PlusIcon, UsersIcon } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Alert, Pressable, ScrollView, Share, StyleSheet, Text, View } from 'react-native';
+import {
+  ActionSheetIOS,
+  Alert,
+  Pressable,
+  ScrollView,
+  Share,
+  StyleSheet,
+  Text,
+  View,
+  type StyleProp,
+  type ViewStyle,
+} from 'react-native';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import DeadlineEditSheet from '../components/ui/DeadlineEditSheet';
 import EditBookSheet from '../components/ui/EditBookSheet';
-import GoalFormSheet from '../components/ui/GoalFormSheet';
-import { resolveCoverImage } from '../components/ui/BookCover';
-import { SHEET_TOP_INSET } from '../components/ui/SheetHeader';
+import GoalFormSheet, { confirmDeleteCap } from '../components/ui/GoalFormSheet';
+import BookBento from '../components/ui/BookBento';
+import GlassButton from '../components/ui/GlassButton';
+import { CapDot } from '../components/ui/GoalTrack';
+import { SheetStickyHeader, useSheetScrolled } from '../components/ui/SheetHeader';
 import { myCoverUrl } from '../services/myEdition';
 import { getChallengeHistory } from '../services/supabase/database';
 import { uploadBookCover } from '../services/supabase/storage';
 import { useFitSheet } from '../hooks/useFitSheet';
+import { useAnnotationStore } from '../stores/annotationStore';
+import { ANNOTATION_CATEGORIES } from '../utils/annotations';
 import { useAuthStore } from '../stores/authStore';
 import { useGoalStore } from '../stores/goalStore';
 import { useProgressStore } from '../stores/progressStore';
 import { useProjectStore } from '../stores/projectStore';
 import type { ChallengeGoal, ProgressHistory } from '../types/supabase';
-import { borderRadius, colors, fonts, inkAlpha, spacing } from '../utils/constants';
+import {
+  borderRadius,
+  colors,
+  dangerGradient,
+  fonts,
+  inkAlpha,
+  shadows,
+  spacing,
+} from '../utils/constants';
 import { extractCoverPalette, type CoverPalette } from '../utils/coverPalette';
 import {
   buildCaps,
@@ -55,6 +71,7 @@ import {
   countAtCapOnDate,
   daysLeft,
   formatTrackDate,
+  median,
   type TrackCap,
 } from '../utils/track';
 
@@ -63,6 +80,7 @@ export default function BookRoute() {
   // Le sheet s'ouvre à la hauteur de toute la fiche, plafonné sous l'en-tête de l'accueil
   // Sans barre ni titre : la couverture et le titre du livre suffisent
   const fit = useFitSheet({ withBar: false });
+  const sheetScroll = useSheetScrolled();
   const { user } = useAuthStore();
   const {
     activeChallenge,
@@ -72,7 +90,7 @@ export default function BookRoute() {
     loadUserChallenges,
   } = useProjectStore();
   const { participants, saveMyEdition } = useProgressStore();
-  const { secondaryGoal, history: goalHistory, addGoal, editGoal } = useGoalStore();
+  const { secondaryGoal, history: goalHistory, addGoal, editGoal, removeGoal } = useGoalStore();
 
   const [deadlineVisible, setDeadlineVisible] = useState(false);
   const [editBookVisible, setEditBookVisible] = useState(false);
@@ -94,10 +112,7 @@ export default function BookRoute() {
       .catch((error) => console.warn('[Fiche du livre] historique indisponible', error));
   }, [challengeId]);
 
-  const goals = useMemo(
-    () => [secondaryGoal, ...goalHistory],
-    [secondaryGoal, goalHistory],
-  );
+  const goals = useMemo(() => [secondaryGoal, ...goalHistory], [secondaryGoal, goalHistory]);
   const caps = useMemo(
     () => buildCaps(goals, referencePages).slice().reverse(),
     [goals, referencePages],
@@ -128,6 +143,41 @@ export default function BookRoute() {
   }, [participants, referencePages]);
 
   const percentages = participants.map((p) => p.percentage || 0);
+
+  // Le carnet : combien de notes, dont les miennes, et où elles sont dans le
+  // livre. Celles que je peux lire gardent leur couleur ; les verrouillées ne
+  // montrent que leur place (règle du carnet : rien de leur contenu)
+  const { notes: allNotes, ahead: allAhead, challengeId: notesBookId } = useAnnotationStore();
+  const noteCounts = useMemo(() => {
+    // Le carnet chargé est peut-être celui d'un autre livre
+    const sameBook = notesBookId === challengeId;
+    const readable = sameBook ? allNotes : [];
+    const locked = sameBook ? allAhead : [];
+    return {
+      total: readable.length + locked.length,
+      mine: readable.filter((n) => n.user_id === user?.id).length,
+      stickers: [
+        ...readable.map((n) => ({
+          id: n.id,
+          position: n.position,
+          color: ANNOTATION_CATEGORIES[n.category]?.color ?? null,
+        })),
+        ...locked.map((n) => ({ id: n.id, position: n.book_position, color: null })),
+      ],
+    };
+  }, [allNotes, allAhead, notesBookId, challengeId, user?.id]);
+  /** Pour colorer les ronds des caps comme sur la piste de l'accueil */
+  const myPercent = participants.find((p) => p.user.id === user?.id)?.percentage ?? 0;
+  const clubPercent = median(percentages);
+  /** Mes co-lectrices et co-lecteurs, les plus avancés d'abord, pour les avatars */
+  const members = useMemo(
+    () =>
+      participants
+        .slice()
+        .sort((a, b) => (b.percentage || 0) - (a.percentage || 0))
+        .map((p) => ({ id: p.user.id, photoUrl: p.user.profile_photo_url })),
+    [participants],
+  );
   const memberCount = participants.length;
 
   const remaining = daysLeft(activeChallenge?.target_end_date);
@@ -177,7 +227,15 @@ export default function BookRoute() {
       }
       setCapForm({ open: false, goal: null });
     },
-    [activeChallenge, user?.id, participants, capForm.goal, addGoal, editGoal, updateActiveChallenge],
+    [
+      activeChallenge,
+      user?.id,
+      participants,
+      capForm.goal,
+      addGoal,
+      editGoal,
+      updateActiveChallenge,
+    ],
   );
 
   const handleSaveBook = useCallback(
@@ -222,7 +280,15 @@ export default function BookRoute() {
 
       await loadUserChallenges(user.id);
     },
-    [activeChallenge, user?.id, myPages, isAdmin, saveMyEdition, updateActiveChallenge, loadUserChallenges],
+    [
+      activeChallenge,
+      user?.id,
+      myPages,
+      isAdmin,
+      saveMyEdition,
+      updateActiveChallenge,
+      loadUserChallenges,
+    ],
   );
 
   const handleShareInvite = useCallback(async () => {
@@ -267,6 +333,21 @@ export default function BookRoute() {
     );
   }, [activeChallenge, challenges, user, leaveActiveChallenge, router]);
 
+  /** Le menu « … » : ce qui se fait rarement sur un livre */
+  const handleMenu = useCallback(() => {
+    const options = [isAdmin ? 'Modifier le livre' : 'Mon édition', 'Quitter le livre', 'Annuler'];
+    ActionSheetIOS.showActionSheetWithOptions(
+      { options, destructiveButtonIndex: 1, cancelButtonIndex: 2 },
+      (index) => {
+        if (index === 0) setEditBookVisible(true);
+        if (index === 1) handleLeave();
+      },
+    );
+  }, [isAdmin, handleLeave]);
+
+  /** Comme la base : seule la personne qui a posé le cap, ou l'admin du livre */
+  const canDeleteCap = (goal: ChallengeGoal) => goal.created_by === user?.id || isAdmin;
+
   if (!activeChallenge) return null;
 
   /** Un cap en pages de MON édition : « p. 28 », ou « ≈ p. 31 » si j'ai une autre édition */
@@ -281,55 +362,63 @@ export default function BookRoute() {
       contentContainerStyle={styles.content}
       contentInsetAdjustmentBehavior="automatic"
       onContentSizeChange={fit.onContentSizeChange}
+      // L'en-tête reste en haut quand la fiche défile
+      stickyHeaderIndices={[0]}
+      onScroll={sheetScroll.onScroll}
+      scrollEventThrottle={sheetScroll.scrollEventThrottle}
     >
-      {/* ─── Le livre ─── */}
-      <View style={styles.header}>
-        <Image
-          source={resolveCoverImage(myCoverUrl(activeChallenge, mine))}
-          style={styles.cover}
-          contentFit="cover"
-        />
-        <View style={styles.headerTexts}>
-          <Text style={styles.title} numberOfLines={2}>
-            {activeChallenge.book_title}
-          </Text>
-          {!!activeChallenge.book_author && (
-            <Text style={styles.author} numberOfLines={1}>
-              {activeChallenge.book_author}
+      {/* ─── Le livre : titre, auteur, et le menu ─── */}
+      <SheetStickyHeader scrolled={sheetScroll.scrolled}>
+        <View style={styles.header}>
+          <View style={styles.headerTexts}>
+            <Text style={styles.title} numberOfLines={2} accessibilityRole="header">
+              {activeChallenge.book_title}
             </Text>
-          )}
-          <View style={styles.pill}>
-            <Text style={styles.pillText}>{myPages} p.</Text>
+            {!!activeChallenge.book_author && (
+              <Text style={styles.author} numberOfLines={1}>
+                {activeChallenge.book_author}
+              </Text>
+            )}
           </View>
+          <GlassButton
+            icon={EllipsisIcon}
+            size={36}
+            onPress={handleMenu}
+            accessibilityLabel="Plus d'options"
+          />
         </View>
-      </View>
+      </SheetStickyHeader>
 
-      {/* ─── Fin ─── */}
-      <GroupHeader title="Fin">
-        <MiniButton icon={PencilIcon} label="Modifier" onPress={() => setDeadlineVisible(true)} />
-      </GroupHeader>
-      <View style={styles.group}>
-        <Row
-          icon={CalendarIcon}
-          label={
-            activeChallenge.target_end_date
-              ? formatLongDate(activeChallenge.target_end_date)
-              : 'Pas de date'
-          }
-          value={remaining === null ? '' : remaining >= 0 ? `J-${remaining}` : 'Prolongations'}
-        />
-      </View>
+      {/* ─── Le tableau de bord ─── */}
+      <BookBento
+        remaining={remaining}
+        endLabel={
+          activeChallenge.target_end_date ? formatLongDate(activeChallenge.target_end_date) : null
+        }
+        onEditEnd={() => setDeadlineVisible(true)}
+        clubPercent={clubPercent}
+        myPercent={myPercent}
+        currentPage={mine?.current_page ?? 0}
+        pages={myPages}
+        members={members}
+        onOpenMembers={() => router.push('/leaderboard?from=book')}
+        onOpenJournal={() => user?.id && router.push(`/participant/${user.id}?from=book`)}
+        notes={noteCounts}
+        onOpenNotes={() => router.push('/notes?from=book')}
+        inviteCode={activeChallenge.invite_code}
+        onInvite={handleShareInvite}
+      />
 
       {/* ─── Caps ─── */}
       <GroupHeader title="Caps">
-        <MiniButton
+        <GlassButton
           icon={PlusIcon}
-          label="Ajouter"
-          dark
+          size={36}
           onPress={() => setCapForm({ open: true, goal: null })}
+          accessibilityLabel="Ajouter un cap"
         />
       </GroupHeader>
-      <View style={styles.group}>
+      <Group>
         {caps.length === 0 ? (
           <Row icon={FlagIcon} label="Aucun cap" value="" />
         ) : (
@@ -338,54 +427,40 @@ export default function BookRoute() {
               cap.state === 'past'
                 ? countAtCapOnDate(clubHistory, editions, cap)
                 : countAtCap(percentages, cap.percent);
-            return (
+            const goal = goalById.get(cap.id);
+            const row = (
               <Row
                 key={cap.id}
-                icon={cap.state === 'past' ? CircleCheckIcon : FlagIcon}
+                icon={FlagIcon}
+                leading={
+                  cap.state === 'past' ? (
+                    <CapDot percent={cap.percent} myPercent={myPercent} clubPercent={clubPercent} />
+                  ) : undefined
+                }
                 label={`${capPages(cap)} · ${formatTrackDate(cap.deadline)}`}
                 value={`${reached}/${memberCount}`}
+                valueIcon={UsersIcon}
+                valueA11y={`${reached} personne${reached > 1 ? 's' : ''} sur ${memberCount}`}
                 tag={cap.state === 'current' ? 'en cours' : undefined}
                 dimmed={cap.state === 'past'}
                 onPress={() => {
-                  const goal = goalById.get(cap.id);
                   if (goal) setCapForm({ open: true, goal });
                 }}
               />
             );
+            // Glisser vers la gauche pour supprimer, si on en a le droit
+            if (!goal || !canDeleteCap(goal)) return row;
+            return (
+              <SwipeToDelete
+                key={cap.id}
+                onDelete={() => confirmDeleteCap(() => removeGoal(goal.id))}
+              >
+                {row}
+              </SwipeToDelete>
+            );
           })
         )}
-      </View>
-
-      {/* ─── Club ─── */}
-      <GroupHeader title="Club" />
-      <View style={styles.group}>
-        <Row
-          icon={UsersIcon}
-          label={`${memberCount} membre${memberCount > 1 ? 's' : ''}`}
-          value=""
-          chevron
-          onPress={() => router.push('/leaderboard')}
-        />
-        <Row
-          icon={ShareIcon}
-          label={activeChallenge.invite_code ?? '------'}
-          labelStyle={styles.code}
-          value="Inviter"
-          onPress={handleShareInvite}
-        />
-      </View>
-
-      {/* ─── Le livre lui-même ─── */}
-      <View style={[styles.group, styles.lastGroup]}>
-        <Row
-          icon={PencilIcon}
-          label={isAdmin ? 'Modifier le livre' : 'Mon édition'}
-          value=""
-          chevron
-          onPress={() => setEditBookVisible(true)}
-        />
-        <Row icon={LogOutIcon} label="Quitter le livre" value="" onPress={handleLeave} />
-      </View>
+      </Group>
 
       {/* ─── Les formulaires ─── */}
       <DeadlineEditSheet
@@ -401,6 +476,11 @@ export default function BookRoute() {
         currentGoal={capForm.goal}
         history={goalHistory}
         onSaveGoal={handleSaveCap}
+        onDeleteGoal={
+          capForm.goal && canDeleteCap(capForm.goal)
+            ? () => removeGoal(capForm.goal!.id)
+            : undefined
+        }
         totalPages={referencePages}
       />
 
@@ -431,32 +511,82 @@ function GroupHeader({ title, children }: { title: string; children?: React.Reac
   );
 }
 
-function MiniButton({
-  icon: Icon,
-  label,
-  dark = false,
-  onPress,
-}: {
-  icon: typeof PlusIcon;
-  label: string;
-  dark?: boolean;
-  onPress: () => void;
-}) {
+/** Une section de la fiche : carte blanche, bordure claire, petite ombre.
+ * Deux vues, car `overflow: 'hidden'` (pour arrondir le fond des lignes
+ * pressées) couperait l'ombre sur iOS. */
+function Group({ style, children }: { style?: StyleProp<ViewStyle>; children: React.ReactNode }) {
   return (
-    <Pressable
-      onPress={onPress}
-      hitSlop={8}
-      style={({ pressed }) => [
-        styles.miniButton,
-        dark ? styles.miniButtonDark : styles.miniButtonGhost,
-        pressed && { opacity: 0.7 },
-      ]}
-      accessibilityRole="button"
-      accessibilityLabel={label}
-    >
-      <Icon size={13} color={dark ? colors.white : colors.dark900} strokeWidth={2.6} />
-      <Text style={[styles.miniButtonText, dark && styles.miniButtonTextDark]}>{label}</Text>
-    </Pressable>
+    <View style={[styles.group, style]}>
+      <View style={styles.groupClip}>{children}</View>
+    </View>
+  );
+}
+
+/**
+ * Glisser vers la gauche pour supprimer, sans rien couper : la ligne reste en
+ * place et se resserre (le libellé garde son début, la valeur se pousse), le
+ * rouge s'élargit depuis la droite. Relâché au-delà de la moitié, il reste
+ * ouvert ; un toucher sur la ligne le referme.
+ */
+function SwipeToDelete({
+  onDelete,
+  children,
+}: {
+  onDelete: () => void;
+  children: React.ReactNode;
+}) {
+  const offset = useSharedValue(0);
+  const start = useSharedValue(0);
+
+  const close = () => {
+    offset.value = withSpring(0, SWIPE_SPRING);
+  };
+
+  const pan = Gesture.Pan()
+    // Horizontal seulement : le défilement vertical du sheet reste libre
+    .activeOffsetX([-12, 12])
+    .failOffsetY([-10, 10])
+    .onBegin(() => {
+      start.value = offset.value;
+    })
+    .onUpdate((e) => {
+      offset.value = Math.min(0, Math.max(-SWIPE_DELETE_WIDTH, start.value + e.translationX));
+    })
+    .onEnd((e) => {
+      const open = offset.value + e.velocityX * 0.1 < -SWIPE_DELETE_WIDTH / 2;
+      offset.value = withSpring(open ? -SWIPE_DELETE_WIDTH : 0, SWIPE_SPRING);
+    });
+
+  const action = useAnimatedStyle(() => ({ width: -offset.value }));
+
+  return (
+    <GestureDetector gesture={pan}>
+      <View style={styles.swipe}>
+        <View
+          style={styles.swipeContent}
+          // Ouvert, un toucher sur la ligne referme au lieu d'ouvrir le cap
+          onStartShouldSetResponderCapture={() => offset.value < 0}
+          onResponderRelease={close}
+        >
+          {children}
+        </View>
+        <Animated.View style={[styles.swipeDelete, action]}>
+          <Pressable
+            onPress={() => {
+              close();
+              onDelete();
+            }}
+            style={styles.swipeDeletePress}
+            accessibilityRole="button"
+            accessibilityLabel="Supprimer le cap"
+          >
+            <LinearGradient colors={dangerGradient} style={styles.swipeDeleteFill}>
+              <Trash2Icon size={20} color={colors.white} strokeWidth={2.2} />
+            </LinearGradient>
+          </Pressable>
+        </Animated.View>
+      </View>
+    </GestureDetector>
   );
 }
 
@@ -467,27 +597,41 @@ function Row({
   tag,
   dimmed = false,
   chevron = false,
-  labelStyle,
+  leading,
+  valueIcon: ValueIcon,
+  valueA11y,
+  trailingIcon: TrailingIcon,
   onPress,
 }: {
   icon: typeof FlagIcon;
   label: string;
   value: string;
+  /** Remplace l'icône de gauche (le rond d'un cap passé) */
+  leading?: React.ReactNode;
+  /** Petite icône devant la valeur, pour dire ce qu'elle compte */
+  valueIcon?: typeof FlagIcon;
+  /** La valeur lue par VoiceOver, si « 3/5 » ne suffit pas */
+  valueA11y?: string;
+  /** Icône à droite de la valeur : ce que fait le toucher (modifier…) */
+  trailingIcon?: typeof FlagIcon;
   /** Petit repère sombre à droite du libellé, pour le cap en cours */
   tag?: string;
   dimmed?: boolean;
   chevron?: boolean;
-  labelStyle?: object;
   onPress?: () => void;
 }) {
   const content = (
     <>
-      <Icon
-        size={17}
-        color={dimmed ? colors.textPlaceholder : colors.textSecondary}
-        strokeWidth={2}
-      />
-      <Text style={[styles.rowLabel, dimmed && styles.rowLabelDimmed, labelStyle]} numberOfLines={1}>
+      <View style={styles.rowLeading}>
+        {leading ?? (
+          <Icon
+            size={17}
+            color={dimmed ? colors.textPlaceholder : colors.textSecondary}
+            strokeWidth={2}
+          />
+        )}
+      </View>
+      <Text style={[styles.rowLabel, dimmed && styles.rowLabelDimmed]} numberOfLines={1}>
         {label}
       </Text>
       {tag && (
@@ -495,7 +639,11 @@ function Row({
           <Text style={styles.tagText}>{tag}</Text>
         </View>
       )}
+      {ValueIcon && value !== '' && (
+        <ValueIcon size={14} color={colors.textTertiary} strokeWidth={2.4} />
+      )}
       <Text style={styles.rowValue}>{value}</Text>
+      {TrailingIcon && <TrailingIcon size={15} color={colors.textTertiary} strokeWidth={2.2} />}
       {chevron && <Text style={styles.rowChevron}>›</Text>}
     </>
   );
@@ -507,7 +655,7 @@ function Row({
       onPress={onPress}
       style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
       accessibilityRole="button"
-      accessibilityLabel={`${label}${value ? `, ${value}` : ''}`}
+      accessibilityLabel={`${label}${valueA11y || value ? `, ${valueA11y ?? value}` : ''}`}
     >
       {content}
     </Pressable>
@@ -526,12 +674,15 @@ function formatLongDate(iso: string) {
 
 // ─── Styles ────────────────────────────────────────────────────────
 
+const SWIPE_DELETE_WIDTH = 72;
+const SWIPE_SPRING = { damping: 22, stiffness: 260 };
+
 const styles = StyleSheet.create({
   screen: {
     backgroundColor: colors.white,
   },
   content: {
-    paddingTop: SHEET_TOP_INSET,
+    // La marge sous la poignée est portée par l'en-tête collant
     paddingHorizontal: spacing.lg,
     // iOS ajoute déjà la zone du bas de l'écran (34 pt) sous le contenu
     paddingBottom: spacing.lg,
@@ -539,21 +690,17 @@ const styles = StyleSheet.create({
 
   header: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.lg,
-    marginBottom: spacing.lg,
-  },
-  cover: {
-    width: 60,
-    height: 85,
-    borderRadius: borderRadius.xs,
+    alignItems: 'flex-start',
+    gap: spacing.md,
+    marginBottom: spacing.sm,
   },
   headerTexts: {
     flex: 1,
   },
   title: {
     fontFamily: fonts.display,
-    fontSize: 24,
+    fontSize: 26,
+    lineHeight: 31,
     color: colors.textPrimary,
   },
   author: {
@@ -562,26 +709,13 @@ const styles = StyleSheet.create({
     color: colors.textTertiary,
     marginTop: 2,
   },
-  pill: {
-    alignSelf: 'flex-start',
-    marginTop: 6,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 2,
-    borderRadius: borderRadius.sm,
-    backgroundColor: inkAlpha(0.07),
-  },
-  pillText: {
-    fontFamily: fonts.bodyBold,
-    fontSize: 12,
-    color: colors.textSecondary,
-    fontVariant: ['tabular-nums'],
-  },
 
   groupHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    height: 28,
+    // La hauteur du rond en verre du « + »
+    height: 36,
     marginHorizontal: spacing.xs,
     marginBottom: spacing.sm,
   },
@@ -593,44 +727,45 @@ const styles = StyleSheet.create({
     color: colors.textTertiary,
   },
 
-  miniButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-    height: 28,
-    paddingHorizontal: spacing.md,
-    borderRadius: borderRadius.full,
-  },
-  miniButtonDark: {
-    backgroundColor: colors.dark900,
-  },
-  miniButtonGhost: {
-    backgroundColor: inkAlpha(0.08),
-  },
-  miniButtonText: {
-    fontFamily: fonts.bodyExtraBold,
-    fontSize: 13,
-    color: colors.dark900,
-  },
-  miniButtonTextDark: {
-    color: colors.white,
-  },
-
   group: {
-    backgroundColor: colors.bgLight,
+    backgroundColor: colors.white,
     borderRadius: borderRadius.lg,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.border,
     marginBottom: spacing.md,
-    overflow: 'hidden',
+    ...shadows.xs,
   },
-  lastGroup: {
-    marginTop: spacing.sm,
+  groupClip: {
+    borderRadius: borderRadius.lg,
+    overflow: 'hidden',
   },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.md,
     height: 46,
-    paddingHorizontal: spacing.md,
+    paddingHorizontal: spacing.lg,
+  },
+  swipe: {
+    flexDirection: 'row',
+  },
+  swipeContent: {
+    flex: 1,
+  },
+  swipeDelete: {
+    overflow: 'hidden',
+  },
+  swipeDeletePress: {
+    flex: 1,
+  },
+  swipeDeleteFill: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  rowLeading: {
+    width: 18,
+    alignItems: 'center',
   },
   rowPressed: {
     backgroundColor: inkAlpha(0.04),
@@ -656,11 +791,6 @@ const styles = StyleSheet.create({
     fontSize: 20,
     color: colors.textPlaceholder,
     marginLeft: -4,
-  },
-  code: {
-    fontFamily: fonts.display,
-    fontSize: 18,
-    letterSpacing: 2,
   },
 
   tag: {

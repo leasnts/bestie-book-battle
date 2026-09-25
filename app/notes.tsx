@@ -17,8 +17,8 @@
  * plusieurs centaines de notes sur un livre.
  */
 
-import { Stack, useRouter } from 'expo-router';
-import { LockIcon, StickyNoteIcon } from 'lucide-react-native';
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
+import { ChevronLeftIcon, LockIcon, StickyNoteIcon } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -34,6 +34,7 @@ import GlassSection from '../components/ui/GlassSection';
 import NoteCard from '../components/ui/NoteCard';
 import NotesTrack, { type TrackDot } from '../components/ui/NotesTrack';
 import PressableScale from '../components/ui/PressableScale';
+import { sheetIconItem, sheetTitleItem } from '../components/ui/SheetHeader';
 import type { AnnotationWithAuthor } from '../services/supabase/annotations';
 import { useAnnotationStore } from '../stores/annotationStore';
 import { useAuthStore } from '../stores/authStore';
@@ -61,6 +62,14 @@ const DEFAULT_AVATAR = require('../assets/images/profile_picture_default.png');
 
 export default function NotesRoute() {
   const router = useRouter();
+  /** Ouvert depuis la fiche du livre : il s'affiche dans son sheet, sans retour natif */
+  const { from } = useLocalSearchParams<{ from?: string }>();
+  /**
+   * Depuis la fiche du livre, le carnet est une consultation : on voit les
+   * notes et leurs réactions, sans rien y faire (ni écrire, ni réagir, ni
+   * modifier, ni marquer comme lu). Écrire se fait depuis l'accueil.
+   */
+  const inSheet = from === 'book';
   const { user } = useAuthStore();
   const activeChallenge = useProjectStore((s) => s.activeChallenge);
   const { participants } = useProgressStore();
@@ -185,7 +194,7 @@ export default function NotesRoute() {
       ref={listRef}
       sections={sections}
       keyExtractor={(note) => note.id}
-      style={styles.screen}
+      style={[styles.screen, inSheet && styles.screenInSheet]}
       contentContainerStyle={styles.content}
       contentInsetAdjustmentBehavior="automatic"
       stickySectionHeadersEnabled={false}
@@ -194,7 +203,22 @@ export default function NotesRoute() {
           {/* Écrire une note depuis le carnet : même bouton post-it qu'ailleurs */}
           <Stack.Screen
             options={{
-              headerRight: () => (
+              // Depuis un autre sheet : comme les autres sheets (fond blanc, barre
+              // fondue sans trait), un retour, et le titre ferré à gauche
+              ...(inSheet && {
+                headerTitle: '',
+                headerShadowVisible: false,
+                headerStyle: { backgroundColor: colors.white },
+                unstable_headerLeftItems: () => [
+                  sheetIconItem({
+                    icon: ChevronLeftIcon,
+                    onPress: () => router.back(),
+                    accessibilityLabel: 'Retour à la fiche du livre',
+                  }),
+                  sheetTitleItem('Carnet'),
+                ],
+              }),
+              headerRight: inSheet ? undefined : () => (
                 <PressableScale
                   style={styles.write}
                   pressedScale={0.9}
@@ -278,7 +302,7 @@ export default function NotesRoute() {
             ))}
           </ScrollView>
 
-          {unread.length > 0 && (
+          {!inSheet && unread.length > 0 && (
             <Pressable
               onPress={markAllRead}
               style={({ pressed }) => [styles.markAll, pressed && { opacity: 0.6 }]}
@@ -301,13 +325,15 @@ export default function NotesRoute() {
             myTotalPages={myPages}
             isMine={item.user_id === user?.id}
             onPress={
-              item.user_id === user?.id
-                ? () => router.push(`/note/${item.id}`)
-                : () => user?.id && markRead(item.id, user.id)
+              inSheet
+                ? undefined
+                : item.user_id === user?.id
+                  ? () => router.push(`/note/${item.id}`)
+                  : () => user?.id && markRead(item.id, user.id)
             }
             myUserId={user?.id}
             onToggleReaction={
-              user?.id
+              !inSheet && user?.id
                 ? (emoji) => {
                     toggleReaction(item.id, user.id, emoji);
                     // Réagir, c'est avoir lu
@@ -315,7 +341,7 @@ export default function NotesRoute() {
                   }
                 : undefined
             }
-            onMoreReactions={() => router.push(`/reactions/${item.id}`)}
+            onMoreReactions={inSheet ? undefined : () => router.push(`/reactions/${item.id}`)}
           />
         </View>
       )}
@@ -388,6 +414,10 @@ function Chip({
 const styles = StyleSheet.create({
   screen: {
     backgroundColor: colors.bgLight,
+  },
+  /** Dans un sheet : le blanc des autres sheets */
+  screenInSheet: {
+    backgroundColor: colors.white,
   },
   content: {
     paddingHorizontal: spacing.lg,

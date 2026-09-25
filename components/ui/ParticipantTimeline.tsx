@@ -1,38 +1,45 @@
 /**
  * ParticipantTimeline — le journal de lecture d'une personne.
  *
- * Les pages enregistrées, regroupées par jour, reliées par un trait vertical :
- * heure, page atteinte, et de combien elle a avancé.
+ *    Journal
+ *
+ *    ○  HIER                       ← un jour : un rond creux sur le fil, la date en
+ *                                   petites capitales (comme « FIN », « CAPS »)
+ *    ┃
+ *    ◉  p. 21   +14      18:40 ← chaque lecture : une étape de la piste de l'accueil,
+ *    ┃                             rond plein découpé dans la barre
+ *    ○  MER. 16 SEPTEMBRE
+ *    ◉  p. 16   +2       23:30
+ *    ◉  p. 36   +20      16:43
+ *
+ * Le fil EST la piste de l'accueil, à la verticale : même barre (6 pt, dégradé
+ * lie de vin, ce sont mes pages lues), mêmes étapes (rond de 9 pt dans un
+ * anneau vide de 2 pt), continu du haut en bas, sans trou entre les jours.
  *
  * Le composant EST la ScrollView de l'écran, sans View autour : c'est la
  * condition pour qu'un sheet natif (`formSheet`) lui donne les bonnes marges
- * (même leçon que le classement complet, #33). L'en-tête avec l'avatar défile
- * donc avec le contenu, comme sur les écrans iOS standard.
+ * (même leçon que le classement complet, #33).
  */
-import { Image } from 'expo-image';
+import { ChevronLeftIcon } from 'lucide-react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import React, { useMemo } from 'react';
-import { useFitSheet } from '../../hooks/useFitSheet';
-import { SHEET_TOP_INSET } from './SheetHeader';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useFitSheet } from '../../hooks/useFitSheet';
 import { ProgressHistory } from '../../types/supabase';
-import { borderRadius, colors, fonts, inkAlpha, spacing } from '../../utils/constants';
-
+import { accentGradient, colors, fonts, spacing } from '../../utils/constants';
+import GlassButton from './GlassButton';
+import { RAIL_HEIGHT, STEP_GAP, STEP_SIZE } from './GoalTrack';
+import { SheetStickyHeader, useSheetScrolled } from './SheetHeader';
 
 // ─── Props ─────────────────────────────────────────────────────────
 
 interface ParticipantTimelineProps {
-  participantName: string;
-  participantPhoto: string | null;
+  /** Le prénom de la personne ; absent pour mon propre journal */
+  ownerName?: string;
   history?: ProgressHistory[] | null;
+  /** Ouvert depuis un autre sheet (fiche du livre, classement) : un retour */
+  onBack?: () => void;
 }
-
-const DEFAULT_AVATAR = require('../../assets/images/profile_picture_default.png');
-
-const resolveAvatar = (url: string | null) => {
-  if (!url) return DEFAULT_AVATAR;
-  if (url.startsWith('http://') || url.startsWith('https://')) return { uri: url };
-  return DEFAULT_AVATAR;
-};
 
 // ─── Helpers de formatage ──────────────────────────────────────────
 
@@ -79,13 +86,13 @@ interface DayGroup {
 // ─── Composant principal ───────────────────────────────────────────
 
 export default function ParticipantTimeline({
-  participantName,
-  participantPhoto,
+  ownerName,
   history = [],
+  onBack,
 }: ParticipantTimelineProps) {
   // Le sheet s'ouvre à la hauteur de tout le journal, plafonné sous l'en-tête de l'accueil
-  // Sans barre ni titre : l'avatar, le nom et « Journal de lecture » suffisent
   const fit = useFitSheet({ withBar: false });
+  const sheetScroll = useSheetScrolled();
 
   const dayGroups: DayGroup[] = useMemo(() => {
     const safeHistory = Array.isArray(history) ? history : [];
@@ -94,8 +101,8 @@ export default function ParticipantTimeline({
     const map = new Map<string, ProgressHistory[]>();
 
     for (const entry of safeHistory) {
-      const day = entry.created_date
-        || (entry.recorded_at ? entry.recorded_at.split('T')[0] : 'unknown');
+      const day =
+        entry.created_date || (entry.recorded_at ? entry.recorded_at.split('T')[0] : 'unknown');
       if (!map.has(day)) map.set(day, []);
       map.get(day)!.push(entry);
     }
@@ -116,273 +123,217 @@ export default function ParticipantTimeline({
       contentInsetAdjustmentBehavior="automatic"
       showsVerticalScrollIndicator={false}
       onContentSizeChange={fit.onContentSizeChange}
+      // L'en-tête reste en haut quand le journal défile
+      stickyHeaderIndices={[0]}
+      onScroll={sheetScroll.onScroll}
+      scrollEventThrottle={sheetScroll.scrollEventThrottle}
     >
-      {/* En-tête : avatar + nom, il défile avec le contenu */}
-      <View style={styles.header}>
-        <Image
-          source={resolveAvatar(participantPhoto)}
-          style={styles.headerAvatar}
-          contentFit="cover"
-        />
-        <View style={styles.headerTexts}>
-          <Text style={styles.headerName}>{participantName}</Text>
-          <Text style={styles.headerSubtitle}>Journal de lecture</Text>
-        </View>
-      </View>
-
-      <View style={styles.divider} />
-
-          {dayGroups.length === 0 ? (
-            <View style={styles.emptyState}>
-              <Text style={styles.emptyEmoji}>📖</Text>
-              <Text style={styles.emptyTitle}>Pas encore de lecture</Text>
-              <Text style={styles.emptySubtitle}>
-                L'historique apparaîtra ici quand des pages seront enregistrées
-              </Text>
-            </View>
-          ) : (
-            dayGroups.map((group, groupIndex) => (
-              <View key={group.date} style={styles.dayGroup}>
-                <View style={styles.dayHeader}>
-                  <View style={styles.dayBadge}>
-                    <Text style={styles.dayBadgeText}>{group.label}</Text>
-                  </View>
-                </View>
-
-                {group.entries.map((entry, entryIndex) => {
-                  const isLastInGroup = entryIndex === group.entries.length - 1;
-                  const isLastOverall =
-                    groupIndex === dayGroups.length - 1 && isLastInGroup;
-
-                  return (
-                    <View key={entry.id} style={styles.timelineRow}>
-                      <View style={styles.timelineTrack}>
-                        <View style={styles.timelineDot}>
-                          <View style={styles.timelineDotInner} />
-                        </View>
-                        {!isLastOverall && <View style={styles.timelineLine} />}
-                      </View>
-
-                      <View
-                        style={[
-                          styles.entryCard,
-                          isLastInGroup && styles.entryCardLast,
-                        ]}
-                      >
-                        <View style={styles.entryTopRow}>
-                          <Text style={styles.entryTime}>
-                            {formatTime(entry.recorded_at)}
-                          </Text>
-                          {entry.pages_read > 0 && (
-                            <View style={styles.pagesDeltaBadge}>
-                              <Text style={styles.pagesDeltaText}>
-                                +{entry.pages_read} page{entry.pages_read > 1 ? 's' : ''}
-                              </Text>
-                            </View>
-                          )}
-                          {entry.pages_read < 0 && (
-                            <View style={[styles.pagesDeltaBadge, styles.pagesDeltaBadgeNeg]}>
-                              <Text style={[styles.pagesDeltaText, styles.pagesDeltaTextNeg]}>
-                                {entry.pages_read} page{Math.abs(entry.pages_read) > 1 ? 's' : ''}
-                              </Text>
-                            </View>
-                          )}
-                        </View>
-
-                        <Text style={styles.entryPageNumber}>
-                          Page {entry.page_number}
-                        </Text>
-                      </View>
-                    </View>
-                  );
-                })}
-              </View>
-            ))
+      {/* En-tête : le titre, ferré à gauche ; le prénom si ce n'est pas moi */}
+      <SheetStickyHeader scrolled={sheetScroll.scrolled}>
+        <View style={styles.header}>
+          {onBack && (
+            <GlassButton
+              icon={ChevronLeftIcon}
+              size={36}
+              onPress={onBack}
+              accessibilityLabel="Retour"
+            />
           )}
+          <View style={styles.headerTexts}>
+            <Text style={styles.title} accessibilityRole="header">
+              Journal
+            </Text>
+            {!!ownerName && <Text style={styles.owner}>{ownerName}</Text>}
+          </View>
+        </View>
+      </SheetStickyHeader>
+
+      {dayGroups.length === 0 ? (
+        <View style={styles.emptyState}>
+          <Text style={styles.emptyTitle}>Pas encore de lecture</Text>
+          <Text style={styles.emptySubtitle}>Les pages enregistrées s'afficheront ici</Text>
+        </View>
+      ) : (
+        <View style={styles.timeline}>
+          {/* Le fil, continu du premier jour au dernier */}
+          <LinearGradient colors={accentGradient} style={styles.rail} />
+
+          {dayGroups.map((group) => (
+            <View key={group.date}>
+              <View style={styles.dayRow}>
+                <View style={styles.dayNode} />
+                <Text style={styles.dayLabel}>{group.label}</Text>
+              </View>
+
+              {group.entries.map((entry) => (
+                <View
+                  key={entry.id}
+                  style={styles.entry}
+                  accessible
+                  accessibilityLabel={`${formatTime(entry.recorded_at)}, page ${entry.page_number}${
+                    entry.pages_read
+                      ? `, ${entry.pages_read > 0 ? '+' : ''}${entry.pages_read} pages`
+                      : ''
+                  }`}
+                >
+                  {/* Une étape de la piste : le rond, dans son anneau découpé */}
+                  <View style={styles.step}>
+                    <View style={styles.stepDot} />
+                  </View>
+                  <Text style={styles.entryPage}>p. {entry.page_number}</Text>
+                  {entry.pages_read !== 0 && (
+                    <Text style={styles.entryDelta}>
+                      {entry.pages_read > 0 ? '+' : '−'}
+                      {Math.abs(entry.pages_read)}
+                    </Text>
+                  )}
+                  <Text style={styles.entryTime}>{formatTime(entry.recorded_at)}</Text>
+                </View>
+              ))}
+            </View>
+          ))}
+        </View>
+      )}
     </ScrollView>
   );
 }
 
 // ─── Styles ────────────────────────────────────────────────────────
 
-const TIMELINE_TRACK_WIDTH = 32;
-const DOT_SIZE = 12;
-const DOT_INNER_SIZE = 6;
-const LINE_WIDTH = 2;
+/** Axe du fil, depuis la gauche du contenu */
+const RAIL_X = 10;
+/** Une étape : le rond et l'anneau vide autour, comme sur la piste */
+const STEP_OUTER = STEP_SIZE + 2 * STEP_GAP;
+const ENTRY_HEIGHT = 44;
+const DAY_NODE = 15;
+const DAY_ROW_HEIGHT = 40;
 
 const styles = StyleSheet.create({
-  // ═══ HEADER ═══
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 16,
-    gap: 16,
-  },
-  headerAvatar: {
-    width: 44,
-    height: 44,
-    borderRadius: borderRadius.sm,
-    borderWidth: 2,
-    borderColor: inkAlpha(0.06),
-  },
-  headerTexts: {
-    flex: 1,
-    gap: 2,
-  },
-  headerName: {
-    fontFamily: fonts.bodySemiBold,
-    fontSize: 18,
-    color: colors.textPrimary,
-    lineHeight: 24,
-  },
-  headerSubtitle: {
-    fontFamily: fonts.body,
-    fontSize: 13,
-    color: colors.textTertiary,
-    lineHeight: 18,
-  },
-
-  // ═══ DIVIDER ═══
-  divider: {
-    height: 1,
-    backgroundColor: colors.borderLight,
-  },
-
-  // ═══ SCROLL VIEW ═══
   // Pas de hauteur imposée : c'est le sheet natif qui donne la sienne
   scrollView: {
     backgroundColor: colors.white,
   },
   scrollContent: {
-    paddingTop: SHEET_TOP_INSET,
-    paddingHorizontal: 24,
+    // La marge sous la poignée est portée par l'en-tête collant
+    paddingHorizontal: spacing.lg,
     // iOS ajoute déjà la zone du bas de l'écran (34 pt) sous le contenu
-    paddingBottom: 16,
+    paddingBottom: spacing.lg,
   },
 
-  // ═══ ÉTAT VIDE ═══
-  emptyState: {
-    alignItems: 'flex-start',
-    paddingVertical: 40,
-    gap: 8,
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    marginBottom: spacing.xs,
   },
-  emptyEmoji: {
-    fontSize: 48,
-    marginBottom: 8,
+  headerTexts: {
+    flex: 1,
+  },
+  title: {
+    fontFamily: fonts.display,
+    fontSize: 26,
+    lineHeight: 31,
+    color: colors.textPrimary,
+  },
+  owner: {
+    fontFamily: fonts.body,
+    fontSize: 15,
+    color: colors.textTertiary,
+    marginTop: 2,
+  },
+
+  emptyState: {
+    paddingVertical: spacing['3xl'],
+    gap: spacing.xs,
   },
   emptyTitle: {
     fontFamily: fonts.bodySemiBold,
     fontSize: 16,
     color: colors.textPrimary,
-    lineHeight: 22,
   },
   emptySubtitle: {
     fontFamily: fonts.body,
     fontSize: 14,
-    color: colors.textPlaceholder,
-    lineHeight: 20,
-    textAlign: 'left',
+    color: colors.textTertiary,
   },
 
-  // ═══ GROUPE PAR JOUR ═══
-  dayGroup: {
-    marginBottom: 4,
-  },
-  dayHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  dayBadge: {
-    backgroundColor: colors.dark900,
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-  },
-  dayBadgeText: {
-    fontFamily: fonts.bodySemiBold,
-    fontSize: 12,
-    color: colors.white,
-    lineHeight: 16,
-    letterSpacing: 0.2,
-  },
-
-  // ═══ TIMELINE ROW ═══
-  timelineRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-  },
-  timelineTrack: {
-    width: TIMELINE_TRACK_WIDTH,
-    alignItems: 'center',
+  timeline: {
     position: 'relative',
   },
-  timelineDot: {
-    width: DOT_SIZE,
-    height: DOT_SIZE,
-    borderRadius: DOT_SIZE / 2,
-    backgroundColor: inkAlpha(0.06),
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 5,
-    zIndex: 2,
-  },
-  timelineDotInner: {
-    width: DOT_INNER_SIZE,
-    height: DOT_INNER_SIZE,
-    borderRadius: DOT_INNER_SIZE / 2,
-    backgroundColor: colors.dark900,
-  },
-  timelineLine: {
-    width: LINE_WIDTH,
-    flex: 1,
-    backgroundColor: inkAlpha(0.08),
-    minHeight: 24,
-    zIndex: 1,
+  /** Le fil : du milieu de la première date au dernier rond */
+  rail: {
+    position: 'absolute',
+    left: RAIL_X - RAIL_HEIGHT / 2,
+    width: RAIL_HEIGHT,
+    top: DAY_ROW_HEIGHT / 2,
+    bottom: ENTRY_HEIGHT / 2,
+    borderRadius: RAIL_HEIGHT / 2,
   },
 
-  // ═══ CARTE D'ENTRÉE ═══
-  entryCard: {
-    flex: 1,
-    paddingBottom: 20,
-    gap: 4,
-  },
-  entryCardLast: {
-    paddingBottom: 16,
-  },
-  entryTopRow: {
+  dayRow: {
+    height: DAY_ROW_HEIGHT,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
   },
-  entryTime: {
-    fontFamily: fonts.bodyMedium,
-    fontSize: 13,
-    color: colors.textPlaceholder,
-    lineHeight: 18,
+  /** Le début d'un jour : un rond creux sur le fil, plus grand qu'une lecture */
+  dayNode: {
+    width: DAY_NODE,
+    height: DAY_NODE,
+    borderRadius: DAY_NODE / 2,
+    marginLeft: RAIL_X - DAY_NODE / 2,
+    marginRight: spacing.md,
+    backgroundColor: colors.white,
+    borderWidth: 3,
+    borderColor: colors.accent,
   },
-  pagesDeltaBadge: {
-    backgroundColor: colors.bgLight,
-    borderRadius: 6,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-  },
-  pagesDeltaText: {
-    fontFamily: fonts.bodySemiBold,
-    fontSize: 11,
+  /** La date, comme les titres de section de l'app (« FIN », « CAPS ») */
+  dayLabel: {
+    fontFamily: fonts.bodyExtraBold,
+    fontSize: 12,
+    letterSpacing: 0.8,
+    textTransform: 'uppercase',
     color: colors.textTertiary,
-    lineHeight: 16,
   },
-  pagesDeltaBadgeNeg: {
-    backgroundColor: colors.bgLight,
+  entry: {
+    height: ENTRY_HEIGHT,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
   },
-  pagesDeltaTextNeg: {
-    color: colors.textPlaceholder,
+  /** L'anneau vide autour du rond : il « découpe » la barre, comme sur la piste */
+  step: {
+    width: STEP_OUTER,
+    height: STEP_OUTER,
+    borderRadius: STEP_OUTER / 2,
+    marginLeft: RAIL_X - STEP_OUTER / 2,
+    marginRight: spacing.md,
+    backgroundColor: colors.white,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  entryPageNumber: {
+  stepDot: {
+    width: STEP_SIZE,
+    height: STEP_SIZE,
+    borderRadius: STEP_SIZE / 2,
+    backgroundColor: colors.accent,
+  },
+  entryPage: {
     fontFamily: fonts.display,
     fontSize: 18,
+    color: colors.textPrimary,
+    fontVariant: ['tabular-nums'],
+  },
+  entryDelta: {
+    fontFamily: fonts.bodyBold,
+    fontSize: 13,
     color: colors.textTertiary,
-    lineHeight: 24,
+    fontVariant: ['tabular-nums'],
+  },
+  entryTime: {
+    marginLeft: 'auto',
+    fontFamily: fonts.body,
+    fontSize: 13,
+    color: colors.textTertiary,
+    fontVariant: ['tabular-nums'],
   },
 });

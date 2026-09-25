@@ -706,6 +706,21 @@ le titre). Les sheets dessinés à la main suivent la même règle.
 Sheets de consultation : poignée seule. Sheets de formulaire : garder une croix,
 qui sert d'affordance « annuler ».
 
+**L'en-tête reste en haut quand un sheet défile.** Tout sheet qui peut défiler
+garde son en-tête (retour + titre, actions) collé en haut, avec un **fondu**
+dessous pour que le contenu qui passe derrière ne se lise pas à travers :
+- barre native (`sheetScreenOptions(titre)`) : iOS le fait (barre fixe, fondu
+  du bord de défilement) ;
+- en-tête dans le contenu (fiche du livre, journal) : `SheetStickyHeader`
+  (premier enfant de la ScrollView + `stickyHeaderIndices={[0]}`), le fondu
+  n'apparaissant qu'une fois le contenu défilé (`useSheetScrolled`) — au repos
+  il pâlirait le haut du contenu.
+
+**Sheet ouvert depuis un autre sheet : toujours un retour** (`?from=…`, rond en
+verre `ChevronLeftIcon` à gauche du titre). Et s'il sert à consulter (fiche du
+livre › carnet), il reste **indicatif** : pas d'actions (écrire, réagir,
+modifier).
+
 ### Signets brodés — `RibbonBookmark`
 
 Un signet en ruban qui sort du haut du livre et pend devant la couverture, bout
@@ -748,6 +763,42 @@ sable : terne, « pas ouf ».
 
 Essai écarté : l'autocollant rond (bord blanc découpé), « pas réaliste, pas
 intéressant ».
+
+### Autocollants brodés — `NoteSticker`
+
+**L'image d'une note du carnet, partout dans l'app.** Validé par Lea le
+2026-09-25 (« magnifique ») : on ne redessine jamais une note autrement ;
+toute nouvelle vue qui parle de notes reprend ce composant.
+
+- **Forme** : carré au grand arrondi (26 % du côté), **coin en haut à gauche
+  qui se décolle**. Le rabat garde l'arrondi du coin d'origine, la pliure
+  s'incurve un peu (le coin se roule) et les jonctions sont adoucies : aucun
+  angle droit, nulle part.
+- **Couture** : pointillés tout autour, à 12 % du bord, encre à 32 % (20 % sur
+  une note verrouillée) — c'est elle qui dit « brodé, fait main ».
+- **Couleur** : celle de la catégorie de la note (`postIt`, via
+  `ANNOTATION_CATEGORIES`), avec un voile clair en haut et plus sombre en bas
+  (jamais d'aplat). Une note **verrouillée** est en papier nu `#efe9df` : on voit
+  qu'elle est là, rien de plus (règle du carnet).
+- **Rabat** : dégradé crème `#fdfbf8` → `#d8d1c6`, petite ombre dessous.
+- **Pourquoi à gauche** : en pile (autocollants qui se chevauchent vers la
+  droite), c'est le coin qui reste visible.
+- **Usage déco** (tuile Carnet de la fiche du livre) : 3-4 gros autocollants
+  (46 pt), pivotés, qui débordent du cadre et que ses bords coupent. Placement
+  et inclinaison fixes (`STICKER_SPOTS`) : la déco ne bouge pas d'une ouverture
+  à l'autre.
+
+**Couleurs = variables, une seule source.** Le thème des autocollants vit dans
+`utils/constants.ts` : `postIt` (une couleur par catégorie) et
+`stickerMaterial` (papier des notes verrouillées, dos du rabat). Tout l'app les
+lit via `ANNOTATION_CATEGORIES` (`utils/annotations.ts`) : autocollants, carnet,
+fiche d'une note, piste des notes, accueil. **Jamais une couleur de catégorie en
+dur ailleurs** : changer de thème = changer ces deux objets, rien d'autre.
+
+Référence visuelle : autocollants en cuir surpiqué au coin décollé (capture de
+Lea). Essais écartés : une frise d'autocollants placés à leur page (« fouillis,
+on comprend pas »), une rangée serrée de petits autocollants, des autocollants-
+étiquettes pour les dates du journal (« pas beau »).
 
 ### Bouton en verre — `GlassButton`
 

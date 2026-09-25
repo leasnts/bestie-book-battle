@@ -9,7 +9,7 @@
  * Les données viennent des stores, sauf l'historique, chargé ici à l'ouverture.
  */
 
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import ParticipantTimeline from '../../components/ui/ParticipantTimeline';
 import { getUserHistory } from '../../services/supabase/database';
@@ -19,7 +19,8 @@ import { useProjectStore } from '../../stores/projectStore';
 import type { ProgressHistory } from '../../types/supabase';
 
 export default function ParticipantRoute() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, from } = useLocalSearchParams<{ id: string; from?: string }>();
+  const router = useRouter();
   const { user } = useAuthStore();
   const { participants } = useProgressStore();
   const activeChallenge = useProjectStore((s) => s.activeChallenge);
@@ -29,13 +30,6 @@ export default function ParticipantRoute() {
   const isMe = id === user?.id;
   const participant = participants.find((p) => p.user.id === id);
 
-  // Ma photo vient de authStore : le progressStore ne se rafraîchit pas quand je
-  // change ma photo de profil.
-  const name = isMe ? 'Moi' : participant?.user.first_name || 'Participant';
-  const photo = isMe
-    ? user?.profile_photo_url ?? null
-    : participant?.user.profile_photo_url ?? null;
-
   useEffect(() => {
     if (!activeChallenge?.id || !id) return;
     getUserHistory(activeChallenge.id, id)
@@ -43,5 +37,12 @@ export default function ParticipantRoute() {
       .catch((error) => console.warn('[Journal] historique indisponible', error));
   }, [activeChallenge?.id, id]);
 
-  return <ParticipantTimeline participantName={name} participantPhoto={photo} history={history} />;
+  return (
+    <ParticipantTimeline
+      ownerName={isMe ? undefined : participant?.user.first_name || undefined}
+      history={history}
+      // Posé sur un autre sheet (fiche du livre, classement) : un retour
+      onBack={from ? () => router.back() : undefined}
+    />
+  );
 }
