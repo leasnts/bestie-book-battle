@@ -639,7 +639,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.md,
     height: 46,
-    paddingHorizontal: spacing.md,
+    paddingHorizontal: spacing.lg,
   },
   rowLeading: {
     width: 18,

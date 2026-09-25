@@ -276,7 +276,7 @@ const styles = StyleSheet.create({
 
   kicker: {
     fontFamily: fonts.bodyExtraBold,
-    fontSize: 11,
+    fontSize: 12,
     letterSpacing: 0.8,
     textTransform: 'uppercase',
     color: colors.textTertiary,

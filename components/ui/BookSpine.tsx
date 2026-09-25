@@ -19,7 +19,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import React from 'react';
 import Svg, { Defs, Line, Pattern, Rect } from 'react-native-svg';
 import { StyleSheet, Text, View } from 'react-native';
-import { colors, fonts, shadowAlpha, shadows } from '../../utils/constants';
+import { borderRadius, colors, fonts, shadowAlpha, shadows } from '../../utils/constants';
 import { FALLBACK_PALETTE, type CoverPalette } from '../../utils/coverPalette';
 
 interface BookSpineProps {
@@ -69,10 +69,9 @@ export default function BookSpine({ title, author, palette }: BookSpineProps) {
           end={{ x: 1, y: 0.5 }}
           style={StyleSheet.absoluteFill}
         />
+        <View style={[styles.band, styles.bandLeft, { borderColor: ink }]} />
+        <View style={[styles.band, styles.bandRight, { borderColor: ink }]} />
       </View>
-
-      <View style={[styles.band, styles.bandLeft, { borderColor: ink }]} />
-      <View style={[styles.band, styles.bandRight, { borderColor: ink }]} />
 
       {/* Titre long : il passe sur deux lignes, puis rétrécit, sans jamais déborder */}
       <Text
@@ -180,17 +179,17 @@ const SPINE_HEIGHT = 64;
 const styles = StyleSheet.create({
   spine: {
     height: SPINE_HEIGHT,
-    borderRadius: 5,
+    borderRadius: borderRadius.lg,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    paddingHorizontal: 32,
+    paddingHorizontal: 40,
     ...shadows.cardSelected,
   },
   /** Les couches restent dans les coins ; l'ombre, elle, vit sur `spine` */
   clip: {
     ...StyleSheet.absoluteFillObject,
-    borderRadius: 5,
+    borderRadius: borderRadius.lg,
     overflow: 'hidden',
   },
   grain: {
@@ -209,10 +208,10 @@ const styles = StyleSheet.create({
     opacity: 0.35,
   },
   bandLeft: {
-    left: 14,
+    left: 22,
   },
   bandRight: {
-    right: 14,
+    right: 22,
   },
   title: {
     flex: 1,
