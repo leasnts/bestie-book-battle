@@ -3,11 +3,11 @@
  *
  *    Journal
  *
- *    ◤┄ Hier ┄╮                   ← la date : un autocollant (NoteSticker en étiquette)
+ *    ╭┄ Hier ┄╮                   ← la date : un autocollant à plat (NoteSticker en étiquette)
  *    ┃
  *    ◉  Page 21   +14      18:40 ← chaque lecture : une étape de la piste de l'accueil,
  *    ┃                             rond plein découpé dans la barre
- *    ◤┄ Mer. 16 septembre ┄╮
+ *    ╭┄ Mer. 16 septembre ┄╮
  *    ◉  Page 16   +2       23:30
  *    ◉  Page 36   +20      16:43
  *
@@ -196,7 +196,13 @@ function DayTag({ id, label }: { id: string; label: string }) {
     >
       {size && (
         <View style={StyleSheet.absoluteFill}>
-          <NoteSticker id={`day-${id}`} color={null} width={size.width} height={size.height} />
+          <NoteSticker
+            id={`day-${id}`}
+            color={null}
+            width={size.width}
+            height={size.height}
+            peel={false}
+          />
         </View>
       )}
       <Text style={styles.dayTagText}>{label}</Text>
@@ -282,8 +288,7 @@ const styles = StyleSheet.create({
   /** La date : un autocollant-étiquette, posé sur le fil */
   dayTag: {
     alignSelf: 'flex-start',
-    paddingLeft: spacing.lg,
-    paddingRight: spacing.md,
+    paddingHorizontal: spacing.md,
     paddingVertical: 7,
     ...shadows.xs,
   },

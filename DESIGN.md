@@ -770,7 +770,9 @@ toute nouvelle vue qui parle de notes reprend ce composant.
   droite), c'est le coin qui reste visible.
 - **Usage étiquette** (`width` + `height` au lieu de `size`) : un autocollant
   rectangulaire, en papier nu, qui porte un texte — les dates du journal de
-  lecture. L'arrondi, le coin et la couture suivent le petit côté.
+  lecture. **À plat, sans coin décollé** (`peel={false}`) : sur une étiquette
+  le coin corné n'est « pas beau » (Lea). L'arrondi et la couture suivent le
+  petit côté.
 - **Usage déco** (tuile Carnet de la fiche du livre) : 3-4 gros autocollants
   (46 pt), pivotés, qui débordent du cadre et que ses bords coupent. Placement
   et inclinaison fixes (`STICKER_SPOTS`) : la déco ne bouge pas d'une ouverture
