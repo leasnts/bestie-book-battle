@@ -3,32 +3,30 @@
  *
  *    ┌──────────────┬──────────────┐
  *    │ FIN        ✎ │ PROGRESSION  │
- *    │ J-18         │   ( 30 % )   │   ← la fin en lie de vin : c'est l'enjeu
+ *    │ J-18         │   ( 30 % )   │   ← des tuiles d'info, toutes pareilles
  *    │ mar. 13 oct. │   toi 34 %   │
  *    ├──────────────┼──────────────┤
  *    │ PAGES  62    │ MEMBRES ●●●● │
- *    ├──────────────┴──────────────┤
- *    │ INVITER   5 2 8 1 8 7     ⇪ │   ← une action : en encre
- *    └─────────────────────────────┘
+ *    └──────────────┴──────────────┘
+ *    ( ⇪  Inviter · 528187          )   ← le seul bouton plein : Button3D
  *
  * Tout en % dès qu'on compare (le club, moi) ; les pages sont celles de MON
- * édition. Jamais d'aplat : les tuiles pleines sont en dégradé, les autres en
- * papier bordé, comme les sections de la fiche.
+ * édition. Hiérarchie : la tranche du livre au-dessus est le seul bloc foncé
+ * d'identité, les tuiles sont de l'info (papier bordé, comme les sections), et
+ * Inviter est le seul bouton plein : rien d'autre ne doit ressembler à un CTA.
  */
 
 import { Image } from 'expo-image';
-import { LinearGradient } from 'expo-linear-gradient';
 import { BookOpenIcon, PencilIcon, ShareIcon } from 'lucide-react-native';
 import React, { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
+import Button3D from '../Button3D';
 import {
-  accentGradient,
   borderRadius,
   colors,
   fonts,
   inkAlpha,
-  inkGradient,
   shadows,
   spacing,
 } from '../../utils/constants';
@@ -81,19 +79,18 @@ export default function BookBento({
         {/* ── La fin ── */}
         <Pressable
           onPress={onEditEnd}
-          style={({ pressed }) => [styles.tile, halfStyle, styles.tall, styles.solid, pressed && styles.pressed]}
+          style={({ pressed }) => [styles.tile, halfStyle, styles.tall, styles.paper, pressed && styles.pressed]}
           accessibilityRole="button"
           accessibilityLabel={`Fin, ${endLabel ?? 'pas de date'}, ${countdown}. Modifier`}
         >
-          <LinearGradient colors={accentGradient} style={styles.solidFill} />
           <View style={styles.tileTop}>
-            <Text style={[styles.kicker, styles.kickerOnDark]}>Fin</Text>
-            <PencilIcon size={15} color={colors.white} strokeWidth={2.2} />
+            <Text style={styles.kicker}>Fin</Text>
+            <PencilIcon size={15} color={colors.textTertiary} strokeWidth={2.2} />
           </View>
           <Text style={styles.countdown} numberOfLines={1} adjustsFontSizeToFit>
             {countdown}
           </Text>
-          <Text style={styles.subOnDark} numberOfLines={1}>
+          <Text style={styles.sub} numberOfLines={1}>
             {endLabel ?? 'Pas de date'}
           </Text>
         </Pressable>
@@ -155,24 +152,16 @@ export default function BookBento({
         </Pressable>
       </View>
 
-      {/* ── Inviter ── */}
-      <Pressable
+      {/* ── Inviter : le seul bouton plein de la fiche ── */}
+      <Button3D
+        variant="primary"
+        icon={ShareIcon}
+        iconPosition="left"
         onPress={onInvite}
-        style={({ pressed }) => [styles.tile, styles.wide, pressed && styles.pressed]}
-        accessibilityRole="button"
         accessibilityLabel={`Inviter, code ${inviteCode?.split('').join(' ') ?? 'indisponible'}`}
       >
-        <LinearGradient
-          colors={inkGradient}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={[styles.fill, styles.inviteFill]}
-        >
-          <Text style={[styles.kicker, styles.kickerOnDark]}>Inviter</Text>
-          <Text style={styles.code}>{inviteCode ?? '------'}</Text>
-          <ShareIcon size={18} color={colors.white} strokeWidth={2.2} />
-        </LinearGradient>
-      </Pressable>
+        {inviteCode ? `Inviter · ${inviteCode}` : 'Inviter'}
+      </Button3D>
     </View>
   );
 }
@@ -228,35 +217,12 @@ const styles = StyleSheet.create({
   tall: {
     height: 136,
   },
-  wide: {
-    height: 64,
-  },
   /** Tuile papier : comme les sections de la fiche */
   paper: {
     padding: spacing.lg,
     backgroundColor: colors.white,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.border,
-  },
-  /**
-   * Tuile pleine dans une rangée : mêmes marge et bordure que la tuile papier,
-   * sinon la mise en page les compte dans la largeur et les tuiles diffèrent
-   */
-  solid: {
-    padding: spacing.lg,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'transparent',
-  },
-  solidFill: {
-    ...StyleSheet.absoluteFillObject,
-    borderRadius: borderRadius.lg,
-  },
-  /** Tuile pleine : le dégradé remplit la tuile, coins compris */
-  fill: {
-    flex: 1,
-    padding: spacing.lg,
-    borderRadius: borderRadius.lg,
-    overflow: 'hidden',
   },
   pressed: {
     opacity: 0.85,
@@ -281,22 +247,12 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     color: colors.textTertiary,
   },
-  kickerOnDark: {
-    color: colors.white,
-    opacity: 0.75,
-  },
   countdown: {
     marginTop: 'auto',
     fontFamily: fonts.display,
     fontSize: 38,
-    color: colors.white,
+    color: colors.textPrimary,
     fontVariant: ['tabular-nums'],
-  },
-  subOnDark: {
-    fontFamily: fonts.bodyBold,
-    fontSize: 13,
-    color: colors.white,
-    opacity: 0.8,
   },
 
   ringRow: {
@@ -361,19 +317,5 @@ const styles = StyleSheet.create({
   },
   avatarOverlap: {
     marginLeft: -7,
-  },
-
-  inviteFill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-    paddingVertical: 0,
-  },
-  code: {
-    flex: 1,
-    fontFamily: fonts.display,
-    fontSize: 20,
-    letterSpacing: 4,
-    color: colors.white,
   },
 });
