@@ -9,7 +9,7 @@
  *    │ PAGES  62    │ MEMBRES ●●●● │
  *    ├──────────────┴──────────────┤
  *    │ INVITER                     │
- *    │ [5][2][8][1][8][7]      (⇪) │   ← une case par lettre (à la Opal)
+ *    │ [5][2][8][1][8][7]      [⇪] │   ← une case par lettre (à la Opal)
  *    └─────────────────────────────┘
  *
  * Tout en % dès qu'on compare (le club, moi) ; les pages sont celles de MON
@@ -19,16 +19,17 @@
  */
 
 import { Image } from 'expo-image';
+import { LinearGradient } from 'expo-linear-gradient';
 import { BookOpenIcon, PencilIcon, ShareIcon } from 'lucide-react-native';
 import React, { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
-import GlassButton from './GlassButton';
 import {
   borderRadius,
   colors,
   fonts,
   inkAlpha,
+  inkGradient,
   shadows,
   spacing,
 } from '../../utils/constants';
@@ -169,7 +170,17 @@ export default function BookBento({
               </View>
             ))}
           </View>
-          <GlassButton icon={ShareIcon} size={44} onPress={onInvite} accessibilityLabel="Partager le code" />
+          {/* Même case que les lettres, pleine : c'est l'action */}
+          <Pressable
+            onPress={onInvite}
+            style={({ pressed }) => [styles.shareBox, pressed && styles.pressed]}
+            accessibilityRole="button"
+            accessibilityLabel="Partager le code"
+          >
+            <LinearGradient colors={inkGradient} style={styles.shareFill}>
+              <ShareIcon size={18} color={colors.white} strokeWidth={2.2} />
+            </LinearGradient>
+          </Pressable>
         </View>
       </View>
     </View>
@@ -253,6 +264,18 @@ const styles = StyleSheet.create({
     backgroundColor: colors.bgLight,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  shareBox: {
+    width: 48,
+    height: 48,
+    borderRadius: borderRadius.md,
+    ...shadows.xs,
+  },
+  shareFill: {
+    flex: 1,
+    borderRadius: borderRadius.md,
     alignItems: 'center',
     justifyContent: 'center',
   },
