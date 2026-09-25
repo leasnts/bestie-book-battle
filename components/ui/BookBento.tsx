@@ -9,9 +9,9 @@
  *    │ PAGES      › │ MEMBRES    › │
  *    │ 21 / 62      │ 5 ●●●●●      │
  *    ├──────────────┼──────────────┤
- *    │ CARNET     › │ INVITER    ⇪ │   ← les notes en pile d'autocollants ;
- *    │              │              │     le code, une lettre par case
- *    │ 8 ◆◆◆◆◆◆◆◆   │ [5][2][8][1][8][7] │
+ *    │ CARNET     › │ INVITER    ⇪ │   ← des autocollants en déco qui débordent ;
+ *    │          ◆◆  │              │     le code, une lettre par case
+ *    │ 8 notes  ◆◆◆ │ [5][2][8][1][8][7] │
  *    └──────────────┴──────────────┘
  *
  * Tout en % dès qu'on compare (le club, moi) ; les pages sont celles de MON
@@ -197,13 +197,15 @@ export default function BookBento({
           accessibilityRole="button"
           accessibilityLabel={`Carnet : ${notes.total} notes. Ouvrir le carnet`}
         >
+          {/* La déco : quelques autocollants qui débordent, coupés par la tuile */}
+          <StickerDecor stickers={notes.stickers} />
           <View style={styles.tileTop}>
             <Text style={styles.kicker}>Carnet</Text>
             <ChevronRightIcon size={15} color={colors.textTertiary} strokeWidth={2.2} />
           </View>
           <View style={styles.notesHead}>
             <Text style={styles.bigNumberInline}>{notes.total}</Text>
-            <StickerStrip stickers={notes.stickers} />
+            <Text style={styles.notesLabel}>note{notes.total > 1 ? 's' : ''}</Text>
           </View>
         </Pressable>
 
@@ -237,42 +239,44 @@ export default function BookBento({
   );
 }
 
-const STICKER = 24;
-/** D'un autocollant au suivant : ils se chevauchent largement, en pile */
-const STICKER_STEP = 10;
+const STICKER = 46;
+/** Où tombent les autocollants, du dessous au-dessus : ils débordent à droite et en bas */
+const STICKER_SPOTS = [
+  { right: 30, bottom: -20, rotate: -14 },
+  { right: -16, bottom: 6, rotate: 12 },
+  { right: 8, bottom: -14, rotate: -4 },
+  // Le plus haut reste sous le chevron
+  { right: -18, bottom: 26, rotate: 22 },
+];
 const LETTER_GAP = 3;
 
 /**
- * Les notes en autocollants, rangées dans l'ordre du livre : une pile qui se
- * chevauche largement, inclinée à peine, un coup à gauche, un coup à droite. Ce
- * qui ne tient pas se résume en « +3 ».
+ * Trois ou quatre autocollants pour décorer la tuile : gros, pivotés, posés en
+ * bas à droite, qui dépassent du cadre et que ses bords coupent. Les couleurs
+ * sont celles des notes du livre (les verrouillées en papier nu).
  */
-function StickerStrip({ stickers }: { stickers: BookBentoProps['notes']['stickers'] }) {
-  const [width, setWidth] = useState(0);
-  const sorted = [...stickers].sort((a, b) => a.position - b.position);
-  // Combien tiennent, la place du « +n » gardée s'il en faut un
-  const fit = Math.max(1, Math.floor((width - STICKER) / STICKER_STEP) + 1);
-  const overflow = sorted.length > fit;
-  const shown = overflow ? sorted.slice(0, Math.max(1, fit - 1)) : sorted;
+function StickerDecor({ stickers }: { stickers: BookBentoProps['notes']['stickers'] }) {
+  // Les notes en couleur d'abord : elles décorent mieux
+  const picked = [...stickers]
+    .sort((a, b) => Number(b.color !== null) - Number(a.color !== null))
+    .slice(0, STICKER_SPOTS.length);
+  if (picked.length === 0) return null;
   return (
-    <View style={styles.strip} onLayout={(e) => setWidth(e.nativeEvent.layout.width)}>
-      {width > 0 &&
-        shown.map((sticker, i) => (
+    <View style={styles.decor} pointerEvents="none">
+      {picked.map((sticker, i) => {
+        const spot = STICKER_SPOTS[i];
+        return (
           <View
             key={sticker.id}
             style={[
               styles.sticker,
-              { left: i * STICKER_STEP, transform: [{ rotate: i % 2 ? '5deg' : '-4deg' }] },
+              { right: spot.right, bottom: spot.bottom, transform: [{ rotate: `${spot.rotate}deg` }] },
             ]}
           >
             <NoteSticker id={sticker.id} color={sticker.color} size={STICKER} />
           </View>
-        ))}
-      {width > 0 && overflow && (
-        <Text style={[styles.more, { left: shown.length * STICKER_STEP + 4 }]}>
-          +{sorted.length - shown.length}
-        </Text>
-      )}
+        );
+      })}
     </View>
   );
 }
@@ -376,26 +380,25 @@ const styles = StyleSheet.create({
     color: colors.textTertiary,
     fontVariant: ['tabular-nums'],
   },
-  /** Le nombre de notes, et leur pile d'autocollants à côté, en bas de la tuile */
+  /** Le nombre de notes, en bas à gauche */
   notesHead: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
+    alignItems: 'baseline',
+    gap: spacing.sm,
     marginTop: 'auto',
   },
   /** Posée en bas de la tuile, comme les cases du code à côté */
-  strip: {
-    flex: 1,
-    height: 28,
+  /** Le calque des autocollants : il épouse la tuile et coupe ce qui dépasse */
+  decor: {
+    ...StyleSheet.absoluteFillObject,
+    borderRadius: borderRadius.lg,
+    overflow: 'hidden',
   },
   sticker: {
     position: 'absolute',
-    top: 2,
     ...shadows.xs,
   },
-  more: {
-    position: 'absolute',
-    top: 5,
+  notesLabel: {
     fontFamily: fonts.bodyBold,
     fontSize: 13,
     color: colors.textTertiary,
