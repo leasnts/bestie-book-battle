@@ -34,15 +34,24 @@ export default function NoteSticker({ color, size = 26, id }: NoteStickerProps) 
   const inset = s * 0.12;
 
   // Carré arrondi, le coin en haut à droite coupé en diagonale
-  const shape = `M ${r} 0 H ${s - c} L ${s} ${c} V ${s - r} Q ${s} ${s} ${s - r} ${s} H ${r} Q 0 ${s} 0 ${s - r} V ${r} Q 0 0 ${r} 0 Z`;
+  // Les deux bouts de la coupe sont adoucis, comme le reste de l'autocollant
+  const k = s * 0.05;
+  const shape = `M ${r} 0 H ${s - c - k} Q ${s - c} 0 ${s - c + k * 0.7} ${k * 0.7} L ${s - k * 0.7} ${c - k * 0.7} Q ${s} ${c} ${s} ${c + k} V ${s - r} Q ${s} ${s} ${s - r} ${s} H ${r} Q 0 ${s} 0 ${s - r} V ${r} Q 0 0 ${r} 0 Z`;
   // La couture, un peu en retrait, qui suit la même forme
   const i = inset;
   const ri = r - inset * 0.6;
   const ci = c - inset * 0.4;
   const stitch = `M ${i + ri} ${i} H ${s - i - ci} L ${s - i} ${i + ci} V ${s - i - ri} Q ${s - i} ${s - i} ${s - i - ri} ${s - i} H ${i + ri} Q ${i} ${s - i} ${i} ${s - i - ri} V ${i + ri} Q ${i} ${i} ${i + ri} ${i} Z`;
   // Le rabat : le coin replié par-dessus, symétrique par rapport à la coupe
-  const flap = `M ${s - c} 0 L ${s} ${c} L ${s - c} ${c} Z`;
-  const flapShadow = `M ${s - c} 0 L ${s} ${c} L ${s - c - 1.5} ${c + 1.5} Z`;
+  // La pliure s'incurve un peu (le coin se roule), et la pointe repliée garde
+  // l'arrondi du coin d'origine
+  const bulge = c * 0.14;
+  const fold = `Q ${s - c / 2 + bulge} ${c / 2 - bulge} ${s} ${c}`;
+  const tip = Math.min(r, c * 0.5);
+  const flapAt = (o: number) =>
+    `M ${s - c} 0 ${fold} L ${s - c + tip - o} ${c + o} Q ${s - c - o} ${c + o} ${s - c - o} ${c - tip + o} Z`;
+  const flap = flapAt(0);
+  const flapShadow = flapAt(1.5);
 
   const fill = color ?? LOCKED_PAPER;
 
