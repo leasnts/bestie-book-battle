@@ -11,7 +11,7 @@
  */
 
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 import Animated, {
   Easing,
   runOnJS,
@@ -34,19 +34,12 @@ interface ProgressGaugeProps {
   clubPercent: number;
   /** Ma progression, 0 à 100 */
   myPercent: number;
+  style?: StyleProp<ViewStyle>;
 }
 
-/** Largeur du dessin ; il s'étire à la largeur de la tuile (viewBox) */
-const WIDTH = 120;
 const STROKE = 12;
-const RADIUS = (WIDTH - STROKE) / 2;
-/** Centre du cercle, une demi-épaisseur au-dessus du bas : les bouts ronds tiennent */
-const CENTER_Y = RADIUS + STROKE / 2;
-const HEIGHT = CENTER_Y + STROKE / 2;
-/** Longueur du demi-cercle */
-const ARC_LENGTH = Math.PI * RADIUS;
-/** Le demi-cercle, de gauche à droite en passant par le haut */
-const ARC = `M ${STROKE / 2} ${CENTER_Y} A ${RADIUS} ${RADIUS} 0 0 1 ${WIDTH - STROKE / 2} ${CENTER_Y}`;
+/** Une marge d'un point tout autour : aucun trait ne touche le bord du dessin */
+const PAD = 1;
 /**
  * Les graduations : un trait plein, un vide, le long de l'arc. L'écart est
  * calculé pour qu'un nombre entier de traits tombe pile de bout en bout : un
@@ -55,8 +48,25 @@ const ARC = `M ${STROKE / 2} ${CENTER_Y} A ${RADIUS} ${RADIUS} 0 0 1 ${WIDTH - S
 const TICK_COUNT = 36;
 /** Part du trait dans une graduation (le reste est le vide) */
 const TICK_RATIO = 0.45;
-const TICK_PERIOD = ARC_LENGTH / (TICK_COUNT - 1 + TICK_RATIO);
-const TICKS = `${TICK_PERIOD * TICK_RATIO} ${TICK_PERIOD * (1 - TICK_RATIO)}`;
+
+/**
+ * Le demi-ovale, dessiné à la taille réelle de la place qu'on lui donne : il
+ * touche les deux côtés et le haut, quelle que soit la forme de la tuile.
+ */
+function geometry(width: number, height: number) {
+  const rx = (width - STROKE) / 2 - PAD;
+  const centerY = height - PAD;
+  const ry = Math.max(1, centerY - STROKE / 2 - PAD);
+  // Longueur du demi-ovale (approximation de Ramanujan, précise à 1e-5 près)
+  const length = (Math.PI / 2) * (3 * (rx + ry) - Math.sqrt((3 * rx + ry) * (rx + 3 * ry)));
+  const period = length / (TICK_COUNT - 1 + TICK_RATIO);
+  return {
+    // De gauche à droite, en passant par le haut
+    arc: `M ${PAD + STROKE / 2} ${centerY} A ${rx} ${ry} 0 0 1 ${width - PAD - STROKE / 2} ${centerY}`,
+    length,
+    ticks: `${period * TICK_RATIO} ${period * (1 - TICK_RATIO)}`,
+  };
+}
 
 const DURATION = 1100;
 /** Je pars un peu après le club : on voit les deux arcs se chercher */
@@ -65,7 +75,7 @@ const EASING = Easing.bezier(...motion.easing.easeOutQuart);
 
 const clamp = (p: number) => Math.max(0, Math.min(100, p));
 
-export default function ProgressGauge({ clubPercent, myPercent }: ProgressGaugeProps) {
+export default function ProgressGauge({ clubPercent, myPercent, style }: ProgressGaugeProps) {
   const reducedMotion = useReducedMotion();
   const club = useSharedValue(reducedMotion ? clamp(clubPercent) : 0);
   const me = useSharedValue(reducedMotion ? clamp(myPercent) : 0);
@@ -76,57 +86,82 @@ export default function ProgressGauge({ clubPercent, myPercent }: ProgressGaugeP
     me.value = withDelay(reducedMotion ? 0 : ME_DELAY, withTiming(clamp(myPercent), timing));
   }, [clubPercent, myPercent, reducedMotion, club, me]);
 
+  const [size, setSize] = useState<{ width: number; height: number } | null>(null);
+  const { arc, length, ticks } = geometry(size?.width ?? 120, size?.height ?? 60);
+
   const clubArc = useAnimatedProps(() => ({
-    strokeDashoffset: ARC_LENGTH * (1 - club.value / 100),
+    strokeDashoffset: length * (1 - club.value / 100),
   }));
   const meArc = useAnimatedProps(() => ({
-    strokeDashoffset: ARC_LENGTH * (1 - me.value / 100),
+    strokeDashoffset: length * (1 - me.value / 100),
   }));
-
 
   return (
     <View
-      style={styles.container}
+      style={[styles.container, style]}
+      onLayout={(e) => {
+        const { width, height } = e.nativeEvent.layout;
+        setSize({ width, height });
+      }}
       accessible
       accessibilityLabel={`La moitié du club est à ${Math.round(clubPercent)} %, toi à ${Math.round(myPercent)} %`}
     >
-      <Svg width="100%" height={undefined} viewBox={`0 0 ${WIDTH} ${HEIGHT}`} style={styles.svg}>
-        <Defs>
-          <LinearGradient id="gaugeMe" x1="0" y1="0" x2="0" y2="1">
-            <Stop offset="0" stopColor={accentGradient[0]} />
-            <Stop offset="1" stopColor={accentGradient[1]} />
-          </LinearGradient>
-          <LinearGradient id="gaugeClub" x1="0" y1="0" x2="0" y2="1">
-            <Stop offset="0" stopColor={CLUB_GRADIENT[0]} />
-            <Stop offset="1" stopColor={CLUB_GRADIENT[1]} />
-          </LinearGradient>
-          {/* Seules les graduations laissent voir ce qu'il y a dessous */}
-          <Mask id="gaugeTicks">
-            <Path d={ARC} stroke="#fff" strokeWidth={STROKE} strokeDasharray={TICKS} fill="none" />
-          </Mask>
-        </Defs>
-        <G mask="url(#gaugeTicks)">
-          <Path d={ARC} stroke={inkAlpha(0.12)} strokeWidth={STROKE} fill="none" />
-          <AnimatedPath
-            d={ARC}
-            stroke="url(#gaugeClub)"
-            strokeWidth={STROKE}
-            strokeDasharray={`${ARC_LENGTH} ${ARC_LENGTH}`}
-            fill="none"
-            animatedProps={clubArc}
-          />
-          <AnimatedPath
-            d={ARC}
-            stroke="url(#gaugeMe)"
-            strokeWidth={STROKE}
-            strokeDasharray={`${ARC_LENGTH} ${ARC_LENGTH}`}
-            fill="none"
-            animatedProps={meArc}
-          />
-        </G>
-      </Svg>
+      {size && (
+        <Svg width={size.width} height={size.height} style={StyleSheet.absoluteFill}>
+          <Defs>
+            <LinearGradient id="gaugeMe" x1="0" y1="0" x2="0" y2="1">
+              <Stop offset="0" stopColor={accentGradient[0]} />
+              <Stop offset="1" stopColor={accentGradient[1]} />
+            </LinearGradient>
+            <LinearGradient id="gaugeClub" x1="0" y1="0" x2="0" y2="1">
+              <Stop offset="0" stopColor={CLUB_GRADIENT[0]} />
+              <Stop offset="1" stopColor={CLUB_GRADIENT[1]} />
+            </LinearGradient>
+            {/* Seules les graduations laissent voir ce qu'il y a dessous */}
+            {/*
+            Zone du masque = tout le dessin. Par défaut, elle suit le tracé
+            sans son épaisseur, et rognait le haut des graduations.
+          */}
+            <Mask
+              id="gaugeTicks"
+              maskUnits="userSpaceOnUse"
+              x={0}
+              y={0}
+              width={size.width}
+              height={size.height}
+            >
+              <Path
+                d={arc}
+                stroke="#fff"
+                strokeWidth={STROKE}
+                strokeDasharray={ticks}
+                fill="none"
+              />
+            </Mask>
+          </Defs>
+          <G mask="url(#gaugeTicks)">
+            <Path d={arc} stroke={inkAlpha(0.12)} strokeWidth={STROKE} fill="none" />
+            <AnimatedPath
+              d={arc}
+              stroke="url(#gaugeClub)"
+              strokeWidth={STROKE}
+              strokeDasharray={`${length} ${length}`}
+              fill="none"
+              animatedProps={clubArc}
+            />
+            <AnimatedPath
+              d={arc}
+              stroke="url(#gaugeMe)"
+              strokeWidth={STROKE}
+              strokeDasharray={`${length} ${length}`}
+              fill="none"
+              animatedProps={meArc}
+            />
+          </G>
+        </Svg>
+      )}
 
-      {/* Dans le creux du demi-cercle, l'un sous l'autre */}
+      {/* Dans le creux du demi-ovale, l'un sous l'autre */}
       <View style={styles.legend}>
         <View style={styles.legendColumn}>
           <Legend label="Toi" value={me} dot={accentGradient[0]} />
@@ -158,10 +193,7 @@ function Legend({ label, value, dot }: { label: string; value: SharedValue<numbe
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'flex-end',
-  },
-  svg: {
-    aspectRatio: WIDTH / HEIGHT,
+    marginTop: spacing.sm,
   },
   legend: {
     position: 'absolute',

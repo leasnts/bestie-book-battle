@@ -103,7 +103,7 @@ export default function BookBento({
         {/* ── Le club ── */}
         <View style={[styles.tile, halfStyle, styles.tall, styles.paper]}>
           <Text style={styles.kicker}>Progression</Text>
-          <ProgressGauge clubPercent={clubPercent} myPercent={myPercent} />
+          <ProgressGauge clubPercent={clubPercent} myPercent={myPercent} style={styles.gaugeBleed} />
         </View>
       </View>
 
@@ -209,6 +209,11 @@ const styles = StyleSheet.create({
   },
   tall: {
     height: 136,
+  },
+  /** La jauge s'étale jusqu'aux bords de la tuile, au-delà de sa marge */
+  gaugeBleed: {
+    marginHorizontal: -spacing.sm,
+    marginBottom: -spacing.sm,
   },
   short: {
     height: 108,
