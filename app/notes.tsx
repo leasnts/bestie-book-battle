@@ -64,6 +64,7 @@ export default function NotesRoute() {
   const router = useRouter();
   /** Ouvert depuis la fiche du livre : il s'affiche dans son sheet, sans retour natif */
   const { from } = useLocalSearchParams<{ from?: string }>();
+  const inSheet = from === 'book';
   const { user } = useAuthStore();
   const activeChallenge = useProjectStore((s) => s.activeChallenge);
   const { participants } = useProgressStore();
@@ -188,7 +189,7 @@ export default function NotesRoute() {
       ref={listRef}
       sections={sections}
       keyExtractor={(note) => note.id}
-      style={styles.screen}
+      style={[styles.screen, inSheet && styles.screenInSheet]}
       contentContainerStyle={styles.content}
       contentInsetAdjustmentBehavior="automatic"
       stickySectionHeadersEnabled={false}
@@ -197,9 +198,12 @@ export default function NotesRoute() {
           {/* Écrire une note depuis le carnet : même bouton post-it qu'ailleurs */}
           <Stack.Screen
             options={{
-              // Depuis un autre sheet : un retour, et le titre ferré à gauche
-              ...(from === 'book' && {
+              // Depuis un autre sheet : comme les autres sheets (fond blanc, barre
+              // fondue sans trait), un retour, et le titre ferré à gauche
+              ...(inSheet && {
                 headerTitle: '',
+                headerShadowVisible: false,
+                headerStyle: { backgroundColor: colors.white },
                 unstable_headerLeftItems: () => [
                   sheetIconItem({
                     icon: ChevronLeftIcon,
@@ -403,6 +407,10 @@ function Chip({
 const styles = StyleSheet.create({
   screen: {
     backgroundColor: colors.bgLight,
+  },
+  /** Dans un sheet : le blanc des autres sheets */
+  screenInSheet: {
+    backgroundColor: colors.white,
   },
   content: {
     paddingHorizontal: spacing.lg,
