@@ -8,7 +8,7 @@
  *    ├──────────────┼──────────────┤
  *    │ PAGES  62    │ MEMBRES ●●●● │
  *    ├──────────────┴──────────────┤
- *    │ INVITER   5 2 8 1 8 7     ⇪ │   ← sur du sable, comme la fin
+ *    │ INVITER   5 2 8 1 8 7     ⇪ │   ← une action : en encre
  *    └─────────────────────────────┘
  *
  * Tout en % dès qu'on compare (le club, moi) ; les pages sont celles de MON
@@ -23,11 +23,12 @@ import React, { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 import {
+  accentGradient,
   borderRadius,
   colors,
   fonts,
   inkAlpha,
-  sandGradient,
+  inkGradient,
   shadows,
   spacing,
 } from '../../utils/constants';
@@ -84,15 +85,15 @@ export default function BookBento({
           accessibilityRole="button"
           accessibilityLabel={`Fin, ${endLabel ?? 'pas de date'}, ${countdown}. Modifier`}
         >
-          <LinearGradient colors={sandGradient} style={styles.solidFill} />
+          <LinearGradient colors={accentGradient} style={styles.solidFill} />
           <View style={styles.tileTop}>
-            <Text style={styles.kicker}>Fin</Text>
-            <PencilIcon size={15} color={colors.textSecondary} strokeWidth={2.2} />
+            <Text style={[styles.kicker, styles.kickerOnDark]}>Fin</Text>
+            <PencilIcon size={15} color={colors.white} strokeWidth={2.2} />
           </View>
           <Text style={styles.countdown} numberOfLines={1} adjustsFontSizeToFit>
             {countdown}
           </Text>
-          <Text style={styles.sub} numberOfLines={1}>
+          <Text style={styles.subOnDark} numberOfLines={1}>
             {endLabel ?? 'Pas de date'}
           </Text>
         </Pressable>
@@ -161,10 +162,15 @@ export default function BookBento({
         accessibilityRole="button"
         accessibilityLabel={`Inviter, code ${inviteCode?.split('').join(' ') ?? 'indisponible'}`}
       >
-        <LinearGradient colors={sandGradient} style={[styles.fill, styles.inviteFill]}>
-          <Text style={styles.kicker}>Inviter</Text>
+        <LinearGradient
+          colors={inkGradient}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={[styles.fill, styles.inviteFill]}
+        >
+          <Text style={[styles.kicker, styles.kickerOnDark]}>Inviter</Text>
           <Text style={styles.code}>{inviteCode ?? '------'}</Text>
-          <ShareIcon size={18} color={colors.textSecondary} strokeWidth={2.2} />
+          <ShareIcon size={18} color={colors.white} strokeWidth={2.2} />
         </LinearGradient>
       </Pressable>
     </View>
@@ -239,7 +245,7 @@ const styles = StyleSheet.create({
   solid: {
     padding: spacing.lg,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
+    borderColor: 'transparent',
   },
   solidFill: {
     ...StyleSheet.absoluteFillObject,
@@ -248,8 +254,6 @@ const styles = StyleSheet.create({
   /** Tuile pleine : le dégradé remplit la tuile, coins compris */
   fill: {
     flex: 1,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
     padding: spacing.lg,
     borderRadius: borderRadius.lg,
     overflow: 'hidden',
@@ -277,13 +281,22 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     color: colors.textTertiary,
   },
+  kickerOnDark: {
+    color: colors.white,
+    opacity: 0.75,
+  },
   countdown: {
     marginTop: 'auto',
     fontFamily: fonts.display,
     fontSize: 38,
-    // L'accent dit où l'on en est
-    color: colors.accent,
+    color: colors.white,
     fontVariant: ['tabular-nums'],
+  },
+  subOnDark: {
+    fontFamily: fonts.bodyBold,
+    fontSize: 13,
+    color: colors.white,
+    opacity: 0.8,
   },
 
   ringRow: {
@@ -361,6 +374,6 @@ const styles = StyleSheet.create({
     fontFamily: fonts.display,
     fontSize: 20,
     letterSpacing: 4,
-    color: colors.textPrimary,
+    color: colors.white,
   },
 });

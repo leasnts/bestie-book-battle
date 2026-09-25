@@ -106,12 +106,6 @@ export const colors = {
  */
 export const accentGradient = ['#8c3b4c', '#5e1f2e'] as const;
 
-/**
- * Le sable : une surface pleine mais douce (tuiles mises en avant), clair en
- * haut → foncé en bas. Encre dessus : 10,7:1 ; texte tertiaire : 5:1.
- */
-export const sandGradient = ['#f1e8dc', '#e6d8c5'] as const;
-
 /** L'encre en surface (boutons d'action) : chocolat, clair en haut → foncé en bas */
 export const inkGradient = ['#5a4536', '#1e140e'] as const;
 

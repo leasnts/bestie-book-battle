@@ -52,7 +52,6 @@ import { myCoverUrl } from '../services/myEdition';
 import { getChallengeHistory } from '../services/supabase/database';
 import { uploadBookCover } from '../services/supabase/storage';
 import { useFitSheet } from '../hooks/useFitSheet';
-import { useCoverPalette } from '../hooks/useCoverPalette';
 import { useAuthStore } from '../stores/authStore';
 import { useGoalStore } from '../stores/goalStore';
 import { useProgressStore } from '../stores/progressStore';
@@ -102,8 +101,6 @@ export default function BookRoute() {
     goal: null,
   });
   const [clubHistory, setClubHistory] = useState<ProgressHistory[]>([]);
-
-  const palette = useCoverPalette(activeChallenge);
 
   const challengeId = activeChallenge?.id;
   const referencePages = activeChallenge?.total_pages ?? 0;
@@ -341,7 +338,6 @@ export default function BookRoute() {
         <BookSpine
           title={activeChallenge.book_title}
           author={activeChallenge.book_author}
-          palette={palette}
         />
       </View>
 

@@ -2,10 +2,14 @@
  * BookSpine — la tranche du livre, pleine largeur, en tête de la fiche.
  *
  *    ┌─────────────────────────────────────────┐
- *    │ ‖  Les nuits blanches     DOSTOÏEVSKI ‖ │   ← aux couleurs de sa couverture
+ *    │ ‖  Les nuits blanches     DOSTOÏEVSKI ‖ │   ← toile chocolat, titre crème
  *    └─────────────────────────────────────────┘
  *
- * Pour qu'on y croie, cinq couches par-dessus le dégradé de la couverture :
+ * Dans nos couleurs, pas dans celles de la couverture : les tuiles lie de vin
+ * et chocolat de la fiche juraient avec les teintes de chaque livre. Crème sur
+ * le chocolat : 8,8:1 au plus clair du dégradé.
+ *
+ * Pour qu'on y croie, cinq couches par-dessus le dégradé :
  * - le **grain** du papier de l'app, en multiply (seuls les points foncés
  *   marquent, le blanc disparaît) ;
  * - une **trame de toile**, de fins traits verticaux, comme une reliure ;
@@ -19,30 +23,35 @@ import { LinearGradient } from 'expo-linear-gradient';
 import React from 'react';
 import Svg, { Defs, Line, Pattern, Rect } from 'react-native-svg';
 import { StyleSheet, Text, View } from 'react-native';
-import { borderRadius, colors, fonts, shadowAlpha, shadows } from '../../utils/constants';
-import { FALLBACK_PALETTE, type CoverPalette } from '../../utils/coverPalette';
+import {
+  borderRadius,
+  colors,
+  fonts,
+  inkGradient,
+  shadowAlpha,
+  shadows,
+} from '../../utils/constants';
 
 interface BookSpineProps {
   title: string;
   author: string | null;
-  palette: CoverPalette | null;
 }
 
-export default function BookSpine({ title, author, palette }: BookSpineProps) {
-  const { ink, main, second } = readableSpine(palettePair(palette));
-  const darkInk = ink === colors.textPrimary;
+const INK = colors.white;
 
-  // Le titre frappé : un creux, donc une ombre claire sous une encre foncée,
-  // une ombre sombre sous un titre crème
-  const stamp = darkInk
-    ? { textShadowColor: 'rgba(255,255,255,0.45)', textShadowOffset: { width: 0, height: 1 } }
-    : { textShadowColor: shadowAlpha(0.45), textShadowOffset: { width: 0, height: -1 } };
+// Le titre frappé dans la toile : un creux, donc une ombre sombre au-dessus
+const STAMP = {
+  textShadowColor: shadowAlpha(0.45),
+  textShadowOffset: { width: 0, height: -1 },
+  textShadowRadius: 0.5,
+};
 
+export default function BookSpine({ title, author }: BookSpineProps) {
   return (
     <View style={styles.spine} accessible accessibilityRole="header" accessibilityLabel={title}>
       <View style={styles.clip}>
         <LinearGradient
-          colors={[main, second]}
+          colors={inkGradient}
           start={{ x: 0, y: 0.5 }}
           end={{ x: 1, y: 0.5 }}
           style={StyleSheet.absoluteFill}
@@ -69,13 +78,13 @@ export default function BookSpine({ title, author, palette }: BookSpineProps) {
           end={{ x: 1, y: 0.5 }}
           style={StyleSheet.absoluteFill}
         />
-        <View style={[styles.band, styles.bandLeft, { borderColor: ink }]} />
-        <View style={[styles.band, styles.bandRight, { borderColor: ink }]} />
+        <View style={[styles.band, styles.bandLeft, { borderColor: INK }]} />
+        <View style={[styles.band, styles.bandRight, { borderColor: INK }]} />
       </View>
 
       {/* Titre long : il passe sur deux lignes, puis rétrécit, sans jamais déborder */}
       <Text
-        style={[styles.title, { color: ink }, stamp, styles.stampRadius]}
+        style={[styles.title, { color: INK }, STAMP]}
         numberOfLines={2}
         adjustsFontSizeToFit
         minimumFontScale={0.6}
@@ -84,7 +93,7 @@ export default function BookSpine({ title, author, palette }: BookSpineProps) {
       </Text>
       {!!author && (
         <Text
-          style={[styles.author, { color: ink }, stamp, styles.stampRadius]}
+          style={[styles.author, { color: INK }, STAMP]}
           numberOfLines={1}
           ellipsizeMode="tail"
         >
@@ -93,62 +102,6 @@ export default function BookSpine({ title, author, palette }: BookSpineProps) {
       )}
     </View>
   );
-}
-
-/** Deux teintes, en complétant avec le repli si la couverture en a moins */
-function palettePair(palette: CoverPalette | null): [string, string] {
-  const p = palette && palette.length > 0 ? palette : FALLBACK_PALETTE;
-  return [p[0], p[1] ?? p[0]];
-}
-
-// ─── Contraste ─────────────────────────────────────────────────────
-
-/** Contraste minimal du texte sur toute la tranche (WCAG AA, texte normal) */
-const MIN_CONTRAST = 4.5;
-
-/**
- * L'encre la plus lisible sur les DEUX bouts du dégradé (le titre peut
- * tomber sur l'un comme sur l'autre), puis, si ça ne suffit pas, chaque
- * teinte est éclaircie (encre foncée) ou assombrie (crème) jusqu'à 4,5:1.
- */
-function readableSpine([a, b]: [string, string]) {
-  const inks = [colors.textPrimary, colors.white];
-  const score = (ink: string) => Math.min(contrast(ink, a), contrast(ink, b));
-  const ink = score(inks[0]) >= score(inks[1]) ? inks[0] : inks[1];
-  const toward = ink === colors.textPrimary ? '#ffffff' : '#000000';
-  const fix = (hex: string) => {
-    let out = hex;
-    for (let step = 1; contrast(ink, out) < MIN_CONTRAST && step <= 12; step++) {
-      out = mix(hex, toward, step * 0.07);
-    }
-    return out;
-  };
-  return { ink, main: fix(a), second: fix(b) };
-}
-
-function rgb(hex: string): [number, number, number] {
-  const n = parseInt(hex.replace('#', '').slice(0, 6), 16);
-  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
-}
-
-function mix(hex: string, toward: string, t: number) {
-  const [r1, g1, b1] = rgb(hex);
-  const [r2, g2, b2] = rgb(toward);
-  const c = (x: number, y: number) => Math.round(x + (y - x) * t).toString(16).padStart(2, '0');
-  return `#${c(r1, r2)}${c(g1, g2)}${c(b1, b2)}`;
-}
-
-function luminance(hex: string) {
-  const [r, g, b] = rgb(hex).map((v) => {
-    const c = v / 255;
-    return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
-  });
-  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
-}
-
-function contrast(x: string, y: string) {
-  const [hi, lo] = [luminance(x), luminance(y)].sort((m, n) => n - m);
-  return (hi + 0.05) / (lo + 0.05);
 }
 
 /** Sur une tranche, on imprime le nom de famille */
@@ -228,8 +181,5 @@ const styles = StyleSheet.create({
     letterSpacing: 1.4,
     textTransform: 'uppercase',
     opacity: 0.85,
-  },
-  stampRadius: {
-    textShadowRadius: 0.5,
   },
 });
