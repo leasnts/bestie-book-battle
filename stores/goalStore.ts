@@ -139,6 +139,9 @@ export const useGoalStore = create<GoalStore>((set, get) => ({
     try {
       await deleteGoal(goalId);
 
+      // Un cap passé vit dans l'historique : on l'y retire aussi
+      set({ history: get().history.filter((goal) => goal.id !== goalId) });
+
       if (primaryGoal?.id === goalId) {
         set({ primaryGoal: null, isLoading: false });
       } else if (secondaryGoal?.id === goalId) {

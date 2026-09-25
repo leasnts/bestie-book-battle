@@ -89,7 +89,7 @@ export default function BookRoute() {
     loadUserChallenges,
   } = useProjectStore();
   const { participants, saveMyEdition } = useProgressStore();
-  const { secondaryGoal, history: goalHistory, addGoal, editGoal } = useGoalStore();
+  const { secondaryGoal, history: goalHistory, addGoal, editGoal, removeGoal } = useGoalStore();
 
   const [deadlineVisible, setDeadlineVisible] = useState(false);
   const [editBookVisible, setEditBookVisible] = useState(false);
@@ -419,6 +419,12 @@ export default function BookRoute() {
         currentGoal={capForm.goal}
         history={goalHistory}
         onSaveGoal={handleSaveCap}
+        onDeleteGoal={
+          // Comme la base : seule la personne qui a posé le cap, ou l'admin du livre
+          capForm.goal && (capForm.goal.created_by === user?.id || isAdmin)
+            ? () => removeGoal(capForm.goal!.id)
+            : undefined
+        }
         totalPages={referencePages}
       />
 
