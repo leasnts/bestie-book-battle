@@ -10,8 +10,8 @@
  *    │ 21 / 62      │ 5 ●●●●●      │
  *    ├──────────────┼──────────────┤
  *    │ CARNET     › │ INVITER   [⇪]│   ← les notes en autocollants, dans l'ordre
- *    │ 8 notes      │ [5][2][8]    │     du livre ; le code, une lettre par case
- *    │ ◆◆◆◆◆◆ +2    │ [1][8][7]    │
+ *    │ 8 notes      │              │     du livre ; le code, une lettre par case
+ *    │ ◆◆◆◆◆◆ +2    │ [5][2][8][1][8][7] │
  *    └──────────────┴──────────────┘
  *
  * Tout en % dès qu'on compare (le club, moi) ; les pages sont celles de MON
@@ -88,13 +88,6 @@ export default function BookBento({
   const halfStyle = half === undefined ? null : { flex: 0, width: half };
   /** Carnet et invitation : même hauteur, compacte */
   const squareStyle = { height: 128 };
-  /** Trois cases par rangée, dans la largeur de la tuile moins sa marge */
-  const letterStyle =
-    half === undefined
-      ? null
-      : // Arrondi vers le bas, et la bordure fine de la tuile comptée : sinon la
-        // troisième case passe à la ligne
-        { width: Math.floor((half - 2 * spacing.lg - 2 - 2 * LETTER_GAP) / 3) };
 
   const countdown =
     remaining === null ? '—' : remaining >= 0 ? `J-${remaining}` : 'Prolong.';
@@ -242,7 +235,7 @@ export default function BookBento({
           </Pressable>
           <View style={styles.letters}>
             {(inviteCode ?? '------').split('').map((letter, i) => (
-              <View key={i} style={[styles.letterBox, letterStyle]}>
+              <View key={i} style={styles.letterBox}>
                 <Text style={styles.letter}>{letter}</Text>
               </View>
             ))}
@@ -256,7 +249,7 @@ export default function BookBento({
 const STICKER = 24;
 /** D'un autocollant au suivant : ils se chevauchent d'un tiers */
 const STICKER_STEP = 16;
-const LETTER_GAP = 5;
+const LETTER_GAP = 3;
 
 /**
  * Les notes en autocollants, rangées dans l'ordre du livre : une rangée qui se
@@ -331,17 +324,17 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.border,
   },
-  /** Trois lettres par rangée, deux rangées */
+  /** Les six lettres sur une rangée */
   letters: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
     gap: LETTER_GAP,
     marginTop: 'auto',
   },
   /** Une case par lettre, comme un code à saisir */
   letterBox: {
-    height: 28,
-    borderRadius: borderRadius.md,
+    flex: 1,
+    height: 32,
+    borderRadius: borderRadius.sm,
     backgroundColor: colors.bgLight,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.border,
