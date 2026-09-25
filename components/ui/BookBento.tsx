@@ -8,7 +8,8 @@
  *    ├──────────────┼──────────────┤
  *    │ PAGES  62    │ MEMBRES ●●●● │
  *    ├──────────────┴──────────────┤
- *    │ INVITER   5 2 8 1 8 7     ⇪ │   ← une tuile de plus, pas un bouton plein
+ *    │ INVITER                     │
+ *    │ [5][2][8][1][8][7]      (⇪) │   ← une case par lettre (à la Opal)
  *    └─────────────────────────────┘
  *
  * Tout en % dès qu'on compare (le club, moi) ; les pages sont celles de MON
@@ -22,6 +23,7 @@ import { BookOpenIcon, PencilIcon, ShareIcon } from 'lucide-react-native';
 import React, { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
+import GlassButton from './GlassButton';
 import {
   borderRadius,
   colors,
@@ -152,17 +154,24 @@ export default function BookBento({
         </Pressable>
       </View>
 
-      {/* ── Inviter : une tuile comme les autres, le code en grand ── */}
-      <Pressable
-        onPress={onInvite}
-        style={({ pressed }) => [styles.tile, styles.paper, styles.invite, pressed && styles.pressed]}
-        accessibilityRole="button"
-        accessibilityLabel={`Inviter, code ${inviteCode?.split('').join(' ') ?? 'indisponible'}`}
+      {/* ── Inviter : le code, une lettre par case, et le partage à droite ── */}
+      <View
+        style={[styles.tile, styles.paper]}
+        accessible
+        accessibilityLabel={`Code d'invitation ${inviteCode?.split('').join(' ') ?? 'indisponible'}`}
       >
         <Text style={styles.kicker}>Inviter</Text>
-        <Text style={styles.code}>{inviteCode ?? '------'}</Text>
-        <ShareIcon size={16} color={colors.textTertiary} strokeWidth={2.2} />
-      </Pressable>
+        <View style={styles.inviteRow}>
+          <View style={styles.letters}>
+            {(inviteCode ?? '------').split('').map((letter, i) => (
+              <View key={i} style={styles.letterBox}>
+                <Text style={styles.letter}>{letter}</Text>
+              </View>
+            ))}
+          </View>
+          <GlassButton icon={ShareIcon} size={44} onPress={onInvite} accessibilityLabel="Partager le code" />
+        </View>
+      </View>
     </View>
   );
 }
@@ -225,18 +234,31 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.border,
   },
-  /** Pleine largeur, sur une ligne */
-  invite: {
+  inviteRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.md,
-    paddingVertical: spacing.md,
+    marginTop: spacing.md,
   },
-  code: {
+  letters: {
     flex: 1,
+    flexDirection: 'row',
+    gap: spacing.xs + 2,
+  },
+  /** Une case par lettre, comme un code à saisir */
+  letterBox: {
+    flex: 1,
+    height: 48,
+    borderRadius: borderRadius.md,
+    backgroundColor: colors.bgLight,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  letter: {
     fontFamily: fonts.display,
-    fontSize: 20,
-    letterSpacing: 4,
+    fontSize: 22,
     color: colors.textPrimary,
   },
   pressed: {
