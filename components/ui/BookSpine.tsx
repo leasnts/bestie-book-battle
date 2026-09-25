@@ -1,19 +1,23 @@
 /**
- * BookSpine — la tranche du livre, couché sur une pile, en tête de la fiche.
+ * BookSpine — la tranche du livre, pleine largeur, en tête de la fiche.
  *
- *        ┌──────────────────────────────────┐
- *        │ ‖  Les nuits blanches   DOSTO… ‖ │   ← le livre, aux couleurs de sa couverture
- *        └──────────────────────────────────┘
- *     ┌─────────────────────────────────────┐    ← un autre livre dessous, plus sage
- *     └─────────────────────────────────────┘
+ *    ┌─────────────────────────────────────────┐
+ *    │ ‖  Les nuits blanches     DOSTOÏEVSKI ‖ │   ← aux couleurs de sa couverture
+ *    └─────────────────────────────────────────┘
  *
- * Les couleurs viennent de la couverture (cover_palette) : dégradé le long du
- * dos, jamais d'aplat, avec un reflet en haut et une ombre en bas pour le
- * volume, et deux filets près des bords comme sur une reliure.
+ * Pour qu'on y croie, cinq couches par-dessus le dégradé de la couverture :
+ * - le **grain** du papier de l'app, en multiply (seuls les points foncés
+ *   marquent, le blanc disparaît) ;
+ * - une **trame de toile**, de fins traits verticaux, comme une reliure ;
+ * - le **volume** : le dos est arrondi, reflet en haut, ombre en bas ;
+ * - les **bouts** plus sombres, là où le dos tourne vers les plats ;
+ * - le titre **frappé** dans la toile (ombre portée d'un pixel).
  */
 
+import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import React from 'react';
+import Svg, { Defs, Line, Pattern, Rect } from 'react-native-svg';
 import { StyleSheet, Text, View } from 'react-native';
 import { colors, fonts, shadowAlpha, shadows } from '../../utils/constants';
 import { FALLBACK_PALETTE, type CoverPalette } from '../../utils/coverPalette';
@@ -28,48 +32,60 @@ export default function BookSpine({ title, author, palette }: BookSpineProps) {
   const [main, second, third] = palettePair(palette);
   const ink = isLight(main) ? colors.textPrimary : colors.white;
 
+  // Le titre frappé : un creux, donc une ombre claire sous une encre foncée,
+  // une ombre sombre sous un titre crème
+  const stamp = isLight(main)
+    ? { textShadowColor: 'rgba(255,255,255,0.45)', textShadowOffset: { width: 0, height: 1 } }
+    : { textShadowColor: shadowAlpha(0.45), textShadowOffset: { width: 0, height: -1 } };
+
   return (
-    <View style={styles.stack} accessible accessibilityRole="header" accessibilityLabel={title}>
-      {/* ── Le livre du dessus : celui-ci ── */}
-      <View style={styles.spine}>
+    <View style={styles.spine} accessible accessibilityRole="header" accessibilityLabel={title}>
+      <View style={styles.clip}>
         <LinearGradient
           colors={[main, second]}
           start={{ x: 0, y: 0.5 }}
           end={{ x: 1, y: 0.5 }}
-          style={styles.fill}
+          style={StyleSheet.absoluteFill}
         />
-        {/* Volume : reflet en haut, ombre en bas */}
+        <Image source={GRAIN} style={styles.grain} contentFit="cover" />
+        <Weave />
+        {/* Volume : le dos est bombé */}
         <LinearGradient
-          colors={['rgba(255,255,255,0.28)', 'rgba(255,255,255,0)', shadowAlpha(0.22)]}
-          locations={[0, 0.45, 1]}
-          style={styles.fill}
+          colors={[
+            'rgba(255,255,255,0.10)',
+            'rgba(255,255,255,0.38)',
+            'rgba(255,255,255,0)',
+            shadowAlpha(0.12),
+            shadowAlpha(0.34),
+          ]}
+          locations={[0, 0.2, 0.5, 0.82, 1]}
+          style={StyleSheet.absoluteFill}
         />
-        <View style={[styles.band, styles.bandLeft, { borderColor: ink }]} />
-        <View style={[styles.band, styles.bandRight, { borderColor: ink }]} />
-
-        <Text style={[styles.title, { color: ink }]} numberOfLines={1} adjustsFontSizeToFit>
-          {title}
-        </Text>
-        {!!author && (
-          <Text style={[styles.author, { color: ink }]} numberOfLines={1}>
-            {lastName(author)}
-          </Text>
-        )}
-      </View>
-
-      {/* ── Le livre du dessous ── */}
-      <View style={styles.under}>
+        {/* Les bouts tournent vers les plats */}
         <LinearGradient
-          colors={[third, main]}
+          colors={[shadowAlpha(0.28), 'rgba(0,0,0,0)', 'rgba(0,0,0,0)', shadowAlpha(0.28)]}
+          locations={[0, 0.04, 0.96, 1]}
           start={{ x: 0, y: 0.5 }}
           end={{ x: 1, y: 0.5 }}
-          style={styles.fill}
-        />
-        <LinearGradient
-          colors={['rgba(255,255,255,0.2)', shadowAlpha(0.3)]}
-          style={styles.fill}
+          style={StyleSheet.absoluteFill}
         />
       </View>
+
+      <View style={[styles.band, styles.bandLeft, { borderColor: ink }]} />
+      <View style={[styles.band, styles.bandRight, { borderColor: ink }]} />
+
+      <Text
+        style={[styles.title, { color: ink }, stamp, styles.stampRadius]}
+        numberOfLines={1}
+        adjustsFontSizeToFit
+      >
+        {title}
+      </Text>
+      {!!author && (
+        <Text style={[styles.author, { color: ink }, stamp, styles.stampRadius]} numberOfLines={1}>
+          {lastName(author)}
+        </Text>
+      )}
     </View>
   );
 }
@@ -95,34 +111,45 @@ function lastName(author: string) {
   return parts[parts.length - 1];
 }
 
-const SPINE_HEIGHT = 58;
+const GRAIN = require('../../assets/images/61ea1e0c638b5b9c8100383a37a5b488848db623.png');
+
+/** La toile de reliure : un fil clair, un fil sombre, tous les 3 pt */
+function Weave() {
+  return (
+    <Svg style={StyleSheet.absoluteFill} pointerEvents="none">
+      <Defs>
+        <Pattern id="weave" width={3} height={4} patternUnits="userSpaceOnUse">
+          <Line x1={0.5} y1={0} x2={0.5} y2={4} stroke="#fff" strokeOpacity={0.08} strokeWidth={1} />
+          <Line x1={2} y1={0} x2={2} y2={4} stroke="#000" strokeOpacity={0.06} strokeWidth={1} />
+        </Pattern>
+      </Defs>
+      <Rect width="100%" height="100%" fill="url(#weave)" />
+    </Svg>
+  );
+}
+
+const SPINE_HEIGHT = 64;
 
 const styles = StyleSheet.create({
-  stack: {
-    alignItems: 'center',
-  },
   spine: {
-    width: '92%',
     height: SPINE_HEIGHT,
-    borderRadius: 6,
+    borderRadius: 5,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    paddingHorizontal: 30,
-    zIndex: 1,
+    paddingHorizontal: 32,
     ...shadows.cardSelected,
   },
-  under: {
-    width: '100%',
-    height: 26,
-    marginTop: -2,
-    borderRadius: 5,
-    transform: [{ rotate: '-1deg' }],
-    ...shadows.xs,
-  },
-  fill: {
+  /** Les couches restent dans les coins ; l'ombre, elle, vit sur `spine` */
+  clip: {
     ...StyleSheet.absoluteFillObject,
-    borderRadius: 6,
+    borderRadius: 5,
+    overflow: 'hidden',
+  },
+  grain: {
+    ...StyleSheet.absoluteFillObject,
+    opacity: 0.55,
+    mixBlendMode: 'multiply',
   },
   /** Les filets de la reliure, près de chaque bout */
   band: {
@@ -135,21 +162,24 @@ const styles = StyleSheet.create({
     opacity: 0.35,
   },
   bandLeft: {
-    left: 12,
+    left: 14,
   },
   bandRight: {
-    right: 12,
+    right: 14,
   },
   title: {
     flex: 1,
     fontFamily: fonts.display,
-    fontSize: 22,
+    fontSize: 23,
   },
   author: {
     fontFamily: fonts.bodyExtraBold,
     fontSize: 11,
-    letterSpacing: 1.2,
+    letterSpacing: 1.4,
     textTransform: 'uppercase',
     opacity: 0.85,
+  },
+  stampRadius: {
+    textShadowRadius: 0.5,
   },
 });
