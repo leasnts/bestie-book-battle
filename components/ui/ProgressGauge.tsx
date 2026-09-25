@@ -2,8 +2,8 @@
  * ProgressGauge — la progression du club en traits, pour la fiche du livre.
  *
  *    ▮▮▮▮▮▮▮▮▮▮▮╷╷╷╷╷╷╷╷╷╷╷╷╷╷╷╷╷╷╷   ← des traits verticaux, comme la tranche des
- *            ● Toi   34 %                pages ; le premier et le dernier touchent
- *            ● Club  30 %                les côtés de la tuile
+ *      ● Toi 34 %       ● Club 30 %      pages ; le premier et le dernier touchent
+ *                                        les côtés de la tuile
  *
  * Les traits se colorent de gauche à droite : le club derrière (lie de vin
  * clair), moi devant (lie de vin). À l'apparition, ils se remplissent (le club,
@@ -136,7 +136,7 @@ export default function ProgressGauge({
         </Svg>
       )}
 
-      {/* Sous les traits, l'un sous l'autre */}
+      {/* Sous les traits, côte à côte */}
       <View style={[styles.legend, { paddingHorizontal: legendInset }]}>
         <View style={styles.legendColumn}>
           <Legend label="Toi" value={me} dot={accentGradient[0]} />
@@ -175,12 +175,11 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    alignItems: 'flex-start',
   },
-  /** Les points l'un sous l'autre */
+  /** Toi à gauche, le club à droite */
   legendColumn: {
-    alignItems: 'flex-start',
-    gap: 2,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
   },
   legendItem: {
     flexDirection: 'row',
@@ -193,8 +192,6 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   legendLabel: {
-    // « Toi » et « Club » font la même largeur : les pourcentages s'alignent
-    minWidth: 32,
     fontFamily: fonts.bodyBold,
     fontSize: 12,
     color: colors.textTertiary,
