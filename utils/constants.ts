@@ -106,6 +106,9 @@ export const colors = {
  */
 export const accentGradient = ['#8c3b4c', '#5e1f2e'] as const;
 
+/** L'encre en surface (boutons d'action) : chocolat, clair en haut → foncé en bas */
+export const inkGradient = ['#5a4536', '#1e140e'] as const;
+
 /**
  * Les six post-it du carnet — des pastels tirés vers le noyer.
  *

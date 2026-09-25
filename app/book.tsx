@@ -20,10 +20,10 @@
  */
 
 import { Image } from 'expo-image';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import {
   CalendarIcon,
-  CircleCheckIcon,
   FlagIcon,
   LogOutIcon,
   PencilIcon,
@@ -46,6 +46,7 @@ import {
 import DeadlineEditSheet from '../components/ui/DeadlineEditSheet';
 import EditBookSheet from '../components/ui/EditBookSheet';
 import GoalFormSheet from '../components/ui/GoalFormSheet';
+import { CapDot } from '../components/ui/GoalTrack';
 import { resolveCoverImage } from '../components/ui/BookCover';
 import { SHEET_TOP_INSET } from '../components/ui/SheetHeader';
 import { myCoverUrl } from '../services/myEdition';
@@ -57,7 +58,15 @@ import { useGoalStore } from '../stores/goalStore';
 import { useProgressStore } from '../stores/progressStore';
 import { useProjectStore } from '../stores/projectStore';
 import type { ChallengeGoal, ProgressHistory } from '../types/supabase';
-import { borderRadius, colors, fonts, inkAlpha, shadows, spacing } from '../utils/constants';
+import {
+  borderRadius,
+  colors,
+  fonts,
+  inkAlpha,
+  inkGradient,
+  shadows,
+  spacing,
+} from '../utils/constants';
 import { extractCoverPalette, type CoverPalette } from '../utils/coverPalette';
 import {
   buildCaps,
@@ -65,6 +74,7 @@ import {
   countAtCapOnDate,
   daysLeft,
   formatTrackDate,
+  median,
   type TrackCap,
 } from '../utils/track';
 
@@ -138,6 +148,9 @@ export default function BookRoute() {
   }, [participants, referencePages]);
 
   const percentages = participants.map((p) => p.percentage || 0);
+  /** Pour colorer les ronds des caps comme sur la piste de l'accueil */
+  const myPercent = participants.find((p) => p.user.id === user?.id)?.percentage ?? 0;
+  const clubPercent = median(percentages);
   const memberCount = participants.length;
 
   const remaining = daysLeft(activeChallenge?.target_end_date);
@@ -315,12 +328,12 @@ export default function BookRoute() {
       </View>
 
       {/* ─── Fin ─── */}
-      <GroupHeader title="Fin">
-        <MiniButton icon={PencilIcon} label="Modifier" onPress={() => setDeadlineVisible(true)} />
-      </GroupHeader>
+      <GroupHeader title="Fin" />
       <Group>
         <Row
           icon={CalendarIcon}
+          trailingIcon={PencilIcon}
+          onPress={() => setDeadlineVisible(true)}
           label={
             activeChallenge.target_end_date
               ? formatLongDate(activeChallenge.target_end_date)
@@ -332,10 +345,8 @@ export default function BookRoute() {
 
       {/* ─── Caps ─── */}
       <GroupHeader title="Caps">
-        <MiniButton
-          icon={PlusIcon}
-          label="Ajouter"
-          dark
+        <AddButton
+          accessibilityLabel="Ajouter un cap"
           onPress={() => setCapForm({ open: true, goal: null })}
         />
       </GroupHeader>
@@ -351,9 +362,20 @@ export default function BookRoute() {
             return (
               <Row
                 key={cap.id}
-                icon={cap.state === 'past' ? CircleCheckIcon : FlagIcon}
+                icon={FlagIcon}
+                leading={
+                  cap.state === 'past' ? (
+                    <CapDot
+                      percent={cap.percent}
+                      myPercent={myPercent}
+                      clubPercent={clubPercent}
+                    />
+                  ) : undefined
+                }
                 label={`${capPages(cap)} · ${formatTrackDate(cap.deadline)}`}
                 value={`${reached}/${memberCount}`}
+                valueIcon={UsersIcon}
+                valueA11y={`${reached} personne${reached > 1 ? 's' : ''} sur ${memberCount}`}
                 tag={cap.state === 'current' ? 'en cours' : undefined}
                 dimmed={cap.state === 'past'}
                 onPress={() => {
@@ -452,31 +474,25 @@ function Group({ style, children }: { style?: StyleProp<ViewStyle>; children: Re
   );
 }
 
-function MiniButton({
-  icon: Icon,
-  label,
-  dark = false,
+/** Le « + » d'une section : rond, en dégradé d'encre (jamais d'aplat) */
+function AddButton({
   onPress,
+  accessibilityLabel,
 }: {
-  icon: typeof PlusIcon;
-  label: string;
-  dark?: boolean;
   onPress: () => void;
+  accessibilityLabel: string;
 }) {
   return (
     <Pressable
       onPress={onPress}
       hitSlop={8}
-      style={({ pressed }) => [
-        styles.miniButton,
-        dark ? styles.miniButtonDark : styles.miniButtonGhost,
-        pressed && { opacity: 0.7 },
-      ]}
+      style={({ pressed }) => [styles.addButton, pressed && { opacity: 0.8 }]}
       accessibilityRole="button"
-      accessibilityLabel={label}
+      accessibilityLabel={accessibilityLabel}
     >
-      <Icon size={13} color={dark ? colors.white : colors.dark900} strokeWidth={2.6} />
-      <Text style={[styles.miniButtonText, dark && styles.miniButtonTextDark]}>{label}</Text>
+      <LinearGradient colors={inkGradient} style={styles.addButtonFill}>
+        <PlusIcon size={16} color={colors.white} strokeWidth={2.6} />
+      </LinearGradient>
     </Pressable>
   );
 }
@@ -489,11 +505,23 @@ function Row({
   dimmed = false,
   chevron = false,
   labelStyle,
+  leading,
+  valueIcon: ValueIcon,
+  valueA11y,
+  trailingIcon: TrailingIcon,
   onPress,
 }: {
   icon: typeof FlagIcon;
   label: string;
   value: string;
+  /** Remplace l'icône de gauche (le rond d'un cap passé) */
+  leading?: React.ReactNode;
+  /** Petite icône devant la valeur, pour dire ce qu'elle compte */
+  valueIcon?: typeof FlagIcon;
+  /** La valeur lue par VoiceOver, si « 3/5 » ne suffit pas */
+  valueA11y?: string;
+  /** Icône à droite de la valeur : ce que fait le toucher (modifier…) */
+  trailingIcon?: typeof FlagIcon;
   /** Petit repère sombre à droite du libellé, pour le cap en cours */
   tag?: string;
   dimmed?: boolean;
@@ -503,11 +531,15 @@ function Row({
 }) {
   const content = (
     <>
-      <Icon
-        size={17}
-        color={dimmed ? colors.textPlaceholder : colors.textSecondary}
-        strokeWidth={2}
-      />
+      <View style={styles.rowLeading}>
+        {leading ?? (
+          <Icon
+            size={17}
+            color={dimmed ? colors.textPlaceholder : colors.textSecondary}
+            strokeWidth={2}
+          />
+        )}
+      </View>
       <Text style={[styles.rowLabel, dimmed && styles.rowLabelDimmed, labelStyle]} numberOfLines={1}>
         {label}
       </Text>
@@ -516,7 +548,13 @@ function Row({
           <Text style={styles.tagText}>{tag}</Text>
         </View>
       )}
+      {ValueIcon && value !== '' && (
+        <ValueIcon size={14} color={colors.textTertiary} strokeWidth={2.4} />
+      )}
       <Text style={styles.rowValue}>{value}</Text>
+      {TrailingIcon && (
+        <TrailingIcon size={15} color={colors.textTertiary} strokeWidth={2.2} />
+      )}
       {chevron && <Text style={styles.rowChevron}>›</Text>}
     </>
   );
@@ -528,7 +566,7 @@ function Row({
       onPress={onPress}
       style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
       accessibilityRole="button"
-      accessibilityLabel={`${label}${value ? `, ${value}` : ''}`}
+      accessibilityLabel={`${label}${valueA11y || value ? `, ${valueA11y ?? value}` : ''}`}
     >
       {content}
     </Pressable>
@@ -614,27 +652,16 @@ const styles = StyleSheet.create({
     color: colors.textTertiary,
   },
 
-  miniButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
+  addButton: {
+    width: 28,
     height: 28,
-    paddingHorizontal: spacing.md,
-    borderRadius: borderRadius.full,
+    borderRadius: 14,
+    overflow: 'hidden',
   },
-  miniButtonDark: {
-    backgroundColor: colors.dark900,
-  },
-  miniButtonGhost: {
-    backgroundColor: inkAlpha(0.08),
-  },
-  miniButtonText: {
-    fontFamily: fonts.bodyExtraBold,
-    fontSize: 13,
-    color: colors.dark900,
-  },
-  miniButtonTextDark: {
-    color: colors.white,
+  addButtonFill: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 
   group: {
@@ -658,6 +685,10 @@ const styles = StyleSheet.create({
     gap: spacing.md,
     height: 46,
     paddingHorizontal: spacing.md,
+  },
+  rowLeading: {
+    width: 18,
+    alignItems: 'center',
   },
   rowPressed: {
     backgroundColor: inkAlpha(0.04),
