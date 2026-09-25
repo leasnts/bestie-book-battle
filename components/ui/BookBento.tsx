@@ -7,7 +7,7 @@
  *    │ mar. 13 oct. │   toi 34 %   │
  *    ├──────────────┼──────────────┤
  *    │ PAGES        │ MEMBRES    › │
- *    │ 62           │ 5 ●●●●●      │
+ *    │ 21 / 62      │ 5 ●●●●●      │
  *    ├──────────────┴──────────────┤
  *    │ INVITER                     │
  *    │ [5][2][8][1][8][7]      [⇪] │   ← une case par lettre (à la Opal)
@@ -46,7 +46,8 @@ interface BookBentoProps {
   /** Médiane du club, 0 à 100 */
   clubPercent: number;
   myPercent: number;
-  /** Pages de mon édition */
+  /** Ma page, et le total de mon édition */
+  currentPage: number;
   pages: number;
   members: { id: string; photoUrl: string | null }[];
   onOpenMembers: () => void;
@@ -60,6 +61,7 @@ export default function BookBento({
   onEditEnd,
   clubPercent,
   myPercent,
+  currentPage,
   pages,
   members,
   onOpenMembers,
@@ -121,10 +123,13 @@ export default function BookBento({
         <View
           style={[styles.tile, halfStyle, styles.short, styles.paper]}
           accessible
-          accessibilityLabel={`${pages} pages`}
+          accessibilityLabel={`Page ${currentPage} sur ${pages}`}
         >
           <Text style={styles.kicker}>Pages</Text>
-          <Text style={styles.bigNumber}>{pages}</Text>
+          <View style={styles.pagesRow}>
+            <Text style={styles.bigNumberInline}>{currentPage}</Text>
+            <Text style={styles.total}>/ {pages}</Text>
+          </View>
         </View>
 
         {/* ── Les membres ── */}
@@ -337,6 +342,18 @@ const styles = StyleSheet.create({
     fontVariant: ['tabular-nums'],
   },
 
+  pagesRow: {
+    marginTop: 'auto',
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: spacing.xs,
+  },
+  total: {
+    fontFamily: fonts.display,
+    fontSize: 18,
+    color: colors.textTertiary,
+    fontVariant: ['tabular-nums'],
+  },
   membersRow: {
     marginTop: 'auto',
     flexDirection: 'row',
@@ -344,13 +361,6 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   bigNumberInline: {
-    fontFamily: fonts.display,
-    fontSize: 28,
-    color: colors.textPrimary,
-    fontVariant: ['tabular-nums'],
-  },
-  bigNumber: {
-    marginTop: 'auto',
     fontFamily: fonts.display,
     fontSize: 28,
     color: colors.textPrimary,

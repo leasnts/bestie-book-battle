@@ -350,6 +350,7 @@ export default function BookRoute() {
         onEditEnd={() => setDeadlineVisible(true)}
         clubPercent={clubPercent}
         myPercent={myPercent}
+        currentPage={mine?.current_page ?? 0}
         pages={myPages}
         members={members}
         onOpenMembers={() => router.push('/leaderboard?from=book')}
