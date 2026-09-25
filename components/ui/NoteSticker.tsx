@@ -9,6 +9,9 @@
  *
  * Une note encore verrouillée est un autocollant de papier nu : on sait qu'elle
  * est là, rien de plus (ni couleur ni contenu, cf. règles du carnet).
+ *
+ * Composant du design system (DESIGN.md › Autocollants brodés) : toute vue qui
+ * montre une note reprend celui-ci, on ne redessine jamais une note autrement.
  */
 
 import React from 'react';

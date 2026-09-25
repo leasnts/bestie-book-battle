@@ -749,6 +749,34 @@ sable : terne, « pas ouf ».
 Essai écarté : l'autocollant rond (bord blanc découpé), « pas réaliste, pas
 intéressant ».
 
+### Autocollants brodés — `NoteSticker`
+
+**L'image d'une note du carnet, partout dans l'app.** Validé par Lea le
+2026-09-25 (« magnifique ») : on ne redessine jamais une note autrement ;
+toute nouvelle vue qui parle de notes reprend ce composant.
+
+- **Forme** : carré au grand arrondi (26 % du côté), **coin en haut à gauche
+  qui se décolle**. Le rabat garde l'arrondi du coin d'origine, la pliure
+  s'incurve un peu (le coin se roule) et les jonctions sont adoucies : aucun
+  angle droit, nulle part.
+- **Couture** : pointillés tout autour, à 12 % du bord, encre à 32 % (20 % sur
+  une note verrouillée) — c'est elle qui dit « brodé, fait main ».
+- **Couleur** : celle de la catégorie de la note (`postIt`, via
+  `ANNOTATION_CATEGORIES`), avec un voile clair en haut et plus sombre en bas
+  (jamais d'aplat). Une note **verrouillée** est en papier nu `#efe9df` : on voit
+  qu'elle est là, rien de plus (règle du carnet).
+- **Rabat** : dégradé crème `#fdfbf8` → `#d8d1c6`, petite ombre dessous.
+- **Pourquoi à gauche** : en pile (autocollants qui se chevauchent vers la
+  droite), c'est le coin qui reste visible.
+- **Usage déco** (tuile Carnet de la fiche du livre) : 3-4 gros autocollants
+  (46 pt), pivotés, qui débordent du cadre et que ses bords coupent. Placement
+  et inclinaison fixes (`STICKER_SPOTS`) : la déco ne bouge pas d'une ouverture
+  à l'autre.
+
+Référence visuelle : autocollants en cuir surpiqué au coin décollé (capture de
+Lea). Essais écartés : une frise d'autocollants placés à leur page (« fouillis,
+on comprend pas »), une rangée serrée de petits autocollants.
+
 ### Bouton en verre — `GlassButton`
 
 Le seul bouton rond en verre de l'app : icône Lucide sur `GlassMaterial`, voile
