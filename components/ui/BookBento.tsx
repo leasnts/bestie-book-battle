@@ -7,13 +7,14 @@
  *    │ mar. 13 oct. │   toi 34 %   │
  *    ├──────────────┼──────────────┤
  *    │ PAGES  62    │ MEMBRES ●●●● │
- *    └──────────────┴──────────────┘
- *    ( ⇪  Inviter · 528187          )   ← le seul bouton plein : Button3D
+ *    ├──────────────┴──────────────┤
+ *    │ INVITER   5 2 8 1 8 7     ⇪ │   ← une tuile de plus, pas un bouton plein
+ *    └─────────────────────────────┘
  *
  * Tout en % dès qu'on compare (le club, moi) ; les pages sont celles de MON
  * édition. Hiérarchie : la tranche du livre au-dessus est le seul bloc foncé
- * d'identité, les tuiles sont de l'info (papier bordé, comme les sections), et
- * Inviter est le seul bouton plein : rien d'autre ne doit ressembler à un CTA.
+ * d'identité ; tout le reste est en papier bordé, comme les sections. Les seuls
+ * boutons pleins de la fiche sont petits (le + des caps).
  */
 
 import { Image } from 'expo-image';
@@ -21,7 +22,6 @@ import { BookOpenIcon, PencilIcon, ShareIcon } from 'lucide-react-native';
 import React, { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
-import Button3D from '../Button3D';
 import {
   borderRadius,
   colors,
@@ -152,16 +152,17 @@ export default function BookBento({
         </Pressable>
       </View>
 
-      {/* ── Inviter : le seul bouton plein de la fiche ── */}
-      <Button3D
-        variant="primary"
-        icon={ShareIcon}
-        iconPosition="left"
+      {/* ── Inviter : une tuile comme les autres, le code en grand ── */}
+      <Pressable
         onPress={onInvite}
+        style={({ pressed }) => [styles.tile, styles.paper, styles.invite, pressed && styles.pressed]}
+        accessibilityRole="button"
         accessibilityLabel={`Inviter, code ${inviteCode?.split('').join(' ') ?? 'indisponible'}`}
       >
-        {inviteCode ? `Inviter · ${inviteCode}` : 'Inviter'}
-      </Button3D>
+        <Text style={styles.kicker}>Inviter</Text>
+        <Text style={styles.code}>{inviteCode ?? '------'}</Text>
+        <ShareIcon size={16} color={colors.textTertiary} strokeWidth={2.2} />
+      </Pressable>
     </View>
   );
 }
@@ -223,6 +224,20 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.border,
+  },
+  /** Pleine largeur, sur une ligne */
+  invite: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    paddingVertical: spacing.md,
+  },
+  code: {
+    flex: 1,
+    fontFamily: fonts.display,
+    fontSize: 20,
+    letterSpacing: 4,
+    color: colors.textPrimary,
   },
   pressed: {
     opacity: 0.85,
