@@ -3,24 +3,21 @@
  *
  *    ┌──────────────┬──────────────┐
  *    │ FIN        ✎ │ PROGRESSION  │
- *    │ J-18         │    ╭────╮    │   ← des tuiles d'info, toutes pareilles
- *    │ mar. 13 oct. │ Club 30  Toi │   ← demi-cercle animé (ProgressGauge)
+ *    │ J-18         │ ▮▮▮▮╷╷╷╷╷╷╷╷ │   ← des tuiles d'info, toutes pareilles
+ *    │ mar. 13 oct. │ Toi 34  Club │
  *    ├──────────────┼──────────────┤
- *    │ PAGES        │ MEMBRES    › │
+ *    │ PAGES      › │ MEMBRES    › │
  *    │ 21 / 62      │ 5 ●●●●●      │
- *    ├──────────────┴──────────────┤
- *    │ CARNET                    › │
- *    │ 8 notes · 2 à toi           │
- *    │ ─◆──◆◆────◆───◆◆──────◆──── │   ← chaque note en autocollant, à sa page
- *    ├─────────────────────────────┤
- *    │ INVITER                     │
- *    │ [5][2][8][1][8][7]      [⇪] │   ← une case par lettre (à la Opal)
- *    └─────────────────────────────┘
+ *    ├──────────────┼──────────────┤
+ *    │ CARNET     › │ INVITER   [⇪]│   ← deux carrés : les notes en autocollants,
+ *    │ 8 notes      │ [5][2][8]    │     à leur page ; le code, une lettre par case
+ *    │ ◆─◆◆──◆──◆── │ [1][8][7]    │
+ *    └──────────────┴──────────────┘
  *
  * Tout en % dès qu'on compare (le club, moi) ; les pages sont celles de MON
  * édition. Hiérarchie : la tranche du livre au-dessus est le seul bloc foncé
  * d'identité ; tout le reste est en papier bordé, comme les sections. Les seuls
- * boutons pleins de la fiche sont petits (le + des caps).
+ * boutons pleins de la fiche sont petits (le partage du code).
  */
 
 import { Image } from 'expo-image';
@@ -89,6 +86,15 @@ export default function BookBento({
   // contenu est le plus large (l'anneau du club) prenait plus que sa moitié
   const [half, setHalf] = useState<number | undefined>(undefined);
   const halfStyle = half === undefined ? null : { flex: 0, width: half };
+  /** Les tuiles carrées (carnet, invitation) */
+  const squareStyle = { height: half ?? 160 };
+  /** Trois cases par rangée, dans la largeur de la tuile moins sa marge */
+  const letterStyle =
+    half === undefined
+      ? null
+      : // Arrondi vers le bas, et la bordure fine de la tuile comptée : sinon la
+        // troisième case passe à la ligne
+        { width: Math.floor((half - 2 * spacing.lg - 2 - 2 * LETTER_GAP) / 3) };
 
   const countdown =
     remaining === null ? '—' : remaining >= 0 ? `J-${remaining}` : 'Prolong.';
@@ -187,60 +193,68 @@ export default function BookBento({
         </Pressable>
       </View>
 
-      {/* ── Le carnet : combien le livre est annoté, et où ── */}
-      <Pressable
-        onPress={onOpenNotes}
-        style={({ pressed }) => [styles.tile, styles.paper, pressed && styles.pressed]}
-        accessibilityRole="button"
-        accessibilityLabel={`Carnet : ${notes.total} notes, dont ${notes.mine} à toi. Ouvrir le carnet`}
-      >
-        <View style={styles.tileTop}>
-          <Text style={styles.kicker}>Carnet</Text>
-          <ChevronRightIcon size={15} color={colors.textTertiary} strokeWidth={2.2} />
-        </View>
-        <View style={styles.notesHead}>
-          <Text style={styles.bigNumberInline}>{notes.total}</Text>
-          <Text style={styles.notesLabel}>
-            note{notes.total > 1 ? 's' : ''}
-            {notes.mine > 0 ? ` · ${notes.mine} à toi` : ''}
-          </Text>
-        </View>
-        <StickerStrip stickers={notes.stickers} />
-      </Pressable>
-
-      {/* ── Inviter : le code, une lettre par case, et le partage à droite ── */}
-      <View
-        style={[styles.tile, styles.paper]}
-        accessible
-        accessibilityLabel={`Code d'invitation ${inviteCode?.split('').join(' ') ?? 'indisponible'}`}
-      >
-        <Text style={styles.kicker}>Inviter</Text>
-        <View style={styles.inviteRow}>
-          <View style={styles.letters}>
-            {(inviteCode ?? '------').split('').map((letter, i) => (
-              <View key={i} style={styles.letterBox}>
-                <Text style={styles.letter}>{letter}</Text>
-              </View>
-            ))}
+      <View style={styles.row}>
+        {/* ── Le carnet : combien le livre est annoté, et où ── */}
+        <Pressable
+          onPress={onOpenNotes}
+          style={({ pressed }) => [
+            styles.tile,
+            halfStyle,
+            squareStyle,
+            styles.paper,
+            pressed && styles.pressed,
+          ]}
+          accessibilityRole="button"
+          accessibilityLabel={`Carnet : ${notes.total} notes, dont ${notes.mine} à toi. Ouvrir le carnet`}
+        >
+          <View style={styles.tileTop}>
+            <Text style={styles.kicker}>Carnet</Text>
+            <ChevronRightIcon size={15} color={colors.textTertiary} strokeWidth={2.2} />
           </View>
-          {/* Même case que les lettres, pleine : c'est l'action */}
+          <View style={styles.notesHead}>
+            <Text style={styles.bigNumberInline}>{notes.total}</Text>
+            <Text style={styles.notesLabel}>
+              note{notes.total > 1 ? 's' : ''}
+              {notes.mine > 0 ? ` · ${notes.mine} à toi` : ''}
+            </Text>
+          </View>
+          <StickerStrip stickers={notes.stickers} />
+        </Pressable>
+
+        {/* ── Inviter : le code, une lettre par case, le partage en haut à droite ── */}
+        <View
+          style={[styles.tile, halfStyle, squareStyle, styles.paper]}
+          accessible
+          accessibilityLabel={`Code d'invitation ${inviteCode?.split('').join(' ') ?? 'indisponible'}`}
+        >
+          <Text style={styles.kicker}>Inviter</Text>
+          {/* Une case pleine : c'est l'action */}
           <Pressable
             onPress={onInvite}
+            hitSlop={6}
             style={({ pressed }) => [styles.shareBox, pressed && styles.pressed]}
             accessibilityRole="button"
             accessibilityLabel="Partager le code"
           >
             <LinearGradient colors={inkGradient} style={styles.shareFill}>
-              <ShareIcon size={18} color={colors.white} strokeWidth={2.2} />
+              <ShareIcon size={15} color={colors.white} strokeWidth={2.2} />
             </LinearGradient>
           </Pressable>
+          <View style={styles.letters}>
+            {(inviteCode ?? '------').split('').map((letter, i) => (
+              <View key={i} style={[styles.letterBox, letterStyle]}>
+                <Text style={styles.letter}>{letter}</Text>
+              </View>
+            ))}
+          </View>
         </View>
       </View>
     </View>
   );
 }
 
-const STICKER = 26;
+const STICKER = 22;
+const LETTER_GAP = 6;
 
 /**
  * Le livre de la première à la dernière page, et chaque note posée à sa page
@@ -262,7 +276,7 @@ function StickerStrip({ stickers }: { stickers: BookBentoProps['notes']['sticker
                 styles.sticker,
                 {
                   left: Math.max(0, Math.min(1, sticker.position)) * (width - STICKER),
-                  top: i % 2 ? 16 : 2 + (seed % 5),
+                  top: (i % 3) * 13 + (seed % 4),
                   transform: [{ rotate: `${(seed % 21) - 10}deg` }],
                 },
               ]}
@@ -320,21 +334,16 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.border,
   },
-  inviteRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-    marginTop: spacing.md,
-  },
+  /** Trois lettres par rangée, deux rangées */
   letters: {
-    flex: 1,
     flexDirection: 'row',
-    gap: spacing.xs + 2,
+    flexWrap: 'wrap',
+    gap: LETTER_GAP,
+    marginTop: 'auto',
   },
   /** Une case par lettre, comme un code à saisir */
   letterBox: {
-    flex: 1,
-    height: 48,
+    height: 40,
     borderRadius: borderRadius.md,
     backgroundColor: colors.bgLight,
     borderWidth: StyleSheet.hairlineWidth,
@@ -342,21 +351,25 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  /** Le partage, en haut à droite : la place des icônes des autres tuiles */
   shareBox: {
-    width: 48,
-    height: 48,
-    borderRadius: borderRadius.md,
+    position: 'absolute',
+    top: spacing.md,
+    right: spacing.md,
+    width: 32,
+    height: 32,
+    borderRadius: borderRadius.sm,
     ...shadows.xs,
   },
   shareFill: {
     flex: 1,
-    borderRadius: borderRadius.md,
+    borderRadius: borderRadius.sm,
     alignItems: 'center',
     justifyContent: 'center',
   },
   letter: {
     fontFamily: fonts.display,
-    fontSize: 22,
+    fontSize: 20,
     color: colors.textPrimary,
   },
   pressed: {
@@ -409,16 +422,17 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: colors.textTertiary,
   },
+  /** Posée en bas de la tuile, comme les cases du code à côté */
   strip: {
-    height: 46,
-    marginTop: spacing.sm,
+    height: 52,
+    marginTop: 'auto',
   },
   /** Le livre, de la première à la dernière page */
   stripLine: {
     position: 'absolute',
     left: 0,
     right: 0,
-    top: 22,
+    top: 25,
     height: 1,
     backgroundColor: colors.border,
   },
