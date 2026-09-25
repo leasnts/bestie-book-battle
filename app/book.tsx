@@ -42,6 +42,7 @@ import {
   type ViewStyle,
 } from 'react-native';
 import ReanimatedSwipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
+import Animated, { useAnimatedStyle, type SharedValue } from 'react-native-reanimated';
 import DeadlineEditSheet from '../components/ui/DeadlineEditSheet';
 import EditBookSheet from '../components/ui/EditBookSheet';
 import GoalFormSheet, { confirmDeleteCap } from '../components/ui/GoalFormSheet';
@@ -417,20 +418,14 @@ export default function BookRoute() {
                 rightThreshold={40}
                 overshootRight={false}
                 childrenContainerStyle={styles.swipeRow}
-                renderRightActions={(_progress, _drag, swipe) => (
-                  <Pressable
+                renderRightActions={(_progress, drag, swipe) => (
+                  <SwipeDelete
+                    drag={drag}
                     onPress={() => {
                       swipe.close();
                       confirmDeleteCap(() => removeGoal(goal.id));
                     }}
-                    style={styles.swipeDelete}
-                    accessibilityRole="button"
-                    accessibilityLabel="Supprimer le cap"
-                  >
-                    <LinearGradient colors={dangerGradient} style={styles.swipeDeleteFill}>
-                      <Trash2Icon size={20} color={colors.white} strokeWidth={2.2} />
-                    </LinearGradient>
-                  </Pressable>
+                  />
                 )}
               >
                 {row}
@@ -497,6 +492,30 @@ function Group({ style, children }: { style?: StyleProp<ViewStyle>; children: Re
     <View style={[styles.group, style]}>
       <View style={styles.groupClip}>{children}</View>
     </View>
+  );
+}
+
+/**
+ * Le bouton rouge du glisser-pour-supprimer, accroché au bout de la ligne : il
+ * entre par la droite en suivant le doigt, toute la ligne avance d'un bloc.
+ */
+function SwipeDelete({ drag, onPress }: { drag: SharedValue<number>; onPress: () => void }) {
+  const follow = useAnimatedStyle(() => ({
+    transform: [{ translateX: drag.value + SWIPE_DELETE_WIDTH }],
+  }));
+  return (
+    <Animated.View style={[styles.swipeDelete, follow]}>
+      <Pressable
+        onPress={onPress}
+        style={styles.swipeDeletePress}
+        accessibilityRole="button"
+        accessibilityLabel="Supprimer le cap"
+      >
+        <LinearGradient colors={dangerGradient} style={styles.swipeDeleteFill}>
+          <Trash2Icon size={20} color={colors.white} strokeWidth={2.2} />
+        </LinearGradient>
+      </Pressable>
+    </Animated.View>
   );
 }
 
@@ -586,6 +605,8 @@ function formatLongDate(iso: string) {
 
 // ─── Styles ────────────────────────────────────────────────────────
 
+const SWIPE_DELETE_WIDTH = 72;
+
 const styles = StyleSheet.create({
   screen: {
     backgroundColor: colors.white,
@@ -649,7 +670,10 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
   },
   swipeDelete: {
-    width: 72,
+    width: SWIPE_DELETE_WIDTH,
+  },
+  swipeDeletePress: {
+    flex: 1,
   },
   swipeDeleteFill: {
     flex: 1,
