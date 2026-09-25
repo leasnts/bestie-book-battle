@@ -2,13 +2,12 @@
  * ProgressGauge — la progression du club en demi-cercle, pour la fiche du livre.
  *
  *          ╭┊┊┊┊┊┊┊╮
- *        ┊▮▮▮o┊┊┊┊┊┊┊       ← un cadran gradué : les graduations se colorent,
- *       ┊   ● Toi 34 %  ┊      le club derrière (lie de vin clair), moi devant
- *       ┊   ● Club 30 % ┊      (lie de vin), et un curseur au bout de mon arc
+ *        ┊▮▮▮▮┊┊┊┊┊┊┊       ← un cadran gradué, comme la tranche des pages :
+ *       ┊   ● Toi 34 %  ┊      les graduations se colorent, le club derrière
+ *       ┊   ● Club 30 % ┊      (lie de vin clair), moi devant (lie de vin)
  *
- * À l'apparition, les graduations se remplissent (le club, puis moi, décalé),
- * le curseur glisse et les pourcentages comptent jusqu'à leur valeur, sur la
- * même courbe. Avec « Réduire les animations », tout est posé d'emblée.
+ * À l'apparition, les graduations se remplissent (le club, puis moi, décalé)
+ * et les pourcentages comptent jusqu'à leur valeur, sur la même courbe. Avec « Réduire les animations », tout est posé d'emblée.
  */
 
 import React, { useEffect, useState } from 'react';
@@ -24,12 +23,11 @@ import Animated, {
   withTiming,
   type SharedValue,
 } from 'react-native-reanimated';
-import Svg, { Circle, Defs, G, LinearGradient, Mask, Path, Stop } from 'react-native-svg';
+import Svg, { Defs, G, LinearGradient, Mask, Path, Stop } from 'react-native-svg';
 import { accentGradient, colors, fonts, inkAlpha, motion, spacing } from '../../utils/constants';
 import { CLUB_GRADIENT } from './GoalTrack';
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
-const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
 interface ProgressGaugeProps {
   /** Médiane du club, 0 à 100 */
@@ -49,17 +47,16 @@ const HEIGHT = CENTER_Y + STROKE / 2;
 const ARC_LENGTH = Math.PI * RADIUS;
 /** Le demi-cercle, de gauche à droite en passant par le haut */
 const ARC = `M ${STROKE / 2} ${CENTER_Y} A ${RADIUS} ${RADIUS} 0 0 1 ${WIDTH - STROKE / 2} ${CENTER_Y}`;
-/** Les graduations : un trait plein, un vide, le long de l'arc */
-const TICKS = '2 2.6';
-/** Le curseur au bout de mon arc */
-const KNOB = STROKE / 2 + 1;
-
-/** Point de l'arc à `percent` (0 = à gauche, 100 = à droite) */
-function pointAt(percent: number) {
-  'worklet';
-  const angle = Math.PI * (1 - percent / 100);
-  return { x: WIDTH / 2 + RADIUS * Math.cos(angle), y: CENTER_Y - RADIUS * Math.sin(angle) };
-}
+/**
+ * Les graduations : un trait plein, un vide, le long de l'arc. L'écart est
+ * calculé pour qu'un nombre entier de traits tombe pile de bout en bout : un
+ * trait plein à chaque extrémité, jamais un demi-trait coupé.
+ */
+const TICK_COUNT = 36;
+/** Part du trait dans une graduation (le reste est le vide) */
+const TICK_RATIO = 0.45;
+const TICK_PERIOD = ARC_LENGTH / (TICK_COUNT - 1 + TICK_RATIO);
+const TICKS = `${TICK_PERIOD * TICK_RATIO} ${TICK_PERIOD * (1 - TICK_RATIO)}`;
 
 const DURATION = 1100;
 /** Je pars un peu après le club : on voit les deux arcs se chercher */
@@ -85,10 +82,7 @@ export default function ProgressGauge({ clubPercent, myPercent }: ProgressGaugeP
   const meArc = useAnimatedProps(() => ({
     strokeDashoffset: ARC_LENGTH * (1 - me.value / 100),
   }));
-  const knob = useAnimatedProps(() => {
-    const { x, y } = pointAt(me.value);
-    return { cx: x, cy: y };
-  });
+
 
   return (
     <View
@@ -130,19 +124,14 @@ export default function ProgressGauge({ clubPercent, myPercent }: ProgressGaugeP
             animatedProps={meArc}
           />
         </G>
-        <AnimatedCircle
-          r={KNOB}
-          fill={colors.white}
-          stroke={accentGradient[0]}
-          strokeWidth={2.5}
-          animatedProps={knob}
-        />
       </Svg>
 
       {/* Dans le creux du demi-cercle, l'un sous l'autre */}
       <View style={styles.legend}>
-        <Legend label="Toi" value={me} dot={accentGradient[0]} />
-        <Legend label="Club" value={club} dot={CLUB_GRADIENT[1]} />
+        <View style={styles.legendColumn}>
+          <Legend label="Toi" value={me} dot={accentGradient[0]} />
+          <Legend label="Club" value={club} dot={CLUB_GRADIENT[1]} />
+        </View>
       </View>
     </View>
   );
@@ -173,8 +162,6 @@ const styles = StyleSheet.create({
   },
   svg: {
     aspectRatio: WIDTH / HEIGHT,
-    // Le curseur déborde de l'arc d'un point : on le laisse dépasser
-    overflow: 'visible',
   },
   legend: {
     position: 'absolute',
@@ -182,6 +169,10 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     alignItems: 'center',
+  },
+  /** Les points l'un sous l'autre, le bloc centré dans le creux */
+  legendColumn: {
+    alignItems: 'flex-start',
     gap: 2,
   },
   legendItem: {
@@ -195,6 +186,8 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   legendLabel: {
+    // « Toi » et « Club » font la même largeur : les pourcentages s'alignent
+    minWidth: 32,
     fontFamily: fonts.bodyBold,
     fontSize: 12,
     color: colors.textTertiary,
