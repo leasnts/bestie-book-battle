@@ -7,7 +7,7 @@
  *
  * Règle non négociable : **le titre d'un sheet n'est jamais centré.** Il est
  * ferré à gauche, en Fraunces 22, comme les sheets dessinés à la main
- * (DeadlineEditSheet, GoalFormSheet).
+ * (SheetPage).
  *
  * La barre de navigation d'iOS centre toujours son titre et n'offre aucun
  * réglage pour l'aligner. On laisse donc son titre vide, et on pose le nôtre

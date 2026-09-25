@@ -16,20 +16,15 @@
  * lie de vin, ce sont mes pages lues), mêmes étapes (rond de 9 pt dans un
  * anneau vide de 2 pt), continu du haut en bas, sans trou entre les jours.
  *
- * Le composant EST la ScrollView de l'écran, sans View autour : c'est la
- * condition pour qu'un sheet natif (`formSheet`) lui donne les bonnes marges
- * (même leçon que le classement complet, #33).
+ * Mise en page : `SheetPage`, le squelette commun à tous les sheets.
  */
-import { ChevronLeftIcon } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useMemo } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import { useFitSheet } from '../../hooks/useFitSheet';
+import { StyleSheet, Text, View } from 'react-native';
 import { ProgressHistory } from '../../types/supabase';
 import { accentGradient, colors, fonts, spacing } from '../../utils/constants';
-import GlassButton from './GlassButton';
 import { RAIL_HEIGHT, STEP_GAP, STEP_SIZE } from './GoalTrack';
-import { SheetStickyHeader, useSheetScrolled } from './SheetHeader';
+import SheetPage from './SheetPage';
 
 // ─── Props ─────────────────────────────────────────────────────────
 
@@ -90,9 +85,6 @@ export default function ParticipantTimeline({
   history = [],
   onBack,
 }: ParticipantTimelineProps) {
-  // Le sheet s'ouvre à la hauteur de tout le journal, plafonné sous l'en-tête de l'accueil
-  const fit = useFitSheet({ withBar: false });
-  const sheetScroll = useSheetScrolled();
 
   const dayGroups: DayGroup[] = useMemo(() => {
     const safeHistory = Array.isArray(history) ? history : [];
@@ -117,37 +109,7 @@ export default function ParticipantTimeline({
   }, [history]);
 
   return (
-    <ScrollView
-      style={[styles.scrollView, fit.style]}
-      contentContainerStyle={styles.scrollContent}
-      contentInsetAdjustmentBehavior="automatic"
-      showsVerticalScrollIndicator={false}
-      onContentSizeChange={fit.onContentSizeChange}
-      // L'en-tête reste en haut quand le journal défile
-      stickyHeaderIndices={[0]}
-      onScroll={sheetScroll.onScroll}
-      scrollEventThrottle={sheetScroll.scrollEventThrottle}
-    >
-      {/* En-tête : le titre, ferré à gauche ; le prénom si ce n'est pas moi */}
-      <SheetStickyHeader scrolled={sheetScroll.scrolled}>
-        <View style={styles.header}>
-          {onBack && (
-            <GlassButton
-              icon={ChevronLeftIcon}
-              size={36}
-              onPress={onBack}
-              accessibilityLabel="Retour"
-            />
-          )}
-          <View style={styles.headerTexts}>
-            <Text style={styles.title} accessibilityRole="header">
-              Journal
-            </Text>
-            {!!ownerName && <Text style={styles.owner}>{ownerName}</Text>}
-          </View>
-        </View>
-      </SheetStickyHeader>
-
+    <SheetPage title="Journal" subtitle={ownerName} onBack={onBack}>
       {dayGroups.length === 0 ? (
         <View style={styles.emptyState}>
           <Text style={styles.emptyTitle}>Pas encore de lecture</Text>
@@ -194,7 +156,7 @@ export default function ParticipantTimeline({
           ))}
         </View>
       )}
-    </ScrollView>
+    </SheetPage>
   );
 }
 
@@ -209,39 +171,6 @@ const DAY_NODE = 15;
 const DAY_ROW_HEIGHT = 40;
 
 const styles = StyleSheet.create({
-  // Pas de hauteur imposée : c'est le sheet natif qui donne la sienne
-  scrollView: {
-    backgroundColor: colors.white,
-  },
-  scrollContent: {
-    // La marge sous la poignée est portée par l'en-tête collant
-    paddingHorizontal: spacing.lg,
-    // iOS ajoute déjà la zone du bas de l'écran (34 pt) sous le contenu
-    paddingBottom: spacing.lg,
-  },
-
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-    marginBottom: spacing.xs,
-  },
-  headerTexts: {
-    flex: 1,
-  },
-  title: {
-    fontFamily: fonts.display,
-    fontSize: 26,
-    lineHeight: 31,
-    color: colors.textPrimary,
-  },
-  owner: {
-    fontFamily: fonts.body,
-    fontSize: 15,
-    color: colors.textTertiary,
-    marginTop: 2,
-  },
-
   emptyState: {
     paddingVertical: spacing['3xl'],
     gap: spacing.xs,

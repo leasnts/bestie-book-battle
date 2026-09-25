@@ -336,6 +336,18 @@ function RootLayoutNav() {
       {/* Fiche d'un livre de l'onglet Explorer — lancer une lecture, envie, partage */}
       <Stack.Screen name="explore-book" options={sheetScreenOptions(null, 'fitToContents')} />
 
+      {/* Les formulaires de la fiche du livre : ils se posent dessus */}
+      <Stack.Screen name="end-date" options={sheetScreenOptions(null, 'fitToContents')} />
+      <Stack.Screen name="cap" options={sheetScreenOptions(null, 'fitToContents')} />
+      <Stack.Screen name="edit-book" options={sheetScreenOptions(null, 'fitToContents')} />
+
+      {/* Les formulaires du profil */}
+      <Stack.Screen name="edit-profile" options={sheetScreenOptions(null, 'fitToContents')} />
+      <Stack.Screen name="invite" options={sheetScreenOptions(null, 'fitToContents')} />
+
+      {/* Recherche d'un livre (onboarding) : haute d'emblée, le clavier et les résultats */}
+      <Stack.Screen name="book-search" options={sheetScreenOptions(null, [0.95])} />
+
       {/* Bibliothèque : toutes mes lectures, sur des étagères, à la hauteur des étagères */}
       <Stack.Screen name="library" options={sheetScreenOptions('Mes lectures', 'fitToContents')} />
 
