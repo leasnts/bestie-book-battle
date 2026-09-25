@@ -28,9 +28,16 @@ import type {
   NativeStackNavigationOptions,
 } from '@react-navigation/native-stack';
 import type { LucideIcon } from 'lucide-react-native';
-import React from 'react';
-import { StyleSheet, Text } from 'react-native';
-import { colors, fonts } from '../../utils/constants';
+import React, { useCallback, useState } from 'react';
+import { LinearGradient } from 'expo-linear-gradient';
+import {
+  StyleSheet,
+  Text,
+  View,
+  type NativeScrollEvent,
+  type NativeSyntheticEvent,
+} from 'react-native';
+import { colors, creamAlpha, fonts, spacing } from '../../utils/constants';
 import GlassButton from './GlassButton';
 
 // ─── Titre ─────────────────────────────────────────────────────────
@@ -115,7 +122,71 @@ export function sheetScreenOptions(
 /** Sheet sans barre : marge du haut du contenu, pour passer sous la poignée */
 export const SHEET_TOP_INSET = 28;
 
+// ─── En-tête collant d'un sheet sans barre ─────────────────────────
+
+/**
+ * L'en-tête d'un sheet dont le titre vit dans le contenu (fiche du livre,
+ * journal) : il reste collé en haut quand on fait défiler, sur le fond du
+ * sheet, avec un fondu dessous pour que le contenu qui passe derrière ne se
+ * lise pas à travers.
+ *
+ * À poser en PREMIER enfant de la ScrollView, avec `stickyHeaderIndices={[0]}`
+ * (la ScrollView reste l'enfant direct de l'écran, condition des formSheet).
+ * Il déborde de la marge latérale du contenu (`gutter`) pour couvrir toute la
+ * largeur, et porte lui-même la marge du haut sous la poignée.
+ */
+export function SheetStickyHeader({
+  children,
+  gutter = spacing.lg,
+  scrolled,
+}: {
+  children: React.ReactNode;
+  /** La marge latérale de la ScrollView, que l'en-tête recouvre */
+  gutter?: number;
+  /**
+   * Le contenu a défilé (`useSheetScrolled`) : le fondu n'apparaît qu'alors.
+   * Au repos, il pâlirait le haut du contenu juste sous l'en-tête.
+   */
+  scrolled: boolean;
+}) {
+  return (
+    <View style={[styles.sticky, { marginHorizontal: -gutter, paddingHorizontal: gutter }]}>
+      {children}
+      {scrolled && (
+        <LinearGradient
+          colors={[colors.white, creamAlpha(0)]}
+          style={styles.stickyFade}
+          pointerEvents="none"
+        />
+      )}
+    </View>
+  );
+}
+
+/** Le contenu du sheet a-t-il défilé ? Pour `SheetStickyHeader` */
+export function useSheetScrolled() {
+  const [scrolled, setScrolled] = useState(false);
+  const onScroll = useCallback((e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const next = e.nativeEvent.contentOffset.y > 1;
+    setScrolled((prev) => (prev === next ? prev : next));
+  }, []);
+  return { scrolled, onScroll, scrollEventThrottle: 16 };
+}
+
 const styles = StyleSheet.create({
+  sticky: {
+    paddingTop: SHEET_TOP_INSET,
+    paddingBottom: spacing.md,
+    backgroundColor: colors.white,
+  },
+  /** Le fondu sous l'en-tête : le contenu s'y efface en passant dessous */
+  stickyFade: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: -spacing.xl,
+    height: spacing.xl,
+  },
   title: {
     fontFamily: fonts.display,
     fontSize: 22,

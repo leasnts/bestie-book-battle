@@ -29,7 +29,7 @@ import { accentGradient, colors, fonts, shadows, spacing } from '../../utils/con
 import GlassButton from './GlassButton';
 import { RAIL_HEIGHT, STEP_GAP, STEP_SIZE } from './GoalTrack';
 import NoteSticker from './NoteSticker';
-import { SHEET_TOP_INSET } from './SheetHeader';
+import { SheetStickyHeader, useSheetScrolled } from './SheetHeader';
 
 // ─── Props ─────────────────────────────────────────────────────────
 
@@ -92,6 +92,7 @@ export default function ParticipantTimeline({
 }: ParticipantTimelineProps) {
   // Le sheet s'ouvre à la hauteur de tout le journal, plafonné sous l'en-tête de l'accueil
   const fit = useFitSheet({ withBar: false });
+  const sheetScroll = useSheetScrolled();
 
   const dayGroups: DayGroup[] = useMemo(() => {
     const safeHistory = Array.isArray(history) ? history : [];
@@ -100,8 +101,8 @@ export default function ParticipantTimeline({
     const map = new Map<string, ProgressHistory[]>();
 
     for (const entry of safeHistory) {
-      const day = entry.created_date
-        || (entry.recorded_at ? entry.recorded_at.split('T')[0] : 'unknown');
+      const day =
+        entry.created_date || (entry.recorded_at ? entry.recorded_at.split('T')[0] : 'unknown');
       if (!map.has(day)) map.set(day, []);
       map.get(day)!.push(entry);
     }
@@ -122,19 +123,30 @@ export default function ParticipantTimeline({
       contentInsetAdjustmentBehavior="automatic"
       showsVerticalScrollIndicator={false}
       onContentSizeChange={fit.onContentSizeChange}
+      // L'en-tête reste en haut quand le journal défile
+      stickyHeaderIndices={[0]}
+      onScroll={sheetScroll.onScroll}
+      scrollEventThrottle={sheetScroll.scrollEventThrottle}
     >
       {/* En-tête : le titre, ferré à gauche ; le prénom si ce n'est pas moi */}
-      <View style={styles.header}>
-        {onBack && (
-          <GlassButton icon={ChevronLeftIcon} size={36} onPress={onBack} accessibilityLabel="Retour" />
-        )}
-        <View style={styles.headerTexts}>
-          <Text style={styles.title} accessibilityRole="header">
-            Journal
-          </Text>
-          {!!ownerName && <Text style={styles.owner}>{ownerName}</Text>}
+      <SheetStickyHeader scrolled={sheetScroll.scrolled}>
+        <View style={styles.header}>
+          {onBack && (
+            <GlassButton
+              icon={ChevronLeftIcon}
+              size={36}
+              onPress={onBack}
+              accessibilityLabel="Retour"
+            />
+          )}
+          <View style={styles.headerTexts}>
+            <Text style={styles.title} accessibilityRole="header">
+              Journal
+            </Text>
+            {!!ownerName && <Text style={styles.owner}>{ownerName}</Text>}
+          </View>
         </View>
-      </View>
+      </SheetStickyHeader>
 
       {dayGroups.length === 0 ? (
         <View style={styles.emptyState}>
@@ -158,7 +170,9 @@ export default function ParticipantTimeline({
                   style={styles.entry}
                   accessible
                   accessibilityLabel={`${formatTime(entry.recorded_at)}, page ${entry.page_number}${
-                    entry.pages_read ? `, ${entry.pages_read > 0 ? '+' : ''}${entry.pages_read} pages` : ''
+                    entry.pages_read
+                      ? `, ${entry.pages_read > 0 ? '+' : ''}${entry.pages_read} pages`
+                      : ''
                   }`}
                 >
                   {/* Une étape de la piste : le rond, dans son anneau découpé */}
@@ -225,7 +239,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
   },
   scrollContent: {
-    paddingTop: SHEET_TOP_INSET,
+    // La marge sous la poignée est portée par l'en-tête collant
     paddingHorizontal: spacing.lg,
     // iOS ajoute déjà la zone du bas de l'écran (34 pt) sous le contenu
     paddingBottom: spacing.lg,
@@ -235,7 +249,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.md,
-    marginBottom: spacing.lg,
+    marginBottom: spacing.xs,
   },
   headerTexts: {
     flex: 1,

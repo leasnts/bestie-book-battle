@@ -21,13 +21,7 @@
 
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import {
-  EllipsisIcon,
-  FlagIcon,
-  Trash2Icon,
-  PlusIcon,
-  UsersIcon,
-} from 'lucide-react-native';
+import { EllipsisIcon, FlagIcon, Trash2Icon, PlusIcon, UsersIcon } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActionSheetIOS,
@@ -49,7 +43,7 @@ import GoalFormSheet, { confirmDeleteCap } from '../components/ui/GoalFormSheet'
 import BookBento from '../components/ui/BookBento';
 import GlassButton from '../components/ui/GlassButton';
 import { CapDot } from '../components/ui/GoalTrack';
-import { SHEET_TOP_INSET } from '../components/ui/SheetHeader';
+import { SheetStickyHeader, useSheetScrolled } from '../components/ui/SheetHeader';
 import { myCoverUrl } from '../services/myEdition';
 import { getChallengeHistory } from '../services/supabase/database';
 import { uploadBookCover } from '../services/supabase/storage';
@@ -86,6 +80,7 @@ export default function BookRoute() {
   // Le sheet s'ouvre à la hauteur de toute la fiche, plafonné sous l'en-tête de l'accueil
   // Sans barre ni titre : la couverture et le titre du livre suffisent
   const fit = useFitSheet({ withBar: false });
+  const sheetScroll = useSheetScrolled();
   const { user } = useAuthStore();
   const {
     activeChallenge,
@@ -117,10 +112,7 @@ export default function BookRoute() {
       .catch((error) => console.warn('[Fiche du livre] historique indisponible', error));
   }, [challengeId]);
 
-  const goals = useMemo(
-    () => [secondaryGoal, ...goalHistory],
-    [secondaryGoal, goalHistory],
-  );
+  const goals = useMemo(() => [secondaryGoal, ...goalHistory], [secondaryGoal, goalHistory]);
   const caps = useMemo(
     () => buildCaps(goals, referencePages).slice().reverse(),
     [goals, referencePages],
@@ -235,7 +227,15 @@ export default function BookRoute() {
       }
       setCapForm({ open: false, goal: null });
     },
-    [activeChallenge, user?.id, participants, capForm.goal, addGoal, editGoal, updateActiveChallenge],
+    [
+      activeChallenge,
+      user?.id,
+      participants,
+      capForm.goal,
+      addGoal,
+      editGoal,
+      updateActiveChallenge,
+    ],
   );
 
   const handleSaveBook = useCallback(
@@ -280,7 +280,15 @@ export default function BookRoute() {
 
       await loadUserChallenges(user.id);
     },
-    [activeChallenge, user?.id, myPages, isAdmin, saveMyEdition, updateActiveChallenge, loadUserChallenges],
+    [
+      activeChallenge,
+      user?.id,
+      myPages,
+      isAdmin,
+      saveMyEdition,
+      updateActiveChallenge,
+      loadUserChallenges,
+    ],
   );
 
   const handleShareInvite = useCallback(async () => {
@@ -354,34 +362,38 @@ export default function BookRoute() {
       contentContainerStyle={styles.content}
       contentInsetAdjustmentBehavior="automatic"
       onContentSizeChange={fit.onContentSizeChange}
+      // L'en-tête reste en haut quand la fiche défile
+      stickyHeaderIndices={[0]}
+      onScroll={sheetScroll.onScroll}
+      scrollEventThrottle={sheetScroll.scrollEventThrottle}
     >
       {/* ─── Le livre : titre, auteur, et le menu ─── */}
-      <View style={styles.header}>
-        <View style={styles.headerTexts}>
-          <Text style={styles.title} numberOfLines={2} accessibilityRole="header">
-            {activeChallenge.book_title}
-          </Text>
-          {!!activeChallenge.book_author && (
-            <Text style={styles.author} numberOfLines={1}>
-              {activeChallenge.book_author}
+      <SheetStickyHeader scrolled={sheetScroll.scrolled}>
+        <View style={styles.header}>
+          <View style={styles.headerTexts}>
+            <Text style={styles.title} numberOfLines={2} accessibilityRole="header">
+              {activeChallenge.book_title}
             </Text>
-          )}
+            {!!activeChallenge.book_author && (
+              <Text style={styles.author} numberOfLines={1}>
+                {activeChallenge.book_author}
+              </Text>
+            )}
+          </View>
+          <GlassButton
+            icon={EllipsisIcon}
+            size={36}
+            onPress={handleMenu}
+            accessibilityLabel="Plus d'options"
+          />
         </View>
-        <GlassButton
-          icon={EllipsisIcon}
-          size={36}
-          onPress={handleMenu}
-          accessibilityLabel="Plus d'options"
-        />
-      </View>
+      </SheetStickyHeader>
 
       {/* ─── Le tableau de bord ─── */}
       <BookBento
         remaining={remaining}
         endLabel={
-          activeChallenge.target_end_date
-            ? formatLongDate(activeChallenge.target_end_date)
-            : null
+          activeChallenge.target_end_date ? formatLongDate(activeChallenge.target_end_date) : null
         }
         onEditEnd={() => setDeadlineVisible(true)}
         clubPercent={clubPercent}
@@ -422,11 +434,7 @@ export default function BookRoute() {
                 icon={FlagIcon}
                 leading={
                   cap.state === 'past' ? (
-                    <CapDot
-                      percent={cap.percent}
-                      myPercent={myPercent}
-                      clubPercent={clubPercent}
-                    />
+                    <CapDot percent={cap.percent} myPercent={myPercent} clubPercent={clubPercent} />
                   ) : undefined
                 }
                 label={`${capPages(cap)} · ${formatTrackDate(cap.deadline)}`}
@@ -635,9 +643,7 @@ function Row({
         <ValueIcon size={14} color={colors.textTertiary} strokeWidth={2.4} />
       )}
       <Text style={styles.rowValue}>{value}</Text>
-      {TrailingIcon && (
-        <TrailingIcon size={15} color={colors.textTertiary} strokeWidth={2.2} />
-      )}
+      {TrailingIcon && <TrailingIcon size={15} color={colors.textTertiary} strokeWidth={2.2} />}
       {chevron && <Text style={styles.rowChevron}>›</Text>}
     </>
   );
@@ -676,18 +682,17 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
   },
   content: {
-    paddingTop: SHEET_TOP_INSET,
+    // La marge sous la poignée est portée par l'en-tête collant
     paddingHorizontal: spacing.lg,
     // iOS ajoute déjà la zone du bas de l'écran (34 pt) sous le contenu
     paddingBottom: spacing.lg,
   },
 
-
   header: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: spacing.md,
-    marginBottom: spacing.xl,
+    marginBottom: spacing.sm,
   },
   headerTexts: {
     flex: 1,

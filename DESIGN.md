@@ -706,6 +706,21 @@ le titre). Les sheets dessinés à la main suivent la même règle.
 Sheets de consultation : poignée seule. Sheets de formulaire : garder une croix,
 qui sert d'affordance « annuler ».
 
+**L'en-tête reste en haut quand un sheet défile.** Tout sheet qui peut défiler
+garde son en-tête (retour + titre, actions) collé en haut, avec un **fondu**
+dessous pour que le contenu qui passe derrière ne se lise pas à travers :
+- barre native (`sheetScreenOptions(titre)`) : iOS le fait (barre fixe, fondu
+  du bord de défilement) ;
+- en-tête dans le contenu (fiche du livre, journal) : `SheetStickyHeader`
+  (premier enfant de la ScrollView + `stickyHeaderIndices={[0]}`), le fondu
+  n'apparaissant qu'une fois le contenu défilé (`useSheetScrolled`) — au repos
+  il pâlirait le haut du contenu.
+
+**Sheet ouvert depuis un autre sheet : toujours un retour** (`?from=…`, rond en
+verre `ChevronLeftIcon` à gauche du titre). Et s'il sert à consulter (fiche du
+livre › carnet), il reste **indicatif** : pas d'actions (écrire, réagir,
+modifier).
+
 ### Signets brodés — `RibbonBookmark`
 
 Un signet en ruban qui sort du haut du livre et pend devant la couverture, bout
