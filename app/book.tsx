@@ -22,7 +22,6 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import {
-  EllipsisIcon,
   FlagIcon,
   Trash2Icon,
   PlusIcon,
@@ -357,18 +356,10 @@ export default function BookRoute() {
       onContentSizeChange={fit.onContentSizeChange}
     >
       {/* ─── Le livre : sa tranche, et le menu ─── */}
-      <View style={styles.menuRow}>
-        <GlassButton
-          icon={EllipsisIcon}
-          size={36}
-          onPress={handleMenu}
-          accessibilityLabel="Plus d'options"
-        />
-      </View>
       <View style={styles.spine}>
         <BookSpine
           title={activeChallenge.book_title}
-          author={activeChallenge.book_author}
+          onMenu={handleMenu}
         />
       </View>
 
@@ -680,12 +671,6 @@ const styles = StyleSheet.create({
   },
 
 
-  /** Le « … » en haut à droite, au-dessus de la tranche */
-  menuRow: {
-    alignItems: 'flex-end',
-    marginTop: -spacing.xs,
-    marginBottom: spacing.sm,
-  },
   spine: {
     marginBottom: spacing.xl,
   },

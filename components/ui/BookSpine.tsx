@@ -2,7 +2,8 @@
  * BookSpine — la tranche du livre, pleine largeur, en tête de la fiche.
  *
  *    ┌─────────────────────────────────────────┐
- *    │ ‖  Les nuits blanches     DOSTOÏEVSKI ‖ │   ← toile chocolat, titre crème
+ *    │ ‖  Les nuits blanches            (…) ‖ │   ← toile chocolat, titre crème,
+ *                                                   le menu du livre au bout
  *    └─────────────────────────────────────────┘
  *
  * Dans nos couleurs, pas dans celles de la couverture : les tuiles lie de vin
@@ -22,10 +23,12 @@ import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import React from 'react';
 import Svg, { Defs, Line, Pattern, Rect } from 'react-native-svg';
-import { StyleSheet, Text, View } from 'react-native';
+import { EllipsisIcon } from 'lucide-react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import {
   borderRadius,
   colors,
+  creamAlpha,
   fonts,
   inkGradient,
   shadowAlpha,
@@ -34,7 +37,8 @@ import {
 
 interface BookSpineProps {
   title: string;
-  author: string | null;
+  /** Le menu « … » du livre (modifier, quitter), posé au bout de la tranche */
+  onMenu: () => void;
 }
 
 const INK = colors.white;
@@ -46,7 +50,7 @@ const STAMP = {
   textShadowRadius: 0.5,
 };
 
-export default function BookSpine({ title, author }: BookSpineProps) {
+export default function BookSpine({ title, onMenu }: BookSpineProps) {
   return (
     <View style={styles.spine} accessible accessibilityRole="header" accessibilityLabel={title}>
       <View style={styles.clip}>
@@ -91,24 +95,19 @@ export default function BookSpine({ title, author }: BookSpineProps) {
       >
         {title}
       </Text>
-      {!!author && (
-        <Text
-          style={[styles.author, { color: INK }, STAMP]}
-          numberOfLines={1}
-          ellipsizeMode="tail"
-        >
-          {lastName(author)}
-        </Text>
-      )}
+      <Pressable
+        onPress={onMenu}
+        hitSlop={8}
+        style={({ pressed }) => [styles.menu, pressed && styles.menuPressed]}
+        accessibilityRole="button"
+        accessibilityLabel="Plus d'options"
+      >
+        <EllipsisIcon size={18} color={INK} strokeWidth={2.4} />
+      </Pressable>
     </View>
   );
 }
 
-/** Sur une tranche, on imprime le nom de famille */
-function lastName(author: string) {
-  const parts = author.trim().split(/\s+/);
-  return parts[parts.length - 1];
-}
 
 const GRAIN = require('../../assets/images/61ea1e0c638b5b9c8100383a37a5b488848db623.png');
 
@@ -172,14 +171,16 @@ const styles = StyleSheet.create({
     fontSize: 22,
     lineHeight: 25,
   },
-  /** Un nom très long est coupé, il ne pousse pas le titre */
-  author: {
-    flexShrink: 1,
-    maxWidth: '38%',
-    fontFamily: fonts.bodyExtraBold,
-    fontSize: 11,
-    letterSpacing: 1.4,
-    textTransform: 'uppercase',
-    opacity: 0.85,
+  /** Le « … » : un rond de crème translucide posé sur la toile */
+  menu: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: creamAlpha(0.14),
+  },
+  menuPressed: {
+    backgroundColor: creamAlpha(0.28),
   },
 });
