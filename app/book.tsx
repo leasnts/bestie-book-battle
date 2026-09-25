@@ -23,12 +23,10 @@ import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import {
-  CalendarIcon,
   FlagIcon,
   LogOutIcon,
   PencilIcon,
   PlusIcon,
-  ShareIcon,
   UsersIcon,
 } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -46,6 +44,7 @@ import {
 import DeadlineEditSheet from '../components/ui/DeadlineEditSheet';
 import EditBookSheet from '../components/ui/EditBookSheet';
 import GoalFormSheet from '../components/ui/GoalFormSheet';
+import BookBento from '../components/ui/BookBento';
 import { CapDot } from '../components/ui/GoalTrack';
 import { resolveCoverImage } from '../components/ui/BookCover';
 import { SHEET_TOP_INSET } from '../components/ui/SheetHeader';
@@ -151,6 +150,15 @@ export default function BookRoute() {
   /** Pour colorer les ronds des caps comme sur la piste de l'accueil */
   const myPercent = participants.find((p) => p.user.id === user?.id)?.percentage ?? 0;
   const clubPercent = median(percentages);
+  /** Mes co-lectrices et co-lecteurs, les plus avancés d'abord, pour les avatars */
+  const members = useMemo(
+    () =>
+      participants
+        .slice()
+        .sort((a, b) => (b.percentage || 0) - (a.percentage || 0))
+        .map((p) => ({ id: p.user.id, photoUrl: p.user.profile_photo_url })),
+    [participants],
+  );
   const memberCount = participants.length;
 
   const remaining = daysLeft(activeChallenge?.target_end_date);
@@ -321,27 +329,26 @@ export default function BookRoute() {
               {activeChallenge.book_author}
             </Text>
           )}
-          <View style={styles.pill}>
-            <Text style={styles.pillText}>{myPages} p.</Text>
-          </View>
         </View>
       </View>
 
-      {/* ─── Fin ─── */}
-      <GroupHeader title="Fin" />
-      <Group>
-        <Row
-          icon={CalendarIcon}
-          trailingIcon={PencilIcon}
-          onPress={() => setDeadlineVisible(true)}
-          label={
-            activeChallenge.target_end_date
-              ? formatLongDate(activeChallenge.target_end_date)
-              : 'Pas de date'
-          }
-          value={remaining === null ? '' : remaining >= 0 ? `J-${remaining}` : 'Prolongations'}
-        />
-      </Group>
+      {/* ─── Le tableau de bord ─── */}
+      <BookBento
+        remaining={remaining}
+        endLabel={
+          activeChallenge.target_end_date
+            ? formatLongDate(activeChallenge.target_end_date)
+            : null
+        }
+        onEditEnd={() => setDeadlineVisible(true)}
+        clubPercent={clubPercent}
+        myPercent={myPercent}
+        pages={myPages}
+        members={members}
+        onOpenMembers={() => router.push('/leaderboard?from=book')}
+        inviteCode={activeChallenge.invite_code}
+        onInvite={handleShareInvite}
+      />
 
       {/* ─── Caps ─── */}
       <GroupHeader title="Caps">
@@ -386,25 +393,6 @@ export default function BookRoute() {
             );
           })
         )}
-      </Group>
-
-      {/* ─── Club ─── */}
-      <GroupHeader title="Club" />
-      <Group>
-        <Row
-          icon={UsersIcon}
-          label={`${memberCount} membre${memberCount > 1 ? 's' : ''}`}
-          value=""
-          chevron
-          onPress={() => router.push('/leaderboard?from=book')}
-        />
-        <Row
-          icon={ShareIcon}
-          label={activeChallenge.invite_code ?? '------'}
-          labelStyle={styles.code}
-          value="Inviter"
-          onPress={handleShareInvite}
-        />
       </Group>
 
       {/* ─── Le livre lui-même ─── */}
@@ -504,7 +492,6 @@ function Row({
   tag,
   dimmed = false,
   chevron = false,
-  labelStyle,
   leading,
   valueIcon: ValueIcon,
   valueA11y,
@@ -526,7 +513,6 @@ function Row({
   tag?: string;
   dimmed?: boolean;
   chevron?: boolean;
-  labelStyle?: object;
   onPress?: () => void;
 }) {
   const content = (
@@ -540,7 +526,7 @@ function Row({
           />
         )}
       </View>
-      <Text style={[styles.rowLabel, dimmed && styles.rowLabelDimmed, labelStyle]} numberOfLines={1}>
+      <Text style={[styles.rowLabel, dimmed && styles.rowLabelDimmed]} numberOfLines={1}>
         {label}
       </Text>
       {tag && (
@@ -621,20 +607,6 @@ const styles = StyleSheet.create({
     color: colors.textTertiary,
     marginTop: 2,
   },
-  pill: {
-    alignSelf: 'flex-start',
-    marginTop: 6,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 2,
-    borderRadius: borderRadius.sm,
-    backgroundColor: inkAlpha(0.07),
-  },
-  pillText: {
-    fontFamily: fonts.bodyBold,
-    fontSize: 12,
-    color: colors.textSecondary,
-    fontVariant: ['tabular-nums'],
-  },
 
   groupHeader: {
     flexDirection: 'row',
@@ -714,11 +686,6 @@ const styles = StyleSheet.create({
     fontSize: 20,
     color: colors.textPlaceholder,
     marginLeft: -4,
-  },
-  code: {
-    fontFamily: fonts.display,
-    fontSize: 18,
-    letterSpacing: 2,
   },
 
   tag: {
