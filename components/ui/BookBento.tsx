@@ -103,7 +103,12 @@ export default function BookBento({
         {/* ── Le club ── */}
         <View style={[styles.tile, halfStyle, styles.tall, styles.paper]}>
           <Text style={styles.kicker}>Progression</Text>
-          <ProgressGauge clubPercent={clubPercent} myPercent={myPercent} style={styles.gaugeBleed} />
+          <ProgressGauge
+            clubPercent={clubPercent}
+            myPercent={myPercent}
+            legendInset={spacing.lg}
+            style={styles.gaugeBleed}
+          />
         </View>
       </View>
 

@@ -1,10 +1,9 @@
 /**
- * ProgressGauge — la progression du club en arche de pages, pour la fiche du livre.
+ * ProgressGauge — la progression du club en traits, pour la fiche du livre.
  *
- *         ╷╷╷╷╷╷╷╷╷╷╷
- *      ╷╷╷           ╷╷╷      ← des traits verticaux, comme la tranche des pages,
- *    ▮▮    ● Toi 34 %    ╷╷      posés le long d'une arche aplatie ; ceux des
- *    ▮     ● Club 30 %    ╷      bouts touchent les côtés de la tuile
+ *    ▮▮▮▮▮▮▮▮▮▮▮╷╷╷╷╷╷╷╷╷╷╷╷╷╷╷╷╷╷╷   ← des traits verticaux, comme la tranche des
+ *            ● Toi   34 %                pages ; le premier et le dernier touchent
+ *            ● Club  30 %                les côtés de la tuile
  *
  * Les traits se colorent de gauche à droite : le club derrière (lie de vin
  * clair), moi devant (lie de vin). À l'apparition, ils se remplissent (le club,
@@ -36,37 +35,23 @@ interface ProgressGaugeProps {
   clubPercent: number;
   /** Ma progression, 0 à 100 */
   myPercent: number;
+  /**
+   * Retrait de la légende depuis le bord : quand la jauge déborde de la marge
+   * de sa tuile, la légende, elle, reste alignée sur le titre
+   */
+  legendInset?: number;
   style?: StyleProp<ViewStyle>;
 }
 
 /** Nombre de traits, de bord à bord */
-const BAR_COUNT = 34;
-const BAR_WIDTH = 2.5;
-/** Longueur d'un trait, centré sur la courbe */
-const BAR_LENGTH = 12;
-/** Hauteur de l'arche par rapport à sa demi-largeur : plus c'est petit, plus c'est plat */
-const FLATNESS = 0.3;
+const BAR_COUNT = 30;
+const BAR_WIDTH = 3.5;
+const BAR_LENGTH = 20;
 
-/**
- * Les traits, à la taille réelle de la place qu'on leur donne : le premier
- * contre le bord gauche, le dernier contre le bord droit, régulièrement espacés,
- * chacun centré sur l'arche.
- */
-function geometry(width: number, height: number) {
+/** Les traits, du bord gauche au bord droit, régulièrement espacés */
+function barsFor(width: number) {
   const step = (width - BAR_WIDTH) / (BAR_COUNT - 1);
-  const rx = (width - BAR_WIDTH) / 2;
-  const centerX = width / 2;
-  // Aplati, sans jamais dépasser la hauteur donnée ; le sommet en haut
-  const ry = Math.max(1, Math.min(height - BAR_LENGTH, rx * FLATNESS));
-  const baseY = ry + BAR_LENGTH / 2;
-  return Array.from({ length: BAR_COUNT }, (_, i) => {
-    const x = i * step;
-    const dx = (x + BAR_WIDTH / 2 - centerX) / rx;
-    // Une parabole plutôt qu'un ovale : un ovale est vertical à ses bouts, et
-    // les derniers traits y tombaient d'un coup
-    const y = baseY - ry * (1 - dx * dx);
-    return { x, y: y - BAR_LENGTH / 2 };
-  });
+  return Array.from({ length: BAR_COUNT }, (_, i) => i * step);
 }
 
 const DURATION = 1100;
@@ -76,7 +61,12 @@ const EASING = Easing.bezier(...motion.easing.easeOutQuart);
 
 const clamp = (p: number) => Math.max(0, Math.min(100, p));
 
-export default function ProgressGauge({ clubPercent, myPercent, style }: ProgressGaugeProps) {
+export default function ProgressGauge({
+  clubPercent,
+  myPercent,
+  legendInset = 0,
+  style,
+}: ProgressGaugeProps) {
   const reducedMotion = useReducedMotion();
   const club = useSharedValue(reducedMotion ? clamp(clubPercent) : 0);
   const me = useSharedValue(reducedMotion ? clamp(myPercent) : 0);
@@ -89,7 +79,7 @@ export default function ProgressGauge({ clubPercent, myPercent, style }: Progres
 
   const [size, setSize] = useState<{ width: number; height: number } | null>(null);
   const width = size?.width ?? 0;
-  const bars = size ? geometry(size.width, size.height) : [];
+  const bars = size ? barsFor(size.width) : [];
 
   // Les remplissages avancent de gauche à droite sous les traits
   const clubFill = useAnimatedProps(() => ({ width: (width * club.value) / 100 }));
@@ -125,11 +115,11 @@ export default function ProgressGauge({ clubPercent, myPercent, style }: Progres
               width={size.width}
               height={size.height}
             >
-              {bars.map((bar, i) => (
+              {bars.map((x, i) => (
                 <Rect
                   key={i}
-                  x={bar.x}
-                  y={bar.y}
+                  x={x}
+                  y={0}
                   width={BAR_WIDTH}
                   height={BAR_LENGTH}
                   rx={BAR_WIDTH / 2}
@@ -146,8 +136,8 @@ export default function ProgressGauge({ clubPercent, myPercent, style }: Progres
         </Svg>
       )}
 
-      {/* Sous l'arche, entre ses deux bouts, l'un sous l'autre */}
-      <View style={styles.legend}>
+      {/* Sous les traits, l'un sous l'autre */}
+      <View style={[styles.legend, { paddingHorizontal: legendInset }]}>
         <View style={styles.legendColumn}>
           <Legend label="Toi" value={me} dot={accentGradient[0]} />
           <Legend label="Club" value={club} dot={CLUB_GRADIENT[1]} />
@@ -185,9 +175,9 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    alignItems: 'center',
+    alignItems: 'flex-start',
   },
-  /** Les points l'un sous l'autre, le bloc centré dans le creux */
+  /** Les points l'un sous l'autre */
   legendColumn: {
     alignItems: 'flex-start',
     gap: 2,
