@@ -208,7 +208,7 @@ const styles = StyleSheet.create({
     ...shadows.xs,
   },
   tall: {
-    height: 160,
+    height: 136,
   },
   short: {
     height: 108,
