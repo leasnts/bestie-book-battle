@@ -165,8 +165,8 @@ function Weave() {
     <Svg style={StyleSheet.absoluteFill} pointerEvents="none">
       <Defs>
         <Pattern id="weave" width={3} height={4} patternUnits="userSpaceOnUse">
-          <Line x1={0.5} y1={0} x2={0.5} y2={4} stroke="#fff" strokeOpacity={0.08} strokeWidth={1} />
-          <Line x1={2} y1={0} x2={2} y2={4} stroke="#000" strokeOpacity={0.06} strokeWidth={1} />
+          <Line x1={0.5} y1={0} x2={0.5} y2={4} stroke="#fff" strokeOpacity={0.04} strokeWidth={1} />
+          <Line x1={2} y1={0} x2={2} y2={4} stroke="#000" strokeOpacity={0.03} strokeWidth={1} />
         </Pattern>
       </Defs>
       <Rect width="100%" height="100%" fill="url(#weave)" />
@@ -194,7 +194,7 @@ const styles = StyleSheet.create({
   },
   grain: {
     ...StyleSheet.absoluteFillObject,
-    opacity: 0.55,
+    opacity: 0.2,
     mixBlendMode: 'multiply',
   },
   /** Les filets de la reliure, près de chaque bout */
