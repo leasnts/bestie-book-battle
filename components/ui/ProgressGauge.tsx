@@ -48,15 +48,18 @@ const PAD = 1;
 const TICK_COUNT = 36;
 /** Part du trait dans une graduation (le reste est le vide) */
 const TICK_RATIO = 0.45;
+/** Hauteur du demi-ovale par rapport à sa demi-largeur : plus c'est petit, plus c'est plat */
+const FLATNESS = 0.7;
 
 /**
  * Le demi-ovale, dessiné à la taille réelle de la place qu'on lui donne : il
- * touche les deux côtés et le haut, quelle que soit la forme de la tuile.
+ * touche les deux côtés, aplati, posé en bas de la place donnée.
  */
 function geometry(width: number, height: number) {
   const rx = (width - STROKE) / 2 - PAD;
   const centerY = height - PAD;
-  const ry = Math.max(1, centerY - STROKE / 2 - PAD);
+  // Aplati : la courbe s'étale en largeur, sans jamais dépasser la hauteur donnée
+  const ry = Math.max(1, Math.min(centerY - STROKE / 2 - PAD, rx * FLATNESS));
   // Longueur du demi-ovale (approximation de Ramanujan, précise à 1e-5 près)
   const length = (Math.PI / 2) * (3 * (rx + ry) - Math.sqrt((3 * rx + ry) * (rx + 3 * ry)));
   const period = length / (TICK_COUNT - 1 + TICK_RATIO);

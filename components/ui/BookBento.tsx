@@ -210,10 +210,9 @@ const styles = StyleSheet.create({
   tall: {
     height: 136,
   },
-  /** La jauge s'étale jusqu'aux bords de la tuile, au-delà de sa marge */
+  /** Les deux bouts de la jauge touchent les côtés de la tuile, au-delà de sa marge */
   gaugeBleed: {
-    marginHorizontal: -spacing.sm,
-    marginBottom: -spacing.sm,
+    marginHorizontal: -spacing.lg,
   },
   short: {
     height: 108,
