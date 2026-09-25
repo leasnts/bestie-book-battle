@@ -6,7 +6,8 @@
  *    │ J-18         │   ( 30 % )   │   ← des tuiles d'info, toutes pareilles
  *    │ mar. 13 oct. │   toi 34 %   │
  *    ├──────────────┼──────────────┤
- *    │ PAGES  62    │ MEMBRES ●●●● │
+ *    │ PAGES        │ MEMBRES    › │
+ *    │ 62           │ 5 ●●●●●      │
  *    ├──────────────┴──────────────┤
  *    │ INVITER                     │
  *    │ [5][2][8][1][8][7]      [⇪] │   ← une case par lettre (à la Opal)
@@ -20,7 +21,7 @@
 
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
-import { BookOpenIcon, PencilIcon, ShareIcon } from 'lucide-react-native';
+import { ChevronRightIcon, PencilIcon, ShareIcon } from 'lucide-react-native';
 import React, { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
@@ -118,39 +119,43 @@ export default function BookBento({
       <View style={styles.row}>
         {/* ── Mes pages ── */}
         <View
-          style={[styles.tile, halfStyle, styles.paper]}
+          style={[styles.tile, halfStyle, styles.short, styles.paper]}
           accessible
           accessibilityLabel={`${pages} pages`}
         >
-          <View style={styles.tileTop}>
-            <Text style={styles.kicker}>Pages</Text>
-            <BookOpenIcon size={15} color={colors.textTertiary} strokeWidth={2.2} />
-          </View>
+          <Text style={styles.kicker}>Pages</Text>
           <Text style={styles.bigNumber}>{pages}</Text>
-          <Text style={styles.sub}>mon édition</Text>
         </View>
 
         {/* ── Les membres ── */}
         <Pressable
           onPress={onOpenMembers}
-          style={({ pressed }) => [styles.tile, halfStyle, styles.paper, pressed && styles.pressed]}
+          style={({ pressed }) => [
+            styles.tile,
+            halfStyle,
+            styles.short,
+            styles.paper,
+            pressed && styles.pressed,
+          ]}
           accessibilityRole="button"
           accessibilityLabel={`${members.length} membres, voir le classement`}
         >
-          <Text style={styles.kicker}>Membres</Text>
-          <View style={[styles.avatars, styles.avatarsSpaced]}>
-            {members.slice(0, 4).map((m, i) => (
-              <Image
-                key={m.id}
-                source={m.photoUrl?.startsWith('http') ? { uri: m.photoUrl } : DEFAULT_AVATAR}
-                style={[styles.avatar, i > 0 && styles.avatarOverlap]}
-                contentFit="cover"
-              />
-            ))}
+          <View style={styles.tileTop}>
+            <Text style={styles.kicker}>Membres</Text>
+            <ChevronRightIcon size={15} color={colors.textTertiary} strokeWidth={2.2} />
           </View>
-          <View style={[styles.tileBottom, styles.pushDown]}>
+          <View style={styles.membersRow}>
             <Text style={styles.bigNumberInline}>{members.length}</Text>
-            <Text style={styles.chevron}>›</Text>
+            <View style={styles.avatars}>
+              {members.slice(0, MAX_AVATARS).map((m, i) => (
+                <Image
+                  key={m.id}
+                  source={m.photoUrl?.startsWith('http') ? { uri: m.photoUrl } : DEFAULT_AVATAR}
+                  style={[styles.avatar, i > 0 && styles.avatarOverlap]}
+                  contentFit="cover"
+                />
+              ))}
+            </View>
           </View>
         </Pressable>
       </View>
@@ -219,6 +224,8 @@ function Ring({ percent }: { percent: number }) {
 // ─── Styles ────────────────────────────────────────────────────────
 
 const AVATAR = 22;
+/** Au-delà, le nombre suffit */
+const MAX_AVATARS = 5;
 
 const styles = StyleSheet.create({
   grid: {
@@ -237,6 +244,9 @@ const styles = StyleSheet.create({
   },
   tall: {
     height: 136,
+  },
+  short: {
+    height: 108,
   },
   /** Tuile papier : comme les sections de la fiche */
   paper: {
@@ -294,11 +304,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  tileBottom: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
 
   kicker: {
     fontFamily: fonts.bodyExtraBold,
@@ -332,17 +337,17 @@ const styles = StyleSheet.create({
     fontVariant: ['tabular-nums'],
   },
 
-  pushDown: {
+  membersRow: {
     marginTop: 'auto',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
   },
   bigNumberInline: {
     fontFamily: fonts.display,
     fontSize: 28,
     color: colors.textPrimary,
     fontVariant: ['tabular-nums'],
-  },
-  avatarsSpaced: {
-    marginTop: spacing.sm,
   },
   bigNumber: {
     marginTop: 'auto',
@@ -355,12 +360,6 @@ const styles = StyleSheet.create({
     fontFamily: fonts.bodyBold,
     fontSize: 13,
     color: colors.textTertiary,
-  },
-  chevron: {
-    fontFamily: fonts.body,
-    fontSize: 20,
-    lineHeight: 20,
-    color: colors.textPlaceholder,
   },
 
   avatars: {
