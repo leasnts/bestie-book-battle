@@ -19,18 +19,17 @@
  * react-native-screens calcule mal les marges du sheet.
  */
 
-import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import {
+  EllipsisIcon,
   FlagIcon,
-  LogOutIcon,
-  PencilIcon,
   PlusIcon,
   UsersIcon,
 } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
+  ActionSheetIOS,
   Alert,
   Pressable,
   ScrollView,
@@ -45,13 +44,15 @@ import DeadlineEditSheet from '../components/ui/DeadlineEditSheet';
 import EditBookSheet from '../components/ui/EditBookSheet';
 import GoalFormSheet from '../components/ui/GoalFormSheet';
 import BookBento from '../components/ui/BookBento';
+import BookSpine from '../components/ui/BookSpine';
+import GlassButton from '../components/ui/GlassButton';
 import { CapDot } from '../components/ui/GoalTrack';
-import { resolveCoverImage } from '../components/ui/BookCover';
 import { SHEET_TOP_INSET } from '../components/ui/SheetHeader';
 import { myCoverUrl } from '../services/myEdition';
 import { getChallengeHistory } from '../services/supabase/database';
 import { uploadBookCover } from '../services/supabase/storage';
 import { useFitSheet } from '../hooks/useFitSheet';
+import { useCoverPalette } from '../hooks/useCoverPalette';
 import { useAuthStore } from '../stores/authStore';
 import { useGoalStore } from '../stores/goalStore';
 import { useProgressStore } from '../stores/progressStore';
@@ -101,6 +102,8 @@ export default function BookRoute() {
     goal: null,
   });
   const [clubHistory, setClubHistory] = useState<ProgressHistory[]>([]);
+
+  const palette = useCoverPalette(activeChallenge);
 
   const challengeId = activeChallenge?.id;
   const referencePages = activeChallenge?.total_pages ?? 0;
@@ -298,6 +301,18 @@ export default function BookRoute() {
     );
   }, [activeChallenge, challenges, user, leaveActiveChallenge, router]);
 
+  /** Le menu « … » : ce qui se fait rarement sur un livre */
+  const handleMenu = useCallback(() => {
+    const options = [isAdmin ? 'Modifier le livre' : 'Mon édition', 'Quitter le livre', 'Annuler'];
+    ActionSheetIOS.showActionSheetWithOptions(
+      { options, destructiveButtonIndex: 1, cancelButtonIndex: 2 },
+      (index) => {
+        if (index === 0) setEditBookVisible(true);
+        if (index === 1) handleLeave();
+      },
+    );
+  }, [isAdmin, handleLeave]);
+
   if (!activeChallenge) return null;
 
   /** Un cap en pages de MON édition : « p. 28 », ou « ≈ p. 31 » si j'ai une autre édition */
@@ -313,23 +328,21 @@ export default function BookRoute() {
       contentInsetAdjustmentBehavior="automatic"
       onContentSizeChange={fit.onContentSizeChange}
     >
-      {/* ─── Le livre ─── */}
-      <View style={styles.header}>
-        <Image
-          source={resolveCoverImage(myCoverUrl(activeChallenge, mine))}
-          style={styles.cover}
-          contentFit="cover"
+      {/* ─── Le livre : sa tranche, et le menu ─── */}
+      <View style={styles.menuRow}>
+        <GlassButton
+          icon={EllipsisIcon}
+          size={36}
+          onPress={handleMenu}
+          accessibilityLabel="Plus d'options"
         />
-        <View style={styles.headerTexts}>
-          <Text style={styles.title} numberOfLines={2}>
-            {activeChallenge.book_title}
-          </Text>
-          {!!activeChallenge.book_author && (
-            <Text style={styles.author} numberOfLines={1}>
-              {activeChallenge.book_author}
-            </Text>
-          )}
-        </View>
+      </View>
+      <View style={styles.spine}>
+        <BookSpine
+          title={activeChallenge.book_title}
+          author={activeChallenge.book_author}
+          palette={palette}
+        />
       </View>
 
       {/* ─── Le tableau de bord ─── */}
@@ -393,18 +406,6 @@ export default function BookRoute() {
             );
           })
         )}
-      </Group>
-
-      {/* ─── Le livre lui-même ─── */}
-      <Group style={styles.lastGroup}>
-        <Row
-          icon={PencilIcon}
-          label={isAdmin ? 'Modifier le livre' : 'Mon édition'}
-          value=""
-          chevron
-          onPress={() => setEditBookVisible(true)}
-        />
-        <Row icon={LogOutIcon} label="Quitter le livre" value="" onPress={handleLeave} />
       </Group>
 
       {/* ─── Les formulaires ─── */}
@@ -582,30 +583,15 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.lg,
   },
 
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.lg,
-    marginBottom: spacing.lg,
+
+  /** Le « … » en haut à droite, au-dessus de la tranche */
+  menuRow: {
+    alignItems: 'flex-end',
+    marginTop: -spacing.xs,
+    marginBottom: spacing.sm,
   },
-  cover: {
-    width: 60,
-    height: 85,
-    borderRadius: borderRadius.xs,
-  },
-  headerTexts: {
-    flex: 1,
-  },
-  title: {
-    fontFamily: fonts.display,
-    fontSize: 24,
-    color: colors.textPrimary,
-  },
-  author: {
-    fontFamily: fonts.body,
-    fontSize: 15,
-    color: colors.textTertiary,
-    marginTop: 2,
+  spine: {
+    marginBottom: spacing.xl,
   },
 
   groupHeader: {
@@ -647,9 +633,6 @@ const styles = StyleSheet.create({
   groupClip: {
     borderRadius: borderRadius.lg,
     overflow: 'hidden',
-  },
-  lastGroup: {
-    marginTop: spacing.sm,
   },
   row: {
     flexDirection: 'row',

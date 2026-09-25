@@ -2,11 +2,11 @@
  * BookBento — le tableau de bord de la fiche du livre, en tuiles.
  *
  *    ┌──────────────┬──────────────┐
- *    │ FIN        ✎ │  LE CLUB     │
+ *    │ FIN        ✎ │ PROGRESSION  │
  *    │ J-18         │   ( 30 % )   │   ← la fin en lie de vin : c'est l'enjeu
  *    │ mar. 13 oct. │   toi 34 %   │
  *    ├──────────────┼──────────────┤
- *    │ 62 pages     │ ●●●● 5    ›  │
+ *    │ PAGES  62    │ MEMBRES ●●●● │
  *    ├──────────────┴──────────────┤
  *    │ INVITER   5 2 8 1 8 7     ⇪ │   ← une action : en encre
  *    └─────────────────────────────┘
@@ -75,7 +75,7 @@ export default function BookBento({
   return (
     <View
       style={styles.grid}
-      onLayout={(e) => setHalf((e.nativeEvent.layout.width - spacing.sm) / 2)}
+      onLayout={(e) => setHalf((e.nativeEvent.layout.width - spacing.md) / 2)}
     >
       <View style={styles.row}>
         {/* ── La fin ── */}
@@ -104,7 +104,7 @@ export default function BookBento({
           accessible
           accessibilityLabel={`La moitié du club est à ${clubPercent} %, toi à ${myPercent} %`}
         >
-          <Text style={styles.kicker}>Le club</Text>
+          <Text style={styles.kicker}>Progression</Text>
           <View style={styles.ringRow}>
             <Ring percent={clubPercent} />
             <View>
@@ -122,9 +122,12 @@ export default function BookBento({
           accessible
           accessibilityLabel={`${pages} pages`}
         >
-          <BookOpenIcon size={16} color={colors.textTertiary} strokeWidth={2.2} />
+          <View style={styles.tileTop}>
+            <Text style={styles.kicker}>Pages</Text>
+            <BookOpenIcon size={15} color={colors.textTertiary} strokeWidth={2.2} />
+          </View>
           <Text style={styles.bigNumber}>{pages}</Text>
-          <Text style={styles.sub}>pages</Text>
+          <Text style={styles.sub}>mon édition</Text>
         </View>
 
         {/* ── Les membres ── */}
@@ -134,7 +137,8 @@ export default function BookBento({
           accessibilityRole="button"
           accessibilityLabel={`${members.length} membres, voir le classement`}
         >
-          <View style={styles.avatars}>
+          <Text style={styles.kicker}>Membres</Text>
+          <View style={[styles.avatars, styles.avatarsSpaced]}>
             {members.slice(0, 4).map((m, i) => (
               <Image
                 key={m.id}
@@ -144,9 +148,8 @@ export default function BookBento({
               />
             ))}
           </View>
-          <Text style={styles.bigNumber}>{members.length}</Text>
-          <View style={styles.tileBottom}>
-            <Text style={styles.sub}>membre{members.length > 1 ? 's' : ''}</Text>
+          <View style={[styles.tileBottom, styles.pushDown]}>
+            <Text style={styles.bigNumberInline}>{members.length}</Text>
             <Text style={styles.chevron}>›</Text>
           </View>
         </Pressable>
@@ -209,12 +212,12 @@ const AVATAR = 22;
 
 const styles = StyleSheet.create({
   grid: {
-    gap: spacing.sm,
-    marginBottom: spacing.lg,
+    gap: spacing.md,
+    marginBottom: spacing['2xl'],
   },
   row: {
     flexDirection: 'row',
-    gap: spacing.sm,
+    gap: spacing.md,
   },
 
   tile: {
@@ -223,14 +226,14 @@ const styles = StyleSheet.create({
     ...shadows.xs,
   },
   tall: {
-    height: 124,
+    height: 136,
   },
   wide: {
-    height: 60,
+    height: 64,
   },
   /** Tuile papier : comme les sections de la fiche */
   paper: {
-    padding: spacing.md,
+    padding: spacing.lg,
     backgroundColor: colors.white,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.border,
@@ -240,7 +243,7 @@ const styles = StyleSheet.create({
    * sinon la mise en page les compte dans la largeur et les tuiles diffèrent
    */
   solid: {
-    padding: spacing.md,
+    padding: spacing.lg,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: 'transparent',
   },
@@ -251,7 +254,7 @@ const styles = StyleSheet.create({
   /** Tuile pleine : le dégradé remplit la tuile, coins compris */
   fill: {
     flex: 1,
-    padding: spacing.md,
+    padding: spacing.lg,
     borderRadius: borderRadius.lg,
     overflow: 'hidden',
   },
@@ -313,6 +316,18 @@ const styles = StyleSheet.create({
     fontVariant: ['tabular-nums'],
   },
 
+  pushDown: {
+    marginTop: 'auto',
+  },
+  bigNumberInline: {
+    fontFamily: fonts.display,
+    fontSize: 28,
+    color: colors.textPrimary,
+    fontVariant: ['tabular-nums'],
+  },
+  avatarsSpaced: {
+    marginTop: spacing.sm,
+  },
   bigNumber: {
     marginTop: 'auto',
     fontFamily: fonts.display,
