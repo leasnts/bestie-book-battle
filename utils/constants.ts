@@ -132,6 +132,17 @@ export const postIt = {
   sable: '#e8dbc6',   // À retenir
 };
 
+/**
+ * La matière des autocollants de notes (`NoteSticker`), hors couleur de
+ * catégorie : le papier nu d'une note verrouillée, et le dos du coin décollé.
+ * Changer le thème des autocollants = changer `postIt` et ceci, rien d'autre :
+ * tout l'app lit les couleurs d'ici (via `ANNOTATION_CATEGORIES`).
+ */
+export const stickerMaterial = {
+  locked: '#efe9df',
+  flap: ['#fdfbf8', '#d8d1c6'] as const,
+};
+
 // Espacements alignés avec Figma (tokens spacing-*)
 export const spacing = {
   xs: 4,

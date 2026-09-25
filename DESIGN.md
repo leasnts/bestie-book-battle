@@ -773,6 +773,13 @@ toute nouvelle vue qui parle de notes reprend ce composant.
   et inclinaison fixes (`STICKER_SPOTS`) : la déco ne bouge pas d'une ouverture
   à l'autre.
 
+**Couleurs = variables, une seule source.** Le thème des autocollants vit dans
+`utils/constants.ts` : `postIt` (une couleur par catégorie) et
+`stickerMaterial` (papier des notes verrouillées, dos du rabat). Tout l'app les
+lit via `ANNOTATION_CATEGORIES` (`utils/annotations.ts`) : autocollants, carnet,
+fiche d'une note, piste des notes, accueil. **Jamais une couleur de catégorie en
+dur ailleurs** : changer de thème = changer ces deux objets, rien d'autre.
+
 Référence visuelle : autocollants en cuir surpiqué au coin décollé (capture de
 Lea). Essais écartés : une frise d'autocollants placés à leur page (« fouillis,
 on comprend pas »), une rangée serrée de petits autocollants.

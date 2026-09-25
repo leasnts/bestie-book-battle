@@ -16,10 +16,8 @@
 
 import React from 'react';
 import Svg, { Defs, G, LinearGradient, Path, Stop } from 'react-native-svg';
-import { inkAlpha, shadowAlpha } from '../../utils/constants';
+import { inkAlpha, shadowAlpha, stickerMaterial } from '../../utils/constants';
 
-/** Papier nu des notes verrouillées */
-const LOCKED_PAPER = '#efe9df';
 
 interface NoteStickerProps {
   /** Couleur de la catégorie ; `null` pour une note verrouillée */
@@ -56,7 +54,7 @@ export default function NoteSticker({ color, size = 26, id }: NoteStickerProps) 
   const flap = flapAt(0);
   const flapShadow = flapAt(1.5);
 
-  const fill = color ?? LOCKED_PAPER;
+  const fill = color ?? stickerMaterial.locked;
 
   return (
     <Svg width={s} height={s}>
@@ -66,8 +64,8 @@ export default function NoteSticker({ color, size = 26, id }: NoteStickerProps) 
           <Stop offset="1" stopColor="#000" stopOpacity={0.08} />
         </LinearGradient>
         <LinearGradient id={`flap-${id}`} x1="1" y1="0" x2="0" y2="1">
-          <Stop offset="0" stopColor="#fdfbf8" />
-          <Stop offset="1" stopColor="#d8d1c6" />
+          <Stop offset="0" stopColor={stickerMaterial.flap[0]} />
+          <Stop offset="1" stopColor={stickerMaterial.flap[1]} />
         </LinearGradient>
       </Defs>
       {/* Dessiné coin à droite, puis retourné : le coin décollé passe à gauche */}
