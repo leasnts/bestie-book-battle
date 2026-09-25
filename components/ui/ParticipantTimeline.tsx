@@ -5,11 +5,11 @@
  *
  *    ╭┄ Hier ┄╮                   ← la date : un autocollant à plat (NoteSticker en étiquette)
  *    ┃
- *    ◉  Page 21   +14      18:40 ← chaque lecture : une étape de la piste de l'accueil,
+ *    ◉  p. 21   +14      18:40 ← chaque lecture : une étape de la piste de l'accueil,
  *    ┃                             rond plein découpé dans la barre
  *    ╭┄ Mer. 16 septembre ┄╮
- *    ◉  Page 16   +2       23:30
- *    ◉  Page 36   +20      16:43
+ *    ◉  p. 16   +2       23:30
+ *    ◉  p. 36   +20      16:43
  *
  * Le fil EST la piste de l'accueil, à la verticale : même barre (6 pt, dégradé
  * lie de vin, ce sont mes pages lues), mêmes étapes (rond de 9 pt dans un
@@ -165,7 +165,7 @@ export default function ParticipantTimeline({
                   <View style={styles.step}>
                     <View style={styles.stepDot} />
                   </View>
-                  <Text style={styles.entryPage}>Page {entry.page_number}</Text>
+                  <Text style={styles.entryPage}>p. {entry.page_number}</Text>
                   {entry.pages_read !== 0 && (
                     <Text style={styles.entryDelta}>
                       {entry.pages_read > 0 ? '+' : '−'}
