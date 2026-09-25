@@ -28,7 +28,7 @@
  */
 
 import { ChevronLeftIcon } from 'lucide-react-native';
-import React, { forwardRef } from 'react';
+import React, { forwardRef, useCallback } from 'react';
 import { ScrollView, StyleSheet, Text, View, type ScrollViewProps } from 'react-native';
 import { useFitSheet } from '../../hooks/useFitSheet';
 import { colors, fonts, spacing } from '../../utils/constants';
@@ -70,59 +70,128 @@ const SheetPage = forwardRef<ScrollView, SheetPageProps>(function SheetPage(
   },
   ref,
 ) {
-  const fitSheet = useFitSheet({ withBar: false });
-  const sheetScroll = useSheetScrolled();
+  const sheet = useSheetScroll({ fit });
 
   return (
     <ScrollView
       ref={ref}
-      style={[styles.screen, fit && fitSheet.style, style]}
-      contentContainerStyle={[styles.content, contentContainerStyle]}
-      contentInsetAdjustmentBehavior="automatic"
-      showsVerticalScrollIndicator={false}
+      {...sheet.scrollProps}
+      style={[sheet.scrollProps.style, style]}
+      contentContainerStyle={[sheet.scrollProps.contentContainerStyle, contentContainerStyle]}
       keyboardShouldPersistTaps="handled"
       // Le clavier ne cache jamais le champ ni le bouton du bas
       automaticallyAdjustKeyboardInsets
       onContentSizeChange={(w, h) => {
-        if (fit) fitSheet.onContentSizeChange(w, h);
+        sheet.scrollProps.onContentSizeChange(w, h);
         onContentSizeChange?.(w, h);
       }}
-      // L'en-tête reste en haut quand le sheet défile
-      stickyHeaderIndices={[0]}
-      onScroll={sheetScroll.onScroll}
-      scrollEventThrottle={sheetScroll.scrollEventThrottle}
       {...scrollProps}
     >
-      <SheetStickyHeader scrolled={sheetScroll.scrolled} gutter={SHEET_GUTTER}>
-        <View style={styles.header}>
-          {onBack && (
-            <GlassButton
-              icon={ChevronLeftIcon}
-              size={36}
-              onPress={onBack}
-              accessibilityLabel="Retour"
-            />
-          )}
-          <View style={styles.headerTexts}>
-            <Text style={styles.title} numberOfLines={titleLines} accessibilityRole="header">
-              {title}
-            </Text>
-            {!!subtitle && (
-              <Text style={styles.subtitle} numberOfLines={1}>
-                {subtitle}
-              </Text>
-            )}
-          </View>
-          {actions && <View style={styles.actions}>{actions}</View>}
-        </View>
-      </SheetStickyHeader>
-
+      <SheetPageHeader
+        title={title}
+        subtitle={subtitle}
+        onBack={onBack}
+        actions={actions}
+        titleLines={titleLines}
+        scrolled={sheet.scrolled}
+      />
       {children}
     </ScrollView>
   );
 });
 
 export default SheetPage;
+
+// ─── Pour une liste (FlatList) ─────────────────────────────────────
+
+/**
+ * Les réglages de défilement de `SheetPage`, pour un sheet qui est une
+ * FlatList (classement, bibliothèque) : à étaler sur la liste, avec
+ * `SheetPageHeader` en `ListHeaderComponent`.
+ *
+ *    const sheet = useSheetScroll();
+ *    <FlatList {...sheet.scrollProps}
+ *      ListHeaderComponent={<SheetPageHeader title="…" scrolled={sheet.scrolled} />} … />
+ */
+export function useSheetScroll({ fit = true }: { fit?: boolean } = {}) {
+  const fitSheet = useFitSheet();
+  const { scrolled, onScroll, scrollEventThrottle } = useSheetScrolled();
+  const { onContentSizeChange: fitOnContentSizeChange } = fitSheet;
+  const onContentSizeChange = useCallback(
+    (w: number, h: number) => {
+      if (fit) fitOnContentSizeChange(w, h);
+    },
+    [fit, fitOnContentSizeChange],
+  );
+
+  return {
+    scrolled,
+    scrollProps: {
+      style: [styles.screen, fit && fitSheet.style],
+      contentContainerStyle: styles.content,
+      contentInsetAdjustmentBehavior: 'automatic' as const,
+      showsVerticalScrollIndicator: false,
+      onContentSizeChange,
+      // L'en-tête reste en haut quand le sheet défile
+      stickyHeaderIndices: [0],
+      onScroll,
+      scrollEventThrottle,
+    },
+  };
+}
+
+// ─── En-tête ───────────────────────────────────────────────────────
+
+interface SheetPageHeaderProps {
+  title: string;
+  subtitle?: string | null;
+  onBack?: () => void;
+  actions?: React.ReactNode;
+  titleLines?: number;
+  /** Le contenu a défilé : le fondu sous l'en-tête apparaît */
+  scrolled: boolean;
+  /** Un décor derrière l'en-tête (l'aquarelle de la bibliothèque) */
+  background?: React.ReactNode;
+  /** Sous le titre, collé avec lui (les filtres de la bibliothèque) */
+  children?: React.ReactNode;
+}
+
+/** L'en-tête de tous les sheets : retour, titre (et sous-titre), actions */
+export function SheetPageHeader({
+  title,
+  subtitle,
+  onBack,
+  actions,
+  titleLines = 1,
+  scrolled,
+  background,
+  children,
+}: SheetPageHeaderProps) {
+  return (
+    <SheetStickyHeader scrolled={scrolled} gutter={SHEET_GUTTER}>
+      {background}
+      <View style={styles.header}>
+        {onBack && (
+          <GlassButton icon={ChevronLeftIcon} size={36} onPress={onBack} accessibilityLabel="Retour" />
+        )}
+        <View style={styles.headerTexts}>
+          <Text style={styles.title} numberOfLines={titleLines} accessibilityRole="header">
+            {title}
+          </Text>
+          {!!subtitle && (
+            <Text style={styles.subtitle} numberOfLines={1}>
+              {subtitle}
+            </Text>
+          )}
+        </View>
+        {actions && <View style={styles.actions}>{actions}</View>}
+      </View>
+      {children}
+    </SheetStickyHeader>
+  );
+}
+
+// ─── Pied ──────────────────────────────────────────────────────────
 
 /** L'action principale d'un sheet, en bas du contenu, séparée de ce qui précède */
 export function SheetFooter({ children }: { children: React.ReactNode }) {

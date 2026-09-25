@@ -5,7 +5,7 @@
  * avec son liseré et une ombre douce. Un seul composant pour tous les usages :
  * - le « + » à droite de la barre d'onglets (58 pt) ;
  * - la bibliothèque, en haut à gauche de l'accueil (44 pt) ;
- * - les actions à droite du titre d'un sheet (44 pt, via `sheetIconItem`).
+ * - le retour et les actions de l'en-tête d'un sheet (36 pt, `SheetPageHeader`).
  *
  * Tout nouveau bouton rond en verre passe par ici : ne pas redessiner le verre,
  * le liseré ou l'ombre ailleurs.

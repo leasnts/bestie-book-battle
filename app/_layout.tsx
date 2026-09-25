@@ -24,7 +24,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { scheduleDailyReminder } from '../services/notifications';
 import { useAuthStore } from '../stores/authStore';
 import { useProjectStore } from '../stores/projectStore';
-import { colors, fonts } from '../utils/constants';
+import { colors } from '../utils/constants';
 import { supabase } from '../supabaseConfig';
 import AnimatedSplash from '../components/AnimatedSplash';
 import { sheetScreenOptions } from '../components/ui/SheetHeader';
@@ -302,54 +302,43 @@ function RootLayoutNav() {
         Sheets iOS natifs. `formSheet` délègue la présentation à UIKit : la
         poignée, les paliers de hauteur, le glissement pour fermer et
         l'assombrissement du fond viennent du système, pas de notre code.
-        Norme commune (titre ferré à gauche, jamais centré) : voir
-        components/ui/SheetHeader.tsx.
+        Un seul type de sheet : l'en-tête et les marges viennent de SheetPage
+        (components/ui/SheetPage.tsx), titre ferré à gauche, jamais centré.
       */}
-      <Stack.Screen name="leaderboard" options={sheetScreenOptions('Classement', 'fitToContents')} />
+      <Stack.Screen name="leaderboard" options={sheetScreenOptions()} />
 
-      {/* Le carnet du livre — écran plein, il se parcourt longtemps */}
-      <Stack.Screen
-        name="notes"
-        options={{
-          headerShown: true,
-          headerTitle: 'Carnet',
-          headerLargeTitle: false,
-          headerTitleStyle: { fontFamily: fonts.display, fontSize: 19, color: colors.textPrimary },
-          // Sans ça, iOS écrit le nom de la route précédente — « (tabs) »
-          headerBackButtonDisplayMode: 'minimal',
-          animation: 'slide_from_right',
-        }}
-      />
+      {/* Le carnet du livre — un sheet haut d'emblée, il se parcourt longtemps */}
+      <Stack.Screen name="notes" options={sheetScreenOptions([0.95])} />
 
       {/* Écrire une note — ouvert par le bouton post-it */}
-      <Stack.Screen name="note/[id]" options={sheetScreenOptions('Nouvelle note', [0.75, 0.95])} />
+      <Stack.Screen name="note/[id]" options={sheetScreenOptions([0.75, 0.95])} />
 
       {/* Toutes les réactions d'une note — ouvert par « … » */}
-      <Stack.Screen name="reactions/[id]" options={sheetScreenOptions('Réagir', [0.6, 0.95])} />
+      <Stack.Screen name="reactions/[id]" options={sheetScreenOptions([0.6, 0.95])} />
 
       {/* Journal d'une personne — posé sur le classement */}
-      <Stack.Screen name="participant/[id]" options={sheetScreenOptions(null, 'fitToContents')} />
+      <Stack.Screen name="participant/[id]" options={sheetScreenOptions()} />
 
       {/* Fiche du livre — fin, caps, club */}
-      <Stack.Screen name="book" options={sheetScreenOptions(null, 'fitToContents')} />
+      <Stack.Screen name="book" options={sheetScreenOptions()} />
 
       {/* Fiche d'un livre de l'onglet Explorer — lancer une lecture, envie, partage */}
-      <Stack.Screen name="explore-book" options={sheetScreenOptions(null, 'fitToContents')} />
+      <Stack.Screen name="explore-book" options={sheetScreenOptions()} />
 
       {/* Les formulaires de la fiche du livre : ils se posent dessus */}
-      <Stack.Screen name="end-date" options={sheetScreenOptions(null, 'fitToContents')} />
-      <Stack.Screen name="cap" options={sheetScreenOptions(null, 'fitToContents')} />
-      <Stack.Screen name="edit-book" options={sheetScreenOptions(null, 'fitToContents')} />
+      <Stack.Screen name="end-date" options={sheetScreenOptions()} />
+      <Stack.Screen name="cap" options={sheetScreenOptions()} />
+      <Stack.Screen name="edit-book" options={sheetScreenOptions()} />
 
       {/* Les formulaires du profil */}
-      <Stack.Screen name="edit-profile" options={sheetScreenOptions(null, 'fitToContents')} />
-      <Stack.Screen name="invite" options={sheetScreenOptions(null, 'fitToContents')} />
+      <Stack.Screen name="edit-profile" options={sheetScreenOptions()} />
+      <Stack.Screen name="invite" options={sheetScreenOptions()} />
 
       {/* Recherche d'un livre (onboarding) : haute d'emblée, le clavier et les résultats */}
-      <Stack.Screen name="book-search" options={sheetScreenOptions(null, [0.95])} />
+      <Stack.Screen name="book-search" options={sheetScreenOptions([0.95])} />
 
       {/* Bibliothèque : toutes mes lectures, sur des étagères, à la hauteur des étagères */}
-      <Stack.Screen name="library" options={sheetScreenOptions('Mes lectures', 'fitToContents')} />
+      <Stack.Screen name="library" options={sheetScreenOptions()} />
 
       {/* Garde les routes d'auth mais cachées (pour éviter les erreurs) */}
       <Stack.Screen

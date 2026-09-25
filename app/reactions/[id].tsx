@@ -5,15 +5,14 @@
  * ne suffisent pas. Un toucher réagit (ou retire ma réaction) et ferme.
  *
  * Mes réactions déjà posées sont entourées : on voit tout de suite ce qu'un
- * nouveau toucher retirera. La ScrollView est l'enfant direct de l'écran : c'est
- * ce qui place le contenu sous la barre de navigation en verre (voir
- * app/leaderboard.tsx).
+ * nouveau toucher retirera. Mise en page : `SheetPage`, commune à tous les sheets.
  */
 
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import PressableScale from '../../components/ui/PressableScale';
+import SheetPage from '../../components/ui/SheetPage';
 import { useAnnotationStore } from '../../stores/annotationStore';
 import { useAuthStore } from '../../stores/authStore';
 import { borderRadius, colors, fonts, spacing } from '../../utils/constants';
@@ -42,11 +41,7 @@ export default function ReactionsRoute() {
   );
 
   return (
-    <ScrollView
-      style={styles.screen}
-      contentContainerStyle={styles.content}
-      contentInsetAdjustmentBehavior="automatic"
-    >
+    <SheetPage title="Réagir" fit={false} contentContainerStyle={styles.content}>
       {EMOJI_SECTIONS.map((section) => (
         <View key={section.title}>
           <Text style={styles.title}>{section.title}</Text>
@@ -71,18 +66,14 @@ export default function ReactionsRoute() {
           </View>
         </View>
       ))}
-    </ScrollView>
+    </SheetPage>
   );
 }
 
 const CELL = 46;
 
 const styles = StyleSheet.create({
-  screen: {
-    backgroundColor: colors.white,
-  },
   content: {
-    paddingHorizontal: spacing.md,
     paddingBottom: spacing['4xl'],
   },
   title: {
@@ -91,9 +82,8 @@ const styles = StyleSheet.create({
     letterSpacing: 0.8,
     textTransform: 'uppercase',
     color: colors.textTertiary,
-    marginTop: spacing.lg,
+    marginTop: spacing.md,
     marginBottom: spacing.xs,
-    marginLeft: spacing.xs,
   },
   grid: {
     flexDirection: 'row',
