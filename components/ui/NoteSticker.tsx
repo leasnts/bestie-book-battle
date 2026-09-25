@@ -18,7 +18,6 @@ import React from 'react';
 import Svg, { Defs, G, LinearGradient, Path, Stop } from 'react-native-svg';
 import { inkAlpha, shadowAlpha, stickerMaterial } from '../../utils/constants';
 
-
 interface NoteStickerProps {
   /** Couleur de la catégorie ; `null` pour une note verrouillée */
   color: string | null;
@@ -27,20 +26,11 @@ interface NoteStickerProps {
   /** Autocollant rectangulaire (étiquette) : largeur et hauteur, à la place de `size` */
   width?: number;
   height?: number;
-  /** Le coin décollé ; sans lui, un autocollant bien à plat (les étiquettes) */
-  peel?: boolean;
   /** Un identifiant, pour des dégradés propres à chaque autocollant */
   id: string;
 }
 
-export default function NoteSticker({
-  color,
-  size = 26,
-  width,
-  height,
-  peel = true,
-  id,
-}: NoteStickerProps) {
+export default function NoteSticker({ color, size = 26, width, height, id }: NoteStickerProps) {
   const w = width ?? size;
   const h = height ?? size;
   // Arrondi, coin décollé et couture suivent le petit côté : une étiquette
@@ -54,15 +44,12 @@ export default function NoteSticker({
   // Carré arrondi, le coin en haut à droite coupé en diagonale
   // Les deux bouts de la coupe sont adoucis, comme le reste de l'autocollant
   const k = base * 0.05;
-  /** Rectangle arrondi, décalé de `o` vers l'intérieur (la couture) */
-  const rounded = (o: number, rr: number) =>
-    `M ${o + rr} ${o} H ${w - o - rr} Q ${w - o} ${o} ${w - o} ${o + rr} V ${h - o - rr} Q ${w - o} ${h - o} ${w - o - rr} ${h - o} H ${o + rr} Q ${o} ${h - o} ${o} ${h - o - rr} V ${o + rr} Q ${o} ${o} ${o + rr} ${o} Z`;
-  const peeled = `M ${r} 0 H ${w - c - k} Q ${w - c} 0 ${w - c + k * 0.7} ${k * 0.7} L ${w - k * 0.7} ${c - k * 0.7} Q ${w} ${c} ${w} ${c + k} V ${h - r} Q ${w} ${h} ${w - r} ${h} H ${r} Q 0 ${h} 0 ${h - r} V ${r} Q 0 0 ${r} 0 Z`;
+  const shape = `M ${r} 0 H ${w - c - k} Q ${w - c} 0 ${w - c + k * 0.7} ${k * 0.7} L ${w - k * 0.7} ${c - k * 0.7} Q ${w} ${c} ${w} ${c + k} V ${h - r} Q ${w} ${h} ${w - r} ${h} H ${r} Q 0 ${h} 0 ${h - r} V ${r} Q 0 0 ${r} 0 Z`;
   // La couture, un peu en retrait, qui suit la même forme
   const i = inset;
   const ri = r - inset * 0.6;
   const ci = c - inset * 0.4;
-  const peeledStitch = `M ${i + ri} ${i} H ${w - i - ci} L ${w - i} ${i + ci} V ${h - i - ri} Q ${w - i} ${h - i} ${w - i - ri} ${h - i} H ${i + ri} Q ${i} ${h - i} ${i} ${h - i - ri} V ${i + ri} Q ${i} ${i} ${i + ri} ${i} Z`;
+  const stitch = `M ${i + ri} ${i} H ${w - i - ci} L ${w - i} ${i + ci} V ${h - i - ri} Q ${w - i} ${h - i} ${w - i - ri} ${h - i} H ${i + ri} Q ${i} ${h - i} ${i} ${h - i - ri} V ${i + ri} Q ${i} ${i} ${i + ri} ${i} Z`;
   // Le rabat : le coin replié par-dessus, symétrique par rapport à la coupe
   // La pliure s'incurve un peu (le coin se roule), et la pointe repliée garde
   // l'arrondi du coin d'origine
@@ -72,9 +59,6 @@ export default function NoteSticker({
   const flapAt = (o: number) =>
     `M ${w - c} 0 ${fold} L ${w - c + tip - o} ${c + o} Q ${w - c - o} ${c + o} ${w - c - o} ${c - tip + o} Z`;
   const flap = flapAt(0);
-  // À plat : un rectangle arrondi, sans coin coupé
-  const shape = peel ? peeled : rounded(0, r);
-  const stitch = peel ? peeledStitch : rounded(i, ri);
   const flapShadow = flapAt(1.5);
 
   const fill = color ?? stickerMaterial.locked;
@@ -103,8 +87,8 @@ export default function NoteSticker({
           strokeWidth={0.9}
           strokeDasharray="2 1.6"
         />
-        {peel && <Path d={flapShadow} fill={shadowAlpha(0.18)} />}
-        {peel && <Path d={flap} fill={`url(#flap-${id})`} />}
+        <Path d={flapShadow} fill={shadowAlpha(0.18)} />
+        <Path d={flap} fill={`url(#flap-${id})`} />
       </G>
     </Svg>
   );

@@ -783,11 +783,6 @@ toute nouvelle vue qui parle de notes reprend ce composant.
 - **Rabat** : dégradé crème `#fdfbf8` → `#d8d1c6`, petite ombre dessous.
 - **Pourquoi à gauche** : en pile (autocollants qui se chevauchent vers la
   droite), c'est le coin qui reste visible.
-- **Usage étiquette** (`width` + `height` au lieu de `size`) : un autocollant
-  rectangulaire, en papier nu, qui porte un texte — les dates du journal de
-  lecture. **À plat, sans coin décollé** (`peel={false}`) : sur une étiquette
-  le coin corné n'est « pas beau » (Lea). L'arrondi et la couture suivent le
-  petit côté.
 - **Usage déco** (tuile Carnet de la fiche du livre) : 3-4 gros autocollants
   (46 pt), pivotés, qui débordent du cadre et que ses bords coupent. Placement
   et inclinaison fixes (`STICKER_SPOTS`) : la déco ne bouge pas d'une ouverture
@@ -802,7 +797,8 @@ dur ailleurs** : changer de thème = changer ces deux objets, rien d'autre.
 
 Référence visuelle : autocollants en cuir surpiqué au coin décollé (capture de
 Lea). Essais écartés : une frise d'autocollants placés à leur page (« fouillis,
-on comprend pas »), une rangée serrée de petits autocollants.
+on comprend pas »), une rangée serrée de petits autocollants, des autocollants-
+étiquettes pour les dates du journal (« pas beau »).
 
 ### Bouton en verre — `GlassButton`
 

@@ -3,11 +3,12 @@
  *
  *    Journal
  *
- *    ╭┄ Hier ┄╮                   ← la date : un autocollant à plat (NoteSticker en étiquette)
+ *    ○  HIER                       ← un jour : un rond creux sur le fil, la date en
+ *                                   petites capitales (comme « FIN », « CAPS »)
  *    ┃
  *    ◉  p. 21   +14      18:40 ← chaque lecture : une étape de la piste de l'accueil,
  *    ┃                             rond plein découpé dans la barre
- *    ╭┄ Mer. 16 septembre ┄╮
+ *    ○  MER. 16 SEPTEMBRE
  *    ◉  p. 16   +2       23:30
  *    ◉  p. 36   +20      16:43
  *
@@ -21,14 +22,13 @@
  */
 import { ChevronLeftIcon } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import React, { useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useFitSheet } from '../../hooks/useFitSheet';
 import { ProgressHistory } from '../../types/supabase';
-import { accentGradient, colors, fonts, shadows, spacing } from '../../utils/constants';
+import { accentGradient, colors, fonts, spacing } from '../../utils/constants';
 import GlassButton from './GlassButton';
 import { RAIL_HEIGHT, STEP_GAP, STEP_SIZE } from './GoalTrack';
-import NoteSticker from './NoteSticker';
 import { SheetStickyHeader, useSheetScrolled } from './SheetHeader';
 
 // ─── Props ─────────────────────────────────────────────────────────
@@ -161,7 +161,8 @@ export default function ParticipantTimeline({
           {dayGroups.map((group) => (
             <View key={group.date}>
               <View style={styles.dayRow}>
-                <DayTag id={group.date} label={group.label} />
+                <View style={styles.dayNode} />
+                <Text style={styles.dayLabel}>{group.label}</Text>
               </View>
 
               {group.entries.map((entry) => (
@@ -197,33 +198,6 @@ export default function ParticipantTimeline({
   );
 }
 
-/** La date du jour : un autocollant en étiquette, en papier nu */
-function DayTag({ id, label }: { id: string; label: string }) {
-  const [size, setSize] = useState<{ width: number; height: number } | null>(null);
-  return (
-    <View
-      style={styles.dayTag}
-      onLayout={(e) => {
-        const { width, height } = e.nativeEvent.layout;
-        setSize({ width, height });
-      }}
-    >
-      {size && (
-        <View style={StyleSheet.absoluteFill}>
-          <NoteSticker
-            id={`day-${id}`}
-            color={null}
-            width={size.width}
-            height={size.height}
-            peel={false}
-          />
-        </View>
-      )}
-      <Text style={styles.dayTagText}>{label}</Text>
-    </View>
-  );
-}
-
 // ─── Styles ────────────────────────────────────────────────────────
 
 /** Axe du fil, depuis la gauche du contenu */
@@ -231,6 +205,7 @@ const RAIL_X = 10;
 /** Une étape : le rond et l'anneau vide autour, comme sur la piste */
 const STEP_OUTER = STEP_SIZE + 2 * STEP_GAP;
 const ENTRY_HEIGHT = 44;
+const DAY_NODE = 15;
 const DAY_ROW_HEIGHT = 40;
 
 const styles = StyleSheet.create({
@@ -297,21 +272,28 @@ const styles = StyleSheet.create({
 
   dayRow: {
     height: DAY_ROW_HEIGHT,
-    justifyContent: 'center',
+    flexDirection: 'row',
+    alignItems: 'center',
   },
-  /** La date : un autocollant-étiquette, posé sur le fil */
-  dayTag: {
-    alignSelf: 'flex-start',
-    paddingHorizontal: spacing.md,
-    paddingVertical: 7,
-    ...shadows.xs,
+  /** Le début d'un jour : un rond creux sur le fil, plus grand qu'une lecture */
+  dayNode: {
+    width: DAY_NODE,
+    height: DAY_NODE,
+    borderRadius: DAY_NODE / 2,
+    marginLeft: RAIL_X - DAY_NODE / 2,
+    marginRight: spacing.md,
+    backgroundColor: colors.white,
+    borderWidth: 3,
+    borderColor: colors.accent,
   },
-  dayTagText: {
-    fontFamily: fonts.bodyBold,
+  /** La date, comme les titres de section de l'app (« FIN », « CAPS ») */
+  dayLabel: {
+    fontFamily: fonts.bodyExtraBold,
     fontSize: 12,
-    color: colors.textSecondary,
+    letterSpacing: 0.8,
+    textTransform: 'uppercase',
+    color: colors.textTertiary,
   },
-
   entry: {
     height: ENTRY_HEIGHT,
     flexDirection: 'row',
