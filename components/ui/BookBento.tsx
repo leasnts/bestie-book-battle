@@ -3,8 +3,8 @@
  *
  *    ┌──────────────┬──────────────┐
  *    │ FIN        ✎ │ PROGRESSION  │
- *    │ J-18         │   ( 30 % )   │   ← des tuiles d'info, toutes pareilles
- *    │ mar. 13 oct. │   toi 34 %   │
+ *    │ J-18         │    ╭────╮    │   ← des tuiles d'info, toutes pareilles
+ *    │ mar. 13 oct. │ Club 30  Toi │   ← demi-cercle animé (ProgressGauge)
  *    ├──────────────┼──────────────┤
  *    │ PAGES        │ MEMBRES    › │
  *    │ 21 / 62      │ 5 ●●●●●      │
@@ -24,12 +24,11 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { ChevronRightIcon, PencilIcon, ShareIcon } from 'lucide-react-native';
 import React, { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import Svg, { Circle } from 'react-native-svg';
+import ProgressGauge from './ProgressGauge';
 import {
   borderRadius,
   colors,
   fonts,
-  inkAlpha,
   inkGradient,
   shadows,
   spacing,
@@ -102,19 +101,9 @@ export default function BookBento({
         </Pressable>
 
         {/* ── Le club ── */}
-        <View
-          style={[styles.tile, halfStyle, styles.tall, styles.paper]}
-          accessible
-          accessibilityLabel={`La moitié du club est à ${clubPercent} %, toi à ${myPercent} %`}
-        >
+        <View style={[styles.tile, halfStyle, styles.tall, styles.paper]}>
           <Text style={styles.kicker}>Progression</Text>
-          <View style={styles.ringRow}>
-            <Ring percent={clubPercent} />
-            <View>
-              <Text style={styles.ringValue}>{Math.round(clubPercent)} %</Text>
-              <Text style={styles.sub}>toi {Math.round(myPercent)} %</Text>
-            </View>
-          </View>
+          <ProgressGauge clubPercent={clubPercent} myPercent={myPercent} />
         </View>
       </View>
 
@@ -197,35 +186,6 @@ export default function BookBento({
   );
 }
 
-// ─── L'anneau du club ──────────────────────────────────────────────
-
-const RING = 46;
-const STROKE = 6;
-
-function Ring({ percent }: { percent: number }) {
-  const r = (RING - STROKE) / 2;
-  const circumference = 2 * Math.PI * r;
-  const clamped = Math.max(0, Math.min(100, percent));
-  return (
-    <Svg width={RING} height={RING} style={styles.ring}>
-      <Circle cx={RING / 2} cy={RING / 2} r={r} stroke={inkAlpha(0.08)} strokeWidth={STROKE} fill="none" />
-      <Circle
-        cx={RING / 2}
-        cy={RING / 2}
-        r={r}
-        stroke={colors.accent}
-        strokeWidth={STROKE}
-        strokeLinecap="round"
-        strokeDasharray={`${circumference} ${circumference}`}
-        strokeDashoffset={circumference * (1 - clamped / 100)}
-        fill="none"
-        // Départ en haut, sens des aiguilles d'une montre
-        transform={`rotate(-90 ${RING / 2} ${RING / 2})`}
-      />
-    </Svg>
-  );
-}
-
 // ─── Styles ────────────────────────────────────────────────────────
 
 const AVATAR = 22;
@@ -248,7 +208,7 @@ const styles = StyleSheet.create({
     ...shadows.xs,
   },
   tall: {
-    height: 136,
+    height: 160,
   },
   short: {
     height: 108,
@@ -325,22 +285,6 @@ const styles = StyleSheet.create({
     fontVariant: ['tabular-nums'],
   },
 
-  ringRow: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-    marginTop: spacing.sm,
-  },
-  ring: {
-    flexShrink: 0,
-  },
-  ringValue: {
-    fontFamily: fonts.display,
-    fontSize: 24,
-    color: colors.textPrimary,
-    fontVariant: ['tabular-nums'],
-  },
 
   pagesRow: {
     marginTop: 'auto',

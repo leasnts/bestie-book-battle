@@ -209,11 +209,11 @@ const STEP_SIZE = 9;
 /** Le vide découpé dans la barre tout autour d'une étape */
 const STEP_GAP = 2;
 /** Le fond de la barre : l'encre à 10 % */
-const RAIL_COLOR = inkAlpha(0.1);
+export const RAIL_COLOR = inkAlpha(0.1);
 /** Gris des étapes pas encore atteintes : le gris de la barre, mais opaque */
 const STEP_AHEAD = '#e2ddd8';
 /** Le club, derrière ma barre : le lie de vin éclairci sur le papier, opaque */
-const CLUB_GRADIENT = ['#e2c9cd', '#d3b3b9'] as const;
+export const CLUB_GRADIENT = ['#e2c9cd', '#d3b3b9'] as const;
 /** Étape dépassée par le club seulement : la même couleur que sa barre (milieu du dégradé) */
 const STEP_CLUB = '#dabec3';
 
