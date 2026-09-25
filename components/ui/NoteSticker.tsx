@@ -22,42 +22,50 @@ import { inkAlpha, shadowAlpha, stickerMaterial } from '../../utils/constants';
 interface NoteStickerProps {
   /** Couleur de la catégorie ; `null` pour une note verrouillée */
   color: string | null;
+  /** Côté d'un autocollant carré */
   size?: number;
+  /** Autocollant rectangulaire (étiquette) : largeur et hauteur, à la place de `size` */
+  width?: number;
+  height?: number;
   /** Un identifiant, pour des dégradés propres à chaque autocollant */
   id: string;
 }
 
-export default function NoteSticker({ color, size = 26, id }: NoteStickerProps) {
-  const s = size;
-  const r = s * 0.26;
+export default function NoteSticker({ color, size = 26, width, height, id }: NoteStickerProps) {
+  const w = width ?? size;
+  const h = height ?? size;
+  // Arrondi, coin décollé et couture suivent le petit côté : une étiquette
+  // allongée garde les proportions d'un autocollant carré
+  const base = Math.min(w, h);
+  const r = base * 0.26;
   /** Le coin décollé */
-  const c = s * 0.34;
-  const inset = s * 0.12;
+  const c = base * 0.34;
+  const inset = base * 0.12;
 
   // Carré arrondi, le coin en haut à droite coupé en diagonale
   // Les deux bouts de la coupe sont adoucis, comme le reste de l'autocollant
-  const k = s * 0.05;
-  const shape = `M ${r} 0 H ${s - c - k} Q ${s - c} 0 ${s - c + k * 0.7} ${k * 0.7} L ${s - k * 0.7} ${c - k * 0.7} Q ${s} ${c} ${s} ${c + k} V ${s - r} Q ${s} ${s} ${s - r} ${s} H ${r} Q 0 ${s} 0 ${s - r} V ${r} Q 0 0 ${r} 0 Z`;
+  const k = base * 0.05;
+  const shape = `M ${r} 0 H ${w - c - k} Q ${w - c} 0 ${w - c + k * 0.7} ${k * 0.7} L ${w - k * 0.7} ${c - k * 0.7} Q ${w} ${c} ${w} ${c + k} V ${h - r} Q ${w} ${h} ${w - r} ${h} H ${r} Q 0 ${h} 0 ${h - r} V ${r} Q 0 0 ${r} 0 Z`;
   // La couture, un peu en retrait, qui suit la même forme
   const i = inset;
   const ri = r - inset * 0.6;
   const ci = c - inset * 0.4;
-  const stitch = `M ${i + ri} ${i} H ${s - i - ci} L ${s - i} ${i + ci} V ${s - i - ri} Q ${s - i} ${s - i} ${s - i - ri} ${s - i} H ${i + ri} Q ${i} ${s - i} ${i} ${s - i - ri} V ${i + ri} Q ${i} ${i} ${i + ri} ${i} Z`;
+  const stitch = `M ${i + ri} ${i} H ${w - i - ci} L ${w - i} ${i + ci} V ${h - i - ri} Q ${w - i} ${h - i} ${w - i - ri} ${h - i} H ${i + ri} Q ${i} ${h - i} ${i} ${h - i - ri} V ${i + ri} Q ${i} ${i} ${i + ri} ${i} Z`;
   // Le rabat : le coin replié par-dessus, symétrique par rapport à la coupe
   // La pliure s'incurve un peu (le coin se roule), et la pointe repliée garde
   // l'arrondi du coin d'origine
   const bulge = c * 0.14;
-  const fold = `Q ${s - c / 2 + bulge} ${c / 2 - bulge} ${s} ${c}`;
+  const fold = `Q ${w - c / 2 + bulge} ${c / 2 - bulge} ${w} ${c}`;
   const tip = Math.min(r, c * 0.5);
   const flapAt = (o: number) =>
-    `M ${s - c} 0 ${fold} L ${s - c + tip - o} ${c + o} Q ${s - c - o} ${c + o} ${s - c - o} ${c - tip + o} Z`;
+    `M ${w - c} 0 ${fold} L ${w - c + tip - o} ${c + o} Q ${w - c - o} ${c + o} ${w - c - o} ${c - tip + o} Z`;
   const flap = flapAt(0);
   const flapShadow = flapAt(1.5);
 
   const fill = color ?? stickerMaterial.locked;
 
   return (
-    <Svg width={s} height={s}>
+    <Svg width={w} height={h}>
       <Defs>
         <LinearGradient id={`shade-${id}`} x1="0" y1="0" x2="0" y2="1">
           <Stop offset="0" stopColor="#fff" stopOpacity={0.25} />
@@ -69,7 +77,7 @@ export default function NoteSticker({ color, size = 26, id }: NoteStickerProps) 
         </LinearGradient>
       </Defs>
       {/* Dessiné coin à droite, puis retourné : le coin décollé passe à gauche */}
-      <G transform={`translate(${s} 0) scale(-1 1)`}>
+      <G transform={`translate(${w} 0) scale(-1 1)`}>
         <Path d={shape} fill={fill} />
         {/* Jamais d'aplat : un voile clair en haut, plus sombre en bas */}
         <Path d={shape} fill={`url(#shade-${id})`} />

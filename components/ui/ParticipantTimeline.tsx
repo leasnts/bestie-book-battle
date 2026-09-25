@@ -3,28 +3,32 @@
  *
  *    Journal
  *
- *    ┆ Hier ┆                    ← la date : une étiquette brodée, posée sur le fil
- *    ●  Page 21   +14      18:40 ← chaque lecture : un rond lie de vin sur le fil,
- *    │                             comme les étapes de la piste de l'accueil
- *    ┆ Mer. 16 septembre ┆
- *    ●  Page 16   +2       23:30
- *    ●  Page 36   +20      16:43
+ *    ◤┄ Hier ┄╮                   ← la date : un autocollant (NoteSticker en étiquette)
+ *    ┃
+ *    ◉  Page 21   +14      18:40 ← chaque lecture : une étape de la piste de l'accueil,
+ *    ┃                             rond plein découpé dans la barre
+ *    ◤┄ Mer. 16 septembre ┄╮
+ *    ◉  Page 16   +2       23:30
+ *    ◉  Page 36   +20      16:43
  *
- * Un seul fil continu du haut en bas (le gris de la piste de l'accueil), sans
- * trou entre les jours.
+ * Le fil EST la piste de l'accueil, à la verticale : même barre (6 pt, dégradé
+ * lie de vin, ce sont mes pages lues), mêmes étapes (rond de 9 pt dans un
+ * anneau vide de 2 pt), continu du haut en bas, sans trou entre les jours.
  *
  * Le composant EST la ScrollView de l'écran, sans View autour : c'est la
  * condition pour qu'un sheet natif (`formSheet`) lui donne les bonnes marges
  * (même leçon que le classement complet, #33).
  */
 import { ChevronLeftIcon } from 'lucide-react-native';
-import React, { useMemo } from 'react';
+import { LinearGradient } from 'expo-linear-gradient';
+import React, { useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useFitSheet } from '../../hooks/useFitSheet';
 import { ProgressHistory } from '../../types/supabase';
-import { borderRadius, colors, fonts, inkAlpha, spacing } from '../../utils/constants';
+import { accentGradient, colors, fonts, shadows, spacing } from '../../utils/constants';
 import GlassButton from './GlassButton';
-import { RAIL_COLOR } from './GoalTrack';
+import { RAIL_HEIGHT, STEP_GAP, STEP_SIZE } from './GoalTrack';
+import NoteSticker from './NoteSticker';
 import { SHEET_TOP_INSET } from './SheetHeader';
 
 // ─── Props ─────────────────────────────────────────────────────────
@@ -140,14 +144,12 @@ export default function ParticipantTimeline({
       ) : (
         <View style={styles.timeline}>
           {/* Le fil, continu du premier jour au dernier */}
-          <View style={styles.rail} />
+          <LinearGradient colors={accentGradient} style={styles.rail} />
 
           {dayGroups.map((group) => (
             <View key={group.date}>
               <View style={styles.dayRow}>
-                <View style={styles.dayTag}>
-                  <Text style={styles.dayTagText}>{group.label}</Text>
-                </View>
+                <DayTag id={group.date} label={group.label} />
               </View>
 
               {group.entries.map((entry) => (
@@ -159,7 +161,10 @@ export default function ParticipantTimeline({
                     entry.pages_read ? `, ${entry.pages_read > 0 ? '+' : ''}${entry.pages_read} pages` : ''
                   }`}
                 >
-                  <View style={styles.dot} />
+                  {/* Une étape de la piste : le rond, dans son anneau découpé */}
+                  <View style={styles.step}>
+                    <View style={styles.stepDot} />
+                  </View>
                   <Text style={styles.entryPage}>Page {entry.page_number}</Text>
                   {entry.pages_read !== 0 && (
                     <Text style={styles.entryDelta}>
@@ -178,13 +183,33 @@ export default function ParticipantTimeline({
   );
 }
 
+/** La date du jour : un autocollant en étiquette, en papier nu */
+function DayTag({ id, label }: { id: string; label: string }) {
+  const [size, setSize] = useState<{ width: number; height: number } | null>(null);
+  return (
+    <View
+      style={styles.dayTag}
+      onLayout={(e) => {
+        const { width, height } = e.nativeEvent.layout;
+        setSize({ width, height });
+      }}
+    >
+      {size && (
+        <View style={StyleSheet.absoluteFill}>
+          <NoteSticker id={`day-${id}`} color={null} width={size.width} height={size.height} />
+        </View>
+      )}
+      <Text style={styles.dayTagText}>{label}</Text>
+    </View>
+  );
+}
+
 // ─── Styles ────────────────────────────────────────────────────────
 
 /** Axe du fil, depuis la gauche du contenu */
-const RAIL_X = 9;
-const RAIL_WIDTH = 4;
-/** Les ronds : un peu plus gros que le fil, liseré blanc (comme la piste) */
-const DOT_SIZE = 12;
+const RAIL_X = 10;
+/** Une étape : le rond et l'anneau vide autour, comme sur la piste */
+const STEP_OUTER = STEP_SIZE + 2 * STEP_GAP;
 const ENTRY_HEIGHT = 44;
 const DAY_ROW_HEIGHT = 40;
 
@@ -243,28 +268,24 @@ const styles = StyleSheet.create({
   /** Le fil : du milieu de la première date au dernier rond */
   rail: {
     position: 'absolute',
-    left: RAIL_X - RAIL_WIDTH / 2,
-    width: RAIL_WIDTH,
+    left: RAIL_X - RAIL_HEIGHT / 2,
+    width: RAIL_HEIGHT,
     top: DAY_ROW_HEIGHT / 2,
     bottom: ENTRY_HEIGHT / 2,
-    borderRadius: RAIL_WIDTH / 2,
-    backgroundColor: RAIL_COLOR,
+    borderRadius: RAIL_HEIGHT / 2,
   },
 
   dayRow: {
     height: DAY_ROW_HEIGHT,
     justifyContent: 'center',
   },
-  /** La date : une étiquette de papier, couture en pointillés, posée sur le fil */
+  /** La date : un autocollant-étiquette, posé sur le fil */
   dayTag: {
     alignSelf: 'flex-start',
-    paddingHorizontal: spacing.md,
-    paddingVertical: 5,
-    borderRadius: borderRadius.full,
-    backgroundColor: colors.bgLight,
-    borderWidth: 1,
-    borderStyle: 'dashed',
-    borderColor: inkAlpha(0.22),
+    paddingLeft: spacing.lg,
+    paddingRight: spacing.md,
+    paddingVertical: 7,
+    ...shadows.xs,
   },
   dayTagText: {
     fontFamily: fonts.bodyBold,
@@ -278,15 +299,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.sm,
   },
-  dot: {
-    width: DOT_SIZE,
-    height: DOT_SIZE,
-    borderRadius: DOT_SIZE / 2,
-    marginLeft: RAIL_X - DOT_SIZE / 2,
+  /** L'anneau vide autour du rond : il « découpe » la barre, comme sur la piste */
+  step: {
+    width: STEP_OUTER,
+    height: STEP_OUTER,
+    borderRadius: STEP_OUTER / 2,
+    marginLeft: RAIL_X - STEP_OUTER / 2,
     marginRight: spacing.md,
+    backgroundColor: colors.white,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  stepDot: {
+    width: STEP_SIZE,
+    height: STEP_SIZE,
+    borderRadius: STEP_SIZE / 2,
     backgroundColor: colors.accent,
-    borderWidth: 2,
-    borderColor: colors.white,
   },
   entryPage: {
     fontFamily: fonts.display,

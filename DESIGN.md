@@ -768,6 +768,9 @@ toute nouvelle vue qui parle de notes reprend ce composant.
 - **Rabat** : dégradé crème `#fdfbf8` → `#d8d1c6`, petite ombre dessous.
 - **Pourquoi à gauche** : en pile (autocollants qui se chevauchent vers la
   droite), c'est le coin qui reste visible.
+- **Usage étiquette** (`width` + `height` au lieu de `size`) : un autocollant
+  rectangulaire, en papier nu, qui porte un texte — les dates du journal de
+  lecture. L'arrondi, le coin et la couture suivent le petit côté.
 - **Usage déco** (tuile Carnet de la fiche du livre) : 3-4 gros autocollants
   (46 pt), pivotés, qui débordent du cadre et que ses bords coupent. Placement
   et inclinaison fixes (`STICKER_SPOTS`) : la déco ne bouge pas d'une ouverture

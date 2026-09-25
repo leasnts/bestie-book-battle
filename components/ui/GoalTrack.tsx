@@ -202,12 +202,12 @@ function trackLabel(
 // Mesures de la maquette (échelle 0,865) ramenées en points.
 
 const RAIL_TOP = 12;
-const RAIL_HEIGHT = 6;
+export const RAIL_HEIGHT = 6;
 const ME_SIZE = 20;
 /** Diamètre des étapes : un peu plus gros que la barre */
-const STEP_SIZE = 9;
+export const STEP_SIZE = 9;
 /** Le vide découpé dans la barre tout autour d'une étape */
-const STEP_GAP = 2;
+export const STEP_GAP = 2;
 /** Le fond de la barre : l'encre à 10 % */
 export const RAIL_COLOR = inkAlpha(0.1);
 /** Gris des étapes pas encore atteintes : le gris de la barre, mais opaque */
