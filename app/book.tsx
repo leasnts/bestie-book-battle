@@ -44,7 +44,6 @@ import EditBookSheet from '../components/ui/EditBookSheet';
 import GoalFormSheet from '../components/ui/GoalFormSheet';
 import BookBento from '../components/ui/BookBento';
 import BookSpine from '../components/ui/BookSpine';
-import ProgressTrials from '../components/ui/ProgressTrials'; // TEMP-ESSAI
 import GlassButton from '../components/ui/GlassButton';
 import { CapDot } from '../components/ui/GoalTrack';
 import { SHEET_TOP_INSET } from '../components/ui/SheetHeader';
@@ -358,9 +357,6 @@ export default function BookRoute() {
         inviteCode={activeChallenge.invite_code}
         onInvite={handleShareInvite}
       />
-
-      {/* TEMP-ESSAI : trois idées de progression « page de livre », à comparer */}
-      <ProgressTrials myPercent={myPercent} clubPercent={clubPercent} />
 
       {/* ─── Caps ─── */}
       <GroupHeader title="Caps">
