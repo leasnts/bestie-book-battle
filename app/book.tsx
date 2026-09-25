@@ -19,7 +19,6 @@
  * react-native-screens calcule mal les marges du sheet.
  */
 
-import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import {
   EllipsisIcon,
@@ -62,7 +61,6 @@ import {
   colors,
   fonts,
   inkAlpha,
-  inkGradient,
   shadows,
   spacing,
 } from '../utils/constants';
@@ -361,9 +359,11 @@ export default function BookRoute() {
 
       {/* ─── Caps ─── */}
       <GroupHeader title="Caps">
-        <AddButton
-          accessibilityLabel="Ajouter un cap"
+        <GlassButton
+          icon={PlusIcon}
+          size={36}
           onPress={() => setCapForm({ open: true, goal: null })}
+          accessibilityLabel="Ajouter un cap"
         />
       </GroupHeader>
       <Group>
@@ -456,29 +456,6 @@ function Group({ style, children }: { style?: StyleProp<ViewStyle>; children: Re
     <View style={[styles.group, style]}>
       <View style={styles.groupClip}>{children}</View>
     </View>
-  );
-}
-
-/** Le « + » d'une section : rond, en dégradé d'encre (jamais d'aplat) */
-function AddButton({
-  onPress,
-  accessibilityLabel,
-}: {
-  onPress: () => void;
-  accessibilityLabel: string;
-}) {
-  return (
-    <Pressable
-      onPress={onPress}
-      hitSlop={8}
-      style={({ pressed }) => [styles.addButton, pressed && { opacity: 0.8 }]}
-      accessibilityRole="button"
-      accessibilityLabel={accessibilityLabel}
-    >
-      <LinearGradient colors={inkGradient} style={styles.addButtonFill}>
-        <PlusIcon size={16} color={colors.white} strokeWidth={2.6} />
-      </LinearGradient>
-    </Pressable>
   );
 }
 
@@ -594,7 +571,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    height: 28,
+    // La hauteur du rond en verre du « + »
+    height: 36,
     marginHorizontal: spacing.xs,
     marginBottom: spacing.sm,
   },
@@ -604,18 +582,6 @@ const styles = StyleSheet.create({
     letterSpacing: 0.8,
     textTransform: 'uppercase',
     color: colors.textTertiary,
-  },
-
-  addButton: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    overflow: 'hidden',
-  },
-  addButtonFill: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
 
   group: {
