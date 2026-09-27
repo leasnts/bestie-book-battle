@@ -16,9 +16,10 @@
 
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
-import { SheetPageHeader, useSheetScroll } from './SheetPage';
+import PressableScale from './PressableScale';
+import { SheetPageHeader, SheetSubtitle, useSheetScroll } from './SheetPage';
 import Animated, { Easing, FadeInDown, useReducedMotion } from 'react-native-reanimated';
 import {
   formatParticipantCount,
@@ -28,7 +29,7 @@ import {
   RankedParticipant,
 } from '../../utils/leaderboard';
 import { borderRadius, colors, fonts, inkAlpha, motion, spacing } from '../../utils/constants';
-import { FlameIcon } from 'lucide-react-native';
+import { ChevronDownIcon, ChevronUpIcon, FlameIcon } from 'lucide-react-native';
 
 // ─── Props ─────────────────────────────────────────────────────────
 
@@ -166,6 +167,12 @@ export default function LeaderboardList({
     () => rankParticipants(participants, myUserId),
     [participants, myUserId],
   );
+  /**
+   * Premier en haut (par défaut) ou dernier en haut. Chacun garde son rang :
+   * on retourne la liste, pas le classement.
+   */
+  const [ascending, setAscending] = useState(false);
+  const rows = useMemo(() => (ascending ? [...ranked].reverse() : ranked), [ranked, ascending]);
 
   return (
     /*
@@ -185,7 +192,7 @@ export default function LeaderboardList({
       `ListHeaderComponent`, collé en haut quand on fait défiler.
     */
     <FlatList
-      data={ranked}
+      data={rows}
       keyExtractor={(participant) => participant.id}
       renderItem={({ item, index }) => (
         <LeaderboardRow
@@ -202,7 +209,26 @@ export default function LeaderboardList({
       ListHeaderComponent={
         <SheetPageHeader
           title="Classement"
-          subtitle={formatParticipantCount(ranked.length)}
+          subtitle={
+            <PressableScale
+              style={styles.sort}
+              pressedScale={0.96}
+              hitSlop={8}
+              onPress={() => setAscending((value) => !value)}
+              accessibilityRole="button"
+              accessibilityLabel={`${formatParticipantCount(ranked.length)}, ${
+                ascending ? 'du dernier au premier' : 'du premier au dernier'
+              }`}
+              accessibilityHint="Inverse l'ordre"
+            >
+              <SheetSubtitle>{formatParticipantCount(ranked.length)}</SheetSubtitle>
+              {ascending ? (
+                <ChevronUpIcon size={16} color={colors.textTertiary} strokeWidth={2.25} />
+              ) : (
+                <ChevronDownIcon size={16} color={colors.textTertiary} strokeWidth={2.25} />
+              )}
+            </PressableScale>
+          }
           onBack={onBack}
           scrolled={sheet.scrolled}
         />
@@ -231,6 +257,13 @@ const AVATAR_SIZE = 36;
 const RANK_WIDTH = 22;
 
 const styles = StyleSheet.create({
+  // « 5 membres ⌄ » : touchable pour inverser l'ordre
+  sort: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    gap: spacing.xs,
+    alignSelf: 'flex-start',
+  },
   // Un peu d'air entre les lignes
   separator: {
     height: spacing.xs,
