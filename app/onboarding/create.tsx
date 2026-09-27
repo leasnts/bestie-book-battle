@@ -27,7 +27,6 @@ import {
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import Button3D from '../../components/Button3D';
-import BookSearchSheet from '../../components/ui/BookSearchSheet';
 import { useOnboardingStore } from '../../stores/onboardingStore';
 import type { BookSearchResult } from '../../types/bookSearch';
 import { borderRadius, colors, fonts, fontSize, shadows, spacing } from '../../utils/constants';
@@ -44,7 +43,6 @@ export default function OnboardingBookFormScreen() {
     const [bookTitle, setBookTitle] = useState('');
     const [author, setAuthor] = useState('');
     const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
-    const [searchVisible, setSearchVisible] = useState(false);
 
     // Refs pour naviguer entre les champs via la touche "Suivant" du clavier
     const titleRef = useRef<TextInput>(null);
@@ -57,6 +55,15 @@ export default function OnboardingBookFormScreen() {
         useOnboardingStore.getState().setApiPageCount(book.pageCount);
         useOnboardingStore.getState().setApiCoverUrl(book.coverUrl);
     };
+
+    // Le livre choisi dans le sheet de recherche : on le reprend, puis on vide le dépôt
+    const bookPick = useOnboardingStore((s) => s.bookPick);
+    useEffect(() => {
+        if (!bookPick) return;
+        handleSelectBook(bookPick);
+        useOnboardingStore.getState().setBookPick(null);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [bookPick]);
 
     useEffect(() => {
         const showSub = Keyboard.addListener(
@@ -142,7 +149,7 @@ export default function OnboardingBookFormScreen() {
                             style={styles.searchButton}
                             onPress={() => {
                                 Keyboard.dismiss();
-                                setSearchVisible(true);
+                                router.push('/book-search');
                             }}
                         >
                             <SearchIcon size={18} color={colors.textPlaceholder} />
@@ -196,11 +203,6 @@ export default function OnboardingBookFormScreen() {
             </View>
             </KeyboardAvoidingView>
 
-            <BookSearchSheet
-                visible={searchVisible}
-                onClose={() => setSearchVisible(false)}
-                onSelectBook={handleSelectBook}
-            />
         </SafeAreaView>
     );
 }

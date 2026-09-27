@@ -3,7 +3,7 @@
  *
  * Une ligne de résultat de recherche de livre : miniature, titre, auteur,
  * édition, pages. Partagée entre la recherche de l'onboarding
- * (BookSearchSheet) et l'onglet Explorer.
+ * (/book-search) et l'onglet Explorer.
  *
  * `BookResultSkeleton` en est la silhouette, affichée pendant une recherche
  * (jamais de spinner dans l'app).

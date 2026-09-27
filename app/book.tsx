@@ -15,8 +15,7 @@
  * - Modifier le livre, et le quitter.
  *
  * Présentation : `formSheet` déclaré dans `app/_layout.tsx` (recette de #33).
- * La ScrollView est l'enfant DIRECT de l'écran, sans View intermédiaire, sinon
- * react-native-screens calcule mal les marges du sheet.
+ * Mise en page : `SheetPage`, le squelette commun à tous les sheets de l'app.
  */
 
 import { LinearGradient } from 'expo-linear-gradient';
@@ -27,7 +26,6 @@ import {
   ActionSheetIOS,
   Alert,
   Pressable,
-  ScrollView,
   Share,
   StyleSheet,
   Text,
@@ -37,23 +35,18 @@ import {
 } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
-import DeadlineEditSheet from '../components/ui/DeadlineEditSheet';
-import EditBookSheet from '../components/ui/EditBookSheet';
-import GoalFormSheet, { confirmDeleteCap } from '../components/ui/GoalFormSheet';
 import BookBento from '../components/ui/BookBento';
 import GlassButton from '../components/ui/GlassButton';
 import { CapDot } from '../components/ui/GoalTrack';
-import { SheetStickyHeader, useSheetScrolled } from '../components/ui/SheetHeader';
-import { myCoverUrl } from '../services/myEdition';
+import SheetPage from '../components/ui/SheetPage';
 import { getChallengeHistory } from '../services/supabase/database';
-import { uploadBookCover } from '../services/supabase/storage';
-import { useFitSheet } from '../hooks/useFitSheet';
 import { useAnnotationStore } from '../stores/annotationStore';
 import { ANNOTATION_CATEGORIES } from '../utils/annotations';
 import { useAuthStore } from '../stores/authStore';
 import { useGoalStore } from '../stores/goalStore';
 import { useProgressStore } from '../stores/progressStore';
 import { useProjectStore } from '../stores/projectStore';
+import { confirmDeleteCap } from '../utils/confirmDeleteCap';
 import type { ChallengeGoal, ProgressHistory } from '../types/supabase';
 import {
   borderRadius,
@@ -64,7 +57,6 @@ import {
   shadows,
   spacing,
 } from '../utils/constants';
-import { extractCoverPalette, type CoverPalette } from '../utils/coverPalette';
 import {
   buildCaps,
   countAtCap,
@@ -77,28 +69,15 @@ import {
 
 export default function BookRoute() {
   const router = useRouter();
-  // Le sheet s'ouvre à la hauteur de toute la fiche, plafonné sous l'en-tête de l'accueil
-  // Sans barre ni titre : la couverture et le titre du livre suffisent
-  const fit = useFitSheet({ withBar: false });
-  const sheetScroll = useSheetScrolled();
   const { user } = useAuthStore();
   const {
     activeChallenge,
     challenges,
-    updateActiveChallenge,
     leaveActiveChallenge,
-    loadUserChallenges,
   } = useProjectStore();
-  const { participants, saveMyEdition } = useProgressStore();
-  const { secondaryGoal, history: goalHistory, addGoal, editGoal, removeGoal } = useGoalStore();
+  const { participants } = useProgressStore();
+  const { secondaryGoal, history: goalHistory, removeGoal } = useGoalStore();
 
-  const [deadlineVisible, setDeadlineVisible] = useState(false);
-  const [editBookVisible, setEditBookVisible] = useState(false);
-  /** Le cap qu'on modifie, ou `null` pour en ajouter un */
-  const [capForm, setCapForm] = useState<{ open: boolean; goal: ChallengeGoal | null }>({
-    open: false,
-    goal: null,
-  });
   const [clubHistory, setClubHistory] = useState<ProgressHistory[]>([]);
 
   const challengeId = activeChallenge?.id;
@@ -184,113 +163,6 @@ export default function BookRoute() {
 
   // ─── Actions ────────────────────────────────────────────────────
 
-  const handleSaveDeadline = useCallback(
-    async (date: Date) => {
-      await updateActiveChallenge({ target_end_date: date.toISOString() });
-    },
-    [updateActiveChallenge],
-  );
-
-  const handleSaveCap = useCallback(
-    async (type: 'primary' | 'secondary', targetPages: number, deadline: Date) => {
-      if (!activeChallenge || !user?.id) return;
-
-      if (type === 'primary') {
-        await updateActiveChallenge({ target_end_date: deadline.toISOString() });
-      } else {
-        // La baseline sert à mesurer le chemin parcouru depuis la pose du cap
-        const baseline =
-          participants.length > 0
-            ? Math.round(
-                participants.reduce((sum, p) => sum + (p.progress?.current_page ?? 0), 0) /
-                  participants.length,
-              )
-            : 0;
-        const edited = capForm.goal;
-
-        if (edited) {
-          await editGoal(edited.id, {
-            target_pages: targetPages,
-            deadline: deadline.toISOString(),
-            results: { baseline },
-          });
-        } else {
-          await addGoal({
-            challenge_id: activeChallenge.id,
-            type: 'secondary',
-            target_pages: targetPages,
-            deadline: deadline.toISOString(),
-            created_by: user.id,
-            results: { baseline },
-          });
-        }
-      }
-      setCapForm({ open: false, goal: null });
-    },
-    [
-      activeChallenge,
-      user?.id,
-      participants,
-      capForm.goal,
-      addGoal,
-      editGoal,
-      updateActiveChallenge,
-    ],
-  );
-
-  const handleSaveBook = useCallback(
-    async (data: { title: string; author: string; totalPages: number; coverUri?: string }) => {
-      if (!activeChallenge || !user?.id) return;
-
-      // Mes pages, dans tous les cas : c'est ma progression qui en dépend
-      if (data.totalPages !== myPages) {
-        await saveMyEdition(activeChallenge.id, user.id, { totalPages: data.totalPages });
-      }
-
-      if (!isAdmin) {
-        // Membre : sa couverture ne change que la sienne
-        if (data.coverUri) {
-          await saveMyEdition(activeChallenge.id, user.id, { cover: data.coverUri });
-        }
-        return;
-      }
-
-      // Admin : son édition est celle de référence du bbb (celle que voient les
-      // invitées). Nouvelle couverture : upload et couleurs du fond en
-      // parallèle. Si l'extraction échoue, la base efface l'ancienne palette et
-      // l'accueil la recalcule (useCoverPalette).
-      let coverUrl = activeChallenge.cover_url;
-      let newPalette: CoverPalette | undefined;
-      if (data.coverUri) {
-        const [{ url }, palette] = await Promise.all([
-          uploadBookCover(activeChallenge.id, data.coverUri),
-          extractCoverPalette(data.coverUri).catch(() => undefined),
-        ]);
-        coverUrl = url;
-        newPalette = palette;
-      }
-
-      await updateActiveChallenge({
-        book_title: data.title,
-        book_author: data.author,
-        total_pages: data.totalPages,
-        cover_url: coverUrl,
-        ...(newPalette && { cover_palette: newPalette }),
-      });
-
-      await loadUserChallenges(user.id);
-    },
-    [
-      activeChallenge,
-      user?.id,
-      myPages,
-      isAdmin,
-      saveMyEdition,
-      updateActiveChallenge,
-      loadUserChallenges,
-    ],
-  );
-
   const handleShareInvite = useCallback(async () => {
     if (!activeChallenge?.invite_code) return;
     try {
@@ -339,11 +211,11 @@ export default function BookRoute() {
     ActionSheetIOS.showActionSheetWithOptions(
       { options, destructiveButtonIndex: 1, cancelButtonIndex: 2 },
       (index) => {
-        if (index === 0) setEditBookVisible(true);
+        if (index === 0) router.push('/edit-book?from=book');
         if (index === 1) handleLeave();
       },
     );
-  }, [isAdmin, handleLeave]);
+  }, [isAdmin, handleLeave, router]);
 
   /** Comme la base : seule la personne qui a posé le cap, ou l'admin du livre */
   const canDeleteCap = (goal: ChallengeGoal) => goal.created_by === user?.id || isAdmin;
@@ -357,45 +229,26 @@ export default function BookRoute() {
   };
 
   return (
-    <ScrollView
-      style={[styles.screen, fit.style]}
-      contentContainerStyle={styles.content}
-      contentInsetAdjustmentBehavior="automatic"
-      onContentSizeChange={fit.onContentSizeChange}
-      // L'en-tête reste en haut quand la fiche défile
-      stickyHeaderIndices={[0]}
-      onScroll={sheetScroll.onScroll}
-      scrollEventThrottle={sheetScroll.scrollEventThrottle}
+    <SheetPage
+      title={activeChallenge.book_title}
+      subtitle={activeChallenge.book_author}
+      titleLines={2}
+      actions={
+        <GlassButton
+          icon={EllipsisIcon}
+          size={36}
+          onPress={handleMenu}
+          accessibilityLabel="Plus d'options"
+        />
+      }
     >
-      {/* ─── Le livre : titre, auteur, et le menu ─── */}
-      <SheetStickyHeader scrolled={sheetScroll.scrolled}>
-        <View style={styles.header}>
-          <View style={styles.headerTexts}>
-            <Text style={styles.title} numberOfLines={2} accessibilityRole="header">
-              {activeChallenge.book_title}
-            </Text>
-            {!!activeChallenge.book_author && (
-              <Text style={styles.author} numberOfLines={1}>
-                {activeChallenge.book_author}
-              </Text>
-            )}
-          </View>
-          <GlassButton
-            icon={EllipsisIcon}
-            size={36}
-            onPress={handleMenu}
-            accessibilityLabel="Plus d'options"
-          />
-        </View>
-      </SheetStickyHeader>
-
       {/* ─── Le tableau de bord ─── */}
       <BookBento
         remaining={remaining}
         endLabel={
           activeChallenge.target_end_date ? formatLongDate(activeChallenge.target_end_date) : null
         }
-        onEditEnd={() => setDeadlineVisible(true)}
+        onEditEnd={() => router.push('/end-date?from=book')}
         clubPercent={clubPercent}
         myPercent={myPercent}
         currentPage={mine?.current_page ?? 0}
@@ -414,7 +267,7 @@ export default function BookRoute() {
         <GlassButton
           icon={PlusIcon}
           size={36}
-          onPress={() => setCapForm({ open: true, goal: null })}
+          onPress={() => router.push('/cap?from=book')}
           accessibilityLabel="Ajouter un cap"
         />
       </GroupHeader>
@@ -444,7 +297,7 @@ export default function BookRoute() {
                 tag={cap.state === 'current' ? 'en cours' : undefined}
                 dimmed={cap.state === 'past'}
                 onPress={() => {
-                  if (goal) setCapForm({ open: true, goal });
+                  if (goal) router.push(`/cap?id=${goal.id}&from=book`);
                 }}
               />
             );
@@ -461,42 +314,7 @@ export default function BookRoute() {
           })
         )}
       </Group>
-
-      {/* ─── Les formulaires ─── */}
-      <DeadlineEditSheet
-        visible={deadlineVisible}
-        onClose={() => setDeadlineVisible(false)}
-        currentDate={activeChallenge.target_end_date}
-        onSave={handleSaveDeadline}
-      />
-
-      <GoalFormSheet
-        visible={capForm.open}
-        onClose={() => setCapForm({ open: false, goal: null })}
-        currentGoal={capForm.goal}
-        history={goalHistory}
-        onSaveGoal={handleSaveCap}
-        onDeleteGoal={
-          capForm.goal && canDeleteCap(capForm.goal)
-            ? () => removeGoal(capForm.goal!.id)
-            : undefined
-        }
-        totalPages={referencePages}
-      />
-
-      <EditBookSheet
-        visible={editBookVisible}
-        onClose={() => setEditBookVisible(false)}
-        currentBook={{
-          title: activeChallenge.book_title,
-          author: activeChallenge.book_author || '',
-          totalPages: myPages,
-          coverUrl: myCoverUrl(activeChallenge, mine),
-        }}
-        editionOnly={!isAdmin}
-        onSave={handleSaveBook}
-      />
-    </ScrollView>
+    </SheetPage>
   );
 }
 
@@ -678,38 +496,6 @@ const SWIPE_DELETE_WIDTH = 72;
 const SWIPE_SPRING = { damping: 22, stiffness: 260 };
 
 const styles = StyleSheet.create({
-  screen: {
-    backgroundColor: colors.white,
-  },
-  content: {
-    // La marge sous la poignée est portée par l'en-tête collant
-    paddingHorizontal: spacing.lg,
-    // iOS ajoute déjà la zone du bas de l'écran (34 pt) sous le contenu
-    paddingBottom: spacing.lg,
-  },
-
-  header: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: spacing.md,
-    marginBottom: spacing.sm,
-  },
-  headerTexts: {
-    flex: 1,
-  },
-  title: {
-    fontFamily: fonts.display,
-    fontSize: 26,
-    lineHeight: 31,
-    color: colors.textPrimary,
-  },
-  author: {
-    fontFamily: fonts.body,
-    fontSize: 15,
-    color: colors.textTertiary,
-    marginTop: 2,
-  },
-
   groupHeader: {
     flexDirection: 'row',
     alignItems: 'center',

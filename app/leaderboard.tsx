@@ -27,36 +27,22 @@
  * n'y ouvrent pas le journal de chacun : ça ne se fait que depuis l'accueil.
  */
 
-import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
-import { ChevronLeftIcon } from 'lucide-react-native';
-import React, { useLayoutEffect } from 'react';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import React from 'react';
 import { useLeaderboardParticipants } from '../hooks/useLeaderboardParticipants';
 import LeaderboardList from '../components/ui/LeaderboardList';
-import { sheetIconItem, sheetTitleItem } from '../components/ui/SheetHeader';
 
 export default function LeaderboardRoute() {
   const { participants, myUserId } = useLeaderboardParticipants();
   const { from } = useLocalSearchParams<{ from?: string }>();
-  const navigation = useNavigation();
   const router = useRouter();
 
-  // Via setOptions et pas <Stack.Screen> : la liste doit rester l'enfant
-  // direct de l'écran.
-  useLayoutEffect(() => {
-    if (from !== 'book') return;
-    navigation.setOptions({
-      unstable_headerLeftItems: () => [
-        sheetIconItem({
-          icon: ChevronLeftIcon,
-          onPress: () => router.back(),
-          accessibilityLabel: 'Retour à la fiche du livre',
-        }),
-        sheetTitleItem('Classement'),
-      ],
-    });
-  }, [from, navigation, router]);
-
   return (
-    <LeaderboardList participants={participants} myUserId={myUserId} readOnly={from === 'book'} />
+    <LeaderboardList
+      participants={participants}
+      myUserId={myUserId}
+      readOnly={from === 'book'}
+      onBack={from === 'book' ? () => router.back() : undefined}
+    />
   );
 }

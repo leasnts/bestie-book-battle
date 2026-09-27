@@ -2,9 +2,11 @@
  * Route /explore-book — la fiche d'un livre de l'onglet Explorer, en sheet natif.
  *
  *    ┌────────────────────────────────┐
- *    │ ▐██▌  Fourth Wing              │
- *    │ ▐██▌  Rebecca Yarros 🔍        │
+ *    │ Fourth Wing                    │
+ *    │ Rebecca Yarros                 │
+ *    │                                │
  *    │ ▐██▌  [518 p. · 2023]          │
+ *    │ ▐██▌  🔍 Ses livres            │
  *    │                                │
  *    │ [ Lancer une lecture ] (♥) (↗) │
  *    └────────────────────────────────┘
@@ -15,23 +17,22 @@
  *   l'accueil.
  * - **♥** : le garde dans mes envies (première étagère de l'onglet).
  * - **↗** : le propose au club par le partage iOS.
- * - Toucher l'autrice lance la recherche de ses livres dans l'onglet.
+ * - « Ses livres » lance la recherche de ses livres dans l'onglet.
  *
  * Pas de note, pas d'avis, pas de résumé : pas de fiche produit (DESIGN.md,
  * anti-référence Goodreads). Le livre vient du store (`selectedBook`).
  *
- * Même présentation que la fiche du livre en cours (app/book.tsx) : sans titre
- * de sheet, ScrollView enfant direct de l'écran, hauteur du contenu.
+ * Mise en page : `SheetPage`, comme tous les sheets (titre du livre en en-tête,
+ * comme la fiche du livre en cours).
  */
 
 import { useRouter } from 'expo-router';
 import { BookOpenIcon, CirclePlusIcon, HeartIcon, SearchIcon, ShareIcon } from 'lucide-react-native';
 import React, { useCallback, useMemo } from 'react';
-import { Pressable, ScrollView, Share, StyleSheet, Text, View } from 'react-native';
+import { Pressable, Share, StyleSheet, Text, View } from 'react-native';
 import Button3D from '../components/Button3D';
 import BookCover, { COVER_RATIO } from '../components/ui/BookCover';
-import { SHEET_TOP_INSET } from '../components/ui/SheetHeader';
-import { useFitSheet } from '../hooks/useFitSheet';
+import SheetPage, { SheetFooter } from '../components/ui/SheetPage';
 import { useAuthStore } from '../stores/authStore';
 import { useExploreStore } from '../stores/exploreStore';
 import { useOnboardingStore } from '../stores/onboardingStore';
@@ -52,7 +53,6 @@ function normalizeTitle(title: string): string {
 
 export default function ExploreBookRoute() {
   const router = useRouter();
-  const fit = useFitSheet({ withBar: false });
   const book = useExploreStore((state) => state.selectedBook);
   const isFavorite = useExploreStore(
     (state) => !!book && state.favorites.some((f) => f.id === book.id),
@@ -120,126 +120,101 @@ export default function ExploreBookRoute() {
     .join(' · ');
 
   return (
-    <ScrollView
-      style={[styles.screen, fit.style]}
-      contentContainerStyle={styles.content}
-      contentInsetAdjustmentBehavior="automatic"
-      onContentSizeChange={fit.onContentSizeChange}
-    >
-      <View style={styles.header}>
+    <SheetPage title={book.title} subtitle={book.author} titleLines={2}>
+      <View style={styles.body}>
         <View style={styles.cover}>
           <BookCover coverUrl={book.coverUrl} outlined />
         </View>
-        <View style={styles.headerTexts}>
-          <Text style={styles.title} numberOfLines={3}>
-            {book.title}
-          </Text>
-          {!!book.author && (
-            <Pressable
-              onPress={handleAuthor}
-              hitSlop={8}
-              style={({ pressed }) => [styles.authorRow, pressed && { opacity: 0.6 }]}
-              accessibilityRole="button"
-              accessibilityLabel={book.author}
-              accessibilityHint="Cherche ses livres"
-            >
-              <Text style={styles.author} numberOfLines={2}>
-                {book.author}
-              </Text>
-              <SearchIcon size={14} color={colors.textTertiary} strokeWidth={2.25} />
-            </Pressable>
-          )}
+        <View style={styles.bodyTexts}>
           {!!details && (
             <View style={styles.pill}>
               <Text style={styles.pillText}>{details}</Text>
             </View>
           )}
+          {!!book.author && (
+            <Pressable
+              onPress={handleAuthor}
+              hitSlop={8}
+              style={({ pressed }) => [styles.authorLink, pressed && { opacity: 0.6 }]}
+              accessibilityRole="button"
+              accessibilityLabel={`Ses livres : ${book.author}`}
+            >
+              <SearchIcon size={14} color={colors.textTertiary} strokeWidth={2.25} />
+              <Text style={styles.authorLinkText}>Ses livres</Text>
+            </Pressable>
+          )}
         </View>
       </View>
 
       {/* Trois places fixes : l'action, l'envie, le partage */}
-      <View style={styles.actions}>
-        <Button3D
-          variant="primary"
-          icon={inLibrary ? BookOpenIcon : CirclePlusIcon}
-          iconPosition="left"
-          onPress={handleStart}
-          style={styles.mainAction}
-        >
-          {inLibrary ? 'Ouvrir' : 'Lancer une lecture'}
-        </Button3D>
-        <Button3D
-          variant="secondary"
-          iconOnly
-          iconComponent={
-            <HeartIcon
-              size={22}
-              color={isFavorite ? colors.accent : colors.dark900}
-              fill={isFavorite ? colors.accent : 'transparent'}
-              strokeWidth={2}
-            />
-          }
-          onPress={() => toggleFavorite(book)}
-          accessibilityLabel={isFavorite ? 'Retirer de mes envies' : 'Garder dans mes envies'}
-          style={styles.iconAction}
-        />
-        <Button3D
-          variant="secondary"
-          iconOnly
-          icon={ShareIcon}
-          onPress={handleShare}
-          accessibilityLabel="Proposer au club"
-          style={styles.iconAction}
-        />
-      </View>
-    </ScrollView>
+      <SheetFooter>
+        <View style={styles.actions}>
+          <Button3D
+            variant="primary"
+            icon={inLibrary ? BookOpenIcon : CirclePlusIcon}
+            iconPosition="left"
+            onPress={handleStart}
+            style={styles.mainAction}
+          >
+            {inLibrary ? 'Ouvrir' : 'Lancer une lecture'}
+          </Button3D>
+          <Button3D
+            variant="secondary"
+            iconOnly
+            iconComponent={
+              <HeartIcon
+                size={22}
+                color={isFavorite ? colors.accent : colors.dark900}
+                fill={isFavorite ? colors.accent : 'transparent'}
+                strokeWidth={2}
+              />
+            }
+            onPress={() => toggleFavorite(book)}
+            accessibilityLabel={isFavorite ? 'Retirer de mes envies' : 'Garder dans mes envies'}
+            style={styles.iconAction}
+          />
+          <Button3D
+            variant="secondary"
+            iconOnly
+            icon={ShareIcon}
+            onPress={handleShare}
+            accessibilityLabel="Proposer au club"
+            style={styles.iconAction}
+          />
+        </View>
+      </SheetFooter>
+    </SheetPage>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: {
-    backgroundColor: colors.white,
-  },
-  content: {
-    paddingTop: SHEET_TOP_INSET,
-    paddingHorizontal: spacing.xl,
-    paddingBottom: spacing.lg,
-    gap: spacing['2xl'],
-  },
-  header: {
+  body: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xl,
+    alignItems: 'flex-end',
+    gap: spacing.lg,
+    marginTop: spacing.sm,
   },
   cover: {
     width: Math.round(COVER_H * COVER_RATIO),
     height: COVER_H,
   },
-  headerTexts: {
+  bodyTexts: {
     flex: 1,
-    gap: spacing.xs,
+    gap: spacing.md,
+    alignItems: 'flex-start',
   },
-  title: {
-    fontFamily: fonts.display,
-    fontSize: 24,
-    lineHeight: 30,
-    color: colors.textPrimary,
-  },
-  authorRow: {
+  authorLink: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.xs,
-    alignSelf: 'flex-start',
+    minHeight: 32,
   },
-  author: {
-    flexShrink: 1,
-    fontFamily: fonts.body,
+  authorLinkText: {
+    fontFamily: fonts.bodySemiBold,
     fontSize: 15,
     color: colors.textTertiary,
   },
   pill: {
-    alignSelf: 'flex-start',
-    marginTop: spacing.xs,
     paddingHorizontal: spacing.sm,
     paddingVertical: 2,
     borderRadius: borderRadius.sm,

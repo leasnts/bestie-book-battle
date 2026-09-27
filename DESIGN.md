@@ -536,13 +536,10 @@ bibliothèque ; Lea, 2026-09-24) : le sheet s'ouvre **à la hauteur de tout son
 contenu** (`fitToContents` + `useFitSheet`). S'il y en a trop, il monte au plus
 **jusque sous l'en-tête de l'accueil** — bouton bibliothèque et mascotte restent
 visibles au-dessus — et l'on fait défiler dedans. Les sheets de saisie (note,
-réactions) gardent leurs hauteurs d'arrêt, à cause du clavier.
+réactions, recherche) et le carnet gardent leurs hauteurs d'arrêt.
 
-**Pas de titre quand le contenu le dit déjà** (Lea, 2026-09-24) : la fiche du
-livre (couverture + titre du livre) et le journal (avatar + nom + « Journal de
-lecture ») n'ont ni titre ni barre : `sheetScreenOptions(null)`, contenu sous la
-poignée (`SHEET_TOP_INSET`). Les autres gardent leur titre ferré à gauche
-(« Mes lectures », « Classement », « Nouvelle note », « Réagir »).
+Tous les sheets ont un titre dans leur en-tête (`SheetPage`) : celui de la
+fiche du livre est le titre du livre, avec l'auteur en dessous.
 
 Changer de livre ou en ajouter un se fait dans la **bibliothèque**, route
 `/library` en sheet natif titré **Mes lectures**, avec le **+** en verre
@@ -682,44 +679,42 @@ largeur (~274 pt pour 3 icônes) et ignore `itemWidth`/`itemPositioning`.
 
 ### Sheets
 
-**Sheets iOS natifs**, présentés en route `formSheet`. Poignée, paliers de
-hauteur, glissement élastique, fond assombri et barre de navigation en verre
-viennent du système. Deux conditions, détaillées dans `app/leaderboard.tsx` :
-une **route** (pas un composant montant un `ScreenStack`), et la liste en
-**enfant direct de l'écran**, sans `View` intermédiaire — sinon UIKit ne lui
-applique pas l'encart sous la barre de navigation et le contenu passe dessous.
+**Un seul type de sheet dans l'app** (Lea, 2026-09-25). Plus de sheet fait
+maison (`BottomSheet`, `<Modal>`) : tout ce qui monte du bas est un **sheet iOS
+natif**, présenté en route `formSheet` (`sheetScreenOptions()` dans
+`app/_layout.tsx`). Poignée, paliers de hauteur, glissement élastique, coins et
+fond assombri viennent du système.
+
+**Le squelette : `SheetPage`** (`components/ui/SheetPage.tsx`), la mise en page
+de la fiche du livre, pour tous :
+- **en-tête** `SheetPageHeader` : retour (si posé sur un autre sheet), titre en
+  Fraunces 26 **ferré à gauche, jamais centré**, sous-titre éventuel, actions à
+  droite en `GlassButton` 36 pt ;
+- **marges de 16 pt** (`SHEET_GUTTER`) sur les côtés ;
+- **action principale** en bas du contenu (`SheetFooter` + `Button3D`
+  primaire, « Enregistrer ») ; une suppression en lien rouge en dessous ;
+- pas de croix : on ferme en glissant vers le bas.
+Un sheet qui est une liste (classement, bibliothèque, carnet) pose
+`SheetPageHeader` en en-tête de sa FlatList, avec `useSheetScroll()`.
+
+Deux conditions pour qu'un formSheet se mette bien en page : une **route** (pas
+un composant montant un `ScreenStack`), et la liste en **enfant direct de
+l'écran**, sans `View` intermédiaire. `SheetPage` EST la ScrollView de l'écran.
+Un formulaire qui a besoin d'une donnée la lit dans les stores ; un sheet qui
+rend un résultat le dépose dans un store (ex. `bookPick` de la recherche).
 
 Ne pas activer `featureFlags.experiment.synchronousScreenUpdatesEnabled` : ce
 flag expérimental de react-native-screens a une contrepartie native et rend
 l'app entièrement blanche sur un binaire fraîchement compilé.
 
-**Titre ferré à gauche, jamais centré.** Tous les sheets, sans exception :
-Fraunces 22 (`headline`), le contenu aligné sur lui (marge de 20 pt), actions à
-droite sur la même ligne (`GlassButton` 44 pt, icône Lucide). La barre native
-centre toujours son titre : on laisse le sien vide et on pose le nôtre en
-premier élément de gauche, sans verre. Tout passe par
-`components/ui/SheetHeader.tsx` : `sheetScreenOptions(titre)` pour la route,
-`sheetIconItem(...)` pour un bouton à droite, `sheetTitleItem(titre)` si un écran
-remplace les éléments de gauche (ex. la croix de « Nouvelle note », posée avant
-le titre). Les sheets dessinés à la main suivent la même règle.
-
-Sheets de consultation : poignée seule. Sheets de formulaire : garder une croix,
-qui sert d'affordance « annuler ».
-
-**L'en-tête reste en haut quand un sheet défile.** Tout sheet qui peut défiler
-garde son en-tête (retour + titre, actions) collé en haut, avec un **fondu**
-dessous pour que le contenu qui passe derrière ne se lise pas à travers :
-- barre native (`sheetScreenOptions(titre)`) : iOS le fait (barre fixe, fondu
-  du bord de défilement) ;
-- en-tête dans le contenu (fiche du livre, journal) : `SheetStickyHeader`
-  (premier enfant de la ScrollView + `stickyHeaderIndices={[0]}`), le fondu
-  n'apparaissant qu'une fois le contenu défilé (`useSheetScrolled`) — au repos
-  il pâlirait le haut du contenu.
+**L'en-tête reste en haut quand un sheet défile**, avec un **fondu** dessous
+(`SheetStickyHeader`, qui n'apparaît qu'une fois le contenu défilé). C'est fait
+par `SheetPage` / `useSheetScroll`.
 
 **Sheet ouvert depuis un autre sheet : toujours un retour** (`?from=…`, rond en
-verre `ChevronLeftIcon` à gauche du titre). Et s'il sert à consulter (fiche du
-livre › carnet), il reste **indicatif** : pas d'actions (écrire, réagir,
-modifier).
+verre `ChevronLeftIcon` à gauche du titre, prop `onBack`). Et s'il sert à
+consulter (fiche du livre › carnet), il reste **indicatif** : pas d'actions
+(écrire, réagir, modifier).
 
 ### Signets brodés — `RibbonBookmark`
 

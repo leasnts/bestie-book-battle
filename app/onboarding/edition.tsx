@@ -18,7 +18,7 @@ import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { BookOpenIcon, ChevronLeftIcon, PencilIcon, XIcon } from 'lucide-react-native';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
     ActionSheetIOS,
     Alert,
@@ -32,7 +32,6 @@ import {
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import Button3D from '../../components/Button3D';
-import BookSearchSheet from '../../components/ui/BookSearchSheet';
 import ImageCropModal, { PendingImage } from '../../components/ui/ImageCropModal';
 import { useOnboardingStore } from '../../stores/onboardingStore';
 import type { BookSearchResult } from '../../types/bookSearch';
@@ -62,7 +61,6 @@ export default function OnboardingEditionScreen() {
         draft ? String(draft.totalPages) : params.totalPages ?? '',
     );
     const [publisher, setPublisher] = useState<string | null>(draft?.publisher ?? null);
-    const [searchVisible, setSearchVisible] = useState(false);
     const [pendingImage, setPendingImage] = useState<PendingImage | null>(null);
 
     const pages = Number(totalPages);
@@ -74,6 +72,15 @@ export default function OnboardingEditionScreen() {
         if (book.pageCount) setTotalPages(String(book.pageCount));
         setPublisher(book.publisher);
     };
+
+    // Le livre choisi dans le sheet de recherche : on le reprend, puis on vide le dépôt
+    const bookPick = useOnboardingStore((s) => s.bookPick);
+    useEffect(() => {
+        if (!bookPick) return;
+        handleSelectBook(bookPick);
+        useOnboardingStore.getState().setBookPick(null);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [bookPick]);
 
     const pickFrom = async (source: 'library' | 'camera') => {
         try {
@@ -116,7 +123,9 @@ export default function OnboardingEditionScreen() {
                 cancelButtonIndex: 0,
             },
             (buttonIndex) => {
-                if (buttonIndex === 1) setSearchVisible(true);
+                if (buttonIndex === 1) {
+                    router.push({ pathname: '/book-search', params: { q: params.bookTitle ?? '' } });
+                }
                 if (buttonIndex === 2) pickFrom('library');
                 if (buttonIndex === 3) pickFrom('camera');
             },
@@ -222,12 +231,6 @@ export default function OnboardingEditionScreen() {
             </KeyboardAvoidingView>
         </SafeAreaView>
 
-        <BookSearchSheet
-            visible={searchVisible}
-            onClose={() => setSearchVisible(false)}
-            onSelectBook={handleSelectBook}
-            initialQuery={params.bookTitle}
-        />
 
         <ImageCropModal
             visible={pendingImage !== null}

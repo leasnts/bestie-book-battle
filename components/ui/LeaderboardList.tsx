@@ -17,8 +17,8 @@
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import React, { useMemo } from 'react';
-import { useFitSheet } from '../../hooks/useFitSheet';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { SheetPageHeader, useSheetScroll } from './SheetPage';
 import Animated, { Easing, FadeInDown, useReducedMotion } from 'react-native-reanimated';
 import {
   formatParticipantCount,
@@ -39,6 +39,8 @@ interface LeaderboardListProps {
   myUserId: string;
   /** Lignes non touchables : le journal de chacun ne s'ouvre que depuis l'accueil */
   readOnly?: boolean;
+  /** Posé sur un autre sheet : un retour à gauche du titre */
+  onBack?: () => void;
 }
 
 const DEFAULT_AVATAR = require('../../assets/images/profile_picture_default.png');
@@ -152,9 +154,10 @@ export default function LeaderboardList({
   participants,
   myUserId,
   readOnly = false,
+  onBack,
 }: LeaderboardListProps) {
   // Le sheet s'ouvre à la hauteur de tout le classement, plafonné sous l'en-tête de l'accueil
-  const fit = useFitSheet();
+  const sheet = useSheetScroll();
   const reducedMotion = useReducedMotion();
   const router = useRouter();
 
@@ -178,9 +181,8 @@ export default function LeaderboardList({
       lui applique l'encart sous la barre de navigation. Avec une View entre les
       deux, le contenu passerait sous la barre en verre d'iOS 26.
 
-      Le sous-titre vit dans `ListHeaderComponent`, donc dans le contenu
-      scrollable — comportement iOS standard : le contenu glisse sous la barre
-      et la fait réagir.
+      L'en-tête (`SheetPageHeader`, commun à tous les sheets) vit dans
+      `ListHeaderComponent`, collé en haut quand on fait défiler.
     */
     <FlatList
       data={ranked}
@@ -195,14 +197,16 @@ export default function LeaderboardList({
           }
         />
       )}
+      {...sheet.scrollProps}
+      ItemSeparatorComponent={Separator}
       ListHeaderComponent={
-        <Text style={styles.headerSubtitle}>{formatParticipantCount(ranked.length)}</Text>
+        <SheetPageHeader
+          title="Classement"
+          subtitle={formatParticipantCount(ranked.length)}
+          onBack={onBack}
+          scrolled={sheet.scrolled}
+        />
       }
-      style={[styles.scrollView, fit.style]}
-      contentContainerStyle={styles.scrollContent}
-      showsVerticalScrollIndicator={false}
-      contentInsetAdjustmentBehavior="automatic"
-      onContentSizeChange={fit.onContentSizeChange}
       /*
         Pas de `getItemLayout` : il suppose une hauteur de ligne constante, or
         les lignes grandissent avec le corps de texte système, et l'en-tête
@@ -217,29 +221,19 @@ export default function LeaderboardList({
   );
 }
 
+function Separator() {
+  return <View style={styles.separator} />;
+}
+
 // ─── Styles ────────────────────────────────────────────────────────
 
 const AVATAR_SIZE = 36;
 const RANK_WIDTH = 22;
 
 const styles = StyleSheet.create({
-  // ═══ SOUS-TITRE ═══
-  headerSubtitle: {
-    paddingHorizontal: spacing.md,
-    paddingBottom: spacing.sm,
-    fontFamily: fonts.bodyMedium,
-    fontSize: 14,
-    color: colors.textTertiary,
-  },
-  // ═══ SCROLL ═══
-  scrollView: {
-    backgroundColor: colors.white,
-  },
-  scrollContent: {
-    paddingHorizontal: spacing.md,
-    paddingTop: spacing.md,
-    paddingBottom: spacing['3xl'],
-    gap: spacing.xs,
+  // Un peu d'air entre les lignes
+  separator: {
+    height: spacing.xs,
   },
 
   // ═══ LIGNE ═══

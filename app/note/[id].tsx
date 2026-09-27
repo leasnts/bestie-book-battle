@@ -7,6 +7,9 @@
  * Une note dit forcément quelque chose : **au minimum un emoji**. « Publier »
  * reste éteint tant qu'il n'y a ni emoji ni texte.
  *
+ * Mise en page : `SheetPage`, commune à tous les sheets. Ouverte depuis le
+ * carnet (`?from=notes`), un retour y ramène.
+ *
  * La page est écrite dans MON édition, mais stockée en position (0 → 1) : c'est
  * elle qui permettra aux autres de voir « ≈ p. 258 » dans la leur, et c'est elle
  * qui décide du déblocage anti-spoil.
@@ -14,20 +17,20 @@
  * Aucune phrase d'explication dans l'écran : des repères courts et des noms.
  */
 
-import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
-import { MinusIcon, PlusIcon, Trash2Icon, XIcon } from 'lucide-react-native';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { MinusIcon, PlusIcon, Trash2Icon } from 'lucide-react-native';
 import React, { useCallback, useMemo, useState } from 'react';
 import {
   Alert,
   Pressable,
-  ScrollView,
   StyleSheet,
   Text,
   TextInput,
   View,
 } from 'react-native';
 import PressableScale from '../../components/ui/PressableScale';
-import { sheetTitleItem } from '../../components/ui/SheetHeader';
+import SheetPage, { SheetFooter } from '../../components/ui/SheetPage';
+import Button3D from '../../components/Button3D';
 import VoicePlayer from '../../components/ui/VoicePlayer';
 import VoiceRecorder from '../../components/ui/VoiceRecorder';
 import { useAnnotationStore, type VoiceClip } from '../../stores/annotationStore';
@@ -55,7 +58,7 @@ interface NoteVoice {
 const QUICK_EMOJIS = ['😭', '😂', '🔥', '😱', '🥺', '💀', '📌', '❤️'];
 
 export default function NoteFormRoute() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, from } = useLocalSearchParams<{ id: string; from?: string }>();
   const router = useRouter();
 
   const { user } = useAuthStore();
@@ -184,52 +187,12 @@ export default function NoteFormRoute() {
   }, [existing, removeNote, router]);
 
   return (
-    <ScrollView
-      style={styles.screen}
+    <SheetPage
+      title={existing ? 'Ma note' : 'Nouvelle note'}
+      onBack={from ? () => router.back() : undefined}
+      fit={false}
       contentContainerStyle={styles.content}
-      contentInsetAdjustmentBehavior="automatic"
-      keyboardShouldPersistTaps="handled"
     >
-      {/*
-        Les deux boutons vivent dans la barre de navigation du sheet : c'est là
-        qu'iOS les attend, et ça évite un deuxième titre sous celui du système.
-      */}
-      <Stack.Screen
-        options={{
-          // Fermer, puis le titre ferré à gauche (norme des sheets, SheetHeader.tsx)
-          unstable_headerLeftItems: () => [
-            {
-              type: 'custom',
-              element: (
-                <Pressable
-                  onPress={() => router.back()}
-                  hitSlop={12}
-                  accessibilityRole="button"
-                  accessibilityLabel="Fermer"
-                >
-                  <XIcon size={20} color={colors.dark900} strokeWidth={2.4} />
-                </Pressable>
-              ),
-            },
-            sheetTitleItem(existing ? 'Ma note' : 'Nouvelle note'),
-          ],
-          headerRight: () => (
-            <PressableScale
-              style={[styles.publish, !canPublish && styles.publishOff]}
-              pressedScale={0.94}
-              disabled={!canPublish || saving}
-              onPress={handlePublish}
-              accessibilityRole="button"
-              accessibilityLabel={existing ? 'Enregistrer la note' : 'Publier la note'}
-            >
-              <Text style={[styles.publishText, !canPublish && styles.publishTextOff]}>
-                {existing ? 'Enregistrer' : 'Publier'}
-              </Text>
-            </PressableScale>
-          ),
-        }}
-      />
-
       {/* ─── La page ─── */}
       <View style={styles.pageRow}>
         <Stepper
@@ -351,18 +314,29 @@ export default function NoteFormRoute() {
         })}
       </View>
 
-      {existing && (
-        <Pressable
-          onPress={handleDelete}
-          style={({ pressed }) => [styles.delete, pressed && { opacity: 0.6 }]}
-          accessibilityRole="button"
-          accessibilityLabel="Supprimer la note"
+      <SheetFooter>
+        <Button3D
+          variant="primary"
+          onPress={handlePublish}
+          disabled={!canPublish}
+          loading={saving}
         >
-          <Trash2Icon size={17} color={colors.error} strokeWidth={2} />
-          <Text style={styles.deleteText}>Supprimer</Text>
-        </Pressable>
-      )}
-    </ScrollView>
+          {existing ? 'Enregistrer' : 'Publier'}
+        </Button3D>
+
+        {existing && (
+          <Pressable
+            onPress={handleDelete}
+            style={({ pressed }) => [styles.delete, pressed && { opacity: 0.6 }]}
+            accessibilityRole="button"
+            accessibilityLabel="Supprimer la note"
+          >
+            <Trash2Icon size={17} color={colors.error} strokeWidth={2} />
+            <Text style={styles.deleteText}>Supprimer</Text>
+          </Pressable>
+        )}
+      </SheetFooter>
+    </SheetPage>
   );
 }
 
@@ -395,33 +369,8 @@ function Stepper({
 const STEPPER_SIZE = 36;
 
 const styles = StyleSheet.create({
-  screen: {
-    backgroundColor: colors.white,
-  },
   content: {
-    paddingHorizontal: spacing.lg,
     paddingBottom: spacing['4xl'],
-  },
-
-  publish: {
-    minHeight: 32,
-    justifyContent: 'center',
-    paddingHorizontal: spacing.md,
-    borderRadius: borderRadius.full,
-    backgroundColor: colors.dark900,
-  },
-  // Éteint par la couleur, pas par l'opacité : PressableScale anime l'opacité
-  // sur le thread natif et écraserait une opacité posée dans le style.
-  publishOff: {
-    backgroundColor: inkAlpha(0.12),
-  },
-  publishText: {
-    fontFamily: fonts.bodyExtraBold,
-    fontSize: 14,
-    color: colors.white,
-  },
-  publishTextOff: {
-    color: colors.textPlaceholder,
   },
 
   pageRow: {
@@ -568,7 +517,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: spacing.sm,
-    marginTop: spacing['2xl'],
     minHeight: 44,
   },
   deleteText: {

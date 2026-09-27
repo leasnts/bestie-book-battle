@@ -7,7 +7,7 @@
  * bouton bibliothèque et la mascotte restent visibles au-dessus) ; au-delà, on
  * fait défiler dedans.
  *
- * Utilisation, avec `sheetScreenOptions(titre, 'fitToContents')` :
+ * Utilisation, avec `sheetScreenOptions()` (déjà fait par `SheetPage`) :
  *
  *    const fit = useFitSheet();
  *    <ScrollView style={[styles.screen, fit.style]} onContentSizeChange={fit.onContentSizeChange} … />
@@ -26,20 +26,16 @@ import { spacing } from '../utils/constants';
  * bouton bibliothèque de 44 pt, marge du bas (cf. styles.header de l'accueil).
  */
 const HOME_HEADER_HEIGHT = spacing.sm + 44 + spacing.sm;
-/** Barre du sheet (poignée + titre + boutons) : le contenu commence dessous */
-const SHEET_BAR_HEIGHT = 64;
-/** Sheet sans barre : il reste la place de la poignée au-dessus du contenu (mesuré) */
+/** La place de la poignée au-dessus du contenu (mesuré) */
 const SHEET_GRABBER_HEIGHT = 20;
 
-export function useFitSheet({ withBar = true }: { withBar?: boolean } = {}) {
+export function useFitSheet() {
   const { height: windowHeight } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const [contentHeight, setContentHeight] = useState<number | null>(null);
 
   // Le sheet monte au plus jusque sous l'en-tête de l'accueil
-  // (moins la barre du sheet quand il en a une : sheetScreenOptions(null) n'en a pas)
-  const maxHeight =
-    windowHeight - insets.top - HOME_HEADER_HEIGHT - (withBar ? SHEET_BAR_HEIGHT : SHEET_GRABBER_HEIGHT);
+  const maxHeight = windowHeight - insets.top - HOME_HEADER_HEIGHT - SHEET_GRABBER_HEIGHT;
 
   const onContentSizeChange = useCallback((_width: number, height: number) => {
     setContentHeight(height);

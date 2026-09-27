@@ -2,9 +2,8 @@
  * Route /library — la bibliothèque : tous mes livres
  *
  * Ouverte par le bouton en haut à gauche de l'accueil. Présentée comme un sheet
- * iOS natif (`presentation: 'formSheet'`, configuré dans app/_layout.tsx), sur
- * le même modèle que /leaderboard : lire l'en-tête de app/leaderboard.tsx avant
- * de toucher à la mise en page.
+ * iOS natif (`presentation: 'formSheet'`, configuré dans app/_layout.tsx), avec
+ * l'en-tête commun à tous les sheets (`SheetPageHeader`).
  *
  * Les données viennent directement des stores : aucun paramètre d'URL. Ma
  * progression par livre est en cache (projectStore.myProgress) et rafraîchie
@@ -12,16 +11,12 @@
  * du progressStore, à jour dès que j'enregistre des pages.
  */
 
-import { useHeaderHeight } from '@react-navigation/elements';
-import { Stack, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { PlusIcon } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import BookLibrary, { LIST_SIDE } from '../components/ui/BookLibrary';
-import { sheetIconItem } from '../components/ui/SheetHeader';
-import WatercolorCorner, {
-  WATERCOLOR_OVERFLOW_RIGHT,
-  WATERCOLOR_OVERFLOW_TOP,
-} from '../components/ui/WatercolorCorner';
+import BookLibrary from '../components/ui/BookLibrary';
+import GlassButton from '../components/ui/GlassButton';
+import WatercolorCorner from '../components/ui/WatercolorCorner';
 import { useAuthStore } from '../stores/authStore';
 import { useProgressStore } from '../stores/progressStore';
 import { useProjectStore } from '../stores/projectStore';
@@ -31,7 +26,6 @@ import { BookReading, LibraryFilter, newBookId, readingOf, sortBooks } from '../
 
 export default function LibraryRoute() {
   const router = useRouter();
-  const headerHeight = useHeaderHeight();
   const challenges = useProjectStore((state) => state.challenges);
   const activeChallengeId = useProjectStore((state) => state.activeChallenge?.id ?? null);
   const setActiveChallenge = useProjectStore((state) => state.setActiveChallenge);
@@ -94,15 +88,7 @@ export default function LibraryRoute() {
   }, [router, firstName]);
 
   return (
-    <>
-      <Stack.Screen
-        options={{
-          unstable_headerRightItems: () => [
-            sheetIconItem({ icon: PlusIcon, onPress: handleAdd, accessibilityLabel: 'Ajouter une lecture' }),
-          ],
-        }}
-      />
-      <BookLibrary
+    <BookLibrary
         challenges={books}
         readings={readings}
         covers={covers}
@@ -111,18 +97,12 @@ export default function LibraryRoute() {
         onSelect={handleSelect}
         filter={filter}
         onFilterChange={setFilter}
-        // Dans l'en-tête de la liste, pour que les filtres passent par-dessus.
-        // Recalé sur le coin de l'écran : la liste commence sous la barre, avec
-        // sa marge. Tons neutres : aucun livre précis ici.
-        headerBackground={
-          <WatercolorCorner
-            style={{
-              top: -WATERCOLOR_OVERFLOW_TOP - headerHeight,
-              right: -WATERCOLOR_OVERFLOW_RIGHT - LIST_SIDE,
-            }}
-          />
+        actions={
+          <GlassButton icon={PlusIcon} size={36} onPress={handleAdd} accessibilityLabel="Ajouter une lecture" />
         }
+        // Derrière l'en-tête, calé sur le coin du sheet (l'en-tête en couvre
+        // toute la largeur). Tons neutres : aucun livre précis ici.
+        headerBackground={<WatercolorCorner />}
       />
-    </>
   );
 }

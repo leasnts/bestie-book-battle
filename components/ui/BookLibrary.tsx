@@ -41,6 +41,8 @@ import BookCover, { COVER_RATIO } from './BookCover';
 import RibbonBookmark, { RIBBON_ABOVE_COVER } from './RibbonBookmark';
 import PressableScale from './PressableScale';
 import FilterChips, { FILTER_CHIPS_H } from './FilterChips';
+import { SHEET_TOP_INSET, useSheetScrolled } from './SheetHeader';
+import { SHEET_GUTTER, SheetPageHeader } from './SheetPage';
 
 // ─── Props ─────────────────────────────────────────────────────────
 
@@ -59,8 +61,10 @@ interface BookLibraryProps {
   onSelect: (challenge: Challenge) => void;
   filter: LibraryFilter;
   onFilterChange: (filter: LibraryFilter) => void;
-  /** Décor posé SOUS les filtres, dans l'en-tête de la liste (l'aquarelle du coin) */
+  /** Décor derrière l'en-tête du sheet (l'aquarelle du coin) */
   headerBackground?: React.ReactNode;
+  /** À droite du titre : le « + » */
+  actions?: React.ReactNode;
 }
 
 // ─── Constantes (reprises de l'ancienne étagère de l'accueil) ──────
@@ -82,14 +86,17 @@ const SHELF_H = COVER_H + SHELF_BAR_H - SHELF_OVERLAP;
 /** Hauteur du message quand aucun livre ne correspond au filtre */
 const EMPTY_H = 60;
 /** Marges gauche et droite de la liste, alignées sur le titre du sheet */
-export const LIST_SIDE = spacing.xl;
+export const LIST_SIDE = SHEET_GUTTER;
 /** Marge sous la dernière étagère */
 const LIST_BOTTOM = spacing['2xl'];
 
+/** L'en-tête du sheet (titre, puis les filtres), avant toute mesure */
+const HEADER_H = SHEET_TOP_INSET + 36 + spacing.sm + FILTER_CHIPS_H + spacing.md;
+
 /** Hauteur du contenu pour `shelfCount` étagères, avant toute mesure */
 function estimateContentHeight(shelfCount: number): number {
-  if (shelfCount === 0) return FILTER_CHIPS_H + SHELF_GAP + EMPTY_H + LIST_BOTTOM;
-  return FILTER_CHIPS_H + shelfCount * (SHELF_GAP + SHELF_H) + LIST_BOTTOM;
+  if (shelfCount === 0) return HEADER_H + SHELF_GAP + EMPTY_H + LIST_BOTTOM;
+  return HEADER_H + shelfCount * (SHELF_GAP + SHELF_H) + LIST_BOTTOM;
 }
 
 /** Pastille si le livre n'est pas encore dans `readings` (premier chargement) */
@@ -259,8 +266,10 @@ export default function BookLibrary({
   filter,
   onFilterChange,
   headerBackground,
+  actions,
 }: BookLibraryProps) {
   const reducedMotion = useReducedMotion();
+  const { scrolled, onScroll } = useSheetScrolled();
   // Plafond commun des sheets à contenu : sous l'en-tête de l'accueil
   const { maxHeight } = useFitSheet();
   // Hauteur réelle du contenu, mesurée après le premier rendu (texte agrandi, etc.)
@@ -283,8 +292,8 @@ export default function BookLibrary({
   return (
     /*
       FlatList enfant DIRECT de l'écran, sans View intermédiaire : c'est la
-      condition pour qu'UIKit lui applique l'encart sous la barre de navigation
-      du sheet (cf. app/leaderboard.tsx). Une étagère = une ligne de la liste.
+      condition des sheets natifs (cf. app/leaderboard.tsx). Une étagère = une
+      ligne de la liste.
     */
     <FlatList
       data={shelves}
@@ -301,13 +310,15 @@ export default function BookLibrary({
           animate={!reducedMotion}
         />
       )}
+      // L'en-tête du sheet, filtres compris, reste collé en haut
       ListHeaderComponent={
-        <>
-          {/* Le décor d'abord : les filtres passent par-dessus */}
-          {headerBackground}
+        <SheetPageHeader title="Mes lectures" actions={actions} background={headerBackground} scrolled={scrolled}>
           <FilterChips options={LIBRARY_FILTERS} value={filter} onChange={onFilterChange} />
-        </>
+        </SheetPageHeader>
       }
+      stickyHeaderIndices={[0]}
+      onScroll={onScroll}
+      scrollEventThrottle={16}
       ListEmptyComponent={<Text style={styles.empty}>Aucun livre</Text>}
       style={[styles.list, { height: listHeight }]}
       contentContainerStyle={styles.listContent}

@@ -18,79 +18,44 @@
 import * as Notifications from 'expo-notifications';
 // Icônes maison plutôt que lucide-react-native : même tracé, même API
 // (size / color / strokeWidth), et un jeu d'icônes de moins à maintenir.
-import * as Clipboard from 'expo-clipboard';
 import Constants from 'expo-constants';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
-  Animated as RNAnimated,
-  InputAccessoryView,
-  Keyboard,
-  KeyboardAvoidingView,
   Linking,
   Platform,
   Pressable,
   ScrollView,
-  Share,
   StyleSheet,
   Switch,
   Text,
-  TextInput,
   View,
 } from 'react-native';
 import 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import BottomSheet from '../../components/ui/BottomSheet';
-import Button3D from '../../components/Button3D';
 import PageTransition from '../../components/PageTransition';
-import { pickImage, uploadProfilePhoto } from '../../services/supabase/storage';
 import { useAuthStore } from '../../stores/authStore';
 import { useProjectStore } from '../../stores/projectStore';
-import { Challenge } from '../../types/supabase';
 import {
-  borderRadius,
   colors,
   creamAlpha,
   fonts,
-  fontSize,
   inkAlpha,
   shadowAlpha,
-  shadows,
   spacing,
 } from '../../utils/constants';
 import { useTabBarInset } from '../../components/ui/GlassTabBar';
-import { BellIcon, BookOpenIcon, ChevronRightIcon, InboxIcon, CopyIcon, FlaskConicalIcon, LogOutIcon, PencilIcon, RotateCcwIcon, ShareIcon, Trash2Icon, TriangleAlertIcon, XIcon } from 'lucide-react-native';
+import { resolvePhotoSource } from '../../utils/profilePhoto';
+import { BellIcon, ChevronRightIcon, InboxIcon, FlaskConicalIcon, LogOutIcon, PencilIcon, ShareIcon, Trash2Icon, TriangleAlertIcon } from 'lucide-react-native';
 
 // ─── Constantes ────────────────────────────────────────────────────────────────
 
 const TEXTURE_IMAGE = require('../../assets/images/61ea1e0c638b5b9c8100383a37a5b488848db623.png');
 const APP_VERSION = Constants.expoConfig?.version ?? '1.0';
-const ACCESSORY_ID_PROFILE = 'edit-profile-no-done';
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// HELPERS
-// ═══════════════════════════════════════════════════════════════════════════════
-
-/**
- * Construit l'URI de la photo avec cache-busting (?v=timestamp).
- * Même logique que resolveAvatarSource sur la home — force expo-image
- * à recharger après un changement de photo.
- */
-const DEFAULT_PROFILE_IMAGE = require('../../assets/images/profile_picture_default.png');
-
-function resolvePhotoSource(url?: string | null, updatedAt?: string | null) {
-  if (!url) return DEFAULT_PROFILE_IMAGE;
-  if (url.startsWith('http://') || url.startsWith('https://')) {
-    const sep = url.includes('?') ? '&' : '?';
-    const v = updatedAt ? new Date(updatedAt).getTime() : Date.now();
-    return { uri: `${url}${sep}v=${v}` };
-  }
-  return DEFAULT_PROFILE_IMAGE;
-}
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // PAGE PRINCIPALE
@@ -107,8 +72,6 @@ export default function ProfileScreen() {
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
-  const [editProfileVisible, setEditProfileVisible] = useState(false);
-  const [inviteVisible, setInviteVisible] = useState(false);
 
   // ─── Init : permissions notifs + challenges ─────────────────────────────────
 
@@ -288,7 +251,7 @@ export default function ProfileScreen() {
             {user?.email && (
               <Text style={styles.profileEmail}>{user.email}</Text>
             )}
-            <EditButton onPress={() => setEditProfileVisible(true)} />
+            <EditButton onPress={() => router.push('/edit-profile')} />
           </View>
         </View>
       </View>
@@ -323,7 +286,7 @@ export default function ProfileScreen() {
 
         <Pressable
           style={({ pressed }) => [styles.settingRow, pressed && styles.settingRowPressed]}
-          onPress={() => setInviteVisible(true)}
+          onPress={() => router.push('/invite')}
         >
           <View style={styles.settingLeft}>
             <ShareIcon size={24} color={colors.textSecondary} />
@@ -411,8 +374,6 @@ export default function ProfileScreen() {
         </View>
       )}
 
-      <EditProfileSheet visible={editProfileVisible} onClose={() => setEditProfileVisible(false)} />
-      <InviteSheet visible={inviteVisible} onClose={() => setInviteVisible(false)} challenges={challenges} />
     </View>
     </PageTransition>
   );
@@ -448,279 +409,6 @@ function EditButton({ onPress }: { onPress: () => void }) {
         <Text style={styles.editButtonText}>Modifier</Text>
       </View>
     </Pressable>
-  );
-}
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// EDIT PROFILE SHEET
-// ═══════════════════════════════════════════════════════════════════════════════
-
-function EditProfileSheet({ visible, onClose }: { visible: boolean; onClose: () => void }) {
-  const insets = useSafeAreaInsets();
-  const { user, updateProfile } = useAuthStore();
-  const [firstName, setFirstName] = useState('');
-  const [isSaving, setIsSaving] = useState(false);
-  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
-  const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
-  const [localPhotoUri, setLocalPhotoUri] = useState<string | null>(null);
-  const inputRef = useRef<TextInput>(null);
-
-  useEffect(() => {
-    if (visible) {
-      setFirstName(user?.first_name || '');
-      setLocalPhotoUri(null);
-    }
-  }, [visible, user?.first_name]);
-
-  useEffect(() => {
-    const show = Keyboard.addListener(
-      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
-      () => setIsKeyboardVisible(true)
-    );
-    const hide = Keyboard.addListener(
-      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
-      () => setIsKeyboardVisible(false)
-    );
-    return () => { show.remove(); hide.remove(); };
-  }, []);
-
-  const handleChangePhoto = async () => {
-    if (!user) return;
-    try {
-      const imageUri = await pickImage(true, [1, 1], 0.8);
-      if (!imageUri) return;
-      // Afficher la photo locale IMMÉDIATEMENT (optimistic UI)
-      // L'utilisatrice voit sa photo tout de suite, sans attendre l'upload
-      setLocalPhotoUri(imageUri);
-      setIsUploadingPhoto(true);
-      const { url } = await uploadProfilePhoto(user.id, imageUri);
-      await updateProfile({ profile_photo_url: url });
-    } catch {
-      // En cas d'échec, on retire la preview locale
-      setLocalPhotoUri(null);
-      Alert.alert('Erreur', 'Impossible de changer ta photo. Réessaie.');
-    } finally {
-      setIsUploadingPhoto(false);
-    }
-  };
-
-  const handleSave = async () => {
-    Keyboard.dismiss();
-    const trimmed = firstName.trim();
-    if (!trimmed) {
-      Alert.alert('Erreur', 'Le prénom ne peut pas être vide.');
-      return;
-    }
-    setIsSaving(true);
-    try {
-      await updateProfile({ first_name: trimmed });
-      onClose();
-    } catch {
-      Alert.alert('Erreur', 'Impossible de sauvegarder. Réessaie.');
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  // Priorité : photo locale (preview instantanée) > photo serveur > défaut
-  const photoSource = localPhotoUri
-    ? { uri: localPhotoUri }
-    : resolvePhotoSource(user?.profile_photo_url, user?.updated_at);
-
-  return (
-    <BottomSheet visible={visible} onClose={onClose}>
-      {Platform.OS === 'ios' && (
-        <InputAccessoryView nativeID={ACCESSORY_ID_PROFILE}><View /></InputAccessoryView>
-      )}
-
-      <KeyboardAvoidingView style={sheetStyles.keyboardAvoid} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-        <View style={{ paddingHorizontal: spacing.xl, paddingBottom: isKeyboardVisible ? 12 : Math.max(32, insets.bottom + 16) }}>
-          <View style={sheetStyles.titleRow}>
-            <Text style={sheetStyles.title}>Modifier le profil</Text>
-            <Pressable
-              onPress={onClose}
-              hitSlop={12}
-              style={sheetStyles.closeBtn}
-              accessibilityRole="button"
-              accessibilityLabel="Fermer"
-            >
-              <XIcon size={22} color={colors.textSubtle} />
-            </Pressable>
-          </View>
-
-          <Pressable
-            style={sheetStyles.photoCentered}
-            onPress={handleChangePhoto}
-            disabled={isUploadingPhoto}
-          >
-            <View style={sheetStyles.photoCenteredThumb}>
-              <Image source={photoSource} style={sheetStyles.photoCenteredImg} contentFit="cover" />
-              <View style={sheetStyles.photoCenteredIconOverlay}>
-                {isUploadingPhoto ? (
-                  <ActivityIndicator size="small" color={colors.white} />
-                ) : (
-                  <RotateCcwIcon size={28} color={colors.white} strokeWidth={2.5} />
-                )}
-              </View>
-            </View>
-          </Pressable>
-
-          <TextInput
-            ref={inputRef}
-            style={sheetStyles.input}
-            value={firstName}
-            onChangeText={setFirstName}
-            placeholder="Ton prénom"
-            placeholderTextColor={colors.textPlaceholder}
-            returnKeyType="done"
-            onSubmitEditing={handleSave}
-            inputAccessoryViewID={ACCESSORY_ID_PROFILE}
-            autoCapitalize="words"
-          />
-
-          <View style={{ marginTop: spacing.sm }}>
-            <Button3D variant="primary" onPress={handleSave} loading={isSaving}>
-              Enregistrer
-            </Button3D>
-          </View>
-        </View>
-      </KeyboardAvoidingView>
-    </BottomSheet>
-  );
-}
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// INVITE SHEET
-// ═══════════════════════════════════════════════════════════════════════════════
-
-function InviteSheet({ visible, onClose, challenges }: { visible: boolean; onClose: () => void; challenges: Challenge[] }) {
-  const insets = useSafeAreaInsets();
-  const [selectedChallenge, setSelectedChallenge] = useState<Challenge | null>(null);
-  // Opacité du mini-toast "Copié !" inline (remplace l'Alert)
-  const copyToastOpacity = useRef(new RNAnimated.Value(0)).current;
-
-  useEffect(() => {
-    if (visible && challenges.length > 0) setSelectedChallenge(challenges[0]);
-  }, [visible, challenges]);
-
-  /**
-   * Copie le code et affiche un mini-toast inline qui disparaît en 1.5s.
-   * Plus léger qu'une Alert pour une action aussi simple.
-   */
-  const handleCopy = async () => {
-    if (!selectedChallenge?.invite_code) return;
-    await Clipboard.setStringAsync(selectedChallenge.invite_code);
-    RNAnimated.sequence([
-      RNAnimated.timing(copyToastOpacity, { toValue: 1, duration: 150, useNativeDriver: true }),
-      RNAnimated.delay(1200),
-      RNAnimated.timing(copyToastOpacity, { toValue: 0, duration: 300, useNativeDriver: true }),
-    ]).start();
-  };
-
-  const handleShare = async () => {
-    if (!selectedChallenge) return;
-    const code = selectedChallenge.invite_code;
-    const deepLink = selectedChallenge.invite_url || `bestiebookbattle://join/${code}`;
-    const message = `Rejoins-moi pour lire "${selectedChallenge.book_title}" sur bestiebookbattle ! 📚\n\nCode : ${code}\n${deepLink}`;
-    try {
-      await Share.share({ message, url: deepLink });
-    } catch {
-      // Annulé par l'utilisateur
-    }
-  };
-
-  const hasMultiple = challenges.length > 1;
-
-  return (
-    <BottomSheet visible={visible} onClose={onClose}>
-      <View style={{ paddingHorizontal: spacing.xl, paddingBottom: Math.max(32, insets.bottom + 16) }}>
-        <View style={sheetStyles.titleRow}>
-          <Text style={sheetStyles.title}>Inviter un ami</Text>
-          <Pressable
-              onPress={onClose}
-              hitSlop={12}
-              style={sheetStyles.closeBtn}
-              accessibilityRole="button"
-              accessibilityLabel="Fermer"
-            >
-            <XIcon size={22} color={colors.textSubtle} />
-          </Pressable>
-        </View>
-
-        {challenges.length === 0 ? (
-          <Text style={sheetStyles.emptyText}>Tu n'as aucun projet de lecture actif pour le moment.</Text>
-        ) : (
-          <>
-            {hasMultiple && (
-              <RNAnimated.ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                style={{ marginBottom: spacing.lg }}
-                contentContainerStyle={inviteStyles.bookPickerContent}
-              >
-                {challenges.map((c) => {
-                  const isSelected = c.id === selectedChallenge?.id;
-                  return (
-                    <Pressable
-                      key={c.id}
-                      onPress={() => setSelectedChallenge(c)}
-                      style={[inviteStyles.bookCard, isSelected && inviteStyles.bookCardSelected]}
-                    >
-                      {c.cover_url ? (
-                        <Image source={{ uri: c.cover_url }} style={inviteStyles.bookCardCover} contentFit="cover" />
-                      ) : (
-                        <View style={inviteStyles.bookCardNoCover}>
-                          <BookOpenIcon size={24} color={colors.textTertiary} />
-                        </View>
-                      )}
-                    </Pressable>
-                  );
-                })}
-              </RNAnimated.ScrollView>
-            )}
-
-            {!hasMultiple && selectedChallenge && (
-              <View style={inviteStyles.singleBook}>
-                {selectedChallenge.cover_url ? (
-                  <Image source={{ uri: selectedChallenge.cover_url }} style={inviteStyles.singleBookCover} contentFit="cover" />
-                ) : (
-                  <View style={[inviteStyles.singleBookCover, inviteStyles.singleBookNoCover]}>
-                    <BookOpenIcon size={28} color={colors.textTertiary} />
-                  </View>
-                )}
-                <View style={{ flex: 1 }}>
-                  <Text style={inviteStyles.singleBookTitle}>{selectedChallenge.book_title}</Text>
-                  {selectedChallenge.book_author && (
-                    <Text style={inviteStyles.singleBookAuthor}>{selectedChallenge.book_author}</Text>
-                  )}
-                </View>
-              </View>
-            )}
-
-            {selectedChallenge && (
-              <>
-                <Text style={sheetStyles.label}>Code d'invitation</Text>
-                <View>
-                  <Pressable style={inviteStyles.codeBox} onPress={handleCopy}>
-                    <Text style={inviteStyles.codeText}>{selectedChallenge.invite_code}</Text>
-                    <CopyIcon size={20} color={colors.textTertiary} />
-                  </Pressable>
-                  <RNAnimated.View style={[inviteStyles.copyToast, { opacity: copyToastOpacity }]} pointerEvents="none">
-                    <Text style={inviteStyles.copyToastText}>Copié !</Text>
-                  </RNAnimated.View>
-                </View>
-
-                <View style={{ marginTop: spacing.lg }}>
-                  <Button3D variant="primary" onPress={handleShare} icon={ShareIcon} iconPosition="left">
-                    Inviter à participer
-                  </Button3D>
-                </View>
-              </>
-            )}
-          </>
-        )}
-      </View>
-    </BottomSheet>
   );
 }
 
@@ -888,178 +576,5 @@ const styles = StyleSheet.create({
     backgroundColor: creamAlpha(0.75),
     justifyContent: 'center',
     alignItems: 'center',
-  },
-});
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// STYLES — SHEETS PARTAGÉS
-// ═══════════════════════════════════════════════════════════════════════════════
-
-const sheetStyles = StyleSheet.create({
-  keyboardAvoid: {
-    flex: 1,
-    justifyContent: 'flex-end',
-  },
-  titleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: spacing.xl,
-  },
-  title: {
-    flex: 1,
-    fontFamily: fonts.display,
-    fontSize: 22,
-    color: colors.textPrimary,
-    letterSpacing: -0.2,
-    lineHeight: 44,
-  },
-  closeBtn: { padding: 4 },
-  label: {
-    fontFamily: fonts.bodySemiBold,
-    fontSize: fontSize.sm,
-    color: colors.textTertiary,
-    lineHeight: 20,
-    marginBottom: spacing.sm,
-  },
-  input: {
-    fontFamily: fonts.body,
-    fontSize: fontSize.md,
-    color: colors.textPrimary,
-    backgroundColor: colors.white,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: borderRadius.lg,
-    paddingHorizontal: spacing['2xl'],
-    paddingVertical: spacing.xl,
-    textAlignVertical: 'center',
-    marginBottom: spacing.lg,
-    ...shadows.xs,
-  },
-  photoCentered: {
-    alignItems: 'center',
-    marginBottom: spacing.xl,
-  },
-  photoCenteredThumb: {
-    width: 120,
-    height: 120,
-    borderRadius: 20,
-    overflow: 'hidden',
-  },
-  photoCenteredImg: {
-    width: 120,
-    height: 120,
-  },
-  photoCenteredIconOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: shadowAlpha(0.35),
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderRadius: 20,
-  },
-  emptyText: {
-    fontFamily: fonts.body,
-    fontSize: fontSize.md,
-    color: colors.textTertiary,
-    textAlign: 'center',
-    marginVertical: spacing['3xl'],
-  },
-});
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// STYLES — INVITE SHEET
-// ═══════════════════════════════════════════════════════════════════════════════
-
-const inviteStyles = StyleSheet.create({
-  bookPickerContent: {
-    gap: spacing.md,
-    paddingHorizontal: 2,
-  },
-  bookCard: {
-    width: 84,
-    alignItems: 'center',
-    padding: spacing.sm,
-    borderRadius: borderRadius.md,
-    borderWidth: 2,
-    borderColor: 'transparent',
-    backgroundColor: colors.bgSecondary,
-  },
-  bookCardSelected: {
-    borderColor: colors.accent,
-    backgroundColor: colors.white,
-  },
-  bookCardCover: {
-    width: 68,
-    height: 95,
-    borderRadius: 4,
-  },
-  bookCardNoCover: {
-    width: 68,
-    height: 95,
-    borderRadius: 4,
-    backgroundColor: colors.borderLight,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  singleBook: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-    marginBottom: spacing.xl,
-  },
-  singleBookCover: {
-    width: 52,
-    height: 72,
-    borderRadius: 4,
-  },
-  singleBookNoCover: {
-    backgroundColor: colors.borderLight,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  singleBookTitle: {
-    fontFamily: fonts.display,
-    fontSize: 18,
-    color: colors.textPrimary,
-    marginBottom: 4,
-  },
-  singleBookAuthor: {
-    fontFamily: fonts.body,
-    fontSize: fontSize.sm,
-    color: colors.textTertiary,
-  },
-  codeBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: colors.bgSecondary,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: borderRadius.md,
-    paddingHorizontal: spacing['2xl'],
-    paddingVertical: spacing.xl,
-    ...shadows.xs,
-  },
-  codeText: {
-    fontFamily: fonts.bodySemiBold,
-    fontSize: 28,
-    color: colors.textPrimary,
-    letterSpacing: 4,
-  },
-  // Mini-toast "Copié !" superposé sur le codeBox, centré
-  copyToast: {
-    position: 'absolute',
-    alignSelf: 'center',
-    top: '50%',
-    transform: [{ translateY: -14 }],
-    backgroundColor: colors.dark900,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: 6,
-    borderRadius: 9999,
-  },
-  copyToastText: {
-    fontFamily: fonts.bodySemiBold,
-    fontSize: fontSize.sm,
-    color: colors.white,
   },
 });

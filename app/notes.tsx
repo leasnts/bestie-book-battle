@@ -15,10 +15,14 @@
  *
  * `SectionList` plutôt qu'un `.map()` : un club qui lit beaucoup peut poser
  * plusieurs centaines de notes sur un livre.
+ *
+ * Un sheet natif haut, comme tous les autres (en-tête commun `SheetPageHeader`,
+ * 16 pt de marge) ; il n'est pas « à la hauteur du contenu » : il se parcourt
+ * longtemps. La liste est l'enfant direct de l'écran.
  */
 
-import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
-import { ChevronLeftIcon, LockIcon, StickyNoteIcon } from 'lucide-react-native';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { LockIcon, StickyNoteIcon } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -34,7 +38,8 @@ import GlassSection from '../components/ui/GlassSection';
 import NoteCard from '../components/ui/NoteCard';
 import NotesTrack, { type TrackDot } from '../components/ui/NotesTrack';
 import PressableScale from '../components/ui/PressableScale';
-import { sheetIconItem, sheetTitleItem } from '../components/ui/SheetHeader';
+import GlassButton from '../components/ui/GlassButton';
+import { SheetPageHeader } from '../components/ui/SheetPage';
 import type { AnnotationWithAuthor } from '../services/supabase/annotations';
 import { useAnnotationStore } from '../stores/annotationStore';
 import { useAuthStore } from '../stores/authStore';
@@ -62,7 +67,7 @@ const DEFAULT_AVATAR = require('../assets/images/profile_picture_default.png');
 
 export default function NotesRoute() {
   const router = useRouter();
-  /** Ouvert depuis la fiche du livre : il s'affiche dans son sheet, sans retour natif */
+  /** Ouvert depuis la fiche du livre : il se pose dessus, un retour y ramène */
   const { from } = useLocalSearchParams<{ from?: string }>();
   /**
    * Depuis la fiche du livre, le carnet est une consultation : on voit les
@@ -194,43 +199,27 @@ export default function NotesRoute() {
       ref={listRef}
       sections={sections}
       keyExtractor={(note) => note.id}
-      style={[styles.screen, inSheet && styles.screenInSheet]}
+      style={styles.screen}
       contentContainerStyle={styles.content}
       contentInsetAdjustmentBehavior="automatic"
       stickySectionHeadersEnabled={false}
       ListHeaderComponent={
         <View style={styles.header}>
-          {/* Écrire une note depuis le carnet : même bouton post-it qu'ailleurs */}
-          <Stack.Screen
-            options={{
-              // Depuis un autre sheet : comme les autres sheets (fond blanc, barre
-              // fondue sans trait), un retour, et le titre ferré à gauche
-              ...(inSheet && {
-                headerTitle: '',
-                headerShadowVisible: false,
-                headerStyle: { backgroundColor: colors.white },
-                unstable_headerLeftItems: () => [
-                  sheetIconItem({
-                    icon: ChevronLeftIcon,
-                    onPress: () => router.back(),
-                    accessibilityLabel: 'Retour à la fiche du livre',
-                  }),
-                  sheetTitleItem('Carnet'),
-                ],
-              }),
-              headerRight: inSheet ? undefined : () => (
-                <PressableScale
-                  style={styles.write}
-                  pressedScale={0.9}
-                  hitSlop={8}
-                  onPress={() => router.push('/note/new')}
-                  accessibilityRole="button"
+          {/* L'en-tête commun des sheets ; écrire une note : le rond post-it */}
+          <SheetPageHeader
+            title="Carnet"
+            onBack={inSheet ? () => router.back() : undefined}
+            actions={
+              inSheet ? undefined : (
+                <GlassButton
+                  icon={StickyNoteIcon}
+                  size={36}
+                  onPress={() => router.push('/note/new?from=notes')}
                   accessibilityLabel="Noter cette page"
-                >
-                  <StickyNoteIcon size={18} color={colors.white} strokeWidth={2.2} />
-                </PressableScale>
-              ),
-            }}
+                />
+              )
+            }
+            scrolled={false}
           />
 
           <GlassSection>
@@ -328,7 +317,7 @@ export default function NotesRoute() {
               inSheet
                 ? undefined
                 : item.user_id === user?.id
-                  ? () => router.push(`/note/${item.id}`)
+                  ? () => router.push(`/note/${item.id}?from=notes`)
                   : () => user?.id && markRead(item.id, user.id)
             }
             myUserId={user?.id}
@@ -413,10 +402,6 @@ function Chip({
 
 const styles = StyleSheet.create({
   screen: {
-    backgroundColor: colors.bgLight,
-  },
-  /** Dans un sheet : le blanc des autres sheets */
-  screenInSheet: {
     backgroundColor: colors.white,
   },
   content: {
@@ -487,14 +472,6 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
 
-  write: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.dark900,
-  },
   markAll: {
     alignSelf: 'flex-start',
   },
