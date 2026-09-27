@@ -206,6 +206,9 @@ export default function LeaderboardList({
       )}
       {...sheet.scrollProps}
       ItemSeparatorComponent={Separator}
+      // La couronne du premier dépasse de sa ligne : de la place sous l'en-tête
+      // (collant, il passe par-dessus la liste et la couperait)
+      ListHeaderComponentStyle={styles.listHeader}
       ListHeaderComponent={
         <SheetPageHeader
           title="Classement"
@@ -241,7 +244,6 @@ export default function LeaderboardList({
       */
       initialNumToRender={12}
       windowSize={7}
-      removeClippedSubviews
       bounces
     />
   );
@@ -263,6 +265,10 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
     gap: spacing.xs,
     alignSelf: 'flex-start',
+  },
+  // La couronne dépasse de 8 pt au-dessus de la ligne du premier
+  listHeader: {
+    marginBottom: spacing.sm,
   },
   // Entre les lignes d'une liste : 12 pt (DESIGN.md › Layout)
   separator: {
