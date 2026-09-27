@@ -248,8 +248,8 @@ const styles = StyleSheet.create({
     fontFamily: fonts.body,
     fontSize: 15,
     color: colors.textTertiary,
-    // Titre ↔ sous-titre : 8 pt, rien en dessous ne respire
-    marginTop: spacing.sm,
+    // Sous la ligne retour + titre (36 pt de haut) : 12 pt, sinon il y colle
+    marginTop: spacing.md,
   },
   actions: {
     flexDirection: 'row',
