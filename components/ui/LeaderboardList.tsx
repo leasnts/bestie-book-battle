@@ -270,9 +270,9 @@ const styles = StyleSheet.create({
   listHeader: {
     marginBottom: spacing.sm,
   },
-  // Entre les lignes d'une liste : 12 pt (DESIGN.md › Layout)
+  // Un peu d'air entre les lignes
   separator: {
-    height: spacing.md,
+    height: spacing.xs,
   },
 
   // ═══ LIGNE ═══
@@ -281,7 +281,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.md,
     paddingVertical: spacing.md,
-    paddingHorizontal: spacing.md,
+    // Le contenu (le rang d'abord) ferré sur la marge du sheet, comme le titre ;
+    // seul le fond de ma ligne déborde dans la marge
+    paddingHorizontal: spacing.sm,
+    marginHorizontal: -spacing.sm,
     borderRadius: borderRadius.md,
   },
   /** Ma ligne : fond teinté pour la repérer d'un coup d'œil */
@@ -298,7 +301,7 @@ const styles = StyleSheet.create({
     fontFamily: fonts.display,
     fontSize: 15,
     color: colors.textPlaceholder,
-    textAlign: 'center',
+    textAlign: 'left',
   },
   rankMe: {
     color: colors.textPrimary,
