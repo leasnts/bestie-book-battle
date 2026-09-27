@@ -695,7 +695,7 @@ de la fiche du livre, pour tous :
   primaire, « Enregistrer ») ; une suppression en lien rouge en dessous ;
 - pas de croix : on ferme en glissant vers le bas.
 - **espacements** (échelle de Layout) : sous-titre **à la ligne** sous le
-  retour (jamais à côté), 12 pt sous la ligne retour + titre ; en-tête ↔ contenu 24 pt ;
+  retour (jamais à côté), 16 pt sous la ligne retour + titre ; en-tête ↔ contenu 24 pt ;
   entre deux champs 24 pt, libellé ↔ son champ 8 pt ; entre les lignes d'une
   liste 12 pt ; action principale 24 pt sous ce qui précède.
 Un sheet qui est une liste (classement, bibliothèque, carnet) pose

@@ -248,8 +248,8 @@ const styles = StyleSheet.create({
     fontFamily: fonts.body,
     fontSize: 15,
     color: colors.textTertiary,
-    // Sous la ligne retour + titre (36 pt de haut) : 12 pt, sinon il y colle
-    marginTop: spacing.md,
+    // Sous la ligne retour + titre : 16 pt, un groupe à part (Lea, 2026-09-27)
+    marginTop: spacing.lg,
   },
   actions: {
     flexDirection: 'row',
