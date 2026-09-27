@@ -264,9 +264,9 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
     alignSelf: 'flex-start',
   },
-  // Un peu d'air entre les lignes
+  // Entre les lignes d'une liste : 12 pt (DESIGN.md › Layout)
   separator: {
-    height: spacing.xs,
+    height: spacing.md,
   },
 
   // ═══ LIGNE ═══

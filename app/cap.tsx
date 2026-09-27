@@ -41,8 +41,18 @@ function inAWeek(): Date {
 
 const JOURS = ['Dim.', 'Lun.', 'Mar.', 'Mer.', 'Jeu.', 'Ven.', 'Sam.'];
 const MOIS = [
-  'janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin',
-  'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.',
+  'janv.',
+  'févr.',
+  'mars',
+  'avr.',
+  'mai',
+  'juin',
+  'juil.',
+  'août',
+  'sept.',
+  'oct.',
+  'nov.',
+  'déc.',
 ];
 function formatDateLabel(d: Date): string {
   return `${JOURS[d.getDay()]} ${d.getDate()} ${MOIS[d.getMonth()]} ${d.getFullYear()}`;
@@ -61,7 +71,7 @@ export default function CapRoute() {
 
   /** Le cap qu'on modifie, ou `null` pour en poser un */
   const goal = useMemo(
-    () => (id ? [secondaryGoal, ...history].find((g) => g?.id === id) ?? null : null),
+    () => (id ? ([secondaryGoal, ...history].find((g) => g?.id === id) ?? null) : null),
     [id, secondaryGoal, history],
   );
   const totalPages = activeChallenge?.total_pages ?? 0;
@@ -89,7 +99,10 @@ export default function CapRoute() {
       return;
     }
     if (pages > totalPages) {
-      Alert.alert('Erreur', `Le livre fait ${totalPages} pages, le cap ne peut pas dépasser ce nombre.`);
+      Alert.alert(
+        'Erreur',
+        `Le livre fait ${totalPages} pages, le cap ne peut pas dépasser ce nombre.`,
+      );
       return;
     }
 
@@ -126,7 +139,18 @@ export default function CapRoute() {
     } finally {
       setIsSaving(false);
     }
-  }, [activeChallenge, user?.id, targetPage, totalPages, participants, goal, deadline, editGoal, addGoal, router]);
+  }, [
+    activeChallenge,
+    user?.id,
+    targetPage,
+    totalPages,
+    participants,
+    goal,
+    deadline,
+    editGoal,
+    addGoal,
+    router,
+  ]);
 
   const handleDelete = useCallback(() => {
     if (!goal) return;
@@ -142,17 +166,19 @@ export default function CapRoute() {
         <View />
       </InputAccessoryView>
 
-      <Text style={styles.label}>Page à atteindre</Text>
-      <TextInput
-        style={styles.input}
-        placeholder={`Ex : ${Math.min(totalPages, 100)}`}
-        placeholderTextColor={colors.textPlaceholder}
-        value={targetPage}
-        onChangeText={setTargetPage}
-        keyboardType="number-pad"
-        inputAccessoryViewID={ACCESSORY_ID}
-        onFocus={() => setShowDatePicker(false)}
-      />
+      <View style={styles.field}>
+        <Text style={styles.label}>Page à atteindre</Text>
+        <TextInput
+          style={styles.input}
+          placeholder={`Ex : ${Math.min(totalPages, 100)}`}
+          placeholderTextColor={colors.textPlaceholder}
+          value={targetPage}
+          onChangeText={setTargetPage}
+          keyboardType="number-pad"
+          inputAccessoryViewID={ACCESSORY_ID}
+          onFocus={() => setShowDatePicker(false)}
+        />
+      </View>
 
       <Text style={styles.label}>Date butoir</Text>
       <Pressable
@@ -208,8 +234,11 @@ const styles = StyleSheet.create({
     fontSize: fontSize.sm,
     color: colors.textTertiary,
     lineHeight: 20,
-    marginTop: spacing.sm,
     marginBottom: spacing.sm,
+  },
+  // Entre deux champs : 24 pt, le libellé colle au sien (8 pt)
+  field: {
+    marginBottom: spacing['2xl'],
   },
   input: {
     fontFamily: fonts.body,
@@ -221,7 +250,6 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.lg,
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.lg,
-    marginBottom: spacing.sm,
     ...shadows.xs,
   },
   dateText: {
@@ -230,6 +258,7 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
   },
   picker: {
+    marginTop: spacing.sm,
     height: 150,
     alignSelf: 'center',
   },

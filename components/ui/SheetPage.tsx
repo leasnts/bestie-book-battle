@@ -227,8 +227,9 @@ const styles = StyleSheet.create({
     // iOS ajoute déjà la zone du bas de l'écran (34 pt) sous le contenu
     paddingBottom: spacing.lg,
   },
+  // + les 12 pt du bas de l'en-tête collant = 24 pt avant le contenu (une section)
   header: {
-    marginBottom: spacing.sm,
+    marginBottom: spacing.md,
   },
   headerRow: {
     flexDirection: 'row',
@@ -247,15 +248,17 @@ const styles = StyleSheet.create({
     fontFamily: fonts.body,
     fontSize: 15,
     color: colors.textTertiary,
-    marginTop: spacing.xs,
+    // Titre ↔ sous-titre : 8 pt, rien en dessous ne respire
+    marginTop: spacing.sm,
   },
   actions: {
     flexDirection: 'row',
     gap: spacing.sm,
     alignSelf: 'flex-start',
   },
+  // L'action principale est une section à part : 24 pt au-dessus
   footer: {
-    paddingTop: spacing.xl,
+    paddingTop: spacing['2xl'],
     gap: spacing.md,
   },
 });
