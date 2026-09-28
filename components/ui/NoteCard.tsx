@@ -21,7 +21,7 @@ import { EllipsisIcon, SmilePlusIcon, XIcon } from 'lucide-react-native';
 import React, { useMemo, useState } from 'react';
 import { StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native';
 import type { AnnotationWithAuthor } from '../../services/supabase/annotations';
-import { ANNOTATION_CATEGORIES, formatNotePage } from '../../utils/annotations';
+import { ANNOTATION_CATEGORIES, formatNotePage, isEmojiOnly } from '../../utils/annotations';
 import { borderRadius, colors, creamAlpha, fonts, inkAlpha, spacing } from '../../utils/constants';
 import { QUICK_REACTIONS } from '../../utils/emojis';
 import NoteSticker from './NoteSticker';
@@ -62,6 +62,9 @@ interface NoteCardProps {
  * les détails d'un autocollant moyen. Le coin décollé fait 34 % de ce côté.
  */
 const STICKER_BASE = 72;
+/** Le diamètre d'une note ronde (un emoji seul) : dans la liste, dans la pile */
+const DISC = 84;
+export const DISC_LARGE = 210;
 export const STICKER_BASE_LARGE = 96;
 
 export default function NoteCard({
@@ -92,15 +95,54 @@ export default function NoteCard({
    * Une ancienne note qui a les deux : l'emoji passe en tête du texte.
    */
   const text = note.body ? (note.emoji ? `${note.emoji} ${note.body}` : note.body) : null;
-  const emojiOnly = !text && !!note.emoji && !note.audio_path && !note.quote;
+  const emojiOnly = isEmojiOnly(note);
+  const author = isMine ? 'Moi' : note.author?.first_name || 'Participant';
 
-  const sticker = (
+  // Un emoji seul : un autocollant rond. Dans la pile, l'autrice au-dessus de
+  // l'emoji et la page dessous ; dans la liste, les mêmes repères à côté.
+  const disc = (diameter: number) => (
+    <View style={[styles.disc, { width: diameter, height: diameter }]}>
+      <View style={StyleSheet.absoluteFill} pointerEvents="none">
+        <NoteSticker id={`note-${note.id}`} color={category.color} size={diameter} round />
+      </View>
+      {large && (
+        <View style={styles.discHead}>
+          <Image source={resolveAvatar(note.author?.profile_photo_url)} style={styles.avatar} />
+          <Text style={styles.name} numberOfLines={1}>
+            {author}
+          </Text>
+        </View>
+      )}
+      <Text style={[styles.bigEmoji, large && styles.bigEmojiLarge]}>{note.emoji}</Text>
+      {large && (
+        <Text style={styles.discMeta}>
+          {category.label} · {page}
+        </Text>
+      )}
+    </View>
+  );
+
+  const roundSticker = large ? (
+    disc(DISC_LARGE)
+  ) : (
+    <View style={styles.discRow}>
+      {disc(DISC)}
+      <View style={styles.discInfo}>
+        <View style={styles.head}>
+          <Image source={resolveAvatar(note.author?.profile_photo_url)} style={styles.avatar} />
+          <Text style={styles.name} numberOfLines={1}>
+            {author}
+          </Text>
+        </View>
+        <Text style={[styles.category, styles.categoryCompact]}>{category.label}</Text>
+        <Text style={[styles.page, styles.discPage]}>{page}</Text>
+      </View>
+    </View>
+  );
+
+  const rectSticker = (
     <View
-      style={[
-        styles.note,
-        large && styles.noteLarge,
-        emojiOnly && (large ? styles.noteCompactCentered : styles.noteCompact),
-      ]}
+      style={[styles.note, large && styles.noteLarge]}
       onLayout={onLayout}
     >
       {size && (
@@ -118,22 +160,18 @@ export default function NoteCard({
       <View style={styles.head}>
         <Image source={resolveAvatar(note.author?.profile_photo_url)} style={styles.avatar} />
         <Text style={styles.name} numberOfLines={1}>
-          {isMine ? 'Moi' : note.author?.first_name || 'Participant'}
+          {author}
         </Text>
-        <Text style={[styles.category, emojiOnly && styles.categoryCompact]}>{category.label}</Text>
+        <Text style={styles.category}>{category.label}</Text>
         <Text style={styles.page}>{page}</Text>
       </View>
 
       {!!note.quote && <Text style={[styles.quote, large && styles.quoteLarge]}>{note.quote}</Text>}
 
-      {emojiOnly ? (
-        <Text style={[styles.bigEmoji, large && styles.bigEmojiLarge]}>{note.emoji}</Text>
-      ) : (
-        !!(text ?? note.emoji) && (
-          <Text style={[styles.text, large && styles.textLarge]} numberOfLines={6}>
-            {text ?? note.emoji}
-          </Text>
-        )
+      {!!(text ?? note.emoji) && (
+        <Text style={[styles.text, large && styles.textLarge]} numberOfLines={6}>
+          {text ?? note.emoji}
+        </Text>
       )}
 
       {!!note.audio_path && (
@@ -147,6 +185,8 @@ export default function NoteCard({
       {note.visibility === 'private' && <Text style={styles.private}>Moi seule</Text>}
     </View>
   );
+
+  const sticker = emojiOnly ? roundSticker : rectSticker;
 
   const content = (
     <View style={styles.wrap}>
@@ -314,14 +354,33 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.xl + spacing.md,
     gap: spacing.md,
   },
-  // Un emoji seul : un petit autocollant, pas une carte vide
-  noteCompact: {
-    alignSelf: 'flex-start',
-    minWidth: 150,
+  // Un emoji seul : un autocollant rond
+  disc: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.xs,
   },
-  noteCompactCentered: {
-    alignSelf: 'center',
-    minWidth: 200,
+  discHead: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  discMeta: {
+    fontFamily: fonts.bodyBold,
+    fontSize: 12,
+    color: inkAlpha(0.66),
+    fontVariant: ['tabular-nums'],
+  },
+  discRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+  },
+  discInfo: {
+    gap: 4,
+  },
+  discPage: {
+    marginLeft: 0,
   },
   compactPress: {
     alignSelf: 'flex-start',

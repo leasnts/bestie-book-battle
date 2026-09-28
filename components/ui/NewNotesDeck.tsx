@@ -58,7 +58,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import Svg, { Defs, G, LinearGradient, Path, Stop } from 'react-native-svg';
 import type { AnnotationWithAuthor } from '../../services/supabase/annotations';
-import { pageFromPosition } from '../../utils/annotations';
+import { isEmojiOnly, pageFromPosition } from '../../utils/annotations';
 import { peel, roundedRect, toPath, type Point } from '../../utils/peel';
 import {
   accentGradient,
@@ -161,6 +161,7 @@ export default function NewNotesDeck({
               depth={depth}
               appearing={!firstIds.current.has(note.id)}
               hint={note.id === first?.id}
+              round={isEmojiOnly(note)}
               onSwiped={swiped}
             >
               <NoteCard
@@ -229,6 +230,7 @@ function SwipeCard({
   depth,
   appearing,
   hint,
+  round,
   onSwiped,
   children,
 }: {
@@ -239,6 +241,8 @@ function SwipeCard({
   appearing: boolean;
   /** La première carte : un coin se soulève et se recolle, pour montrer qu'elle se décolle */
   hint: boolean;
+  /** Une note ronde (un emoji seul) : elle se décolle comme un disque */
+  round: boolean;
   onSwiped: (noteId: string) => void;
   children: React.ReactNode;
 }) {
@@ -318,8 +322,17 @@ function SwipeCard({
     .onUpdate((e) => {
       if (mode.value === 0) {
         // Le coin le plus proche du doigt ; tiré vers l'intérieur, il se décolle
-        ax.value = startX.value < w.value / 2 ? 0 : w.value;
-        ay.value = startY.value < h.value / 2 ? 0 : h.value;
+        if (round) {
+          // Un rond n'a pas de coin : le bord le plus proche du doigt se soulève
+          const cx = w.value / 2;
+          const cy = h.value / 2;
+          const angle = Math.atan2(startY.value - cy, startX.value - cx);
+          ax.value = cx + Math.cos(angle) * cx;
+          ay.value = cy + Math.sin(angle) * cy;
+        } else {
+          ax.value = startX.value < w.value / 2 ? 0 : w.value;
+          ay.value = startY.value < h.value / 2 ? 0 : h.value;
+        }
         const inward =
           e.translationX * (w.value / 2 - ax.value) + e.translationY * (h.value / 2 - ay.value) > 0;
         mode.value = inward && !reduced ? 1 : 2;
@@ -329,7 +342,7 @@ function SwipeCard({
         bx.value = ax.value + e.translationX;
         by.value = ay.value + e.translationY;
         peeling.value = 1;
-        const r = cornerRadius(w.value, h.value);
+        const r = cornerRadius(w.value, h.value, round);
         amount.value = peel(roundedRect(w.value, h.value, r), w.value, h.value, ax.value, ay.value, bx.value, by.value).amount;
       } else {
         x.value = e.translationX;
@@ -404,18 +417,18 @@ function SwipeCard({
   // Ce qui reste collé : le masque de la note
   const keptProps = useAnimatedProps(() => {
     if (!peeling.value) return { d: WHOLE };
-    const r = cornerRadius(w.value, h.value);
+    const r = cornerRadius(w.value, h.value, round);
     return { d: toPath(peel(roundedRect(w.value, h.value, r), w.value, h.value, ax.value, ay.value, bx.value, by.value).kept) };
   });
   // Le dos de la partie décollée, et son ombre portée sur la note
   const flapProps = useAnimatedProps(() => {
     if (!peeling.value) return { d: NOTHING };
-    const r = cornerRadius(w.value, h.value);
+    const r = cornerRadius(w.value, h.value, round);
     return { d: toPath(peel(roundedRect(w.value, h.value, r), w.value, h.value, ax.value, ay.value, bx.value, by.value).flap) };
   });
   const shadowProps = useAnimatedProps(() => {
     if (!peeling.value) return { d: NOTHING };
-    const r = cornerRadius(w.value, h.value);
+    const r = cornerRadius(w.value, h.value, round);
     const flap = peel(roundedRect(w.value, h.value, r), w.value, h.value, ax.value, ay.value, bx.value, by.value).flap;
     return { d: toPath(flap.map((p) => [p[0] + 2, p[1] + 5] as Point)) };
   });
@@ -430,7 +443,8 @@ function SwipeCard({
     <View style={styles.slot} pointerEvents="box-none">
       <GestureDetector gesture={pan}>
         <Animated.View
-          style={[styles.card, cardStyle]}
+          // À la taille de la note : un rond ne prend pas toute la largeur
+          style={[styles.card, !round && styles.cardWide, cardStyle]}
           pointerEvents={depth === 0 ? 'auto' : 'none'}
           importantForAccessibility={depth === 0 ? 'auto' : 'no-hide-descendants'}
           accessibilityElementsHidden={depth !== 0}
@@ -483,9 +497,9 @@ function SwipeCard({
 }
 
 /** L'arrondi de la note, le même que son autocollant (NoteSticker, 26 % du côté plafonné) */
-function cornerRadius(w: number, h: number) {
+function cornerRadius(w: number, h: number, round: boolean) {
   'worklet';
-  return Math.min(w, h, STICKER_BASE_LARGE) * 0.26;
+  return round ? Math.min(w, h) / 2 : Math.min(w, h, STICKER_BASE_LARGE) * 0.26;
 }
 
 /** Rien de décollé : le masque couvre tout, ombres comprises */
@@ -545,8 +559,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  card: {
+  cardWide: {
     width: '100%',
+  },
+  card: {
     shadowColor: shadowAlpha(1),
     shadowOpacity: 0.14,
     shadowRadius: 18,
