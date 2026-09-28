@@ -9,6 +9,9 @@
  * couleur seule exclurait les personnes daltoniennes, et un club a le droit de
  * savoir ce que veut dire un post-it bleu.
  *
+ * La note a la forme de l'autocollant brodé (`NoteSticker`, coin décollé en
+ * haut à gauche) : une note = cet autocollant, partout (DESIGN.md).
+ *
  * La page affichée est celle de MON édition (« ≈ p. 153 » si l'autrice lit une
  * autre édition) : c'est la page où je retrouverai le passage.
  */
@@ -16,11 +19,12 @@
 import { Image } from 'expo-image';
 import { EllipsisIcon, SmilePlusIcon, XIcon } from 'lucide-react-native';
 import React, { useMemo, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native';
 import type { AnnotationWithAuthor } from '../../services/supabase/annotations';
 import { ANNOTATION_CATEGORIES, formatNotePage } from '../../utils/annotations';
 import { borderRadius, colors, creamAlpha, fonts, inkAlpha, spacing } from '../../utils/constants';
 import { QUICK_REACTIONS } from '../../utils/emojis';
+import NoteSticker from './NoteSticker';
 import PressableScale from './PressableScale';
 import VoicePlayer from './VoicePlayer';
 
@@ -45,7 +49,16 @@ interface NoteCardProps {
   onToggleReaction?: (emoji: string) => void;
   /** Ouvrir le sélecteur complet */
   onMoreReactions?: () => void;
+  /** Une grande carte (la pile des nouvelles) : elle remplit sa hauteur, texte plus grand */
+  large?: boolean;
 }
+
+/**
+ * Plafond du côté qui règle l'arrondi et le coin décollé : une grande note garde
+ * les détails d'un autocollant moyen. Le coin décollé fait 34 % de ce côté.
+ */
+const STICKER_BASE = 72;
+const STICKER_BASE_LARGE = 96;
 
 export default function NoteCard({
   note,
@@ -55,10 +68,19 @@ export default function NoteCard({
   myUserId,
   onToggleReaction,
   onMoreReactions,
+  large = false,
 }: NoteCardProps) {
   const category = ANNOTATION_CATEGORIES[note.category];
   const page = formatNotePage(note.position, note.edition_total_pages, myTotalPages);
   const [picking, setPicking] = useState(false);
+  /** L'autocollant se dessine à la taille de la note, une fois mesurée */
+  const [size, setSize] = useState<{ width: number; height: number } | null>(null);
+  const onLayout = (e: LayoutChangeEvent) => {
+    const { width, height } = e.nativeEvent.layout;
+    setSize((prev) =>
+      prev && prev.width === width && prev.height === height ? prev : { width, height },
+    );
+  };
 
   // Une note privée ne se lit que par son autrice : pas de réactions
   const canReact = note.visibility === 'club' && !!onToggleReaction;
@@ -81,8 +103,19 @@ export default function NoteCard({
   };
 
   const content = (
-    <View style={[styles.note, { backgroundColor: category.color }]}>
-      <View style={styles.head}>
+    <View style={[styles.note, large && styles.noteLarge]} onLayout={onLayout}>
+      {size && (
+        <View style={StyleSheet.absoluteFill} pointerEvents="none">
+          <NoteSticker
+            id={`note-${note.id}`}
+            color={category.color}
+            width={size.width}
+            height={size.height}
+            maxBase={large ? STICKER_BASE_LARGE : STICKER_BASE}
+          />
+        </View>
+      )}
+      <View style={[styles.head, large && styles.headLarge]}>
         <Image source={resolveAvatar(note.author?.profile_photo_url)} style={styles.avatar} />
         <Text style={styles.name} numberOfLines={1}>
           {isMine ? 'Moi' : note.author?.first_name || 'Participant'}
@@ -91,12 +124,12 @@ export default function NoteCard({
         <Text style={styles.page}>{page}</Text>
       </View>
 
-      {!!note.quote && <Text style={styles.quote}>{note.quote}</Text>}
+      {!!note.quote && <Text style={[styles.quote, large && styles.quoteLarge]}>{note.quote}</Text>}
 
-      <View style={styles.body}>
-        {!!note.emoji && <Text style={styles.emoji}>{note.emoji}</Text>}
+      <View style={[styles.body, large && styles.bodyLarge]}>
+        {!!note.emoji && <Text style={[styles.emoji, large && styles.emojiLarge]}>{note.emoji}</Text>}
         {!!note.body && (
-          <Text style={styles.text} numberOfLines={6}>
+          <Text style={[styles.text, large && styles.textLarge]} numberOfLines={6}>
             {note.body}
           </Text>
         )}
@@ -218,14 +251,23 @@ const AVATAR = 22;
 
 const styles = StyleSheet.create({
   note: {
-    borderRadius: borderRadius.lg,
     padding: spacing.md,
     gap: spacing.sm,
   },
+  noteLarge: {
+    flex: 1,
+    padding: spacing.xl,
+    gap: spacing.md,
+  },
+  // La ligne du haut commence après le coin décollé (34 % de STICKER_BASE)
   head: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
+    marginLeft: spacing.lg,
+  },
+  headLarge: {
+    marginLeft: spacing.lg,
   },
   avatar: {
     width: AVATAR,
@@ -270,8 +312,22 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     gap: spacing.sm,
   },
+  bodyLarge: {
+    flex: 1,
+  },
   emoji: {
     fontSize: 20,
+  },
+  emojiLarge: {
+    fontSize: 28,
+  },
+  textLarge: {
+    fontSize: 18,
+    lineHeight: 25,
+  },
+  quoteLarge: {
+    fontSize: 16,
+    lineHeight: 22,
   },
   text: {
     flex: 1,

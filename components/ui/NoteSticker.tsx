@@ -28,14 +28,27 @@ interface NoteStickerProps {
   height?: number;
   /** Un identifiant, pour des dégradés propres à chaque autocollant */
   id: string;
+  /**
+   * Plafond du côté qui règle l'arrondi, le coin et la couture. Une grande
+   * carte (une note du carnet) garde ainsi les détails d'un autocollant moyen
+   * au lieu d'un arrondi démesuré.
+   */
+  maxBase?: number;
 }
 
-export default function NoteSticker({ color, size = 26, width, height, id }: NoteStickerProps) {
+export default function NoteSticker({
+  color,
+  size = 26,
+  width,
+  height,
+  id,
+  maxBase = Infinity,
+}: NoteStickerProps) {
   const w = width ?? size;
   const h = height ?? size;
   // Arrondi, coin décollé et couture suivent le petit côté : une étiquette
   // allongée garde les proportions d'un autocollant carré
-  const base = Math.min(w, h);
+  const base = Math.min(w, h, maxBase);
   const r = base * 0.26;
   /** Le coin décollé */
   const c = base * 0.34;

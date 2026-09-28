@@ -10,9 +10,15 @@
  * dirait déjà de quoi parle la note.
  */
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { LayoutChangeEvent, Pressable, StyleSheet, View } from 'react-native';
-import { colors, creamAlpha, inkAlpha } from '../../utils/constants';
+import Animated, {
+  Easing,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from 'react-native-reanimated';
+import { colors, creamAlpha, inkAlpha, motion } from '../../utils/constants';
 import { ANNOTATION_CATEGORIES } from '../../utils/annotations';
 import type { AnnotationCategory } from '../../types/supabase';
 
@@ -20,6 +26,8 @@ export interface TrackDot {
   id: string;
   position: number;
   category: AnnotationCategory | null;
+  /** Hors du filtre choisi : le point s'efface et rapetisse, sans disparaître */
+  dimmed?: boolean;
 }
 
 interface NotesTrackProps {
@@ -72,17 +80,7 @@ export default function NotesTrack({
       </View>
 
       {visibleDots.map((dot) => (
-        <View
-          key={dot.id}
-          style={[
-            styles.dot,
-            { left: `${dot.position * 100}%` },
-            dot.category
-              ? { backgroundColor: ANNOTATION_CATEGORIES[dot.category].color }
-              : styles.dotNeutral,
-          ]}
-          pointerEvents="none"
-        />
+        <Dot key={dot.id} dot={dot} />
       ))}
 
       {lockedPositions.map((position, index) => (
@@ -96,6 +94,34 @@ export default function NotesTrack({
       {/* Où j'en suis */}
       <View style={[styles.me, { left: `${myPosition * 100}%` }]} pointerEvents="none" />
     </Pressable>
+  );
+}
+
+/** Un point de note : il suit le filtre en s'effaçant (200 ms, ease-out-quart) */
+function Dot({ dot }: { dot: TrackDot }) {
+  const on = useSharedValue(dot.dimmed ? 0 : 1);
+  useEffect(() => {
+    on.value = withTiming(dot.dimmed ? 0 : 1, {
+      duration: motion.duration.standard,
+      easing: Easing.bezier(...motion.easing.easeOutQuart),
+    });
+  }, [dot.dimmed, on]);
+  const animated = useAnimatedStyle(() => ({
+    opacity: 0.18 + on.value * 0.82,
+    transform: [{ scale: 0.6 + on.value * 0.4 }],
+  }));
+  return (
+    <Animated.View
+      style={[
+        styles.dot,
+        { left: `${dot.position * 100}%` },
+        dot.category
+          ? { backgroundColor: ANNOTATION_CATEGORIES[dot.category].color }
+          : styles.dotNeutral,
+        animated,
+      ]}
+      pointerEvents="none"
+    />
   );
 }
 
