@@ -16,9 +16,10 @@
 
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
-import { SheetPageHeader, useSheetScroll } from './SheetPage';
+import PressableScale from './PressableScale';
+import { SheetPageHeader, SheetSubtitle, useSheetScroll } from './SheetPage';
 import Animated, { Easing, FadeInDown, useReducedMotion } from 'react-native-reanimated';
 import {
   formatParticipantCount,
@@ -28,7 +29,7 @@ import {
   RankedParticipant,
 } from '../../utils/leaderboard';
 import { borderRadius, colors, fonts, inkAlpha, motion, spacing } from '../../utils/constants';
-import { FlameIcon } from 'lucide-react-native';
+import { ChevronDownIcon, ChevronUpIcon, FlameIcon } from 'lucide-react-native';
 
 // ─── Props ─────────────────────────────────────────────────────────
 
@@ -166,6 +167,12 @@ export default function LeaderboardList({
     () => rankParticipants(participants, myUserId),
     [participants, myUserId],
   );
+  /**
+   * Premier en haut (par défaut) ou dernier en haut. Chacun garde son rang :
+   * on retourne la liste, pas le classement.
+   */
+  const [ascending, setAscending] = useState(false);
+  const rows = useMemo(() => (ascending ? [...ranked].reverse() : ranked), [ranked, ascending]);
 
   return (
     /*
@@ -185,7 +192,7 @@ export default function LeaderboardList({
       `ListHeaderComponent`, collé en haut quand on fait défiler.
     */
     <FlatList
-      data={ranked}
+      data={rows}
       keyExtractor={(participant) => participant.id}
       renderItem={({ item, index }) => (
         <LeaderboardRow
@@ -199,10 +206,32 @@ export default function LeaderboardList({
       )}
       {...sheet.scrollProps}
       ItemSeparatorComponent={Separator}
+      // La couronne du premier dépasse de sa ligne : de la place sous l'en-tête
+      // (collant, il passe par-dessus la liste et la couperait)
+      ListHeaderComponentStyle={styles.listHeader}
       ListHeaderComponent={
         <SheetPageHeader
           title="Classement"
-          subtitle={formatParticipantCount(ranked.length)}
+          subtitle={
+            <PressableScale
+              style={styles.sort}
+              pressedScale={0.96}
+              hitSlop={8}
+              onPress={() => setAscending((value) => !value)}
+              accessibilityRole="button"
+              accessibilityLabel={`${formatParticipantCount(ranked.length)}, ${
+                ascending ? 'du dernier au premier' : 'du premier au dernier'
+              }`}
+              accessibilityHint="Inverse l'ordre"
+            >
+              <SheetSubtitle>{formatParticipantCount(ranked.length)}</SheetSubtitle>
+              {ascending ? (
+                <ChevronUpIcon size={16} color={colors.textTertiary} strokeWidth={2.25} />
+              ) : (
+                <ChevronDownIcon size={16} color={colors.textTertiary} strokeWidth={2.25} />
+              )}
+            </PressableScale>
+          }
           onBack={onBack}
           scrolled={sheet.scrolled}
         />
@@ -215,7 +244,6 @@ export default function LeaderboardList({
       */
       initialNumToRender={12}
       windowSize={7}
-      removeClippedSubviews
       bounces
     />
   );
@@ -231,6 +259,17 @@ const AVATAR_SIZE = 36;
 const RANK_WIDTH = 22;
 
 const styles = StyleSheet.create({
+  // « 5 membres ⌄ » : touchable pour inverser l'ordre
+  sort: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    gap: spacing.xs,
+    alignSelf: 'flex-start',
+  },
+  // La couronne dépasse de 8 pt au-dessus de la ligne du premier
+  listHeader: {
+    marginBottom: spacing.sm,
+  },
   // Un peu d'air entre les lignes
   separator: {
     height: spacing.xs,
@@ -242,7 +281,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.md,
     paddingVertical: spacing.md,
-    paddingHorizontal: spacing.md,
+    // Le contenu (le rang d'abord) ferré sur la marge du sheet, comme le titre ;
+    // seul le fond de ma ligne déborde dans la marge
+    paddingHorizontal: spacing.sm,
+    marginHorizontal: -spacing.sm,
     borderRadius: borderRadius.md,
   },
   /** Ma ligne : fond teinté pour la repérer d'un coup d'œil */
@@ -259,7 +301,7 @@ const styles = StyleSheet.create({
     fontFamily: fonts.display,
     fontSize: 15,
     color: colors.textPlaceholder,
-    textAlign: 'center',
+    textAlign: 'left',
   },
   rankMe: {
     color: colors.textPrimary,

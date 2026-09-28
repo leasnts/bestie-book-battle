@@ -694,6 +694,13 @@ de la fiche du livre, pour tous :
 - **action principale** en bas du contenu (`SheetFooter` + `Button3D`
   primaire, « Enregistrer ») ; une suppression en lien rouge en dessous ;
 - pas de croix : on ferme en glissant vers le bas.
+- **espacements** (échelle de Layout) : sous-titre **à la ligne** sous le
+  retour (jamais à côté), 16 pt sous la ligne retour + titre ; en-tête ↔ contenu 24 pt ;
+  entre deux champs 24 pt, libellé ↔ son champ 8 pt ; action principale
+  24 pt sous ce qui précède ;
+- **contenu ferré sur la marge** : le premier élément d'une ligne (le rang du
+  classement) s'aligne sur le retour et le titre ; seul un fond de ligne (ma
+  ligne) déborde dans la marge.
 Un sheet qui est une liste (classement, bibliothèque, carnet) pose
 `SheetPageHeader` en en-tête de sa FlatList, avec `useSheetScroll()`.
 

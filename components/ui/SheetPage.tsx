@@ -42,7 +42,7 @@ interface SheetPageProps
   extends Omit<ScrollViewProps, 'children' | 'stickyHeaderIndices' | 'onScroll'> {
   title: string;
   /** Une ligne sous le titre (l'auteur d'un livre, le prénom d'une personne) */
-  subtitle?: string | null;
+  subtitle?: React.ReactNode;
   /** Posé sur un autre sheet : un retour à gauche du titre */
   onBack?: () => void;
   /** À droite du titre : des `GlassButton` de 36 pt */
@@ -144,7 +144,8 @@ export function useSheetScroll({ fit = true }: { fit?: boolean } = {}) {
 
 interface SheetPageHeaderProps {
   title: string;
-  subtitle?: string | null;
+  /** À la ligne sous le titre : un texte, ou un élément touchable (tri du classement) */
+  subtitle?: React.ReactNode;
   onBack?: () => void;
   actions?: React.ReactNode;
   titleLines?: number;
@@ -156,7 +157,21 @@ interface SheetPageHeaderProps {
   children?: React.ReactNode;
 }
 
-/** L'en-tête de tous les sheets : retour, titre (et sous-titre), actions */
+/** Le sous-titre d'un sheet, en texte seul (à reprendre dans un sous-titre touchable) */
+export function SheetSubtitle({ children }: { children: React.ReactNode }) {
+  return (
+    <Text style={styles.subtitle} numberOfLines={1}>
+      {children}
+    </Text>
+  );
+}
+
+/**
+ * L'en-tête de tous les sheets :
+ *
+ *    (‹)  Titre               (…)
+ *    sous-titre
+ */
 export function SheetPageHeader({
   title,
   subtitle,
@@ -171,20 +186,24 @@ export function SheetPageHeader({
     <SheetStickyHeader scrolled={scrolled} gutter={SHEET_GUTTER}>
       {background}
       <View style={styles.header}>
-        {onBack && (
-          <GlassButton icon={ChevronLeftIcon} size={36} onPress={onBack} accessibilityLabel="Retour" />
-        )}
-        <View style={styles.headerTexts}>
-          <Text style={styles.title} numberOfLines={titleLines} accessibilityRole="header">
+        {/* Retour, titre et actions sur une ligne */}
+        <View style={styles.headerRow}>
+          {onBack && (
+            <GlassButton icon={ChevronLeftIcon} size={36} onPress={onBack} accessibilityLabel="Retour" />
+          )}
+          <Text
+            style={styles.title}
+            numberOfLines={titleLines}
+            accessibilityRole="header"
+          >
             {title}
           </Text>
-          {!!subtitle && (
-            <Text style={styles.subtitle} numberOfLines={1}>
-              {subtitle}
-            </Text>
-          )}
+          {actions && <View style={styles.actions}>{actions}</View>}
         </View>
-        {actions && <View style={styles.actions}>{actions}</View>}
+        {/* Le sous-titre à la ligne, sous le retour, jamais à côté */}
+        {typeof subtitle === 'string'
+          ? !!subtitle && <SheetSubtitle>{subtitle}</SheetSubtitle>
+          : subtitle}
       </View>
       {children}
     </SheetStickyHeader>
@@ -208,17 +227,18 @@ const styles = StyleSheet.create({
     // iOS ajoute déjà la zone du bas de l'écran (34 pt) sous le contenu
     paddingBottom: spacing.lg,
   },
+  // + les 12 pt du bas de l'en-tête collant = 24 pt avant le contenu (une section)
   header: {
+    marginBottom: spacing.md,
+  },
+  headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.md,
     minHeight: 36,
-    marginBottom: spacing.sm,
-  },
-  headerTexts: {
-    flex: 1,
   },
   title: {
+    flex: 1,
     fontFamily: fonts.display,
     fontSize: 26,
     lineHeight: 31,
@@ -228,15 +248,17 @@ const styles = StyleSheet.create({
     fontFamily: fonts.body,
     fontSize: 15,
     color: colors.textTertiary,
-    marginTop: 2,
+    // Sous la ligne retour + titre : 16 pt, un groupe à part (Lea, 2026-09-27)
+    marginTop: spacing.lg,
   },
   actions: {
     flexDirection: 'row',
     gap: spacing.sm,
     alignSelf: 'flex-start',
   },
+  // L'action principale est une section à part : 24 pt au-dessus
   footer: {
-    paddingTop: spacing.xl,
+    paddingTop: spacing['2xl'],
     gap: spacing.md,
   },
 });
