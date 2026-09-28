@@ -22,6 +22,9 @@
  * pleine opacité, il est blanc et laiteux sur un fond clair. C'est le rendu que
  * Lea veut : poser le verre dans une vue qui apparaît en fondu.
  *
+ * Toujours clair (`colorScheme="light"`) : l'app n'a pas de thème sombre. En
+ * « Automatique », un iPhone en mode sombre teinte le verre en gris foncé.
+ *
  * `rim` ajoute le liseré des boutons en verre d'iOS 26 : un filet d'encre très fin
  * qui dessine la forme même sur un fond blanc, doublé à l'intérieur d'un reflet
  * crème qui accroche la lumière en haut à gauche et en bas à droite.
@@ -78,7 +81,7 @@ export default function GlassMaterial({
   return (
     <>
       {native ? (
-        <GlassView style={[styles.fill, shape]} glassEffectStyle="regular" />
+        <GlassView style={[styles.fill, shape]} glassEffectStyle="regular" colorScheme="light" />
       ) : (
         <BlurView
           style={[styles.fill, shape]}
