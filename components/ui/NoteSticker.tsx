@@ -41,8 +41,6 @@ interface NoteStickerProps {
    * (la pile des nouvelles, où c'est le doigt qui décolle la note).
    */
   corner?: 'top-left' | 'bottom-right' | 'none';
-  /** Un autocollant rond (une note qui n'est qu'un emoji) : sans coin décollé */
-  round?: boolean;
 }
 
 export default function NoteSticker({
@@ -52,10 +50,8 @@ export default function NoteSticker({
   height,
   id,
   maxBase = Infinity,
-  corner: cornerProp = 'top-left',
-  round = false,
+  corner = 'top-left',
 }: NoteStickerProps) {
-  const corner = round ? 'none' : cornerProp;
   const w = width ?? size;
   const h = height ?? size;
   // Arrondi, coin décollé et couture suivent le petit côté : une étiquette
@@ -79,13 +75,8 @@ export default function NoteSticker({
   // À plat (`none`) : le carré arrondi entier, aucun coin coupé
   const whole = `M ${r} 0 H ${w - r} Q ${w} 0 ${w} ${r} V ${h - r} Q ${w} ${h} ${w - r} ${h} H ${r} Q 0 ${h} 0 ${h - r} V ${r} Q 0 0 ${r} 0 Z`;
   const wholeStitch = `M ${i + ri} ${i} H ${w - i - ri} Q ${w - i} ${i} ${w - i} ${i + ri} V ${h - i - ri} Q ${w - i} ${h - i} ${w - i - ri} ${h - i} H ${i + ri} Q ${i} ${h - i} ${i} ${h - i - ri} V ${i + ri} Q ${i} ${i} ${i + ri} ${i} Z`;
-  // Rond : un cercle, et sa couture en cercle un peu en retrait
-  const rr = Math.min(w, h) / 2;
-  const disc = `M 0 ${rr} A ${rr} ${rr} 0 1 0 ${2 * rr} ${rr} A ${rr} ${rr} 0 1 0 0 ${rr} Z`;
-  const ri2 = rr - i;
-  const discStitch = `M ${i} ${rr} A ${ri2} ${ri2} 0 1 0 ${2 * rr - i} ${rr} A ${ri2} ${ri2} 0 1 0 ${i} ${rr} Z`;
-  const shape = round ? disc : corner === 'none' ? whole : cut;
-  const stitch = round ? discStitch : corner === 'none' ? wholeStitch : cutStitch;
+  const shape = corner === 'none' ? whole : cut;
+  const stitch = corner === 'none' ? wholeStitch : cutStitch;
   // Le rabat : le coin replié par-dessus, symétrique par rapport à la coupe
   // La pliure s'incurve un peu (le coin se roule), et la pointe repliée garde
   // l'arrondi du coin d'origine

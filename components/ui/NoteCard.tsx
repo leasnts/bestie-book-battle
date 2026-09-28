@@ -62,9 +62,9 @@ interface NoteCardProps {
  * les détails d'un autocollant moyen. Le coin décollé fait 34 % de ce côté.
  */
 const STICKER_BASE = 72;
-/** Le diamètre d'une note ronde (un emoji seul) : dans la liste, dans la pile */
-const DISC = 84;
-export const DISC_LARGE = 210;
+/** Le côté d'une note carrée (un emoji seul) : dans la liste, dans la pile */
+const SQUARE = 84;
+const SQUARE_LARGE = 200;
 export const STICKER_BASE_LARGE = 96;
 
 export default function NoteCard({
@@ -98,15 +98,21 @@ export default function NoteCard({
   const emojiOnly = isEmojiOnly(note);
   const author = isMine ? 'Moi' : note.author?.first_name || 'Participant';
 
-  // Un emoji seul : un autocollant rond. Dans la pile, l'autrice au-dessus de
+  // Un emoji seul : un autocollant carré. Dans la pile, l'autrice au-dessus de
   // l'emoji et la page dessous ; dans la liste, les mêmes repères à côté.
-  const disc = (diameter: number) => (
-    <View style={[styles.disc, { width: diameter, height: diameter }]}>
+  const square = (side: number) => (
+    <View style={[styles.square, { width: side, height: side }]}>
       <View style={StyleSheet.absoluteFill} pointerEvents="none">
-        <NoteSticker id={`note-${note.id}`} color={category.color} size={diameter} round />
+        <NoteSticker
+          id={`note-${note.id}`}
+          color={category.color}
+          size={side}
+          maxBase={large ? STICKER_BASE_LARGE : STICKER_BASE}
+          corner={flat ? 'none' : 'bottom-right'}
+        />
       </View>
       {large && (
-        <View style={styles.discHead}>
+        <View style={styles.squareHead}>
           <Image source={resolveAvatar(note.author?.profile_photo_url)} style={styles.avatar} />
           <Text style={styles.name} numberOfLines={1}>
             {author}
@@ -115,19 +121,19 @@ export default function NoteCard({
       )}
       <Text style={[styles.bigEmoji, large && styles.bigEmojiLarge]}>{note.emoji}</Text>
       {large && (
-        <Text style={styles.discMeta}>
+        <Text style={styles.squareMeta}>
           {category.label} · {page}
         </Text>
       )}
     </View>
   );
 
-  const roundSticker = large ? (
-    disc(DISC_LARGE)
+  const squareSticker = large ? (
+    square(SQUARE_LARGE)
   ) : (
-    <View style={styles.discRow}>
-      {disc(DISC)}
-      <View style={styles.discInfo}>
+    <View style={styles.squareRow}>
+      {square(SQUARE)}
+      <View style={styles.squareInfo}>
         <View style={styles.head}>
           <Image source={resolveAvatar(note.author?.profile_photo_url)} style={styles.avatar} />
           <Text style={styles.name} numberOfLines={1}>
@@ -135,7 +141,7 @@ export default function NoteCard({
           </Text>
         </View>
         <Text style={[styles.category, styles.categoryCompact]}>{category.label}</Text>
-        <Text style={[styles.page, styles.discPage]}>{page}</Text>
+        <Text style={[styles.page, styles.squarePage]}>{page}</Text>
       </View>
     </View>
   );
@@ -186,7 +192,7 @@ export default function NoteCard({
     </View>
   );
 
-  const sticker = emojiOnly ? roundSticker : rectSticker;
+  const sticker = emojiOnly ? squareSticker : rectSticker;
 
   const content = (
     <View style={styles.wrap}>
@@ -354,32 +360,32 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.xl + spacing.md,
     gap: spacing.md,
   },
-  // Un emoji seul : un autocollant rond
-  disc: {
+  // Un emoji seul : un autocollant carré
+  square: {
     alignItems: 'center',
     justifyContent: 'center',
     gap: spacing.xs,
   },
-  discHead: {
+  squareHead: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.xs,
   },
-  discMeta: {
+  squareMeta: {
     fontFamily: fonts.bodyBold,
     fontSize: 12,
     color: inkAlpha(0.66),
     fontVariant: ['tabular-nums'],
   },
-  discRow: {
+  squareRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.md,
   },
-  discInfo: {
+  squareInfo: {
     gap: 4,
   },
-  discPage: {
+  squarePage: {
     marginLeft: 0,
   },
   compactPress: {
