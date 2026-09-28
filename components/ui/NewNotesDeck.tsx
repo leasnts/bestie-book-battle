@@ -1,8 +1,7 @@
 /**
  * NewNotesDeck — les nouvelles notes du club, en pile, une à la fois.
  *
- *    1 / 3                     p. 5–11
- *    ▰▰▰▱▱▱▱▱▱                             ← un segment par note, rempli en lie de vin
+ *    1 / 3                     p. 5–11     ← où j'en suis
  *
  *        ╱▔▔▔▔▔▔▔▔▔▔▔▔▔╲
  *       │ Emma   p. 5   │                  ← la note, à sa taille, les suivantes
@@ -54,7 +53,6 @@ import {
   accentGradient,
   colors,
   fonts,
-  inkAlpha,
   inkGradient,
   motion,
   shadowAlpha,
@@ -127,7 +125,7 @@ export default function NewNotesDeck({
 
   return (
     <View style={styles.wrap}>
-      {/* Où j'en suis : le chiffre, et un segment par note */}
+      {/* Où j'en suis */}
       <View style={styles.progress} accessibilityLabel={`Note ${shown} sur ${notes.length}`}>
         <View style={styles.progressHead}>
           <Text style={styles.count}>
@@ -135,11 +133,6 @@ export default function NewNotesDeck({
             <Text style={styles.countTotal}> / {notes.length}</Text>
           </Text>
           <Text style={styles.range}>{range}</Text>
-        </View>
-        <View style={styles.segments}>
-          {notes.map((note, i) => (
-            <Segment key={note.id} filled={i <= index} current={i === index} />
-          ))}
         </View>
       </View>
 
@@ -210,23 +203,6 @@ export default function NewNotesDeck({
           <CheckIcon size={20} color={colors.white} strokeWidth={2.4} />
         </PressableScale>
       )}
-    </View>
-  );
-}
-
-/** Un segment de la progression : lie de vin une fois atteint */
-function Segment({ filled, current }: { filled: boolean; current: boolean }) {
-  const fill = useSharedValue(filled ? 1 : 0);
-  useEffect(() => {
-    fill.value = withTiming(filled ? 1 : 0, { duration: motion.duration.slow, easing: easeOut });
-  }, [filled, fill]);
-  // Il se remplit de gauche à droite (scaleX, jamais width)
-  const style = useAnimatedStyle(() => ({ transform: [{ scaleX: fill.value }] }));
-  return (
-    <View style={[styles.segment, current && styles.segmentCurrent]}>
-      <Animated.View style={[StyleSheet.absoluteFill, styles.segmentFill, style]}>
-        <LinearGradient colors={accentGradient} style={StyleSheet.absoluteFill} />
-      </Animated.View>
     </View>
   );
 }
@@ -354,15 +330,12 @@ function useScreenReader() {
   return enabled;
 }
 
-const SEGMENT_HEIGHT = 6;
-
 const styles = StyleSheet.create({
   wrap: {
     gap: spacing.xl,
   },
 
   progress: {
-    gap: spacing.md,
     paddingHorizontal: spacing.xs,
   },
   progressHead: {
@@ -388,23 +361,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.textTertiary,
     fontVariant: ['tabular-nums'],
-  },
-  segments: {
-    flexDirection: 'row',
-    gap: spacing.xs,
-  },
-  segment: {
-    flex: 1,
-    height: SEGMENT_HEIGHT,
-    borderRadius: SEGMENT_HEIGHT / 2,
-    overflow: 'hidden',
-    backgroundColor: inkAlpha(0.1),
-  },
-  segmentCurrent: {
-    backgroundColor: inkAlpha(0.16),
-  },
-  segmentFill: {
-    transformOrigin: 'left',
   },
 
   deck: {
