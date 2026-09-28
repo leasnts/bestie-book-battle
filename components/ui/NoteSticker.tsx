@@ -60,17 +60,23 @@ export default function NoteSticker({
   const r = base * 0.26;
   /** Le coin décollé */
   const c = base * 0.34;
-  const inset = base * 0.12;
+  // La couture, près du bord (retour de Lea : plus près que les 12 % d'origine)
+  const inset = base * 0.07;
 
   // Carré arrondi, le coin en haut à droite coupé en diagonale
   // Les deux bouts de la coupe sont adoucis, comme le reste de l'autocollant
   const k = base * 0.05;
-  const shape = `M ${r} 0 H ${w - c - k} Q ${w - c} 0 ${w - c + k * 0.7} ${k * 0.7} L ${w - k * 0.7} ${c - k * 0.7} Q ${w} ${c} ${w} ${c + k} V ${h - r} Q ${w} ${h} ${w - r} ${h} H ${r} Q 0 ${h} 0 ${h - r} V ${r} Q 0 0 ${r} 0 Z`;
+  const cut = `M ${r} 0 H ${w - c - k} Q ${w - c} 0 ${w - c + k * 0.7} ${k * 0.7} L ${w - k * 0.7} ${c - k * 0.7} Q ${w} ${c} ${w} ${c + k} V ${h - r} Q ${w} ${h} ${w - r} ${h} H ${r} Q 0 ${h} 0 ${h - r} V ${r} Q 0 0 ${r} 0 Z`;
   // La couture, un peu en retrait, qui suit la même forme
   const i = inset;
   const ri = r - inset * 0.6;
   const ci = c - inset * 0.4;
-  const stitch = `M ${i + ri} ${i} H ${w - i - ci} L ${w - i} ${i + ci} V ${h - i - ri} Q ${w - i} ${h - i} ${w - i - ri} ${h - i} H ${i + ri} Q ${i} ${h - i} ${i} ${h - i - ri} V ${i + ri} Q ${i} ${i} ${i + ri} ${i} Z`;
+  const cutStitch = `M ${i + ri} ${i} H ${w - i - ci} L ${w - i} ${i + ci} V ${h - i - ri} Q ${w - i} ${h - i} ${w - i - ri} ${h - i} H ${i + ri} Q ${i} ${h - i} ${i} ${h - i - ri} V ${i + ri} Q ${i} ${i} ${i + ri} ${i} Z`;
+  // À plat (`none`) : le carré arrondi entier, aucun coin coupé
+  const whole = `M ${r} 0 H ${w - r} Q ${w} 0 ${w} ${r} V ${h - r} Q ${w} ${h} ${w - r} ${h} H ${r} Q 0 ${h} 0 ${h - r} V ${r} Q 0 0 ${r} 0 Z`;
+  const wholeStitch = `M ${i + ri} ${i} H ${w - i - ri} Q ${w - i} ${i} ${w - i} ${i + ri} V ${h - i - ri} Q ${w - i} ${h - i} ${w - i - ri} ${h - i} H ${i + ri} Q ${i} ${h - i} ${i} ${h - i - ri} V ${i + ri} Q ${i} ${i} ${i + ri} ${i} Z`;
+  const shape = corner === 'none' ? whole : cut;
+  const stitch = corner === 'none' ? wholeStitch : cutStitch;
   // Le rabat : le coin replié par-dessus, symétrique par rapport à la coupe
   // La pliure s'incurve un peu (le coin se roule), et la pointe repliée garde
   // l'arrondi du coin d'origine
