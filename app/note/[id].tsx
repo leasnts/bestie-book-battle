@@ -4,8 +4,10 @@
  * `id = "new"` ouvre une note vierge à ma page enregistrée ; un identifiant
  * ouvre ma note pour la modifier ou la supprimer.
  *
- * Une note dit forcément quelque chose : **au minimum un emoji**. « Publier »
- * reste éteint tant qu'il n'y a ni emoji ni texte.
+ * Une note dit forcément quelque chose : **un emoji seul, ou un texte** (ou un
+ * vocal). Avec du texte, l'emoji n'est plus à part : les emojis rapides
+ * s'ajoutent au texte, comme le clavier. « Publier » reste éteint tant qu'il
+ * n'y a rien.
  *
  * Mise en page : `SheetPage`, commune à tous les sheets. Ouverte depuis le
  * carnet (`?from=notes`), un retour y ramène.
@@ -80,8 +82,13 @@ export default function NoteFormRoute() {
   }, [participants, user?.id]);
 
   const [page, setPage] = useState(existing?.page ?? savedPage);
-  const [emoji, setEmoji] = useState<string | null>(existing?.emoji ?? null);
-  const [body, setBody] = useState(existing?.body ?? '');
+  // Une ancienne note avec emoji ET texte : l'emoji passe en tête du texte
+  const [emoji, setEmoji] = useState<string | null>(
+    existing?.body ? null : (existing?.emoji ?? null),
+  );
+  const [body, setBody] = useState(
+    existing?.body && existing.emoji ? `${existing.emoji} ${existing.body}` : (existing?.body ?? ''),
+  );
   const [category, setCategory] = useState<AnnotationCategory>(
     existing?.category ?? DEFAULT_CATEGORY,
   );
@@ -218,7 +225,15 @@ export default function NoteFormRoute() {
         <TextInput
           style={styles.noteInput}
           value={body}
-          onChangeText={setBody}
+          onChangeText={(next) => {
+            // On commence à écrire après un emoji seul : il passe dans le texte
+            if (emoji && !body && next) {
+              setBody(`${emoji} ${next}`);
+              setEmoji(null);
+              return;
+            }
+            setBody(next);
+          }}
           placeholder="…"
           placeholderTextColor={inkAlpha(0.35)}
           multiline
@@ -255,7 +270,12 @@ export default function NoteFormRoute() {
             key={candidate}
             style={[styles.emojiButton, emoji === candidate && styles.emojiButtonOn]}
             pressedScale={0.9}
-            onPress={() => setEmoji(emoji === candidate ? null : candidate)}
+            onPress={() =>
+              // Du texte : l'emoji s'y ajoute. Sinon, c'est la note : un emoji seul.
+              body.trim()
+                ? setBody((b) => `${b.trimEnd()} ${candidate}`)
+                : setEmoji(emoji === candidate ? null : candidate)
+            }
             accessibilityRole="button"
             accessibilityLabel={`Emoji ${candidate}`}
             accessibilityState={{ selected: emoji === candidate }}

@@ -30,7 +30,7 @@
  */
 
 import { useRouter } from 'expo-router';
-import { LockIcon, StickyNoteIcon } from 'lucide-react-native';
+import { ChevronLeftIcon, LockIcon, StickyNoteIcon } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Animated, {
   Easing,
@@ -50,6 +50,7 @@ import {
   Text,
   View,
 } from 'react-native';
+import DriftingBackdrop from './ui/DriftingBackdrop';
 import GlassSection from './ui/GlassSection';
 import NewNotesDeck from './ui/NewNotesDeck';
 import NoteCard from './ui/NoteCard';
@@ -513,10 +514,34 @@ export default function Carnet({ mode }: { mode: CarnetMode }) {
   // Page entière : l'en-tête reste en haut, la pile puis la liste passent dessous
   return (
     <View style={[styles.screen, styles.page, { paddingTop: insets.top - SHEET_TOP_INSET + spacing.sm }]}>
-      {/* Le verre naît dans une vue en fondu : il reste translucide (DESIGN.md) */}
-      <Animated.View entering={FadeIn.duration(motion.duration.standard)} style={styles.pageHeader}>
-        {header}
-      </Animated.View>
+      {/* Pendant la pile : un fond vivant, des taches douces qui dérivent */}
+      {phase === 'deck' && (
+        <Animated.View exiting={FadeOut.duration(500)} style={StyleSheet.absoluteFill}>
+          <DriftingBackdrop />
+        </Animated.View>
+      )}
+
+      {/*
+        Le verre naît dans une vue en fondu : il reste translucide (DESIGN.md).
+        Pendant la pile, seulement le retour : ni titre ni post-it, la note seule.
+      */}
+      {phase === 'deck' ? (
+        <Animated.View
+          entering={FadeIn.duration(motion.duration.standard)}
+          style={[styles.pageHeader, styles.deckHeader]}
+        >
+          <GlassButton
+            icon={ChevronLeftIcon}
+            size={36}
+            onPress={() => router.back()}
+            accessibilityLabel="Retour"
+          />
+        </Animated.View>
+      ) : (
+        <Animated.View entering={FadeIn.duration(motion.duration.standard)} style={styles.pageHeader}>
+          {header}
+        </Animated.View>
+      )}
 
       <View style={styles.page}>
         {phase === 'list' && list}
@@ -594,6 +619,12 @@ const styles = StyleSheet.create({
   pageHeader: {
     paddingHorizontal: spacing.lg,
     zIndex: 1,
+  },
+  // La même hauteur que l'en-tête du carnet : le retour ne bouge pas ensuite
+  deckHeader: {
+    paddingTop: SHEET_TOP_INSET,
+    paddingBottom: spacing.md,
+    minHeight: SHEET_TOP_INSET + 36 + spacing.md,
   },
   deckLayer: {
     ...StyleSheet.absoluteFillObject,

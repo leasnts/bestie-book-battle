@@ -1,21 +1,27 @@
 /**
  * NewNotesDeck — les nouvelles notes du club, en pile, une à la fois.
  *
- *    Nouvelles                 1 / 4
- *    p. 142–157
- *      ┌──────────────────────┐
- *     ┌┴─────────────────────┐│      ← deux cartes décalées derrière :
- *     │ note de Zoé    p. 142 ││        on sent qu'il y a une pile
- *     │ …                     │┘
- *     └───────────────────────┘
+ *    1 / 3                     p. 5–11
+ *    ▰▰▰▱▱▱▱▱▱                             ← un segment par note, rempli en lie de vin
+ *
+ *        ╱▔▔▔▔▔▔▔▔▔▔▔▔▔╲
+ *       │ Emma   p. 5   │                  ← la note, à sa taille, les suivantes
+ *       │ Le narrateur… │                    dessous, un peu pivotées
+ *        ╲____________◢╱
+ *
+ *     (😭) (🫶) (😂) (🔥) (😱) (👀) (…)    ← les réactions, sous la pile
  *
  * Le carnet s'ouvre sur elles quand il y en a (page entière, depuis l'accueil) :
  * on lit d'abord ce qui est nouveau, seul, puis le carnet entier apparaît.
  *
  * - **Glisser à gauche ou à droite = lue.** Les deux sens font la même chose :
  *   on passe à la suivante, sans choix à faire. Une coche apparaît pendant le
- *   geste, la carte s'envole en tournant un peu, la suivante monte.
- * - On peut réagir avant de glisser (les pastilles de `NoteCard`).
+ *   geste, la carte s'envole en tournant un peu, la suivante se redresse.
+ * - Chaque carte a la taille de sa note : un emoji seul est un petit autocollant.
+ *   Les suivantes dépassent derrière, pivotées, comme des autocollants posés
+ *   en tas — elles se voient quelle que soit leur taille.
+ * - Les réactions de la note du dessus sont sous la pile, les six rapides
+ *   toujours là : réagir se fait d'un toucher, avant de glisser.
  * - La première carte fait un petit aller-retour à l'ouverture : elle montre
  *   qu'elle se glisse, sans texte d'aide.
  * - Après la dernière : « Tout lu », puis `onDone` (le carnet dissout la pile).
@@ -32,6 +38,7 @@ import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   Easing,
   FadeIn,
+  FadeOut,
   interpolate,
   runOnJS,
   useAnimatedStyle,
@@ -47,12 +54,13 @@ import {
   accentGradient,
   colors,
   fonts,
+  inkAlpha,
   inkGradient,
   motion,
   shadowAlpha,
   spacing,
 } from '../../utils/constants';
-import NoteCard from './NoteCard';
+import NoteCard, { NoteReactions } from './NoteCard';
 import PressableScale from './PressableScale';
 
 interface NewNotesDeckProps {
@@ -68,13 +76,10 @@ interface NewNotesDeckProps {
   onDone: () => void;
 }
 
-/** Hauteur d'une carte : de quoi lire six lignes, réactions comprises */
-const CARD_HEIGHT = 300;
-/** Ce qui dépasse de chaque carte sous la précédente */
-const DEPTH_OFFSET = 12;
-/** Rétrécie de 5 % par rang : le bas remonte d'autant, on le compense */
-const DEPTH_SCALE = 0.05;
-const DEPTH_STEP = DEPTH_OFFSET + (CARD_HEIGHT * DEPTH_SCALE) / 2;
+/** La place de la pile : de quoi poser une note de six lignes */
+const DECK_HEIGHT = 320;
+/** Les cartes de dessous : pivotées dans un sens puis dans l'autre */
+const TILTS = [0, -4, 3.5, 0];
 /** Glisser au-delà (ou lancer assez vite) = lue */
 const SWIPE_DISTANCE = 100;
 const SWIPE_VELOCITY = 800;
@@ -94,7 +99,7 @@ export default function NewNotesDeck({
 }: NewNotesDeckProps) {
   const [index, setIndex] = useState(0);
   const screenReader = useScreenReader();
-  /** Les cartes du premier affichage sont déjà en place ; les suivantes montent */
+  /** Les cartes du premier affichage sont déjà en place ; les suivantes arrivent */
   const firstIds = useRef(new Set(notes.slice(0, 3).map((note) => note.id)));
 
   const done = index >= notes.length;
@@ -116,26 +121,30 @@ export default function NewNotesDeck({
       ? `p. ${pageFromPosition(first.position, myTotalPages)}–${pageFromPosition(last.position, myTotalPages)}`
       : '';
 
-  // La carte du dessus en dernier : elle se dessine par-dessus les autres
   const pile = notes.slice(index, index + 3);
+  const top = pile[0];
+  const shown = Math.min(index + 1, notes.length);
 
   return (
     <View style={styles.wrap}>
-      <View style={styles.head}>
-        <View>
-          <Text style={styles.title} accessibilityRole="header">
-            Nouvelles
+      {/* Où j'en suis : le chiffre, et un segment par note */}
+      <View style={styles.progress} accessibilityLabel={`Note ${shown} sur ${notes.length}`}>
+        <View style={styles.progressHead}>
+          <Text style={styles.count}>
+            <Text style={styles.countNow}>{shown}</Text>
+            <Text style={styles.countTotal}> / {notes.length}</Text>
           </Text>
           <Text style={styles.range}>{range}</Text>
         </View>
-        {!done && (
-          <Text style={styles.count} accessibilityLabel={`Note ${index + 1} sur ${notes.length}`}>
-            <Text style={styles.countNow}>{index + 1}</Text> / {notes.length}
-          </Text>
-        )}
+        <View style={styles.segments}>
+          {notes.map((note, i) => (
+            <Segment key={note.id} filled={i <= index} current={i === index} />
+          ))}
+        </View>
       </View>
 
       <View style={styles.deck}>
+        {/* La carte du dessus en dernier : elle se dessine par-dessus les autres */}
         {[...pile].reverse().map((note) => {
           const depth = pile.indexOf(note);
           return (
@@ -149,12 +158,11 @@ export default function NewNotesDeck({
             >
               <NoteCard
                 large
+                hideReactions
                 note={note}
                 myTotalPages={myTotalPages}
                 isMine={false}
                 myUserId={myUserId}
-                onToggleReaction={(emoji) => onToggleReaction(note, emoji)}
-                onMoreReactions={() => onMoreReactions(note.id)}
               />
             </SwipeCard>
           );
@@ -171,11 +179,30 @@ export default function NewNotesDeck({
         )}
       </View>
 
+      {/* Les réactions de la note du dessus, hors de la note */}
+      <View style={styles.reactions}>
+        {top && top.visibility === 'club' && (
+          <Animated.View
+            key={top.id}
+            entering={FadeIn.duration(motion.duration.standard)}
+            exiting={FadeOut.duration(motion.duration.instant)}
+          >
+            <NoteReactions
+              quick
+              note={top}
+              myUserId={myUserId}
+              onToggle={(emoji) => onToggleReaction(top, emoji)}
+              onMore={() => onMoreReactions(top.id)}
+            />
+          </Animated.View>
+        )}
+      </View>
+
       {/* VoiceOver ne glisse pas : une action à la place du geste */}
-      {screenReader && !done && (
+      {screenReader && top && (
         <PressableScale
           style={styles.a11yButton}
-          onPress={() => swiped(notes[index].id)}
+          onPress={() => swiped(top.id)}
           accessibilityRole="button"
           accessibilityLabel="Marquer comme lue"
         >
@@ -183,6 +210,23 @@ export default function NewNotesDeck({
           <CheckIcon size={20} color={colors.white} strokeWidth={2.4} />
         </PressableScale>
       )}
+    </View>
+  );
+}
+
+/** Un segment de la progression : lie de vin une fois atteint */
+function Segment({ filled, current }: { filled: boolean; current: boolean }) {
+  const fill = useSharedValue(filled ? 1 : 0);
+  useEffect(() => {
+    fill.value = withTiming(filled ? 1 : 0, { duration: motion.duration.slow, easing: easeOut });
+  }, [filled, fill]);
+  // Il se remplit de gauche à droite (scaleX, jamais width)
+  const style = useAnimatedStyle(() => ({ transform: [{ scaleX: fill.value }] }));
+  return (
+    <View style={[styles.segment, current && styles.segmentCurrent]}>
+      <Animated.View style={[StyleSheet.absoluteFill, styles.segmentFill, style]}>
+        <LinearGradient colors={accentGradient} style={StyleSheet.absoluteFill} />
+      </Animated.View>
     </View>
   );
 }
@@ -198,9 +242,9 @@ function SwipeCard({
   children,
 }: {
   note: AnnotationWithAuthor;
-  /** 0 = dessus ; 1 et 2 dépassent derrière */
+  /** 0 = dessus ; 1 et 2 dépassent derrière, pivotées */
   depth: number;
-  /** Arrivée dans la pile après l'ouverture : monte depuis le fond */
+  /** Arrivée dans la pile après l'ouverture : elle apparaît au fond */
   appearing: boolean;
   /** La première carte : petit aller-retour pour montrer qu'elle se glisse */
   hint: boolean;
@@ -214,7 +258,7 @@ function SwipeCard({
   const fade = useSharedValue(1);
   const place = useSharedValue(appearing ? depth + 1 : depth);
 
-  // Sa place dans la pile : elle avance quand celle du dessus part
+  // Sa place dans la pile : elle se redresse quand celle du dessus part
   useEffect(() => {
     place.value = withTiming(depth, { duration: motion.duration.slow, easing: easeOut });
   }, [depth, place]);
@@ -229,8 +273,7 @@ function SwipeCard({
         withTiming(0, { duration: 390, easing: easeOut }),
       ),
     );
-    // Une seule fois, à l'ouverture
-  }, []);
+  }, [hint, reduced, x]);
 
   const buzz = () => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
 
@@ -264,12 +307,12 @@ function SwipeCard({
     });
 
   const cardStyle = useAnimatedStyle(() => ({
-    opacity: fade.value * interpolate(place.value, [0, 1, 2, 3], [1, 1, 0.7, 0]),
+    opacity: fade.value * interpolate(place.value, [0, 2, 3], [1, 1, 0]),
     transform: [
       { translateX: x.value },
-      { translateY: y.value * 0.25 + place.value * DEPTH_STEP },
-      { rotate: `${x.value * 0.05}deg` },
-      { scale: 1 - place.value * DEPTH_SCALE },
+      { translateY: y.value * 0.25 },
+      { rotate: `${x.value * 0.05 + interpolate(place.value, [0, 1, 2, 3], TILTS)}deg` },
+      { scale: interpolate(place.value, [0, 1, 3], [1, 0.97, 0.94]) },
     ],
   }));
 
@@ -281,20 +324,22 @@ function SwipeCard({
   });
 
   return (
-    <GestureDetector gesture={pan}>
-      <Animated.View
-        style={[styles.card, cardStyle]}
-        pointerEvents={depth === 0 ? 'auto' : 'none'}
-        importantForAccessibility={depth === 0 ? 'auto' : 'no-hide-descendants'}
-        accessibilityElementsHidden={depth !== 0}
-      >
-        {children}
-        <Animated.View style={[styles.mark, markStyle]} pointerEvents="none">
-          <LinearGradient colors={inkGradient} style={StyleSheet.absoluteFill} />
-          <CheckIcon size={18} color={colors.white} strokeWidth={2.6} />
+    <View style={styles.slot} pointerEvents="box-none">
+      <GestureDetector gesture={pan}>
+        <Animated.View
+          style={[styles.card, cardStyle]}
+          pointerEvents={depth === 0 ? 'auto' : 'none'}
+          importantForAccessibility={depth === 0 ? 'auto' : 'no-hide-descendants'}
+          accessibilityElementsHidden={depth !== 0}
+        >
+          {children}
+          <Animated.View style={[styles.mark, markStyle]} pointerEvents="none">
+            <LinearGradient colors={inkGradient} style={StyleSheet.absoluteFill} />
+            <CheckIcon size={18} color={colors.white} strokeWidth={2.6} />
+          </Animated.View>
         </Animated.View>
-      </Animated.View>
-    </GestureDetector>
+      </GestureDetector>
+    </View>
   );
 }
 
@@ -309,20 +354,34 @@ function useScreenReader() {
   return enabled;
 }
 
+const SEGMENT_HEIGHT = 6;
+
 const styles = StyleSheet.create({
   wrap: {
-    gap: spacing.md,
+    gap: spacing.xl,
   },
-  head: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    justifyContent: 'space-between',
+
+  progress: {
+    gap: spacing.md,
     paddingHorizontal: spacing.xs,
   },
-  title: {
-    fontFamily: fonts.display,
-    fontSize: 24,
+  progressHead: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    justifyContent: 'space-between',
+  },
+  count: {
+    fontVariant: ['tabular-nums'],
+  },
+  countNow: {
+    fontFamily: fonts.displayHero,
+    fontSize: 56,
     color: colors.textPrimary,
+  },
+  countTotal: {
+    fontFamily: fonts.display,
+    fontSize: 22,
+    color: colors.textTertiary,
   },
   range: {
     fontFamily: fonts.bodyBold,
@@ -330,34 +389,44 @@ const styles = StyleSheet.create({
     color: colors.textTertiary,
     fontVariant: ['tabular-nums'],
   },
-  count: {
-    fontFamily: fonts.display,
-    fontSize: 17,
-    color: colors.textTertiary,
-    fontVariant: ['tabular-nums'],
+  segments: {
+    flexDirection: 'row',
+    gap: spacing.xs,
   },
-  countNow: {
-    color: colors.textPrimary,
+  segment: {
+    flex: 1,
+    height: SEGMENT_HEIGHT,
+    borderRadius: SEGMENT_HEIGHT / 2,
+    overflow: 'hidden',
+    backgroundColor: inkAlpha(0.1),
+  },
+  segmentCurrent: {
+    backgroundColor: inkAlpha(0.16),
+  },
+  segmentFill: {
+    transformOrigin: 'left',
   },
 
   deck: {
-    height: CARD_HEIGHT + DEPTH_OFFSET * 2,
+    height: DECK_HEIGHT,
+  },
+  // Chaque carte centrée dans la place de la pile, à sa taille
+  slot: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   card: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: CARD_HEIGHT,
+    width: '100%',
     shadowColor: shadowAlpha(1),
-    shadowOpacity: 0.12,
+    shadowOpacity: 0.14,
     shadowRadius: 18,
     shadowOffset: { width: 0, height: 10 },
   },
   mark: {
     position: 'absolute',
-    top: spacing.lg,
-    right: spacing.lg,
+    top: -spacing.md,
+    right: -spacing.sm,
     width: 34,
     height: 34,
     borderRadius: 17,
@@ -384,6 +453,11 @@ const styles = StyleSheet.create({
     fontFamily: fonts.display,
     fontSize: 22,
     color: colors.textPrimary,
+  },
+
+  // Place fixe : la pile ne saute pas quand une note n'a pas de réactions
+  reactions: {
+    minHeight: 44,
   },
 
   a11yButton: {

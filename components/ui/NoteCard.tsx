@@ -2,15 +2,15 @@
  * NoteCard — une note du carnet, en post-it.
  *
  * `[avatar] [prénom] [catégorie] … [p. 153]`
- * `[emoji] [texte]`
- * `[réactions]`
+ * `[texte]` ou `[emoji]` en grand, seul
+ * `[réactions]`, sous l'autocollant
  *
  * La couleur vient de la catégorie, mais **son nom est toujours écrit** : la
  * couleur seule exclurait les personnes daltoniennes, et un club a le droit de
  * savoir ce que veut dire un post-it bleu.
  *
  * La note a la forme de l'autocollant brodé (`NoteSticker`, coin décollé en
- * haut à gauche) : une note = cet autocollant, partout (DESIGN.md).
+ * bas à droite) : une note = cet autocollant, partout (DESIGN.md).
  *
  * La page affichée est celle de MON édition (« ≈ p. 153 » si l'autrice lit une
  * autre édition) : c'est la page où je retrouverai le passage.
@@ -49,8 +49,10 @@ interface NoteCardProps {
   onToggleReaction?: (emoji: string) => void;
   /** Ouvrir le sélecteur complet */
   onMoreReactions?: () => void;
-  /** Une grande carte (la pile des nouvelles) : elle remplit sa hauteur, texte plus grand */
+  /** Une grande carte (la pile des nouvelles) : texte plus grand */
   large?: boolean;
+  /** Les réactions sont posées ailleurs (sous la pile) */
+  hideReactions?: boolean;
 }
 
 /**
@@ -69,10 +71,10 @@ export default function NoteCard({
   onToggleReaction,
   onMoreReactions,
   large = false,
+  hideReactions = false,
 }: NoteCardProps) {
   const category = ANNOTATION_CATEGORIES[note.category];
   const page = formatNotePage(note.position, note.edition_total_pages, myTotalPages);
-  const [picking, setPicking] = useState(false);
   /** L'autocollant se dessine à la taille de la note, une fois mesurée */
   const [size, setSize] = useState<{ width: number; height: number } | null>(null);
   const onLayout = (e: LayoutChangeEvent) => {
@@ -82,8 +84,125 @@ export default function NoteCard({
     );
   };
 
-  // Une note privée ne se lit que par son autrice : pas de réactions
-  const canReact = note.visibility === 'club' && !!onToggleReaction;
+  /**
+   * Une note, c'est un emoji seul OU un texte (l'emoji va alors dans le texte).
+   * Une ancienne note qui a les deux : l'emoji passe en tête du texte.
+   */
+  const text = note.body ? (note.emoji ? `${note.emoji} ${note.body}` : note.body) : null;
+  const emojiOnly = !text && !!note.emoji && !note.audio_path && !note.quote;
+
+  const sticker = (
+    <View
+      style={[
+        styles.note,
+        large && styles.noteLarge,
+        emojiOnly && (large ? styles.noteCompactCentered : styles.noteCompact),
+      ]}
+      onLayout={onLayout}
+    >
+      {size && (
+        <View style={StyleSheet.absoluteFill} pointerEvents="none">
+          <NoteSticker
+            id={`note-${note.id}`}
+            color={category.color}
+            width={size.width}
+            height={size.height}
+            maxBase={large ? STICKER_BASE_LARGE : STICKER_BASE}
+            corner="bottom-right"
+          />
+        </View>
+      )}
+      <View style={styles.head}>
+        <Image source={resolveAvatar(note.author?.profile_photo_url)} style={styles.avatar} />
+        <Text style={styles.name} numberOfLines={1}>
+          {isMine ? 'Moi' : note.author?.first_name || 'Participant'}
+        </Text>
+        <Text style={[styles.category, emojiOnly && styles.categoryCompact]}>{category.label}</Text>
+        <Text style={styles.page}>{page}</Text>
+      </View>
+
+      {!!note.quote && <Text style={[styles.quote, large && styles.quoteLarge]}>{note.quote}</Text>}
+
+      {emojiOnly ? (
+        <Text style={[styles.bigEmoji, large && styles.bigEmojiLarge]}>{note.emoji}</Text>
+      ) : (
+        !!(text ?? note.emoji) && (
+          <Text style={[styles.text, large && styles.textLarge]} numberOfLines={6}>
+            {text ?? note.emoji}
+          </Text>
+        )
+      )}
+
+      {!!note.audio_path && (
+        <VoicePlayer
+          path={note.audio_path}
+          seconds={note.audio_seconds ?? 0}
+          levels={note.audio_levels}
+        />
+      )}
+
+      {note.visibility === 'private' && <Text style={styles.private}>Moi seule</Text>}
+    </View>
+  );
+
+  const content = (
+    <View style={styles.wrap}>
+      {onPress ? (
+        <PressableScale
+          pressedScale={0.99}
+          onPress={onPress}
+          style={emojiOnly && styles.compactPress}
+          accessibilityRole="button"
+          accessibilityLabel={`Note de ${isMine ? 'moi' : note.author?.first_name}, ${category.label}, ${page}`}
+          accessibilityHint={isMine ? 'Ouvre ma note pour la modifier' : undefined}
+        >
+          {sticker}
+        </PressableScale>
+      ) : (
+        sticker
+      )}
+
+      {/* Les réactions, sous la note : l'autocollant ne porte que la note */}
+      {!hideReactions && note.visibility === 'club' && (
+        <NoteReactions
+          note={note}
+          myUserId={myUserId}
+          onToggle={onToggleReaction}
+          onMore={onMoreReactions}
+        />
+      )}
+    </View>
+  );
+
+  return content;
+}
+
+// ─── Les réactions d'une note ──────────────────────────────────────
+
+/**
+ * Une pastille par emoji avec son compte, ma réaction cerclée d'encre.
+ *
+ * - `quick` (la pile des nouvelles) : les six emojis rapides sont toujours là,
+ *   avec leur compte s'il y en a un, puis « … » pour le reste. Un toucher suffit.
+ * - Sinon (la liste) : seulement les réactions posées, et `smile-plus` ouvre
+ *   les six rapides à la place de la rangée.
+ * - Sans `onToggle`, elles se lisent seulement (consultation).
+ */
+export function NoteReactions({
+  note,
+  myUserId,
+  onToggle,
+  onMore,
+  quick = false,
+}: {
+  note: AnnotationWithAuthor;
+  myUserId?: string;
+  onToggle?: (emoji: string) => void;
+  onMore?: () => void;
+  quick?: boolean;
+}) {
+  const [picking, setPicking] = useState(false);
+  const canReact = !!onToggle;
 
   // Une pastille par emoji, avec son compte ; les plus partagées d'abord
   const reactions = useMemo(() => {
@@ -99,175 +218,115 @@ export default function NoteCard({
 
   const react = (emoji: string) => {
     setPicking(false);
-    onToggleReaction?.(emoji);
+    onToggle?.(emoji);
   };
 
-  const content = (
-    <View style={[styles.note, large && styles.noteLarge]} onLayout={onLayout}>
-      {size && (
-        <View style={StyleSheet.absoluteFill} pointerEvents="none">
-          <NoteSticker
-            id={`note-${note.id}`}
-            color={category.color}
-            width={size.width}
-            height={size.height}
-            maxBase={large ? STICKER_BASE_LARGE : STICKER_BASE}
-          />
-        </View>
-      )}
-      <View style={[styles.head, large && styles.headLarge]}>
-        <Image source={resolveAvatar(note.author?.profile_photo_url)} style={styles.avatar} />
-        <Text style={styles.name} numberOfLines={1}>
-          {isMine ? 'Moi' : note.author?.first_name || 'Participant'}
-        </Text>
-        <Text style={styles.category}>{category.label}</Text>
-        <Text style={styles.page}>{page}</Text>
-      </View>
+  // Les six rapides d'abord, dans leur ordre, puis les autres emojis posés
+  const shown =
+    quick || picking
+      ? [
+          ...QUICK_REACTIONS.map(
+            (emoji) => reactions.find((r) => r.emoji === emoji) ?? { emoji, count: 0, mine: false },
+          ),
+          ...(quick ? reactions.filter((r) => !QUICK_REACTIONS.includes(r.emoji)) : []),
+        ]
+      : reactions;
 
-      {!!note.quote && <Text style={[styles.quote, large && styles.quoteLarge]}>{note.quote}</Text>}
-
-      <View style={[styles.body, large && styles.bodyLarge]}>
-        {!!note.emoji && <Text style={[styles.emoji, large && styles.emojiLarge]}>{note.emoji}</Text>}
-        {!!note.body && (
-          <Text style={[styles.text, large && styles.textLarge]} numberOfLines={6}>
-            {note.body}
-          </Text>
-        )}
-      </View>
-
-      {!!note.audio_path && (
-        <VoicePlayer
-          path={note.audio_path}
-          seconds={note.audio_seconds ?? 0}
-          levels={note.audio_levels}
-        />
-      )}
-
-      {picking ? (
-        // Les six emojis rapides remplacent la rangée, « … » ouvre le reste
-        <View style={styles.footer}>
-          {QUICK_REACTIONS.map((emoji) => {
-            const mine = reactions.some((r) => r.emoji === emoji && r.mine);
-            return (
-              <PressableScale
-                key={emoji}
-                style={[styles.quick, mine && styles.reactionMine]}
-                pressedScale={0.85}
-                hitSlop={2}
-                onPress={() => react(emoji)}
-                accessibilityRole="button"
-                accessibilityLabel={emoji}
-                accessibilityState={{ selected: mine }}
-              >
-                <Text style={styles.quickEmoji}>{emoji}</Text>
-              </PressableScale>
-            );
-          })}
-          <PressableScale
-            style={styles.quick}
-            pressedScale={0.85}
-            hitSlop={2}
-            onPress={() => {
-              setPicking(false);
-              onMoreReactions?.();
-            }}
-            accessibilityRole="button"
-            accessibilityLabel="Tous les emojis"
-          >
-            <EllipsisIcon size={16} color={colors.dark900} strokeWidth={2.4} />
-          </PressableScale>
-          <PressableScale
-            style={styles.quick}
-            pressedScale={0.85}
-            hitSlop={2}
-            onPress={() => setPicking(false)}
-            accessibilityRole="button"
-            accessibilityLabel="Fermer"
-          >
-            <XIcon size={15} color={colors.dark900} strokeWidth={2.4} />
-          </PressableScale>
-        </View>
-      ) : (
-        (note.visibility === 'private' || reactions.length > 0 || canReact) && (
-          <View style={styles.footer}>
-            {note.visibility === 'private' && <Text style={styles.private}>Moi seule</Text>}
-            {reactions.map(({ emoji, count, mine }) =>
-              canReact ? (
-                <PressableScale
-                  key={emoji}
-                  style={[styles.reaction, mine && styles.reactionMine]}
-                  pressedScale={0.9}
-                  hitSlop={4}
-                  onPress={() => react(emoji)}
-                  accessibilityRole="button"
-                  accessibilityLabel={`${emoji}, ${count}`}
-                  accessibilityState={{ selected: mine }}
-                  accessibilityHint={mine ? 'Retire ma réaction' : 'Ajoute ma réaction'}
-                >
-                  <Text style={styles.reactionEmoji}>{emoji}</Text>
-                  <Text style={styles.reactionCount}>{count}</Text>
-                </PressableScale>
-              ) : (
-                <View key={emoji} style={styles.reaction}>
-                  <Text style={styles.reactionEmoji}>{emoji}</Text>
-                  <Text style={styles.reactionCount}>{count}</Text>
-                </View>
-              ),
-            )}
-            {canReact && (
-              <PressableScale
-                style={styles.reaction}
-                pressedScale={0.9}
-                hitSlop={4}
-                onPress={() => setPicking(true)}
-                accessibilityRole="button"
-                accessibilityLabel="Réagir"
-              >
-                <SmilePlusIcon size={14} color={colors.dark900} strokeWidth={2.2} />
-              </PressableScale>
-            )}
-          </View>
-        )
-      )}
-    </View>
-  );
-
-  if (!onPress) return content;
+  if (!canReact && reactions.length === 0) return null;
 
   return (
-    <PressableScale
-      pressedScale={0.99}
-      onPress={onPress}
-      accessibilityRole="button"
-      accessibilityLabel={`Note de ${isMine ? 'moi' : note.author?.first_name}, ${category.label}, ${page}`}
-      accessibilityHint={isMine ? 'Ouvre ma note pour la modifier' : undefined}
-    >
-      {content}
-    </PressableScale>
+    <View style={[styles.footer, quick && styles.footerQuick]}>
+      {shown.map(({ emoji, count, mine }) =>
+        canReact ? (
+          <PressableScale
+            key={emoji}
+            style={[styles.reaction, quick && styles.reactionQuick, mine && styles.reactionMine]}
+            pressedScale={0.85}
+            hitSlop={4}
+            onPress={() => react(emoji)}
+            accessibilityRole="button"
+            accessibilityLabel={count ? `${emoji}, ${count}` : emoji}
+            accessibilityState={{ selected: mine }}
+            accessibilityHint={mine ? 'Retire ma réaction' : 'Ajoute ma réaction'}
+          >
+            <Text style={[styles.reactionEmoji, quick && styles.reactionEmojiQuick]}>{emoji}</Text>
+            {count > 0 && <Text style={styles.reactionCount}>{count}</Text>}
+          </PressableScale>
+        ) : (
+          <View key={emoji} style={styles.reaction}>
+            <Text style={styles.reactionEmoji}>{emoji}</Text>
+            <Text style={styles.reactionCount}>{count}</Text>
+          </View>
+        ),
+      )}
+      {canReact && (quick || picking) && (
+        <PressableScale
+          style={[styles.reaction, quick && styles.reactionQuick]}
+          pressedScale={0.85}
+          hitSlop={4}
+          onPress={() => {
+            setPicking(false);
+            onMore?.();
+          }}
+          accessibilityRole="button"
+          accessibilityLabel="Tous les emojis"
+        >
+          <EllipsisIcon size={16} color={colors.dark900} strokeWidth={2.4} />
+        </PressableScale>
+      )}
+      {canReact && !quick && (
+        <PressableScale
+          style={styles.reaction}
+          pressedScale={0.85}
+          hitSlop={4}
+          onPress={() => setPicking((p) => !p)}
+          accessibilityRole="button"
+          accessibilityLabel={picking ? 'Fermer' : 'Réagir'}
+        >
+          {picking ? (
+            <XIcon size={15} color={colors.dark900} strokeWidth={2.4} />
+          ) : (
+            <SmilePlusIcon size={14} color={colors.dark900} strokeWidth={2.2} />
+          )}
+        </PressableScale>
+      )}
+    </View>
   );
 }
 
 const AVATAR = 22;
 
 const styles = StyleSheet.create({
+  wrap: {
+    gap: spacing.sm,
+  },
+  // En bas, la place du coin corné (34 % du côté plafonné) : le texte n'y passe pas
   note: {
     padding: spacing.md,
+    paddingBottom: spacing.md + spacing.sm,
     gap: spacing.sm,
   },
   noteLarge: {
-    flex: 1,
     padding: spacing.xl,
+    paddingBottom: spacing.xl + spacing.md,
     gap: spacing.md,
   },
-  // La ligne du haut commence après le coin décollé (34 % de STICKER_BASE)
+  // Un emoji seul : un petit autocollant, pas une carte vide
+  noteCompact: {
+    alignSelf: 'flex-start',
+    minWidth: 150,
+  },
+  noteCompactCentered: {
+    alignSelf: 'center',
+    minWidth: 200,
+  },
+  compactPress: {
+    alignSelf: 'flex-start',
+  },
   head: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
-    marginLeft: spacing.lg,
-  },
-  headLarge: {
-    marginLeft: spacing.lg,
   },
   avatar: {
     width: AVATAR,
@@ -289,7 +348,12 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     color: inkAlpha(0.55),
   },
+  categoryCompact: {
+    flex: 0,
+    marginRight: spacing.sm,
+  },
   page: {
+    marginLeft: 'auto',
     fontFamily: fonts.bodyBold,
     fontSize: 12,
     color: inkAlpha(0.66),
@@ -306,35 +370,34 @@ const styles = StyleSheet.create({
     borderLeftWidth: 2,
     borderLeftColor: inkAlpha(0.35),
   },
+  quoteLarge: {
+    fontSize: 16,
+    lineHeight: 22,
+  },
 
-  body: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: spacing.sm,
+  bigEmoji: {
+    fontSize: 40,
+    lineHeight: 48,
   },
-  bodyLarge: {
-    flex: 1,
+  bigEmojiLarge: {
+    fontSize: 64,
+    lineHeight: 76,
   },
-  emoji: {
-    fontSize: 20,
-  },
-  emojiLarge: {
-    fontSize: 28,
+  text: {
+    fontFamily: fonts.body,
+    fontSize: 15,
+    lineHeight: 20,
+    color: colors.textPrimary,
   },
   textLarge: {
     fontSize: 18,
     lineHeight: 25,
   },
-  quoteLarge: {
-    fontSize: 16,
-    lineHeight: 22,
-  },
-  text: {
-    flex: 1,
-    fontFamily: fonts.body,
-    fontSize: 15,
-    lineHeight: 20,
-    color: colors.textPrimary,
+
+  private: {
+    fontFamily: fonts.bodyBold,
+    fontSize: 11,
+    color: inkAlpha(0.55),
   },
 
   footer: {
@@ -343,11 +406,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.xs,
   },
-  private: {
-    fontFamily: fonts.bodyBold,
-    fontSize: 11,
-    color: inkAlpha(0.55),
-    marginRight: spacing.xs,
+  footerQuick: {
+    justifyContent: 'center',
+    gap: spacing.sm,
   },
   // 30 pt de haut : assez pour viser juste, hitSlop compris
   reaction: {
@@ -359,35 +420,31 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: spacing.sm,
     borderRadius: borderRadius.full,
-    backgroundColor: creamAlpha(0.55),
+    backgroundColor: inkAlpha(0.05),
     borderWidth: 1.5,
     borderColor: 'transparent',
+  },
+  // Sous la pile : de vraies touches, 44 pt
+  reactionQuick: {
+    minWidth: 44,
+    minHeight: 44,
+    backgroundColor: creamAlpha(0.7),
   },
   // Ma réaction : cerclée d'encre, on sait ce qu'un toucher retirera
   reactionMine: {
     borderColor: inkAlpha(0.7),
-    backgroundColor: creamAlpha(0.8),
+    backgroundColor: creamAlpha(0.9),
   },
   reactionEmoji: {
     fontSize: 15,
+  },
+  reactionEmojiQuick: {
+    fontSize: 20,
   },
   reactionCount: {
     fontFamily: fonts.bodyExtraBold,
     fontSize: 13,
     color: colors.textPrimary,
     fontVariant: ['tabular-nums'],
-  },
-  quick: {
-    width: 36,
-    height: 36,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 18,
-    backgroundColor: creamAlpha(0.55),
-    borderWidth: 1.5,
-    borderColor: 'transparent',
-  },
-  quickEmoji: {
-    fontSize: 19,
   },
 });

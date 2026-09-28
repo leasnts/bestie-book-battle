@@ -34,6 +34,12 @@ interface NoteStickerProps {
    * au lieu d'un arrondi démesuré.
    */
   maxBase?: number;
+  /**
+   * Le coin qui se décolle. En haut à gauche par défaut (en pile d'autocollants,
+   * c'est lui qui reste visible) ; en bas à droite pour une note du carnet, où
+   * le haut porte l'autrice et la page.
+   */
+  corner?: 'top-left' | 'bottom-right';
 }
 
 export default function NoteSticker({
@@ -43,6 +49,7 @@ export default function NoteSticker({
   height,
   id,
   maxBase = Infinity,
+  corner = 'top-left',
 }: NoteStickerProps) {
   const w = width ?? size;
   const h = height ?? size;
@@ -79,7 +86,14 @@ export default function NoteSticker({
   return (
     <Svg width={w} height={h}>
       <Defs>
-        <LinearGradient id={`shade-${id}`} x1="0" y1="0" x2="0" y2="1">
+        {/* Retourné de haut en bas, le voile l'est aussi : on l'inverse pour garder le clair en haut */}
+        <LinearGradient
+          id={`shade-${id}`}
+          x1="0"
+          y1={corner === 'bottom-right' ? '1' : '0'}
+          x2="0"
+          y2={corner === 'bottom-right' ? '0' : '1'}
+        >
           <Stop offset="0" stopColor="#fff" stopOpacity={0.25} />
           <Stop offset="1" stopColor="#000" stopOpacity={0.08} />
         </LinearGradient>
@@ -88,8 +102,12 @@ export default function NoteSticker({
           <Stop offset="1" stopColor={stickerMaterial.flap[1]} />
         </LinearGradient>
       </Defs>
-      {/* Dessiné coin à droite, puis retourné : le coin décollé passe à gauche */}
-      <G transform={`translate(${w} 0) scale(-1 1)`}>
+      {/* Dessiné coin en haut à droite, puis retourné : à gauche, ou en bas */}
+      <G
+        transform={
+          corner === 'bottom-right' ? `translate(0 ${h}) scale(1 -1)` : `translate(${w} 0) scale(-1 1)`
+        }
+      >
         <Path d={shape} fill={fill} />
         {/* Jamais d'aplat : un voile clair en haut, plus sombre en bas */}
         <Path d={shape} fill={`url(#shade-${id})`} />
