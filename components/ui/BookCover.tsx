@@ -30,7 +30,7 @@ const DEFAULT_COVER = require('../../assets/images/random_cover_1.png');
 
 // Texture de vrai livre (reliure, coins usés, rayures) posée sur chaque couverture.
 // Transparente au centre : seuls les bords et les reflets ressortent.
-const COVER_TEXTURE = require('../../assets/images/cover_book_40.png');
+const COVER_TEXTURE = require('../../assets/images/cover_book_60.png');
 
 /** La couverture + la texture par-dessus */
 const TexturedCover = ({ coverUrl }: { coverUrl: string | null | undefined }) => (
