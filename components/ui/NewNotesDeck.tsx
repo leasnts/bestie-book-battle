@@ -90,6 +90,12 @@ interface NewNotesDeckProps {
 const DECK_HEIGHT = 320;
 /** Les cartes de dessous : pivotées dans un sens puis dans l'autre */
 const TILTS = [0, -4, 3.5, 0];
+/**
+ * Décollée à plus de la moitié : lâcher la fait partir. En dessous, elle se
+ * recolle — on peut jouer avec le coin sans qu'elle parte. La vitesse du geste
+ * ne compte pas : un mouvement vif ne doit pas la décoller par surprise.
+ */
+const PEEL_OFF = 0.5;
 /** Glisser au-delà (ou lancer assez vite) = lue */
 const SWIPE_DISTANCE = 100;
 const SWIPE_VELOCITY = 800;
@@ -264,6 +270,8 @@ function SwipeCard({
   const by = useSharedValue(0);
   const peeling = useSharedValue(0);
   const amount = useSharedValue(0);
+  /** Passée le cap : lâcher la décolle (une vibration l'annonce, une autre si on revient) */
+  const armed = useSharedValue(0);
   /** 0 : pas encore décidé ; 1 : décoller ; 2 : glisser */
   const mode = useSharedValue(0);
   const startX = useSharedValue(0);
@@ -318,6 +326,7 @@ function SwipeCard({
       startX.value = e.x;
       startY.value = e.y;
       mode.value = 0;
+      armed.value = 0;
     })
     .onUpdate((e) => {
       if (mode.value === 0) {
@@ -344,6 +353,11 @@ function SwipeCard({
         peeling.value = 1;
         const r = cornerRadius(w.value, h.value, round);
         amount.value = peel(roundedRect(w.value, h.value, r), w.value, h.value, ax.value, ay.value, bx.value, by.value).amount;
+        const nowArmed = amount.value >= PEEL_OFF ? 1 : 0;
+        if (nowArmed !== armed.value) {
+          armed.value = nowArmed;
+          runOnJS(buzz)(nowArmed ? Haptics.ImpactFeedbackStyle.Medium : Haptics.ImpactFeedbackStyle.Light);
+        }
       } else {
         x.value = e.translationX;
         y.value = e.translationY;
@@ -356,8 +370,7 @@ function SwipeCard({
       };
 
       if (mode.value === 1) {
-        const fast = Math.hypot(e.velocityX, e.velocityY) > SWIPE_VELOCITY;
-        if (amount.value < 0.3 && !fast) {
+        if (!armed.value) {
           // Lâchée trop tôt : le coin se recolle
           const back = { duration: motion.duration.slow, easing: easeOut };
           bx.value = withTiming(ax.value, back);
@@ -368,7 +381,6 @@ function SwipeCard({
           return;
         }
         // Assez tirée : le pli traverse toute la note, puis elle s'envole, dos visible
-        runOnJS(buzz)(Haptics.ImpactFeedbackStyle.Medium);
         const dx = bx.value - ax.value;
         const dy = by.value - ay.value;
         const len = Math.hypot(dx, dy) || 1;
