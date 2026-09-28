@@ -28,6 +28,18 @@ export const COVER_RATIO = 50 / 70;
 // Image par défaut si pas de couverture
 const DEFAULT_COVER = require('../../assets/images/random_cover_1.png');
 
+// Texture de vrai livre (reliure, coins usés, rayures) posée sur chaque couverture.
+// Transparente au centre : seuls les bords et les reflets ressortent.
+const COVER_TEXTURE = require('../../assets/images/cover_book_60.png');
+
+/** La couverture + la texture par-dessus */
+const TexturedCover = ({ coverUrl }: { coverUrl: string | null | undefined }) => (
+  <>
+    <Image source={resolveCoverImage(coverUrl)} style={styles.cover} contentFit="cover" />
+    <Image source={COVER_TEXTURE} style={styles.texture} contentFit="fill" pointerEvents="none" />
+  </>
+);
+
 /**
  * Résout la source d'image.
  * Si c'est une URL http(s), on renvoie { uri: url }. Sinon, l'image par défaut.
@@ -80,7 +92,7 @@ export default function BookCover({ coverUrl, done = false, outlined = false }: 
         <View style={styles.doneBackground}>
           <View style={styles.doneInnerShadow} />
         </View>
-        <Image source={resolveCoverImage(coverUrl)} style={styles.cover} contentFit="cover" />
+        <TexturedCover coverUrl={coverUrl} />
         <BookmarkCheckBadge />
       </View>
     );
@@ -88,7 +100,7 @@ export default function BookCover({ coverUrl, done = false, outlined = false }: 
 
   return (
     <View style={styles.shadow}>
-      <Image source={resolveCoverImage(coverUrl)} style={styles.cover} contentFit="cover" />
+      <TexturedCover coverUrl={coverUrl} />
       {outlined && <View style={styles.outline} pointerEvents="none" />}
     </View>
   );
@@ -112,6 +124,10 @@ const styles = StyleSheet.create({
   cover: {
     width: '100%',
     height: '100%',
+    borderRadius: 2,
+  },
+  texture: {
+    ...StyleSheet.absoluteFillObject,
     borderRadius: 2,
   },
   // Posé PAR-DESSUS l'image : une bordure sur le conteneur rognerait la couverture
