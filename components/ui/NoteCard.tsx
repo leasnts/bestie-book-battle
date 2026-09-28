@@ -62,9 +62,6 @@ interface NoteCardProps {
  * les détails d'un autocollant moyen. Le coin décollé fait 34 % de ce côté.
  */
 const STICKER_BASE = 72;
-/** Le côté d'une note carrée (un emoji seul) : dans la liste, dans la pile */
-const SQUARE = 84;
-const SQUARE_LARGE = 200;
 export const STICKER_BASE_LARGE = 96;
 
 export default function NoteCard({
@@ -98,57 +95,15 @@ export default function NoteCard({
   const emojiOnly = isEmojiOnly(note);
   const author = isMine ? 'Moi' : note.author?.first_name || 'Participant';
 
-  // Un emoji seul : un autocollant carré. Dans la pile, l'autrice au-dessus de
-  // l'emoji et la page dessous ; dans la liste, les mêmes repères à côté.
-  const square = (side: number) => (
-    <View style={[styles.square, { width: side, height: side }]}>
-      <View style={StyleSheet.absoluteFill} pointerEvents="none">
-        <NoteSticker
-          id={`note-${note.id}`}
-          color={category.color}
-          size={side}
-          maxBase={large ? STICKER_BASE_LARGE : STICKER_BASE}
-          corner={flat ? 'none' : 'bottom-right'}
-        />
-      </View>
-      {large && (
-        <View style={styles.squareHead}>
-          <Image source={resolveAvatar(note.author?.profile_photo_url)} style={styles.avatar} />
-          <Text style={styles.name} numberOfLines={1}>
-            {author}
-          </Text>
-        </View>
-      )}
-      <Text style={[styles.bigEmoji, large && styles.bigEmojiLarge]}>{note.emoji}</Text>
-      {large && (
-        <Text style={styles.squareMeta}>
-          {category.label} · {page}
-        </Text>
-      )}
-    </View>
-  );
-
-  const squareSticker = large ? (
-    square(SQUARE_LARGE)
-  ) : (
-    <View style={styles.squareRow}>
-      {square(SQUARE)}
-      <View style={styles.squareInfo}>
-        <View style={styles.head}>
-          <Image source={resolveAvatar(note.author?.profile_photo_url)} style={styles.avatar} />
-          <Text style={styles.name} numberOfLines={1}>
-            {author}
-          </Text>
-        </View>
-        <Text style={[styles.category, styles.categoryCompact]}>{category.label}</Text>
-        <Text style={[styles.page, styles.squarePage]}>{page}</Text>
-      </View>
-    </View>
-  );
-
-  const rectSticker = (
+  // Un emoji seul : la même note, en petit — elle prend la largeur de sa
+  // ligne du haut, l'emoji en grand dessous
+  const sticker = (
     <View
-      style={[styles.note, large && styles.noteLarge]}
+      style={[
+        styles.note,
+        large && styles.noteLarge,
+        emojiOnly && (large ? styles.compactLarge : styles.compact),
+      ]}
       onLayout={onLayout}
     >
       {size && (
@@ -168,16 +123,20 @@ export default function NoteCard({
         <Text style={styles.name} numberOfLines={1}>
           {author}
         </Text>
-        <Text style={styles.category}>{category.label}</Text>
+        <Text style={[styles.category, emojiOnly && styles.categoryCompact]}>{category.label}</Text>
         <Text style={styles.page}>{page}</Text>
       </View>
 
       {!!note.quote && <Text style={[styles.quote, large && styles.quoteLarge]}>{note.quote}</Text>}
 
-      {!!(text ?? note.emoji) && (
-        <Text style={[styles.text, large && styles.textLarge]} numberOfLines={6}>
-          {text ?? note.emoji}
-        </Text>
+      {emojiOnly ? (
+        <Text style={[styles.bigEmoji, large && styles.bigEmojiLarge]}>{note.emoji}</Text>
+      ) : (
+        !!text && (
+          <Text style={[styles.text, large && styles.textLarge]} numberOfLines={6}>
+            {text}
+          </Text>
+        )
       )}
 
       {!!note.audio_path && (
@@ -191,8 +150,6 @@ export default function NoteCard({
       {note.visibility === 'private' && <Text style={styles.private}>Moi seule</Text>}
     </View>
   );
-
-  const sticker = emojiOnly ? squareSticker : rectSticker;
 
   const content = (
     <View style={styles.wrap}>
@@ -360,33 +317,13 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.xl + spacing.md,
     gap: spacing.md,
   },
-  // Un emoji seul : un autocollant carré
-  square: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.xs,
+  // Un emoji seul : une petite note, à la largeur de sa ligne du haut
+  compact: {
+    alignSelf: 'flex-start',
   },
-  squareHead: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-  },
-  squareMeta: {
-    fontFamily: fonts.bodyBold,
-    fontSize: 12,
-    color: inkAlpha(0.66),
-    fontVariant: ['tabular-nums'],
-  },
-  squareRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-  },
-  squareInfo: {
-    gap: 4,
-  },
-  squarePage: {
-    marginLeft: 0,
+  compactLarge: {
+    alignSelf: 'center',
+    minWidth: 220,
   },
   compactPress: {
     alignSelf: 'flex-start',
