@@ -56,7 +56,7 @@ import Animated, {
   withSequence,
   withTiming,
 } from 'react-native-reanimated';
-import Svg, { Defs, LinearGradient, Path, Stop } from 'react-native-svg';
+import Svg, { Defs, G, LinearGradient, Path, Stop } from 'react-native-svg';
 import type { AnnotationWithAuthor } from '../../services/supabase/annotations';
 import { pageFromPosition } from '../../utils/annotations';
 import { peel, roundedRect, toPath, type Point } from '../../utils/peel';
@@ -265,6 +265,9 @@ function SwipeCard({
   const startX = useSharedValue(0);
   const startY = useSharedValue(0);
 
+  /** La marge du dessin du rabat autour de la note : il se rabat jusqu'à une note plus loin */
+  const bleed = size ? Math.max(size.w, size.h) : 0;
+
   const onLayout = (e: LayoutChangeEvent) => {
     const { width: lw, height: lh } = e.nativeEvent.layout;
     w.value = lw;
@@ -445,15 +448,27 @@ function SwipeCard({
 
           {/* Le dos de l'autocollant : papier nu, clair au pli, plus sombre à la pointe */}
           {size && (
-            <Svg style={styles.backSide} pointerEvents="none">
+            // Le rabat peut dépasser de la note : le dessin déborde d'une note de chaque côté
+            <Svg
+              style={{
+                position: 'absolute',
+                left: -bleed,
+                top: -bleed,
+                width: size.w + bleed * 2,
+                height: size.h + bleed * 2,
+              }}
+              pointerEvents="none"
+            >
               <Defs>
                 <LinearGradient id={`back-${note.id}`} x1="0" y1="0" x2="0" y2={size.h} gradientUnits="userSpaceOnUse">
                   <Stop offset="0" stopColor={stickerMaterial.flap[0]} />
                   <Stop offset="1" stopColor={stickerMaterial.flap[1]} />
                 </LinearGradient>
               </Defs>
-              <AnimatedPath animatedProps={shadowProps} fill={shadowAlpha(0.2)} />
-              <AnimatedPath animatedProps={flapProps} fill={`url(#back-${note.id})`} />
+              <G transform={`translate(${bleed} ${bleed})`}>
+                <AnimatedPath animatedProps={shadowProps} fill={shadowAlpha(0.2)} />
+                <AnimatedPath animatedProps={flapProps} fill={`url(#back-${note.id})`} />
+              </G>
             </Svg>
           )}
 
@@ -536,11 +551,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.14,
     shadowRadius: 18,
     shadowOffset: { width: 0, height: 10 },
-  },
-  // Le dos déborde de la note quand il se rabat au-delà du bord
-  backSide: {
-    ...StyleSheet.absoluteFillObject,
-    overflow: 'visible',
   },
   mark: {
     position: 'absolute',
