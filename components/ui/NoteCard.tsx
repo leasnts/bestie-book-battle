@@ -53,6 +53,8 @@ interface NoteCardProps {
   large?: boolean;
   /** Les réactions sont posées ailleurs (sous la pile) */
   hideReactions?: boolean;
+  /** À plat, sans coin corné : la pile, où le doigt décolle la note */
+  flat?: boolean;
 }
 
 /**
@@ -60,7 +62,7 @@ interface NoteCardProps {
  * les détails d'un autocollant moyen. Le coin décollé fait 34 % de ce côté.
  */
 const STICKER_BASE = 72;
-const STICKER_BASE_LARGE = 96;
+export const STICKER_BASE_LARGE = 96;
 
 export default function NoteCard({
   note,
@@ -72,6 +74,7 @@ export default function NoteCard({
   onMoreReactions,
   large = false,
   hideReactions = false,
+  flat = false,
 }: NoteCardProps) {
   const category = ANNOTATION_CATEGORIES[note.category];
   const page = formatNotePage(note.position, note.edition_total_pages, myTotalPages);
@@ -108,7 +111,7 @@ export default function NoteCard({
             width={size.width}
             height={size.height}
             maxBase={large ? STICKER_BASE_LARGE : STICKER_BASE}
-            corner="bottom-right"
+            corner={flat ? 'none' : 'bottom-right'}
           />
         </View>
       )}

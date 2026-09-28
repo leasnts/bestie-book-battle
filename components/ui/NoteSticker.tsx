@@ -37,9 +37,10 @@ interface NoteStickerProps {
   /**
    * Le coin qui se décolle. En haut à gauche par défaut (en pile d'autocollants,
    * c'est lui qui reste visible) ; en bas à droite pour une note du carnet, où
-   * le haut porte l'autrice et la page.
+   * le haut porte l'autrice et la page. `none` : à plat, sans coin décollé
+   * (la pile des nouvelles, où c'est le doigt qui décolle la note).
    */
-  corner?: 'top-left' | 'bottom-right';
+  corner?: 'top-left' | 'bottom-right' | 'none';
 }
 
 export default function NoteSticker({
@@ -118,8 +119,12 @@ export default function NoteSticker({
           strokeWidth={0.9}
           strokeDasharray="2 1.6"
         />
-        <Path d={flapShadow} fill={shadowAlpha(0.18)} />
-        <Path d={flap} fill={`url(#flap-${id})`} />
+        {corner !== 'none' && (
+          <>
+            <Path d={flapShadow} fill={shadowAlpha(0.18)} />
+            <Path d={flap} fill={`url(#flap-${id})`} />
+          </>
+        )}
       </G>
     </Svg>
   );

@@ -29,10 +29,18 @@
  */
 
 import * as Haptics from 'expo-haptics';
-import { LinearGradient } from 'expo-linear-gradient';
+import MaskedView from '@react-native-masked-view/masked-view';
+import { LinearGradient as ExpoLinearGradient } from 'expo-linear-gradient';
 import { CheckIcon } from 'lucide-react-native';
 import React, { useEffect, useRef, useState } from 'react';
-import { AccessibilityInfo, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import {
+  AccessibilityInfo,
+  StyleSheet,
+  Text,
+  View,
+  useWindowDimensions,
+  type LayoutChangeEvent,
+} from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   Easing,
@@ -40,6 +48,7 @@ import Animated, {
   FadeOut,
   interpolate,
   runOnJS,
+  useAnimatedProps,
   useAnimatedStyle,
   useReducedMotion,
   useSharedValue,
@@ -47,8 +56,10 @@ import Animated, {
   withSequence,
   withTiming,
 } from 'react-native-reanimated';
+import Svg, { Defs, LinearGradient, Path, Stop } from 'react-native-svg';
 import type { AnnotationWithAuthor } from '../../services/supabase/annotations';
 import { pageFromPosition } from '../../utils/annotations';
+import { peel, roundedRect, toPath, type Point } from '../../utils/peel';
 import {
   accentGradient,
   colors,
@@ -57,8 +68,9 @@ import {
   motion,
   shadowAlpha,
   spacing,
+  stickerMaterial,
 } from '../../utils/constants';
-import NoteCard, { NoteReactions } from './NoteCard';
+import NoteCard, { NoteReactions, STICKER_BASE_LARGE } from './NoteCard';
 import PressableScale from './PressableScale';
 
 interface NewNotesDeckProps {
@@ -85,6 +97,8 @@ const SWIPE_VELOCITY = 800;
 const DONE_PAUSE = 900;
 
 const easeOut = Easing.bezier(...motion.easing.easeOutQuart);
+
+const AnimatedPath = Animated.createAnimatedComponent(Path);
 
 export default function NewNotesDeck({
   notes,
@@ -151,6 +165,7 @@ export default function NewNotesDeck({
             >
               <NoteCard
                 large
+                flat
                 hideReactions
                 note={note}
                 myTotalPages={myTotalPages}
@@ -164,7 +179,7 @@ export default function NewNotesDeck({
         {done && (
           <Animated.View entering={FadeIn.duration(motion.duration.slow)} style={styles.allRead}>
             <View style={styles.ring}>
-              <LinearGradient colors={accentGradient} style={StyleSheet.absoluteFill} />
+              <ExpoLinearGradient colors={accentGradient} style={StyleSheet.absoluteFill} />
               <CheckIcon size={30} color={colors.white} strokeWidth={2.4} />
             </View>
             <Text style={styles.allReadText}>Tout lu</Text>
@@ -199,7 +214,7 @@ export default function NewNotesDeck({
           accessibilityRole="button"
           accessibilityLabel="Marquer comme lue"
         >
-          <LinearGradient colors={inkGradient} style={StyleSheet.absoluteFill} />
+          <ExpoLinearGradient colors={inkGradient} style={StyleSheet.absoluteFill} />
           <CheckIcon size={20} color={colors.white} strokeWidth={2.4} />
         </PressableScale>
       )}
@@ -222,45 +237,140 @@ function SwipeCard({
   depth: number;
   /** Arrivée dans la pile après l'ouverture : elle apparaît au fond */
   appearing: boolean;
-  /** La première carte : petit aller-retour pour montrer qu'elle se glisse */
+  /** La première carte : un coin se soulève et se recolle, pour montrer qu'elle se décolle */
   hint: boolean;
   onSwiped: (noteId: string) => void;
   children: React.ReactNode;
 }) {
   const reduced = useReducedMotion();
   const { width } = useWindowDimensions();
+  // Glisser la note entière (vers l'extérieur)
   const x = useSharedValue(0);
   const y = useSharedValue(0);
   const fade = useSharedValue(1);
   const place = useSharedValue(appearing ? depth + 1 : depth);
+
+  // Décoller : le coin A tiré en B, sur une note de w × h
+  const [size, setSize] = useState<{ w: number; h: number } | null>(null);
+  const w = useSharedValue(0);
+  const h = useSharedValue(0);
+  const ax = useSharedValue(0);
+  const ay = useSharedValue(0);
+  const bx = useSharedValue(0);
+  const by = useSharedValue(0);
+  const peeling = useSharedValue(0);
+  const amount = useSharedValue(0);
+  /** 0 : pas encore décidé ; 1 : décoller ; 2 : glisser */
+  const mode = useSharedValue(0);
+  const startX = useSharedValue(0);
+  const startY = useSharedValue(0);
+
+  const onLayout = (e: LayoutChangeEvent) => {
+    const { width: lw, height: lh } = e.nativeEvent.layout;
+    w.value = lw;
+    h.value = lh;
+    setSize((prev) => (prev && prev.w === lw && prev.h === lh ? prev : { w: lw, h: lh }));
+  };
 
   // Sa place dans la pile : elle se redresse quand celle du dessus part
   useEffect(() => {
     place.value = withTiming(depth, { duration: motion.duration.slow, easing: easeOut });
   }, [depth, place]);
 
+  // À l'ouverture, le coin en bas à droite se soulève un peu et se recolle
+  const hinted = useRef(false);
   useEffect(() => {
-    if (!hint || reduced) return;
-    x.value = withDelay(
+    if (!hint || reduced || !size || hinted.current) return;
+    hinted.current = true;
+    ax.value = size.w;
+    ay.value = size.h;
+    bx.value = size.w;
+    by.value = size.h;
+    peeling.value = 1;
+    const lift = { duration: 450, easing: easeOut };
+    const back = { duration: 300, easing: easeOut };
+    bx.value = withDelay(650, withSequence(withTiming(size.w - 46, lift), withDelay(250, withTiming(size.w, back))));
+    by.value = withDelay(
       650,
       withSequence(
-        withTiming(-26, { duration: 330, easing: easeOut }),
-        withTiming(18, { duration: 380, easing: easeOut }),
-        withTiming(0, { duration: 390, easing: easeOut }),
+        withTiming(size.h - 30, lift),
+        withDelay(250, withTiming(size.h, back, (f) => {
+          'worklet';
+          if (f) peeling.value = 0;
+        })),
       ),
     );
-  }, [hint, reduced, x]);
+  }, [hint, reduced, size, ax, ay, bx, by, peeling]);
 
-  const buzz = () => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+  const buzz = (style: Haptics.ImpactFeedbackStyle) => Haptics.impactAsync(style).catch(() => {});
 
   const pan = Gesture.Pan()
     .enabled(depth === 0)
-    .activeOffsetX([-10, 10])
+    .minDistance(6)
+    .onBegin((e) => {
+      startX.value = e.x;
+      startY.value = e.y;
+      mode.value = 0;
+    })
     .onUpdate((e) => {
-      x.value = e.translationX;
-      y.value = e.translationY;
+      if (mode.value === 0) {
+        // Le coin le plus proche du doigt ; tiré vers l'intérieur, il se décolle
+        ax.value = startX.value < w.value / 2 ? 0 : w.value;
+        ay.value = startY.value < h.value / 2 ? 0 : h.value;
+        const inward =
+          e.translationX * (w.value / 2 - ax.value) + e.translationY * (h.value / 2 - ay.value) > 0;
+        mode.value = inward && !reduced ? 1 : 2;
+        if (mode.value === 1) runOnJS(buzz)(Haptics.ImpactFeedbackStyle.Light);
+      }
+      if (mode.value === 1) {
+        bx.value = ax.value + e.translationX;
+        by.value = ay.value + e.translationY;
+        peeling.value = 1;
+        const r = cornerRadius(w.value, h.value);
+        amount.value = peel(roundedRect(w.value, h.value, r), w.value, h.value, ax.value, ay.value, bx.value, by.value).amount;
+      } else {
+        x.value = e.translationX;
+        y.value = e.translationY;
+      }
     })
     .onEnd((e) => {
+      const done = (finished?: boolean) => {
+        'worklet';
+        if (finished) runOnJS(onSwiped)(note.id);
+      };
+
+      if (mode.value === 1) {
+        const fast = Math.hypot(e.velocityX, e.velocityY) > SWIPE_VELOCITY;
+        if (amount.value < 0.3 && !fast) {
+          // Lâchée trop tôt : le coin se recolle
+          const back = { duration: motion.duration.slow, easing: easeOut };
+          bx.value = withTiming(ax.value, back);
+          by.value = withTiming(ay.value, back, (f) => {
+            'worklet';
+            if (f) peeling.value = 0;
+          });
+          return;
+        }
+        // Assez tirée : le pli traverse toute la note, puis elle s'envole, dos visible
+        runOnJS(buzz)(Haptics.ImpactFeedbackStyle.Medium);
+        const dx = bx.value - ax.value;
+        const dy = by.value - ay.value;
+        const len = Math.hypot(dx, dy) || 1;
+        const reach = 2.2 * Math.hypot(w.value, h.value);
+        const sweep = { duration: 360, easing: easeOut };
+        bx.value = withTiming(ax.value + (dx / len) * reach, sweep);
+        by.value = withTiming(ay.value + (dy / len) * reach, sweep, (f) => {
+          'worklet';
+          if (!f) return;
+          const dir = Math.sign(dx) || 1;
+          const fly = { duration: 420, easing: easeOut };
+          y.value = withTiming(-60, fly);
+          fade.value = withTiming(0, fly);
+          x.value = withTiming(dir * width * 1.3, fly, done);
+        });
+        return;
+      }
+
       const far = Math.abs(e.translationX) > SWIPE_DISTANCE;
       const fast = Math.abs(e.velocityX) > SWIPE_VELOCITY && Math.abs(e.translationX) > 30;
       if (!far && !fast) {
@@ -268,11 +378,7 @@ function SwipeCard({
         y.value = withTiming(0, { duration: motion.duration.slow, easing: easeOut });
         return;
       }
-      runOnJS(buzz)();
-      const done = (finished?: boolean) => {
-        'worklet';
-        if (finished) runOnJS(onSwiped)(note.id);
-      };
+      runOnJS(buzz)(Haptics.ImpactFeedbackStyle.Light);
       if (reduced) {
         fade.value = withTiming(0, { duration: motion.duration.standard }, done);
         return;
@@ -292,8 +398,26 @@ function SwipeCard({
     ],
   }));
 
-  // La coche grandit avec le geste : on sait que lâcher suffit. Elle attend
-  // 30 pt, pour ne pas clignoter pendant l'aller-retour d'ouverture.
+  // Ce qui reste collé : le masque de la note
+  const keptProps = useAnimatedProps(() => {
+    if (!peeling.value) return { d: WHOLE };
+    const r = cornerRadius(w.value, h.value);
+    return { d: toPath(peel(roundedRect(w.value, h.value, r), w.value, h.value, ax.value, ay.value, bx.value, by.value).kept) };
+  });
+  // Le dos de la partie décollée, et son ombre portée sur la note
+  const flapProps = useAnimatedProps(() => {
+    if (!peeling.value) return { d: NOTHING };
+    const r = cornerRadius(w.value, h.value);
+    return { d: toPath(peel(roundedRect(w.value, h.value, r), w.value, h.value, ax.value, ay.value, bx.value, by.value).flap) };
+  });
+  const shadowProps = useAnimatedProps(() => {
+    if (!peeling.value) return { d: NOTHING };
+    const r = cornerRadius(w.value, h.value);
+    const flap = peel(roundedRect(w.value, h.value, r), w.value, h.value, ax.value, ay.value, bx.value, by.value).flap;
+    return { d: toPath(flap.map((p) => [p[0] + 2, p[1] + 5] as Point)) };
+  });
+
+  // La coche grandit quand on fait glisser : on sait que lâcher suffit
   const markStyle = useAnimatedStyle(() => {
     const p = interpolate(Math.abs(x.value), [30, SWIPE_DISTANCE], [0, 1], 'clamp');
     return { opacity: p, transform: [{ scale: 0.6 + p * 0.4 }] };
@@ -308,9 +432,33 @@ function SwipeCard({
           importantForAccessibility={depth === 0 ? 'auto' : 'no-hide-descendants'}
           accessibilityElementsHidden={depth !== 0}
         >
-          {children}
+          <MaskedView
+            onLayout={onLayout}
+            maskElement={
+              <Svg style={StyleSheet.absoluteFill}>
+                <AnimatedPath animatedProps={keptProps} fill="black" />
+              </Svg>
+            }
+          >
+            {children}
+          </MaskedView>
+
+          {/* Le dos de l'autocollant : papier nu, clair au pli, plus sombre à la pointe */}
+          {size && (
+            <Svg style={styles.backSide} pointerEvents="none">
+              <Defs>
+                <LinearGradient id={`back-${note.id}`} x1="0" y1="0" x2="0" y2={size.h} gradientUnits="userSpaceOnUse">
+                  <Stop offset="0" stopColor={stickerMaterial.flap[0]} />
+                  <Stop offset="1" stopColor={stickerMaterial.flap[1]} />
+                </LinearGradient>
+              </Defs>
+              <AnimatedPath animatedProps={shadowProps} fill={shadowAlpha(0.2)} />
+              <AnimatedPath animatedProps={flapProps} fill={`url(#back-${note.id})`} />
+            </Svg>
+          )}
+
           <Animated.View style={[styles.mark, markStyle]} pointerEvents="none">
-            <LinearGradient colors={inkGradient} style={StyleSheet.absoluteFill} />
+            <ExpoLinearGradient colors={inkGradient} style={StyleSheet.absoluteFill} />
             <CheckIcon size={18} color={colors.white} strokeWidth={2.6} />
           </Animated.View>
         </Animated.View>
@@ -318,6 +466,16 @@ function SwipeCard({
     </View>
   );
 }
+
+/** L'arrondi de la note, le même que son autocollant (NoteSticker, 26 % du côté plafonné) */
+function cornerRadius(w: number, h: number) {
+  'worklet';
+  return Math.min(w, h, STICKER_BASE_LARGE) * 0.26;
+}
+
+/** Rien de décollé : le masque couvre tout, ombres comprises */
+const WHOLE = 'M-100 -100H4000V4000H-100Z';
+const NOTHING = 'M0 0Z';
 
 /** VoiceOver est-il actif ? (il ne sait pas glisser une carte) */
 function useScreenReader() {
@@ -378,6 +536,11 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.14,
     shadowRadius: 18,
     shadowOffset: { width: 0, height: 10 },
+  },
+  // Le dos déborde de la note quand il se rabat au-delà du bord
+  backSide: {
+    ...StyleSheet.absoluteFillObject,
+    overflow: 'visible',
   },
   mark: {
     position: 'absolute',
