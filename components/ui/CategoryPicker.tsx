@@ -17,15 +17,13 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { Image } from 'expo-image';
 import * as Haptics from 'expo-haptics';
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import Animated, {
   Easing,
   useAnimatedStyle,
   useReducedMotion,
   useSharedValue,
-  withSequence,
-  withSpring,
   withTiming,
 } from 'react-native-reanimated';
 import type { AnnotationCategory } from '../../types/supabase';
@@ -42,6 +40,8 @@ const TAB_TILT = [-8, 7, -6, 8, -7, 6];
 /** La part visible d'un intercalaire, et ce que la choisie dépasse en plus */
 const TAB_HEIGHT = 30;
 const TAB_PULL = 10;
+/** Tirer un intercalaire : lent à la fin, comme un onglet de papier qui glisse */
+const TAB_IN_MS = 420;
 
 interface CategoryPickerProps {
   value: AnnotationCategory;
@@ -107,9 +107,10 @@ function CategoryTabs({ value, onChange }: Pick<CategoryPickerProps, 'value' | '
 }
 
 /**
- * Un intercalaire. Tiré, il glisse vers le bas avec un léger rebond ; son
- * illustration fait un petit saut doux, se redresse et se repose. Rendu, il remonte
- * sans rebond. Sans animation si « Réduire les animations » est activé.
+ * Un intercalaire. Tiré, il glisse vers le bas sans rebond, et son illustration
+ * se redresse en fonçant, comme l'encre qui infuse : la choisie est la seule
+ * droite. Rendu, il remonte, pâlit et se penche à nouveau. Sans animation si
+ * « Réduire les animations » est activé.
  */
 function CategoryTab({
   category,
@@ -125,45 +126,27 @@ function CategoryTab({
   const option = ANNOTATION_CATEGORIES[category];
   const reducedMotion = useReducedMotion();
   const out = useSharedValue(selected ? 1 : 0);
-  const hop = useSharedValue(0);
-  const first = useRef(true);
 
   useEffect(() => {
-    // À l'ouverture, les intercalaires sont déjà en place
-    if (first.current) {
-      first.current = false;
-      return;
-    }
+    const to = selected ? 1 : 0;
     if (reducedMotion) {
-      out.value = selected ? 1 : 0;
+      out.value = to;
       return;
     }
-    if (selected) {
-      out.value = withSpring(1, { damping: 11, stiffness: 260, mass: 0.7 });
-      hop.value = 0;
-      hop.value = withSequence(
-        withTiming(1, { duration: 180, easing: Easing.out(Easing.quad) }),
-        withSpring(0, { damping: 16, stiffness: 140 }),
-      );
-    } else {
-      out.value = withTiming(0, {
-        duration: motion.duration.standard,
-        easing: Easing.bezier(...motion.easing.easeOutQuart),
-      });
-    }
-  }, [selected, reducedMotion, out, hop]);
+    out.value = withTiming(to, {
+      duration: selected ? TAB_IN_MS : motion.duration.slow,
+      easing: selected ? Easing.bezier(...motion.easing.easeOutExpo) : Easing.bezier(...motion.easing.easeOutQuart),
+    });
+  }, [selected, reducedMotion, out]);
 
   const tabStyle = useAnimatedStyle(() => ({
     height: TAB_TUCK + TAB_HEIGHT + out.value * TAB_PULL,
   }));
-  // Le petit saut : à peine plus haut, à peine plus grand, redressé, puis reposé en douceur
   const iconStyle = useAnimatedStyle(() => ({
-    transform: [
-      { translateY: -hop.value * 3 },
-      { scale: 1 + hop.value * 0.08 },
-      { rotate: `${tilt - hop.value * tilt}deg` },
-    ],
+    transform: [{ rotate: `${tilt * (1 - out.value)}deg` }, { scale: 1 + out.value * 0.06 }],
   }));
+  // L'encre foncée, par-dessus l'encre pâle, apparaît avec la sélection
+  const inkStyle = useAnimatedStyle(() => ({ opacity: out.value }));
 
   return (
     <PressableScale
@@ -186,9 +169,17 @@ function CategoryTab({
           <Image
             source={CATEGORY_ICONS[category]}
             style={StyleSheet.absoluteFill}
-            tintColor={shade(option.color, selected ? 0.6 : 0.72)}
+            tintColor={shade(option.color, 0.72)}
             contentFit="contain"
           />
+          <Animated.View style={[StyleSheet.absoluteFill, inkStyle]}>
+            <Image
+              source={CATEGORY_ICONS[category]}
+              style={StyleSheet.absoluteFill}
+              tintColor={shade(option.color, 0.6)}
+              contentFit="contain"
+            />
+          </Animated.View>
         </Animated.View>
       </Animated.View>
     </PressableScale>
