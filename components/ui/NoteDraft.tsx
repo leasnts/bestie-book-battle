@@ -29,7 +29,7 @@ import { colors, fonts, inkAlpha, motion, spacing } from '../../utils/constants'
 import { STICKER_BASE_LARGE } from './NoteCard';
 import NoteSticker from './NoteSticker';
 import GlassButton from './GlassButton';
-import VoiceRecorder, { VOICE_BAR_HEIGHT } from './VoiceRecorder';
+import VoiceRecorder, { VOICE_BAR_HEIGHT_COMPACT } from './VoiceRecorder';
 
 export interface DraftVoice {
   uri?: string;
@@ -73,10 +73,11 @@ interface NoteDraftProps {
 }
 
 /**
- * 🎙 ❝ ✕ : des ronds en verre, aussi hauts que la gélule du vocal. Toucher 🎙
- * ne change pas la hauteur de la note : rien ne saute (retour de Lea, 2026-09-29).
+ * 🎙 ❝ ✕ : des ronds en verre de la taille des boutons d'en-tête, aussi hauts que
+ * la gélule compacte du vocal. Toucher 🎙 ne change pas la hauteur de la note :
+ * rien ne saute (retour de Lea, 2026-09-29).
  */
-const TOOL = VOICE_BAR_HEIGHT;
+const TOOL = VOICE_BAR_HEIGHT_COMPACT;
 /** Le coin corné : le vocal s'arrête avant */
 const CORNER_GAP = 26;
 
@@ -201,7 +202,7 @@ const NoteDraft = forwardRef<TextInput, NoteDraftProps>(function NoteDraft(
               {/* Le contenu garde sa largeur finale : la gélule le dévoile sans l'écraser */}
               <View style={[styles.voiceRow, styles.barContent, { width: barWidth }]}>
                 <View style={styles.grow}>
-                  <VoiceRecorder clip={voice} onChange={onVoiceChange} onRecordingChange={onRecordingChange} autoStart />
+                  <VoiceRecorder clip={voice} onChange={onVoiceChange} onRecordingChange={onRecordingChange} autoStart compact />
                 </View>
                 <GlassButton icon={XIcon} size={TOOL} onPress={closeVoice} accessibilityLabel="Retirer le vocal" />
               </View>
@@ -266,7 +267,9 @@ const styles = StyleSheet.create({
   inputFill: {
     flex: 1,
   },
+  // Replié : quatre lignes d’emblée, pour une note qui invite à écrire
   inputGrow: {
+    minHeight: 24 * 4,
     maxHeight: 24 * 7,
   },
   noteTools: {

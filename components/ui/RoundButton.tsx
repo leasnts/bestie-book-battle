@@ -27,6 +27,8 @@ interface RoundButtonProps {
   disabled?: boolean;
   /** Icône pleine (■ arrêter) */
   filled?: boolean;
+  /** Plus petit dans la feuille rapide ; par défaut `ROUND_BUTTON_SIZE` */
+  size?: number;
 }
 
 export const ROUND_BUTTON_SIZE = 42;
@@ -39,11 +41,17 @@ export default function RoundButton({
   onPress,
   disabled,
   filled = false,
+  size = ROUND_BUTTON_SIZE,
 }: RoundButtonProps) {
+  const scale = size / ROUND_BUTTON_SIZE;
   const color = variant === 'dark' ? colors.white : variant === 'light' ? colors.accent : colors.dark900;
   return (
     <PressableScale
-      style={[styles.button, styles[variant]]}
+      style={[
+        styles.button,
+        size !== ROUND_BUTTON_SIZE && { width: size, height: size, borderRadius: size / 2 },
+        styles[variant],
+      ]}
       pressedScale={0.9}
       hitSlop={6}
       disabled={disabled}
@@ -52,7 +60,7 @@ export default function RoundButton({
       accessibilityLabel={label}
       accessibilityHint={hint}
     >
-      <Icon size={filled ? 15 : 19} color={color} fill={filled ? color : 'none'} strokeWidth={2.2} />
+      <Icon size={Math.round((filled ? 15 : 19) * scale)} color={color} fill={filled ? color : 'none'} strokeWidth={2.2} />
     </PressableScale>
   );
 }
