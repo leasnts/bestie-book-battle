@@ -1,21 +1,22 @@
 /**
  * QuickNoteBar — la barre d'actions rapides de « Ma page ».
  *
- *   ( Annoter la page…            ) (🎙) (📷) (☺)
+ *   (  ✎  ) (  🎙  ) (  ❝  ) (  ☺  )
  *
- * Chaque action annote ma page enregistrée, sans quitter l'accueil. Une note est
- * une pensée, un avis ou un élément à retenir ; elle rejoint le carnet de notes :
- * - la gélule « Annoter la page… » : la feuille rapide (`NoteComposer`), la note
- *   en autocollant ; un brouillon laissé reste écrit dans la gélule ;
+ * Quatre façons d'annoter ma page enregistrée, sans quitter l'accueil : quatre
+ * gélules égales, icône seule, aucune n'est « la principale ». Une note est une
+ * pensée, un avis ou un élément à retenir ; elle rejoint le carnet de notes :
+ * - ✎ écrire : la feuille rapide (`NoteComposer`), la note en autocollant ; un
+ *   brouillon laissé met un point lie de vin sur le crayon ;
  * - 🎙 : la barre DEVIENT l'enregistreur (`VoiceRecorder`, le même que partout),
  *   qui part tout de suite ; ■, puis ✓ pour ajouter la note ;
- * - 📷 : photographier la page, toucher les lignes à citer (`QuotePicker`), puis
- *   la feuille rapide avec le passage, modifiable ;
+ * - ❝ citer : photographier la page, toucher les lignes à citer (`QuotePicker`),
+ *   puis la feuille rapide avec le passage, modifiable ;
  * - ☺ : la liste à la mode sort au-dessus de la barre et défile ; « + » ouvre
  *   tous les emojis (/emoji-note).
  *
- * Mêmes pièces que partout : la gélule a la forme de l'enregistreur, les ronds
- * sont des `GlassButton`, ✓ est un `RoundButton`.
+ * Mêmes pièces que partout : les gélules sont des `GlassButton` étirés, de la
+ * hauteur de l'enregistreur ; ✓ est un `RoundButton`.
  * Hauteur fixe : la barre, l'enregistreur et la rangée ↺ +14 ✓ de « Ma page »
  * prennent la même place, rien ne saute.
  */
@@ -23,14 +24,14 @@
 import * as Haptics from 'expo-haptics';
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
-import { CameraIcon, CheckIcon, MicIcon, PlusIcon, SmilePlusIcon, XIcon } from 'lucide-react-native';
+import { CheckIcon, MicIcon, PenLineIcon, PlusIcon, QuoteIcon, SmilePlusIcon, XIcon } from 'lucide-react-native';
 import React, { useCallback, useState } from 'react';
 import { Alert, Linking, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeIn, FadeOut, useReducedMotion, ZoomIn } from 'react-native-reanimated';
 import { useQuickNote, type QuickNote } from '../../hooks/useQuickNote';
 import { isAvailable as canReadPages } from '../../modules/page-text/src';
 import type { VoiceClip } from '../../stores/annotationStore';
-import { colors, creamAlpha, fonts, inkAlpha, shadowAlpha, spacing } from '../../utils/constants';
+import { colors, creamAlpha, inkAlpha, shadowAlpha, spacing } from '../../utils/constants';
 import { TRENDING_EMOJIS } from '../../utils/emojis';
 import GlassButton from './GlassButton';
 import NoteComposer, { EMPTY_DRAFT, type ComposerDraft } from './NoteComposer';
@@ -129,28 +130,37 @@ export default function QuickNoteBar() {
 
   return (
     <View style={styles.bar}>
-      <PressableScale
-        style={styles.write}
-        pressedScale={0.97}
+      <GlassButton
+        icon={PenLineIcon}
+        size={QUICK_BAR_HEIGHT}
+        stretch
+        badge={!!draft.body}
         onPress={() => {
           setMode('idle');
           setWriting(true);
         }}
-        accessibilityRole="button"
-        accessibilityLabel={draft.body ? `Reprendre ma note sur la page ${page} : ${draft.body}` : `Annoter la page ${page}`}
-      >
-        <Text style={[styles.placeholder, !!draft.body && styles.draft]} numberOfLines={1}>
-          {draft.body || 'Annoter la page…'}
-        </Text>
-      </PressableScale>
-
-      <GlassButton icon={MicIcon} size={GLASS} onPress={() => setMode('voice')} accessibilityLabel={`Annoter la page ${page} en vocal`} />
+        accessibilityLabel={draft.body ? `Reprendre ma note sur la page ${page} : ${draft.body}` : `Annoter la page ${page} par écrit`}
+      />
+      <GlassButton
+        icon={MicIcon}
+        size={QUICK_BAR_HEIGHT}
+        stretch
+        onPress={() => setMode('voice')}
+        accessibilityLabel={`Annoter la page ${page} en vocal`}
+      />
       {canReadPages && (
-        <GlassButton icon={CameraIcon} size={GLASS} onPress={takePhoto} accessibilityLabel="Citer un passage : photographier la page" />
+        <GlassButton
+          icon={QuoteIcon}
+          size={QUICK_BAR_HEIGHT}
+          stretch
+          onPress={takePhoto}
+          accessibilityLabel={`Annoter la page ${page} d’une citation : photographier la page`}
+        />
       )}
       <GlassButton
         icon={mode === 'emoji' ? XIcon : SmilePlusIcon}
-        size={GLASS}
+        size={QUICK_BAR_HEIGHT}
+        stretch
         onPress={() => setMode(mode === 'emoji' ? 'idle' : 'emoji')}
         accessibilityLabel={mode === 'emoji' ? 'Fermer les emojis' : `Annoter la page ${page} d’un emoji`}
       />
@@ -239,25 +249,6 @@ const styles = StyleSheet.create({
   grow: {
     flex: 1,
   },
-  // La même gélule que l'enregistreur : on voit que c'est un champ à toucher
-  write: {
-    flex: 1,
-    height: QUICK_BAR_HEIGHT,
-    justifyContent: 'center',
-    paddingHorizontal: spacing.lg,
-    borderRadius: QUICK_BAR_HEIGHT / 2,
-    backgroundColor: inkAlpha(0.06),
-  },
-  placeholder: {
-    fontFamily: fonts.bodyBold,
-    fontSize: 15,
-    color: colors.textTertiary,
-  },
-  draft: {
-    fontFamily: fonts.bodySemiBold,
-    color: colors.textPrimary,
-  },
-
   // Les emojis sortent au-dessus de la barre, sur toute sa largeur
   emojis: {
     position: 'absolute',

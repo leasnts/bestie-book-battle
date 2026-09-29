@@ -5,7 +5,8 @@
  * avec son liseré et une ombre douce. Un seul composant pour tous les usages :
  * - le « + » à droite de la barre d'onglets (58 pt) ;
  * - la bibliothèque, en haut à gauche de l'accueil (44 pt) ;
- * - le retour et les actions de l'en-tête d'un sheet (36 pt, `SheetPageHeader`).
+ * - le retour et les actions de l'en-tête d'un sheet (36 pt, `SheetPageHeader`) ;
+ * - étiré en gélule (`stretch`), les quatre façons d'annoter de « Ma page ».
  *
  * Tout nouveau bouton rond en verre passe par ici : ne pas redessiner le verre,
  * le liseré ou l'ombre ailleurs.
@@ -16,7 +17,7 @@
 
 import type { LucideIcon } from 'lucide-react-native';
 import React from 'react';
-import { StyleSheet, type StyleProp, type ViewStyle } from 'react-native';
+import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import { colors, glassControlVeil } from '../../utils/constants';
 import GlassMaterial from './GlassMaterial';
 import PressableScale from './PressableScale';
@@ -28,6 +29,10 @@ interface GlassButtonProps {
   accessibilityLabel: string;
   /** Diamètre en pt (44 minimum, la taille tactile de la HIG) */
   size?: number;
+  /** Prend toute la largeur libre : une gélule, à parts égales avec ses voisins */
+  stretch?: boolean;
+  /** Un point lie de vin dans le coin : quelque chose attend (un brouillon) */
+  badge?: boolean;
   /** Marges et placement dans le parent */
   style?: StyleProp<ViewStyle>;
 }
@@ -37,18 +42,23 @@ export default function GlassButton({
   onPress,
   accessibilityLabel,
   size = 44,
+  stretch = false,
+  badge = false,
   style,
 }: GlassButtonProps) {
+  const iconSize = Math.round(size * 0.42);
   return (
     <PressableScale
-      style={[styles.button, { width: size, height: size, borderRadius: size / 2 }, style]}
+      style={[styles.button, { width: stretch ? undefined : size, height: size, borderRadius: size / 2 }, stretch && styles.stretch, style]}
       pressedScale={0.9}
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
     >
       <GlassMaterial radius={size / 2} veil={glassControlVeil} rim />
-      <Icon size={Math.round(size * 0.42)} color={colors.dark900} strokeWidth={2.25} />
+      <Icon size={iconSize} color={colors.dark900} strokeWidth={2.25} />
+      {/* Le point se pose sur le coin haut droit de l'icône, rond ou gélule */}
+      {badge && <View style={[styles.badge, { top: (size - iconSize) / 2 - 3, marginLeft: iconSize / 2 - 2 }]} />}
     </PressableScale>
   );
 }
@@ -63,5 +73,16 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.12,
     shadowRadius: 12,
+  },
+  stretch: {
+    flex: 1,
+  },
+  badge: {
+    position: 'absolute',
+    left: '50%',
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: colors.accent,
   },
 });
