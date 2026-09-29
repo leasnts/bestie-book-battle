@@ -9,8 +9,9 @@
  *   ┆ À RETENIR                     ┆   la note, en autocollant (`NoteDraft`) :
  *   ┆ Une pensée, un avis…          ┆   texte, citation, vocal, tout dedans
  *   ┆ (🎙 ──────────────── 0:00)    ┆
- *   └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄◢┘
- *   [Coup de cœur] [Spicy] [Larmes] …     la couleur (`CategoryPicker`)
+ *   ╰┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄╯
+ *     ╰Cœur╯╰Spicy╯╰Larmes╯ …          la couleur, en intercalaires collés sous
+ *                                      la note (`CategoryPicker`), sans coin corné
  *
  * Mêmes pièces que partout : `GlassButton` pour ✕ et ↗ (comme l'en-tête des
  * sheets), `RoundButton` pour ✓ (comme ✓ enregistrer), `NoteDraft` et
@@ -70,9 +71,8 @@ interface NoteComposerProps {
 
 export const EMPTY_DRAFT: ComposerDraft = { body: '', category: DEFAULT_CATEGORY };
 
-/** La feuille sur place ; plus haute avec une citation */
+/** La feuille sur place, citation comprise : plus haute, elle monterait trop */
 const SHEET_HEIGHT = 360;
-const SHEET_HEIGHT_QUOTE = 440;
 /** L'écart entre la feuille et le clavier */
 const GAP = spacing.md;
 
@@ -93,7 +93,6 @@ export default function NoteComposer({ visible, page, draft, quote = null, onClo
   const shown = useSharedValue(0);
   const expanded = useSharedValue(0);
   const isQuote = quote !== null;
-  const sheetHeight = isQuote ? SHEET_HEIGHT_QUOTE : SHEET_HEIGHT;
 
   // Chaque ouverture repart du brouillon (ou du passage cité), sur place
   useEffect(() => {
@@ -142,7 +141,7 @@ export default function NoteComposer({ visible, page, draft, quote = null, onClo
   const sheetStyle = useAnimatedStyle(() => {
     const kb = keyboard.height.value;
     const e = expanded.value;
-    const placeTop = Math.max(insets.top, windowHeight - kb - GAP - sheetHeight);
+    const placeTop = Math.max(insets.top, windowHeight - kb - GAP - SHEET_HEIGHT);
     return {
       top: interpolate(e, [0, 1], [placeTop, 0]),
       bottom: interpolate(e, [0, 1], [kb + GAP, kb]),
@@ -189,25 +188,33 @@ export default function NoteComposer({ visible, page, draft, quote = null, onClo
             />
           </View>
 
-          <NoteDraft
-            ref={input}
-            id="composer"
-            color={style.color}
-            label={style.label}
-            quote={isQuote ? passage : null}
-            onQuoteChange={setPassage}
-            body={body}
-            onBodyChange={setBody}
-            placeholder={isQuote ? 'Ta pensée, ton avis sur ce passage…' : 'Une pensée, un avis, un élément à retenir…'}
-            voice={voice}
-            onVoiceChange={setVoice}
-            onRecordingChange={setRecording}
-            large={full}
-            fill
-            autoFocus
-          />
-
-          <CategoryPicker value={category} onChange={setCategory} layout="row" />
+          {/* La note et ses intercalaires, collés : aucun écart entre les deux */}
+          <View style={styles.note}>
+            {/* Par-dessus : le haut des intercalaires glisse sous la note */}
+            <View style={styles.sticker}>
+              <NoteDraft
+                ref={input}
+                id="composer"
+                color={style.color}
+                label={style.label}
+                quote={isQuote ? passage : null}
+                onQuoteChange={setPassage}
+                body={body}
+                onBodyChange={setBody}
+                placeholder={
+                  isQuote ? 'Ta pensée, ton avis sur ce passage…' : 'Une pensée, un avis, un élément à retenir…'
+                }
+                voice={voice}
+                onVoiceChange={setVoice}
+                onRecordingChange={setRecording}
+                large={full}
+                corner="none"
+                fill
+                autoFocus
+              />
+            </View>
+            <CategoryPicker value={category} onChange={setCategory} layout="tabs" />
+          </View>
         </ScrollView>
       </Animated.View>
     </Modal>
@@ -242,6 +249,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     paddingBottom: spacing.md,
     gap: spacing.md,
+  },
+  note: {
+    flex: 1,
+  },
+  sticker: {
+    flex: 1,
+    zIndex: 1,
   },
   head: {
     flexDirection: 'row',

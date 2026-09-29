@@ -50,6 +50,8 @@ interface NoteDraftProps {
   /** Pleine page : texte plus grand */
   large?: boolean;
   autoFocus?: boolean;
+  /** Le coin décollé ; `none` quand des intercalaires sortent du bas de la note */
+  corner?: 'bottom-right' | 'none';
   id: string;
 }
 
@@ -69,6 +71,7 @@ const NoteDraft = forwardRef<TextInput, NoteDraftProps>(function NoteDraft(
     fill = false,
     large = false,
     autoFocus = false,
+    corner = 'bottom-right',
     id,
   },
   ref,
@@ -89,7 +92,7 @@ const NoteDraft = forwardRef<TextInput, NoteDraftProps>(function NoteDraft(
             width={size.width}
             height={size.height}
             maxBase={STICKER_BASE_LARGE}
-            corner="bottom-right"
+            corner={corner}
           />
         </View>
       )}
@@ -125,7 +128,7 @@ const NoteDraft = forwardRef<TextInput, NoteDraftProps>(function NoteDraft(
       />
 
       {/* Le vocal vit dans la note, comme le texte ; il s'arrête avant le coin corné */}
-      <View style={styles.voice}>
+      <View style={corner !== 'none' && styles.voice}>
         <VoiceRecorder clip={voice} onChange={onVoiceChange} onRecordingChange={onRecordingChange} />
       </View>
     </View>
