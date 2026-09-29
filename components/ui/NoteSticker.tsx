@@ -42,11 +42,15 @@ interface NoteStickerProps {
    */
   corner?: 'top-left' | 'bottom-right' | 'none';
   /**
-   * Le nom de la catégorie, en très grand et presque transparent, en bas à
-   * gauche, coupé par les bords : il fait partie du fond de l'autocollant.
-   * Toujours en minuscules : en grand, les capitales crieraient.
+   * Le nom de la catégorie, en très grand et presque transparent, en bas,
+   * ferré à droite sur la marge du texte de la note, coupé par le bas (et par
+   * le coin décollé, qui passe par-dessus) :
+   * il fait partie du fond de l'autocollant. Toujours en minuscules : en grand,
+   * les capitales crieraient.
    */
   watermark?: string;
+  /** La marge de droite du texte de la note, pour que le filigrane s'y aligne */
+  watermarkInset?: number;
 }
 
 export default function NoteSticker({
@@ -58,6 +62,7 @@ export default function NoteSticker({
   maxBase = Infinity,
   corner = 'top-left',
   watermark,
+  watermarkInset = 12,
 }: NoteStickerProps) {
   const w = width ?? size;
   const h = height ?? size;
@@ -97,7 +102,7 @@ export default function NoteSticker({
 
   const fill = color ?? stickerMaterial.locked;
   const flip = corner === 'bottom-right' ? `translate(0 ${h}) scale(1 -1)` : `translate(${w} 0) scale(-1 1)`;
-  // Le filigrane : sa base passe sous le bord du bas, le début déborde à gauche
+  // Le filigrane : sa base passe juste sous le bord du bas
   const markSize = base * 0.62;
 
   return (
@@ -133,7 +138,8 @@ export default function NoteSticker({
       {!!watermark && (
         <G clipPath={`url(#clip-${id})`}>
           <SvgText
-            x={-base * 0.06}
+            x={w - watermarkInset}
+            textAnchor="end"
             y={h + markSize * 0.02}
             fontFamily={fonts.display}
             fontSize={markSize}

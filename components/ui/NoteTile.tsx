@@ -88,6 +88,7 @@ export default function NoteTile({
             maxBase={STICKER_BASE_LARGE}
             corner="bottom-right"
             watermark={note ? ANNOTATION_CATEGORIES[note.category].label : undefined}
+            watermarkInset={spacing.lg - 2}
           />
         </View>
       )}

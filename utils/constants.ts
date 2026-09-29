@@ -129,7 +129,7 @@ export const postIt = {
   bleu: '#cadbe6',    // Triste
   jaune: '#f3e2a0',   // Drôle
   sauge: '#d3dfc2',   // Théorie
-  sable: '#e8dbc6',   // Important
+  sable: '#e8dbc6',   // Note
 };
 
 /**

@@ -9,7 +9,7 @@
  *   ┆ ▌« le passage cité »    ┆   la citation, modifiable
  *   ┆ Une pensée, un avis…    ┆   le texte
  *   ┆ (🎙 ─────────── 0:00)   ┆   le vocal : le même `VoiceRecorder` que partout
- *   └┄important┄┄┄┄┄┄┄┄┄┄◢┘   la catégorie en filigrane, coupée par les bords
+ *   └┄note┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄◢┘   la catégorie en filigrane, coupée par les bords
  *
  * Un seul composant pour l'éditeur de note et la feuille rapide de « Ma page ».
  */
@@ -93,6 +93,7 @@ const NoteDraft = forwardRef<TextInput, NoteDraftProps>(function NoteDraft(
             maxBase={STICKER_BASE_LARGE}
             corner={corner}
             watermark={label}
+            watermarkInset={spacing.lg}
           />
         </View>
       )}

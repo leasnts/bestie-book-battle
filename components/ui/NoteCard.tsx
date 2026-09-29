@@ -116,6 +116,7 @@ export default function NoteCard({
             maxBase={large ? STICKER_BASE_LARGE : STICKER_BASE}
             corner={flat ? 'none' : 'bottom-right'}
             watermark={category.label}
+            watermarkInset={large ? spacing.xl : spacing.md}
           />
         </View>
       )}
