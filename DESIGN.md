@@ -487,12 +487,12 @@ une **rangée du bas à hauteur fixe** (52 pt) :
   du clavier, l'accueil s'assombrit. Ligne du haut : ✕, la page (« p. 157 »,
   une gélule qu'on touche pour la changer au pavé numérique), ↗ pleine page,
   ✓ — **une seule taille sur la ligne, 42 pt** (celle de `RoundButton`). Le
-  thème se choisit en **intercalaires au-dessus de la note** (`CategoryPicker`
+  thème se choisit en **intercalaires sous la note** (`CategoryPicker`
   `tabs`) : l'illustration aquarelle de chaque thème, sans mot, en masque teinté
   de sa couleur ; la choisie dépasse plus et se tient droite. La note
   (`NoteDraft` `tools`) est **courte au départ**, grandit avec le texte jusqu'à
   sept lignes puis défile ; sans coin corné. En bas à gauche, 🎙 et ❝
-  (`RoundButton` ghost) : 🎙 n'ouvre l'enregistreur qu'au toucher (✕ pour le
+  (`GlassButton` 42, comme tous les boutons-icônes) : 🎙 n'ouvre l'enregistreur qu'au toucher (✕ pour le
   retirer), ❝ photographie la page — texte lu **sur le téléphone** (module maison
   `modules/page-text`, Vision d'Apple, en français), `QuotePicker` : on touche
   les lignes, surlignées en jaune stabilo, et le passage arrive en tête de la

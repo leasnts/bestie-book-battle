@@ -6,12 +6,12 @@
  * Tout se fait ici : écrire, dire (🎙), citer (❝), choisir le thème.
  *
  *   (✕) (p. 157)                (↗) (✓)   une seule taille sur la ligne : 42 pt
- *     ╭📌╮╭♥╮╭🔥╮╭☁╮╭🎭╮╭💡╮            le thème, en intercalaires au-dessus
  *   ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐
  *   ┆ ▌« le passage cité »          ┆   la note (`NoteDraft`) : courte au départ,
  *   ┆ Une pensée, un avis…          ┆   elle grandit avec le texte jusqu'à un
  *   ┆ (🎙) (❝)               note   ┆   plafond, puis défile
  *   └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┘
+ *     ╰📌╯╰♥╯╰🔥╯╰☁╯╰🎭╯╰💡╯            le thème, en intercalaires dessous
  *
  * - « p. 157 » : ma page enregistrée, qu'on peut changer (pavé numérique) ;
  * - 🎙 n'ouvre l'enregistreur qu'au toucher ; ❝ photographie la page, on
@@ -269,10 +269,9 @@ export default function NoteComposer({ visible, page, maxPage, draft, onClose, o
             />
           </View>
 
-          {/* Le thème en intercalaires, puis la note, collés : aucun écart entre les deux */}
+          {/* La note, puis le thème en intercalaires, collés : aucun écart entre les deux */}
           <View style={[styles.note, full && styles.grow]}>
-            <CategoryPicker value={category} onChange={setCategory} layout="tabs" />
-            {/* Par-dessus : le bas des intercalaires glisse sous la note */}
+            {/* Par-dessus : le haut des intercalaires glisse sous la note */}
             <View style={[styles.sticker, full && styles.grow]}>
               <NoteDraft
                 ref={input}
@@ -297,6 +296,7 @@ export default function NoteComposer({ visible, page, maxPage, draft, onClose, o
                 autoFocus
               />
             </View>
+            <CategoryPicker value={category} onChange={setCategory} layout="tabs" />
           </View>
         </ScrollView>
       </Animated.View>

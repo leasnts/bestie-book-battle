@@ -21,7 +21,8 @@ import type { VoiceClip } from '../../stores/annotationStore';
 import { colors, fonts, inkAlpha, spacing } from '../../utils/constants';
 import { STICKER_BASE_LARGE } from './NoteCard';
 import NoteSticker from './NoteSticker';
-import RoundButton from './RoundButton';
+import GlassButton from './GlassButton';
+import { ROUND_BUTTON_SIZE } from './RoundButton';
 import VoiceRecorder from './VoiceRecorder';
 
 export interface DraftVoice {
@@ -54,7 +55,7 @@ interface NoteDraftProps {
   /** Le coin décollé ; `none` quand des intercalaires sortent de la note */
   corner?: 'bottom-right' | 'none';
   /**
-   * Les outils repliés (la feuille rapide) : 🎙 et ❝ en bas à gauche de la note.
+   * Les outils repliés (la feuille rapide) : 🎙 et ❝ en verre, en bas à gauche de la note.
    * L'enregistreur ne s'ouvre que si on touche 🎙. Sans eux, l'enregistreur est
    * toujours là (l'éditeur de note).
    */
@@ -63,6 +64,9 @@ interface NoteDraftProps {
   onCite?: () => void;
   id: string;
 }
+
+/** 🎙 ❝ ✕ : des ronds en verre, de la taille des boutons de l'enregistreur */
+const TOOL = ROUND_BUTTON_SIZE;
 
 const NoteDraft = forwardRef<TextInput, NoteDraftProps>(function NoteDraft(
   {
@@ -149,13 +153,18 @@ const NoteDraft = forwardRef<TextInput, NoteDraftProps>(function NoteDraft(
       {tools && !voiceOpen ? (
         // 🎙 et ❝ en bas à gauche : rien ne s'ouvre tant qu'on ne les touche pas
         <View style={styles.tools}>
-          <RoundButton icon={MicIcon} variant="ghost" label="Ajouter un vocal" onPress={() => setVoiceOpen(true)} />
+          <GlassButton
+            icon={MicIcon}
+            size={TOOL}
+            onPress={() => setVoiceOpen(true)}
+            accessibilityLabel="Ajouter un vocal"
+          />
           {onCite && (
-            <RoundButton
+            <GlassButton
               icon={QuoteIcon}
-              variant="ghost"
-              label="Citer un passage : photographier la page"
+              size={TOOL}
               onPress={onCite}
+              accessibilityLabel="Citer un passage : photographier la page"
             />
           )}
         </View>
@@ -170,7 +179,7 @@ const NoteDraft = forwardRef<TextInput, NoteDraftProps>(function NoteDraft(
               autoStart={tools}
             />
           </View>
-          {tools && <RoundButton icon={XIcon} variant="ghost" label="Retirer le vocal" onPress={closeVoice} />}
+          {tools && <GlassButton icon={XIcon} size={TOOL} onPress={closeVoice} accessibilityLabel="Retirer le vocal" />}
         </View>
       )}
     </View>
