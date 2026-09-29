@@ -479,6 +479,13 @@ une **rangée du bas à hauteur fixe** (52 pt) :
   l'accueil s'assombrit derrière. Papier réglé (lignes de 26 pt), marge lie de
   vin ; ✕ · p. 157 · ↗ · ✓. ↗ la déplie en pleine page, ↙ la replie. ✕ ou le
   fond referment en **gardant le brouillon**, écrit sur la ligne de cahier ;
+  Citer (📷, #101) : photo de la page (photothèque sur le simulateur), le texte
+  est lu **sur le téléphone** (module maison `modules/page-text`, Vision d'Apple,
+  en français). `QuotePicker` : la photo sur fond encre, on touche les lignes,
+  elles se surlignent en jaune stabilo (`mixBlendMode: multiply`) ; pendant la
+  lecture un voile balaie la page, jamais de roue. « Citer » ouvre la feuille
+  avec le passage en tête (filet lie de vin), « Ce que j'en pense… » à écrire, ou
+  à dire avec le même `VoiceRecorder` ;
 - pendant un défilement, ↺ annuler, « +14 », ✓ enregistrer (encre pleine). La
   barre s'efface : jamais de doute sur la page notée.
 

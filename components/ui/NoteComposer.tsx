@@ -13,6 +13,10 @@
  *
  * ✕ ou toucher le fond : la feuille se referme et **garde le brouillon**, qui
  * reste écrit sur la ligne de cahier. ✓ colle la note (grisé tant que c'est vide).
+ *
+ * Avec une citation (photo d'un passage) : le passage en tête, en italique, puis
+ * ce que j'en pense, à écrire ou à dire avec l'enregistreur (`VoiceRecorder`, le
+ * même que partout).
  */
 
 import { CheckIcon, Maximize2Icon, Minimize2Icon, XIcon } from 'lucide-react-native';
@@ -29,29 +33,44 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, creamAlpha, fonts, inkAlpha, motion, shadowAlpha, spacing } from '../../utils/constants';
+import type { VoiceClip } from '../../stores/annotationStore';
 import PressableScale from './PressableScale';
+import VoiceRecorder from './VoiceRecorder';
 
 interface NoteComposerProps {
   visible: boolean;
   page: number;
   /** Le brouillon laissé la dernière fois */
   draft: string;
+  /** Le passage cité, s'il y en a un */
+  quote?: string | null;
   /** Fermer sans coller : on rend le brouillon */
   onClose: (draft: string) => void;
   /** Coller la note. `false` : ça n'a pas marché, la feuille reste ouverte. */
-  onPost: (text: string) => Promise<boolean>;
+  onPost: (note: { body: string; voice: VoiceClip | null }) => Promise<boolean>;
 }
 
-/** La feuille sur place : quatre lignes de cahier */
+/** La feuille sur place : quatre lignes de cahier ; plus haute avec une citation */
 const SHEET_HEIGHT = 250;
+const SHEET_HEIGHT_QUOTE = 400;
 /** L'écart entre la feuille et le clavier */
 const GAP = spacing.md;
 const LINE = 26;
 
-export default function NoteComposer({ visible, page, draft, onClose, onPost }: NoteComposerProps) {
+export default function NoteComposer({
+  visible,
+  page,
+  draft,
+  quote = null,
+  onClose,
+  onPost,
+}: NoteComposerProps) {
   const [text, setText] = useState(draft);
   const [full, setFull] = useState(false);
   const [posting, setPosting] = useState(false);
+  const [clip, setClip] = useState<VoiceClip | null>(null);
+  const [recording, setRecording] = useState(false);
+  const sheetHeight = quote ? SHEET_HEIGHT_QUOTE : SHEET_HEIGHT;
   const input = useRef<TextInput>(null);
   const { height: windowHeight } = useWindowDimensions();
   const insets = useSafeAreaInsets();
@@ -65,6 +84,7 @@ export default function NoteComposer({ visible, page, draft, onClose, onPost }: 
   useEffect(() => {
     if (!visible) return;
     setText(draft);
+    setClip(null);
     setFull(false);
     expanded.value = 0;
     shown.value = withTiming(1, timing(reducedMotion));
@@ -83,10 +103,12 @@ export default function NoteComposer({ visible, page, draft, onClose, onPost }: 
     setTimeout(() => onClose(text), reducedMotion ? 0 : 180);
   };
 
+  const empty = !quote && !text.trim() && !clip;
+
   const post = async () => {
-    if (!text.trim() || posting) return;
+    if (empty || recording || posting) return;
     setPosting(true);
-    const done = await onPost(text.trim());
+    const done = await onPost({ body: text.trim(), voice: clip });
     setPosting(false);
     if (done) {
       shown.value = withTiming(0, timing(reducedMotion, 180));
@@ -100,7 +122,7 @@ export default function NoteComposer({ visible, page, draft, onClose, onPost }: 
   const sheetStyle = useAnimatedStyle(() => {
     const kb = keyboard.height.value;
     const e = expanded.value;
-    const placeTop = windowHeight - kb - GAP - SHEET_HEIGHT;
+    const placeTop = windowHeight - kb - GAP - sheetHeight;
     return {
       top: interpolate(e, [0, 1], [placeTop, 0]),
       bottom: interpolate(e, [0, 1], [kb + GAP, kb]),
@@ -112,8 +134,6 @@ export default function NoteComposer({ visible, page, draft, onClose, onPost }: 
       transform: [{ translateY: (1 - shown.value) * 24 }],
     };
   });
-
-  const empty = !text.trim();
 
   return (
     <Modal visible={visible} transparent animationType="none" statusBarTranslucent onRequestClose={close}>
@@ -131,8 +151,20 @@ export default function NoteComposer({ visible, page, draft, onClose, onPost }: 
             label={full ? 'Replier la note' : 'Écrire en pleine page'}
             onPress={toggleFull}
           />
-          <Round icon={CheckIcon} variant="dark" label="Coller la note" disabled={empty || posting} onPress={post} />
+          <Round
+            icon={CheckIcon}
+            variant="dark"
+            label="Coller la note"
+            disabled={empty || recording || posting}
+            onPress={post}
+          />
         </View>
+
+        {!!quote && (
+          <Text style={[styles.quote, full && styles.quoteFull]} numberOfLines={full ? 12 : 4}>
+            {quote}
+          </Text>
+        )}
 
         {/* Le papier réglé, la marge lie de vin, et le texte posé sur les lignes */}
         <Pressable style={styles.paper} onPress={() => input.current?.focus()}>
@@ -145,7 +177,7 @@ export default function NoteComposer({ visible, page, draft, onClose, onPost }: 
             style={styles.input}
             value={text}
             onChangeText={setText}
-            placeholder="Ce que cette page t'a fait…"
+            placeholder={quote ? "Ce que j'en pense…" : "Ce que cette page t'a fait…"}
             placeholderTextColor={inkAlpha(0.38)}
             multiline
             autoFocus
@@ -154,6 +186,8 @@ export default function NoteComposer({ visible, page, draft, onClose, onPost }: 
             accessibilityLabel={`Note page ${page}`}
           />
         </Pressable>
+
+        {!!quote && <VoiceRecorder clip={clip} onChange={setClip} onRecordingChange={setRecording} />}
       </Animated.View>
     </Modal>
   );
@@ -226,6 +260,21 @@ const styles = StyleSheet.create({
   },
   pageFull: {
     fontSize: 28,
+  },
+  // Le passage cité : italique, un filet lie de vin à gauche
+  quote: {
+    paddingLeft: spacing.md,
+    borderLeftWidth: 3,
+    borderLeftColor: colors.accent,
+    fontFamily: fonts.display,
+    fontStyle: 'italic',
+    fontSize: 17,
+    lineHeight: 24,
+    color: colors.textPrimary,
+  },
+  quoteFull: {
+    fontSize: 21,
+    lineHeight: 30,
   },
   paper: {
     flex: 1,

@@ -8,7 +8,8 @@
  *   laissé reste écrit sur la ligne ;
  * - 🎙 : la barre DEVIENT l'enregistreur (`VoiceRecorder`, le même que partout),
  *   l'enregistrement part tout de suite ; ■, puis ✓ pour coller ;
- * - 📷 : photographier un passage pour le citer ;
+ * - 📷 : photographier la page, toucher les lignes à citer (`QuotePicker`), puis
+ *   écrire ou dire ce qu'on en pense ;
  * - ☺ : une rangée d'emojis sort de la barre, un toucher pose la réaction.
  *
  * La note collée apparaît dans le carré du carnet, à côté.
@@ -17,30 +18,31 @@
  */
 
 import * as Haptics from 'expo-haptics';
+import * as ImagePicker from 'expo-image-picker';
 import { LinearGradient } from 'expo-linear-gradient';
 import { CameraIcon, CheckIcon, MicIcon, PenLineIcon, SmilePlusIcon, XIcon } from 'lucide-react-native';
 import React, { useCallback, useState } from 'react';
-import { Alert, StyleSheet, Text, View } from 'react-native';
+import { Alert, Linking, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeIn, FadeOut, useReducedMotion, ZoomIn } from 'react-native-reanimated';
 import { useQuickNote } from '../../hooks/useQuickNote';
+import { isAvailable as canReadPages } from '../../modules/page-text/src';
 import type { VoiceClip } from '../../stores/annotationStore';
 import { colors, creamAlpha, fonts, inkAlpha, shadowAlpha, spacing } from '../../utils/constants';
 import { QUICK_REACTIONS } from '../../utils/emojis';
 import NoteComposer from './NoteComposer';
+import QuotePicker, { type PagePhoto } from './QuotePicker';
 import PressableScale from './PressableScale';
 import VoiceRecorder from './VoiceRecorder';
 
-interface QuickNoteBarProps {
-  /** Photographier un passage. Sans elle, pas de bouton. */
-  onCamera?: () => void;
-}
 
 type Mode = 'idle' | 'voice' | 'emoji';
 
 export const QUICK_BAR_HEIGHT = 52;
+/** Le temps qu'une vue plein écran finisse de se fermer avant d'en ouvrir une autre */
+const MODAL_SWAP_MS = 450;
 const BUTTON = 42;
 
-export default function QuickNoteBar({ onCamera }: QuickNoteBarProps) {
+export default function QuickNoteBar() {
   const { post, posting, page } = useQuickNote();
   const reducedMotion = useReducedMotion();
   const [mode, setMode] = useState<Mode>('idle');
@@ -48,6 +50,8 @@ export default function QuickNoteBar({ onCamera }: QuickNoteBarProps) {
   const [recording, setRecording] = useState(false);
   const [writing, setWriting] = useState(false);
   const [draft, setDraft] = useState('');
+  const [photo, setPhoto] = useState<PagePhoto | null>(null);
+  const [quote, setQuote] = useState<string | null>(null);
 
   const close = useCallback(() => {
     setClip(null);
@@ -67,6 +71,42 @@ export default function QuickNoteBar({ onCamera }: QuickNoteBarProps) {
       }
     },
     [post, close],
+  );
+
+  // La photo de la page. Sans appareil (simulateur), on la choisit dans la photothèque.
+  const takePhoto = useCallback(async () => {
+    const options: ImagePicker.ImagePickerOptions = { mediaTypes: ['images'], quality: 0.9 };
+    let result: ImagePicker.ImagePickerResult;
+    try {
+      const permission = await ImagePicker.requestCameraPermissionsAsync();
+      if (!permission.granted) {
+        Alert.alert('Appareil photo', "Autorise l'appareil photo dans les réglages pour citer une page.", [
+          { text: 'Annuler', style: 'cancel' },
+          { text: 'Réglages', onPress: () => Linking.openSettings() },
+        ]);
+        return;
+      }
+      result = await ImagePicker.launchCameraAsync(options);
+    } catch {
+      result = await ImagePicker.launchImageLibraryAsync(options);
+    }
+    const asset = result.canceled ? null : result.assets[0];
+    setPhoto(asset ? { uri: asset.uri, width: asset.width, height: asset.height } : null);
+  }, []);
+
+  const postComposed = useCallback(
+    async (note: Parameters<typeof post>[0]) => {
+      try {
+        const done = await post(note);
+        if (done) Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+        return done;
+      } catch (error) {
+        console.error('[Carnet] note écrite impossible', error);
+        Alert.alert('Erreur', "La note n'a pas pu être enregistrée. Réessaie.");
+        return false;
+      }
+    },
+    [post],
   );
 
   const entering = reducedMotion ? undefined : FadeIn.duration(180);
@@ -108,7 +148,9 @@ export default function QuickNoteBar({ onCamera }: QuickNoteBarProps) {
       </PressableScale>
 
       <Round icon={MicIcon} variant="ghost" label="Note vocale" onPress={() => setMode('voice')} />
-      {onCamera && <Round icon={CameraIcon} variant="ghost" label="Photographier un passage" onPress={onCamera} />}
+      {canReadPages && (
+        <Round icon={CameraIcon} variant="ghost" label="Photographier un passage à citer" onPress={takePhoto} />
+      )}
       <Round
         icon={mode === 'emoji' ? XIcon : SmilePlusIcon}
         variant={mode === 'emoji' ? 'dark' : 'ghost'}
@@ -124,17 +166,31 @@ export default function QuickNoteBar({ onCamera }: QuickNoteBarProps) {
           setDraft(left);
           setWriting(false);
         }}
-        onPost={async (body) => {
-          try {
-            const done = await post({ body });
-            if (done) Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
-            return done;
-          } catch (error) {
-            console.error('[Carnet] note écrite impossible', error);
-            Alert.alert('Erreur', "La note n'a pas pu être enregistrée. Réessaie.");
-            return false;
-          }
+        onPost={({ body }) => postComposed({ body })}
+      />
+
+      <QuotePicker
+        photo={photo}
+        onClose={() => setPhoto(null)}
+        // iOS ne présente pas une vue par-dessus une autre qui se ferme : on attend la fin du fondu
+        onRetake={() => {
+          setPhoto(null);
+          setTimeout(takePhoto, MODAL_SWAP_MS);
         }}
+        onCite={(passage) => {
+          setPhoto(null);
+          setTimeout(() => setQuote(passage), MODAL_SWAP_MS);
+        }}
+      />
+
+      {/* La citation : le passage, puis ce que j'en pense (écrit ou dit) */}
+      <NoteComposer
+        visible={quote !== null}
+        page={page}
+        draft=""
+        quote={quote}
+        onClose={() => setQuote(null)}
+        onPost={({ body, voice }) => postComposed({ quote, body, voice })}
       />
 
       {mode === 'emoji' && (
