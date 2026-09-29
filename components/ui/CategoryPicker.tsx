@@ -8,10 +8,10 @@
  * « Ma page » (en intercalaires, `tabs`). Les intercalaires n'ont pas de mot :
  * l'illustration de la catégorie, et son nom pour VoiceOver.
  *
+ *      ╭────╮
+ *      ╭ 📌 ╮╭ ♥ ╮╭ 🔥 ╮╭ ☁ ╮╭ 🎭 ╮╭ 💡 ╮   les intercalaires sortent du haut de
+ *   ╭┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄╮   la note ; la choisie dépasse plus
  *   ┆ Une pensée, un avis…            ┆
- *   ╰┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄╯
- *      ╰ ♥ ╯╰ 🔥 ╯╰ ☁ ╯╰ 🎭 ╯╰ 💡 ╯╰ 📌 ╯   les intercalaires sortent du bas de
- *                                ╰────╯   la note ; la choisie dépasse plus
  */
 
 import { LinearGradient } from 'expo-linear-gradient';
@@ -47,8 +47,8 @@ interface CategoryPickerProps {
   value: AnnotationCategory;
   onChange: (category: AnnotationCategory) => void;
   /**
-   * `grid` : trois par ligne ; `tabs` : des intercalaires collés sous la note
-   * (à poser juste après elle, sans écart)
+   * `grid` : trois par ligne ; `tabs` : des intercalaires collés au-dessus de
+   * la note (à poser juste avant elle, sans écart, la note par-dessus)
    */
   layout?: 'grid' | 'tabs';
 }
@@ -82,9 +82,10 @@ export default function CategoryPicker({ value, onChange, layout = 'grid' }: Cat
 }
 
 /**
- * Les intercalaires : on tire celui de la couleur voulue, il dépasse plus que les
- * autres. Pas de mot : l'illustration de la catégorie, en bas, coupée par le bord,
- * dans un ton plus sombre de la couleur (VoiceOver lit le nom).
+ * Les intercalaires, au-dessus de la note : on tire celui de la couleur voulue,
+ * il dépasse plus que les autres. Pas de mot : l'illustration de la catégorie,
+ * en haut, coupée par le bord, dans un ton plus sombre de la couleur (VoiceOver
+ * lit le nom).
  */
 function CategoryTabs({ value, onChange }: Pick<CategoryPickerProps, 'value' | 'onChange'>) {
   return (
@@ -107,9 +108,9 @@ function CategoryTabs({ value, onChange }: Pick<CategoryPickerProps, 'value' | '
 }
 
 /**
- * Un intercalaire. Tiré, il glisse vers le bas sans rebond, et son illustration
+ * Un intercalaire. Tiré, il monte sans rebond, et son illustration
  * se redresse en fonçant, comme l'encre qui infuse : la choisie est la seule
- * droite. Rendu, il remonte, pâlit et se penche à nouveau. Sans animation si
+ * droite. Rendu, il redescend, pâlit et se penche à nouveau. Sans animation si
  * « Réduire les animations » est activé.
  */
 function CategoryTab({
@@ -158,11 +159,11 @@ function CategoryTab({
       accessibilityState={{ selected }}
     >
       <Animated.View style={[styles.tab, tabStyle]}>
-        {/* Aucune ombre sous la note : le haut reprend le ton du bas de la note
-            (le voile de `NoteSticker` l’y assombrit d’environ 6 %), l'intercalaire
-            en est le prolongement */}
+        {/* Aucune ombre sur la note : le bas reprend le ton du haut de la note
+            (le voile de `NoteSticker` l’y éclaircit), l'intercalaire en est le
+            prolongement */}
         <LinearGradient
-          colors={[shade(option.color, 0.94), shade(option.color, 0.86)]}
+          colors={[shade(option.color, 0.94), lighten(option.color, 0.2)]}
           style={StyleSheet.absoluteFill}
         />
         <Animated.View style={[styles.tabIcon, iconStyle]}>
@@ -184,6 +185,13 @@ function CategoryTab({
       </Animated.View>
     </PressableScale>
   );
+}
+
+/** La même couleur, un peu plus claire (vers le blanc) */
+function lighten(hex: string, k: number) {
+  const n = parseInt(hex.slice(1), 16);
+  const mix = (c: number) => Math.round(c + (255 - c) * k);
+  return `rgb(${mix((n >> 16) & 255)},${mix((n >> 8) & 255)},${mix(n & 255)})`;
 }
 
 /** La même couleur, un peu plus sombre en bas */
@@ -225,29 +233,29 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
   },
 
-  // Les intercalaires glissent sous le bord de la note (le haut est caché),
-  // entre les deux arrondis du bas, à parts égales
+  // Les intercalaires glissent sous le bord de la note (le bas est caché),
+  // entre les deux arrondis du haut, à parts égales
   tabs: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'flex-end',
     gap: 3,
-    marginTop: -TAB_TUCK,
+    marginBottom: -TAB_TUCK,
     paddingHorizontal: spacing.lg,
   },
   tabPress: {
     flex: 1,
   },
   tab: {
-    borderBottomLeftRadius: borderRadius.md,
-    borderBottomRightRadius: borderRadius.md,
+    borderTopLeftRadius: borderRadius.md,
+    borderTopRightRadius: borderRadius.md,
     overflow: 'hidden',
   },
-  // L'illustration sort par le bas, coupée : un masque, teinté d'un ton plus
+  // L'illustration sort par le haut, coupée : un masque, teinté d'un ton plus
   // sombre que l'intercalaire (le grain de l'aquarelle est dans la transparence)
   tabIcon: {
     position: 'absolute',
     alignSelf: 'center',
-    bottom: -TAB_ICON * 0.15,
+    top: -TAB_ICON * 0.15,
     width: TAB_ICON,
     height: TAB_ICON,
   },

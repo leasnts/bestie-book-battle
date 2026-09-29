@@ -14,12 +14,14 @@
  * Un seul composant pour l'éditeur de note et la feuille rapide de « Ma page ».
  */
 
+import { MicIcon, QuoteIcon, XIcon } from 'lucide-react-native';
 import React, { forwardRef, useState } from 'react';
 import { StyleSheet, Text, TextInput, View, type LayoutChangeEvent } from 'react-native';
 import type { VoiceClip } from '../../stores/annotationStore';
 import { colors, fonts, inkAlpha, spacing } from '../../utils/constants';
 import { STICKER_BASE_LARGE } from './NoteCard';
 import NoteSticker from './NoteSticker';
+import RoundButton from './RoundButton';
 import VoiceRecorder from './VoiceRecorder';
 
 export interface DraftVoice {
@@ -49,8 +51,16 @@ interface NoteDraftProps {
   /** Pleine page : texte plus grand */
   large?: boolean;
   autoFocus?: boolean;
-  /** Le coin décollé ; `none` quand des intercalaires sortent du bas de la note */
+  /** Le coin décollé ; `none` quand des intercalaires sortent de la note */
   corner?: 'bottom-right' | 'none';
+  /**
+   * Les outils repliés (la feuille rapide) : 🎙 et ❝ en bas à gauche de la note.
+   * L'enregistreur ne s'ouvre que si on touche 🎙. Sans eux, l'enregistreur est
+   * toujours là (l'éditeur de note).
+   */
+  tools?: boolean;
+  /** ❝ : ajouter une citation (photo de la page) ; absent, pas de bouton */
+  onCite?: () => void;
   id: string;
 }
 
@@ -71,10 +81,19 @@ const NoteDraft = forwardRef<TextInput, NoteDraftProps>(function NoteDraft(
     large = false,
     autoFocus = false,
     corner = 'bottom-right',
+    tools = false,
+    onCite,
     id,
   },
   ref,
 ) {
+  // Replié, l'enregistreur n'apparaît qu'au toucher de 🎙 (ou s'il y a déjà un vocal)
+  const [voiceOpen, setVoiceOpen] = useState(!!voice);
+  const closeVoice = () => {
+    onVoiceChange(null);
+    onRecordingChange?.(false);
+    setVoiceOpen(false);
+  };
   const [size, setSize] = useState<{ width: number; height: number } | null>(null);
   const onLayout = (e: LayoutChangeEvent) => {
     const { width, height } = e.nativeEvent.layout;
@@ -82,7 +101,7 @@ const NoteDraft = forwardRef<TextInput, NoteDraftProps>(function NoteDraft(
   };
 
   return (
-    <View style={[styles.note, fill && styles.fill]} onLayout={onLayout}>
+    <View style={[styles.note, tools && styles.noteTools, fill && styles.fill]} onLayout={onLayout}>
       {size && (
         <View style={StyleSheet.absoluteFill} pointerEvents="none">
           <NoteSticker
@@ -115,7 +134,8 @@ const NoteDraft = forwardRef<TextInput, NoteDraftProps>(function NoteDraft(
 
       <TextInput
         ref={ref}
-        style={[styles.input, large && styles.inputLarge, fill && styles.inputFill]}
+        // Replié : la note grandit avec le texte jusqu'à un plafond, puis défile
+        style={[styles.input, large && styles.inputLarge, fill && styles.inputFill, tools && !fill && styles.inputGrow]}
         value={body}
         onChangeText={onBodyChange}
         placeholder={placeholder}
@@ -126,10 +146,33 @@ const NoteDraft = forwardRef<TextInput, NoteDraftProps>(function NoteDraft(
         accessibilityLabel="Texte de la note"
       />
 
-      {/* Le vocal vit dans la note, comme le texte ; il s'arrête avant le coin corné */}
-      <View style={corner !== 'none' && styles.voice}>
-        <VoiceRecorder clip={voice} onChange={onVoiceChange} onRecordingChange={onRecordingChange} />
-      </View>
+      {tools && !voiceOpen ? (
+        // 🎙 et ❝ en bas à gauche : rien ne s'ouvre tant qu'on ne les touche pas
+        <View style={styles.tools}>
+          <RoundButton icon={MicIcon} variant="ghost" label="Ajouter un vocal" onPress={() => setVoiceOpen(true)} />
+          {onCite && (
+            <RoundButton
+              icon={QuoteIcon}
+              variant="ghost"
+              label="Citer un passage : photographier la page"
+              onPress={onCite}
+            />
+          )}
+        </View>
+      ) : (
+        // Le vocal vit dans la note, comme le texte ; il s'arrête avant le coin corné
+        <View style={[styles.voiceRow, corner !== 'none' && styles.voice]}>
+          <View style={styles.grow}>
+            <VoiceRecorder
+              clip={voice}
+              onChange={onVoiceChange}
+              onRecordingChange={onRecordingChange}
+              autoStart={tools}
+            />
+          </View>
+          {tools && <RoundButton icon={XIcon} variant="ghost" label="Retirer le vocal" onPress={closeVoice} />}
+        </View>
+      )}
     </View>
   );
 });
@@ -178,6 +221,24 @@ const styles = StyleSheet.create({
     lineHeight: 28,
   },
   inputFill: {
+    flex: 1,
+  },
+  inputGrow: {
+    maxHeight: 24 * 7,
+  },
+  noteTools: {
+    minHeight: 0,
+  },
+  tools: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+  },
+  voiceRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  grow: {
     flex: 1,
   },
   voice: {
