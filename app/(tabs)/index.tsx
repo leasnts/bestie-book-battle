@@ -453,6 +453,10 @@ export default function HomeScreen() {
           paddingBottom: tabBarInset + (compactSpacing ? spacing.md : spacing['2xl']),
         }}
         scrollEnabled={framesOverflow}
+        // La feuille pour annoter la page vit dans ce défilement (dans l'arbre
+        // React, même ouverte par-dessus tout) : sans ceci, clavier ouvert, le
+        // premier toucher sur ✕, ↗ ou ✓ ne servait qu'à fermer le clavier.
+        keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={framesOverflow}
         onLayout={(e) => setFramesHeight(e.nativeEvent.layout.height)}
         onContentSizeChange={(_w, h) => setContentHeight(h)}
