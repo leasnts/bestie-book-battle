@@ -1,18 +1,18 @@
 /**
  * QuickNoteBar — la barre d'actions rapides de « Ma page ».
  *
- *   (      ✎      ) (      ☺      )
+ *   (✎) (☺)
  *
  * Deux façons d'annoter ma page enregistrée, sans quitter l'accueil, deux
- * gélules égales, icône seule :
+ * ronds en verre ferrés à gauche, icône seule :
  * - ✎ : la feuille (`NoteComposer`), où tout se fait : écrire, dire (🎙), citer
  *   (❝), choisir le thème et la page. Un brouillon laissé met un point lie de
  *   vin sur le crayon ;
  * - ☺ : une réaction en un geste, sans note : la liste à la mode sort au-dessus
  *   de la barre et défile ; « + » ouvre tous les emojis (/emoji-note).
  *
- * Les gélules sont des `GlassButton` étirés. Hauteur fixe : la barre et la
- * rangée ↺ +14 ✓ de « Ma page » prennent la même place, rien ne saute.
+ * Hauteur fixe : la barre et la rangée ↺ +14 ✓ de « Ma page » prennent la même
+ * place, rien ne saute.
  */
 
 import * as Haptics from 'expo-haptics';
@@ -65,8 +65,6 @@ export default function QuickNoteBar() {
     <View style={styles.bar}>
       <GlassButton
         icon={PenLineIcon}
-        size={QUICK_BAR_HEIGHT}
-        stretch
         badge={!!(draft.body || draft.quote)}
         onPress={() => {
           setMode('idle');
@@ -78,8 +76,6 @@ export default function QuickNoteBar() {
       />
       <GlassButton
         icon={mode === 'emoji' ? XIcon : SmilePlusIcon}
-        size={QUICK_BAR_HEIGHT}
-        stretch
         onPress={() => setMode(mode === 'emoji' ? 'idle' : 'emoji')}
         accessibilityLabel={mode === 'emoji' ? 'Fermer les emojis' : `Annoter la page ${page} d’un emoji`}
       />

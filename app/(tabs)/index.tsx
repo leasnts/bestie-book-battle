@@ -46,7 +46,7 @@ import CoverBackdrop from '../../components/ui/CoverBackdrop';
 import GlassButton from '../../components/ui/GlassButton';
 import NoteTile from '../../components/ui/NoteTile';
 import QuickNoteBar from '../../components/ui/QuickNoteBar';
-import PageSection from '../../components/ui/PageSection';
+import PageSection, { PAGE_TUCK } from '../../components/ui/PageSection';
 import LeaderboardSection from '../../components/ui/LeaderboardSection';
 import { getAllUserPages } from '../../services/supabase/database';
 import { myCoverUrl } from '../../services/myEdition';
@@ -480,7 +480,7 @@ export default function HomeScreen() {
 
       {/* ═══════════ CADRE 2 : MA PAGE ═══════════ */}
       {activeChallenge ? (
-        <View style={[styles.pageSection, frameGap]}>
+        <View style={[styles.pageSection, { marginTop: -PAGE_TUCK, paddingTop: 0 }]}>
           <PageSection
             key={activeChallenge.id}
             currentPage={currentPageInput}
@@ -490,7 +490,6 @@ export default function HomeScreen() {
             onPageChange={handlePageChange}
             onSave={handleSave}
             onUndo={handleUndo}
-            onJournalPress={() => router.push(`/participant/${myUserId}`)}
             quickBar={<QuickNoteBar />}
             compact={compactSpacing}
             pickerFontSize={pickerFontSize}
@@ -625,7 +624,9 @@ const styles = StyleSheet.create({
   // ===== CADRE 1 : LE LIVRE =====
   // Les trois cadres sont espacés de 12 pt, comme sur la maquette : l'accueil
   // doit tenir sans défiler.
+  // Au-dessus de « Ma page », qui se glisse dessous
   bookSection: {
+    zIndex: 1,
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.md,
     borderBottomWidth: 1,

@@ -4,7 +4,8 @@
  * Deuxième question de l'accueil : où j'en suis. C'est aussi le geste principal
  * de l'app — enregistrer sa page en un geste.
  *
- * - En-tête : « Ma page » (touchable, sans chevron) ouvre mon journal ; à droite, ma série en **jours**
+ * - Sans titre : le cadre sort de sous « Le livre », son haut s'efface, coins
+ *   droits (retour de Lea, 2026-09-29). À droite, ma série en **jours**
  *   (jamais « soirs » : on ne suppose pas quand les gens lisent).
  * - Le sélecteur qui défile est gardé (pas de − / +), resserré pour tenir dans
  *   le cadre. Ma page est en **pages de mon édition**, d'où le « / 624 ».
@@ -22,7 +23,6 @@ import { LayoutChangeEvent, StyleSheet, Text, View } from 'react-native';
 import { colors, fonts, spacing } from '../../utils/constants';
 import GlassSection from './GlassSection';
 import PageScrollPicker from './PageScrollPicker';
-import PressableScale from './PressableScale';
 import RoundButton from './RoundButton';
 import { QUICK_BAR_HEIGHT } from './QuickNoteBar';
 
@@ -38,8 +38,8 @@ interface PageSectionProps {
   onPageChange: (page: number) => void;
   onSave: () => void;
   onUndo: () => void;
-  /** « Ma page » → mon journal */
-  onJournalPress: () => void;
+  /** Mon journal (le titre qui l'ouvrait est retiré ; gardé pour y revenir) */
+  onJournalPress?: () => void;
   /** La barre d'actions rapides, au repos */
   quickBar?: React.ReactNode;
   /** Petit écran : marges resserrées, pour que l'accueil tienne sans défiler */
@@ -56,7 +56,6 @@ export default function PageSection({
   onPageChange,
   onSave,
   onUndo,
-  onJournalPress,
   quickBar,
   compact = false,
   pickerFontSize = PICKER_FONT_SIZE,
@@ -71,20 +70,9 @@ export default function PageSection({
 
   return (
     // Le cadre remplit la place que l'accueil lui donne ; le chiffre est centré dedans
-    <GlassSection compact={compact} style={styles.frame}>
+    <GlassSection compact={compact} square fadeTop={PAGE_FADE} style={styles.frame}>
+      {/* Le haut est sous « Le livre » : le contenu commence sous le fondu */}
       <View style={styles.head}>
-        <PressableScale
-          style={styles.journalLink}
-          pressedScale={0.96}
-          hitSlop={8}
-          onPress={onJournalPress}
-          accessibilityRole="button"
-          accessibilityLabel="Ma page"
-          accessibilityHint="Ouvre mon journal de lecture"
-        >
-          <Text style={styles.title}>Ma page</Text>
-        </PressableScale>
-
         {streakDays > 0 && (
           <View style={styles.streak} accessible accessibilityLabel={`Série de ${streakDays} jours`}>
             <FlameIcon size={14} color={colors.textTertiary} fill={colors.textTertiary} />
@@ -142,6 +130,10 @@ export default function PageSection({
 // ─── Styles ────────────────────────────────────────────────────────
 // Mesures de la maquette (échelle 0,865) ramenées en points.
 
+/** Ce que « Ma page » glisse sous « Le livre », et la hauteur de son fondu */
+export const PAGE_TUCK = 28;
+const PAGE_FADE = 44;
+
 /** Trois nombres visibles à la fois : le mien au centre, ses deux voisins effacés */
 const PICKER_ITEM_WIDTH = 120;
 /** Le chiffre et sa zone reprennent la maquette (68 et 76 px à l'échelle 0,865) */
@@ -151,19 +143,10 @@ const styles = StyleSheet.create({
   // minHeight : le titre grandit avec le réglage système au lieu d'être coupé
   head: {
     minHeight: 21,
+    marginTop: PAGE_TUCK - spacing.sm,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  journalLink: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 2,
-  },
-  title: {
-    fontFamily: fonts.bodyExtraBold,
-    fontSize: 15,
-    color: colors.textPrimary,
+    justifyContent: 'flex-end',
   },
   streak: {
     flexDirection: 'row',

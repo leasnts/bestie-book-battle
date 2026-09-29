@@ -19,6 +19,8 @@
  * espacements, pas avec un fond ou un cadre de plus.
  */
 
+import MaskedView from '@react-native-masked-view/masked-view';
+import { LinearGradient } from 'expo-linear-gradient';
 import React from 'react';
 import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import { borderRadius, creamAlpha, glassVeil, spacing } from '../../utils/constants';
@@ -41,6 +43,10 @@ interface GlassSectionProps {
   style?: StyleProp<ViewStyle>;
   /** Marge intérieure resserrée (12 au lieu de 16) : accueil sur petit écran */
   compact?: boolean;
+  /** Coins droits : un cadre qui se glisse sous un autre (Ma page, sous Le livre) */
+  square?: boolean;
+  /** Le haut s'efface sur cette hauteur : le cadre sort de sous celui du dessus */
+  fadeTop?: number;
 }
 
 export default function GlassSection({
@@ -50,17 +56,36 @@ export default function GlassSection({
   accessibilityHint,
   style,
   compact = false,
+  square = false,
+  fadeTop = 0,
 }: GlassSectionProps) {
+  const radius = square ? 0 : RADIUS;
   const layers = (
     <>
-      <GlassMaterial radius={RADIUS} veil={glassVeil} edgeColor={EDGE} />
+      {fadeTop > 0 ? (
+        // Seul le verre s'efface ; le contenu, lui, commence sous le fondu
+        <MaskedView
+          style={StyleSheet.absoluteFill}
+          pointerEvents="none"
+          maskElement={
+            <View style={styles.maskColumn}>
+              <LinearGradient colors={['transparent', '#000']} style={{ height: fadeTop }} />
+              <View style={styles.maskSolid} />
+            </View>
+          }
+        >
+          <GlassMaterial radius={radius} veil={glassVeil} />
+        </MaskedView>
+      ) : (
+        <GlassMaterial radius={radius} veil={glassVeil} edgeColor={EDGE} />
+      )}
       <View style={[styles.content, compact && styles.contentCompact]}>{children}</View>
     </>
   );
 
   if (!onPress) {
     return (
-      <View style={[styles.frame, style]}>{layers}</View>
+      <View style={[styles.frame, { borderRadius: radius }, style]}>{layers}</View>
     );
   }
 
@@ -88,5 +113,12 @@ const styles = StyleSheet.create({
   },
   contentCompact: {
     padding: spacing.md,
+  },
+  maskColumn: {
+    flex: 1,
+  },
+  maskSolid: {
+    flex: 1,
+    backgroundColor: '#000',
   },
 });
