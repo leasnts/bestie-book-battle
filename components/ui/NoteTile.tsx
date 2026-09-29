@@ -87,6 +87,7 @@ export default function NoteTile({
             size={side}
             maxBase={STICKER_BASE_LARGE}
             corner="bottom-right"
+            watermark={note ? ANNOTATION_CATEGORIES[note.category].label : undefined}
           />
         </View>
       )}
@@ -120,7 +121,6 @@ function NoteContent({
   freshCount: number;
   myTotalPages: number;
 }) {
-  const category = ANNOTATION_CATEGORIES[note.category];
   const page = formatNotePage(note.position, note.edition_total_pages, myTotalPages);
   const author = isMine ? 'Moi' : note.author?.first_name || 'Participant';
   // Une note, c'est un emoji seul OU un texte : l'emoji d'une ancienne note passe en tête
@@ -129,9 +129,6 @@ function NoteContent({
   return (
     <View style={styles.content}>
       <View style={styles.head}>
-        <Text style={styles.category} numberOfLines={1}>
-          {category.label}
-        </Text>
         <Text style={styles.page}>{page}</Text>
       </View>
 
@@ -206,15 +203,8 @@ const styles = StyleSheet.create({
     alignItems: 'baseline',
     gap: spacing.sm,
   },
-  category: {
-    flex: 1,
-    fontFamily: fonts.bodyExtraBold,
-    fontSize: 11,
-    letterSpacing: 0.4,
-    textTransform: 'uppercase',
-    color: inkAlpha(0.6),
-  },
   page: {
+    marginLeft: 'auto',
     fontFamily: fonts.display,
     fontSize: 14,
     color: colors.textPrimary,

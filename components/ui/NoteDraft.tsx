@@ -6,11 +6,10 @@
  * DANS l'autocollant, à la couleur de sa catégorie :
  *
  *   ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐
- *   ┆ À RETENIR               ┆   la catégorie, toujours écrite
  *   ┆ ▌« le passage cité »    ┆   la citation, modifiable
  *   ┆ Une pensée, un avis…    ┆   le texte
  *   ┆ (🎙 ─────────── 0:00)   ┆   le vocal : le même `VoiceRecorder` que partout
- *   └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄◢┘
+ *   └┄À retenir┄┄┄┄┄┄┄┄┄┄◢┘   la catégorie en filigrane, coupée par les bords
  *
  * Un seul composant pour l'éditeur de note et la feuille rapide de « Ma page ».
  */
@@ -32,7 +31,7 @@ export interface DraftVoice {
 
 interface NoteDraftProps {
   color: string;
-  /** Le nom de la catégorie, écrit en tête */
+  /** Le nom de la catégorie, en filigrane dans le fond de la note */
   label: string;
   body: string;
   onBodyChange: (body: string) => void;
@@ -93,11 +92,10 @@ const NoteDraft = forwardRef<TextInput, NoteDraftProps>(function NoteDraft(
             height={size.height}
             maxBase={STICKER_BASE_LARGE}
             corner={corner}
+            watermark={label}
           />
         </View>
       )}
-
-      <Text style={styles.category}>{label}</Text>
 
       {quote !== null && (
         <TextInput
@@ -146,13 +144,6 @@ const styles = StyleSheet.create({
   },
   fill: {
     flex: 1,
-  },
-  category: {
-    fontFamily: fonts.bodyExtraBold,
-    fontSize: 11,
-    letterSpacing: 0.6,
-    textTransform: 'uppercase',
-    color: inkAlpha(0.6),
   },
   // Le passage cité : un filet lie de vin à gauche, comme sur la note publiée
   quote: {
