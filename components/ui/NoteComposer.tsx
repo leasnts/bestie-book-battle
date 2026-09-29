@@ -5,7 +5,7 @@
  * on annote sans quitter l'écran. ↗ la déplie en pleine page ; ↙ la replie.
  * Tout se fait ici : écrire, dire (🎙), citer (❝), choisir le thème.
  *
- *   (✕) (p. 157 ⌄)              (↗) (✓)   une seule taille sur la ligne : 42 pt
+ *   (✕) (p. 157)                (↗) (✓)   une seule taille sur la ligne : 42 pt
  *   ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐
  *   ┆ ▌« le passage cité »          ┆   la note (`NoteDraft`) : courte au départ,
  *   ┆ Une pensée, un avis…          ┆   elle grandit avec le texte jusqu'à un
@@ -25,7 +25,7 @@
  */
 
 import * as ImagePicker from 'expo-image-picker';
-import { CheckIcon, ChevronDownIcon, Maximize2Icon, Minimize2Icon, XIcon } from 'lucide-react-native';
+import { CheckIcon, Maximize2Icon, Minimize2Icon, XIcon } from 'lucide-react-native';
 import React, { useEffect, useRef, useState } from 'react';
 import {
   Alert,
@@ -195,14 +195,15 @@ export default function NoteComposer({ visible, page, maxPage, draft, onClose, o
   const sheetStyle = useAnimatedStyle(() => {
     const kb = keyboard.height.value;
     const e = expanded.value;
-    const placeTop = Math.max(insets.top, windowHeight - kb - GAP - spacing.md - contentHeight.value);
+    const placeTop = Math.max(insets.top, windowHeight - kb - GAP - contentHeight.value);
     return {
       top: interpolate(e, [0, 1], [placeTop, 0]),
       bottom: interpolate(e, [0, 1], [kb + GAP, kb]),
       left: interpolate(e, [0, 1], [spacing.lg, 0]),
       right: interpolate(e, [0, 1], [spacing.lg, 0]),
       borderRadius: interpolate(e, [0, 1], [28, 0]),
-      paddingTop: interpolate(e, [0, 1], [spacing.md, insets.top + spacing.sm]),
+      // Le haut du contenu garde sa marge : l'ombre des boutons n'est jamais coupée
+      paddingTop: interpolate(e, [0, 1], [0, insets.top]),
       opacity: shown.value,
       transform: [{ translateY: (1 - shown.value) * 24 }],
     };
@@ -255,7 +256,6 @@ export default function NoteComposer({ visible, page, maxPage, draft, onClose, o
                 maxLength={5}
                 accessibilityLabel="Page de la note"
               />
-              <ChevronDownIcon size={16} color={colors.dark900} strokeWidth={2.4} />
             </Pressable>
             <View style={styles.grow} />
             <GlassButton
@@ -350,7 +350,10 @@ const styles = StyleSheet.create({
   scroll: {
     flex: 1,
   },
+  // Des marges tout autour, plus larges que l'ombre des boutons en verre :
+  // le défilement coupe tout ce qui dépasse
   content: {
+    paddingTop: spacing.md,
     paddingHorizontal: spacing.md,
     paddingBottom: spacing.md,
     gap: spacing.md,
@@ -373,8 +376,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    paddingLeft: spacing.md + 2,
-    paddingRight: spacing.md,
+    paddingHorizontal: spacing.md + 2,
     borderRadius: HEAD_BUTTON / 2,
     shadowColor: colors.black,
     shadowOffset: { width: 0, height: 4 },

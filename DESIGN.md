@@ -484,7 +484,7 @@ une **rangée du bas à hauteur fixe** (52 pt) :
   défile ; « + » ouvre tous les emojis (/emoji-note, `EmojiGrid`). Un brouillon
   laissé met un point lie de vin sur ✎.
   ✎ ouvre la feuille (`NoteComposer`), où **tout se fait** : elle monte au-dessus
-  du clavier, l'accueil s'assombrit. Ligne du haut : ✕, la page (« p. 157 ⌄ »,
+  du clavier, l'accueil s'assombrit. Ligne du haut : ✕, la page (« p. 157 »,
   une gélule en verre qu'on touche pour la changer au pavé numérique), ↗ pleine page,
   ✓ — **une seule taille sur la ligne, 42 pt** (celle de `RoundButton`). Le
   thème se choisit en **intercalaires sous la note** (`CategoryPicker`
