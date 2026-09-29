@@ -25,8 +25,10 @@ import PressableScale from './PressableScale';
 
 /** La part de l'intercalaire cachée sous la note */
 const TAB_TUCK = 10;
-/** L'illustration d'un intercalaire, plus large que lui : elle est coupée */
-const TAB_ICON = 40;
+/** L'illustration d'un intercalaire, à peine coupée par le bas : on la reconnaît */
+const TAB_ICON = 30;
+/** Un peu de travers, un coup dans un sens, un coup dans l'autre : posées à la main */
+const TAB_TILT = ['-8deg', '7deg', '-6deg', '8deg', '-7deg', '6deg'];
 
 interface CategoryPickerProps {
   value: AnnotationCategory;
@@ -74,7 +76,7 @@ export default function CategoryPicker({ value, onChange, layout = 'grid' }: Cat
 function CategoryTabs({ value, onChange }: Pick<CategoryPickerProps, 'value' | 'onChange'>) {
   return (
     <View style={styles.tabs}>
-      {CATEGORY_ORDER.map((key) => {
+      {CATEGORY_ORDER.map((key, index) => {
         const option = ANNOTATION_CATEGORIES[key];
         const selected = key === value;
         return (
@@ -96,8 +98,8 @@ function CategoryTabs({ value, onChange }: Pick<CategoryPickerProps, 'value' | '
             />
             <Image
               source={CATEGORY_ICONS[key]}
-              style={styles.tabIcon}
-              tintColor={shade(option.color, selected ? 0.62 : 0.78)}
+              style={[styles.tabIcon, { transform: [{ rotate: TAB_TILT[index] }] }]}
+              tintColor={shade(option.color, selected ? 0.6 : 0.72)}
               contentFit="contain"
             />
           </PressableScale>
@@ -170,7 +172,7 @@ const styles = StyleSheet.create({
   tabIcon: {
     position: 'absolute',
     alignSelf: 'center',
-    bottom: -TAB_ICON * 0.3,
+    bottom: -TAB_ICON * 0.15,
     width: TAB_ICON,
     height: TAB_ICON,
   },
