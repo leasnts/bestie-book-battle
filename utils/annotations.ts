@@ -110,14 +110,14 @@ export const CATEGORY_ICONS: Record<AnnotationCategory, number> = {
 /** La catégorie par défaut d'une nouvelle note */
 export const DEFAULT_CATEGORY: AnnotationCategory = 'a_retenir';
 
-/** L'ordre d'affichage des catégories, celui de la maquette */
+/** L'ordre d'affichage des catégories : « À retenir », la catégorie par défaut, d'abord */
 export const CATEGORY_ORDER: AnnotationCategory[] = [
+  'a_retenir',
   'coup_de_coeur',
   'spicy',
   'larmes',
   'mdr',
   'theorie',
-  'a_retenir',
 ];
 
 // ─── Vocaux ────────────────────────────────────────────────────────

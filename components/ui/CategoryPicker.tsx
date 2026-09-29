@@ -16,11 +16,21 @@
 
 import { LinearGradient } from 'expo-linear-gradient';
 import { Image } from 'expo-image';
-import React from 'react';
+import * as Haptics from 'expo-haptics';
+import React, { useEffect, useRef } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
+import Animated, {
+  Easing,
+  useAnimatedStyle,
+  useReducedMotion,
+  useSharedValue,
+  withSequence,
+  withSpring,
+  withTiming,
+} from 'react-native-reanimated';
 import type { AnnotationCategory } from '../../types/supabase';
 import { ANNOTATION_CATEGORIES, CATEGORY_ICONS, CATEGORY_ORDER } from '../../utils/annotations';
-import { borderRadius, colors, fonts, inkAlpha, shadowAlpha, spacing } from '../../utils/constants';
+import { borderRadius, colors, fonts, inkAlpha, motion, shadowAlpha, spacing } from '../../utils/constants';
 import PressableScale from './PressableScale';
 
 /** La part de l'intercalaire cachée sous la note */
@@ -28,7 +38,10 @@ const TAB_TUCK = 10;
 /** L'illustration d'un intercalaire, à peine coupée par le bas : on la reconnaît */
 const TAB_ICON = 30;
 /** Un peu de travers, un coup dans un sens, un coup dans l'autre : posées à la main */
-const TAB_TILT = ['-8deg', '7deg', '-6deg', '8deg', '-7deg', '6deg'];
+const TAB_TILT = [-8, 7, -6, 8, -7, 6];
+/** La part visible d'un intercalaire, et ce que la choisie dépasse en plus */
+const TAB_HEIGHT = 30;
+const TAB_PULL = 10;
 
 interface CategoryPickerProps {
   value: AnnotationCategory;
@@ -76,36 +89,109 @@ export default function CategoryPicker({ value, onChange, layout = 'grid' }: Cat
 function CategoryTabs({ value, onChange }: Pick<CategoryPickerProps, 'value' | 'onChange'>) {
   return (
     <View style={styles.tabs}>
-      {CATEGORY_ORDER.map((key, index) => {
-        const option = ANNOTATION_CATEGORIES[key];
-        const selected = key === value;
-        return (
-          <PressableScale
-            key={key}
-            style={[styles.tab, selected && styles.tabOn]}
-            pressedScale={0.94}
-            onPress={() => onChange(key)}
-            accessibilityRole="button"
-            accessibilityLabel={option.label}
-            accessibilityState={{ selected }}
-          >
-            {/* Aucune ombre sous la note : le haut reprend le ton du bas de la note
-                (le voile de `NoteSticker` l’y assombrit d’environ 6 %), l'intercalaire
-                en est le prolongement */}
-            <LinearGradient
-              colors={[shade(option.color, 0.94), shade(option.color, 0.86)]}
-              style={StyleSheet.absoluteFill}
-            />
-            <Image
-              source={CATEGORY_ICONS[key]}
-              style={[styles.tabIcon, { transform: [{ rotate: TAB_TILT[index] }] }]}
-              tintColor={shade(option.color, selected ? 0.6 : 0.72)}
-              contentFit="contain"
-            />
-          </PressableScale>
-        );
-      })}
+      {CATEGORY_ORDER.map((key, index) => (
+        <CategoryTab
+          key={key}
+          category={key}
+          tilt={TAB_TILT[index]}
+          selected={key === value}
+          onPress={() => {
+            if (key === value) return;
+            Haptics.selectionAsync().catch(() => {});
+            onChange(key);
+          }}
+        />
+      ))}
     </View>
+  );
+}
+
+/**
+ * Un intercalaire. Tiré, il glisse vers le bas avec un léger rebond ; son
+ * illustration saute, tourne dans l'autre sens et se repose. Rendu, il remonte
+ * sans rebond. Sans animation si « Réduire les animations » est activé.
+ */
+function CategoryTab({
+  category,
+  tilt,
+  selected,
+  onPress,
+}: {
+  category: AnnotationCategory;
+  tilt: number;
+  selected: boolean;
+  onPress: () => void;
+}) {
+  const option = ANNOTATION_CATEGORIES[category];
+  const reducedMotion = useReducedMotion();
+  const out = useSharedValue(selected ? 1 : 0);
+  const hop = useSharedValue(0);
+  const first = useRef(true);
+
+  useEffect(() => {
+    // À l'ouverture, les intercalaires sont déjà en place
+    if (first.current) {
+      first.current = false;
+      return;
+    }
+    if (reducedMotion) {
+      out.value = selected ? 1 : 0;
+      return;
+    }
+    if (selected) {
+      out.value = withSpring(1, { damping: 11, stiffness: 260, mass: 0.7 });
+      hop.value = 0;
+      hop.value = withSequence(
+        withTiming(1, { duration: 140, easing: Easing.out(Easing.quad) }),
+        withSpring(0, { damping: 7, stiffness: 180 }),
+      );
+    } else {
+      out.value = withTiming(0, {
+        duration: motion.duration.standard,
+        easing: Easing.bezier(...motion.easing.easeOutQuart),
+      });
+    }
+  }, [selected, reducedMotion, out, hop]);
+
+  const tabStyle = useAnimatedStyle(() => ({
+    height: TAB_TUCK + TAB_HEIGHT + out.value * TAB_PULL,
+  }));
+  // Le saut : un peu plus haut, un peu plus grand, penché dans l'autre sens
+  const iconStyle = useAnimatedStyle(() => ({
+    transform: [
+      { translateY: -hop.value * 7 },
+      { scale: 1 + hop.value * 0.18 },
+      { rotate: `${tilt - hop.value * tilt * 2.2}deg` },
+    ],
+  }));
+
+  return (
+    <PressableScale
+      style={styles.tabPress}
+      pressedScale={0.94}
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={option.label}
+      accessibilityState={{ selected }}
+    >
+      <Animated.View style={[styles.tab, tabStyle]}>
+        {/* Aucune ombre sous la note : le haut reprend le ton du bas de la note
+            (le voile de `NoteSticker` l’y assombrit d’environ 6 %), l'intercalaire
+            en est le prolongement */}
+        <LinearGradient
+          colors={[shade(option.color, 0.94), shade(option.color, 0.86)]}
+          style={StyleSheet.absoluteFill}
+        />
+        <Animated.View style={[styles.tabIcon, iconStyle]}>
+          <Image
+            source={CATEGORY_ICONS[category]}
+            style={StyleSheet.absoluteFill}
+            tintColor={shade(option.color, selected ? 0.6 : 0.72)}
+            contentFit="contain"
+          />
+        </Animated.View>
+      </Animated.View>
+    </PressableScale>
   );
 }
 
@@ -157,15 +243,13 @@ const styles = StyleSheet.create({
     marginTop: -TAB_TUCK,
     paddingHorizontal: spacing.lg,
   },
-  tab: {
+  tabPress: {
     flex: 1,
-    height: TAB_TUCK + 30,
+  },
+  tab: {
     borderBottomLeftRadius: borderRadius.md,
     borderBottomRightRadius: borderRadius.md,
     overflow: 'hidden',
-  },
-  tabOn: {
-    height: TAB_TUCK + 40,
   },
   // L'illustration sort par le bas, coupée : un masque, teinté d'un ton plus
   // sombre que l'intercalaire (le grain de l'aquarelle est dans la transparence)
