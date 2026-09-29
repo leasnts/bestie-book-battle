@@ -68,8 +68,8 @@ export default function CategoryPicker({ value, onChange, layout = 'grid' }: Cat
 
 /**
  * Les intercalaires : on tire celui de la couleur voulue, il dépasse plus que les
- * autres. Pas de mot : l'illustration de la catégorie, en bas, coupée par le bord
- * et fondue dans la couleur (VoiceOver lit le nom).
+ * autres. Pas de mot : l'illustration de la catégorie, en bas, coupée par le bord,
+ * dans un ton plus sombre de la couleur (VoiceOver lit le nom).
  */
 function CategoryTabs({ value, onChange }: Pick<CategoryPickerProps, 'value' | 'onChange'>) {
   return (
@@ -95,7 +95,8 @@ function CategoryTabs({ value, onChange }: Pick<CategoryPickerProps, 'value' | '
             />
             <Image
               source={CATEGORY_ICONS[key]}
-              style={[styles.tabIcon, selected && styles.tabIconOn]}
+              style={styles.tabIcon}
+              tintColor={shade(option.color, selected ? 0.62 : 0.78)}
               contentFit="contain"
             />
           </PressableScale>
@@ -163,17 +164,13 @@ const styles = StyleSheet.create({
   tabOn: {
     height: TAB_TUCK + 40,
   },
-  // L'illustration sort par le bas, coupée, fondue dans la couleur
+  // L'illustration sort par le bas, coupée : un masque, teinté d'un ton plus
+  // sombre que l'intercalaire (le grain de l'aquarelle est dans la transparence)
   tabIcon: {
     position: 'absolute',
     alignSelf: 'center',
     bottom: -TAB_ICON * 0.3,
     width: TAB_ICON,
     height: TAB_ICON,
-    opacity: 0.4,
-    mixBlendMode: 'multiply',
-  },
-  tabIconOn: {
-    opacity: 0.75,
   },
 });
