@@ -90,10 +90,10 @@ export interface CategoryStyle {
 
 export const ANNOTATION_CATEGORIES: Record<AnnotationCategory, CategoryStyle> = {
   // Des mots de tous les jours (les clés restent celles de la base)
-  coup_de_coeur: { label: 'Adoré', color: postIt.rose },
-  spicy: { label: 'Hot', color: postIt.peche },
-  larmes: { label: 'Triste', color: postIt.bleu },
-  mdr: { label: 'Drôle', color: postIt.jaune },
+  coup_de_coeur: { label: 'J’adore', color: postIt.rose },
+  spicy: { label: 'Spicy', color: postIt.peche },
+  larmes: { label: 'Bouleversé', color: postIt.bleu },
+  mdr: { label: 'Ahahah', color: postIt.jaune },
   theorie: { label: 'Théorie', color: postIt.sauge },
   // Ce qui n'entre dans aucun thème : une note, tout simplement
   a_retenir: { label: 'Note', color: postIt.sable },
