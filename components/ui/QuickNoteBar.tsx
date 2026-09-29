@@ -1,9 +1,10 @@
 /**
  * QuickNoteBar — la barre d'actions rapides de « Ma page ».
  *
- *   [ ✎ p. 157…            ] [🎙] [📷] [☺]
+ *   [ ✎ Annoter la page     ] [🎙] [📷] [☺]
  *
- * Chaque action pose une note sur ma page enregistrée, sans quitter l'accueil :
+ * Chaque action annote ma page enregistrée, sans quitter l'accueil. Une note est
+ * une pensée, un avis ou un élément à retenir ; elle rejoint le carnet de notes :
  * - la ligne de cahier : écrire, sur place (`NoteComposer`) ; un brouillon
  *   laissé reste écrit sur la ligne ;
  * - 🎙 : la barre DEVIENT l'enregistreur (`VoiceRecorder`, le même que partout),
@@ -12,7 +13,7 @@
  *   écrire ou dire ce qu'on en pense ;
  * - ☺ : une rangée d'emojis sort de la barre, un toucher pose la réaction.
  *
- * La note collée apparaît dans le carré du carnet, à côté.
+ * La note ajoutée apparaît dans le carré du carnet de notes, à côté.
  * Hauteur fixe : la barre, l'enregistreur et la rangée ↺ +14 ✓ de « Ma page »
  * prennent la même place, rien ne saute.
  */
@@ -119,9 +120,9 @@ export default function QuickNoteBar() {
           <VoiceRecorder clip={clip} onChange={setClip} onRecordingChange={setRecording} autoStart />
         </View>
         {clip && !recording ? (
-          <Round icon={CheckIcon} variant="dark" label="Coller le vocal" disabled={posting} onPress={() => publish({ voice: clip })} />
+          <Round icon={CheckIcon} variant="dark" label="Ajouter la note vocale au carnet de notes" disabled={posting} onPress={() => publish({ voice: clip })} />
         ) : (
-          <Round icon={XIcon} variant="ghost" label="Annuler le vocal" onPress={close} />
+          <Round icon={XIcon} variant="ghost" label="Annuler la note vocale" onPress={close} />
         )}
       </Animated.View>
     );
@@ -134,7 +135,7 @@ export default function QuickNoteBar() {
         pressedScale={0.97}
         onPress={() => setWriting(true)}
         accessibilityRole="button"
-        accessibilityLabel={draft ? `Reprendre la note page ${page} : ${draft}` : `Écrire une note page ${page}`}
+        accessibilityLabel={draft ? `Reprendre ma note sur la page ${page} : ${draft}` : `Annoter la page ${page}`}
       >
         <LinearGradient colors={PAPER} style={StyleSheet.absoluteFill} />
         {/* La ligne de cahier : deux réglures et la marge lie de vin */}
@@ -143,18 +144,18 @@ export default function QuickNoteBar() {
         <View style={styles.margin} />
         <PenLineIcon size={16} color={colors.textSecondary} strokeWidth={2.2} />
         <Text style={[styles.placeholder, !!draft && styles.draft]} numberOfLines={1}>
-          {draft || `p. ${page}…`}
+          {draft || 'Annoter la page'}
         </Text>
       </PressableScale>
 
-      <Round icon={MicIcon} variant="ghost" label="Note vocale" onPress={() => setMode('voice')} />
+      <Round icon={MicIcon} variant="ghost" label={`Annoter la page ${page} en vocal`} onPress={() => setMode('voice')} />
       {canReadPages && (
-        <Round icon={CameraIcon} variant="ghost" label="Photographier un passage à citer" onPress={takePhoto} />
+        <Round icon={CameraIcon} variant="ghost" label="Citer un passage : photographier la page" onPress={takePhoto} />
       )}
       <Round
         icon={mode === 'emoji' ? XIcon : SmilePlusIcon}
         variant={mode === 'emoji' ? 'dark' : 'ghost'}
-        label={mode === 'emoji' ? 'Fermer les réactions' : 'Réagir en emoji'}
+        label={mode === 'emoji' ? 'Fermer les emojis' : `Annoter la page ${page} d’un emoji`}
         onPress={() => setMode(mode === 'emoji' ? 'idle' : 'emoji')}
       />
 

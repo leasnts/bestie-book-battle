@@ -148,6 +148,15 @@ système est sobre à l'arrêt et taquin en action.
 Anti-référence contraignante : **Goodreads et Babelio**. Pas de fiche produit,
 pas de note sur 5, pas de densité de catalogue.
 
+**Lexique des notes** (Lea, 2026-09-29), le même partout, à l'écran comme pour
+VoiceOver :
+- le geste, c'est **annoter** un livre, une page (« Annoter la page ») ;
+- ce qu'on ajoute, c'est une **note** : une pensée, un avis ou un élément à
+  retenir, écrite, dite (note vocale), citée ou en emoji ;
+- les notes vivent dans le **carnet de notes**. On y **ajoute** une note.
+Jamais « post-it », « noter », « coller » ni « p. 157 » seul là où il faut dire
+ce que fait le bouton.
+
 Plateforme : **iOS uniquement**. La HIG gouverne la structure, la navigation et
 l'interaction ; la marque s'exprime dans ce que la plateforme laisse ouvert —
 typographie, mouvement, illustration.
@@ -469,22 +478,22 @@ Le cadre **Ma page** (`PageSection`) porte le geste principal : le sélecteur qu
 défile (pas de − / +), ma page en pages de mon édition, ma série en **jours**, et
 une **rangée du bas à hauteur fixe** (52 pt) :
 - au repos, la **barre d'actions rapides** (`QuickNoteBar`, #98) : une ligne de
-  cahier « ✎ p. 157… » (papier, deux réglures, marge lie de vin) pour écrire,
+  cahier « ✎ Annoter la page » (papier, deux réglures, marge lie de vin) pour écrire,
   puis 🎙, 📷 et ☺ en boutons ronds de 42 pt `inkAlpha(0.07)`. Tout se pose sur
   ma page **enregistrée**, sans quitter l'accueil. 🎙 : la barre **devient**
-  l'enregistreur, qui démarre tout de suite ; ■, puis ✓ pour coller, ✕ pour
+  l'enregistreur, qui démarre tout de suite ; ■, puis ✓ pour ajouter la note, ✕ pour
   renoncer. ☺ : les six réactions sortent au-dessus de la barre, un toucher pose
   une note emoji seul ;
   Écrire (`NoteComposer`, #100) : la feuille monte juste au-dessus du clavier,
   l'accueil s'assombrit derrière. Papier réglé (lignes de 26 pt), marge lie de
-  vin ; ✕ · p. 157 · ↗ · ✓. ↗ la déplie en pleine page, ↙ la replie. ✕ ou le
+  vin ; ✕ · Page 157 · ↗ · ✓ ; « Une pensée, un avis, un élément à retenir… ». ↗ la déplie en pleine page, ↙ la replie. ✕ ou le
   fond referment en **gardant le brouillon**, écrit sur la ligne de cahier ;
   Citer (📷, #101) : photo de la page (photothèque sur le simulateur), le texte
   est lu **sur le téléphone** (module maison `modules/page-text`, Vision d'Apple,
   en français). `QuotePicker` : la photo sur fond encre, on touche les lignes,
   elles se surlignent en jaune stabilo (`mixBlendMode: multiply`) ; pendant la
   lecture un voile balaie la page, jamais de roue. « Citer » ouvre la feuille
-  avec le passage en tête (filet lie de vin), « Ce que j'en pense… » à écrire, ou
+  avec le passage en tête (filet lie de vin), « Ta pensée, ton avis sur ce passage… » à écrire, ou
   à dire avec le même `VoiceRecorder` ;
 - pendant un défilement, ↺ annuler, « +14 », ✓ enregistrer (encre pleine). La
   barre s'efface : jamais de doute sur la page notée.

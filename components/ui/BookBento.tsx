@@ -195,12 +195,12 @@ export default function BookBento({
             pressed && styles.pressed,
           ]}
           accessibilityRole="button"
-          accessibilityLabel={`Carnet : ${notes.total} notes. Ouvrir le carnet`}
+          accessibilityLabel={`Carnet de notes : ${notes.total} notes. L’ouvrir`}
         >
           {/* La déco : quelques autocollants qui débordent, coupés par la tuile */}
           <StickerDecor stickers={notes.stickers} />
           <View style={styles.tileTop}>
-            <Text style={styles.kicker}>Carnet</Text>
+            <Text style={styles.kicker}>Carnet de notes</Text>
             <ChevronRightIcon size={15} color={colors.textTertiary} strokeWidth={2.2} />
           </View>
           <View style={styles.notesHead}>

@@ -321,7 +321,7 @@ export default function Carnet({ mode }: { mode: CarnetMode }) {
   // L'en-tête commun des sheets ; écrire une note : le rond post-it
   const header = (
     <SheetPageHeader
-      title="Carnet"
+      title="Carnet de notes"
       onBack={inSheet || isPage ? () => router.back() : undefined}
       actions={
         inSheet ? undefined : (
@@ -329,7 +329,7 @@ export default function Carnet({ mode }: { mode: CarnetMode }) {
             icon={StickyNoteIcon}
             size={36}
             onPress={() => router.push(`/note/new${from}`)}
-            accessibilityLabel="Noter cette page"
+            accessibilityLabel="Annoter la page"
           />
         )
       }

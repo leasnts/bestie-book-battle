@@ -63,12 +63,12 @@ export default function NoteTile({
   };
 
   const label = note
-    ? `Carnet. Note de ${isMine ? 'moi' : note.author?.first_name ?? 'quelqu’un'}${
+    ? `Carnet de notes. Note de ${isMine ? 'moi' : note.author?.first_name ?? 'quelqu’un'}${
         freshCount > 0 ? `, 1 sur ${freshCount} nouvelles` : ''
       }`
     : aheadCount > 0
-      ? `Carnet, ${aheadCount} ${aheadCount > 1 ? 'notes' : 'note'} plus loin`
-      : 'Carnet';
+      ? `Carnet de notes, ${aheadCount} ${aheadCount > 1 ? 'notes' : 'note'} plus loin`
+      : 'Carnet de notes';
 
   return (
     <PressableScale
@@ -77,7 +77,7 @@ export default function NoteTile({
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={label}
-      accessibilityHint="Ouvre le carnet"
+      accessibilityHint="Ouvre le carnet de notes"
     >
       {side > 0 && (
         <View style={StyleSheet.absoluteFill} pointerEvents="none">

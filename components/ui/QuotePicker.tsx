@@ -3,7 +3,8 @@
  *
  * La photo s'affiche en grand ; le téléphone y lit le texte (`page-text`, Vision
  * d'Apple, rien ne quitte l'appareil). On touche les lignes à citer, elles se
- * surlignent comme au stabilo ; « Citer » ouvre la note avec le passage.
+ * surlignent comme au stabilo ; « Citer » ouvre la note avec le passage, pour y
+ * ajouter une pensée ou un avis.
  *
  *   [✕]      Touche les lignes à citer
  *   ┌─────────────────────────┐

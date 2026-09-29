@@ -6,16 +6,17 @@
  * derrière : on écrit sans quitter l'écran. ↗ la déplie en pleine page, pour
  * écrire long ; ↙ la replie.
  *
- *   [✕]  p. 157            [↗] [✓]
+ *   [✕]  Page 157          [↗] [✓]
  *   ─────────────────────────────
- *   │ Ce que cette page t'a fait…
+ *   │ Une pensée, un avis, un élément à retenir…
  *   ─────────────────────────────
  *
  * ✕ ou toucher le fond : la feuille se referme et **garde le brouillon**, qui
- * reste écrit sur la ligne de cahier. ✓ colle la note (grisé tant que c'est vide).
+ * reste écrit sur la ligne de cahier. ✓ ajoute la note au carnet de notes (grisé
+ * tant que c'est vide).
  *
  * Avec une citation (photo d'un passage) : le passage en tête, en italique, puis
- * ce que j'en pense, à écrire ou à dire avec l'enregistreur (`VoiceRecorder`, le
+ * ma pensée ou mon avis, à écrire ou à dire avec l'enregistreur (`VoiceRecorder`, le
  * même que partout).
  */
 
@@ -138,13 +139,13 @@ export default function NoteComposer({
   return (
     <Modal visible={visible} transparent animationType="none" statusBarTranslucent onRequestClose={close}>
       <Animated.View style={[StyleSheet.absoluteFill, styles.veil, veilStyle]}>
-        <Pressable style={StyleSheet.absoluteFill} onPress={close} accessibilityLabel="Fermer la note" />
+        <Pressable style={StyleSheet.absoluteFill} onPress={close} accessibilityLabel="Fermer, garder le brouillon" />
       </Animated.View>
 
       <Animated.View style={[styles.sheet, sheetStyle]}>
         <View style={styles.head}>
           <Round icon={XIcon} variant="ghost" label="Fermer, garder le brouillon" onPress={close} />
-          <Text style={[styles.page, full && styles.pageFull]}>p. {page}</Text>
+          <Text style={[styles.page, full && styles.pageFull]}>Page {page}</Text>
           <Round
             icon={full ? Minimize2Icon : Maximize2Icon}
             variant="ghost"
@@ -154,7 +155,7 @@ export default function NoteComposer({
           <Round
             icon={CheckIcon}
             variant="dark"
-            label="Coller la note"
+            label="Ajouter la note au carnet de notes"
             disabled={empty || recording || posting}
             onPress={post}
           />
@@ -177,13 +178,13 @@ export default function NoteComposer({
             style={styles.input}
             value={text}
             onChangeText={setText}
-            placeholder={quote ? "Ce que j'en pense…" : "Ce que cette page t'a fait…"}
+            placeholder={quote ? 'Ta pensée, ton avis sur ce passage…' : 'Une pensée, un avis, un élément à retenir…'}
             placeholderTextColor={inkAlpha(0.38)}
             multiline
             autoFocus
             maxLength={2000}
             scrollEnabled
-            accessibilityLabel={`Note page ${page}`}
+            accessibilityLabel={`Ma note sur la page ${page}`}
           />
         </Pressable>
 
