@@ -159,14 +159,8 @@ export default function Carnet({ mode }: { mode: CarnetMode }) {
     if (!isPage) return [];
     const state = useAnnotationStore.getState();
     const me = useAuthStore.getState().user?.id;
-    // TEMP-DEBUG : sur le livre témoin « Les nuits blanches », les notes du club
-    // sont toujours nouvelles, pour que Lea teste la pile à chaque ouverture.
-    // À retirer avant de fusionner la PR #94.
-    const alwaysNew =
-      __DEV__ &&
-      useProjectStore.getState().activeChallenge?.id === '4c6650d1-a213-48d2-8f86-7aaf52cf2be9';
     return state.notes
-      .filter((note) => note.user_id !== me && (alwaysNew || !state.readIds.includes(note.id)))
+      .filter((note) => note.user_id !== me && !state.readIds.includes(note.id))
       .sort((a, b) => a.position - b.position);
   });
   const [phase, setPhase] = useState<'deck' | 'list'>(deck.length > 0 ? 'deck' : 'list');
