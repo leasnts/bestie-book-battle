@@ -4,7 +4,10 @@
  * Aussi simple qu'un texte : **un toucher pour démarrer, un pour arrêter**. Pas
  * d'appui long, qui exclut les personnes qui ont du mal à maintenir un geste.
  *
- * Une rangée, des places fixes, seules les icônes changent :
+ * Une gélule, des places fixes, seules les icônes changent. **Le même
+ * enregistreur partout** (règle de Lea, 2026-09-29) : dans l'éditeur de note, dans
+ * la barre d'actions rapides de « Ma page », pour commenter une citation.
+ * Pendant l'enregistrement, la gélule passe en lie de vin :
  *
  * |               | gauche       | centre                  | droite      |
  * |---------------|--------------|-------------------------|-------------|
@@ -31,6 +34,7 @@ import {
 } from 'expo-audio';
 import { MicIcon, RotateCcwIcon, SquareIcon, Trash2Icon } from 'lucide-react-native';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Alert, AppState, Linking, StyleSheet, Text, View } from 'react-native';
 import type { VoiceClip } from '../../stores/annotationStore';
 import {
@@ -39,7 +43,15 @@ import {
   levelFromMetering,
   MAX_VOICE_SECONDS,
 } from '../../utils/annotations';
-import { colors, fonts, inkAlpha, shadowAlpha, spacing } from '../../utils/constants';
+import {
+  accentGradient,
+  colors,
+  creamAlpha,
+  fonts,
+  inkAlpha,
+  shadowAlpha,
+  spacing,
+} from '../../utils/constants';
 import PressableScale from './PressableScale';
 
 /** La voix n'a pas besoin de plus : 22 kHz mono, AAC à 32 kbps */
@@ -70,14 +82,21 @@ const LIVE_BARS = 32;
 
 interface VoiceRecorderProps {
   /** Le vocal de la note, s'il y en a un */
-  clip: { seconds: number } | null;
+  clip: { seconds: number; levels?: number[] | null } | null;
   /** Un nouvel enregistrement, ou `null` quand on le supprime ou le refait */
   onChange: (clip: VoiceClip | null) => void;
   /** Pendant l'enregistrement, la note ne peut pas être publiée */
   onRecordingChange?: (recording: boolean) => void;
+  /** Démarre dès l'affichage : le micro de la barre d'actions rapides */
+  autoStart?: boolean;
 }
 
-export default function VoiceRecorder({ clip, onChange, onRecordingChange }: VoiceRecorderProps) {
+export default function VoiceRecorder({
+  clip,
+  onChange,
+  onRecordingChange,
+  autoStart = false,
+}: VoiceRecorderProps) {
   const recorder = useAudioRecorder(VOICE_RECORDING);
   const state = useAudioRecorderState(recorder, 100);
 
@@ -153,6 +172,13 @@ export default function VoiceRecorder({ clip, onChange, onRecordingChange }: Voi
     }
   }, [recorder, onChange, setRecordingBoth]);
 
+  // Le micro de la barre : un toucher suffit, l'enregistrement part tout de suite
+  useEffect(() => {
+    if (autoStart) start();
+    // Une seule fois, à l'ouverture
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Chaque relevé du micro : un niveau de plus pour l'onde
   useEffect(() => {
     if (!recording) return;
@@ -190,7 +216,10 @@ export default function VoiceRecorder({ clip, onChange, onRecordingChange }: Voi
   const live = samples.current.slice(-LIVE_BARS);
 
   return (
-    <View style={styles.row}>
+    <View style={[styles.row, !recording && styles.rowIdle]}>
+      {recording && (
+        <LinearGradient colors={accentGradient} style={[StyleSheet.absoluteFill, styles.rowFill]} />
+      )}
       {recording ? (
         <RoundButton icon={SquareIcon} variant="stop" label="Arrêter le vocal" onPress={finish} />
       ) : clip ? (
@@ -200,6 +229,8 @@ export default function VoiceRecorder({ clip, onChange, onRecordingChange }: Voi
       )}
 
       <View style={styles.middle}>
+        {recording && <View style={styles.dot} />}
+        {!recording && clip && <ClipWave levels={clip.levels} />}
         {recording && (
           <View style={styles.live} importantForAccessibility="no-hide-descendants">
             {Array.from({ length: LIVE_BARS }).map((_, index) => {
@@ -221,7 +252,7 @@ export default function VoiceRecorder({ clip, onChange, onRecordingChange }: Voi
         )}
 
         <Text
-          style={[styles.counter, recording && styles.counterOn]}
+          style={[styles.counter, recording && styles.counterOn, !recording && !clip && styles.counterIdle]}
           accessibilityLabel={
             clip && !recording
               ? `Vocal de ${formatVoiceDuration(clip.seconds)}`
@@ -233,7 +264,9 @@ export default function VoiceRecorder({ clip, onChange, onRecordingChange }: Voi
           ) : (
             <>
               {formatVoiceDuration(elapsed)}
-              <Text style={styles.counterMax}> / {formatVoiceDuration(MAX_VOICE_SECONDS)}</Text>
+              <Text style={[styles.counterMax, recording && styles.counterMaxOn]}>
+                {' '}/ {formatVoiceDuration(MAX_VOICE_SECONDS)}
+              </Text>
             </>
           )}
         </Text>
@@ -253,6 +286,21 @@ export default function VoiceRecorder({ clip, onChange, onRecordingChange }: Voi
   );
 }
 
+/** L'onde du vocal enregistré, en petit dans la gélule */
+function ClipWave({ levels }: { levels?: number[] | null }) {
+  const bars = Array.from({ length: CLIP_BARS }, (_, index) => {
+    const source = levels?.length ? levels[Math.floor((index / CLIP_BARS) * levels.length)] : 40;
+    return Math.max(3, (source / 100) * LIVE_HEIGHT);
+  });
+  return (
+    <View style={styles.live} importantForAccessibility="no-hide-descendants">
+      {bars.map((height, index) => (
+        <View key={index} style={[styles.liveBar, styles.clipBar, { height }]} />
+      ))}
+    </View>
+  );
+}
+
 /** Même taille, même place : seule l'icône change */
 function RoundButton({
   icon: Icon,
@@ -265,10 +313,15 @@ function RoundButton({
   label: string;
   onPress: () => void;
 }) {
-  const filled = variant !== 'ghost';
+  const filled = variant === 'dark';
   return (
     <PressableScale
-      style={[styles.button, filled ? styles.buttonDark : styles.buttonGhost]}
+      style={[
+        styles.button,
+        variant === 'dark' && styles.buttonDark,
+        variant === 'ghost' && styles.buttonGhost,
+        variant === 'stop' && styles.buttonStop,
+      ]}
       pressedScale={0.9}
       hitSlop={6}
       onPress={onPress}
@@ -277,8 +330,8 @@ function RoundButton({
     >
       <Icon
         size={variant === 'stop' ? 15 : 19}
-        color={filled ? colors.white : colors.dark900}
-        fill={variant === 'stop' ? colors.white : 'none'}
+        color={filled ? colors.white : variant === 'stop' ? colors.accent : colors.dark900}
+        fill={variant === 'stop' ? colors.accent : 'none'}
         strokeWidth={2.2}
       />
     </PressableScale>
@@ -287,13 +340,33 @@ function RoundButton({
 
 const BUTTON = 42;
 const LIVE_HEIGHT = 22;
+/** Les barres de l'onde d'un vocal enregistré */
+const CLIP_BARS = 20;
+/** La gélule : le bouton rond, et 5 pt tout autour */
+const PAD = 5;
 
 const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.md,
-    minHeight: BUTTON,
+    minHeight: BUTTON + PAD * 2,
+    padding: PAD,
+    paddingRight: PAD + 2,
+    borderRadius: (BUTTON + PAD * 2) / 2,
+    overflow: 'hidden',
+  },
+  rowIdle: {
+    backgroundColor: inkAlpha(0.06),
+  },
+  rowFill: {
+    borderRadius: (BUTTON + PAD * 2) / 2,
+  },
+  dot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: creamAlpha(0.9),
   },
   slot: {
     width: BUTTON,
@@ -315,11 +388,14 @@ const styles = StyleSheet.create({
   liveBar: {
     flex: 1,
     borderRadius: 1.5,
-    backgroundColor: colors.dark900,
+    backgroundColor: creamAlpha(0.9),
   },
   liveBarEmpty: {
     height: 3,
-    backgroundColor: inkAlpha(0.15),
+    backgroundColor: creamAlpha(0.3),
+  },
+  clipBar: {
+    backgroundColor: inkAlpha(0.5),
   },
   counter: {
     fontFamily: fonts.bodyExtraBold,
@@ -328,11 +404,17 @@ const styles = StyleSheet.create({
     fontVariant: ['tabular-nums'],
   },
   counterOn: {
-    color: colors.textPrimary,
+    color: colors.white,
+  },
+  counterIdle: {
+    flex: 1,
   },
   counterMax: {
     fontFamily: fonts.bodyBold,
     color: colors.textPlaceholder,
+  },
+  counterMaxOn: {
+    color: creamAlpha(0.6),
   },
 
   button: {
@@ -351,5 +433,9 @@ const styles = StyleSheet.create({
   },
   buttonGhost: {
     backgroundColor: inkAlpha(0.07),
+  },
+  // Arrêter : un rond clair sur la gélule lie de vin
+  buttonStop: {
+    backgroundColor: creamAlpha(0.95),
   },
 });

@@ -467,13 +467,22 @@ intermédiaire s'appelle un **cap** partout dans l'UI.
 
 Le cadre **Ma page** (`PageSection`) porte le geste principal : le sélecteur qui
 défile (pas de − / +), ma page en pages de mon édition, ma série en **jours**, et
-une **rangée du bas à hauteur fixe** — trois places qui ne bougent jamais,
-seules les icônes changent : au repos le post-it, pendant
-un défilement ↺ annuler, « +14 », ✓ enregistrer. Les boutons ronds font 42 pt,
-encre pleine pour l'action principale (post-it au repos, ✓ pendant un
-défilement), `inkAlpha(0.07)` pour les autres.
+une **rangée du bas à hauteur fixe** (52 pt) :
+- au repos, la **barre d'actions rapides** (`QuickNoteBar`, #98) : une ligne de
+  cahier « ✎ p. 157… » (papier, deux réglures, marge lie de vin) pour écrire,
+  puis 🎙, 📷 et ☺ en boutons ronds de 42 pt `inkAlpha(0.07)`. Tout se pose sur
+  ma page **enregistrée**, sans quitter l'accueil. 🎙 : la barre **devient**
+  l'enregistreur, qui démarre tout de suite ; ■, puis ✓ pour coller, ✕ pour
+  renoncer. ☺ : les six réactions sortent au-dessus de la barre, un toucher pose
+  une note emoji seul ;
+- pendant un défilement, ↺ annuler, « +14 », ✓ enregistrer (encre pleine). La
+  barre s'efface : jamais de doute sur la page notée.
 
-Le **post-it** note toujours la page enregistrée.
+**Un seul enregistreur vocal** (`VoiceRecorder`, Lea, 2026-09-29) : le même dans
+la barre, dans l'éditeur de note et pour commenter une citation. Une gélule
+`inkAlpha(0.06)` avec le bouton rond à gauche (🎙, puis ■, puis ↺) ; pendant
+l'enregistrement elle passe en **dégradé lie de vin** (`accentGradient`), onde et
+compteur en crème, ■ sur un rond crème. Enregistré : l'onde en petit et la durée.
 
 **Le bento** (Lea, 2026-09-29, #97) : sous « Ma page », deux carrés côte à côte,
 12 pt d'écart. À gauche le **classement** (`LeaderboardSection square`) : lignes

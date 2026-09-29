@@ -45,6 +45,7 @@ import BookSection from '../../components/ui/BookSection';
 import CoverBackdrop from '../../components/ui/CoverBackdrop';
 import GlassButton from '../../components/ui/GlassButton';
 import NoteTile from '../../components/ui/NoteTile';
+import QuickNoteBar from '../../components/ui/QuickNoteBar';
 import PageSection from '../../components/ui/PageSection';
 import LeaderboardSection from '../../components/ui/LeaderboardSection';
 import { getAllUserPages } from '../../services/supabase/database';
@@ -486,7 +487,7 @@ export default function HomeScreen() {
             onSave={handleSave}
             onUndo={handleUndo}
             onJournalPress={() => router.push(`/participant/${myUserId}`)}
-            onNotePress={() => router.push('/note/new')}
+            quickBar={<QuickNoteBar onWrite={() => router.push('/note/new')} />}
             compact={compactSpacing}
             pickerFontSize={pickerFontSize}
           />

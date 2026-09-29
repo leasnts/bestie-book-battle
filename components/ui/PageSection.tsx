@@ -8,26 +8,22 @@
  *   (jamais « soirs » : on ne suppose pas quand les gens lisent).
  * - Le sélecteur qui défile est gardé (pas de − / +), resserré pour tenir dans
  *   le cadre. Ma page est en **pages de mon édition**, d'où le « / 624 ».
- * - La rangée du bas a une **hauteur fixe** et trois places fixes. Seules les
- *   icônes changent, jamais l'endroit où l'on appuie (DESIGN.md › Boutons-icônes) :
- *
- *   |        | gauche                  | centre   | droite                  |
- *   |--------|-------------------------|----------|-------------------------|
- *   | repos  | porte du carnet         | —        | post-it : noter ma page |
- *   | défilé | ↺ annuler               | « +14 »  | ✓ enregistrer           |
- *
- * Le post-it note toujours la page **enregistrée** : pendant un défilement il
- * laisse la place au ✓, il n'y a jamais de doute sur la page notée. La porte du
- * carnet (`NotesDoor`) montre ce qui compte à ce moment-là.
+ * - La rangée du bas a une **hauteur fixe** :
+ *   - au repos, la barre d'actions rapides (`QuickNoteBar`) : écrire, vocal,
+ *     photo, emoji, sur ma page **enregistrée** ;
+ *   - pendant un défilement, ↺ annuler, « +14 », ✓ enregistrer.
+ *   La barre s'efface pendant le défilement : il n'y a jamais de doute sur la
+ *   page notée.
  */
 
-import { CheckIcon, FlameIcon, RotateCcwIcon, StickyNoteIcon } from 'lucide-react-native';
+import { CheckIcon, FlameIcon, RotateCcwIcon } from 'lucide-react-native';
 import React, { useState } from 'react';
 import { LayoutChangeEvent, StyleSheet, Text, View } from 'react-native';
 import { colors, fonts, inkAlpha, shadowAlpha, spacing } from '../../utils/constants';
 import GlassSection from './GlassSection';
 import PageScrollPicker from './PageScrollPicker';
 import PressableScale from './PressableScale';
+import { QUICK_BAR_HEIGHT } from './QuickNoteBar';
 
 interface PageSectionProps {
   /** Page affichée par le sélecteur */
@@ -43,10 +39,8 @@ interface PageSectionProps {
   onUndo: () => void;
   /** « Ma page » → mon journal */
   onJournalPress: () => void;
-  /** Noter ma page enregistrée. Sans elle, la place reste vide. */
-  onNotePress?: () => void;
-  /** La porte du carnet, à gauche au repos. Sans elle, la place reste vide. */
-  notesDoor?: React.ReactNode;
+  /** La barre d'actions rapides, au repos */
+  quickBar?: React.ReactNode;
   /** Petit écran : marges resserrées, pour que l'accueil tienne sans défiler */
   compact?: boolean;
   /** Taille du chiffre, choisie par l'accueil selon la hauteur de l'écran */
@@ -95,8 +89,7 @@ export default function PageSection({
   onSave,
   onUndo,
   onJournalPress,
-  onNotePress,
-  notesDoor,
+  quickBar,
   compact = false,
   pickerFontSize = PICKER_FONT_SIZE,
 }: PageSectionProps) {
@@ -155,54 +148,25 @@ export default function PageSection({
       </Text>
       </View>
 
-      <View style={styles.row}>
-        {/* Gauche : la porte du carnet est plus large qu'un rond, la place s'adapte */}
-        <View style={[styles.slot, styles.slotLeft]}>
-          {hasChanged ? (
-            <IconButton
-              icon={RotateCcwIcon}
-              variant="ghost"
-              label="Annuler"
-              hint="Revient à ma dernière page enregistrée"
-              onPress={onUndo}
-            />
-          ) : (
-            notesDoor
-          )}
+      {hasChanged ? (
+        <View style={styles.row}>
+          <IconButton
+            icon={RotateCcwIcon}
+            variant="ghost"
+            label="Annuler"
+            hint="Revient à ma dernière page enregistrée"
+            onPress={onUndo}
+          />
+          {/* Ce que je viens de lire */}
+          <Text style={styles.deltaText}>
+            {delta > 0 ? '+' : '−'}
+            {Math.abs(delta)}
+          </Text>
+          <IconButton icon={CheckIcon} variant="dark" label="Enregistrer ma page" onPress={onSave} />
         </View>
-
-        {/* Centre : ce que je viens de lire */}
-        <View style={styles.delta}>
-          {hasChanged && (
-            <Text style={styles.deltaText}>
-              {delta > 0 ? '+' : '−'}
-              {Math.abs(delta)}
-            </Text>
-          )}
-        </View>
-
-        {/* Droite */}
-        <View style={styles.slot}>
-          {hasChanged ? (
-            <IconButton
-              icon={CheckIcon}
-              variant="dark"
-              label="Enregistrer ma page"
-              onPress={onSave}
-            />
-          ) : (
-            onNotePress && (
-              <IconButton
-                icon={StickyNoteIcon}
-                variant="dark"
-                label="Noter ma page"
-                hint={`Écrit une note à la page ${savedPage}`}
-                onPress={onNotePress}
-              />
-            )
-          )}
-        </View>
-      </View>
+      ) : (
+        <View style={styles.bar}>{quickBar}</View>
+      )}
     </GlassSection>
   );
 }
@@ -267,27 +231,17 @@ const styles = StyleSheet.create({
     fontVariant: ['tabular-nums'],
   },
 
-  // Hauteur fixe : les boutons apparaissent sans rien déplacer
+  // Hauteur fixe, celle de la barre : les boutons apparaissent sans rien déplacer
   row: {
-    height: BUTTON_SIZE,
+    height: QUICK_BAR_HEIGHT,
     marginTop: spacing.sm,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  slot: {
-    width: BUTTON_SIZE,
-    height: BUTTON_SIZE,
-  },
-  slotLeft: {
-    width: undefined,
-    minWidth: BUTTON_SIZE,
-    flexShrink: 1,
-    alignItems: 'flex-start',
-  },
-  delta: {
-    flex: 1,
-    alignItems: 'center',
+  bar: {
+    height: QUICK_BAR_HEIGHT,
+    marginTop: spacing.sm,
   },
   deltaText: {
     fontFamily: fonts.bodyExtraBold,
