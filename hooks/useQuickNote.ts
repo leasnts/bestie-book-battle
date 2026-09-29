@@ -1,7 +1,7 @@
 /**
  * useQuickNote — poser une note sur ma page enregistrée, sans passer par
- * l'éditeur complet : la barre d'actions rapides de « Ma page » (texte, vocal,
- * citation, emoji).
+ * l'éditeur complet : la barre d'actions rapides de « Ma page » (✎ : texte, vocal,
+ * citation ; ☺ : emoji). La page se change dans la feuille.
  *
  * Mêmes règles que l'éditeur `note/[id]` : la note s'écrit dans les pages de MON
  * édition et voyage en position (0 → 1), visible par le club. Sans catégorie
@@ -22,6 +22,8 @@ export interface QuickNote {
   quote?: string | null;
   voice?: VoiceClip | null;
   category?: AnnotationCategory;
+  /** Une autre page que ma page enregistrée (changée dans la feuille) */
+  page?: number;
 }
 
 export function useQuickNote() {
@@ -40,17 +42,18 @@ export function useQuickNote() {
   const myPages = mine?.progress.total_pages ?? activeChallenge?.total_pages ?? 0;
 
   const post = useCallback(
-    async ({ body = null, emoji = null, quote = null, voice = null, category = DEFAULT_CATEGORY }: QuickNote) => {
+    async ({ body = null, emoji = null, quote = null, voice = null, category = DEFAULT_CATEGORY, page: at }: QuickNote) => {
       if (!activeChallenge || !user?.id || myPages <= 0) return false;
+      const notePage = Math.min(myPages, Math.max(1, Math.round(at ?? page)));
       setPosting(true);
       try {
         await addNote(
           {
             challenge_id: activeChallenge.id,
             user_id: user.id,
-            page,
+            page: notePage,
             edition_total_pages: myPages,
-            position: Number(positionFromPage(page, myPages).toFixed(5)),
+            position: Number(positionFromPage(notePage, myPages).toFixed(5)),
             body: body?.trim() || null,
             emoji,
             quote: quote?.trim() || null,
@@ -67,5 +70,5 @@ export function useQuickNote() {
     [activeChallenge, user?.id, page, myPages, addNote],
   );
 
-  return { post, posting, page };
+  return { post, posting, page, myPages };
 }

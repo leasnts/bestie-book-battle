@@ -15,8 +15,8 @@
  */
 
 import React from 'react';
-import Svg, { Defs, G, LinearGradient, Path, Stop } from 'react-native-svg';
-import { inkAlpha, shadowAlpha, stickerMaterial } from '../../utils/constants';
+import Svg, { ClipPath, Defs, G, LinearGradient, Path, Stop, Text as SvgText } from 'react-native-svg';
+import { fonts, inkAlpha, shadowAlpha, stickerMaterial } from '../../utils/constants';
 
 interface NoteStickerProps {
   /** Couleur de la catégorie ; `null` pour une note verrouillée */
@@ -41,6 +41,16 @@ interface NoteStickerProps {
    * (la pile des nouvelles, où c'est le doigt qui décolle la note).
    */
   corner?: 'top-left' | 'bottom-right' | 'none';
+  /**
+   * Le nom de la catégorie, en très grand et presque transparent, en bas,
+   * ferré à gauche sur la marge du texte de la note, coupé par le bas (et par
+   * la droite s'il est long) :
+   * il fait partie du fond de l'autocollant. Toujours en minuscules : en grand,
+   * les capitales crieraient.
+   */
+  watermark?: string;
+  /** La marge de gauche du texte de la note, pour que le filigrane s'y aligne */
+  watermarkInset?: number;
 }
 
 export default function NoteSticker({
@@ -51,6 +61,8 @@ export default function NoteSticker({
   id,
   maxBase = Infinity,
   corner = 'top-left',
+  watermark,
+  watermarkInset = 12,
 }: NoteStickerProps) {
   const w = width ?? size;
   const h = height ?? size;
@@ -89,6 +101,9 @@ export default function NoteSticker({
   const flapShadow = flapAt(1.5);
 
   const fill = color ?? stickerMaterial.locked;
+  const flip = corner === 'bottom-right' ? `translate(0 ${h}) scale(1 -1)` : `translate(${w} 0) scale(-1 1)`;
+  // Le filigrane : sa base passe juste sous le bord du bas
+  const markSize = base * 0.62;
 
   return (
     <Svg width={w} height={h}>
@@ -108,16 +123,32 @@ export default function NoteSticker({
           <Stop offset="0" stopColor={stickerMaterial.flap[0]} />
           <Stop offset="1" stopColor={stickerMaterial.flap[1]} />
         </LinearGradient>
+        {!!watermark && (
+          <ClipPath id={`clip-${id}`}>
+            <Path d={shape} transform={flip} />
+          </ClipPath>
+        )}
       </Defs>
       {/* Dessiné coin en haut à droite, puis retourné : à gauche, ou en bas */}
-      <G
-        transform={
-          corner === 'bottom-right' ? `translate(0 ${h}) scale(1 -1)` : `translate(${w} 0) scale(-1 1)`
-        }
-      >
+      <G transform={flip}>
         <Path d={shape} fill={fill} />
         {/* Jamais d'aplat : un voile clair en haut, plus sombre en bas */}
         <Path d={shape} fill={`url(#shade-${id})`} />
+      </G>
+      {!!watermark && (
+        <G clipPath={`url(#clip-${id})`}>
+          <SvgText
+            x={watermarkInset}
+            y={h + markSize * 0.02}
+            fontFamily={fonts.display}
+            fontSize={markSize}
+            fill={inkAlpha(0.07)}
+          >
+            {watermark.toLocaleLowerCase('fr')}
+          </SvgText>
+        </G>
+      )}
+      <G transform={flip}>
         <Path
           d={stitch}
           fill="none"

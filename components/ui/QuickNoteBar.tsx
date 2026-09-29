@@ -1,68 +1,46 @@
 /**
  * QuickNoteBar — la barre d'actions rapides de « Ma page ».
  *
- *   ( Annoter la page…            ) (🎙) (📷) (☺)
+ *   (      ✎      ) (      ☺      )
  *
- * Chaque action annote ma page enregistrée, sans quitter l'accueil. Une note est
- * une pensée, un avis ou un élément à retenir ; elle rejoint le carnet de notes :
- * - la gélule « Annoter la page… » : la feuille rapide (`NoteComposer`), la note
- *   en autocollant ; un brouillon laissé reste écrit dans la gélule ;
- * - 🎙 : la barre DEVIENT l'enregistreur (`VoiceRecorder`, le même que partout),
- *   qui part tout de suite ; ■, puis ✓ pour ajouter la note ;
- * - 📷 : photographier la page, toucher les lignes à citer (`QuotePicker`), puis
- *   la feuille rapide avec le passage, modifiable ;
- * - ☺ : la liste à la mode sort au-dessus de la barre et défile ; « + » ouvre
- *   tous les emojis (/emoji-note).
+ * Deux façons d'annoter ma page enregistrée, sans quitter l'accueil, deux
+ * gélules égales, icône seule :
+ * - ✎ : la feuille (`NoteComposer`), où tout se fait : écrire, dire (🎙), citer
+ *   (❝), choisir le thème et la page. Un brouillon laissé met un point lie de
+ *   vin sur le crayon ;
+ * - ☺ : une réaction en un geste, sans note : la liste à la mode sort au-dessus
+ *   de la barre et défile ; « + » ouvre tous les emojis (/emoji-note).
  *
- * Mêmes pièces que partout : la gélule a la forme de l'enregistreur, les ronds
- * sont des `GlassButton`, ✓ est un `RoundButton`.
- * Hauteur fixe : la barre, l'enregistreur et la rangée ↺ +14 ✓ de « Ma page »
- * prennent la même place, rien ne saute.
+ * Les gélules sont des `GlassButton` étirés. Hauteur fixe : la barre et la
+ * rangée ↺ +14 ✓ de « Ma page » prennent la même place, rien ne saute.
  */
 
 import * as Haptics from 'expo-haptics';
-import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
-import { CameraIcon, CheckIcon, MicIcon, PlusIcon, SmilePlusIcon, XIcon } from 'lucide-react-native';
+import { PenLineIcon, PlusIcon, SmilePlusIcon, XIcon } from 'lucide-react-native';
 import React, { useCallback, useState } from 'react';
-import { Alert, Linking, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeIn, FadeOut, useReducedMotion, ZoomIn } from 'react-native-reanimated';
 import { useQuickNote, type QuickNote } from '../../hooks/useQuickNote';
-import { isAvailable as canReadPages } from '../../modules/page-text/src';
-import type { VoiceClip } from '../../stores/annotationStore';
-import { colors, creamAlpha, fonts, inkAlpha, shadowAlpha, spacing } from '../../utils/constants';
+import { colors, creamAlpha, inkAlpha, shadowAlpha, spacing } from '../../utils/constants';
 import { TRENDING_EMOJIS } from '../../utils/emojis';
 import GlassButton from './GlassButton';
 import NoteComposer, { EMPTY_DRAFT, type ComposerDraft } from './NoteComposer';
 import PressableScale from './PressableScale';
-import QuotePicker, { type PagePhoto } from './QuotePicker';
-import RoundButton from './RoundButton';
-import VoiceRecorder from './VoiceRecorder';
 
-type Mode = 'idle' | 'voice' | 'emoji';
+type Mode = 'idle' | 'emoji';
 
 export const QUICK_BAR_HEIGHT = 52;
-/** Le temps qu'une vue plein écran finisse de se fermer avant d'en ouvrir une autre */
-const MODAL_SWAP_MS = 450;
-const GLASS = 44;
 
 export default function QuickNoteBar() {
   const router = useRouter();
-  const { post, posting, page } = useQuickNote();
+  const { post, posting, page, myPages } = useQuickNote();
   const reducedMotion = useReducedMotion();
   const [mode, setMode] = useState<Mode>('idle');
-  const [clip, setClip] = useState<VoiceClip | null>(null);
-  const [recording, setRecording] = useState(false);
   const [writing, setWriting] = useState(false);
   const [draft, setDraft] = useState<ComposerDraft>(EMPTY_DRAFT);
-  const [photo, setPhoto] = useState<PagePhoto | null>(null);
-  const [quote, setQuote] = useState<string | null>(null);
 
-  const closeMode = useCallback(() => {
-    setClip(null);
-    setRecording(false);
-    setMode('idle');
-  }, []);
+  const closeMode = useCallback(() => setMode('idle'), []);
 
   /** Ajoute la note ; `false` si ça n'a pas marché (la personne est prévenue) */
   const add = useCallback(
@@ -80,77 +58,28 @@ export default function QuickNoteBar() {
     [post],
   );
 
-  // La photo de la page. Sans appareil (simulateur), on la choisit dans la photothèque.
-  const takePhoto = useCallback(async () => {
-    const options: ImagePicker.ImagePickerOptions = { mediaTypes: ['images'], quality: 0.9 };
-    let result: ImagePicker.ImagePickerResult;
-    try {
-      const permission = await ImagePicker.requestCameraPermissionsAsync();
-      if (!permission.granted) {
-        Alert.alert('Appareil photo', "Autorise l'appareil photo dans les réglages pour citer une page.", [
-          { text: 'Annuler', style: 'cancel' },
-          { text: 'Réglages', onPress: () => Linking.openSettings() },
-        ]);
-        return;
-      }
-      result = await ImagePicker.launchCameraAsync(options);
-    } catch {
-      result = await ImagePicker.launchImageLibraryAsync(options);
-    }
-    const asset = result.canceled ? null : result.assets[0];
-    setPhoto(asset ? { uri: asset.uri, width: asset.width, height: asset.height } : null);
-  }, []);
-
   const entering = reducedMotion ? undefined : FadeIn.duration(180);
   const exiting = reducedMotion ? undefined : FadeOut.duration(120);
 
-  if (mode === 'voice') {
-    return (
-      <Animated.View style={styles.bar} entering={entering} exiting={exiting}>
-        <View style={styles.grow}>
-          <VoiceRecorder clip={clip} onChange={setClip} onRecordingChange={setRecording} autoStart />
-        </View>
-        {clip && !recording ? (
-          <RoundButton
-            icon={CheckIcon}
-            variant="dark"
-            label="Ajouter la note vocale au carnet de notes"
-            disabled={posting}
-            onPress={async () => {
-              if (await add({ voice: clip })) closeMode();
-            }}
-          />
-        ) : (
-          <GlassButton icon={XIcon} size={GLASS} onPress={closeMode} accessibilityLabel="Annuler la note vocale" />
-        )}
-      </Animated.View>
-    );
-  }
-
   return (
     <View style={styles.bar}>
-      <PressableScale
-        style={styles.write}
-        pressedScale={0.97}
+      <GlassButton
+        icon={PenLineIcon}
+        size={QUICK_BAR_HEIGHT}
+        stretch
+        badge={!!(draft.body || draft.quote)}
         onPress={() => {
           setMode('idle');
           setWriting(true);
         }}
-        accessibilityRole="button"
-        accessibilityLabel={draft.body ? `Reprendre ma note sur la page ${page} : ${draft.body}` : `Annoter la page ${page}`}
-      >
-        <Text style={[styles.placeholder, !!draft.body && styles.draft]} numberOfLines={1}>
-          {draft.body || 'Annoter la page…'}
-        </Text>
-      </PressableScale>
-
-      <GlassButton icon={MicIcon} size={GLASS} onPress={() => setMode('voice')} accessibilityLabel={`Annoter la page ${page} en vocal`} />
-      {canReadPages && (
-        <GlassButton icon={CameraIcon} size={GLASS} onPress={takePhoto} accessibilityLabel="Citer un passage : photographier la page" />
-      )}
+        accessibilityLabel={
+          draft.body ? `Reprendre ma note sur la page ${page} : ${draft.body}` : `Écrire une note sur la page ${page}`
+        }
+      />
       <GlassButton
         icon={mode === 'emoji' ? XIcon : SmilePlusIcon}
-        size={GLASS}
+        size={QUICK_BAR_HEIGHT}
+        stretch
         onPress={() => setMode(mode === 'emoji' ? 'idle' : 'emoji')}
         accessibilityLabel={mode === 'emoji' ? 'Fermer les emojis' : `Annoter la page ${page} d’un emoji`}
       />
@@ -194,35 +123,12 @@ export default function QuickNoteBar() {
       <NoteComposer
         visible={writing}
         page={page}
+        maxPage={myPages}
         draft={draft}
         onClose={(left) => {
           setDraft(left);
           setWriting(false);
         }}
-        onPost={({ body, voice, category }) => add({ body, voice, category })}
-      />
-
-      <QuotePicker
-        photo={photo}
-        onClose={() => setPhoto(null)}
-        // iOS ne présente pas une vue par-dessus une autre qui se ferme : on attend la fin du fondu
-        onRetake={() => {
-          setPhoto(null);
-          setTimeout(takePhoto, MODAL_SWAP_MS);
-        }}
-        onCite={(passage) => {
-          setPhoto(null);
-          setTimeout(() => setQuote(passage), MODAL_SWAP_MS);
-        }}
-      />
-
-      {/* La citation : le passage (modifiable), puis ma pensée ou mon avis, écrit ou dit */}
-      <NoteComposer
-        visible={quote !== null}
-        page={page}
-        draft={EMPTY_DRAFT}
-        quote={quote}
-        onClose={() => setQuote(null)}
         onPost={(note) => add(note)}
       />
     </View>
@@ -236,28 +142,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.sm,
   },
-  grow: {
-    flex: 1,
-  },
-  // La même gélule que l'enregistreur : on voit que c'est un champ à toucher
-  write: {
-    flex: 1,
-    height: QUICK_BAR_HEIGHT,
-    justifyContent: 'center',
-    paddingHorizontal: spacing.lg,
-    borderRadius: QUICK_BAR_HEIGHT / 2,
-    backgroundColor: inkAlpha(0.06),
-  },
-  placeholder: {
-    fontFamily: fonts.bodyBold,
-    fontSize: 15,
-    color: colors.textTertiary,
-  },
-  draft: {
-    fontFamily: fonts.bodySemiBold,
-    color: colors.textPrimary,
-  },
-
   // Les emojis sortent au-dessus de la barre, sur toute sa largeur
   emojis: {
     position: 'absolute',

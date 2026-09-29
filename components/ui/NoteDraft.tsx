@@ -6,21 +6,23 @@
  * DANS l'autocollant, à la couleur de sa catégorie :
  *
  *   ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐
- *   ┆ À RETENIR               ┆   la catégorie, toujours écrite
  *   ┆ ▌« le passage cité »    ┆   la citation, modifiable
  *   ┆ Une pensée, un avis…    ┆   le texte
  *   ┆ (🎙 ─────────── 0:00)   ┆   le vocal : le même `VoiceRecorder` que partout
- *   └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄◢┘
+ *   └┄note┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄◢┘   la catégorie en filigrane, coupée par les bords
  *
  * Un seul composant pour l'éditeur de note et la feuille rapide de « Ma page ».
  */
 
+import { MicIcon, QuoteIcon, XIcon } from 'lucide-react-native';
 import React, { forwardRef, useState } from 'react';
 import { StyleSheet, Text, TextInput, View, type LayoutChangeEvent } from 'react-native';
 import type { VoiceClip } from '../../stores/annotationStore';
 import { colors, fonts, inkAlpha, spacing } from '../../utils/constants';
 import { STICKER_BASE_LARGE } from './NoteCard';
 import NoteSticker from './NoteSticker';
+import GlassButton from './GlassButton';
+import { ROUND_BUTTON_SIZE } from './RoundButton';
 import VoiceRecorder from './VoiceRecorder';
 
 export interface DraftVoice {
@@ -32,7 +34,7 @@ export interface DraftVoice {
 
 interface NoteDraftProps {
   color: string;
-  /** Le nom de la catégorie, écrit en tête */
+  /** Le nom de la catégorie, en filigrane dans le fond de la note */
   label: string;
   body: string;
   onBodyChange: (body: string) => void;
@@ -50,8 +52,22 @@ interface NoteDraftProps {
   /** Pleine page : texte plus grand */
   large?: boolean;
   autoFocus?: boolean;
+  /** Le coin décollé ; `none` quand des intercalaires sortent de la note */
+  corner?: 'bottom-right' | 'none';
+  /**
+   * Les outils repliés (la feuille rapide) : 🎙 et ❝ en verre, en bas à droite de la note
+   * (le thème en filigrane est en bas à gauche).
+   * L'enregistreur ne s'ouvre que si on touche 🎙. Sans eux, l'enregistreur est
+   * toujours là (l'éditeur de note).
+   */
+  tools?: boolean;
+  /** ❝ : ajouter une citation (photo de la page) ; absent, pas de bouton */
+  onCite?: () => void;
   id: string;
 }
+
+/** 🎙 ❝ ✕ : des ronds en verre, de la taille des boutons de l'enregistreur */
+const TOOL = ROUND_BUTTON_SIZE;
 
 const NoteDraft = forwardRef<TextInput, NoteDraftProps>(function NoteDraft(
   {
@@ -69,10 +85,20 @@ const NoteDraft = forwardRef<TextInput, NoteDraftProps>(function NoteDraft(
     fill = false,
     large = false,
     autoFocus = false,
+    corner = 'bottom-right',
+    tools = false,
+    onCite,
     id,
   },
   ref,
 ) {
+  // Replié, l'enregistreur n'apparaît qu'au toucher de 🎙 (ou s'il y a déjà un vocal)
+  const [voiceOpen, setVoiceOpen] = useState(!!voice);
+  const closeVoice = () => {
+    onVoiceChange(null);
+    onRecordingChange?.(false);
+    setVoiceOpen(false);
+  };
   const [size, setSize] = useState<{ width: number; height: number } | null>(null);
   const onLayout = (e: LayoutChangeEvent) => {
     const { width, height } = e.nativeEvent.layout;
@@ -80,7 +106,7 @@ const NoteDraft = forwardRef<TextInput, NoteDraftProps>(function NoteDraft(
   };
 
   return (
-    <View style={[styles.note, fill && styles.fill]} onLayout={onLayout}>
+    <View style={[styles.note, tools && styles.noteTools, fill && styles.fill]} onLayout={onLayout}>
       {size && (
         <View style={StyleSheet.absoluteFill} pointerEvents="none">
           <NoteSticker
@@ -89,12 +115,12 @@ const NoteDraft = forwardRef<TextInput, NoteDraftProps>(function NoteDraft(
             width={size.width}
             height={size.height}
             maxBase={STICKER_BASE_LARGE}
-            corner="bottom-right"
+            corner={corner}
+            watermark={label}
+            watermarkInset={spacing.lg}
           />
         </View>
       )}
-
-      <Text style={styles.category}>{label}</Text>
 
       {quote !== null && (
         <TextInput
@@ -113,7 +139,8 @@ const NoteDraft = forwardRef<TextInput, NoteDraftProps>(function NoteDraft(
 
       <TextInput
         ref={ref}
-        style={[styles.input, large && styles.inputLarge, fill && styles.inputFill]}
+        // Replié : la note grandit avec le texte jusqu'à un plafond, puis défile
+        style={[styles.input, large && styles.inputLarge, fill && styles.inputFill, tools && !fill && styles.inputGrow]}
         value={body}
         onChangeText={onBodyChange}
         placeholder={placeholder}
@@ -124,10 +151,38 @@ const NoteDraft = forwardRef<TextInput, NoteDraftProps>(function NoteDraft(
         accessibilityLabel="Texte de la note"
       />
 
-      {/* Le vocal vit dans la note, comme le texte ; il s'arrête avant le coin corné */}
-      <View style={styles.voice}>
-        <VoiceRecorder clip={voice} onChange={onVoiceChange} onRecordingChange={onRecordingChange} />
-      </View>
+      {tools && !voiceOpen ? (
+        // 🎙 et ❝ en bas à droite : rien ne s'ouvre tant qu'on ne les touche pas
+        <View style={styles.tools}>
+          <GlassButton
+            icon={MicIcon}
+            size={TOOL}
+            onPress={() => setVoiceOpen(true)}
+            accessibilityLabel="Ajouter un vocal"
+          />
+          {onCite && (
+            <GlassButton
+              icon={QuoteIcon}
+              size={TOOL}
+              onPress={onCite}
+              accessibilityLabel="Citer un passage : photographier la page"
+            />
+          )}
+        </View>
+      ) : (
+        // Le vocal vit dans la note, comme le texte ; il s'arrête avant le coin corné
+        <View style={[styles.voiceRow, corner !== 'none' && styles.voice]}>
+          <View style={styles.grow}>
+            <VoiceRecorder
+              clip={voice}
+              onChange={onVoiceChange}
+              onRecordingChange={onRecordingChange}
+              autoStart={tools}
+            />
+          </View>
+          {tools && <GlassButton icon={XIcon} size={TOOL} onPress={closeVoice} accessibilityLabel="Retirer le vocal" />}
+        </View>
+      )}
     </View>
   );
 });
@@ -143,13 +198,6 @@ const styles = StyleSheet.create({
   },
   fill: {
     flex: 1,
-  },
-  category: {
-    fontFamily: fonts.bodyExtraBold,
-    fontSize: 11,
-    letterSpacing: 0.6,
-    textTransform: 'uppercase',
-    color: inkAlpha(0.6),
   },
   // Le passage cité : un filet lie de vin à gauche, comme sur la note publiée
   quote: {
@@ -183,6 +231,25 @@ const styles = StyleSheet.create({
     lineHeight: 28,
   },
   inputFill: {
+    flex: 1,
+  },
+  inputGrow: {
+    maxHeight: 24 * 7,
+  },
+  noteTools: {
+    minHeight: 0,
+  },
+  tools: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: spacing.sm,
+  },
+  voiceRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  grow: {
     flex: 1,
   },
   voice: {

@@ -115,6 +115,8 @@ export default function NoteCard({
             height={size.height}
             maxBase={large ? STICKER_BASE_LARGE : STICKER_BASE}
             corner={flat ? 'none' : 'bottom-right'}
+            watermark={category.label}
+            watermarkInset={large ? spacing.xl : spacing.md}
           />
         </View>
       )}
@@ -123,7 +125,6 @@ export default function NoteCard({
         <Text style={styles.name} numberOfLines={1}>
           {author}
         </Text>
-        <Text style={[styles.category, emojiOnly && styles.categoryCompact]}>{category.label}</Text>
         <Text style={styles.page}>{page}</Text>
       </View>
 
@@ -344,18 +345,6 @@ const styles = StyleSheet.create({
     fontFamily: fonts.bodyExtraBold,
     fontSize: 13,
     color: colors.textPrimary,
-  },
-  category: {
-    flex: 1,
-    fontFamily: fonts.bodyBold,
-    fontSize: 11,
-    letterSpacing: 0.4,
-    textTransform: 'uppercase',
-    color: inkAlpha(0.55),
-  },
-  categoryCompact: {
-    flex: 0,
-    marginRight: spacing.sm,
   },
   page: {
     marginLeft: 'auto',

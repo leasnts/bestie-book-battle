@@ -89,25 +89,37 @@ export interface CategoryStyle {
 }
 
 export const ANNOTATION_CATEGORIES: Record<AnnotationCategory, CategoryStyle> = {
-  coup_de_coeur: { label: 'Coup de cœur', color: postIt.rose },
-  spicy: { label: 'Spicy', color: postIt.peche },
-  larmes: { label: 'Larmes', color: postIt.bleu },
-  mdr: { label: 'Mdr', color: postIt.jaune },
+  // Des mots de tous les jours (les clés restent celles de la base)
+  coup_de_coeur: { label: 'Adoré', color: postIt.rose },
+  spicy: { label: 'Hot', color: postIt.peche },
+  larmes: { label: 'Triste', color: postIt.bleu },
+  mdr: { label: 'Drôle', color: postIt.jaune },
   theorie: { label: 'Théorie', color: postIt.sauge },
-  a_retenir: { label: 'À retenir', color: postIt.sable },
+  // Ce qui n'entre dans aucun thème : une note, tout simplement
+  a_retenir: { label: 'Note', color: postIt.sable },
+};
+
+/** L'illustration de chaque catégorie, à l'encre aquarelle (les intercalaires de la note) */
+export const CATEGORY_ICONS: Record<AnnotationCategory, number> = {
+  coup_de_coeur: require('../assets/images/categories/coup_de_coeur.png'),
+  spicy: require('../assets/images/categories/spicy.png'),
+  larmes: require('../assets/images/categories/larmes.png'),
+  mdr: require('../assets/images/categories/mdr.png'),
+  theorie: require('../assets/images/categories/theorie.png'),
+  a_retenir: require('../assets/images/categories/a_retenir.png'),
 };
 
 /** La catégorie par défaut d'une nouvelle note */
 export const DEFAULT_CATEGORY: AnnotationCategory = 'a_retenir';
 
-/** L'ordre d'affichage des catégories, celui de la maquette */
+/** L'ordre d'affichage des catégories : « Note », la catégorie par défaut, d'abord */
 export const CATEGORY_ORDER: AnnotationCategory[] = [
+  'a_retenir',
   'coup_de_coeur',
   'spicy',
   'larmes',
   'mdr',
   'theorie',
-  'a_retenir',
 ];
 
 // ─── Vocaux ────────────────────────────────────────────────────────

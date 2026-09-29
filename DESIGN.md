@@ -477,23 +477,26 @@ intermédiaire s'appelle un **cap** partout dans l'UI.
 Le cadre **Ma page** (`PageSection`) porte le geste principal : le sélecteur qui
 défile (pas de − / +), ma page en pages de mon édition, ma série en **jours**, et
 une **rangée du bas à hauteur fixe** (52 pt) :
-- au repos, la **barre d'actions rapides** (`QuickNoteBar`, #98) : une gélule
-  « Annoter la page… » (la même forme que l'enregistreur), puis 🎙, 📷 et ☺ en
-  `GlassButton` de 44 pt. Tout annote ma page **enregistrée**, sans quitter
-  l'accueil. 🎙 : la barre **devient** l'enregistreur, qui passe en lie de vin
-  dès le toucher ; ■, puis ✓ (`RoundButton`) pour ajouter la note. ☺ : la liste à
-  la mode (`TRENDING_EMOJIS`) sort au-dessus de la barre et défile ; « + » ouvre
-  tous les emojis (/emoji-note, `EmojiGrid`, le même sélecteur que les réactions).
-  Annoter (`NoteComposer`, #100) : la feuille monte au-dessus du clavier,
-  l'accueil s'assombrit. ✕ et ↗ en `GlassButton` 36 (comme l'en-tête des
-  sheets), ✓ en `RoundButton`. La note s'écrit **dans l'autocollant**
-  (`NoteDraft`, le même que l'éditeur) : catégorie, texte, vocal dedans ; la
-  couleur se choisit dessous (`CategoryPicker`, en rangée). Un toucher sur ✓ ou
-  ↗ agit clavier ouvert. ✕ ou le fond gardent le brouillon dans la gélule.
-  Citer (📷, #101) : photo de la page, texte lu **sur le téléphone** (module
-  maison `modules/page-text`, Vision d'Apple, en français). `QuotePicker` : on
-  touche les lignes, surlignées en jaune stabilo (`mixBlendMode: multiply`) ;
-  « Citer » ouvre la feuille avec le passage **modifiable** en tête de la note ;
+- au repos, la **barre d'actions rapides** (`QuickNoteBar`) : deux gélules en
+  verre égales, icône seule (`GlassButton` `stretch`), ✎ et ☺. Tout annote ma
+  page **enregistrée**, sans quitter l'accueil. ☺ : une réaction en un geste, sans
+  note ; la liste à la mode (`TRENDING_EMOJIS`) sort au-dessus de la barre et
+  défile ; « + » ouvre tous les emojis (/emoji-note, `EmojiGrid`). Un brouillon
+  laissé met un point lie de vin sur ✎.
+  ✎ ouvre la feuille (`NoteComposer`), où **tout se fait** : elle monte au-dessus
+  du clavier, l'accueil s'assombrit. Ligne du haut : ✕, la page (« p. 157 »,
+  une gélule en verre qu'on touche pour la changer au pavé numérique), ↗ pleine page,
+  ✓ — **une seule taille sur la ligne, 42 pt** (celle de `RoundButton`). Le
+  thème se choisit en **intercalaires sous la note** (`CategoryPicker`
+  `tabs`) : l'illustration aquarelle de chaque thème, sans mot, en masque teinté
+  de sa couleur ; la choisie dépasse plus et se tient droite. La note
+  (`NoteDraft` `tools`) est **courte au départ**, grandit avec le texte jusqu'à
+  sept lignes puis défile ; sans coin corné. En bas à droite, 🎙 et ❝ (le thème en filigrane, en bas à gauche)
+  (`GlassButton` 42, comme tous les boutons-icônes) : 🎙 n'ouvre l'enregistreur qu'au toucher (✕ pour le
+  retirer), ❝ photographie la page — texte lu **sur le téléphone** (module maison
+  `modules/page-text`, Vision d'Apple, en français), `QuotePicker` : on touche
+  les lignes, surlignées en jaune stabilo, et le passage arrive en tête de la
+  note, **modifiable**. ✕ ou le fond gardent le brouillon ;
 - pendant un défilement, ↺ annuler, « +14 », ✓ enregistrer (encre pleine). La
   barre s'efface : jamais de doute sur la page notée.
 
