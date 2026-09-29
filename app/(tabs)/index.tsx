@@ -629,8 +629,6 @@ const styles = StyleSheet.create({
     zIndex: 1,
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.borderLight,
   },
 
   // ===== SECTION SÉLECTEUR DE PAGE =====
