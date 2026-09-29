@@ -92,7 +92,7 @@ export const ANNOTATION_CATEGORIES: Record<AnnotationCategory, CategoryStyle> = 
   // Des mots de tous les jours (les clés restent celles de la base)
   coup_de_coeur: { label: 'J’adore', color: postIt.rose },
   spicy: { label: 'Spicy', color: postIt.peche },
-  larmes: { label: 'Bouleversé', color: postIt.bleu },
+  larmes: { label: 'Snif', color: postIt.bleu },
   mdr: { label: 'Ahahah', color: postIt.jaune },
   theorie: { label: 'Théorie', color: postIt.sauge },
   // Ce qui n'entre dans aucun thème : une note, tout simplement

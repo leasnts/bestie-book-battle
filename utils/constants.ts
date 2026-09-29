@@ -126,7 +126,7 @@ export const inkGradient = ['#5a4536', '#1e140e'] as const;
 export const postIt = {
   rose: '#efcfca',    // J’adore
   peche: '#f3cdb0',   // Spicy
-  bleu: '#cadbe6',    // Bouleversé
+  bleu: '#cadbe6',    // Snif
   jaune: '#f3e2a0',   // Ahahah
   sauge: '#d3dfc2',   // Théorie
   sable: '#e8dbc6',   // Note
