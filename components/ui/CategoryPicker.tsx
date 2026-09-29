@@ -108,7 +108,7 @@ function CategoryTabs({ value, onChange }: Pick<CategoryPickerProps, 'value' | '
 
 /**
  * Un intercalaire. Tiré, il glisse vers le bas avec un léger rebond ; son
- * illustration saute, tourne dans l'autre sens et se repose. Rendu, il remonte
+ * illustration fait un petit saut doux, se redresse et se repose. Rendu, il remonte
  * sans rebond. Sans animation si « Réduire les animations » est activé.
  */
 function CategoryTab({
@@ -142,8 +142,8 @@ function CategoryTab({
       out.value = withSpring(1, { damping: 11, stiffness: 260, mass: 0.7 });
       hop.value = 0;
       hop.value = withSequence(
-        withTiming(1, { duration: 140, easing: Easing.out(Easing.quad) }),
-        withSpring(0, { damping: 7, stiffness: 180 }),
+        withTiming(1, { duration: 180, easing: Easing.out(Easing.quad) }),
+        withSpring(0, { damping: 16, stiffness: 140 }),
       );
     } else {
       out.value = withTiming(0, {
@@ -156,12 +156,12 @@ function CategoryTab({
   const tabStyle = useAnimatedStyle(() => ({
     height: TAB_TUCK + TAB_HEIGHT + out.value * TAB_PULL,
   }));
-  // Le saut : un peu plus haut, un peu plus grand, penché dans l'autre sens
+  // Le petit saut : à peine plus haut, à peine plus grand, redressé, puis reposé en douceur
   const iconStyle = useAnimatedStyle(() => ({
     transform: [
-      { translateY: -hop.value * 7 },
-      { scale: 1 + hop.value * 0.18 },
-      { rotate: `${tilt - hop.value * tilt * 2.2}deg` },
+      { translateY: -hop.value * 3 },
+      { scale: 1 + hop.value * 0.08 },
+      { rotate: `${tilt - hop.value * tilt}deg` },
     ],
   }));
 
