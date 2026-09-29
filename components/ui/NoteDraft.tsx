@@ -17,13 +17,19 @@
 import { MicIcon, QuoteIcon, XIcon } from 'lucide-react-native';
 import React, { forwardRef, useState } from 'react';
 import { StyleSheet, Text, TextInput, View, type LayoutChangeEvent } from 'react-native';
+import Animated, {
+  Easing,
+  runOnJS,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from 'react-native-reanimated';
 import type { VoiceClip } from '../../stores/annotationStore';
-import { colors, fonts, inkAlpha, spacing } from '../../utils/constants';
+import { colors, fonts, inkAlpha, motion, spacing } from '../../utils/constants';
 import { STICKER_BASE_LARGE } from './NoteCard';
 import NoteSticker from './NoteSticker';
 import GlassButton from './GlassButton';
-import { ROUND_BUTTON_SIZE } from './RoundButton';
-import VoiceRecorder from './VoiceRecorder';
+import VoiceRecorder, { VOICE_BAR_HEIGHT } from './VoiceRecorder';
 
 export interface DraftVoice {
   uri?: string;
@@ -66,8 +72,16 @@ interface NoteDraftProps {
   id: string;
 }
 
-/** 🎙 ❝ ✕ : des ronds en verre, de la taille des boutons de l'enregistreur */
-const TOOL = ROUND_BUTTON_SIZE;
+/**
+ * 🎙 ❝ ✕ : des ronds en verre, aussi hauts que la gélule du vocal. Toucher 🎙
+ * ne change pas la hauteur de la note : rien ne saute (retour de Lea, 2026-09-29).
+ */
+const TOOL = VOICE_BAR_HEIGHT;
+/** Le coin corné : le vocal s'arrête avant */
+const CORNER_GAP = 26;
+
+const GROW = { duration: motion.duration.slow, easing: Easing.bezier(...motion.easing.easeOutQuart) };
+const SHRINK = { duration: motion.duration.standard, easing: Easing.bezier(...motion.easing.easeInQuart) };
 
 const NoteDraft = forwardRef<TextInput, NoteDraftProps>(function NoteDraft(
   {
@@ -94,11 +108,28 @@ const NoteDraft = forwardRef<TextInput, NoteDraftProps>(function NoteDraft(
 ) {
   // Replié, l'enregistreur n'apparaît qu'au toucher de 🎙 (ou s'il y a déjà un vocal)
   const [voiceOpen, setVoiceOpen] = useState(!!voice);
+  // La gélule naît du rond 🎙 : elle s'étire vers la gauche, et s'y replie au ✕.
+  // À la main plutôt qu'en `entering` : les animations d'entrée ne jouent pas
+  // dans le `Modal` de la feuille rapide.
+  const open = useSharedValue(voice ? 1 : 0);
+  const [dockWidth, setDockWidth] = useState(0);
+  const barWidth = Math.max(TOOL, dockWidth - (corner !== 'none' ? CORNER_GAP : 0));
+  const openVoice = () => {
+    setVoiceOpen(true);
+    open.value = withTiming(1, GROW);
+  };
   const closeVoice = () => {
     onVoiceChange(null);
     onRecordingChange?.(false);
-    setVoiceOpen(false);
+    open.value = withTiming(0, SHRINK, (done) => {
+      if (done) runOnJS(setVoiceOpen)(false);
+    });
   };
+  const toolsStyle = useAnimatedStyle(() => ({ opacity: 1 - open.value }));
+  const barStyle = useAnimatedStyle(() => ({
+    width: TOOL + (barWidth - TOOL) * open.value,
+    opacity: Math.min(1, open.value * 3),
+  }));
   const [size, setSize] = useState<{ width: number; height: number } | null>(null);
   const onLayout = (e: LayoutChangeEvent) => {
     const { width, height } = e.nativeEvent.layout;
@@ -151,36 +182,38 @@ const NoteDraft = forwardRef<TextInput, NoteDraftProps>(function NoteDraft(
         accessibilityLabel="Texte de la note"
       />
 
-      {tools && !voiceOpen ? (
-        // 🎙 et ❝ en bas à droite : rien ne s'ouvre tant qu'on ne les touche pas
-        <View style={styles.tools}>
-          <GlassButton
-            icon={MicIcon}
-            size={TOOL}
-            onPress={() => setVoiceOpen(true)}
-            accessibilityLabel="Ajouter un vocal"
-          />
-          {onCite && (
-            <GlassButton
-              icon={QuoteIcon}
-              size={TOOL}
-              onPress={onCite}
-              accessibilityLabel="Citer un passage : photographier la page"
-            />
+      {tools ? (
+        // 🎙 et ❝ en bas à droite ; 🎙 s'étire en gélule, à la même hauteur
+        <View style={styles.dock} onLayout={(e) => setDockWidth(e.nativeEvent.layout.width)}>
+          <Animated.View style={[styles.tools, toolsStyle]} pointerEvents={voiceOpen ? 'none' : 'auto'}>
+            <GlassButton icon={MicIcon} size={TOOL} onPress={openVoice} accessibilityLabel="Ajouter un vocal" />
+            {onCite && (
+              <GlassButton
+                icon={QuoteIcon}
+                size={TOOL}
+                onPress={onCite}
+                accessibilityLabel="Citer un passage : photographier la page"
+              />
+            )}
+          </Animated.View>
+          {voiceOpen && dockWidth > 0 && (
+            <Animated.View style={[styles.bar, corner !== 'none' && styles.barCorner, barStyle]}>
+              {/* Le contenu garde sa largeur finale : la gélule le dévoile sans l'écraser */}
+              <View style={[styles.voiceRow, styles.barContent, { width: barWidth }]}>
+                <View style={styles.grow}>
+                  <VoiceRecorder clip={voice} onChange={onVoiceChange} onRecordingChange={onRecordingChange} autoStart />
+                </View>
+                <GlassButton icon={XIcon} size={TOOL} onPress={closeVoice} accessibilityLabel="Retirer le vocal" />
+              </View>
+            </Animated.View>
           )}
         </View>
       ) : (
         // Le vocal vit dans la note, comme le texte ; il s'arrête avant le coin corné
         <View style={[styles.voiceRow, corner !== 'none' && styles.voice]}>
           <View style={styles.grow}>
-            <VoiceRecorder
-              clip={voice}
-              onChange={onVoiceChange}
-              onRecordingChange={onRecordingChange}
-              autoStart={tools}
-            />
+            <VoiceRecorder clip={voice} onChange={onVoiceChange} onRecordingChange={onRecordingChange} />
           </View>
-          {tools && <GlassButton icon={XIcon} size={TOOL} onPress={closeVoice} accessibilityLabel="Retirer le vocal" />}
         </View>
       )}
     </View>
@@ -239,6 +272,9 @@ const styles = StyleSheet.create({
   noteTools: {
     minHeight: 0,
   },
+  dock: {
+    height: TOOL,
+  },
   tools: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
@@ -253,6 +289,24 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   voice: {
-    marginRight: 26,
+    marginRight: CORNER_GAP,
+  },
+  // Ancrée à droite, là où est 🎙 : elle grandit vers la gauche
+  bar: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    height: TOOL,
+    borderRadius: TOOL / 2,
+    overflow: 'hidden',
+  },
+  barCorner: {
+    right: CORNER_GAP,
+  },
+  barContent: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    height: TOOL,
   },
 });

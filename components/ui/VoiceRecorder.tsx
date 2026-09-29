@@ -291,6 +291,8 @@ const BAR_MIN = 4;
 /** La gélule : le bouton rond, et 5 pt tout autour */
 const PAD = 5;
 const HEIGHT = ROUND_BUTTON_SIZE + PAD * 2;
+/** La hauteur de la gélule : les ronds posés à côté (🎙 ❝ ✕) prennent la même */
+export const VOICE_BAR_HEIGHT = HEIGHT;
 
 const styles = StyleSheet.create({
   row: {
