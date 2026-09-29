@@ -468,21 +468,24 @@ intermédiaire s'appelle un **cap** partout dans l'UI.
 Le cadre **Ma page** (`PageSection`) porte le geste principal : le sélecteur qui
 défile (pas de − / +), ma page en pages de mon édition, ma série en **jours**, et
 une **rangée du bas à hauteur fixe** — trois places qui ne bougent jamais,
-seules les icônes changent : au repos la porte du carnet et le post-it, pendant
+seules les icônes changent : au repos le post-it, pendant
 un défilement ↺ annuler, « +14 », ✓ enregistrer. Les boutons ronds font 42 pt,
 encre pleine pour l'action principale (post-it au repos, ✓ pendant un
 défilement), `inkAlpha(0.07)` pour les autres.
 
-Le **post-it** note toujours la page enregistrée. La **porte du carnet**
-(`NotesDoor`, → /notes) est une pastille `inkAlpha(0.07)` de 42 pt de haut,
-toujours touchable, qui montre ce qui compte :
-- rien de nouveau : icône `notebook` + `23 notes` ;
-- des notes plus loin : avatars **grisés + cadenas** + `3 plus loin` ;
-- juste après « Enregistrer » : les notes que je viens de dépasser **deviennent
-  des post-it** (avatar + page de mon édition, `≈ 158` si l'édition diffère),
-  couleur de leur catégorie, en éventail, trois au maximum puis un nombre, et
-  `🔒 1` pour ce qui reste. Ils arrivent pendant que la feuille « +14 » tombe
-  et se rangent dès que j'ouvre le carnet (ou que je les ai lus).
+Le **post-it** note toujours la page enregistrée.
+
+**Le bento** (Lea, 2026-09-29, #97) : sous « Ma page », deux carrés côte à côte,
+12 pt d'écart. À gauche le **classement** (`LeaderboardSection square`) : lignes
+de 27 pt posées en bas du carré, avatar 22, score en Fraunces 16. À droite le
+**carnet** (`NoteTile`) : **uniquement la note à la une**, un `NoteSticker` de la
+taille du carré, sans cadre en verre derrière, coin corné en bas à droite (il
+invite à tourner la page). En haut la catégorie (toujours écrite) et la page ;
+au milieu le texte, la citation en Fraunces italique, l'emoji seul en grand ou
+le vocal (onde + durée) ; en bas l'autrice et « 1 / 3 » en lie de vin s'il y a
+des nouvelles. À la une : la première des nouvelles, sinon la plus récente.
+Sans note lisible : papier nu, un cadenas et le nombre de notes plus loin. Tout
+le carré ouvre `/carnet`. L'ancienne porte du carnet (`NotesDoor`) a disparu.
 
 **Aucun défilement** (Lea, 2026-09-24) : l'accueil tient sur un seul écran, sur
 tous les iPhone. Plus de ScrollView : le livre, « Ma page » et le classement sont

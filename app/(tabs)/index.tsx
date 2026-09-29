@@ -44,7 +44,7 @@ import PopEyes from '../../components/PopEyes';
 import BookSection from '../../components/ui/BookSection';
 import CoverBackdrop from '../../components/ui/CoverBackdrop';
 import GlassButton from '../../components/ui/GlassButton';
-import NotesDoor from '../../components/ui/NotesDoor';
+import NoteTile from '../../components/ui/NoteTile';
 import PageSection from '../../components/ui/PageSection';
 import LeaderboardSection from '../../components/ui/LeaderboardSection';
 import { getAllUserPages } from '../../services/supabase/database';
@@ -119,7 +119,6 @@ export default function HomeScreen() {
   const notesAhead = useAnnotationStore((s) => s.ahead);
   const readNoteIds = useAnnotationStore((s) => s.readIds);
   const revealedNoteIds = useAnnotationStore((s) => s.revealedIds);
-  const revealedAt = useAnnotationStore((s) => s.revealedAt);
 
   const {
     loadChallengeProgress,
@@ -347,8 +346,8 @@ export default function HomeScreen() {
     setCurrentPageInput(lastSavedPage);
   }, [lastSavedPage]);
 
-  // ===== Le carnet, pour la porte de « Ma page » =====
-  // Tant que le carnet chargé est celui d'un autre livre, la porte reste neutre
+  // ===== Le carnet, pour son carré du bento =====
+  // Tant que le carnet chargé est celui d'un autre livre, le carré reste neutre
   const notesMatchChallenge = notesChallengeId === activeChallenge?.id;
   const revealedNotes = useMemo(
     () =>
@@ -357,8 +356,15 @@ export default function HomeScreen() {
         : [],
     [notesMatchChallenge, notes, revealedNoteIds, readNoteIds],
   );
-  // Une arrivée se joue une fois : revenir sur l'accueil plus tard ne la rejoue pas
-  const animateReveal = revealedAt !== null && Date.now() - revealedAt < 3000;
+  // À la une : la première des nouvelles, sinon la note la plus récente
+  const featuredNote = useMemo(() => {
+    if (!notesMatchChallenge) return null;
+    if (revealedNotes.length > 0) return revealedNotes[0];
+    return notes.reduce<(typeof notes)[number] | null>(
+      (latest, note) => (!latest || note.created_at > latest.created_at ? note : latest),
+      null,
+    );
+  }, [notesMatchChallenge, notes, revealedNotes]);
 
   // ===== Membres du club, pour le cadre Classement =====
   // Même hook que le classement complet : mêmes prénoms, mêmes photos, mêmes %.
@@ -483,16 +489,6 @@ export default function HomeScreen() {
             onNotePress={() => router.push('/note/new')}
             compact={compactSpacing}
             pickerFontSize={pickerFontSize}
-            notesDoor={
-              <NotesDoor
-                count={notesMatchChallenge ? notes.length : 0}
-                ahead={notesMatchChallenge ? notesAhead : []}
-                revealed={revealedNotes}
-                myTotalPages={totalPages}
-                animateReveal={animateReveal}
-                onPress={() => router.push('/carnet')}
-              />
-            }
           />
         </View>
       ) : !_hasHydrated || (challenges.length === 0 && challengesLoading) ? (
@@ -546,15 +542,29 @@ export default function HomeScreen() {
         </View>
       )}
 
-      {/* ═══════════ BLOC 3 : TOP 3 DU CHALLENGE + MOI ═══════════ */}
+      {/* ═══════════ CADRE 3 : LE BENTO — CLASSEMENT ET CARNET ═══════════
+        Deux carrés côte à côte : où je me situe dans le club, et la note à la une. */}
       {activeChallenge && (
-        <View style={[styles.progressSection, frameGap]}>
-          <LeaderboardSection
-            participants={leaderboardParticipants}
-            myUserId={myUserId}
-            onPress={() => router.push('/leaderboard')}
-            compact={compactLeaderboard}
-          />
+        <View style={[styles.bento, frameGap]}>
+          <View style={styles.bentoCell}>
+            <LeaderboardSection
+              participants={leaderboardParticipants}
+              myUserId={myUserId}
+              onPress={() => router.push('/leaderboard')}
+              compact={compactLeaderboard}
+              square
+            />
+          </View>
+          <View style={styles.bentoCell}>
+            <NoteTile
+              note={featuredNote}
+              isMine={featuredNote?.user_id === user?.id}
+              freshCount={revealedNotes.length}
+              aheadCount={notesMatchChallenge ? notesAhead.length : 0}
+              myTotalPages={totalPages}
+              onPress={() => router.push('/carnet')}
+            />
+          </View>
         </View>
       )}
       </ScrollView>
@@ -626,10 +636,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.md,
   },
-  // ===== CARTE DE PROGRESSION (bas) =====
-  progressSection: {
+  // ===== LE BENTO (bas) : deux carrés, l'écart des cadres entre eux =====
+  bento: {
+    flexDirection: 'row',
+    gap: spacing.md,
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.md,
+  },
+  bentoCell: {
+    flex: 1,
   },
 
   // ===== ÉTAT VIDE =====
