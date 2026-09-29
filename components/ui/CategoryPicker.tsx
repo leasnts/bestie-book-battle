@@ -5,33 +5,37 @@
  * seule exclurait les personnes daltoniennes. La choisie est entourée de lie de vin.
  *
  * Un seul sélecteur : l'éditeur de note (en grille) et la feuille rapide de
- * « Ma page » (en intercalaires, `tabs`).
+ * « Ma page » (en intercalaires, `tabs`). Les intercalaires n'ont pas de mot :
+ * l'illustration de la catégorie, et son nom pour VoiceOver.
  *
  *   ┆ Une pensée, un avis…            ┆
  *   ╰┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄╯
- *      ╰Cœur╯╰Spicy╯╰Larmes╯ ╰À RETENIR╯   les intercalaires sortent du bas de
- *                              ╰───────╯   la note ; la choisie dépasse plus
+ *      ╰ ♥ ╯╰ 🔥 ╯╰ ☁ ╯╰ 🎭 ╯╰ 💡 ╯╰ 📌 ╯   les intercalaires sortent du bas de
+ *                                ╰────╯   la note ; la choisie dépasse plus
  */
 
 import { LinearGradient } from 'expo-linear-gradient';
-import React, { useRef } from 'react';
-import { ScrollView, StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native';
+import { Image } from 'expo-image';
+import React from 'react';
+import { StyleSheet, Text, View } from 'react-native';
 import type { AnnotationCategory } from '../../types/supabase';
-import { ANNOTATION_CATEGORIES, CATEGORY_ORDER } from '../../utils/annotations';
+import { ANNOTATION_CATEGORIES, CATEGORY_ICONS, CATEGORY_ORDER } from '../../utils/annotations';
 import { borderRadius, colors, fonts, inkAlpha, shadowAlpha, spacing } from '../../utils/constants';
 import PressableScale from './PressableScale';
 
 /** La part de l'intercalaire cachée sous la note */
 const TAB_TUCK = 10;
+/** L'illustration d'un intercalaire, plus large que lui : elle est coupée */
+const TAB_ICON = 40;
 
 interface CategoryPickerProps {
   value: AnnotationCategory;
   onChange: (category: AnnotationCategory) => void;
   /**
-   * `grid` : trois par ligne ; `row` : une rangée qui défile ; `tabs` : des
-   * intercalaires collés sous la note (à poser juste après elle, sans écart)
+   * `grid` : trois par ligne ; `tabs` : des intercalaires collés sous la note
+   * (à poser juste après elle, sans écart)
    */
-  layout?: 'grid' | 'row' | 'tabs';
+  layout?: 'grid' | 'tabs';
 }
 
 export default function CategoryPicker({ value, onChange, layout = 'grid' }: CategoryPickerProps) {
@@ -43,7 +47,7 @@ export default function CategoryPicker({ value, onChange, layout = 'grid' }: Cat
     return (
       <PressableScale
         key={key}
-        style={[styles.chip, layout === 'grid' ? styles.chipGrid : styles.chipRow, selected && styles.chipOn]}
+        style={[styles.chip, styles.chipGrid, selected && styles.chipOn]}
         pressedScale={0.96}
         onPress={() => onChange(key)}
         accessibilityRole="button"
@@ -59,42 +63,17 @@ export default function CategoryPicker({ value, onChange, layout = 'grid' }: Cat
     );
   });
 
-  if (layout === 'row') {
-    return (
-      <ScrollView
-        horizontal
-        style={styles.rowScroll}
-        showsHorizontalScrollIndicator={false}
-        keyboardShouldPersistTaps="always"
-        contentContainerStyle={styles.row}
-      >
-        {chips}
-      </ScrollView>
-    );
-  }
   return <View style={styles.grid}>{chips}</View>;
 }
 
-/** Les intercalaires : on tire celui de la couleur voulue, il dépasse plus que les autres */
+/**
+ * Les intercalaires : on tire celui de la couleur voulue, il dépasse plus que les
+ * autres. Pas de mot : l'illustration de la catégorie, en bas, coupée par le bord
+ * et fondue dans la couleur (VoiceOver lit le nom).
+ */
 function CategoryTabs({ value, onChange }: Pick<CategoryPickerProps, 'value' | 'onChange'>) {
-  const scroll = useRef<ScrollView>(null);
-  const shown = useRef(false);
-  // À l'ouverture, la choisie est en vue, même si elle est au bout de la rangée
-  const reveal = (key: AnnotationCategory) => (e: LayoutChangeEvent) => {
-    if (key !== value || shown.current) return;
-    shown.current = true;
-    scroll.current?.scrollTo({ x: Math.max(0, e.nativeEvent.layout.x - spacing.lg), animated: false });
-  };
-
   return (
-    <ScrollView
-      ref={scroll}
-      horizontal
-      style={styles.tabsScroll}
-      showsHorizontalScrollIndicator={false}
-      keyboardShouldPersistTaps="always"
-      contentContainerStyle={styles.tabs}
-    >
+    <View style={styles.tabs}>
       {CATEGORY_ORDER.map((key) => {
         const option = ANNOTATION_CATEGORIES[key];
         const selected = key === value;
@@ -102,8 +81,7 @@ function CategoryTabs({ value, onChange }: Pick<CategoryPickerProps, 'value' | '
           <PressableScale
             key={key}
             style={[styles.tab, selected && styles.tabOn]}
-            onLayout={reveal(key)}
-            pressedScale={0.96}
+            pressedScale={0.94}
             onPress={() => onChange(key)}
             accessibilityRole="button"
             accessibilityLabel={option.label}
@@ -115,13 +93,15 @@ function CategoryTabs({ value, onChange }: Pick<CategoryPickerProps, 'value' | '
               locations={[0, 0.35, 1]}
               style={StyleSheet.absoluteFill}
             />
-            <Text style={[styles.tabText, selected && styles.tabTextOn]} numberOfLines={1}>
-              {option.label}
-            </Text>
+            <Image
+              source={CATEGORY_ICONS[key]}
+              style={[styles.tabIcon, selected && styles.tabIconOn]}
+              contentFit="contain"
+            />
           </PressableScale>
         );
       })}
-    </ScrollView>
+    </View>
   );
 }
 
@@ -140,15 +120,6 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: spacing.sm,
   },
-  // La rangée garde la hauteur de ses pastilles, même dans un parent qui s'étire
-  rowScroll: {
-    flexGrow: 0,
-  },
-  row: {
-    gap: spacing.sm,
-    paddingVertical: 3,
-    alignItems: 'center',
-  },
   chip: {
     minHeight: 40,
     alignItems: 'center',
@@ -163,9 +134,6 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     flexBasis: '30%',
   },
-  chipRow: {
-    minHeight: 36,
-  },
   chipOn: {
     borderColor: colors.accent,
     shadowColor: shadowAlpha(0.2),
@@ -176,23 +144,18 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
   },
 
-  // Les intercalaires glissent sous le bord de la note : le haut est caché
-  tabsScroll: {
-    flexGrow: 0,
-    marginTop: -TAB_TUCK,
-  },
-  // Entre les deux arrondis du bas de la note
+  // Les intercalaires glissent sous le bord de la note (le haut est caché),
+  // entre les deux arrondis du bas, à parts égales
   tabs: {
-    paddingHorizontal: spacing.lg,
-    gap: 3,
+    flexDirection: 'row',
     alignItems: 'flex-start',
+    gap: 3,
+    marginTop: -TAB_TUCK,
+    paddingHorizontal: spacing.lg,
   },
   tab: {
+    flex: 1,
     height: TAB_TUCK + 30,
-    paddingTop: TAB_TUCK,
-    paddingHorizontal: spacing.md,
-    alignItems: 'center',
-    justifyContent: 'center',
     borderBottomLeftRadius: borderRadius.md,
     borderBottomRightRadius: borderRadius.md,
     overflow: 'hidden',
@@ -200,13 +163,17 @@ const styles = StyleSheet.create({
   tabOn: {
     height: TAB_TUCK + 40,
   },
-  tabText: {
-    fontFamily: fonts.bodyBold,
-    fontSize: 12,
-    color: inkAlpha(0.6),
+  // L'illustration sort par le bas, coupée, fondue dans la couleur
+  tabIcon: {
+    position: 'absolute',
+    alignSelf: 'center',
+    bottom: -TAB_ICON * 0.3,
+    width: TAB_ICON,
+    height: TAB_ICON,
+    opacity: 0.4,
+    mixBlendMode: 'multiply',
   },
-  tabTextOn: {
-    fontFamily: fonts.bodyExtraBold,
-    color: colors.textPrimary,
+  tabIconOn: {
+    opacity: 0.75,
   },
 });

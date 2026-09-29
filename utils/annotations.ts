@@ -97,6 +97,16 @@ export const ANNOTATION_CATEGORIES: Record<AnnotationCategory, CategoryStyle> = 
   a_retenir: { label: 'À retenir', color: postIt.sable },
 };
 
+/** L'illustration de chaque catégorie, à l'encre aquarelle (les intercalaires de la note) */
+export const CATEGORY_ICONS: Record<AnnotationCategory, number> = {
+  coup_de_coeur: require('../assets/images/categories/coup_de_coeur.png'),
+  spicy: require('../assets/images/categories/spicy.png'),
+  larmes: require('../assets/images/categories/larmes.png'),
+  mdr: require('../assets/images/categories/mdr.png'),
+  theorie: require('../assets/images/categories/theorie.png'),
+  a_retenir: require('../assets/images/categories/a_retenir.png'),
+};
+
 /** La catégorie par défaut d'une nouvelle note */
 export const DEFAULT_CATEGORY: AnnotationCategory = 'a_retenir';
 
