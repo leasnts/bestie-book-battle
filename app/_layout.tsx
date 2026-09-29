@@ -307,7 +307,16 @@ function RootLayoutNav() {
       */}
       <Stack.Screen name="leaderboard" options={sheetScreenOptions()} />
 
-      {/* Le carnet du livre — un sheet haut d'emblée, il se parcourt longtemps */}
+      {/* Le carnet, depuis l'accueil : une page entière qui glisse depuis la droite */}
+      <Stack.Screen
+        name="carnet"
+        options={{
+          headerShown: false,
+          animation: 'slide_from_right',
+        }}
+      />
+
+      {/* Le carnet en sheet (fiche du livre, lien profond) — haut d'emblée */}
       <Stack.Screen name="notes" options={sheetScreenOptions([0.95])} />
 
       {/* Écrire une note — ouvert par le bouton post-it */}

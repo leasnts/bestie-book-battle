@@ -2254,6 +2254,28 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
+  - RNCMaskedView (0.3.2):
+    - hermes-engine
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-Core-prebuilt
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - ReactNativeDependencies
+    - Yoga
   - RNDateTimePicker (8.6.0):
     - hermes-engine
     - RCTRequired
@@ -2667,6 +2689,7 @@ DEPENDENCIES:
   - ReactCommon/turbomodule/core (from `../node_modules/react-native/ReactCommon`)
   - ReactNativeDependencies (from `../node_modules/react-native/third-party-podspecs/ReactNativeDependencies.podspec`)
   - "RNCAsyncStorage (from `../node_modules/@react-native-async-storage/async-storage`)"
+  - "RNCMaskedView (from `../node_modules/@react-native-masked-view/masked-view`)"
   - "RNDateTimePicker (from `../node_modules/@react-native-community/datetimepicker`)"
   - RNGestureHandler (from `../node_modules/react-native-gesture-handler`)
   - RNReactNativeSharedGroupPreferences (from `../node_modules/react-native-shared-group-preferences`)
@@ -2919,6 +2942,8 @@ EXTERNAL SOURCES:
     :podspec: "../node_modules/react-native/third-party-podspecs/ReactNativeDependencies.podspec"
   RNCAsyncStorage:
     :path: "../node_modules/@react-native-async-storage/async-storage"
+  RNCMaskedView:
+    :path: "../node_modules/@react-native-masked-view/masked-view"
   RNDateTimePicker:
     :path: "../node_modules/@react-native-community/datetimepicker"
   RNGestureHandler:
@@ -2977,7 +3002,7 @@ SPEC CHECKSUMS:
   EXUpdates: 096630c6f5a2da4cae1916b42e9c5df481c1a3b8
   EXUpdatesInterface: d48f288b92900bd95a27c6cf92a7b9aff826d49a
   FBLazyVector: 32e9ed0301d0fcbc1b2b341dd7fcbf291f51eb83
-  hermes-engine: 74c6f330d1332796c8c937bec5c24c0e4331f420
+  hermes-engine: a6aaf0dfd0cfe78a6e2e5d3c7e81eeee501c67a2
   libavif: 5f8e715bea24debec477006f21ef9e95432e254d
   libdav1d: 23581a4d8ec811ff171ed5e2e05cd27bad64c39f
   libwebp: 02b23773aedb6ff1fd38cec7a77b81414c6842a8
@@ -2990,7 +3015,7 @@ SPEC CHECKSUMS:
   React: f4edc7518ccb0b54a6f580d89dd91471844b4990
   React-callinvoker: 79ef4e3f1c021571f6d2dafbe45ca432b2f3a146
   React-Core: c19ad4660fd48bc8abc060d979f8ee37f1fc4a5a
-  React-Core-prebuilt: a6155420f8c5902255145292c209c3d96fc0b518
+  React-Core-prebuilt: 528d4f656e3ed183845271b3251ea281ebd4598e
   React-CoreModules: f94ec3ee2bac588d033ad15a2377af746284f8c8
   React-cxxreact: de66364f2d5fb77d3da3cfa927b2fd960892c711
   React-debug: 4f6739c820d7da9c20f48caa985573b6a847e5f5
@@ -3054,8 +3079,9 @@ SPEC CHECKSUMS:
   ReactAppDependencyProvider: d69159b417e8c9d82b8fe4d0a27def4c3e8f767f
   ReactCodegen: e67cb698a2107da1da9efa55174861d724666a3e
   ReactCommon: 8868269b67561136a7970be188b40738135af077
-  ReactNativeDependencies: 4616ff5befe9c66265a32654fbc5af2021597337
+  ReactNativeDependencies: 60797d9176abe88ba7df3c743e950d29826571f4
   RNCAsyncStorage: 3a4f5e2777dae1688b781a487923a08569e27fe4
+  RNCMaskedView: d2578d41c59b936db122b2798ba37e4722d21035
   RNDateTimePicker: 9c0a849bbe1c256f0854fea255734b715f5ea876
   RNGestureHandler: 5494787ce29288a8941fa825663f2b1fa0a5aaf1
   RNReactNativeSharedGroupPreferences: d4869af3c7757405b6b5ac633d0ef5f9886a9be7

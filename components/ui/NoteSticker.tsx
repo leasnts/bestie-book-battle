@@ -28,28 +28,55 @@ interface NoteStickerProps {
   height?: number;
   /** Un identifiant, pour des dégradés propres à chaque autocollant */
   id: string;
+  /**
+   * Plafond du côté qui règle l'arrondi, le coin et la couture. Une grande
+   * carte (une note du carnet) garde ainsi les détails d'un autocollant moyen
+   * au lieu d'un arrondi démesuré.
+   */
+  maxBase?: number;
+  /**
+   * Le coin qui se décolle. En haut à gauche par défaut (en pile d'autocollants,
+   * c'est lui qui reste visible) ; en bas à droite pour une note du carnet, où
+   * le haut porte l'autrice et la page. `none` : à plat, sans coin décollé
+   * (la pile des nouvelles, où c'est le doigt qui décolle la note).
+   */
+  corner?: 'top-left' | 'bottom-right' | 'none';
 }
 
-export default function NoteSticker({ color, size = 26, width, height, id }: NoteStickerProps) {
+export default function NoteSticker({
+  color,
+  size = 26,
+  width,
+  height,
+  id,
+  maxBase = Infinity,
+  corner = 'top-left',
+}: NoteStickerProps) {
   const w = width ?? size;
   const h = height ?? size;
   // Arrondi, coin décollé et couture suivent le petit côté : une étiquette
   // allongée garde les proportions d'un autocollant carré
-  const base = Math.min(w, h);
+  const base = Math.min(w, h, maxBase);
   const r = base * 0.26;
   /** Le coin décollé */
   const c = base * 0.34;
-  const inset = base * 0.12;
+  // La couture, près du bord (retour de Lea : plus près que les 12 % d'origine)
+  const inset = base * 0.07;
 
   // Carré arrondi, le coin en haut à droite coupé en diagonale
   // Les deux bouts de la coupe sont adoucis, comme le reste de l'autocollant
   const k = base * 0.05;
-  const shape = `M ${r} 0 H ${w - c - k} Q ${w - c} 0 ${w - c + k * 0.7} ${k * 0.7} L ${w - k * 0.7} ${c - k * 0.7} Q ${w} ${c} ${w} ${c + k} V ${h - r} Q ${w} ${h} ${w - r} ${h} H ${r} Q 0 ${h} 0 ${h - r} V ${r} Q 0 0 ${r} 0 Z`;
+  const cut = `M ${r} 0 H ${w - c - k} Q ${w - c} 0 ${w - c + k * 0.7} ${k * 0.7} L ${w - k * 0.7} ${c - k * 0.7} Q ${w} ${c} ${w} ${c + k} V ${h - r} Q ${w} ${h} ${w - r} ${h} H ${r} Q 0 ${h} 0 ${h - r} V ${r} Q 0 0 ${r} 0 Z`;
   // La couture, un peu en retrait, qui suit la même forme
   const i = inset;
   const ri = r - inset * 0.6;
   const ci = c - inset * 0.4;
-  const stitch = `M ${i + ri} ${i} H ${w - i - ci} L ${w - i} ${i + ci} V ${h - i - ri} Q ${w - i} ${h - i} ${w - i - ri} ${h - i} H ${i + ri} Q ${i} ${h - i} ${i} ${h - i - ri} V ${i + ri} Q ${i} ${i} ${i + ri} ${i} Z`;
+  const cutStitch = `M ${i + ri} ${i} H ${w - i - ci} L ${w - i} ${i + ci} V ${h - i - ri} Q ${w - i} ${h - i} ${w - i - ri} ${h - i} H ${i + ri} Q ${i} ${h - i} ${i} ${h - i - ri} V ${i + ri} Q ${i} ${i} ${i + ri} ${i} Z`;
+  // À plat (`none`) : le carré arrondi entier, aucun coin coupé
+  const whole = `M ${r} 0 H ${w - r} Q ${w} 0 ${w} ${r} V ${h - r} Q ${w} ${h} ${w - r} ${h} H ${r} Q 0 ${h} 0 ${h - r} V ${r} Q 0 0 ${r} 0 Z`;
+  const wholeStitch = `M ${i + ri} ${i} H ${w - i - ri} Q ${w - i} ${i} ${w - i} ${i + ri} V ${h - i - ri} Q ${w - i} ${h - i} ${w - i - ri} ${h - i} H ${i + ri} Q ${i} ${h - i} ${i} ${h - i - ri} V ${i + ri} Q ${i} ${i} ${i + ri} ${i} Z`;
+  const shape = corner === 'none' ? whole : cut;
+  const stitch = corner === 'none' ? wholeStitch : cutStitch;
   // Le rabat : le coin replié par-dessus, symétrique par rapport à la coupe
   // La pliure s'incurve un peu (le coin se roule), et la pointe repliée garde
   // l'arrondi du coin d'origine
@@ -66,7 +93,14 @@ export default function NoteSticker({ color, size = 26, width, height, id }: Not
   return (
     <Svg width={w} height={h}>
       <Defs>
-        <LinearGradient id={`shade-${id}`} x1="0" y1="0" x2="0" y2="1">
+        {/* Retourné de haut en bas, le voile l'est aussi : on l'inverse pour garder le clair en haut */}
+        <LinearGradient
+          id={`shade-${id}`}
+          x1="0"
+          y1={corner === 'bottom-right' ? '1' : '0'}
+          x2="0"
+          y2={corner === 'bottom-right' ? '0' : '1'}
+        >
           <Stop offset="0" stopColor="#fff" stopOpacity={0.25} />
           <Stop offset="1" stopColor="#000" stopOpacity={0.08} />
         </LinearGradient>
@@ -75,8 +109,12 @@ export default function NoteSticker({ color, size = 26, width, height, id }: Not
           <Stop offset="1" stopColor={stickerMaterial.flap[1]} />
         </LinearGradient>
       </Defs>
-      {/* Dessiné coin à droite, puis retourné : le coin décollé passe à gauche */}
-      <G transform={`translate(${w} 0) scale(-1 1)`}>
+      {/* Dessiné coin en haut à droite, puis retourné : à gauche, ou en bas */}
+      <G
+        transform={
+          corner === 'bottom-right' ? `translate(0 ${h}) scale(1 -1)` : `translate(${w} 0) scale(-1 1)`
+        }
+      >
         <Path d={shape} fill={fill} />
         {/* Jamais d'aplat : un voile clair en haut, plus sombre en bas */}
         <Path d={shape} fill={`url(#shade-${id})`} />
@@ -87,8 +125,12 @@ export default function NoteSticker({ color, size = 26, width, height, id }: Not
           strokeWidth={0.9}
           strokeDasharray="2 1.6"
         />
-        <Path d={flapShadow} fill={shadowAlpha(0.18)} />
-        <Path d={flap} fill={`url(#flap-${id})`} />
+        {corner !== 'none' && (
+          <>
+            <Path d={flapShadow} fill={shadowAlpha(0.18)} />
+            <Path d={flap} fill={`url(#flap-${id})`} />
+          </>
+        )}
       </G>
     </Svg>
   );

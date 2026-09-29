@@ -490,7 +490,7 @@ export default function HomeScreen() {
                 revealed={revealedNotes}
                 myTotalPages={totalPages}
                 animateReveal={animateReveal}
-                onPress={() => router.push('/notes')}
+                onPress={() => router.push('/carnet')}
               />
             }
           />

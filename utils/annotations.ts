@@ -157,3 +157,16 @@ const MIN_BAR = 6;
 function clamp(value: number) {
   return Math.max(0, Math.min(1, value));
 }
+
+/**
+ * Une note qui n'est qu'un emoji (ni texte, ni vocal, ni citation) : elle se
+ * montre en autocollant rond. Une note, c'est un emoji seul OU un texte.
+ */
+export function isEmojiOnly(note: {
+  body: string | null;
+  emoji: string | null;
+  audio_path?: string | null;
+  quote?: string | null;
+}): boolean {
+  return !note.body && !!note.emoji && !note.audio_path && !note.quote;
+}
