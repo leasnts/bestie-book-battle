@@ -56,7 +56,7 @@
       <true/>
     </dict>
     <key>NSCameraUsageDescription</key>
-    <string>Allow $(PRODUCT_NAME) to access your camera</string>
+    <string>bestiebookbattle a besoin d'accéder à ton appareil photo pour photographier les couvertures de livres et les passages que tu veux citer.</string>
     <key>NSMicrophoneUsageDescription</key>
     <string>bestiebookbattle a besoin du micro pour enregistrer tes notes vocales.</string>
     <key>NSPhotoLibraryUsageDescription</key>

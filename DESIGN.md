@@ -148,6 +148,15 @@ système est sobre à l'arrêt et taquin en action.
 Anti-référence contraignante : **Goodreads et Babelio**. Pas de fiche produit,
 pas de note sur 5, pas de densité de catalogue.
 
+**Lexique des notes** (Lea, 2026-09-29), le même partout, à l'écran comme pour
+VoiceOver :
+- le geste, c'est **annoter** un livre, une page (« Annoter la page ») ;
+- ce qu'on ajoute, c'est une **note** : une pensée, un avis ou un élément à
+  retenir, écrite, dite (note vocale), citée ou en emoji ;
+- les notes vivent dans le **carnet de notes**. On y **ajoute** une note.
+Jamais « post-it », « noter », « coller » ni « p. 157 » seul là où il faut dire
+ce que fait le bouton.
+
 Plateforme : **iOS uniquement**. La HIG gouverne la structure, la navigation et
 l'interaction ; la marque s'exprime dans ce que la plateforme laisse ouvert —
 typographie, mouvement, illustration.
@@ -467,22 +476,49 @@ intermédiaire s'appelle un **cap** partout dans l'UI.
 
 Le cadre **Ma page** (`PageSection`) porte le geste principal : le sélecteur qui
 défile (pas de − / +), ma page en pages de mon édition, ma série en **jours**, et
-une **rangée du bas à hauteur fixe** — trois places qui ne bougent jamais,
-seules les icônes changent : au repos la porte du carnet et le post-it, pendant
-un défilement ↺ annuler, « +14 », ✓ enregistrer. Les boutons ronds font 42 pt,
-encre pleine pour l'action principale (post-it au repos, ✓ pendant un
-défilement), `inkAlpha(0.07)` pour les autres.
+une **rangée du bas à hauteur fixe** (52 pt) :
+- au repos, la **barre d'actions rapides** (`QuickNoteBar`, #98) : une gélule
+  « Annoter la page… » (la même forme que l'enregistreur), puis 🎙, 📷 et ☺ en
+  `GlassButton` de 44 pt. Tout annote ma page **enregistrée**, sans quitter
+  l'accueil. 🎙 : la barre **devient** l'enregistreur, qui passe en lie de vin
+  dès le toucher ; ■, puis ✓ (`RoundButton`) pour ajouter la note. ☺ : la liste à
+  la mode (`TRENDING_EMOJIS`) sort au-dessus de la barre et défile ; « + » ouvre
+  tous les emojis (/emoji-note, `EmojiGrid`, le même sélecteur que les réactions).
+  Annoter (`NoteComposer`, #100) : la feuille monte au-dessus du clavier,
+  l'accueil s'assombrit. ✕ et ↗ en `GlassButton` 36 (comme l'en-tête des
+  sheets), ✓ en `RoundButton`. La note s'écrit **dans l'autocollant**
+  (`NoteDraft`, le même que l'éditeur) : catégorie, texte, vocal dedans ; la
+  couleur se choisit dessous (`CategoryPicker`, en rangée). Un toucher sur ✓ ou
+  ↗ agit clavier ouvert. ✕ ou le fond gardent le brouillon dans la gélule.
+  Citer (📷, #101) : photo de la page, texte lu **sur le téléphone** (module
+  maison `modules/page-text`, Vision d'Apple, en français). `QuotePicker` : on
+  touche les lignes, surlignées en jaune stabilo (`mixBlendMode: multiply`) ;
+  « Citer » ouvre la feuille avec le passage **modifiable** en tête de la note ;
+- pendant un défilement, ↺ annuler, « +14 », ✓ enregistrer (encre pleine). La
+  barre s'efface : jamais de doute sur la page notée.
 
-Le **post-it** note toujours la page enregistrée. La **porte du carnet**
-(`NotesDoor`, → /notes) est une pastille `inkAlpha(0.07)` de 42 pt de haut,
-toujours touchable, qui montre ce qui compte :
-- rien de nouveau : icône `notebook` + `23 notes` ;
-- des notes plus loin : avatars **grisés + cadenas** + `3 plus loin` ;
-- juste après « Enregistrer » : les notes que je viens de dépasser **deviennent
-  des post-it** (avatar + page de mon édition, `≈ 158` si l'édition diffère),
-  couleur de leur catégorie, en éventail, trois au maximum puis un nombre, et
-  `🔒 1` pour ce qui reste. Ils arrivent pendant que la feuille « +14 » tombe
-  et se rangent dès que j'ouvre le carnet (ou que je les ai lus).
+**Un seul enregistreur vocal** (`VoiceRecorder`, Lea, 2026-09-29) : le même dans
+la barre, dans la note qu'on écrit (`NoteDraft`, éditeur et feuille rapide).
+Une gélule `inkAlpha(0.06)`, le bouton rond à gauche (🎙, ■, ↺), le temps ferré
+à droite en gras. Au toucher elle passe **aussitôt** en dégradé lie de vin ;
+barres de 4 pt arrondies qui glissent vers leur niveau (140 ms), en crème.
+Enregistré : ▶ réécouter (`VoicePlayer`) et 🗑.
+
+**Une note s'écrit dans l'autocollant** (`NoteDraft`, Lea, 2026-09-29) : jamais
+de feuille de cahier à part. Mêmes boutons partout : `GlassButton` (verre),
+`RoundButton` (plein), jamais un rond redessiné.
+
+**Le bento** (Lea, 2026-09-29, #97) : sous « Ma page », deux carrés côte à côte,
+12 pt d'écart. À gauche le **classement** (`LeaderboardSection square`) : lignes
+de 27 pt posées en bas du carré, avatar 22, score en Fraunces 16. À droite le
+**carnet** (`NoteTile`) : **uniquement la note à la une**, un `NoteSticker` de la
+taille du carré, sans cadre en verre derrière, coin corné en bas à droite (il
+invite à tourner la page). En haut la catégorie (toujours écrite) et la page ;
+au milieu le texte, la citation en Fraunces italique, l'emoji seul en grand ou
+le vocal (onde + durée) ; en bas l'autrice et « 1 / 3 » en lie de vin s'il y a
+des nouvelles. À la une : la première des nouvelles, sinon la plus récente.
+Sans note lisible : papier nu, un cadenas et le nombre de notes plus loin. Tout
+le carré ouvre `/carnet`. L'ancienne porte du carnet (`NotesDoor`) a disparu.
 
 **Aucun défilement** (Lea, 2026-09-24) : l'accueil tient sur un seul écran, sur
 tous les iPhone. Plus de ScrollView : le livre, « Ma page » et le classement sont

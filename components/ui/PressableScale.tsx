@@ -63,7 +63,8 @@ export default function PressableScale({
   const animatedStyle = useAnimatedStyle(() => {
     // progress va de 0 à 1, on interpole manuellement pour rester lisible
     const scale = 1 + (pressedScale - 1) * progress.value;
-    const opacity = 1 + (pressedOpacity - 1) * progress.value;
+    // Désactivé : grisé ici, sinon l'opacité animée écraserait celle du style
+    const opacity = (1 + (pressedOpacity - 1) * progress.value) * (disabled ? 0.5 : 1);
     return { transform: [{ scale }], opacity };
   });
 

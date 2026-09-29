@@ -8,26 +8,23 @@
  *   (jamais « soirs » : on ne suppose pas quand les gens lisent).
  * - Le sélecteur qui défile est gardé (pas de − / +), resserré pour tenir dans
  *   le cadre. Ma page est en **pages de mon édition**, d'où le « / 624 ».
- * - La rangée du bas a une **hauteur fixe** et trois places fixes. Seules les
- *   icônes changent, jamais l'endroit où l'on appuie (DESIGN.md › Boutons-icônes) :
- *
- *   |        | gauche                  | centre   | droite                  |
- *   |--------|-------------------------|----------|-------------------------|
- *   | repos  | porte du carnet         | —        | post-it : noter ma page |
- *   | défilé | ↺ annuler               | « +14 »  | ✓ enregistrer           |
- *
- * Le post-it note toujours la page **enregistrée** : pendant un défilement il
- * laisse la place au ✓, il n'y a jamais de doute sur la page notée. La porte du
- * carnet (`NotesDoor`) montre ce qui compte à ce moment-là.
+ * - La rangée du bas a une **hauteur fixe** :
+ *   - au repos, la barre d'actions rapides (`QuickNoteBar`) : écrire, vocal,
+ *     photo, emoji, sur ma page **enregistrée** ;
+ *   - pendant un défilement, ↺ annuler, « +14 », ✓ enregistrer.
+ *   La barre s'efface pendant le défilement : il n'y a jamais de doute sur la
+ *   page notée.
  */
 
-import { CheckIcon, FlameIcon, RotateCcwIcon, StickyNoteIcon } from 'lucide-react-native';
+import { CheckIcon, FlameIcon, RotateCcwIcon } from 'lucide-react-native';
 import React, { useState } from 'react';
 import { LayoutChangeEvent, StyleSheet, Text, View } from 'react-native';
-import { colors, fonts, inkAlpha, shadowAlpha, spacing } from '../../utils/constants';
+import { colors, fonts, spacing } from '../../utils/constants';
 import GlassSection from './GlassSection';
 import PageScrollPicker from './PageScrollPicker';
 import PressableScale from './PressableScale';
+import RoundButton from './RoundButton';
+import { QUICK_BAR_HEIGHT } from './QuickNoteBar';
 
 interface PageSectionProps {
   /** Page affichée par le sélecteur */
@@ -43,47 +40,12 @@ interface PageSectionProps {
   onUndo: () => void;
   /** « Ma page » → mon journal */
   onJournalPress: () => void;
-  /** Noter ma page enregistrée. Sans elle, la place reste vide. */
-  onNotePress?: () => void;
-  /** La porte du carnet, à gauche au repos. Sans elle, la place reste vide. */
-  notesDoor?: React.ReactNode;
+  /** La barre d'actions rapides, au repos */
+  quickBar?: React.ReactNode;
   /** Petit écran : marges resserrées, pour que l'accueil tienne sans défiler */
   compact?: boolean;
   /** Taille du chiffre, choisie par l'accueil selon la hauteur de l'écran */
   pickerFontSize?: number;
-}
-
-/** Bouton rond de la rangée du bas : même taille et même place, seule l'icône change */
-function IconButton({
-  icon: Icon,
-  variant,
-  label,
-  hint,
-  onPress,
-}: {
-  icon: typeof CheckIcon;
-  variant: 'dark' | 'ghost';
-  label: string;
-  hint?: string;
-  onPress: () => void;
-}) {
-  return (
-    <PressableScale
-      style={[styles.iconButton, variant === 'dark' ? styles.iconButtonDark : styles.iconButtonGhost]}
-      pressedScale={0.9}
-      hitSlop={6}
-      onPress={onPress}
-      accessibilityRole="button"
-      accessibilityLabel={label}
-      accessibilityHint={hint}
-    >
-      <Icon
-        size={20}
-        color={variant === 'dark' ? colors.white : colors.dark900}
-        strokeWidth={2.2}
-      />
-    </PressableScale>
-  );
 }
 
 export default function PageSection({
@@ -95,8 +57,7 @@ export default function PageSection({
   onSave,
   onUndo,
   onJournalPress,
-  onNotePress,
-  notesDoor,
+  quickBar,
   compact = false,
   pickerFontSize = PICKER_FONT_SIZE,
 }: PageSectionProps) {
@@ -155,54 +116,25 @@ export default function PageSection({
       </Text>
       </View>
 
-      <View style={styles.row}>
-        {/* Gauche : la porte du carnet est plus large qu'un rond, la place s'adapte */}
-        <View style={[styles.slot, styles.slotLeft]}>
-          {hasChanged ? (
-            <IconButton
-              icon={RotateCcwIcon}
-              variant="ghost"
-              label="Annuler"
-              hint="Revient à ma dernière page enregistrée"
-              onPress={onUndo}
-            />
-          ) : (
-            notesDoor
-          )}
+      {hasChanged ? (
+        <View style={styles.row}>
+          <RoundButton
+            icon={RotateCcwIcon}
+            variant="ghost"
+            label="Annuler"
+            hint="Revient à ma dernière page enregistrée"
+            onPress={onUndo}
+          />
+          {/* Ce que je viens de lire */}
+          <Text style={styles.deltaText}>
+            {delta > 0 ? '+' : '−'}
+            {Math.abs(delta)}
+          </Text>
+          <RoundButton icon={CheckIcon} variant="dark" label="Enregistrer ma page" onPress={onSave} />
         </View>
-
-        {/* Centre : ce que je viens de lire */}
-        <View style={styles.delta}>
-          {hasChanged && (
-            <Text style={styles.deltaText}>
-              {delta > 0 ? '+' : '−'}
-              {Math.abs(delta)}
-            </Text>
-          )}
-        </View>
-
-        {/* Droite */}
-        <View style={styles.slot}>
-          {hasChanged ? (
-            <IconButton
-              icon={CheckIcon}
-              variant="dark"
-              label="Enregistrer ma page"
-              onPress={onSave}
-            />
-          ) : (
-            onNotePress && (
-              <IconButton
-                icon={StickyNoteIcon}
-                variant="dark"
-                label="Noter ma page"
-                hint={`Écrit une note à la page ${savedPage}`}
-                onPress={onNotePress}
-              />
-            )
-          )}
-        </View>
-      </View>
+      ) : (
+        <View style={styles.bar}>{quickBar}</View>
+      )}
     </GlassSection>
   );
 }
@@ -214,7 +146,6 @@ export default function PageSection({
 const PICKER_ITEM_WIDTH = 120;
 /** Le chiffre et sa zone reprennent la maquette (68 et 76 px à l'échelle 0,865) */
 const PICKER_FONT_SIZE = 68;
-const BUTTON_SIZE = 42;
 
 const styles = StyleSheet.create({
   // minHeight : le titre grandit avec le réglage système au lieu d'être coupé
@@ -267,50 +198,22 @@ const styles = StyleSheet.create({
     fontVariant: ['tabular-nums'],
   },
 
-  // Hauteur fixe : les boutons apparaissent sans rien déplacer
+  // Hauteur fixe, celle de la barre : les boutons apparaissent sans rien déplacer
   row: {
-    height: BUTTON_SIZE,
+    height: QUICK_BAR_HEIGHT,
     marginTop: spacing.sm,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  slot: {
-    width: BUTTON_SIZE,
-    height: BUTTON_SIZE,
-  },
-  slotLeft: {
-    width: undefined,
-    minWidth: BUTTON_SIZE,
-    flexShrink: 1,
-    alignItems: 'flex-start',
-  },
-  delta: {
-    flex: 1,
-    alignItems: 'center',
+  bar: {
+    height: QUICK_BAR_HEIGHT,
+    marginTop: spacing.sm,
   },
   deltaText: {
     fontFamily: fonts.bodyExtraBold,
     fontSize: 17,
     color: colors.textSecondary,
     fontVariant: ['tabular-nums'],
-  },
-
-  iconButton: {
-    width: BUTTON_SIZE,
-    height: BUTTON_SIZE,
-    borderRadius: BUTTON_SIZE / 2,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  iconButtonDark: {
-    backgroundColor: colors.dark900,
-    shadowColor: shadowAlpha(0.25),
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 1,
-    shadowRadius: 6,
-  },
-  iconButtonGhost: {
-    backgroundColor: inkAlpha(0.07),
   },
 });

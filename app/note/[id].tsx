@@ -27,14 +27,13 @@ import {
   Pressable,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from 'react-native';
+import CategoryPicker from '../../components/ui/CategoryPicker';
+import NoteDraft from '../../components/ui/NoteDraft';
 import PressableScale from '../../components/ui/PressableScale';
 import SheetPage, { SheetFooter } from '../../components/ui/SheetPage';
 import Button3D from '../../components/Button3D';
-import VoicePlayer from '../../components/ui/VoicePlayer';
-import VoiceRecorder from '../../components/ui/VoiceRecorder';
 import { useAnnotationStore, type VoiceClip } from '../../stores/annotationStore';
 import { useAuthStore } from '../../stores/authStore';
 import { useProgressStore } from '../../stores/progressStore';
@@ -42,11 +41,11 @@ import { useProjectStore } from '../../stores/projectStore';
 import type { AnnotationCategory, AnnotationVisibility } from '../../types/supabase';
 import {
   ANNOTATION_CATEGORIES,
-  CATEGORY_ORDER,
   DEFAULT_CATEGORY,
   positionFromPage,
 } from '../../utils/annotations';
 import { borderRadius, colors, fonts, inkAlpha, spacing } from '../../utils/constants';
+import { TRENDING_EMOJIS } from '../../utils/emojis';
 
 /** Le vocal affiché : déjà envoyé (`path`) ou tout juste enregistré (`uri`) */
 interface NoteVoice {
@@ -56,8 +55,8 @@ interface NoteVoice {
   levels?: number[] | null;
 }
 
-/** Les emojis qui reviennent le plus en club de lecture. Le clavier fait le reste. */
-const QUICK_EMOJIS = ['😭', '😂', '🔥', '😱', '🥺', '💀', '📌', '❤️'];
+/** La courte liste à la mode, la même partout (utils/emojis). Le clavier fait le reste. */
+const QUICK_EMOJIS = TRENDING_EMOJIS.slice(0, 8);
 
 export default function NoteFormRoute() {
   const { id, from } = useLocalSearchParams<{ id: string; from?: string }>();
@@ -218,47 +217,25 @@ export default function NoteFormRoute() {
         />
       </View>
 
-      {/* ─── Le post-it ─── */}
-      <View style={[styles.note, { backgroundColor: style.color }]}>
-        <Text style={styles.noteCategory}>{style.label}</Text>
-        {emoji && <Text style={styles.noteEmoji}>{emoji}</Text>}
-        <TextInput
-          style={styles.noteInput}
-          value={body}
-          onChangeText={(next) => {
-            // On commence à écrire après un emoji seul : il passe dans le texte
-            if (emoji && !body && next) {
-              setBody(`${emoji} ${next}`);
-              setEmoji(null);
-              return;
-            }
-            setBody(next);
-          }}
-          placeholder="…"
-          placeholderTextColor={inkAlpha(0.35)}
-          multiline
-          maxLength={2000}
-          accessibilityLabel="Texte de la note"
-        />
-        {voice && !recording && (
-          <View style={styles.noteVoice}>
-            <VoicePlayer
-              // Un nouveau vocal remplace le lecteur : il repart du début
-              key={voice.uri ?? voice.path ?? 'voice'}
-              uri={voice.uri}
-              path={voice.path}
-              seconds={voice.seconds}
-              levels={voice.levels}
-            />
-          </View>
-        )}
-      </View>
-
-      {/* ─── Vocal ─── */}
-      <Text style={styles.rowTitle}>Vocal</Text>
-      <VoiceRecorder
-        clip={voice}
-        onChange={handleVoiceChange}
+      {/* ─── La note : l'autocollant, avec le texte et le vocal dedans ─── */}
+      <NoteDraft
+        id={`draft-${existing?.id ?? 'new'}`}
+        color={style.color}
+        label={style.label}
+        emoji={emoji}
+        body={body}
+        onBodyChange={(next) => {
+          // On commence à écrire après un emoji seul : il passe dans le texte
+          if (emoji && !body && next) {
+            setBody(`${emoji} ${next}`);
+            setEmoji(null);
+            return;
+          }
+          setBody(next);
+        }}
+        placeholder="Une pensée, un avis, un élément à retenir…"
+        voice={voice}
+        onVoiceChange={handleVoiceChange}
         onRecordingChange={setRecording}
       />
 
@@ -287,31 +264,7 @@ export default function NoteFormRoute() {
 
       {/* ─── Catégorie ─── */}
       <Text style={styles.rowTitle}>Catégorie</Text>
-      <View style={styles.categories}>
-        {CATEGORY_ORDER.map((key) => {
-          const option = ANNOTATION_CATEGORIES[key];
-          const selected = key === category;
-          return (
-            <PressableScale
-              key={key}
-              style={[
-                styles.category,
-                { backgroundColor: option.color },
-                selected && styles.categoryOn,
-              ]}
-              pressedScale={0.96}
-              onPress={() => setCategory(key)}
-              accessibilityRole="button"
-              accessibilityLabel={option.label}
-              accessibilityState={{ selected }}
-            >
-              <Text style={styles.categoryText} numberOfLines={1}>
-                {option.label}
-              </Text>
-            </PressableScale>
-          );
-        })}
-      </View>
+      <CategoryPicker value={category} onChange={setCategory} />
 
       {/* ─── Visible par ─── */}
       <Text style={styles.rowTitle}>Visible par</Text>
@@ -421,33 +374,6 @@ const styles = StyleSheet.create({
     color: colors.textPlaceholder,
   },
 
-  note: {
-    borderRadius: borderRadius.lg,
-    padding: spacing.lg,
-    minHeight: 140,
-  },
-  noteCategory: {
-    fontFamily: fonts.bodyExtraBold,
-    fontSize: 11,
-    letterSpacing: 0.6,
-    textTransform: 'uppercase',
-    color: inkAlpha(0.6),
-  },
-  noteEmoji: {
-    fontSize: 30,
-    marginTop: spacing.sm,
-  },
-  noteVoice: {
-    marginTop: spacing.sm,
-  },
-  noteInput: {
-    marginTop: spacing.sm,
-    fontFamily: fonts.body,
-    fontSize: 16,
-    lineHeight: 22,
-    color: colors.textPrimary,
-    minHeight: 60,
-  },
 
   rowTitle: {
     fontFamily: fonts.bodyExtraBold,
@@ -480,31 +406,6 @@ const styles = StyleSheet.create({
   },
   emojiText: {
     fontSize: 22,
-  },
-
-  categories: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.sm,
-  },
-  category: {
-    flexGrow: 1,
-    flexBasis: '30%',
-    minHeight: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: spacing.sm,
-    borderRadius: borderRadius.md,
-    borderWidth: 2,
-    borderColor: 'transparent',
-  },
-  categoryOn: {
-    borderColor: colors.accent,
-  },
-  categoryText: {
-    fontFamily: fonts.bodyExtraBold,
-    fontSize: 13,
-    color: colors.textPrimary,
   },
 
   segment: {

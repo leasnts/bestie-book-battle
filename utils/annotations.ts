@@ -35,8 +35,13 @@ export function positionFromPage(page: number, editionTotalPages: number): numbe
  * tôt, pour la même raison que la marge.
  */
 export function pageFromPosition(position: number, myTotalPages: number): number {
-  return Math.ceil(clamp(position) * myTotalPages);
+  // La position est stockée à 5 décimales : 15 / 62 devient 0,24194, soit
+  // 15,0003 pages. Sans cette marge, l'arrondi au supérieur donnait p. 16.
+  return Math.max(0, Math.ceil(clamp(position) * myTotalPages - POSITION_SLACK));
 }
+
+/** L'erreur d'arrondi de la position (5 décimales), même sur un livre de 2 000 pages */
+const POSITION_SLACK = 0.02;
 
 /**
  * Est-ce que je lis la même édition que l'autrice ?

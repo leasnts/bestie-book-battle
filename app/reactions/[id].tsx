@@ -10,13 +10,12 @@
 
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
-import PressableScale from '../../components/ui/PressableScale';
+import { StyleSheet } from 'react-native';
+import EmojiGrid from '../../components/ui/EmojiGrid';
 import SheetPage from '../../components/ui/SheetPage';
 import { useAnnotationStore } from '../../stores/annotationStore';
 import { useAuthStore } from '../../stores/authStore';
-import { borderRadius, colors, fonts, spacing } from '../../utils/constants';
-import { EMOJI_SECTIONS } from '../../utils/emojis';
+import { spacing } from '../../utils/constants';
 
 export default function ReactionsRoute() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -42,67 +41,13 @@ export default function ReactionsRoute() {
 
   return (
     <SheetPage title="Réagir" fit={false} contentContainerStyle={styles.content}>
-      {EMOJI_SECTIONS.map((section) => (
-        <View key={section.title}>
-          <Text style={styles.title}>{section.title}</Text>
-          <View style={styles.grid}>
-            {section.emojis.map((emoji) => {
-              const selected = mine.has(emoji);
-              return (
-                <PressableScale
-                  key={emoji}
-                  style={[styles.cell, selected && styles.cellOn]}
-                  pressedScale={0.88}
-                  onPress={() => react(emoji)}
-                  accessibilityRole="button"
-                  accessibilityLabel={emoji}
-                  accessibilityState={{ selected }}
-                  accessibilityHint={selected ? 'Retire ma réaction' : undefined}
-                >
-                  <Text style={styles.emoji}>{emoji}</Text>
-                </PressableScale>
-              );
-            })}
-          </View>
-        </View>
-      ))}
+      <EmojiGrid onPick={react} selected={mine} selectedHint="Retire ma réaction" />
     </SheetPage>
   );
 }
 
-const CELL = 46;
-
 const styles = StyleSheet.create({
   content: {
     paddingBottom: spacing['4xl'],
-  },
-  title: {
-    fontFamily: fonts.bodyExtraBold,
-    fontSize: 12,
-    letterSpacing: 0.8,
-    textTransform: 'uppercase',
-    color: colors.textTertiary,
-    marginTop: spacing.md,
-    marginBottom: spacing.xs,
-  },
-  grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-  },
-  cell: {
-    width: CELL,
-    height: CELL,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: borderRadius.md,
-    borderWidth: 2,
-    borderColor: 'transparent',
-  },
-  cellOn: {
-    borderColor: colors.accent,
-    backgroundColor: colors.bgLight,
-  },
-  emoji: {
-    fontSize: 28,
   },
 });

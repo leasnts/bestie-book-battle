@@ -80,13 +80,22 @@ export default function GlassMaterial({
 
   return (
     <>
+      {/* Le verre n'est qu'un fond : il ne prend aucun toucher. Sinon la vue native
+          d'iOS avalait le premier toucher d'un bouton en verre (clavier ouvert, il
+          fallait toucher deux fois ✕ ou ↗). */}
       {native ? (
-        <GlassView style={[styles.fill, shape]} glassEffectStyle="regular" colorScheme="light" />
+        <GlassView
+          style={[styles.fill, shape]}
+          glassEffectStyle="regular"
+          colorScheme="light"
+          pointerEvents="none"
+        />
       ) : (
         <BlurView
           style={[styles.fill, shape]}
           intensity={frosted ? FROSTED_INTENSITY : 40}
           tint="light"
+          pointerEvents="none"
         />
       )}
       {veilOpacity > 0 && (

@@ -53,6 +53,8 @@ interface LeaderboardSectionProps {
   onPress?: () => void;
   /** Petit écran : le 1er et moi seulement (cf. selectVisibleRows) */
   compact?: boolean;
+  /** Un carré du bento de l'accueil, à côté du carnet : lignes resserrées */
+  square?: boolean;
 }
 
 const DEFAULT_AVATAR = require('../../assets/images/profile_picture_default.png');
@@ -108,7 +110,15 @@ function useRollingCounter(target: number, duration = 800, enabled = true): numb
 
 // ─── Une ligne ────────────────────────────────────────────────────
 /** `[rang] [avatar] [prénom] … [score %]`, sur quatre colonnes fixes */
-function Row({ participant, animate }: { participant: RankedParticipant; animate: boolean }) {
+function Row({
+  participant,
+  animate,
+  square,
+}: {
+  participant: RankedParticipant;
+  animate: boolean;
+  square: boolean;
+}) {
   const score = formatScore(participant);
   const displayScore = useRollingCounter(score, 800, animate);
 
@@ -125,22 +135,25 @@ function Row({ participant, animate }: { participant: RankedParticipant; animate
             )
           : undefined
       }
-      style={[styles.row, participant.isMe && styles.rowMe]}
+      style={[styles.row, square && styles.rowSquare, participant.isMe && styles.rowMe]}
       accessible
       accessibilityLabel={`${participant.rank}, ${participant.name}, ${score} pour cent`}
     >
-      <Text style={styles.rank}>{participant.rank}</Text>
+      <Text style={[styles.rank, square && styles.rankSquare]}>{participant.rank}</Text>
       <Image
         source={resolveAvatar(participant.photoUrl)}
-        style={styles.avatar}
+        style={[styles.avatar, square && styles.avatarSquare]}
         contentFit="cover"
       />
-      <Text style={[styles.name, participant.isMe && styles.nameMe]} numberOfLines={1}>
+      <Text
+        style={[styles.name, square && styles.nameSquare, participant.isMe && styles.nameMe]}
+        numberOfLines={1}
+      >
         {participant.name}
       </Text>
-      <Text style={styles.score}>
+      <Text style={[styles.score, square && styles.scoreSquare]}>
         {displayScore}
-        <Text style={styles.scoreUnit}>%</Text>
+        <Text style={[styles.scoreUnit, square && styles.scoreUnitSquare]}>%</Text>
       </Text>
     </Animated.View>
   );
@@ -153,6 +166,7 @@ export default function LeaderboardSection({
   myUserId,
   onPress,
   compact = false,
+  square = false,
 }: LeaderboardSectionProps) {
   const reducedMotion = useReducedMotion();
   const animate = !reducedMotion;
@@ -166,6 +180,7 @@ export default function LeaderboardSection({
       onPress={onPress}
       accessibilityLabel={`Classement, ${ranked.length} membres`}
       accessibilityHint="Ouvre le classement complet"
+      style={square && styles.square}
     >
       <View style={styles.head}>
         <Text style={styles.title}>Classement</Text>
@@ -175,9 +190,9 @@ export default function LeaderboardSection({
         </View>
       </View>
 
-      <View style={styles.rows}>
+      <View style={[styles.rows, square && styles.rowsSquare]}>
         {rows.map((participant) => (
-          <Row key={participant.id} participant={participant} animate={animate} />
+          <Row key={participant.id} participant={participant} animate={animate} square={square} />
         ))}
 
         {/* Ma ligne, quand je suis hors du top 3 : le pointillé dit qu'il y a
@@ -185,7 +200,7 @@ export default function LeaderboardSection({
         {pinnedMe && (
           <>
             <View style={styles.gap} />
-            <Row participant={pinnedMe} animate={animate} />
+            <Row participant={pinnedMe} animate={animate} square={square} />
           </>
         )}
       </View>
@@ -229,6 +244,40 @@ const styles = StyleSheet.create({
 
   rows: {
     marginTop: 7,
+  },
+
+  // En carré : les lignes se posent en bas du cadre, plus serrées
+  square: {
+    aspectRatio: 1,
+  },
+  rowsSquare: {
+    flex: 1,
+    justifyContent: 'flex-end',
+  },
+  rowSquare: {
+    minHeight: 27,
+    gap: spacing.sm,
+    marginHorizontal: -6,
+    paddingHorizontal: 6,
+    borderRadius: 10,
+  },
+  rankSquare: {
+    width: 12,
+    fontSize: 13,
+  },
+  avatarSquare: {
+    width: 22,
+    height: 22,
+    borderRadius: 7,
+  },
+  nameSquare: {
+    fontSize: 14,
+  },
+  scoreSquare: {
+    fontSize: 16,
+  },
+  scoreUnitSquare: {
+    fontSize: 11,
   },
   row: {
     minHeight: ROW_HEIGHT,

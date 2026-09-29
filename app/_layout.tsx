@@ -324,6 +324,7 @@ function RootLayoutNav() {
 
       {/* Toutes les réactions d'une note — ouvert par « … » */}
       <Stack.Screen name="reactions/[id]" options={sheetScreenOptions([0.6, 0.95])} />
+      <Stack.Screen name="emoji-note" options={sheetScreenOptions([0.6, 0.95])} />
 
       {/* Journal d'une personne — posé sur le classement */}
       <Stack.Screen name="participant/[id]" options={sheetScreenOptions()} />
