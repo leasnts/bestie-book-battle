@@ -87,10 +87,11 @@ function CategoryTabs({ value, onChange }: Pick<CategoryPickerProps, 'value' | '
             accessibilityLabel={option.label}
             accessibilityState={{ selected }}
           >
-            {/* Du haut (sous la note) vers le bas : l'ombre de la note, puis la couleur */}
+            {/* Aucune ombre sous la note : le haut reprend le ton du bas de la note
+                (le voile de `NoteSticker` l’y assombrit d’environ 6 %), l'intercalaire
+                en est le prolongement */}
             <LinearGradient
-              colors={[shade(option.color, 0.8), option.color, shade(option.color)]}
-              locations={[0, 0.35, 1]}
+              colors={[shade(option.color, 0.94), shade(option.color, 0.86)]}
               style={StyleSheet.absoluteFill}
             />
             <Image
