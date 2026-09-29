@@ -43,13 +43,13 @@ interface NoteStickerProps {
   corner?: 'top-left' | 'bottom-right' | 'none';
   /**
    * Le nom de la catégorie, en très grand et presque transparent, en bas,
-   * ferré à droite sur la marge du texte de la note, coupé par le bas (et par
-   * le coin décollé, qui passe par-dessus) :
+   * ferré à gauche sur la marge du texte de la note, coupé par le bas (et par
+   * la droite s'il est long) :
    * il fait partie du fond de l'autocollant. Toujours en minuscules : en grand,
    * les capitales crieraient.
    */
   watermark?: string;
-  /** La marge de droite du texte de la note, pour que le filigrane s'y aligne */
+  /** La marge de gauche du texte de la note, pour que le filigrane s'y aligne */
   watermarkInset?: number;
 }
 
@@ -138,8 +138,7 @@ export default function NoteSticker({
       {!!watermark && (
         <G clipPath={`url(#clip-${id})`}>
           <SvgText
-            x={w - watermarkInset}
-            textAnchor="end"
+            x={watermarkInset}
             y={h + markSize * 0.02}
             fontFamily={fonts.display}
             fontSize={markSize}

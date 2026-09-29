@@ -5,11 +5,11 @@
  * on annote sans quitter l'écran. ↗ la déplie en pleine page ; ↙ la replie.
  * Tout se fait ici : écrire, dire (🎙), citer (❝), choisir le thème.
  *
- *   (✕) (p. 157)                (↗) (✓)   une seule taille sur la ligne : 42 pt
+ *   (✕) (p. 157 ⌄)              (↗) (✓)   une seule taille sur la ligne : 42 pt
  *   ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐
  *   ┆ ▌« le passage cité »          ┆   la note (`NoteDraft`) : courte au départ,
  *   ┆ Une pensée, un avis…          ┆   elle grandit avec le texte jusqu'à un
- *   ┆ (🎙) (❝)               note   ┆   plafond, puis défile
+ *   ┆ note               (🎙) (❝)   ┆   plafond, puis défile
  *   └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┘
  *     ╰📌╯╰♥╯╰🔥╯╰☁╯╰🎭╯╰💡╯            le thème, en intercalaires dessous
  *
@@ -25,7 +25,7 @@
  */
 
 import * as ImagePicker from 'expo-image-picker';
-import { CheckIcon, Maximize2Icon, Minimize2Icon, XIcon } from 'lucide-react-native';
+import { CheckIcon, ChevronDownIcon, Maximize2Icon, Minimize2Icon, XIcon } from 'lucide-react-native';
 import React, { useEffect, useRef, useState } from 'react';
 import {
   Alert,
@@ -53,9 +53,10 @@ import { isAvailable as canReadPages } from '../../modules/page-text/src';
 import type { VoiceClip } from '../../stores/annotationStore';
 import type { AnnotationCategory } from '../../types/supabase';
 import { ANNOTATION_CATEGORIES, DEFAULT_CATEGORY } from '../../utils/annotations';
-import { colors, creamAlpha, fonts, inkAlpha, motion, shadowAlpha, spacing } from '../../utils/constants';
+import { colors, creamAlpha, fonts, glassControlVeil, motion, shadowAlpha, spacing } from '../../utils/constants';
 import CategoryPicker from './CategoryPicker';
 import GlassButton from './GlassButton';
+import GlassMaterial from './GlassMaterial';
 import NoteDraft from './NoteDraft';
 import QuotePicker, { type PagePhoto } from './QuotePicker';
 import RoundButton, { ROUND_BUTTON_SIZE } from './RoundButton';
@@ -240,6 +241,8 @@ export default function NoteComposer({ visible, page, maxPage, draft, onClose, o
               accessibilityRole="button"
               accessibilityLabel={`Page ${chosenPage}, changer la page`}
             >
+              {/* Le même verre que les boutons ronds : on voit qu'elle se touche */}
+              <GlassMaterial radius={HEAD_BUTTON / 2} veil={glassControlVeil} rim />
               <Text style={styles.pageLabel}>p.</Text>
               <TextInput
                 ref={pageInput}
@@ -252,6 +255,7 @@ export default function NoteComposer({ visible, page, maxPage, draft, onClose, o
                 maxLength={5}
                 accessibilityLabel="Page de la note"
               />
+              <ChevronDownIcon size={16} color={colors.dark900} strokeWidth={2.4} />
             </Pressable>
             <View style={styles.grow} />
             <GlassButton
@@ -362,15 +366,20 @@ const styles = StyleSheet.create({
   grow: {
     flex: 1,
   },
-  // La page : une gélule qu'on touche pour la changer, de la hauteur des boutons
+  // La page : une gélule en verre qu'on touche pour la changer, de la hauteur
+  // des boutons, avec la même ombre que `GlassButton`
   page: {
     height: HEAD_BUTTON,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 3,
-    paddingHorizontal: spacing.md,
+    gap: 4,
+    paddingLeft: spacing.md + 2,
+    paddingRight: spacing.md,
     borderRadius: HEAD_BUTTON / 2,
-    backgroundColor: inkAlpha(0.06),
+    shadowColor: colors.black,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 12,
   },
   pageLabel: {
     fontFamily: fonts.display,
@@ -385,7 +394,10 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
     fontVariant: ['tabular-nums'],
   },
-  note: {},
+  // Un peu d'air entre la ligne du haut et la note
+  note: {
+    marginTop: spacing.sm,
+  },
   sticker: {
     zIndex: 1,
   },

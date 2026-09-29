@@ -55,7 +55,8 @@ interface NoteDraftProps {
   /** Le coin décollé ; `none` quand des intercalaires sortent de la note */
   corner?: 'bottom-right' | 'none';
   /**
-   * Les outils repliés (la feuille rapide) : 🎙 et ❝ en verre, en bas à gauche de la note.
+   * Les outils repliés (la feuille rapide) : 🎙 et ❝ en verre, en bas à droite de la note
+   * (le thème en filigrane est en bas à gauche).
    * L'enregistreur ne s'ouvre que si on touche 🎙. Sans eux, l'enregistreur est
    * toujours là (l'éditeur de note).
    */
@@ -151,7 +152,7 @@ const NoteDraft = forwardRef<TextInput, NoteDraftProps>(function NoteDraft(
       />
 
       {tools && !voiceOpen ? (
-        // 🎙 et ❝ en bas à gauche : rien ne s'ouvre tant qu'on ne les touche pas
+        // 🎙 et ❝ en bas à droite : rien ne s'ouvre tant qu'on ne les touche pas
         <View style={styles.tools}>
           <GlassButton
             icon={MicIcon}
@@ -240,6 +241,7 @@ const styles = StyleSheet.create({
   },
   tools: {
     flexDirection: 'row',
+    justifyContent: 'flex-end',
     gap: spacing.sm,
   },
   voiceRow: {
