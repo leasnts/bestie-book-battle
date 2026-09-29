@@ -8,6 +8,7 @@
  * - Déconnexion
  */
 
+import type { Session } from '@supabase/supabase-js';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import { supabase } from '../../supabaseConfig';
 import { User, UserInsert, UserUpdate } from '../../types/supabase';
@@ -317,39 +318,50 @@ export function subscribeToAuthChanges(
   callback: (user: User | null) => void
 ): () => void {
   const { data: { subscription } } = supabase.auth.onAuthStateChange(
-    async (event, session) => {
+    (event, session) => {
       if (event === 'INITIAL_SESSION') return;
 
-      if (session?.user) {
-        try {
-          const { data: userProfile, error } = await withTimeout(
-            supabase
-              .from('users')
-              .select('*')
-              .eq('id', session.user.id)
-              .maybeSingle(),
-            8000
-          );
-
-          if (error) {
-            console.warn('Auth change: profile fetch failed, ignoring', error.message);
-            return;
-          }
-          callback(userProfile ?? null);
-        } catch (e) {
-          // Timeout ou réseau mort — on ignore silencieusement.
-          // Le profil sera récupéré au prochain événement auth ou foreground.
-          console.warn('Auth change: profile fetch timed out, ignoring');
-        }
-      } else {
-        callback(null);
-      }
+      // JAMAIS d'appel Supabase attendu directement dans ce rappel : supabase-js
+      // l'attend en gardant son verrou d'auth, et la requête ci-dessous attend ce
+      // même verrou → blocage jusqu'au délai (session « expirée » au lancement,
+      // déconnexion). On sort du rappel d'abord (recommandation Supabase).
+      setTimeout(() => handleAuthChange(session, callback), 0);
     }
   );
 
   return () => {
     subscription.unsubscribe();
   };
+}
+
+async function handleAuthChange(
+  session: Session | null,
+  callback: (user: User | null) => void,
+) {
+  if (session?.user) {
+    try {
+      const { data: userProfile, error } = await withTimeout(
+        supabase
+          .from('users')
+          .select('*')
+          .eq('id', session.user.id)
+          .maybeSingle(),
+        8000
+      );
+
+      if (error) {
+        console.warn('Auth change: profile fetch failed, ignoring', error.message);
+        return;
+      }
+      callback(userProfile ?? null);
+    } catch (e) {
+      // Timeout ou réseau mort — on ignore silencieusement.
+      // Le profil sera récupéré au prochain événement auth ou foreground.
+      console.warn('Auth change: profile fetch timed out, ignoring');
+    }
+  } else {
+    callback(null);
+  }
 }
 
 /**

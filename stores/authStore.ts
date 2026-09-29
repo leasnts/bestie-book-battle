@@ -330,8 +330,11 @@ export const useAuthStore = create<AuthStore>()(
         // Note : loadUserChallenges est géré exclusivement par _layout.tsx
         // via useEffect [user?.id, _hasHydrated] — pas d'appel ici.
       } catch (error) {
-        console.error('Session check error:', error);
-        set({ user: null, isInitialized: true, isLoading: false });
+        // Un délai dépassé ne veut pas dire « déconnectée » : on garde la personne
+        // en cache (persistée) et le prochain événement d'auth mettra à jour.
+        // Seule une vraie absence de session (plus haut) déconnecte.
+        console.warn('Session check error, keeping cached user:', error);
+        set({ isInitialized: true, isLoading: false });
       }
     };
 
