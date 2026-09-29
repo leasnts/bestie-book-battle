@@ -54,7 +54,7 @@ import type { VoiceClip } from '../../stores/annotationStore';
 import type { AnnotationCategory } from '../../types/supabase';
 import { ANNOTATION_CATEGORIES, DEFAULT_CATEGORY } from '../../utils/annotations';
 import { colors, creamAlpha, fonts, glassControlVeil, motion, shadowAlpha, spacing } from '../../utils/constants';
-import CategoryPicker from './CategoryPicker';
+import CategoryPicker, { tabStitchNotch } from './CategoryPicker';
 import GlassButton from './GlassButton';
 import GlassMaterial from './GlassMaterial';
 import NoteDraft from './NoteDraft';
@@ -297,6 +297,8 @@ export default function NoteComposer({ visible, page, maxPage, draft, onClose, o
                 fill={full}
                 tools
                 onCite={canReadPages ? takePhoto : undefined}
+                // La couture descend dans l'intercalaire choisi : une seule pièce
+                stitchNotch={(width) => tabStitchNotch(width, category)}
                 autoFocus
               />
             </View>

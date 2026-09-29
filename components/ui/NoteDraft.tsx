@@ -67,6 +67,8 @@ interface NoteDraftProps {
    * toujours là (l'éditeur de note).
    */
   tools?: boolean;
+  /** La couture qui s'ouvre vers l'intercalaire choisi, selon la largeur de la note */
+  stitchNotch?: (width: number) => { left: number; right: number };
   /** ❝ : ajouter une citation (photo de la page) ; absent, pas de bouton */
   onCite?: () => void;
   id: string;
@@ -103,6 +105,7 @@ const NoteDraft = forwardRef<TextInput, NoteDraftProps>(function NoteDraft(
     corner = 'bottom-right',
     tools = false,
     onCite,
+    stitchNotch,
     id,
   },
   ref,
@@ -150,6 +153,7 @@ const NoteDraft = forwardRef<TextInput, NoteDraftProps>(function NoteDraft(
             corner={corner}
             watermark={label}
             watermarkInset={spacing.lg}
+            notch={stitchNotch ? stitchNotch(size.width) : null}
           />
         </View>
       )}
