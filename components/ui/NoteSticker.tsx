@@ -44,6 +44,7 @@ interface NoteStickerProps {
   /**
    * Le nom de la catégorie, en très grand et presque transparent, en bas à
    * gauche, coupé par les bords : il fait partie du fond de l'autocollant.
+   * Toujours en minuscules : en grand, les capitales crieraient.
    */
   watermark?: string;
 }
@@ -138,7 +139,7 @@ export default function NoteSticker({
             fontSize={markSize}
             fill={inkAlpha(0.07)}
           >
-            {watermark}
+            {watermark.toLocaleLowerCase('fr')}
           </SvgText>
         </G>
       )}

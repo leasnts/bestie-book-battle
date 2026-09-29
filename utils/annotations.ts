@@ -89,12 +89,13 @@ export interface CategoryStyle {
 }
 
 export const ANNOTATION_CATEGORIES: Record<AnnotationCategory, CategoryStyle> = {
-  coup_de_coeur: { label: 'Coup de cœur', color: postIt.rose },
-  spicy: { label: 'Spicy', color: postIt.peche },
-  larmes: { label: 'Larmes', color: postIt.bleu },
-  mdr: { label: 'Mdr', color: postIt.jaune },
+  // Des mots de tous les jours (les clés restent celles de la base)
+  coup_de_coeur: { label: 'Adoré', color: postIt.rose },
+  spicy: { label: 'Hot', color: postIt.peche },
+  larmes: { label: 'Triste', color: postIt.bleu },
+  mdr: { label: 'Drôle', color: postIt.jaune },
   theorie: { label: 'Théorie', color: postIt.sauge },
-  a_retenir: { label: 'À retenir', color: postIt.sable },
+  a_retenir: { label: 'Important', color: postIt.sable },
 };
 
 /** L'illustration de chaque catégorie, à l'encre aquarelle (les intercalaires de la note) */
@@ -110,7 +111,7 @@ export const CATEGORY_ICONS: Record<AnnotationCategory, number> = {
 /** La catégorie par défaut d'une nouvelle note */
 export const DEFAULT_CATEGORY: AnnotationCategory = 'a_retenir';
 
-/** L'ordre d'affichage des catégories : « À retenir », la catégorie par défaut, d'abord */
+/** L'ordre d'affichage des catégories : « Important », la catégorie par défaut, d'abord */
 export const CATEGORY_ORDER: AnnotationCategory[] = [
   'a_retenir',
   'coup_de_coeur',

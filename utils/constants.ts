@@ -124,12 +124,12 @@ export const inkGradient = ['#5a4536', '#1e140e'] as const;
  * le nom de la catégorie s'affiche toujours (DESIGN.md › Carnet).
  */
 export const postIt = {
-  rose: '#efcfca',    // Coup de cœur
-  peche: '#f3cdb0',   // Spicy
-  bleu: '#cadbe6',    // Larmes
-  jaune: '#f3e2a0',   // Mdr
+  rose: '#efcfca',    // Adoré
+  peche: '#f3cdb0',   // Hot
+  bleu: '#cadbe6',    // Triste
+  jaune: '#f3e2a0',   // Drôle
   sauge: '#d3dfc2',   // Théorie
-  sable: '#e8dbc6',   // À retenir
+  sable: '#e8dbc6',   // Important
 };
 
 /**
