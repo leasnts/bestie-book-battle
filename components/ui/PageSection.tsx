@@ -4,8 +4,8 @@
  * Deuxième question de l'accueil : où j'en suis. C'est aussi le geste principal
  * de l'app — enregistrer sa page en un geste.
  *
- * - Sans titre : le cadre sort de sous « Le livre », son haut s'efface, coins
- *   droits (retour de Lea, 2026-09-29). À droite, ma série en **jours**
+ * - Sans titre : le cadre sort de sous « Le livre » et son haut s'efface, sans
+ *   coins ; le bas garde l'arrondi et le bord d'un cadre (retour de Lea, 2026-09-29). À droite, ma série en **jours**
  *   (jamais « soirs » : on ne suppose pas quand les gens lisent).
  * - Le sélecteur qui défile est gardé (pas de − / +), resserré pour tenir dans
  *   le cadre. Ma page est en **pages de mon édition**, d'où le « / 624 ».
@@ -70,7 +70,7 @@ export default function PageSection({
 
   return (
     // Le cadre remplit la place que l'accueil lui donne ; le chiffre est centré dedans
-    <GlassSection compact={compact} square fadeTop={PAGE_FADE} style={styles.frame}>
+    <GlassSection compact={compact} fadeTop={PAGE_FADE} style={styles.frame}>
       {/* Le haut est sous « Le livre » : le contenu commence sous le fondu */}
       <View style={styles.head}>
         {streakDays > 0 && (

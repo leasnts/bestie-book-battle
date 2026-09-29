@@ -43,9 +43,11 @@ interface GlassSectionProps {
   style?: StyleProp<ViewStyle>;
   /** Marge intérieure resserrée (12 au lieu de 16) : accueil sur petit écran */
   compact?: boolean;
-  /** Coins droits : un cadre qui se glisse sous un autre (Ma page, sous Le livre) */
-  square?: boolean;
-  /** Le haut s'efface sur cette hauteur : le cadre sort de sous celui du dessus */
+  /**
+   * Le haut s'efface sur cette hauteur : le cadre sort de sous celui du dessus
+   * (Ma page, sous Le livre). Les coins du haut disparaissent dans le fondu ; le
+   * bas garde son arrondi et son bord.
+   */
   fadeTop?: number;
 }
 
@@ -56,10 +58,8 @@ export default function GlassSection({
   accessibilityHint,
   style,
   compact = false,
-  square = false,
   fadeTop = 0,
 }: GlassSectionProps) {
-  const radius = square ? 0 : RADIUS;
   const layers = (
     <>
       {fadeTop > 0 ? (
@@ -74,10 +74,10 @@ export default function GlassSection({
             </View>
           }
         >
-          <GlassMaterial radius={radius} veil={glassVeil} />
+          <GlassMaterial radius={RADIUS} veil={glassVeil} edgeColor={EDGE} />
         </MaskedView>
       ) : (
-        <GlassMaterial radius={radius} veil={glassVeil} edgeColor={EDGE} />
+        <GlassMaterial radius={RADIUS} veil={glassVeil} edgeColor={EDGE} />
       )}
       <View style={[styles.content, compact && styles.contentCompact]}>{children}</View>
     </>
@@ -85,7 +85,7 @@ export default function GlassSection({
 
   if (!onPress) {
     return (
-      <View style={[styles.frame, { borderRadius: radius }, style]}>{layers}</View>
+      <View style={[styles.frame, style]}>{layers}</View>
     );
   }
 
