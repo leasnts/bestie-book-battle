@@ -1,11 +1,11 @@
 /**
  * useQuickNote — poser une note sur ma page enregistrée, sans passer par
- * l'éditeur : la barre d'actions rapides de « Ma page » (vocal, emoji, et
- * bientôt texte et citation écrits sur place).
+ * l'éditeur complet : la barre d'actions rapides de « Ma page » (texte, vocal,
+ * citation, emoji).
  *
  * Mêmes règles que l'éditeur `note/[id]` : la note s'écrit dans les pages de MON
- * édition et voyage en position (0 → 1), visible par le club, catégorie par
- * défaut (les catégories seront revues, retour de Lea le 2026-09-29).
+ * édition et voyage en position (0 → 1), visible par le club. Sans catégorie
+ * choisie (un vocal, un emoji), la catégorie par défaut.
  */
 
 import { useCallback, useMemo, useState } from 'react';
@@ -13,6 +13,7 @@ import { useAnnotationStore, type VoiceClip } from '../stores/annotationStore';
 import { useAuthStore } from '../stores/authStore';
 import { useProgressStore } from '../stores/progressStore';
 import { useProjectStore } from '../stores/projectStore';
+import type { AnnotationCategory } from '../types/supabase';
 import { DEFAULT_CATEGORY, positionFromPage } from '../utils/annotations';
 
 export interface QuickNote {
@@ -20,6 +21,7 @@ export interface QuickNote {
   emoji?: string | null;
   quote?: string | null;
   voice?: VoiceClip | null;
+  category?: AnnotationCategory;
 }
 
 export function useQuickNote() {
@@ -38,7 +40,7 @@ export function useQuickNote() {
   const myPages = mine?.progress.total_pages ?? activeChallenge?.total_pages ?? 0;
 
   const post = useCallback(
-    async ({ body = null, emoji = null, quote = null, voice = null }: QuickNote) => {
+    async ({ body = null, emoji = null, quote = null, voice = null, category = DEFAULT_CATEGORY }: QuickNote) => {
       if (!activeChallenge || !user?.id || myPages <= 0) return false;
       setPosting(true);
       try {
@@ -52,7 +54,7 @@ export function useQuickNote() {
             body: body?.trim() || null,
             emoji,
             quote: quote?.trim() || null,
-            category: DEFAULT_CATEGORY,
+            category,
             visibility: 'club',
           },
           voice,

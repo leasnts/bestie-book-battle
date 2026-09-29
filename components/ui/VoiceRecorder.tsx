@@ -9,13 +9,14 @@
  * la barre d'actions rapides de « Ma page », pour commenter une citation.
  * Pendant l'enregistrement, la gélule passe en lie de vin :
  *
- * |               | gauche       | centre                  | droite      |
- * |---------------|--------------|-------------------------|-------------|
- * | rien          | 🎙 démarrer  | `0:00 / 2:00`           | —           |
- * | enregistre    | ■ arrêter    | onde en direct + compteur | —         |
- * | enregistré    | ↺ refaire    | `0:24`                  | 🗑 supprimer |
+ * |            | gauche      | centre                    | droite       |
+ * |------------|-------------|---------------------------|--------------|
+ * | rien       | 🎙 démarrer | onde au repos             | `0:00`       |
+ * | enregistre | ■ arrêter   | onde en direct, fluide    | `0:09`, gras |
+ * | enregistré | ↺ refaire   | ▶ réécouter (VoicePlayer) | 🗑 supprimer |
  *
- * La réécoute se fait dans le post-it, avec le même lecteur que le club verra.
+ * Le toucher passe **aussitôt** en lie de vin, sans attendre que le micro
+ * s'ouvre.
  *
  * - AAC mono ≈ 32 kbps (≈ 240 Ko/min) : le Go gratuit de Supabase tient ≈ 70 h.
  * - 2 minutes au maximum, le compteur le montre ; l'enregistrement s'arrête seul.
@@ -33,6 +34,7 @@ import {
   type RecordingOptions,
 } from 'expo-audio';
 import { MicIcon, RotateCcwIcon, SquareIcon, Trash2Icon } from 'lucide-react-native';
+import Animated, { Easing, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Alert, AppState, Linking, StyleSheet, Text, View } from 'react-native';
@@ -43,16 +45,9 @@ import {
   levelFromMetering,
   MAX_VOICE_SECONDS,
 } from '../../utils/annotations';
-import {
-  accentGradient,
-  colors,
-  creamAlpha,
-  fonts,
-  inkAlpha,
-  shadowAlpha,
-  spacing,
-} from '../../utils/constants';
-import PressableScale from './PressableScale';
+import { accentGradient, colors, creamAlpha, fonts, inkAlpha, spacing } from '../../utils/constants';
+import RoundButton, { ROUND_BUTTON_SIZE } from './RoundButton';
+import VoicePlayer from './VoicePlayer';
 
 /** La voix n'a pas besoin de plus : 22 kHz mono, AAC à 32 kbps */
 const VOICE_RECORDING: RecordingOptions = {
@@ -78,11 +73,11 @@ const VOICE_RECORDING: RecordingOptions = {
 /** Un toucher trop bref pour être un vocal : on ne garde rien */
 const MIN_VOICE_MS = 700;
 /** Les barres visibles pendant l'enregistrement, les plus récentes à droite */
-const LIVE_BARS = 32;
+const LIVE_BARS = 26;
 
 interface VoiceRecorderProps {
   /** Le vocal de la note, s'il y en a un */
-  clip: { seconds: number; levels?: number[] | null } | null;
+  clip: { seconds: number; levels?: number[] | null; uri?: string; path?: string | null } | null;
   /** Un nouvel enregistrement, ou `null` quand on le supprime ou le refait */
   onChange: (clip: VoiceClip | null) => void;
   /** Pendant l'enregistrement, la note ne peut pas être publiée */
@@ -99,6 +94,18 @@ export default function VoiceRecorder({
 }: VoiceRecorderProps) {
   const recorder = useAudioRecorder(VOICE_RECORDING);
   const state = useAudioRecorderState(recorder, 100);
+  // Le démarrage attend la permission et le micro : entre-temps l'enregistreur a
+  // pu être recréé (écran remonté). On prend toujours le dernier, et on renonce
+  // si l'enregistreur n'est plus affiché.
+  const latest = useRef(recorder);
+  latest.current = recorder;
+  const mounted = useRef(true);
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
 
   const [recording, setRecording] = useState(false);
   /** Les niveaux du micro, un tous les 100 ms */
@@ -143,8 +150,12 @@ export default function VoiceRecorder({
   }, [recorder, onChange, setRecordingBoth]);
 
   const start = useCallback(async () => {
+    // Le rouge tout de suite : le micro met quelques dixièmes à s'ouvrir, le
+    // toucher doit répondre sans attendre (retour de Lea, 2026-09-29)
+    setRecordingBoth(true);
     const permission = await requestRecordingPermissionsAsync();
     if (!permission.granted) {
+      setRecordingBoth(false);
       Alert.alert('Micro', 'Autorise le micro dans les réglages pour enregistrer un vocal.', [
         { text: 'Annuler', style: 'cancel' },
         { text: 'Réglages', onPress: () => Linking.openSettings() },
@@ -162,9 +173,11 @@ export default function VoiceRecorder({
         playsInSilentMode: true,
         interruptionMode: 'doNotMix',
       });
-      await recorder.prepareToRecordAsync();
-      recorder.record({ forDuration: MAX_VOICE_SECONDS });
-      setRecordingBoth(true);
+      if (!mounted.current) return;
+      const current = latest.current;
+      await current.prepareToRecordAsync();
+      if (!mounted.current) return;
+      current.record({ forDuration: MAX_VOICE_SECONDS });
     } catch (error) {
       console.error('[Carnet] enregistrement impossible', error);
       Alert.alert('Erreur', "Le vocal n'a pas pu démarrer. Réessaie.");
@@ -173,8 +186,11 @@ export default function VoiceRecorder({
   }, [recorder, onChange, setRecordingBoth]);
 
   // Le micro de la barre : un toucher suffit, l'enregistrement part tout de suite
+  const autoStarted = useRef(false);
   useEffect(() => {
-    if (autoStart) start();
+    if (!autoStart || autoStarted.current) return;
+    autoStarted.current = true;
+    start();
     // Une seule fois, à l'ouverture
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -214,228 +230,115 @@ export default function VoiceRecorder({
 
   const elapsed = recording ? state.durationMillis / 1000 : 0;
   const live = samples.current.slice(-LIVE_BARS);
+  const recorded = clip && !recording ? clip : null;
 
   return (
     <View style={[styles.row, !recording && styles.rowIdle]}>
       {recording && (
         <LinearGradient colors={accentGradient} style={[StyleSheet.absoluteFill, styles.rowFill]} />
       )}
+
       {recording ? (
-        <RoundButton icon={SquareIcon} variant="stop" label="Arrêter le vocal" onPress={finish} />
-      ) : clip ? (
+        <RoundButton icon={SquareIcon} variant="light" filled label="Arrêter le vocal" onPress={finish} />
+      ) : recorded ? (
         <RoundButton icon={RotateCcwIcon} variant="ghost" label="Refaire le vocal" onPress={start} />
       ) : (
-        <RoundButton icon={MicIcon} variant="dark" label="Enregistrer un vocal" onPress={start} />
+        <RoundButton icon={MicIcon} variant="dark" label="Enregistrer une note vocale" onPress={start} />
       )}
 
-      <View style={styles.middle}>
-        {recording && <View style={styles.dot} />}
-        {!recording && clip && <ClipWave levels={clip.levels} />}
-        {recording && (
+      {recorded ? (
+        // Enregistré : on peut le réécouter avant de l'ajouter, avec le lecteur du carnet
+        <View style={styles.player}>
+          <VoicePlayer uri={recorded.uri} path={recorded.path} seconds={recorded.seconds} levels={recorded.levels} />
+        </View>
+      ) : (
+        <>
           <View style={styles.live} importantForAccessibility="no-hide-descendants">
-            {Array.from({ length: LIVE_BARS }).map((_, index) => {
+            {Array.from({ length: LIVE_BARS }).map((_, index) => (
               // Les barres arrivent par la droite
-              const level = live[index - (LIVE_BARS - live.length)];
-              return (
-                <View
-                  key={index}
-                  style={[
-                    styles.liveBar,
-                    level === undefined
-                      ? styles.liveBarEmpty
-                      : { height: Math.max(3, level * LIVE_HEIGHT) },
-                  ]}
-                />
-              );
-            })}
+              <LiveBar key={index} level={live[index - (LIVE_BARS - live.length)]} on={recording} />
+            ))}
           </View>
-        )}
+          <Text
+            style={[styles.counter, recording && styles.counterOn]}
+            accessibilityLabel={`${formatVoiceDuration(elapsed)} sur ${formatVoiceDuration(MAX_VOICE_SECONDS)}`}
+          >
+            {formatVoiceDuration(elapsed)}
+          </Text>
+        </>
+      )}
 
-        <Text
-          style={[styles.counter, recording && styles.counterOn, !recording && !clip && styles.counterIdle]}
-          accessibilityLabel={
-            clip && !recording
-              ? `Vocal de ${formatVoiceDuration(clip.seconds)}`
-              : `${formatVoiceDuration(elapsed)} sur ${formatVoiceDuration(MAX_VOICE_SECONDS)}`
-          }
-        >
-          {clip && !recording ? (
-            formatVoiceDuration(clip.seconds)
-          ) : (
-            <>
-              {formatVoiceDuration(elapsed)}
-              <Text style={[styles.counterMax, recording && styles.counterMaxOn]}>
-                {' '}/ {formatVoiceDuration(MAX_VOICE_SECONDS)}
-              </Text>
-            </>
-          )}
-        </Text>
-      </View>
-
-      <View style={styles.slot}>
-        {clip && !recording && (
-          <RoundButton
-            icon={Trash2Icon}
-            variant="ghost"
-            label="Supprimer le vocal"
-            onPress={() => onChange(null)}
-          />
-        )}
-      </View>
+      {recorded && (
+        <RoundButton icon={Trash2Icon} variant="ghost" label="Supprimer le vocal" onPress={() => onChange(null)} />
+      )}
     </View>
   );
 }
 
-/** L'onde du vocal enregistré, en petit dans la gélule */
-function ClipWave({ levels }: { levels?: number[] | null }) {
-  const bars = Array.from({ length: CLIP_BARS }, (_, index) => {
-    const source = levels?.length ? levels[Math.floor((index / CLIP_BARS) * levels.length)] : 40;
-    return Math.max(3, (source / 100) * LIVE_HEIGHT);
-  });
-  return (
-    <View style={styles.live} importantForAccessibility="no-hide-descendants">
-      {bars.map((height, index) => (
-        <View key={index} style={[styles.liveBar, styles.clipBar, { height }]} />
-      ))}
-    </View>
-  );
+/** Une barre de l'onde : sa hauteur glisse vers le nouveau niveau, sans à-coup */
+function LiveBar({ level, on }: { level: number | undefined; on: boolean }) {
+  const height = useSharedValue(BAR_MIN);
+  useEffect(() => {
+    const target = level === undefined ? BAR_MIN : Math.max(BAR_MIN, level * LIVE_HEIGHT);
+    height.value = withTiming(target, { duration: 140, easing: Easing.out(Easing.quad) });
+  }, [level, height]);
+  const style = useAnimatedStyle(() => ({ height: height.value }));
+  return <Animated.View style={[styles.liveBar, on ? styles.liveBarOn : styles.liveBarIdle, style]} />;
 }
 
-/** Même taille, même place : seule l'icône change */
-function RoundButton({
-  icon: Icon,
-  variant,
-  label,
-  onPress,
-}: {
-  icon: typeof MicIcon;
-  variant: 'dark' | 'ghost' | 'stop';
-  label: string;
-  onPress: () => void;
-}) {
-  const filled = variant === 'dark';
-  return (
-    <PressableScale
-      style={[
-        styles.button,
-        variant === 'dark' && styles.buttonDark,
-        variant === 'ghost' && styles.buttonGhost,
-        variant === 'stop' && styles.buttonStop,
-      ]}
-      pressedScale={0.9}
-      hitSlop={6}
-      onPress={onPress}
-      accessibilityRole="button"
-      accessibilityLabel={label}
-    >
-      <Icon
-        size={variant === 'stop' ? 15 : 19}
-        color={filled ? colors.white : variant === 'stop' ? colors.accent : colors.dark900}
-        fill={variant === 'stop' ? colors.accent : 'none'}
-        strokeWidth={2.2}
-      />
-    </PressableScale>
-  );
-}
-
-const BUTTON = 42;
-const LIVE_HEIGHT = 22;
-/** Les barres de l'onde d'un vocal enregistré */
-const CLIP_BARS = 20;
+const LIVE_HEIGHT = 28;
+const BAR_MIN = 4;
 /** La gélule : le bouton rond, et 5 pt tout autour */
 const PAD = 5;
+const HEIGHT = ROUND_BUTTON_SIZE + PAD * 2;
 
 const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.md,
-    minHeight: BUTTON + PAD * 2,
+    minHeight: HEIGHT,
     padding: PAD,
-    paddingRight: PAD + 2,
-    borderRadius: (BUTTON + PAD * 2) / 2,
+    paddingRight: spacing.lg,
+    borderRadius: HEIGHT / 2,
     overflow: 'hidden',
   },
   rowIdle: {
     backgroundColor: inkAlpha(0.06),
   },
   rowFill: {
-    borderRadius: (BUTTON + PAD * 2) / 2,
+    borderRadius: HEIGHT / 2,
   },
-  dot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: creamAlpha(0.9),
-  },
-  slot: {
-    width: BUTTON,
-    height: BUTTON,
-  },
-  middle: {
+  player: {
     flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
   },
   live: {
     flex: 1,
     height: LIVE_HEIGHT,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 2,
+    justifyContent: 'space-between',
   },
   liveBar: {
-    flex: 1,
-    borderRadius: 1.5,
-    backgroundColor: creamAlpha(0.9),
+    width: 4,
+    borderRadius: 2,
   },
-  liveBarEmpty: {
-    height: 3,
-    backgroundColor: creamAlpha(0.3),
+  liveBarOn: {
+    backgroundColor: creamAlpha(0.92),
   },
-  clipBar: {
-    backgroundColor: inkAlpha(0.5),
+  liveBarIdle: {
+    backgroundColor: inkAlpha(0.15),
   },
+  // Le temps, ferré à droite, en gras
   counter: {
+    minWidth: 40,
+    textAlign: 'right',
     fontFamily: fonts.bodyExtraBold,
-    fontSize: 15,
+    fontSize: 16,
     color: colors.textTertiary,
     fontVariant: ['tabular-nums'],
   },
   counterOn: {
     color: colors.white,
-  },
-  counterIdle: {
-    flex: 1,
-  },
-  counterMax: {
-    fontFamily: fonts.bodyBold,
-    color: colors.textPlaceholder,
-  },
-  counterMaxOn: {
-    color: creamAlpha(0.6),
-  },
-
-  button: {
-    width: BUTTON,
-    height: BUTTON,
-    borderRadius: BUTTON / 2,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  buttonDark: {
-    backgroundColor: colors.dark900,
-    shadowColor: shadowAlpha(0.25),
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 1,
-    shadowRadius: 6,
-  },
-  buttonGhost: {
-    backgroundColor: inkAlpha(0.07),
-  },
-  // Arrêter : un rond clair sur la gélule lie de vin
-  buttonStop: {
-    backgroundColor: creamAlpha(0.95),
   },
 });

@@ -31,6 +31,7 @@ import Animated, {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { recognizePage, type PageLine } from '../../modules/page-text/src';
 import { colors, creamAlpha, fonts, spacing } from '../../utils/constants';
+import GlassButton from './GlassButton';
 import PressableScale from './PressableScale';
 
 export interface PagePhoto {
@@ -116,15 +117,7 @@ export default function QuotePicker({ photo, onClose, onRetake, onCite }: QuoteP
     <Modal visible={photo !== null} animationType="fade" statusBarTranslucent onRequestClose={onClose}>
       <View style={[styles.screen, { paddingTop: insets.top + spacing.sm, paddingBottom: insets.bottom + spacing.md }]}>
         <View style={styles.head}>
-          <PressableScale
-            style={styles.close}
-            pressedScale={0.9}
-            onPress={onClose}
-            accessibilityRole="button"
-            accessibilityLabel="Fermer"
-          >
-            <XIcon size={19} color={colors.dark900} strokeWidth={2.2} />
-          </PressableScale>
+          <GlassButton icon={XIcon} size={36} onPress={onClose} accessibilityLabel="Fermer" />
           <View style={styles.hint}>
             <Text style={styles.hintText}>{hint}</Text>
           </View>
@@ -214,16 +207,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     gap: spacing.sm,
   },
-  close: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: creamAlpha(0.9),
-  },
   spacer: {
-    width: 42,
+    width: 36,
   },
   hint: {
     flex: 1,

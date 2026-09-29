@@ -1,28 +1,28 @@
 /**
- * NoteComposer — écrire une note sur place, depuis la ligne de cahier de
- * « Ma page ».
+ * NoteComposer — annoter la page sur place, depuis « Ma page ».
  *
- * La feuille monte juste au-dessus du clavier, le reste de l'accueil s'assombrit
- * derrière : on écrit sans quitter l'écran. ↗ la déplie en pleine page, pour
- * écrire long ; ↙ la replie.
+ * La feuille monte juste au-dessus du clavier, l'accueil s'assombrit derrière :
+ * on annote sans quitter l'écran. ↗ la déplie en pleine page ; ↙ la replie.
  *
- *   [✕]  Page 157          [↗] [✓]
- *   ─────────────────────────────
- *   │ Une pensée, un avis, un élément à retenir…
- *   ─────────────────────────────
+ *   (✕)  Page 157                (↗)  [✓]
+ *   ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐
+ *   ┆ À RETENIR                     ┆   la note, en autocollant (`NoteDraft`) :
+ *   ┆ Une pensée, un avis…          ┆   texte, citation, vocal, tout dedans
+ *   ┆ (🎙 ──────────────── 0:00)    ┆
+ *   └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄◢┘
+ *   [Coup de cœur] [Spicy] [Larmes] …     la couleur (`CategoryPicker`)
  *
- * ✕ ou toucher le fond : la feuille se referme et **garde le brouillon**, qui
- * reste écrit sur la ligne de cahier. ✓ ajoute la note au carnet de notes (grisé
- * tant que c'est vide).
+ * Mêmes pièces que partout : `GlassButton` pour ✕ et ↗ (comme l'en-tête des
+ * sheets), `RoundButton` pour ✓ (comme ✓ enregistrer), `NoteDraft` et
+ * `CategoryPicker` comme dans l'éditeur de note.
  *
- * Avec une citation (photo d'un passage) : le passage en tête, en italique, puis
- * ma pensée ou mon avis, à écrire ou à dire avec l'enregistreur (`VoiceRecorder`, le
- * même que partout).
+ * Toucher un bouton pendant qu'on tape agit tout de suite, sans d'abord fermer
+ * le clavier. ✕ ou le fond : la feuille se referme et **garde le brouillon**.
  */
 
 import { CheckIcon, Maximize2Icon, Minimize2Icon, XIcon } from 'lucide-react-native';
 import React, { useEffect, useRef, useState } from 'react';
-import { Modal, Pressable, StyleSheet, Text, TextInput, useWindowDimensions, View } from 'react-native';
+import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, useWindowDimensions, View } from 'react-native';
 import Animated, {
   Easing,
   interpolate,
@@ -33,45 +33,57 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, creamAlpha, fonts, inkAlpha, motion, shadowAlpha, spacing } from '../../utils/constants';
 import type { VoiceClip } from '../../stores/annotationStore';
-import PressableScale from './PressableScale';
-import VoiceRecorder from './VoiceRecorder';
+import type { AnnotationCategory } from '../../types/supabase';
+import { ANNOTATION_CATEGORIES, DEFAULT_CATEGORY } from '../../utils/annotations';
+import { colors, creamAlpha, fonts, motion, shadowAlpha, spacing } from '../../utils/constants';
+import CategoryPicker from './CategoryPicker';
+import GlassButton from './GlassButton';
+import NoteDraft from './NoteDraft';
+import RoundButton from './RoundButton';
+
+/** Ce que la feuille garde quand on la ferme sans ajouter la note */
+export interface ComposerDraft {
+  body: string;
+  category: AnnotationCategory;
+}
+
+export interface ComposedNote {
+  body: string;
+  quote: string | null;
+  voice: VoiceClip | null;
+  category: AnnotationCategory;
+}
 
 interface NoteComposerProps {
   visible: boolean;
   page: number;
   /** Le brouillon laissé la dernière fois */
-  draft: string;
-  /** Le passage cité, s'il y en a un */
+  draft: ComposerDraft;
+  /** Le passage cité (photo de la page), modifiable ; `null` : pas de citation */
   quote?: string | null;
-  /** Fermer sans coller : on rend le brouillon */
-  onClose: (draft: string) => void;
-  /** Coller la note. `false` : ça n'a pas marché, la feuille reste ouverte. */
-  onPost: (note: { body: string; voice: VoiceClip | null }) => Promise<boolean>;
+  /** Fermer sans ajouter : on rend le brouillon */
+  onClose: (draft: ComposerDraft) => void;
+  /** Ajouter la note. `false` : ça n'a pas marché, la feuille reste ouverte. */
+  onPost: (note: ComposedNote) => Promise<boolean>;
 }
 
-/** La feuille sur place : quatre lignes de cahier ; plus haute avec une citation */
-const SHEET_HEIGHT = 250;
-const SHEET_HEIGHT_QUOTE = 400;
+export const EMPTY_DRAFT: ComposerDraft = { body: '', category: DEFAULT_CATEGORY };
+
+/** La feuille sur place ; plus haute avec une citation */
+const SHEET_HEIGHT = 360;
+const SHEET_HEIGHT_QUOTE = 440;
 /** L'écart entre la feuille et le clavier */
 const GAP = spacing.md;
-const LINE = 26;
 
-export default function NoteComposer({
-  visible,
-  page,
-  draft,
-  quote = null,
-  onClose,
-  onPost,
-}: NoteComposerProps) {
-  const [text, setText] = useState(draft);
+export default function NoteComposer({ visible, page, draft, quote = null, onClose, onPost }: NoteComposerProps) {
+  const [body, setBody] = useState(draft.body);
+  const [category, setCategory] = useState(draft.category);
+  const [passage, setPassage] = useState(quote ?? '');
+  const [voice, setVoice] = useState<VoiceClip | null>(null);
+  const [recording, setRecording] = useState(false);
   const [full, setFull] = useState(false);
   const [posting, setPosting] = useState(false);
-  const [clip, setClip] = useState<VoiceClip | null>(null);
-  const [recording, setRecording] = useState(false);
-  const sheetHeight = quote ? SHEET_HEIGHT_QUOTE : SHEET_HEIGHT;
   const input = useRef<TextInput>(null);
   const { height: windowHeight } = useWindowDimensions();
   const insets = useSafeAreaInsets();
@@ -80,12 +92,16 @@ export default function NoteComposer({
 
   const shown = useSharedValue(0);
   const expanded = useSharedValue(0);
+  const isQuote = quote !== null;
+  const sheetHeight = isQuote ? SHEET_HEIGHT_QUOTE : SHEET_HEIGHT;
 
-  // Chaque ouverture repart du brouillon, sur place
+  // Chaque ouverture repart du brouillon (ou du passage cité), sur place
   useEffect(() => {
     if (!visible) return;
-    setText(draft);
-    setClip(null);
+    setBody(draft.body);
+    setCategory(draft.category);
+    setPassage(quote ?? '');
+    setVoice(null);
     setFull(false);
     expanded.value = 0;
     shown.value = withTiming(1, timing(reducedMotion));
@@ -98,23 +114,26 @@ export default function NoteComposer({
     expanded.value = withTiming(next ? 1 : 0, timing(reducedMotion));
   };
 
-  const close = () => {
+  const leave = (then: () => void) => {
     shown.value = withTiming(0, timing(reducedMotion, 180));
-    // Le fondu joue, puis la feuille rend le brouillon
-    setTimeout(() => onClose(text), reducedMotion ? 0 : 180);
+    setTimeout(then, reducedMotion ? 0 : 180);
   };
 
-  const empty = !quote && !text.trim() && !clip;
+  const close = () => leave(() => onClose({ body, category }));
+
+  const empty = !body.trim() && !passage.trim() && !voice;
 
   const post = async () => {
     if (empty || recording || posting) return;
     setPosting(true);
-    const done = await onPost({ body: text.trim(), voice: clip });
+    const done = await onPost({
+      body: body.trim(),
+      quote: isQuote ? passage.trim() || null : null,
+      voice,
+      category,
+    });
     setPosting(false);
-    if (done) {
-      shown.value = withTiming(0, timing(reducedMotion, 180));
-      setTimeout(() => onClose(''), reducedMotion ? 0 : 180);
-    }
+    if (done) leave(() => onClose(EMPTY_DRAFT));
   };
 
   const veilStyle = useAnimatedStyle(() => ({ opacity: shown.value }));
@@ -123,18 +142,20 @@ export default function NoteComposer({
   const sheetStyle = useAnimatedStyle(() => {
     const kb = keyboard.height.value;
     const e = expanded.value;
-    const placeTop = windowHeight - kb - GAP - sheetHeight;
+    const placeTop = Math.max(insets.top, windowHeight - kb - GAP - sheetHeight);
     return {
       top: interpolate(e, [0, 1], [placeTop, 0]),
       bottom: interpolate(e, [0, 1], [kb + GAP, kb]),
       left: interpolate(e, [0, 1], [spacing.lg, 0]),
       right: interpolate(e, [0, 1], [spacing.lg, 0]),
-      borderRadius: interpolate(e, [0, 1], [26, 0]),
+      borderRadius: interpolate(e, [0, 1], [28, 0]),
       paddingTop: interpolate(e, [0, 1], [spacing.md, insets.top + spacing.sm]),
       opacity: shown.value,
       transform: [{ translateY: (1 - shown.value) * 24 }],
     };
   });
+
+  const style = ANNOTATION_CATEGORIES[category];
 
   return (
     <Modal visible={visible} transparent animationType="none" statusBarTranslucent onRequestClose={close}>
@@ -143,52 +164,51 @@ export default function NoteComposer({
       </Animated.View>
 
       <Animated.View style={[styles.sheet, sheetStyle]}>
-        <View style={styles.head}>
-          <Round icon={XIcon} variant="ghost" label="Fermer, garder le brouillon" onPress={close} />
-          <Text style={[styles.page, full && styles.pageFull]}>Page {page}</Text>
-          <Round
-            icon={full ? Minimize2Icon : Maximize2Icon}
-            variant="ghost"
-            label={full ? 'Replier la note' : 'Écrire en pleine page'}
-            onPress={toggleFull}
-          />
-          <Round
-            icon={CheckIcon}
-            variant="dark"
-            label="Ajouter la note au carnet de notes"
-            disabled={empty || recording || posting}
-            onPress={post}
-          />
-        </View>
+        {/* `always` : un toucher sur ✓ ou ↗ agit tout de suite, clavier ouvert */}
+        <ScrollView
+          style={styles.scroll}
+          contentContainerStyle={styles.content}
+          keyboardShouldPersistTaps="always"
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.head}>
+            <GlassButton icon={XIcon} size={36} onPress={close} accessibilityLabel="Fermer, garder le brouillon" />
+            <Text style={[styles.page, full && styles.pageFull]}>Page {page}</Text>
+            <GlassButton
+              icon={full ? Minimize2Icon : Maximize2Icon}
+              size={36}
+              onPress={toggleFull}
+              accessibilityLabel={full ? 'Replier la note' : 'Annoter en pleine page'}
+            />
+            <RoundButton
+              icon={CheckIcon}
+              variant="dark"
+              label="Ajouter la note au carnet de notes"
+              disabled={empty || recording || posting}
+              onPress={post}
+            />
+          </View>
 
-        {!!quote && (
-          <Text style={[styles.quote, full && styles.quoteFull]} numberOfLines={full ? 12 : 4}>
-            {quote}
-          </Text>
-        )}
-
-        {/* Le papier réglé, la marge lie de vin, et le texte posé sur les lignes */}
-        <Pressable style={styles.paper} onPress={() => input.current?.focus()}>
-          <View style={styles.margin} />
-          {Array.from({ length: 40 }).map((_, index) => (
-            <View key={index} style={[styles.rule, { top: spacing.sm + LINE * (index + 1) - 1 }]} />
-          ))}
-          <TextInput
+          <NoteDraft
             ref={input}
-            style={styles.input}
-            value={text}
-            onChangeText={setText}
-            placeholder={quote ? 'Ta pensée, ton avis sur ce passage…' : 'Une pensée, un avis, un élément à retenir…'}
-            placeholderTextColor={inkAlpha(0.38)}
-            multiline
+            id="composer"
+            color={style.color}
+            label={style.label}
+            quote={isQuote ? passage : null}
+            onQuoteChange={setPassage}
+            body={body}
+            onBodyChange={setBody}
+            placeholder={isQuote ? 'Ta pensée, ton avis sur ce passage…' : 'Une pensée, un avis, un élément à retenir…'}
+            voice={voice}
+            onVoiceChange={setVoice}
+            onRecordingChange={setRecording}
+            large={full}
+            fill
             autoFocus
-            maxLength={2000}
-            scrollEnabled
-            accessibilityLabel={`Ma note sur la page ${page}`}
           />
-        </Pressable>
 
-        {!!quote && <VoiceRecorder clip={clip} onChange={setClip} onRecordingChange={setRecording} />}
+          <CategoryPicker value={category} onChange={setCategory} layout="row" />
+        </ScrollView>
       </Animated.View>
     </Modal>
   );
@@ -201,51 +221,27 @@ function timing(reducedMotion: boolean, duration = motion.duration.standard) {
   };
 }
 
-function Round({
-  icon: Icon,
-  variant,
-  label,
-  onPress,
-  disabled,
-}: {
-  icon: typeof XIcon;
-  variant: 'dark' | 'ghost';
-  label: string;
-  onPress: () => void;
-  disabled?: boolean;
-}) {
-  return (
-    <PressableScale
-      style={[styles.round, variant === 'dark' ? styles.roundDark : styles.roundGhost]}
-      pressedScale={0.9}
-      hitSlop={4}
-      disabled={disabled}
-      onPress={onPress}
-      accessibilityRole="button"
-      accessibilityLabel={label}
-    >
-      <Icon size={19} color={variant === 'dark' ? colors.white : colors.dark900} strokeWidth={2.2} />
-    </PressableScale>
-  );
-}
-
-const BUTTON = 42;
-
 const styles = StyleSheet.create({
   veil: {
     backgroundColor: shadowAlpha(0.3),
   },
   sheet: {
     position: 'absolute',
-    paddingHorizontal: spacing.md,
-    paddingBottom: spacing.md,
-    gap: spacing.md,
     backgroundColor: creamAlpha(0.98),
     overflow: 'hidden',
     shadowColor: shadowAlpha(0.3),
     shadowOffset: { width: 0, height: 16 },
     shadowOpacity: 1,
     shadowRadius: 30,
+  },
+  scroll: {
+    flex: 1,
+  },
+  content: {
+    flexGrow: 1,
+    paddingHorizontal: spacing.md,
+    paddingBottom: spacing.md,
+    gap: spacing.md,
   },
   head: {
     flexDirection: 'row',
@@ -261,73 +257,5 @@ const styles = StyleSheet.create({
   },
   pageFull: {
     fontSize: 28,
-  },
-  // Le passage cité : italique, un filet lie de vin à gauche
-  quote: {
-    paddingLeft: spacing.md,
-    borderLeftWidth: 3,
-    borderLeftColor: colors.accent,
-    fontFamily: fonts.display,
-    fontStyle: 'italic',
-    fontSize: 17,
-    lineHeight: 24,
-    color: colors.textPrimary,
-  },
-  quoteFull: {
-    fontSize: 21,
-    lineHeight: 30,
-  },
-  paper: {
-    flex: 1,
-    borderRadius: 16,
-    overflow: 'hidden',
-    backgroundColor: 'rgba(245,240,233,0.9)',
-    borderWidth: 1,
-    borderColor: inkAlpha(0.06),
-  },
-  margin: {
-    position: 'absolute',
-    left: 20,
-    top: 0,
-    bottom: 0,
-    width: 1.4,
-    backgroundColor: 'rgba(140,59,76,0.35)',
-  },
-  rule: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    height: 1,
-    backgroundColor: inkAlpha(0.1),
-  },
-  input: {
-    flex: 1,
-    paddingTop: spacing.sm + 4,
-    paddingBottom: spacing.sm,
-    paddingLeft: 30,
-    paddingRight: spacing.md,
-    fontFamily: fonts.body,
-    fontSize: 17,
-    lineHeight: LINE,
-    color: colors.textPrimary,
-    textAlignVertical: 'top',
-  },
-
-  round: {
-    width: BUTTON,
-    height: BUTTON,
-    borderRadius: BUTTON / 2,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  roundDark: {
-    backgroundColor: colors.dark900,
-    shadowColor: shadowAlpha(0.25),
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 1,
-    shadowRadius: 6,
-  },
-  roundGhost: {
-    backgroundColor: inkAlpha(0.07),
   },
 });

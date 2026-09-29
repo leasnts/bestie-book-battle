@@ -19,10 +19,11 @@
 import { CheckIcon, FlameIcon, RotateCcwIcon } from 'lucide-react-native';
 import React, { useState } from 'react';
 import { LayoutChangeEvent, StyleSheet, Text, View } from 'react-native';
-import { colors, fonts, inkAlpha, shadowAlpha, spacing } from '../../utils/constants';
+import { colors, fonts, spacing } from '../../utils/constants';
 import GlassSection from './GlassSection';
 import PageScrollPicker from './PageScrollPicker';
 import PressableScale from './PressableScale';
+import RoundButton from './RoundButton';
 import { QUICK_BAR_HEIGHT } from './QuickNoteBar';
 
 interface PageSectionProps {
@@ -45,39 +46,6 @@ interface PageSectionProps {
   compact?: boolean;
   /** Taille du chiffre, choisie par l'accueil selon la hauteur de l'écran */
   pickerFontSize?: number;
-}
-
-/** Bouton rond de la rangée du bas : même taille et même place, seule l'icône change */
-function IconButton({
-  icon: Icon,
-  variant,
-  label,
-  hint,
-  onPress,
-}: {
-  icon: typeof CheckIcon;
-  variant: 'dark' | 'ghost';
-  label: string;
-  hint?: string;
-  onPress: () => void;
-}) {
-  return (
-    <PressableScale
-      style={[styles.iconButton, variant === 'dark' ? styles.iconButtonDark : styles.iconButtonGhost]}
-      pressedScale={0.9}
-      hitSlop={6}
-      onPress={onPress}
-      accessibilityRole="button"
-      accessibilityLabel={label}
-      accessibilityHint={hint}
-    >
-      <Icon
-        size={20}
-        color={variant === 'dark' ? colors.white : colors.dark900}
-        strokeWidth={2.2}
-      />
-    </PressableScale>
-  );
 }
 
 export default function PageSection({
@@ -150,7 +118,7 @@ export default function PageSection({
 
       {hasChanged ? (
         <View style={styles.row}>
-          <IconButton
+          <RoundButton
             icon={RotateCcwIcon}
             variant="ghost"
             label="Annuler"
@@ -162,7 +130,7 @@ export default function PageSection({
             {delta > 0 ? '+' : '−'}
             {Math.abs(delta)}
           </Text>
-          <IconButton icon={CheckIcon} variant="dark" label="Enregistrer ma page" onPress={onSave} />
+          <RoundButton icon={CheckIcon} variant="dark" label="Enregistrer ma page" onPress={onSave} />
         </View>
       ) : (
         <View style={styles.bar}>{quickBar}</View>
@@ -178,7 +146,6 @@ export default function PageSection({
 const PICKER_ITEM_WIDTH = 120;
 /** Le chiffre et sa zone reprennent la maquette (68 et 76 px à l'échelle 0,865) */
 const PICKER_FONT_SIZE = 68;
-const BUTTON_SIZE = 42;
 
 const styles = StyleSheet.create({
   // minHeight : le titre grandit avec le réglage système au lieu d'être coupé
@@ -248,23 +215,5 @@ const styles = StyleSheet.create({
     fontSize: 17,
     color: colors.textSecondary,
     fontVariant: ['tabular-nums'],
-  },
-
-  iconButton: {
-    width: BUTTON_SIZE,
-    height: BUTTON_SIZE,
-    borderRadius: BUTTON_SIZE / 2,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  iconButtonDark: {
-    backgroundColor: colors.dark900,
-    shadowColor: shadowAlpha(0.25),
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 1,
-    shadowRadius: 6,
-  },
-  iconButtonGhost: {
-    backgroundColor: inkAlpha(0.07),
   },
 });

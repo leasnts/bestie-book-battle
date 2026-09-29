@@ -477,32 +477,36 @@ intermédiaire s'appelle un **cap** partout dans l'UI.
 Le cadre **Ma page** (`PageSection`) porte le geste principal : le sélecteur qui
 défile (pas de − / +), ma page en pages de mon édition, ma série en **jours**, et
 une **rangée du bas à hauteur fixe** (52 pt) :
-- au repos, la **barre d'actions rapides** (`QuickNoteBar`, #98) : une ligne de
-  cahier « ✎ Annoter la page » (papier, deux réglures, marge lie de vin) pour écrire,
-  puis 🎙, 📷 et ☺ en boutons ronds de 42 pt `inkAlpha(0.07)`. Tout se pose sur
-  ma page **enregistrée**, sans quitter l'accueil. 🎙 : la barre **devient**
-  l'enregistreur, qui démarre tout de suite ; ■, puis ✓ pour ajouter la note, ✕ pour
-  renoncer. ☺ : les six réactions sortent au-dessus de la barre, un toucher pose
-  une note emoji seul ;
-  Écrire (`NoteComposer`, #100) : la feuille monte juste au-dessus du clavier,
-  l'accueil s'assombrit derrière. Papier réglé (lignes de 26 pt), marge lie de
-  vin ; ✕ · Page 157 · ↗ · ✓ ; « Une pensée, un avis, un élément à retenir… ». ↗ la déplie en pleine page, ↙ la replie. ✕ ou le
-  fond referment en **gardant le brouillon**, écrit sur la ligne de cahier ;
-  Citer (📷, #101) : photo de la page (photothèque sur le simulateur), le texte
-  est lu **sur le téléphone** (module maison `modules/page-text`, Vision d'Apple,
-  en français). `QuotePicker` : la photo sur fond encre, on touche les lignes,
-  elles se surlignent en jaune stabilo (`mixBlendMode: multiply`) ; pendant la
-  lecture un voile balaie la page, jamais de roue. « Citer » ouvre la feuille
-  avec le passage en tête (filet lie de vin), « Ta pensée, ton avis sur ce passage… » à écrire, ou
-  à dire avec le même `VoiceRecorder` ;
+- au repos, la **barre d'actions rapides** (`QuickNoteBar`, #98) : une gélule
+  « Annoter la page… » (la même forme que l'enregistreur), puis 🎙, 📷 et ☺ en
+  `GlassButton` de 44 pt. Tout annote ma page **enregistrée**, sans quitter
+  l'accueil. 🎙 : la barre **devient** l'enregistreur, qui passe en lie de vin
+  dès le toucher ; ■, puis ✓ (`RoundButton`) pour ajouter la note. ☺ : la liste à
+  la mode (`TRENDING_EMOJIS`) sort au-dessus de la barre et défile ; « + » ouvre
+  tous les emojis (/emoji-note, `EmojiGrid`, le même sélecteur que les réactions).
+  Annoter (`NoteComposer`, #100) : la feuille monte au-dessus du clavier,
+  l'accueil s'assombrit. ✕ et ↗ en `GlassButton` 36 (comme l'en-tête des
+  sheets), ✓ en `RoundButton`. La note s'écrit **dans l'autocollant**
+  (`NoteDraft`, le même que l'éditeur) : catégorie, texte, vocal dedans ; la
+  couleur se choisit dessous (`CategoryPicker`, en rangée). Un toucher sur ✓ ou
+  ↗ agit clavier ouvert. ✕ ou le fond gardent le brouillon dans la gélule.
+  Citer (📷, #101) : photo de la page, texte lu **sur le téléphone** (module
+  maison `modules/page-text`, Vision d'Apple, en français). `QuotePicker` : on
+  touche les lignes, surlignées en jaune stabilo (`mixBlendMode: multiply`) ;
+  « Citer » ouvre la feuille avec le passage **modifiable** en tête de la note ;
 - pendant un défilement, ↺ annuler, « +14 », ✓ enregistrer (encre pleine). La
   barre s'efface : jamais de doute sur la page notée.
 
 **Un seul enregistreur vocal** (`VoiceRecorder`, Lea, 2026-09-29) : le même dans
-la barre, dans l'éditeur de note et pour commenter une citation. Une gélule
-`inkAlpha(0.06)` avec le bouton rond à gauche (🎙, puis ■, puis ↺) ; pendant
-l'enregistrement elle passe en **dégradé lie de vin** (`accentGradient`), onde et
-compteur en crème, ■ sur un rond crème. Enregistré : l'onde en petit et la durée.
+la barre, dans la note qu'on écrit (`NoteDraft`, éditeur et feuille rapide).
+Une gélule `inkAlpha(0.06)`, le bouton rond à gauche (🎙, ■, ↺), le temps ferré
+à droite en gras. Au toucher elle passe **aussitôt** en dégradé lie de vin ;
+barres de 4 pt arrondies qui glissent vers leur niveau (140 ms), en crème.
+Enregistré : ▶ réécouter (`VoicePlayer`) et 🗑.
+
+**Une note s'écrit dans l'autocollant** (`NoteDraft`, Lea, 2026-09-29) : jamais
+de feuille de cahier à part. Mêmes boutons partout : `GlassButton` (verre),
+`RoundButton` (plein), jamais un rond redessiné.
 
 **Le bento** (Lea, 2026-09-29, #97) : sous « Ma page », deux carrés côte à côte,
 12 pt d'écart. À gauche le **classement** (`LeaderboardSection square`) : lignes
