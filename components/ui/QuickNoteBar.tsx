@@ -4,7 +4,8 @@
  *   [ ✎ p. 157…            ] [🎙] [📷] [☺]
  *
  * Chaque action pose une note sur ma page enregistrée, sans quitter l'accueil :
- * - la ligne de cahier : écrire (la note s'ouvre) ;
+ * - la ligne de cahier : écrire, sur place (`NoteComposer`) ; un brouillon
+ *   laissé reste écrit sur la ligne ;
  * - 🎙 : la barre DEVIENT l'enregistreur (`VoiceRecorder`, le même que partout),
  *   l'enregistrement part tout de suite ; ■, puis ✓ pour coller ;
  * - 📷 : photographier un passage pour le citer ;
@@ -25,12 +26,11 @@ import { useQuickNote } from '../../hooks/useQuickNote';
 import type { VoiceClip } from '../../stores/annotationStore';
 import { colors, creamAlpha, fonts, inkAlpha, shadowAlpha, spacing } from '../../utils/constants';
 import { QUICK_REACTIONS } from '../../utils/emojis';
+import NoteComposer from './NoteComposer';
 import PressableScale from './PressableScale';
 import VoiceRecorder from './VoiceRecorder';
 
 interface QuickNoteBarProps {
-  /** Écrire : ouvre la note sur ma page */
-  onWrite: () => void;
   /** Photographier un passage. Sans elle, pas de bouton. */
   onCamera?: () => void;
 }
@@ -40,12 +40,14 @@ type Mode = 'idle' | 'voice' | 'emoji';
 export const QUICK_BAR_HEIGHT = 52;
 const BUTTON = 42;
 
-export default function QuickNoteBar({ onWrite, onCamera }: QuickNoteBarProps) {
+export default function QuickNoteBar({ onCamera }: QuickNoteBarProps) {
   const { post, posting, page } = useQuickNote();
   const reducedMotion = useReducedMotion();
   const [mode, setMode] = useState<Mode>('idle');
   const [clip, setClip] = useState<VoiceClip | null>(null);
   const [recording, setRecording] = useState(false);
+  const [writing, setWriting] = useState(false);
+  const [draft, setDraft] = useState('');
 
   const close = useCallback(() => {
     setClip(null);
@@ -90,9 +92,9 @@ export default function QuickNoteBar({ onWrite, onCamera }: QuickNoteBarProps) {
       <PressableScale
         style={styles.write}
         pressedScale={0.97}
-        onPress={onWrite}
+        onPress={() => setWriting(true)}
         accessibilityRole="button"
-        accessibilityLabel={`Écrire une note page ${page}`}
+        accessibilityLabel={draft ? `Reprendre la note page ${page} : ${draft}` : `Écrire une note page ${page}`}
       >
         <LinearGradient colors={PAPER} style={StyleSheet.absoluteFill} />
         {/* La ligne de cahier : deux réglures et la marge lie de vin */}
@@ -100,8 +102,8 @@ export default function QuickNoteBar({ onWrite, onCamera }: QuickNoteBarProps) {
         <View style={[styles.rule, { top: QUICK_BAR_HEIGHT * 0.72 }]} />
         <View style={styles.margin} />
         <PenLineIcon size={16} color={colors.textSecondary} strokeWidth={2.2} />
-        <Text style={styles.placeholder} numberOfLines={1}>
-          p. {page}…
+        <Text style={[styles.placeholder, !!draft && styles.draft]} numberOfLines={1}>
+          {draft || `p. ${page}…`}
         </Text>
       </PressableScale>
 
@@ -112,6 +114,27 @@ export default function QuickNoteBar({ onWrite, onCamera }: QuickNoteBarProps) {
         variant={mode === 'emoji' ? 'dark' : 'ghost'}
         label={mode === 'emoji' ? 'Fermer les réactions' : 'Réagir en emoji'}
         onPress={() => setMode(mode === 'emoji' ? 'idle' : 'emoji')}
+      />
+
+      <NoteComposer
+        visible={writing}
+        page={page}
+        draft={draft}
+        onClose={(left) => {
+          setDraft(left);
+          setWriting(false);
+        }}
+        onPost={async (body) => {
+          try {
+            const done = await post({ body });
+            if (done) Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+            return done;
+          } catch (error) {
+            console.error('[Carnet] note écrite impossible', error);
+            Alert.alert('Erreur', "La note n'a pas pu être enregistrée. Réessaie.");
+            return false;
+          }
+        }}
       />
 
       {mode === 'emoji' && (
@@ -215,6 +238,12 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     fontSize: 16,
     color: inkAlpha(0.45),
+  },
+  draft: {
+    fontFamily: fonts.bodySemiBold,
+    fontStyle: 'normal',
+    fontSize: 15,
+    color: colors.textPrimary,
   },
 
   round: {

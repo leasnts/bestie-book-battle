@@ -475,6 +475,10 @@ une **rangée du bas à hauteur fixe** (52 pt) :
   l'enregistreur, qui démarre tout de suite ; ■, puis ✓ pour coller, ✕ pour
   renoncer. ☺ : les six réactions sortent au-dessus de la barre, un toucher pose
   une note emoji seul ;
+  Écrire (`NoteComposer`, #100) : la feuille monte juste au-dessus du clavier,
+  l'accueil s'assombrit derrière. Papier réglé (lignes de 26 pt), marge lie de
+  vin ; ✕ · p. 157 · ↗ · ✓. ↗ la déplie en pleine page, ↙ la replie. ✕ ou le
+  fond referment en **gardant le brouillon**, écrit sur la ligne de cahier ;
 - pendant un défilement, ↺ annuler, « +14 », ✓ enregistrer (encre pleine). La
   barre s'efface : jamais de doute sur la page notée.
 

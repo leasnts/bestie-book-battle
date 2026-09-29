@@ -487,7 +487,7 @@ export default function HomeScreen() {
             onSave={handleSave}
             onUndo={handleUndo}
             onJournalPress={() => router.push(`/participant/${myUserId}`)}
-            quickBar={<QuickNoteBar onWrite={() => router.push('/note/new')} />}
+            quickBar={<QuickNoteBar />}
             compact={compactSpacing}
             pickerFontSize={pickerFontSize}
           />
