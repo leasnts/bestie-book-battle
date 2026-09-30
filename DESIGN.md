@@ -475,14 +475,17 @@ Le nombre de membres au cap vit dans la fiche du livre. Un objectif
 intermédiaire s'appelle un **cap** partout dans l'UI.
 
 Le cadre **Ma page** (`PageSection`) porte le geste principal : le sélecteur qui
-défile (pas de − / +), ma page en pages de mon édition, ma série en **jours**, et
-une **rangée du bas à hauteur fixe** (52 pt) :
-- au repos, la **barre d'actions rapides** (`QuickNoteBar`) : deux gélules en
-  verre égales, icône seule (`GlassButton` `stretch`), ✎ et ☺. Tout annote ma
+défile (pas de − / +), ma page en pages de mon édition, ma série en **jours**
+(dans le coin), et une **rangée du bas à hauteur fixe** (52 pt). **Sans titre**
+(Lea, 2026-09-29) : le cadre sort de sous « Le livre » (28 pt glissés dessous),
+son haut s'efface en fondu, coins droits en haut ; le bas garde l'arrondi et le
+bord d'un cadre (`GlassSection` `fadeTop`).
+- au repos, la **barre d'actions rapides** (`QuickNoteBar`) : ✎ et ☺, deux
+  `RoundButton` `dark` ferrés à droite (là où ✓ apparaît). Tout annote ma
   page **enregistrée**, sans quitter l'accueil. ☺ : une réaction en un geste, sans
   note ; la liste à la mode (`TRENDING_EMOJIS`) sort au-dessus de la barre et
-  défile ; « + » ouvre tous les emojis (/emoji-note, `EmojiGrid`). Un brouillon
-  laissé met un point lie de vin sur ✎.
+  défile ; « + » (`GlassButton`, secondaire) ouvre tous les emojis (/emoji-note,
+  `EmojiGrid`). Un brouillon laissé met un point lie de vin sur ✎ (`badge`).
   ✎ ouvre la feuille (`NoteComposer`), où **tout se fait** : elle monte au-dessus
   du clavier, l'accueil s'assombrit. Ligne du haut : ✕, la page (« p. 157 »,
   une gélule en verre qu'on touche pour la changer au pavé numérique), ↗ pleine page,
@@ -840,6 +843,28 @@ Référence visuelle : autocollants en cuir surpiqué au coin décollé (capture
 Lea). Essais écartés : une frise d'autocollants placés à leur page (« fouillis,
 on comprend pas »), une rangée serrée de petits autocollants, des autocollants-
 étiquettes pour les dates du journal (« pas beau »).
+
+### Boutons ronds à icône : secondaire et primaire, jamais un troisième
+
+**Règle de Lea (2026-09-30), non négociable.** Tout bouton rond qui porte une
+icône est l'un de ces deux, et rien d'autre :
+
+- **Secondaire, par défaut : `GlassButton`**, le rond en verre. C'est celui de
+  la feuille de note (✕ ↗ 🎙 ❝), des en-têtes (📚), du « + » des emojis, du + de
+  la barre d'onglets. En cas de doute, c'est lui ;
+- **Primaire : `RoundButton` `dark`**, l'encre chocolat en dégradé, **réservé
+  aux actions vraiment importantes** : ✓ enregistrer ma page, ✓ ajouter la note,
+  ■ / 🎙 de l'enregistreur, ✎ ☺ de « Ma page » (choix de Lea). Rare par
+  construction : s'il y en a partout, plus rien n'est important.
+
+Dans le contenu, `RoundButton` garde aussi `ghost` (↺ 🗑) et `light` (sur la
+gélule lie de vin). 42 pt partout ; plus petit seulement dans une gélule
+compacte (`size`).
+
+Jamais de `PressableScale` + `borderRadius: taille / 2` + icône écrit à la main,
+même « juste pour ici » : le « + » de la liste d'emojis l'était, il ne
+ressemblait à aucun autre bouton. Il manque une variante ? On l'ajoute au
+composant, pour tous.
 
 ### Bouton en verre — `GlassButton`
 
