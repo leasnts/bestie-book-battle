@@ -166,7 +166,7 @@ function GhostTotal({ total, size, left }: { total: number; size: number; left: 
   const width = Math.round(label.length * size * 0.58) + margin * 2;
   const height = Math.round(size * 1.25) + margin * 2;
   return (
-    <View pointerEvents="none" style={[styles.ghost, { left: left - margin, top: size * 0.2 - margin }]}>
+    <View pointerEvents="none" style={[styles.ghost, { left: left - margin, top: size * 0.08 - margin }]}>
       <Svg width={width} height={height}>
         <Defs>
           <Filter id="ghostBlur" x="-20%" y="-20%" width="140%" height="140%">
