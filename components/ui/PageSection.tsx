@@ -6,9 +6,8 @@
  *
  * - Sans titre : le cadre sort de sous « Le livre » et son haut s'efface, sans
  *   coins ; le bas garde l'arrondi et le bord d'un cadre (retour de Lea, 2026-09-29).
- * - Ma page est un **livre ouvert** (`OpenBookPicker`, 2026-09-30) : toucher
- *   tourne une page, appuyer puis glisser feuillette. Ma page est en **pages de
- *   mon édition**, d'où le « sur 624 » en titre courant.
+ * - Ma page en grand sur une **règle** qu'on fait glisser (`PageRuler`,
+ *   2026-09-30). Ma page est en **pages de mon édition**, d'où le « sur 624 ».
  * - La rangée du bas a une **hauteur fixe** :
  *   - au repos, ma série en **jours** (jamais « soirs » : on ne suppose pas
  *     quand les gens lisent) et la barre d'actions rapides (`QuickNoteBar`) ;
@@ -21,7 +20,7 @@ import React, { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { colors, fonts, spacing } from '../../utils/constants';
 import GlassSection from './GlassSection';
-import OpenBookPicker from './OpenBookPicker';
+import PageRuler from './PageRuler';
 import RoundButton from './RoundButton';
 import { QUICK_BAR_HEIGHT } from './QuickNoteBar';
 
@@ -43,6 +42,8 @@ interface PageSectionProps {
   quickBar?: React.ReactNode;
   /** Petit écran : marges resserrées, pour que l'accueil tienne sans défiler */
   compact?: boolean;
+  /** Taille du chiffre, choisie par l'accueil selon la hauteur de l'écran */
+  pickerFontSize?: number;
 }
 
 export default function PageSection({
@@ -55,6 +56,7 @@ export default function PageSection({
   onUndo,
   quickBar,
   compact = false,
+  pickerFontSize = 88,
 }: PageSectionProps) {
   const delta = currentPage - savedPage;
   const hasChanged = delta !== 0;
@@ -66,11 +68,11 @@ export default function PageSection({
       <View style={styles.tuck} />
 
       <View style={styles.book}>
-        <OpenBookPicker
+        <PageRuler
           currentPage={currentPage}
-          savedPage={savedPage}
           totalPages={totalPages}
           onPageChange={onPageChange}
+          fontSize={pickerFontSize}
         />
       </View>
 
