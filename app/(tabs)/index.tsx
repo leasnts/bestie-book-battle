@@ -83,12 +83,9 @@ export default function HomeScreen() {
   const tabBarInset = useTabBarInset();
   const { height: windowHeight } = useWindowDimensions();
   // Petits écrans : l'accueil doit tenir sans défiler (règle de Lea)
-  // - sous 830 pt (SE, mini) : chiffre de page plus petit ;
+  // - sous 830 pt (SE, mini) : cadres plus serrés ;
   // - sous 700 pt (SE) : classement réduit au 1er et à moi.
   const compactPage = windowHeight < 830;
-  // Taille du chiffre de page : petite sur SE/mini, plus grosse sur les grands
-  // écrans où il reste de la place (17 Pro, Pro Max)
-  const pickerFontSize = windowHeight < 830 ? 52 : windowHeight < 900 ? 80 : 88;
   const compactLeaderboard = windowHeight < 700;
   // SE : marges resserrées aussi (entre les cadres et dans les cadres)
   const compactSpacing = compactLeaderboard;
@@ -493,7 +490,6 @@ export default function HomeScreen() {
             onUndo={handleUndo}
             quickBar={<QuickNoteBar />}
             compact={compactSpacing}
-            pickerFontSize={pickerFontSize}
           />
         </View>
       ) : !_hasHydrated || (challenges.length === 0 && challengesLoading) ? (
