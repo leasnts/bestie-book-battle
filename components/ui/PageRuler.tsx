@@ -5,7 +5,8 @@
  * chiffres solo au milieu de rien, le / 624 pas beau »). Maquette :
  * https://claude.ai/artifact/LHcESZK1418eDJSUatpYP1 (★ B).
  *
- * - En haut, ma page en grand ; dessous « sur 624 » (pages de MON édition).
+ * - En haut, ma page en grand. Le total (pages de MON édition) est un « / 624 »
+ *   en arrière-plan : plus gros, décalé en bas à droite, pâle et flouté (Lea).
  * - En bas, une règle graduée qu'on fait glisser : un trait par page, un grand
  *   trait et un repère toutes les dix. Le curseur lie de vin marque ma page.
  *   Défilement natif (élan, arrêt net sur une page), un tic par page.
@@ -27,6 +28,7 @@ import {
   Text,
   View,
 } from 'react-native';
+import Svg, { Defs, FeGaussianBlur, Filter, Text as SvgText } from 'react-native-svg';
 import { accentGradient, colors, fonts } from '../../utils/constants';
 
 interface PageRulerProps {
@@ -49,6 +51,8 @@ export default function PageRuler({ currentPage, totalPages, onPageChange, fontS
   const [width, setWidth] = useState(0);
   const onLayout = (e: LayoutChangeEvent) => setWidth(e.nativeEvent.layout.width);
 
+  // Le « / 624 » se cale sur la largeur du chiffre
+  const [numberWidth, setNumberWidth] = useState(0);
   const listRef = useRef<FlatList<number>>(null);
   // La page que la règle montre ; sert à ne pas re-défiler quand c'est elle qui l'a changée
   const shownPage = useRef(currentPage);
@@ -100,14 +104,17 @@ export default function PageRuler({ currentPage, totalPages, onPageChange, fontS
       onAccessibilityAction={(e) => step(e.nativeEvent.actionName === 'increment' ? 1 : -1)}
     >
       <View style={styles.numberBlock}>
-        <Text
-          style={[styles.number, { fontSize, lineHeight: Math.round(fontSize * 1.05) }]}
-          numberOfLines={1}
-          adjustsFontSizeToFit
-        >
-          {currentPage}
-        </Text>
-        <Text style={styles.total}>sur {totalPages}</Text>
+        <View>
+          {numberWidth > 0 && <GhostTotal total={totalPages} size={Math.round(fontSize * 0.95)} left={numberWidth * 0.62} />}
+          <Text
+            onLayout={(e) => setNumberWidth(e.nativeEvent.layout.width)}
+            style={[styles.number, { fontSize, lineHeight: Math.round(fontSize * 1.05) }]}
+            numberOfLines={1}
+            adjustsFontSizeToFit
+          >
+            {currentPage}
+          </Text>
+        </View>
       </View>
 
       <View style={styles.ruler} onLayout={onLayout}>
@@ -151,6 +158,37 @@ export default function PageRuler({ currentPage, totalPages, onPageChange, fontS
   );
 }
 
+/** « / 624 » derrière le chiffre : plus gros, décalé, pâle et flouté */
+function GhostTotal({ total, size, left }: { total: number; size: number; left: number }) {
+  const label = `/${total}`;
+  const blur = 3;
+  const margin = blur * 4;
+  const width = Math.round(label.length * size * 0.58) + margin * 2;
+  const height = Math.round(size * 1.25) + margin * 2;
+  return (
+    <View pointerEvents="none" style={[styles.ghost, { left: left - margin, top: size * 0.2 - margin }]}>
+      <Svg width={width} height={height}>
+        <Defs>
+          <Filter id="ghostBlur" x="-20%" y="-20%" width="140%" height="140%">
+            <FeGaussianBlur stdDeviation={blur} />
+          </Filter>
+        </Defs>
+        <SvgText
+          x={margin}
+          y={margin + size}
+          fontFamily={fonts.displayHero}
+          fontSize={size}
+          fill={colors.textPrimary}
+          fillOpacity={0.16}
+          filter="url(#ghostBlur)"
+        >
+          {label}
+        </SvgText>
+      </Svg>
+    </View>
+  );
+}
+
 /** Dix pages de règle : le grand trait et son repère, puis neuf petits */
 const Decade = React.memo(function Decade({ index, totalPages }: { index: number; totalPages: number }) {
   const first = index * 10;
@@ -186,11 +224,8 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
     fontVariant: ['tabular-nums'],
   },
-  total: {
-    marginTop: 2,
-    fontFamily: fonts.displayRegular,
-    fontSize: 16,
-    color: colors.textTertiary,
+  ghost: {
+    position: 'absolute',
   },
   ruler: {
     height: RULER_HEIGHT,
