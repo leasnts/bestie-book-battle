@@ -1,10 +1,10 @@
 /**
  * QuickNoteBar — la barre d'actions rapides de « Ma page ».
  *
- *   (✎) (☺)
+ *                (✎) (☺)
  *
  * Deux façons d'annoter ma page enregistrée, sans quitter l'accueil, deux
- * ronds en verre ferrés à gauche, icône seule :
+ * ronds chocolat (`RoundButton` dark) ferrés à droite, icône seule :
  * - ✎ : la feuille (`NoteComposer`), où tout se fait : écrire, dire (🎙), citer
  *   (❝), choisir le thème et la page. Un brouillon laissé met un point lie de
  *   vin sur le crayon ;
@@ -24,9 +24,9 @@ import Animated, { FadeIn, FadeOut, useReducedMotion, ZoomIn } from 'react-nativ
 import { useQuickNote, type QuickNote } from '../../hooks/useQuickNote';
 import { colors, creamAlpha, inkAlpha, shadowAlpha, spacing } from '../../utils/constants';
 import { TRENDING_EMOJIS } from '../../utils/emojis';
-import GlassButton from './GlassButton';
 import NoteComposer, { EMPTY_DRAFT, type ComposerDraft } from './NoteComposer';
 import PressableScale from './PressableScale';
+import RoundButton from './RoundButton';
 
 type Mode = 'idle' | 'emoji';
 
@@ -63,21 +63,23 @@ export default function QuickNoteBar() {
 
   return (
     <View style={styles.bar}>
-      <GlassButton
+      <RoundButton
         icon={PenLineIcon}
+        variant="dark"
         badge={!!(draft.body || draft.quote)}
         onPress={() => {
           setMode('idle');
           setWriting(true);
         }}
-        accessibilityLabel={
+        label={
           draft.body ? `Reprendre ma note sur la page ${page} : ${draft.body}` : `Écrire une note sur la page ${page}`
         }
       />
-      <GlassButton
+      <RoundButton
         icon={mode === 'emoji' ? XIcon : SmilePlusIcon}
+        variant="dark"
         onPress={() => setMode(mode === 'emoji' ? 'idle' : 'emoji')}
-        accessibilityLabel={mode === 'emoji' ? 'Fermer les emojis' : `Annoter la page ${page} d’un emoji`}
+        label={mode === 'emoji' ? 'Fermer les emojis' : `Annoter la page ${page} d’un emoji`}
       />
 
       {mode === 'emoji' && (
@@ -136,6 +138,7 @@ const styles = StyleSheet.create({
     height: QUICK_BAR_HEIGHT,
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'flex-end',
     gap: spacing.sm,
   },
   // Les emojis sortent au-dessus de la barre, sur toute sa largeur
