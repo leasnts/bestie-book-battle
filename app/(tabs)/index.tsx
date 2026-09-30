@@ -450,7 +450,8 @@ export default function HomeScreen() {
         contentContainerStyle={{
           flexGrow: 1,
           // De l'air au-dessus de la barre d'onglets, sauf sur SE où chaque point compte
-          paddingBottom: tabBarInset + (compactSpacing ? spacing.md : spacing['2xl']),
+          // « Ma page » prend la place qui reste, un peu moins haute grâce à cet air
+          paddingBottom: tabBarInset + (compactSpacing ? spacing.md : spacing['4xl']),
         }}
         scrollEnabled={framesOverflow}
         // La feuille pour annoter la page vit dans ce défilement (dans l'arbre
@@ -549,7 +550,7 @@ export default function HomeScreen() {
       {/* ═══════════ CADRE 3 : LE BENTO — CLASSEMENT ET CARNET ═══════════
         Deux carrés côte à côte : où je me situe dans le club, et la note à la une. */}
       {activeChallenge && (
-        <View style={[styles.bento, frameGap]}>
+        <View style={[styles.bento, { paddingTop: compactSpacing ? spacing.sm : spacing['2xl'] }]}>
           <View style={styles.bentoCell}>
             <LeaderboardSection
               participants={leaderboardParticipants}

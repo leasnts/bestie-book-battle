@@ -45,8 +45,8 @@ interface GlassSectionProps {
   compact?: boolean;
   /**
    * Le haut s'efface sur cette hauteur : le cadre sort de sous celui du dessus
-   * (Ma page, sous Le livre). Les coins du haut disparaissent dans le fondu ; le
-   * bas garde son arrondi et son bord.
+   * (Ma page, sous Le livre). Coins droits en haut ; le bas garde son arrondi et
+   * son bord.
    */
   fadeTop?: number;
 }
@@ -68,13 +68,15 @@ export default function GlassSection({
           style={StyleSheet.absoluteFill}
           pointerEvents="none"
           maskElement={
+            // Le masque dessine la forme : droit en haut, arrondi en bas
             <View style={styles.maskColumn}>
               <LinearGradient colors={['transparent', '#000']} style={{ height: fadeTop }} />
               <View style={styles.maskSolid} />
             </View>
           }
         >
-          <GlassMaterial radius={RADIUS} veil={glassVeil} edgeColor={EDGE} />
+          <GlassMaterial radius={0} veil={glassVeil} />
+          <View style={styles.edgeOpenTop} />
         </MaskedView>
       ) : (
         <GlassMaterial radius={RADIUS} veil={glassVeil} edgeColor={EDGE} />
@@ -120,5 +122,16 @@ const styles = StyleSheet.create({
   maskSolid: {
     flex: 1,
     backgroundColor: '#000',
+    borderBottomLeftRadius: RADIUS,
+    borderBottomRightRadius: RADIUS,
+  },
+  // Le bord, sans le haut : il s'efface avec le verre
+  edgeOpenTop: {
+    ...StyleSheet.absoluteFillObject,
+    borderWidth: 1,
+    borderTopWidth: 0,
+    borderColor: EDGE,
+    borderBottomLeftRadius: RADIUS,
+    borderBottomRightRadius: RADIUS,
   },
 });

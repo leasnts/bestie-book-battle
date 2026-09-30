@@ -71,15 +71,15 @@ export default function PageSection({
   return (
     // Le cadre remplit la place que l'accueil lui donne ; le chiffre est centré dedans
     <GlassSection compact={compact} fadeTop={PAGE_FADE} style={styles.frame}>
-      {/* Le haut est sous « Le livre » : le contenu commence sous le fondu */}
-      <View style={styles.head}>
-        {streakDays > 0 && (
-          <View style={styles.streak} accessible accessibilityLabel={`Série de ${streakDays} jours`}>
-            <FlameIcon size={14} color={colors.textTertiary} fill={colors.textTertiary} />
-            <Text style={styles.streakText}>{streakDays} j</Text>
-          </View>
-        )}
-      </View>
+      {/* Le haut est sous « Le livre » : le contenu commence sous le fondu. La
+          série se pose dans le coin, sans prendre de hauteur. */}
+      <View style={styles.tuck} />
+      {streakDays > 0 && (
+        <View style={styles.streak} accessible accessibilityLabel={`Série de ${streakDays} jours`}>
+          <FlameIcon size={14} color={colors.textTertiary} fill={colors.textTertiary} />
+          <Text style={styles.streakText}>{streakDays} j</Text>
+        </View>
+      )}
 
       {/* Le chiffre et son « / 624 », ensemble, centrés dans la place du cadre */}
       <View style={styles.center}>
@@ -141,14 +141,14 @@ const PICKER_FONT_SIZE = 68;
 
 const styles = StyleSheet.create({
   // minHeight : le titre grandit avec le réglage système au lieu d'être coupé
-  head: {
-    minHeight: 21,
-    marginTop: PAGE_TUCK - spacing.sm,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'flex-end',
+  tuck: {
+    height: PAGE_TUCK - spacing.sm,
   },
   streak: {
+    position: 'absolute',
+    zIndex: 1,
+    top: PAGE_TUCK + spacing.sm,
+    right: spacing.lg,
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.xs,
