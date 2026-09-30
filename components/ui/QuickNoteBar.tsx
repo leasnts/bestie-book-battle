@@ -1,18 +1,19 @@
 /**
  * QuickNoteBar — la barre d'actions rapides de « Ma page ».
  *
- *   (      ✎      ) (      ☺      )
+ *                (✎) (☺)
  *
  * Deux façons d'annoter ma page enregistrée, sans quitter l'accueil, deux
- * gélules égales, icône seule :
+ * ronds chocolat (`RoundButton` dark) ferrés à droite, icône seule :
  * - ✎ : la feuille (`NoteComposer`), où tout se fait : écrire, dire (🎙), citer
  *   (❝), choisir le thème et la page. Un brouillon laissé met un point lie de
  *   vin sur le crayon ;
  * - ☺ : une réaction en un geste, sans note : la liste à la mode sort au-dessus
- *   de la barre et défile ; « + » ouvre tous les emojis (/emoji-note).
+ *   de la barre et défile ; « + » (secondaire, en verre) ouvre tous les emojis
+ *   (/emoji-note).
  *
- * Les gélules sont des `GlassButton` étirés. Hauteur fixe : la barre et la
- * rangée ↺ +14 ✓ de « Ma page » prennent la même place, rien ne saute.
+ * Hauteur fixe : la barre et la rangée ↺ +14 ✓ de « Ma page » prennent la même
+ * place, rien ne saute.
  */
 
 import * as Haptics from 'expo-haptics';
@@ -22,11 +23,12 @@ import React, { useCallback, useState } from 'react';
 import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeIn, FadeOut, useReducedMotion, ZoomIn } from 'react-native-reanimated';
 import { useQuickNote, type QuickNote } from '../../hooks/useQuickNote';
-import { colors, creamAlpha, inkAlpha, shadowAlpha, spacing } from '../../utils/constants';
+import { creamAlpha, inkAlpha, shadowAlpha, spacing } from '../../utils/constants';
 import { TRENDING_EMOJIS } from '../../utils/emojis';
-import GlassButton from './GlassButton';
 import NoteComposer, { EMPTY_DRAFT, type ComposerDraft } from './NoteComposer';
 import PressableScale from './PressableScale';
+import GlassButton from './GlassButton';
+import RoundButton, { ROUND_BUTTON_SIZE } from './RoundButton';
 
 type Mode = 'idle' | 'emoji';
 
@@ -63,25 +65,23 @@ export default function QuickNoteBar() {
 
   return (
     <View style={styles.bar}>
-      <GlassButton
+      <RoundButton
         icon={PenLineIcon}
-        size={QUICK_BAR_HEIGHT}
-        stretch
+        variant="dark"
         badge={!!(draft.body || draft.quote)}
         onPress={() => {
           setMode('idle');
           setWriting(true);
         }}
-        accessibilityLabel={
+        label={
           draft.body ? `Reprendre ma note sur la page ${page} : ${draft.body}` : `Écrire une note sur la page ${page}`
         }
       />
-      <GlassButton
+      <RoundButton
         icon={mode === 'emoji' ? XIcon : SmilePlusIcon}
-        size={QUICK_BAR_HEIGHT}
-        stretch
+        variant="dark"
         onPress={() => setMode(mode === 'emoji' ? 'idle' : 'emoji')}
-        accessibilityLabel={mode === 'emoji' ? 'Fermer les emojis' : `Annoter la page ${page} d’un emoji`}
+        label={mode === 'emoji' ? 'Fermer les emojis' : `Annoter la page ${page} d’un emoji`}
       />
 
       {mode === 'emoji' && (
@@ -105,18 +105,16 @@ export default function QuickNoteBar() {
               </Animated.View>
             ))}
           </ScrollView>
-          <PressableScale
-            style={styles.more}
-            pressedScale={0.9}
+          {/* Secondaire : le rond en verre, jamais un bouton-icône redessiné */}
+          <GlassButton
+            icon={PlusIcon}
+            size={ROUND_BUTTON_SIZE}
+            accessibilityLabel="Tous les emojis"
             onPress={() => {
               closeMode();
               router.push('/emoji-note');
             }}
-            accessibilityRole="button"
-            accessibilityLabel="Tous les emojis"
-          >
-            <PlusIcon size={20} color={colors.dark900} strokeWidth={2.4} />
-          </PressableScale>
+          />
         </Animated.View>
       )}
 
@@ -140,6 +138,7 @@ const styles = StyleSheet.create({
     height: QUICK_BAR_HEIGHT,
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'flex-end',
     gap: spacing.sm,
   },
   // Les emojis sortent au-dessus de la barre, sur toute sa largeur
@@ -173,13 +172,5 @@ const styles = StyleSheet.create({
   },
   emojiText: {
     fontSize: 24,
-  },
-  more: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: inkAlpha(0.07),
   },
 });

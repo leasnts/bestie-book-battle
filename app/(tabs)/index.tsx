@@ -46,7 +46,7 @@ import CoverBackdrop from '../../components/ui/CoverBackdrop';
 import GlassButton from '../../components/ui/GlassButton';
 import NoteTile from '../../components/ui/NoteTile';
 import QuickNoteBar from '../../components/ui/QuickNoteBar';
-import PageSection from '../../components/ui/PageSection';
+import PageSection, { PAGE_TUCK } from '../../components/ui/PageSection';
 import LeaderboardSection from '../../components/ui/LeaderboardSection';
 import { getAllUserPages } from '../../services/supabase/database';
 import { myCoverUrl } from '../../services/myEdition';
@@ -450,7 +450,8 @@ export default function HomeScreen() {
         contentContainerStyle={{
           flexGrow: 1,
           // De l'air au-dessus de la barre d'onglets, sauf sur SE où chaque point compte
-          paddingBottom: tabBarInset + (compactSpacing ? spacing.md : spacing['2xl']),
+          // « Ma page » prend la place qui reste, un peu moins haute grâce à cet air
+          paddingBottom: tabBarInset + (compactSpacing ? spacing.md : spacing['4xl']),
         }}
         scrollEnabled={framesOverflow}
         // La feuille pour annoter la page vit dans ce défilement (dans l'arbre
@@ -480,7 +481,7 @@ export default function HomeScreen() {
 
       {/* ═══════════ CADRE 2 : MA PAGE ═══════════ */}
       {activeChallenge ? (
-        <View style={[styles.pageSection, frameGap]}>
+        <View style={[styles.pageSection, { marginTop: -PAGE_TUCK, paddingTop: 0 }]}>
           <PageSection
             key={activeChallenge.id}
             currentPage={currentPageInput}
@@ -490,7 +491,6 @@ export default function HomeScreen() {
             onPageChange={handlePageChange}
             onSave={handleSave}
             onUndo={handleUndo}
-            onJournalPress={() => router.push(`/participant/${myUserId}`)}
             quickBar={<QuickNoteBar />}
             compact={compactSpacing}
             pickerFontSize={pickerFontSize}
@@ -550,7 +550,7 @@ export default function HomeScreen() {
       {/* ═══════════ CADRE 3 : LE BENTO — CLASSEMENT ET CARNET ═══════════
         Deux carrés côte à côte : où je me situe dans le club, et la note à la une. */}
       {activeChallenge && (
-        <View style={[styles.bento, frameGap]}>
+        <View style={[styles.bento, { paddingTop: compactSpacing ? spacing.sm : spacing['2xl'] }]}>
           <View style={styles.bentoCell}>
             <LeaderboardSection
               participants={leaderboardParticipants}
@@ -625,11 +625,11 @@ const styles = StyleSheet.create({
   // ===== CADRE 1 : LE LIVRE =====
   // Les trois cadres sont espacés de 12 pt, comme sur la maquette : l'accueil
   // doit tenir sans défiler.
+  // Au-dessus de « Ma page », qui se glisse dessous
   bookSection: {
+    zIndex: 1,
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.borderLight,
   },
 
   // ===== SECTION SÉLECTEUR DE PAGE =====

@@ -2,8 +2,8 @@
  * RoundButton — LE bouton rond plein de l'app, pour les actions dans le contenu
  * (à distinguer de `GlassButton`, le rond en verre des en-têtes et de la barre).
  *
- * - `dark` : l'action principale, encre pleine (✓ enregistrer, ✓ ajouter la note,
- *   🎙 enregistrer) ;
+ * - `dark` : l'action principale, encre chocolat en dégradé (✓ enregistrer,
+ *   ✓ ajouter la note, 🎙 enregistrer, ✎ ☺ de « Ma page ») ;
  * - `ghost` : les autres, `inkAlpha(0.07)` (↺ annuler, ↺ refaire, 🗑) ;
  * - `light` : sur une surface foncée (■ arrêter, sur la gélule lie de vin).
  *
@@ -11,10 +11,11 @@
  * Désactivé, il se grise (`PressableScale`).
  */
 
+import { LinearGradient } from 'expo-linear-gradient';
 import type { LucideIcon } from 'lucide-react-native';
 import React from 'react';
-import { StyleSheet } from 'react-native';
-import { colors, creamAlpha, inkAlpha, shadowAlpha } from '../../utils/constants';
+import { StyleSheet, View } from 'react-native';
+import { colors, creamAlpha, inkAlpha, inkGradient, shadowAlpha } from '../../utils/constants';
 import PressableScale from './PressableScale';
 
 interface RoundButtonProps {
@@ -27,6 +28,10 @@ interface RoundButtonProps {
   disabled?: boolean;
   /** Icône pleine (■ arrêter) */
   filled?: boolean;
+  /** Plus petit dans la feuille rapide ; par défaut `ROUND_BUTTON_SIZE` */
+  size?: number;
+  /** Un point lie de vin dans le coin : quelque chose attend (un brouillon) */
+  badge?: boolean;
 }
 
 export const ROUND_BUTTON_SIZE = 42;
@@ -39,11 +44,18 @@ export default function RoundButton({
   onPress,
   disabled,
   filled = false,
+  size = ROUND_BUTTON_SIZE,
+  badge = false,
 }: RoundButtonProps) {
+  const scale = size / ROUND_BUTTON_SIZE;
   const color = variant === 'dark' ? colors.white : variant === 'light' ? colors.accent : colors.dark900;
   return (
     <PressableScale
-      style={[styles.button, styles[variant]]}
+      style={[
+        styles.button,
+        size !== ROUND_BUTTON_SIZE && { width: size, height: size, borderRadius: size / 2 },
+        styles[variant],
+      ]}
       pressedScale={0.9}
       hitSlop={6}
       disabled={disabled}
@@ -52,7 +64,12 @@ export default function RoundButton({
       accessibilityLabel={label}
       accessibilityHint={hint}
     >
-      <Icon size={filled ? 15 : 19} color={color} fill={filled ? color : 'none'} strokeWidth={2.2} />
+      {/* Jamais d'aplat : l'encre chocolat, plus claire en haut */}
+      {variant === 'dark' && (
+        <LinearGradient colors={inkGradient} style={[StyleSheet.absoluteFill, { borderRadius: size / 2 }]} />
+      )}
+      <Icon size={Math.round((filled ? 15 : 19) * scale)} color={color} fill={filled ? color : 'none'} strokeWidth={2.2} />
+      {badge && <View style={styles.badge} />}
     </PressableScale>
   );
 }
@@ -71,6 +88,18 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 1,
     shadowRadius: 6,
+  },
+  // Cerclé de crème : il se détache sur l'encre comme sur le verre
+  badge: {
+    position: 'absolute',
+    top: 2,
+    right: 2,
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    borderWidth: 1.5,
+    borderColor: colors.white,
+    backgroundColor: colors.accent,
   },
   ghost: {
     backgroundColor: inkAlpha(0.07),

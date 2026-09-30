@@ -28,12 +28,14 @@ interface VoicePlayerProps {
   seconds: number;
   /** L'onde, de 0 à 100. Sans elle, une ligne régulière. */
   levels?: number[] | null;
+  /** Plus bas, dans la gélule compacte de la feuille rapide */
+  compact?: boolean;
 }
 
 /** Le vocal qui parle en ce moment, pour le couper quand un autre démarre */
 let pauseCurrent: (() => void) | null = null;
 
-export default function VoicePlayer({ path, uri, seconds, levels }: VoicePlayerProps) {
+export default function VoicePlayer({ path, uri, seconds, levels, compact = false }: VoicePlayerProps) {
   const player = useAudioPlayer(null, { updateInterval: 100 });
   const status = useAudioPlayerStatus(player);
   const [loading, setLoading] = useState(false);
@@ -96,9 +98,9 @@ export default function VoicePlayer({ path, uri, seconds, levels }: VoicePlayerP
   const bars = levels && levels.length > 0 ? levels : FLAT;
 
   return (
-    <View style={styles.player}>
+    <View style={[styles.player, compact && styles.playerCompact]}>
       <PressableScale
-        style={styles.play}
+        style={[styles.play, compact && styles.playCompact]}
         pressedScale={0.9}
         hitSlop={8}
         disabled={loading}
@@ -149,6 +151,10 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.full,
     backgroundColor: creamAlpha(0.55),
   },
+  playerCompact: {
+    minHeight: 32,
+    paddingLeft: 4,
+  },
   play: {
     width: PLAY_SIZE,
     height: PLAY_SIZE,
@@ -156,6 +162,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: colors.dark900,
+  },
+  playCompact: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
   },
   // Le triangle est plus lourd à gauche : on le recentre à l'œil
   playIcon: {

@@ -12,12 +12,16 @@
  *   ╰┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄╯
  *      ╰ ♥ ╯╰ 🔥 ╯╰ ☁ ╯╰ 🎭 ╯╰ 💡 ╯╰ 📌 ╯   les intercalaires sortent du bas de
  *                                ╰────╯   la note ; la choisie dépasse plus
+ *
+ * La choisie prolonge la note : la couture y descend et en fait le tour
+ * (`tabStitchNotch` ouvre celle de la note au bon endroit).
  */
 
 import { LinearGradient } from 'expo-linear-gradient';
 import { Image } from 'expo-image';
 import * as Haptics from 'expo-haptics';
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
+import Svg, { Path } from 'react-native-svg';
 import { StyleSheet, Text, View } from 'react-native';
 import Animated, {
   Easing,
@@ -29,6 +33,7 @@ import Animated, {
 import type { AnnotationCategory } from '../../types/supabase';
 import { ANNOTATION_CATEGORIES, CATEGORY_ICONS, CATEGORY_ORDER } from '../../utils/annotations';
 import { borderRadius, colors, fonts, inkAlpha, motion, shadowAlpha, spacing } from '../../utils/constants';
+import { STITCH, stitchColor } from './NoteSticker';
 import PressableScale from './PressableScale';
 
 /** La part de l'intercalaire cachée sous la note */
@@ -42,6 +47,24 @@ const TAB_HEIGHT = 30;
 const TAB_PULL = 10;
 /** Tirer un intercalaire : lent à la fin, comme un onglet de papier qui glisse */
 const TAB_IN_MS = 420;
+const TAB_GAP = 3;
+const TAB_RADIUS = borderRadius.md;
+/** La couture dans l'intercalaire : aussi près du bord que celle de la note */
+const TAB_STITCH_INSET = 7;
+/** Le plus haut qu'un intercalaire puisse être : la couture y est dessinée d'un bloc */
+const TAB_MAX = TAB_TUCK + TAB_HEIGHT + TAB_PULL;
+
+/**
+ * Où la couture de la note s'ouvre pour descendre dans l'intercalaire choisi :
+ * les intercalaires ont tous la même largeur, on n'a rien à mesurer.
+ */
+export function tabStitchNotch(width: number, category: AnnotationCategory) {
+  const index = CATEGORY_ORDER.indexOf(category);
+  const count = CATEGORY_ORDER.length;
+  const tab = (width - spacing.lg * 2 - TAB_GAP * (count - 1)) / count;
+  const x = spacing.lg + index * (tab + TAB_GAP);
+  return { left: x + TAB_STITCH_INSET, right: x + tab - TAB_STITCH_INSET };
+}
 
 interface CategoryPickerProps {
   value: AnnotationCategory;
@@ -147,6 +170,12 @@ function CategoryTab({
   }));
   // L'encre foncée, par-dessus l'encre pâle, apparaît avec la sélection
   const inkStyle = useAnimatedStyle(() => ({ opacity: out.value }));
+  const [width, setWidth] = useState(0);
+  // La couture, calée en bas : elle descend avec l'intercalaire qu'on tire
+  const i = TAB_STITCH_INSET;
+  const rr = TAB_RADIUS - i * 0.6;
+  const b = TAB_MAX - i;
+  const stitch = `M ${i} 0 V ${b - rr} Q ${i} ${b} ${i + rr} ${b} H ${width - i - rr} Q ${width - i} ${b} ${width - i} ${b - rr} V 0`;
 
   return (
     <PressableScale
@@ -157,7 +186,7 @@ function CategoryTab({
       accessibilityLabel={option.label}
       accessibilityState={{ selected }}
     >
-      <Animated.View style={[styles.tab, tabStyle]}>
+      <Animated.View style={[styles.tab, tabStyle]} onLayout={(e) => setWidth(e.nativeEvent.layout.width)}>
         {/* Aucune ombre sous la note : le haut reprend le ton du bas de la note
             (le voile de `NoteSticker` l’y assombrit d’environ 6 %), l'intercalaire
             en est le prolongement */}
@@ -181,6 +210,19 @@ function CategoryTab({
             />
           </Animated.View>
         </Animated.View>
+        {width > 0 && (
+          <Animated.View style={[styles.tabStitch, inkStyle]} pointerEvents="none">
+            <Svg width={width} height={TAB_MAX}>
+              <Path
+                d={stitch}
+                fill="none"
+                stroke={stitchColor(true)}
+                strokeWidth={STITCH.width}
+                strokeDasharray={STITCH.dash}
+              />
+            </Svg>
+          </Animated.View>
+        )}
       </Animated.View>
     </PressableScale>
   );
@@ -230,7 +272,7 @@ const styles = StyleSheet.create({
   tabs: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    gap: 3,
+    gap: TAB_GAP,
     marginTop: -TAB_TUCK,
     paddingHorizontal: spacing.lg,
   },
@@ -238,9 +280,14 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   tab: {
-    borderBottomLeftRadius: borderRadius.md,
-    borderBottomRightRadius: borderRadius.md,
+    borderBottomLeftRadius: TAB_RADIUS,
+    borderBottomRightRadius: TAB_RADIUS,
     overflow: 'hidden',
+  },
+  tabStitch: {
+    position: 'absolute',
+    left: 0,
+    bottom: 0,
   },
   // L'illustration sort par le bas, coupée : un masque, teinté d'un ton plus
   // sombre que l'intercalaire (le grain de l'aquarelle est dans la transparence)

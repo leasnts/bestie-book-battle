@@ -84,6 +84,11 @@ interface VoiceRecorderProps {
   onRecordingChange?: (recording: boolean) => void;
   /** Démarre dès l'affichage : le micro de la barre d'actions rapides */
   autoStart?: boolean;
+  /**
+   * La gélule à la hauteur des boutons d'en-tête (`ROUND_BUTTON_SIZE`) : dans la
+   * feuille rapide, elle s'aligne sur ✕ et ↗ (retour de Lea, 2026-09-29)
+   */
+  compact?: boolean;
 }
 
 export default function VoiceRecorder({
@@ -91,7 +96,10 @@ export default function VoiceRecorder({
   onChange,
   onRecordingChange,
   autoStart = false,
+  compact = false,
 }: VoiceRecorderProps) {
+  const height = compact ? VOICE_BAR_HEIGHT_COMPACT : HEIGHT;
+  const button = height - PAD * 2;
   const recorder = useAudioRecorder(VOICE_RECORDING);
   const state = useAudioRecorderState(recorder, 100);
   // Le démarrage attend la permission et le micro : entre-temps l'enregistreur a
@@ -233,34 +241,55 @@ export default function VoiceRecorder({
   const recorded = clip && !recording ? clip : null;
 
   return (
-    <View style={[styles.row, !recording && styles.rowIdle]}>
+    <View
+      style={[
+        styles.row,
+        { minHeight: height, borderRadius: height / 2 },
+        compact && styles.rowCompact,
+        !recording && styles.rowIdle,
+      ]}
+    >
       {recording && (
-        <LinearGradient colors={accentGradient} style={[StyleSheet.absoluteFill, styles.rowFill]} />
+        <LinearGradient colors={accentGradient} style={[StyleSheet.absoluteFill, { borderRadius: height / 2 }]} />
       )}
 
       {recording ? (
-        <RoundButton icon={SquareIcon} variant="light" filled label="Arrêter le vocal" onPress={finish} />
+        <RoundButton icon={SquareIcon} variant="light" filled size={button} label="Arrêter le vocal" onPress={finish} />
       ) : recorded ? (
-        <RoundButton icon={RotateCcwIcon} variant="ghost" label="Refaire le vocal" onPress={start} />
+        <RoundButton icon={RotateCcwIcon} variant="ghost" size={button} label="Refaire le vocal" onPress={start} />
       ) : (
-        <RoundButton icon={MicIcon} variant="dark" label="Enregistrer une note vocale" onPress={start} />
+        <RoundButton icon={MicIcon} variant="dark" size={button} label="Enregistrer une note vocale" onPress={start} />
       )}
 
       {recorded ? (
         // Enregistré : on peut le réécouter avant de l'ajouter, avec le lecteur du carnet
         <View style={styles.player}>
-          <VoicePlayer uri={recorded.uri} path={recorded.path} seconds={recorded.seconds} levels={recorded.levels} />
+          <VoicePlayer
+            uri={recorded.uri}
+            path={recorded.path}
+            seconds={recorded.seconds}
+            levels={recorded.levels}
+            compact={compact}
+          />
         </View>
       ) : (
         <>
-          <View style={styles.live} importantForAccessibility="no-hide-descendants">
+          <View
+            style={[styles.live, compact && styles.liveCompact]}
+            importantForAccessibility="no-hide-descendants"
+          >
             {Array.from({ length: LIVE_BARS }).map((_, index) => (
               // Les barres arrivent par la droite
-              <LiveBar key={index} level={live[index - (LIVE_BARS - live.length)]} on={recording} />
+              <LiveBar
+                key={index}
+                level={live[index - (LIVE_BARS - live.length)]}
+                on={recording}
+                max={compact ? LIVE_HEIGHT_COMPACT : LIVE_HEIGHT}
+              />
             ))}
           </View>
           <Text
-            style={[styles.counter, recording && styles.counterOn]}
+            style={[styles.counter, compact && styles.counterCompact, recording && styles.counterOn]}
             accessibilityLabel={`${formatVoiceDuration(elapsed)} sur ${formatVoiceDuration(MAX_VOICE_SECONDS)}`}
           >
             {formatVoiceDuration(elapsed)}
@@ -269,45 +298,53 @@ export default function VoiceRecorder({
       )}
 
       {recorded && (
-        <RoundButton icon={Trash2Icon} variant="ghost" label="Supprimer le vocal" onPress={() => onChange(null)} />
+        <RoundButton
+          icon={Trash2Icon}
+          variant="ghost"
+          size={button}
+          label="Supprimer le vocal"
+          onPress={() => onChange(null)}
+        />
       )}
     </View>
   );
 }
 
 /** Une barre de l'onde : sa hauteur glisse vers le nouveau niveau, sans à-coup */
-function LiveBar({ level, on }: { level: number | undefined; on: boolean }) {
+function LiveBar({ level, on, max }: { level: number | undefined; on: boolean; max: number }) {
   const height = useSharedValue(BAR_MIN);
   useEffect(() => {
-    const target = level === undefined ? BAR_MIN : Math.max(BAR_MIN, level * LIVE_HEIGHT);
+    const target = level === undefined ? BAR_MIN : Math.max(BAR_MIN, level * max);
     height.value = withTiming(target, { duration: 140, easing: Easing.out(Easing.quad) });
-  }, [level, height]);
+  }, [level, max, height]);
   const style = useAnimatedStyle(() => ({ height: height.value }));
   return <Animated.View style={[styles.liveBar, on ? styles.liveBarOn : styles.liveBarIdle, style]} />;
 }
 
 const LIVE_HEIGHT = 28;
+const LIVE_HEIGHT_COMPACT = 20;
 const BAR_MIN = 4;
 /** La gélule : le bouton rond, et 5 pt tout autour */
 const PAD = 5;
 const HEIGHT = ROUND_BUTTON_SIZE + PAD * 2;
+/** La gélule compacte : les ronds posés à côté (🎙 ❝ ✕) prennent la même hauteur */
+export const VOICE_BAR_HEIGHT_COMPACT = ROUND_BUTTON_SIZE;
 
 const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.md,
-    minHeight: HEIGHT,
     padding: PAD,
     paddingRight: spacing.lg,
-    borderRadius: HEIGHT / 2,
     overflow: 'hidden',
+  },
+  rowCompact: {
+    gap: spacing.sm,
+    paddingRight: spacing.md,
   },
   rowIdle: {
     backgroundColor: inkAlpha(0.06),
-  },
-  rowFill: {
-    borderRadius: HEIGHT / 2,
   },
   player: {
     flex: 1,
@@ -318,6 +355,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+  },
+  liveCompact: {
+    height: LIVE_HEIGHT_COMPACT,
   },
   liveBar: {
     width: 4,
@@ -337,6 +377,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: colors.textTertiary,
     fontVariant: ['tabular-nums'],
+  },
+  counterCompact: {
+    minWidth: 34,
+    fontSize: 14,
   },
   counterOn: {
     color: colors.white,

@@ -51,7 +51,16 @@ interface NoteStickerProps {
   watermark?: string;
   /** La marge de gauche du texte de la note, pour que le filigrane s'y aligne */
   watermarkInset?: number;
+  /**
+   * À plat (`none`) seulement : la couture s'ouvre en bas entre `left` et `right`
+   * et descend dans l'intercalaire choisi, qui la continue (`CategoryPicker`).
+   */
+  notch?: { left: number; right: number } | null;
 }
+
+/** Le point de couture, le même sur la note et sur l'intercalaire qui la prolonge */
+export const STITCH = { width: 0.9, dash: '2 1.6' };
+export const stitchColor = (colored: boolean) => inkAlpha(colored ? 0.32 : 0.2);
 
 export default function NoteSticker({
   color,
@@ -63,6 +72,7 @@ export default function NoteSticker({
   corner = 'top-left',
   watermark,
   watermarkInset = 12,
+  notch = null,
 }: NoteStickerProps) {
   const w = width ?? size;
   const h = height ?? size;
@@ -87,6 +97,21 @@ export default function NoteSticker({
   // À plat (`none`) : le carré arrondi entier, aucun coin coupé
   const whole = `M ${r} 0 H ${w - r} Q ${w} 0 ${w} ${r} V ${h - r} Q ${w} ${h} ${w - r} ${h} H ${r} Q 0 ${h} 0 ${h - r} V ${r} Q 0 0 ${r} 0 Z`;
   const wholeStitch = `M ${i + ri} ${i} H ${w - i - ri} Q ${w - i} ${i} ${w - i} ${i + ri} V ${h - i - ri} Q ${w - i} ${h - i} ${w - i - ri} ${h - i} H ${i + ri} Q ${i} ${h - i} ${i} ${h - i - ri} V ${i + ri} Q ${i} ${i} ${i + ri} ${i} Z`;
+  // Ouverte vers l'intercalaire : la couture tourne vers le bas et sort par le
+  // bord. Près d'un coin arrondi, elle y descend en S depuis le côté.
+  const f = 3;
+  const x1 = notch?.left ?? 0;
+  const x2 = notch?.right ?? 0;
+  const notchLeft =
+    x1 - f >= i + ri
+      ? `M ${x1} ${h} V ${h - i + f} Q ${x1} ${h - i} ${x1 - f} ${h - i} H ${i + ri} Q ${i} ${h - i} ${i} ${h - i - ri}`
+      : `M ${x1} ${h} V ${h - i} C ${x1} ${h - i - ri / 2} ${i} ${h - i - ri / 2} ${i} ${h - i - ri}`;
+  const notchRight =
+    x2 + f <= w - i - ri
+      ? `Q ${w - i} ${h - i} ${w - i - ri} ${h - i} H ${x2 + f} Q ${x2} ${h - i} ${x2} ${h - i + f} V ${h}`
+      : `C ${w - i} ${h - i - ri / 2} ${x2} ${h - i - ri / 2} ${x2} ${h - i} V ${h}`;
+  const notchStitch = `${notchLeft} V ${i + ri} Q ${i} ${i} ${i + ri} ${i} H ${w - i - ri} Q ${w - i} ${i} ${w - i} ${i + ri} V ${h - i - ri} ${notchRight}`;
+  const notched = corner === 'none' && !!notch;
   const shape = corner === 'none' ? whole : cut;
   const stitch = corner === 'none' ? wholeStitch : cutStitch;
   // Le rabat : le coin replié par-dessus, symétrique par rapport à la coupe
@@ -148,14 +173,17 @@ export default function NoteSticker({
           </SvgText>
         </G>
       )}
-      <G transform={flip}>
+      {/* Ouverte, dessinée sans retournement : `left` et `right` sont pris depuis la gauche */}
+      <G transform={notched ? undefined : flip}>
         <Path
-          d={stitch}
+          d={notched ? notchStitch : stitch}
           fill="none"
-          stroke={inkAlpha(color ? 0.32 : 0.2)}
-          strokeWidth={0.9}
-          strokeDasharray="2 1.6"
+          stroke={stitchColor(!!color)}
+          strokeWidth={STITCH.width}
+          strokeDasharray={STITCH.dash}
         />
+      </G>
+      <G transform={flip}>
         {corner !== 'none' && (
           <>
             <Path d={flapShadow} fill={shadowAlpha(0.18)} />
