@@ -15,21 +15,56 @@
  *   Classement). `PressableScale` coupe l'animation si « Réduire les animations »
  *   est activé ; le cadre n'en ajoute aucune autre.
  *
+ * Brodé comme les autocollants (`NoteSticker`) : une couture au même point
+ * (`STITCH`) court tout le tour, un peu en retrait du bord. Rien d'autre (ni
+ * coin décollé ni filigrane) : ce sont des blocs, pas des autocollants.
+ *
  * Pas de carte dans une carte : le contenu se structure avec des filets et des
  * espacements, pas avec un fond ou un cadre de plus.
  */
 
 import MaskedView from '@react-native-masked-view/masked-view';
 import { LinearGradient } from 'expo-linear-gradient';
-import React from 'react';
-import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
+import React, { useState } from 'react';
+import { StyleSheet, View, type LayoutChangeEvent, type StyleProp, type ViewStyle } from 'react-native';
+import Svg, { Path } from 'react-native-svg';
 import { borderRadius, creamAlpha, glassVeil, spacing } from '../../utils/constants';
 import GlassMaterial from './GlassMaterial';
+import { STITCH, stitchColor } from './NoteSticker';
 import PressableScale from './PressableScale';
 
 const RADIUS = borderRadius.xl;
 /** Bord clair qui détache le cadre du fond coloré */
 const EDGE = creamAlpha(0.9);
+/** La couture, en retrait du bord ; son arrondi suit celui du cadre */
+const STITCH_INSET = 6;
+
+/**
+ * Le tracé de la couture. Haut ouvert (`openTop`) : elle descend du haut d'un
+ * côté, fait le tour par le bas et remonte de l'autre, et s'efface avec le verre.
+ */
+function stitchPath(w: number, h: number, openTop: boolean) {
+  const i = STITCH_INSET;
+  const r = RADIUS - i;
+  const bottom = `V ${h - i - r} Q ${i} ${h - i} ${i + r} ${h - i} H ${w - i - r} Q ${w - i} ${h - i} ${w - i} ${h - i - r}`;
+  if (openTop) return `M ${i} 0 ${bottom} V 0`;
+  return `M ${i + r} ${i} H ${w - i - r} Q ${w - i} ${i} ${w - i} ${i + r} V ${h - i - r} Q ${w - i} ${h - i} ${w - i - r} ${h - i} H ${i + r} Q ${i} ${h - i} ${i} ${h - i - r} V ${i + r} Q ${i} ${i} ${i + r} ${i} Z`;
+}
+
+function Stitch({ width, height, openTop }: { width: number; height: number; openTop: boolean }) {
+  if (!width || !height) return null;
+  return (
+    <Svg style={StyleSheet.absoluteFill} width={width} height={height} pointerEvents="none">
+      <Path
+        d={stitchPath(width, height, openTop)}
+        fill="none"
+        stroke={stitchColor(true)}
+        strokeWidth={STITCH.width}
+        strokeDasharray={STITCH.dash}
+      />
+    </Svg>
+  );
+}
 
 interface GlassSectionProps {
   children: React.ReactNode;
@@ -60,6 +95,12 @@ export default function GlassSection({
   compact = false,
   fadeTop = 0,
 }: GlassSectionProps) {
+  const [size, setSize] = useState({ width: 0, height: 0 });
+  const onLayout = (e: LayoutChangeEvent) => {
+    const { width, height } = e.nativeEvent.layout;
+    if (width !== size.width || height !== size.height) setSize({ width, height });
+  };
+
   const layers = (
     <>
       {fadeTop > 0 ? (
@@ -77,9 +118,13 @@ export default function GlassSection({
         >
           <GlassMaterial radius={0} veil={glassVeil} />
           <View style={styles.edgeOpenTop} />
+          <Stitch {...size} openTop />
         </MaskedView>
       ) : (
-        <GlassMaterial radius={RADIUS} veil={glassVeil} edgeColor={EDGE} />
+        <>
+          <GlassMaterial radius={RADIUS} veil={glassVeil} edgeColor={EDGE} />
+          <Stitch {...size} openTop={false} />
+        </>
       )}
       <View style={[styles.content, compact && styles.contentCompact]}>{children}</View>
     </>
@@ -87,13 +132,14 @@ export default function GlassSection({
 
   if (!onPress) {
     return (
-      <View style={[styles.frame, style]}>{layers}</View>
+      <View style={[styles.frame, style]} onLayout={onLayout}>{layers}</View>
     );
   }
 
   return (
     <PressableScale
       style={[styles.frame, style]}
+      onLayout={onLayout}
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
