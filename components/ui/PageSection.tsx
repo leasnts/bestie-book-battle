@@ -4,8 +4,8 @@
  * Deuxième question de l'accueil : où j'en suis. C'est aussi le geste principal
  * de l'app — enregistrer sa page en un geste.
  *
- * - Sans titre : le cadre sort de sous « Le livre » et son haut s'efface, sans
- *   coins ; le bas garde l'arrondi et le bord d'un cadre (retour de Lea, 2026-09-29).
+ * - Hors cadre (essai du 2026-10-01) : ni verre ni couture, le chiffre et la
+ *   règle sont posés à même le fond, entre « Le livre » et le bento.
  * - Ma page en grand sur une **règle** qu'on fait glisser (`PageRuler`,
  *   2026-09-30). Ma page est en **pages de mon édition**, d'où le « sur 624 ».
  * - La rangée du bas a une **hauteur fixe** :
@@ -19,7 +19,6 @@ import { CheckIcon, FlameIcon, RotateCcwIcon } from 'lucide-react-native';
 import React, { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { colors, fonts, spacing } from '../../utils/constants';
-import GlassSection from './GlassSection';
 import PageRuler, { type ClubPin } from './PageRuler';
 import RoundButton from './RoundButton';
 import { QUICK_BAR_HEIGHT } from './QuickNoteBar';
@@ -65,11 +64,8 @@ export default function PageSection({
   const hasChanged = delta !== 0;
 
   return (
-    // Le cadre remplit la place que l'accueil lui donne ; le chiffre est centré dedans
-    <GlassSection compact={compact} fadeTop={PAGE_FADE} style={styles.frame}>
-      {/* Le haut est sous « Le livre » : le contenu commence sous le fondu */}
-      <View style={styles.tuck} />
-
+    // Remplit la place que l'accueil lui donne ; le chiffre est centré dedans
+    <View style={[styles.frame, compact && styles.frameCompact]}>
       <View style={styles.book}>
         <PageRuler
           currentPage={currentPage}
@@ -107,22 +103,14 @@ export default function PageSection({
           {quickBar}
         </View>
       )}
-    </GlassSection>
+    </View>
   );
 }
 
 // ─── Styles ────────────────────────────────────────────────────────
 // Mesures de la maquette (échelle 0,865) ramenées en points.
 
-/** Ce que « Ma page » glisse sous « Le livre », et la hauteur de son fondu */
-export const PAGE_TUCK = 28;
-const PAGE_FADE = 44;
-
 const styles = StyleSheet.create({
-  // minHeight : le titre grandit avec le réglage système au lieu d'être coupé
-  tuck: {
-    height: PAGE_TUCK - spacing.sm,
-  },
   // Ma série, posée à gauche de la barre (les ronds sont ferrés à droite)
   streak: {
     position: 'absolute',
@@ -141,8 +129,13 @@ const styles = StyleSheet.create({
     fontVariant: ['tabular-nums'],
   },
 
+  // Pas de cadre : juste de l'air en haut et en bas, aligné sur les bords des cadres
   frame: {
     flexGrow: 1,
+    paddingVertical: spacing.lg,
+  },
+  frameCompact: {
+    paddingVertical: spacing.md,
   },
   book: {
     flexGrow: 1,

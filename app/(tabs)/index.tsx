@@ -46,7 +46,7 @@ import CoverBackdrop from '../../components/ui/CoverBackdrop';
 import GlassButton from '../../components/ui/GlassButton';
 import NoteTile from '../../components/ui/NoteTile';
 import QuickNoteBar from '../../components/ui/QuickNoteBar';
-import PageSection, { PAGE_TUCK } from '../../components/ui/PageSection';
+import PageSection from '../../components/ui/PageSection';
 import LeaderboardSection from '../../components/ui/LeaderboardSection';
 import { getAllUserPages } from '../../services/supabase/database';
 import { myCoverUrl } from '../../services/myEdition';
@@ -486,7 +486,7 @@ export default function HomeScreen() {
 
       {/* ═══════════ CADRE 2 : MA PAGE ═══════════ */}
       {activeChallenge ? (
-        <View style={[styles.pageSection, { marginTop: -PAGE_TUCK, paddingTop: 0 }]}>
+        <View style={[styles.pageSection, frameGap]}>
           <PageSection
             key={activeChallenge.id}
             currentPage={currentPageInput}
