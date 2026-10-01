@@ -23,7 +23,6 @@
  */
 
 import { Image } from 'expo-image';
-import { UsersIcon } from 'lucide-react-native';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import Animated, {
@@ -183,11 +182,8 @@ export default function LeaderboardSection({
       style={square && styles.square}
     >
       <View style={styles.head}>
+        {/* Plus de nombre de membres à côté du titre (Lea, 2026-10-01) : il ne menait nulle part */}
         <Text style={styles.title}>Classement</Text>
-        <View style={styles.count}>
-          <UsersIcon size={15} color={colors.textTertiary} strokeWidth={2} />
-          <Text style={styles.countText}>{ranked.length}</Text>
-        </View>
       </View>
 
       <View style={[styles.rows, square && styles.rowsSquare]}>
@@ -229,17 +225,6 @@ const styles = StyleSheet.create({
     fontFamily: fonts.bodyExtraBold,
     fontSize: 15,
     color: colors.textPrimary,
-  },
-  count: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-  },
-  countText: {
-    fontFamily: fonts.bodyBold,
-    fontSize: 14,
-    color: colors.textTertiary,
-    fontVariant: ['tabular-nums'],
   },
 
   rows: {

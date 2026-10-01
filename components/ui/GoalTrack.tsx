@@ -1,22 +1,22 @@
 /**
  * GoalTrack — la piste du livre, de 0 à 100 %.
  *
- * Elle répond à « où en est le club, où j'en suis, et qu'est-ce qui m'attend »,
- * sans une phrase :
+ * Elle répond à « qu'est-ce qui m'attend, et dans combien de temps », sans une
+ * phrase :
  *
- * - deux **remplissages** : moi devant (lie de vin), le club derrière (lie de
- *   vin clair, jusqu'à la médiane : la moitié du club est là) ;
- * - ma **pastille** (ma photo) est posée à mon pourcentage ;
+ * - un **remplissage** : ma part lue (lie de vin) ;
  * - les **étapes** (caps passés ou à venir, et la fin) sont des ronds pleins,
- *   de la couleur de la barre qui les a dépassées, dans une découpe de la barre ;
+ *   lie de vin si je les ai dépassées, dans une découpe de la barre ;
  * - le **cap en cours** est un drapeau, avec sa date dessous ;
- * - la date de fin est au bout.
+ * - la date de fin est au bout, et le repère de gauche (J-x) dit le temps qu'il reste.
+ *
+ * Plus de pastille « moi » ni de barre du groupe (Lea, 2026-10-01) : Ma page
+ * montre déjà où j'en suis et qui est devant, le classement où en est le groupe.
  *
  * Tout est en pourcentage : les caps aussi, pour tomber au même endroit quelle
  * que soit l'édition de chacun.
  */
 
-import { Image } from 'expo-image';
 import { CheckIcon, FlagIcon } from 'lucide-react-native';
 import React, { useState } from 'react';
 import Svg, { Circle, Defs, G, LinearGradient as SvgGradient, Mask, Rect, Stop } from 'react-native-svg';
@@ -25,17 +25,12 @@ import { accentGradient, colors, fonts, inkAlpha } from '../../utils/constants';
 import { formatTrackDate, type TrackCap } from '../../utils/track';
 
 interface GoalTrackProps {
-  /** Médiane du club, 0 à 100 */
-  clubPercent: number;
   /** Ma progression, 0 à 100 */
   myPercent: number;
-  myPhotoUrl: string | null;
-  /** Initiale affichée si je n'ai pas de photo */
-  myInitial: string;
   caps: TrackCap[];
   /** Date de fin du livre, affichée au bout de la piste */
   endDate: string | null;
-  /** Repère posé au début de la ligne des dates, sous le départ de la piste (le % du club) */
+  /** Repère posé au début de la ligne des dates, sous le départ de la piste (le J-x) */
   leadingLabel?: React.ReactNode;
 }
 
@@ -46,10 +41,7 @@ interface GoalTrackProps {
 const LEADING_LABEL_CLEARANCE = 30;
 
 export default function GoalTrack({
-  clubPercent,
   myPercent,
-  myPhotoUrl,
-  myInitial,
   caps,
   endDate,
   leadingLabel,
@@ -66,15 +58,10 @@ export default function GoalTrack({
   return (
     <View
       accessible
-      accessibilityLabel={trackLabel(clubPercent, myPercent, currentCap, endDate)}
+      accessibilityLabel={trackLabel(myPercent, currentCap, endDate)}
     >
       <View style={styles.track} onLayout={(e) => setRailWidth(e.nativeEvent.layout.width)}>
         {/*
-          Deux remplissages superposés, comme la barre d'une vidéo (lu / chargé) :
-          derrière, en lie de vin clair, le club (médiane) ; devant, en lie de
-          vin, MOI, jusqu'à ma photo. Une seule barre pour le club faisait croire
-          que j'avais atteint des étapes que seul le club avait dépassées.
-
           La barre est découpée autour de chaque étape (masque SVG) : un vrai
           trou où l'on voit le fond, au lieu d'un liseré blanc qui ressortait
           sur le verre.
@@ -82,10 +69,6 @@ export default function GoalTrack({
         {railWidth > 0 && (
           <Svg width={railWidth} height={RAIL_HEIGHT} style={styles.rail}>
             <Defs>
-              <SvgGradient id="club" x1="0" y1="0" x2="1" y2="0">
-                <Stop offset="0" stopColor={CLUB_GRADIENT[0]} />
-                <Stop offset="1" stopColor={CLUB_GRADIENT[1]} />
-              </SvgGradient>
               <SvgGradient id="me" x1="0" y1="0" x2="1" y2="0">
                 <Stop offset="0" stopColor={accentGradient[0]} />
                 <Stop offset="1" stopColor={accentGradient[1]} />
@@ -105,7 +88,6 @@ export default function GoalTrack({
             </Defs>
             <G mask="url(#cut)">
               <Rect width={railWidth} height={RAIL_HEIGHT} rx={RAIL_HEIGHT / 2} fill={RAIL_COLOR} />
-              <Rect width={(railWidth * clubPercent) / 100} height={RAIL_HEIGHT} rx={RAIL_HEIGHT / 2} fill="url(#club)" />
               <Rect width={(railWidth * myPercent) / 100} height={RAIL_HEIGHT} rx={RAIL_HEIGHT / 2} fill="url(#me)" />
             </G>
           </Svg>
@@ -126,7 +108,7 @@ export default function GoalTrack({
               key={cap.id}
               style={[
                 styles.step,
-                stepStyle(cap.percent, myPercent, clubPercent),
+                stepStyle(cap.percent, myPercent),
                 { left: `${cap.percent}%` },
               ]}
             />
@@ -138,19 +120,10 @@ export default function GoalTrack({
             style={[
               styles.step,
               styles.endStep,
-              stepStyle(100, myPercent, clubPercent),
+              stepStyle(100, myPercent),
             ]}
           />
         )}
-
-        {/* Ma pastille passe au-dessus des caps : c'est le repère qu'on cherche d'abord */}
-        <View style={[styles.me, { left: `${myPercent}%` }]}>
-          {myPhotoUrl ? (
-            <Image source={{ uri: myPhotoUrl }} style={styles.mePhoto} contentFit="cover" />
-          ) : (
-            <Text style={styles.meInitial}>{myInitial}</Text>
-          )}
-        </View>
       </View>
 
       <View style={styles.labels}>
@@ -179,16 +152,8 @@ export default function GoalTrack({
 }
 
 /** Ce que VoiceOver lit : la piste en une phrase, puisqu'elle n'en porte aucune */
-function trackLabel(
-  clubPercent: number,
-  myPercent: number,
-  currentCap: TrackCap | null,
-  endDate: string | null,
-) {
-  const parts = [
-    `Le club est à ${Math.round(clubPercent)} pour cent du livre`,
-    `moi à ${Math.round(myPercent)} pour cent`,
-  ];
+function trackLabel(myPercent: number, currentCap: TrackCap | null, endDate: string | null) {
+  const parts = [`J'en suis à ${Math.round(myPercent)} pour cent du livre`];
   if (currentCap) {
     parts.push(
       `prochain cap à ${Math.round(currentCap.percent)} pour cent, le ${formatTrackDate(currentCap.deadline)}`,
@@ -203,7 +168,6 @@ function trackLabel(
 
 const RAIL_TOP = 12;
 export const RAIL_HEIGHT = 6;
-const ME_SIZE = 20;
 /** Diamètre des étapes : un peu plus gros que la barre */
 export const STEP_SIZE = 9;
 /** Le vide découpé dans la barre tout autour d'une étape */
@@ -247,8 +211,11 @@ export function CapDot({
   );
 }
 
-/** Couleur d'une étape : celle de la barre qui l'a dépassée (moi, sinon le club) */
-function stepStyle(percent: number, myPercent: number, clubPercent: number) {
+/**
+ * Couleur d'une étape : celle de la barre qui l'a dépassée (moi, sinon le club).
+ * La piste de l'accueil n'a plus de barre du groupe : elle ne passe que moi.
+ */
+function stepStyle(percent: number, myPercent: number, clubPercent = 0) {
   if (percent <= myPercent) return styles.stepReached;
   if (percent <= clubPercent) return styles.stepClub;
   return styles.stepAhead;
@@ -316,30 +283,6 @@ const styles = StyleSheet.create({
     marginLeft: 0,
   },
 
-  me: {
-    position: 'absolute',
-    top: 4,
-    width: ME_SIZE,
-    height: ME_SIZE,
-    marginLeft: -ME_SIZE / 2,
-    borderRadius: 7,
-    borderWidth: 2,
-    borderColor: colors.white,
-    backgroundColor: colors.bgSecondary,
-    overflow: 'hidden',
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 1,
-  },
-  mePhoto: {
-    width: '100%',
-    height: '100%',
-  },
-  meInitial: {
-    fontFamily: fonts.bodyExtraBold,
-    fontSize: 9,
-    color: colors.textPrimary,
-  },
 
   labels: {
     minHeight: 17,
