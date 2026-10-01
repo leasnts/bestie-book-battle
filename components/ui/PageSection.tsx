@@ -18,9 +18,11 @@
 import { CheckIcon, RotateCcwIcon } from 'lucide-react-native';
 import React, { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
+import Animated, { FadeIn } from 'react-native-reanimated';
 import { colors, fonts, spacing } from '../../utils/constants';
+import GlassButton from './GlassButton';
 import PageRuler, { type ClubPin } from './PageRuler';
-import RoundButton from './RoundButton';
+import RoundButton, { ROUND_BUTTON_SIZE } from './RoundButton';
 import { QUICK_BAR_HEIGHT } from './QuickNoteBar';
 
 interface PageSectionProps {
@@ -74,12 +76,13 @@ export default function PageSection({
       </View>
 
       {hasChanged ? (
-        <View style={styles.row}>
-          <RoundButton
+        // En fondu : le verre qui naît dans une vue en fondu reste translucide
+        <Animated.View entering={FadeIn.duration(180)} style={styles.row}>
+          {/* Secondaire : notre rond en verre, à la taille du ✓ */}
+          <GlassButton
             icon={RotateCcwIcon}
-            variant="ghost"
-            label="Annuler"
-            hint="Revient à ma dernière page enregistrée"
+            size={ROUND_BUTTON_SIZE}
+            accessibilityLabel="Annuler"
             onPress={onUndo}
           />
           {/* Ce que je viens de lire */}
@@ -88,7 +91,7 @@ export default function PageSection({
             {Math.abs(delta)}
           </Text>
           <RoundButton icon={CheckIcon} variant="dark" label="Enregistrer ma page" onPress={onSave} />
-        </View>
+        </Animated.View>
       ) : (
         <View style={styles.bar}>
           {quickBar}
