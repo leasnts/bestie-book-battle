@@ -51,7 +51,7 @@ import LeaderboardSection from '../../components/ui/LeaderboardSection';
 import { getAllUserPages } from '../../services/supabase/database';
 import { myCoverUrl } from '../../services/myEdition';
 import { updateWidgetData } from '../../utils/widget';
-import { buildCaps, median } from '../../utils/track';
+import { buildCaps } from '../../utils/track';
 import { useLeaderboardParticipants } from '../../hooks/useLeaderboardParticipants';
 import { useNotificationScheduler } from '../../hooks/useNotificationScheduler';
 import { useAuthStore } from '../../stores/authStore';
@@ -377,9 +377,6 @@ export default function HomeScreen() {
   );
 
   // ===== La piste du livre =====
-  // Le club avance à la MÉDIANE des pourcentages : trois lectrices rapides ne
-  // doivent pas donner l'impression que tout le monde est loin devant.
-  const clubPercent = median(leaderboardParticipants.map((p) => p.percentage));
   const myPercent = leaderboardParticipants.find((p) => p.id === myUserId)?.percentage ?? 0;
   // L'édition de référence du challenge : c'est en elle que les caps sont posés
   const caps = buildCaps([secondaryGoal, ...goalHistory], activeChallenge?.total_pages ?? 0);
@@ -473,10 +470,7 @@ export default function HomeScreen() {
           <BookSection
             challenge={activeChallenge}
             coverUrl={myCoverUrl(activeChallenge, myProgress ?? cachedMyProgress)}
-            clubPercent={clubPercent}
             myPercent={myPercent}
-            myPhotoUrl={user?.profile_photo_url ?? null}
-            myInitial={(user?.first_name ?? 'M').charAt(0).toUpperCase()}
             caps={caps}
             streakDays={myStreak}
             compact={compactSpacing}

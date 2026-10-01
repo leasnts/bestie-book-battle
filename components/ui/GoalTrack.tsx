@@ -1,156 +1,64 @@
 /**
  * GoalTrack — la piste du livre, de 0 à 100 %.
  *
- * Elle répond à « où en est le club, où j'en suis, et qu'est-ce qui m'attend »,
- * sans une phrase :
+ * C'est la couture de Ma page en petit (Lea, 2026-10-01 : la barre lisse
+ * détonnait à côté des cadres brodés) :
  *
- * - deux **remplissages** : moi devant (lie de vin), le club derrière (lie de
- *   vin clair, jusqu'à la médiane : la moitié du club est là) ;
- * - ma **pastille** (ma photo) est posée à mon pourcentage ;
- * - les **étapes** (caps passés ou à venir, et la fin) sont des ronds pleins,
- *   de la couleur de la barre qui les a dépassées, dans une découpe de la barre ;
- * - le **cap en cours** est un drapeau, avec sa date dessous ;
- * - la date de fin est au bout.
+ * - le **fil** en point avant, un point tous les quelques points : chocolat
+ *   jusqu'à moi, sable après — la même matière que la règle de Ma page et les
+ *   autocollants brodés ;
+ * - les **caps** et la **fin** sont des nœuds de broderie : lie de vin une fois
+ *   dépassés, sable sinon. Plus de date sous le cap en cours (Lea, 2026-10-01) :
+ *   on la trouve dans la fiche du livre ;
+ * - **moi** : là où le fil passe du chocolat au sable (plus de pastille ni de
+ *   loupe, Lea, 2026-10-01) ;
+ * - le repère de gauche (J-x) dit le temps qu'il reste, la date de fin est au bout.
  *
  * Tout est en pourcentage : les caps aussi, pour tomber au même endroit quelle
  * que soit l'édition de chacun.
  */
 
-import { Image } from 'expo-image';
-import { CheckIcon, FlagIcon } from 'lucide-react-native';
+import { CheckIcon } from 'lucide-react-native';
 import React, { useState } from 'react';
-import Svg, { Circle, Defs, G, LinearGradient as SvgGradient, Mask, Rect, Stop } from 'react-native-svg';
+import Svg, { Circle, Defs, G, Line, RadialGradient, Stop } from 'react-native-svg';
 import { StyleSheet, Text, View } from 'react-native';
-import { accentGradient, colors, fonts, inkAlpha } from '../../utils/constants';
+import { colors, fonts, inkAlpha } from '../../utils/constants';
 import { formatTrackDate, type TrackCap } from '../../utils/track';
 
 interface GoalTrackProps {
-  /** Médiane du club, 0 à 100 */
-  clubPercent: number;
   /** Ma progression, 0 à 100 */
   myPercent: number;
-  myPhotoUrl: string | null;
-  /** Initiale affichée si je n'ai pas de photo */
-  myInitial: string;
   caps: TrackCap[];
   /** Date de fin du livre, affichée au bout de la piste */
   endDate: string | null;
-  /** Repère posé au début de la ligne des dates, sous le départ de la piste (le % du club) */
+  /** Repère posé au début de la ligne des dates, sous le départ de la piste (le J-x) */
   leadingLabel?: React.ReactNode;
 }
 
-/**
- * Sous ce %, la date du cap en cours tomberait sur le repère de gauche : on ne
- * l'écrit pas (le drapeau reste, et la date est dans la fiche du livre).
- */
-const LEADING_LABEL_CLEARANCE = 30;
-
-export default function GoalTrack({
-  clubPercent,
-  myPercent,
-  myPhotoUrl,
-  myInitial,
-  caps,
-  endDate,
-  leadingLabel,
-}: GoalTrackProps) {
+export default function GoalTrack({ myPercent, caps, endDate, leadingLabel }: GoalTrackProps) {
   const currentCap = caps.find((cap) => cap.state === 'current') ?? null;
-  // Largeur de la piste, pour dessiner la barre découpée en SVG
-  const [railWidth, setRailWidth] = useState(0);
-  // Les étapes rondes (caps hors cap en cours, et la fin) : là où la barre est découpée
-  const stepPercents = [
-    ...caps.filter((cap) => cap.state !== 'current').map((cap) => cap.percent),
-    ...(endDate ? [100] : []),
-  ];
+  // Largeur de la piste, pour placer les points du fil
+  const [width, setWidth] = useState(0);
+  const knots = [...caps.map((cap) => cap.percent), ...(endDate ? [100] : [])];
+  const meX = (width * myPercent) / 100;
 
   return (
-    <View
-      accessible
-      accessibilityLabel={trackLabel(clubPercent, myPercent, currentCap, endDate)}
-    >
-      <View style={styles.track} onLayout={(e) => setRailWidth(e.nativeEvent.layout.width)}>
-        {/*
-          Deux remplissages superposés, comme la barre d'une vidéo (lu / chargé) :
-          derrière, en lie de vin clair, le club (médiane) ; devant, en lie de
-          vin, MOI, jusqu'à ma photo. Une seule barre pour le club faisait croire
-          que j'avais atteint des étapes que seul le club avait dépassées.
-
-          La barre est découpée autour de chaque étape (masque SVG) : un vrai
-          trou où l'on voit le fond, au lieu d'un liseré blanc qui ressortait
-          sur le verre.
-        */}
-        {railWidth > 0 && (
-          <Svg width={railWidth} height={RAIL_HEIGHT} style={styles.rail}>
-            <Defs>
-              <SvgGradient id="club" x1="0" y1="0" x2="1" y2="0">
-                <Stop offset="0" stopColor={CLUB_GRADIENT[0]} />
-                <Stop offset="1" stopColor={CLUB_GRADIENT[1]} />
-              </SvgGradient>
-              <SvgGradient id="me" x1="0" y1="0" x2="1" y2="0">
-                <Stop offset="0" stopColor={accentGradient[0]} />
-                <Stop offset="1" stopColor={accentGradient[1]} />
-              </SvgGradient>
-              <Mask id="cut" maskUnits="userSpaceOnUse" x={0} y={0} width={railWidth} height={RAIL_HEIGHT}>
-                <Rect x={0} y={0} width={railWidth} height={RAIL_HEIGHT} fill="#fff" />
-                {stepPercents.map((percent) => (
-                  <Circle
-                    key={percent}
-                    cx={(railWidth * percent) / 100}
-                    cy={RAIL_HEIGHT / 2}
-                    r={STEP_SIZE / 2 + STEP_GAP}
-                    fill="#000"
-                  />
+    <View accessible accessibilityLabel={trackLabel(myPercent, currentCap, endDate)}>
+      <View style={styles.track} onLayout={(e) => setWidth(e.nativeEvent.layout.width)}>
+        {width > 0 && (
+          <>
+            {/* Un peu plus large que la piste : sinon les nœuds du bout sont coupés en deux */}
+            <Svg width={width + 2 * KNOT_PAD} height={TRACK_HEIGHT} style={styles.seam}>
+              <KnotGradients />
+              <G transform={`translate(${KNOT_PAD} 0)`}>
+                <Seam width={width} readUntil={meX} />
+                {knots.map((percent) => (
+                  <Knot key={percent} x={(width * percent) / 100} reached={percent <= myPercent} />
                 ))}
-              </Mask>
-            </Defs>
-            <G mask="url(#cut)">
-              <Rect width={railWidth} height={RAIL_HEIGHT} rx={RAIL_HEIGHT / 2} fill={RAIL_COLOR} />
-              <Rect width={(railWidth * clubPercent) / 100} height={RAIL_HEIGHT} rx={RAIL_HEIGHT / 2} fill="url(#club)" />
-              <Rect width={(railWidth * myPercent) / 100} height={RAIL_HEIGHT} rx={RAIL_HEIGHT / 2} fill="url(#me)" />
-            </G>
-          </Svg>
+              </G>
+            </Svg>
+          </>
         )}
-
-        {caps.map((cap) =>
-          cap.state === 'current' ? (
-            <View key={cap.id} style={[styles.capMark, { left: `${cap.percent}%` }]}>
-              <FlagIcon
-                size={13}
-                color={colors.dark900}
-                strokeWidth={2.4}
-                style={styles.capFlag}
-              />
-            </View>
-          ) : (
-            <View
-              key={cap.id}
-              style={[
-                styles.step,
-                stepStyle(cap.percent, myPercent, clubPercent),
-                { left: `${cap.percent}%` },
-              ]}
-            />
-          ),
-        )}
-
-        {endDate && (
-          <View
-            style={[
-              styles.step,
-              styles.endStep,
-              stepStyle(100, myPercent, clubPercent),
-            ]}
-          />
-        )}
-
-        {/* Ma pastille passe au-dessus des caps : c'est le repère qu'on cherche d'abord */}
-        <View style={[styles.me, { left: `${myPercent}%` }]}>
-          {myPhotoUrl ? (
-            <Image source={{ uri: myPhotoUrl }} style={styles.mePhoto} contentFit="cover" />
-          ) : (
-            <Text style={styles.meInitial}>{myInitial}</Text>
-          )}
-        </View>
       </View>
 
       <View style={styles.labels}>
@@ -160,14 +68,6 @@ export default function GoalTrack({
           et ne désignent plus rien. Même règle que le chiffre du sélecteur.
         */}
         {leadingLabel && <View style={styles.leading}>{leadingLabel}</View>}
-        {currentCap && !(leadingLabel && currentCap.percent < LEADING_LABEL_CLEARANCE) && (
-          <Text
-            style={[styles.label, styles.capLabel, { left: `${currentCap.percent}%` }]}
-            maxFontSizeMultiplier={1.3}
-          >
-            {formatTrackDate(currentCap.deadline)}
-          </Text>
-        )}
         {endDate && (
           <Text style={[styles.label, styles.endLabel]} maxFontSizeMultiplier={1.3}>
             {formatTrackDate(endDate)}
@@ -178,17 +78,58 @@ export default function GoalTrack({
   );
 }
 
+/** Les dégradés des nœuds : bombés, éclairés en haut à gauche */
+function KnotGradients() {
+  return (
+    <Defs>
+      <RadialGradient id="knotReached" cx="35%" cy="30%" r="80%">
+        <Stop offset="0" stopColor="#b0596b" />
+        <Stop offset="0.55" stopColor={colors.accent} />
+        <Stop offset="1" stopColor="#4f1826" />
+      </RadialGradient>
+      <RadialGradient id="knotAhead" cx="35%" cy="30%" r="80%">
+        <Stop offset="0" stopColor="#f4ece1" />
+        <Stop offset="0.6" stopColor={SAND} />
+        <Stop offset="1" stopColor="#b9a891" />
+      </RadialGradient>
+    </Defs>
+  );
+}
+
+/** Le fil en point avant : chocolat jusqu'à `readUntil`, sable après */
+function Seam({ width, readUntil }: { width: number; readUntil: number }) {
+  const stitches = [];
+  for (let x = 0; x <= width; x += STITCH_STEP) {
+    stitches.push(
+      <Line
+        key={x}
+        x1={x}
+        y1={TRACK_HEIGHT / 2}
+        x2={Math.min(x + STITCH_LEN, width)}
+        y2={TRACK_HEIGHT / 2}
+        stroke={x < readUntil ? THREAD_READ : THREAD_AHEAD}
+        strokeWidth={STITCH_WIDTH}
+        strokeLinecap="round"
+      />,
+    );
+  }
+  return <>{stitches}</>;
+}
+
+function Knot({ x, reached }: { x: number; reached: boolean }) {
+  return (
+    <Circle
+      cx={x}
+      cy={TRACK_HEIGHT / 2}
+      r={KNOT_R}
+      fill={reached ? 'url(#knotReached)' : 'url(#knotAhead)'}
+    />
+  );
+}
+
 /** Ce que VoiceOver lit : la piste en une phrase, puisqu'elle n'en porte aucune */
-function trackLabel(
-  clubPercent: number,
-  myPercent: number,
-  currentCap: TrackCap | null,
-  endDate: string | null,
-) {
-  const parts = [
-    `Le club est à ${Math.round(clubPercent)} pour cent du livre`,
-    `moi à ${Math.round(myPercent)} pour cent`,
-  ];
+function trackLabel(myPercent: number, currentCap: TrackCap | null, endDate: string | null) {
+  const parts = [`J'en suis à ${Math.round(myPercent)} pour cent du livre`];
   if (currentCap) {
     parts.push(
       `prochain cap à ${Math.round(currentCap.percent)} pour cent, le ${formatTrackDate(currentCap.deadline)}`,
@@ -199,11 +140,22 @@ function trackLabel(
 }
 
 // ─── Styles ────────────────────────────────────────────────────────
-// Mesures de la maquette (échelle 0,865) ramenées en points.
 
-const RAIL_TOP = 12;
+const TRACK_HEIGHT = 28;
+/** Le fil : un point de 3,5 pt tous les 6 pt (le point avant de la règle de Ma page, en petit) */
+const STITCH_STEP = 6;
+const STITCH_LEN = 3.5;
+const STITCH_WIDTH = 1.8;
+/** Les couleurs du fil de Ma page (milieu de ses dégradés) */
+const THREAD_READ = '#3f2b20';
+const THREAD_AHEAD = '#d6ccbf';
+const SAND = '#d8cbbb';
+const KNOT_R = 3.4;
+/** Ce que le dessin du fil déborde de la piste, de chaque côté */
+const KNOT_PAD = KNOT_R + 1;
+
+// Gardés pour les pistes des autres écrans (ParticipantTimeline, ProgressGauge)
 export const RAIL_HEIGHT = 6;
-const ME_SIZE = 20;
 /** Diamètre des étapes : un peu plus gros que la barre */
 export const STEP_SIZE = 9;
 /** Le vide découpé dans la barre tout autour d'une étape */
@@ -256,29 +208,16 @@ function stepStyle(percent: number, myPercent: number, clubPercent: number) {
 
 const styles = StyleSheet.create({
   track: {
-    height: 28,
+    height: TRACK_HEIGHT,
     marginHorizontal: 7,
   },
-  rail: {
+  seam: {
     position: 'absolute',
-    left: 0,
-    top: RAIL_TOP,
+    top: 0,
+    left: -KNOT_PAD,
   },
 
-  /**
-   * Étapes (caps et fin du livre) : des ronds pleins à liseré blanc, un peu plus
-   * gros que la barre, de la couleur de la barre qui l'a dépassée : lie de vin
-   * si JE l'ai dépassée, lie de vin clair si seul le club l'a dépassée, gris
-   * sinon (cf. stepStyle).
-   */
-  step: {
-    position: 'absolute',
-    top: RAIL_TOP + RAIL_HEIGHT / 2 - STEP_SIZE / 2,
-    width: STEP_SIZE,
-    height: STEP_SIZE,
-    marginLeft: -STEP_SIZE / 2,
-    borderRadius: STEP_SIZE / 2,
-  },
+  // La fiche du livre : les caps en ronds pleins (CapDot)
   capDot: {
     alignItems: 'center',
     justifyContent: 'center',
@@ -294,52 +233,6 @@ const styles = StyleSheet.create({
   stepClub: {
     backgroundColor: STEP_CLUB,
   },
-  /** Cap en cours : un trait qui traverse la piste, drapeau en haut */
-  capMark: {
-    position: 'absolute',
-    top: 0,
-    width: 2,
-    height: 25,
-    marginLeft: -1,
-    borderRadius: 2,
-    backgroundColor: colors.dark900,
-  },
-  capFlag: {
-    position: 'absolute',
-    left: 1,
-    top: -4,
-  },
-  /** La fin du livre : au bout de la piste */
-  endStep: {
-    left: undefined,
-    right: -STEP_SIZE / 2,
-    marginLeft: 0,
-  },
-
-  me: {
-    position: 'absolute',
-    top: 4,
-    width: ME_SIZE,
-    height: ME_SIZE,
-    marginLeft: -ME_SIZE / 2,
-    borderRadius: 7,
-    borderWidth: 2,
-    borderColor: colors.white,
-    backgroundColor: colors.bgSecondary,
-    overflow: 'hidden',
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 1,
-  },
-  mePhoto: {
-    width: '100%',
-    height: '100%',
-  },
-  meInitial: {
-    fontFamily: fonts.bodyExtraBold,
-    fontSize: 9,
-    color: colors.textPrimary,
-  },
 
   labels: {
     minHeight: 17,
@@ -351,10 +244,6 @@ const styles = StyleSheet.create({
     fontFamily: fonts.bodyBold,
     fontSize: 13,
     color: colors.textSecondary,
-  },
-  capLabel: {
-    // Centré sous le drapeau : la moitié d'une date courte, à peu près
-    transform: [{ translateX: -26 }],
   },
   endLabel: {
     right: -5,
