@@ -400,8 +400,19 @@ function InkNumber({
   return (
     <View style={{ width: numberWidth + 80, height: lineHeight }}>
       <GhostTotal total={total} size={Math.round(fontSize * 0.72)} left={40 + numberWidth * 0.7} />
-      {outStyles.map((s, i) => layer(s, outText, `o${i}`))}
-      {inStyles.map((s, i) => layer(s, inText, `i${i}`))}
+      {/* Le chiffre est le masque d'un dégradé d'encre : jamais d'aplat (DA) */}
+      <MaskedView
+        style={StyleSheet.absoluteFill}
+        pointerEvents="none"
+        maskElement={
+          <View style={StyleSheet.absoluteFill}>
+            {outStyles.map((s, i) => layer(s, outText, `o${i}`))}
+            {inStyles.map((s, i) => layer(s, inText, `i${i}`))}
+          </View>
+        }
+      >
+        <LinearGradient colors={INK} style={StyleSheet.absoluteFill} />
+      </MaskedView>
     </View>
   );
 }

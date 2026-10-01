@@ -13,11 +13,14 @@
  * l'accueil doit tenir sans défiler. Le nombre de membres au cap reste dans la
  * fiche du livre.
  *
+ * Ma série (🔥 3) à droite du titre, sans « j » (Lea, 2026-10-01) : elle a
+ * quitté Ma page quand celle-ci est sortie de son cadre.
+ *
  * Tout le cadre s'ouvre d'un toucher : c'est la fiche du livre qui porte les
  * réglages (fin, caps, club), plus aucun menu ⋮ sur l'accueil.
  */
 
-import { UsersIcon } from 'lucide-react-native';
+import { FlameIcon, UsersIcon } from 'lucide-react-native';
 import React, { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import type { Challenge } from '../../types/supabase';
@@ -38,6 +41,8 @@ interface BookSectionProps {
   myPhotoUrl: string | null;
   myInitial: string;
   caps: TrackCap[];
+  /** Jours consécutifs de lecture, 0 = pas de série */
+  streakDays: number;
   /** Petit écran : marges resserrées, pour que l'accueil tienne sans défiler */
   compact?: boolean;
   /** Toucher le cadre → la fiche du livre */
@@ -52,6 +57,7 @@ export default function BookSection({
   myPhotoUrl,
   myInitial,
   caps,
+  streakDays,
   compact = false,
   onPress,
 }: BookSectionProps) {
@@ -62,7 +68,9 @@ export default function BookSection({
     <GlassSection
       compact={compact}
       onPress={onPress}
-      accessibilityLabel={`${challenge.book_title}, ${challenge.book_author ?? 'autrice inconnue'}`}
+      accessibilityLabel={`${challenge.book_title}, ${challenge.book_author ?? 'autrice inconnue'}${
+        streakDays > 0 ? `, série de ${streakDays} jours` : ''
+      }`}
       accessibilityHint="Ouvre la fiche du livre"
     >
       <View style={styles.head}>
@@ -78,9 +86,20 @@ export default function BookSection({
         <View style={styles.texts} onLayout={(e) => setTextsHeight(e.nativeEvent.layout.height)}>
           {/* Deux lignes : aux gros corps de texte, « Les nuits blanches » ne
               doit pas se réduire à « Les nu… ». */}
-          <Text style={styles.title} numberOfLines={2}>
-            {challenge.book_title}
-          </Text>
+          <View style={styles.titleRow}>
+            <Text style={styles.title} numberOfLines={2}>
+              {challenge.book_title}
+            </Text>
+            {streakDays > 0 && (
+              // Déjà lue par VoiceOver dans le libellé du cadre
+              <View style={styles.streak} importantForAccessibility="no-hide-descendants" accessibilityElementsHidden>
+                <FlameIcon size={14} color={colors.textTertiary} fill={colors.textTertiary} />
+                <Text style={styles.streakText} maxFontSizeMultiplier={1.3}>
+                  {streakDays}
+                </Text>
+              </View>
+            )}
+          </View>
           {!!challenge.book_author && (
             <Text style={styles.author} numberOfLines={1}>
               {challenge.book_author}
@@ -134,7 +153,14 @@ const styles = StyleSheet.create({
   texts: {
     flex: 1,
   },
+  // La série reste sur la première ligne du titre, même quand il en prend deux
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: spacing.sm,
+  },
   title: {
+    flex: 1,
     fontFamily: fonts.display,
     fontSize: 20,
     color: colors.textPrimary,
@@ -144,6 +170,20 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.textTertiary,
     marginTop: 1,
+  },
+
+  streak: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    // Centrée sur la première ligne du titre (Fraunces 20)
+    height: 26,
+  },
+  streakText: {
+    fontFamily: fonts.bodyBold,
+    fontSize: 14,
+    color: colors.textTertiary,
+    fontVariant: ['tabular-nums'],
   },
 
   track: {
