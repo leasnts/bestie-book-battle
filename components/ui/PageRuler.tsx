@@ -563,7 +563,6 @@ function Pin({
       <View style={styles.pinDrop}>
         <View style={styles.pinUpright}>
           <Image source={avatarSource(member.photoUrl)} style={styles.pinPhoto} contentFit="cover" />
-          <View style={styles.pinGlint} />
         </View>
         <View style={styles.pinRim} />
       </View>
@@ -740,16 +739,6 @@ const styles = StyleSheet.create({
   },
   pinPhoto: {
     ...StyleSheet.absoluteFillObject,
-  },
-  pinGlint: {
-    position: 'absolute',
-    left: PIN * 0.22,
-    top: PIN * 0.12,
-    width: PIN * 0.45,
-    height: PIN * 0.22,
-    borderRadius: PIN,
-    backgroundColor: 'rgba(255,255,255,0.55)',
-    transform: [{ rotate: '-18deg' }],
   },
   pinRim: {
     ...StyleSheet.absoluteFillObject,
