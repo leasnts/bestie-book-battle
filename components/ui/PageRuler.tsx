@@ -166,6 +166,9 @@ export default function PageRuler({ currentPage, totalPages, onPageChange, fontS
   const userActive = useSharedValue(false);
   const lastPage = useSharedValue(currentPage);
   const prevX = useSharedValue(currentPage * STEP);
+  // Où la règle est déjà en train de se poser : un `scrollTo` peut renvoyer tout de
+  // suite une fin d'élan, qui rappellerait `settle` à l'infini (pile d'appels pleine)
+  const settleTarget = useSharedValue(-1);
 
   const settle = (x: number) => {
     'worklet';
@@ -173,7 +176,10 @@ export default function PageRuler({ currentPage, totalPages, onPageChange, fontS
     lag.value = withSpring(0, { damping: 14, stiffness: 160 });
     const page = Math.max(0, Math.min(totalPages, Math.round(x / STEP)));
     // Arrêt en douceur pile sur la page
-    if (Math.abs(page * STEP - x) > 0.5) scrollTo(listRef, page * STEP, 0, true);
+    if (Math.abs(page * STEP - x) > 0.5 && settleTarget.value !== page) {
+      settleTarget.value = page;
+      scrollTo(listRef, page * STEP, 0, true);
+    }
     if (userActive.value) runOnJS(commit)(page);
   };
 
@@ -194,14 +200,18 @@ export default function PageRuler({ currentPage, totalPages, onPageChange, fontS
     },
     onBeginDrag: () => {
       driving.value = false;
+      settleTarget.value = -1;
       userActive.value = true;
     },
     onEndDrag: (e) => {
+      // Le chiffre pilote la règle : c'est lui qui la posera, à la fin de son geste
+      if (driving.value) return;
       const v = (e as unknown as { velocity?: { x: number } }).velocity?.x ?? 0;
       // Sans élan, pas de fin d'élan à attendre : on se pose tout de suite
       if (Math.abs(v) < 0.05) settle(e.contentOffset.x);
     },
     onMomentumEnd: (e) => {
+      if (driving.value) return;
       settle(e.contentOffset.x);
     },
   });
@@ -217,6 +227,7 @@ export default function PageRuler({ currentPage, totalPages, onPageChange, fontS
     .activeOffsetX([-8, 8])
     .onStart(() => {
       driving.value = true;
+      settleTarget.value = -1;
       userActive.value = true;
       drive.value = scrollX.value;
     })
