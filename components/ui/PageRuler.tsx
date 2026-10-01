@@ -23,7 +23,7 @@
  *   règle ; deux épingles trop proches se décalent en hauteur. Hors de vue,
  *   elles restent amarrées au bord de leur côté (devant à droite, derrière à
  *   gauche), un peu plus petites et sans pointe, puis glissent en place quand
- *   on s'en approche.
+ *   on s'en approche. Chaque épingle est une goutte de verre, pointe en bas.
  *
  * Fluidité (retour de Lea sur iPhone : « lent et saccadé ») : tout ce qui bouge
  * pendant le geste tourne sur le fil d'animation, sans React. Le chiffre est un
@@ -87,6 +87,8 @@ const RULER_HEIGHT = 74;
 const LINE_Y = 50;
 /** L'épingle : une bulle de verre avec la photo, et sa pointe sur la couture */
 const PIN = 24;
+/** Ce que la pointe de la goutte dépasse sous le rond (carré tourné de 45°) */
+const PIN_TIP = PIN * (Math.SQRT2 - 1) / 2 + 1;
 /** Épingles amarrées : marge au bord, et écart entre deux */
 const EDGE = 22;
 const DOCK_GAP = 14;
@@ -550,24 +552,19 @@ function Pin({
       opacity: 1 - 0.2 * docked,
     };
   });
-  const stem = useAnimatedStyle(() => {
-    const raw = width / 2 + page * STEP - scrollX.value - PIN / 2;
-    const x = Math.max(minX, Math.min(maxX, raw));
-    return { opacity: Math.abs(raw - x) > 1 ? 0 : 1 };
-  });
   return (
     <Animated.View
       pointerEvents="none"
-      style={[styles.pin, { top: LINE_Y - PIN - 9 - level * 10 }, move]}
+      style={[styles.pin, { top: LINE_Y - PIN - PIN_TIP - 2 - level * 10 }, move]}
       accessible
       accessibilityLabel={`${member.name}, ${Math.round(member.percentage)} %`}
     >
-      {/* La pointe, posée sur la couture */}
-      <Animated.View style={[styles.pinStem, { height: 9 + level * 10 }, stem]} />
-      <View style={styles.pinBubble}>
-        <Image source={avatarSource(member.photoUrl)} style={styles.pinPhoto} contentFit="cover" />
-        {/* Le verre : reflet en haut, liseré clair */}
-        <View style={styles.pinGlint} />
+      {/* Une goutte de verre, la pointe en bas sur la couture (retour de Lea : pas de tige) */}
+      <View style={styles.pinDrop}>
+        <View style={styles.pinUpright}>
+          <Image source={avatarSource(member.photoUrl)} style={styles.pinPhoto} contentFit="cover" />
+          <View style={styles.pinGlint} />
+        </View>
         <View style={styles.pinRim} />
       </View>
     </Animated.View>
@@ -720,31 +717,34 @@ const styles = StyleSheet.create({
     width: PIN,
     alignItems: 'center',
   },
-  pinStem: {
-    position: 'absolute',
-    top: PIN - 2,
-    width: 1.5,
-    borderRadius: 1,
-    backgroundColor: 'rgba(90,69,54,0.35)',
-  },
-  pinBubble: {
+  // La goutte : un carré aux trois coins ronds, tourné de 45° — le coin vif fait la pointe
+  pinDrop: {
     width: PIN,
     height: PIN,
-    borderRadius: PIN / 2,
+    borderTopLeftRadius: PIN / 2,
+    borderTopRightRadius: PIN / 2,
+    borderBottomLeftRadius: PIN / 2,
+    borderBottomRightRadius: 2,
     overflow: 'hidden',
     backgroundColor: '#f3eee7',
+    transform: [{ rotate: '45deg' }],
     shadowColor: colors.black,
     shadowOpacity: 0.18,
     shadowRadius: 4,
     shadowOffset: { width: 0, height: 2 },
+  },
+  // Le contenu remis droit dans la goutte
+  pinUpright: {
+    ...StyleSheet.absoluteFillObject,
+    transform: [{ rotate: '-45deg' }, { scale: 1.12 }],
   },
   pinPhoto: {
     ...StyleSheet.absoluteFillObject,
   },
   pinGlint: {
     position: 'absolute',
-    left: PIN * 0.2,
-    top: PIN * 0.1,
+    left: PIN * 0.22,
+    top: PIN * 0.12,
     width: PIN * 0.45,
     height: PIN * 0.22,
     borderRadius: PIN,
@@ -753,7 +753,10 @@ const styles = StyleSheet.create({
   },
   pinRim: {
     ...StyleSheet.absoluteFillObject,
-    borderRadius: PIN / 2,
+    borderTopLeftRadius: PIN / 2,
+    borderTopRightRadius: PIN / 2,
+    borderBottomLeftRadius: PIN / 2,
+    borderBottomRightRadius: 2,
     borderWidth: 1.5,
     borderColor: 'rgba(255,255,255,0.9)',
     boxShadow: '0 0 0 1px rgba(90,69,54,0.22)',
