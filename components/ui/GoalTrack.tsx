@@ -121,37 +121,39 @@ function Seam({
   from,
   to,
   readUntil,
-  zoom = 1,
-  origin = 0,
   y = TRACK_HEIGHT / 2,
+  map = (x) => x,
+  thickness = () => STITCH_WIDTH,
   gapAt,
 }: {
   from: number;
   to: number;
   readUntil: number;
-  zoom?: number;
-  origin?: number;
   y?: number;
+  /** Où tombe un point de la piste dans le dessin (la loupe le déforme) */
+  map?: (x: number) => number;
+  /** L'épaisseur du fil à cet endroit (la loupe le grossit) */
+  thickness?: (x: number) => number;
   /** Laisse la place à mon point (dans la loupe) : aucun point du fil ne passe dessous */
   gapAt?: number;
 }) {
-  const at = (x: number) => origin + (x - origin) * zoom;
   const stitches = [];
   // Les points restent calés sur la piste entière, pour que la loupe grossisse
   // exactement ceux qu'elle couvre
   for (let x = Math.floor(from / STITCH_STEP) * STITCH_STEP; x <= to; x += STITCH_STEP) {
+    const start = Math.max(x, 0);
     const end = Math.min(x + STITCH_LEN, to);
     if (end <= Math.max(from, 0)) continue;
     if (gapAt !== undefined && end > gapAt - STITCH_LEN && x < gapAt + STITCH_LEN) continue;
     stitches.push(
       <Line
         key={x}
-        x1={at(Math.max(x, 0))}
+        x1={map(start)}
         y1={y}
-        x2={at(end)}
+        x2={map(end)}
         y2={y}
         stroke={x < readUntil ? THREAD_READ : THREAD_AHEAD}
-        strokeWidth={STITCH_WIDTH * zoom}
+        strokeWidth={thickness((start + end) / 2)}
         strokeLinecap="round"
       />,
     );
@@ -191,46 +193,51 @@ function Loupe({
   myPercent: number;
 }) {
   const size = LOUPE_R * 2;
-  // Ce que la loupe couvre, en points de la piste
-  const span = LOUPE_R / LOUPE_ZOOM + STITCH_STEP;
+  // Ce que le verre couvre sur la piste, et un peu plus : tout ce qu'il cache, il le montre
+  const span = LOUPE_R * 1.4;
+  // Comme dans une bille (et la loupe de Ma page) : grossi au centre, tassé vers le bord
+  const bend = (d: number) => {
+    const u = (d * LOUPE_ZOOM) / LOUPE_R;
+    return (LOUPE_R * u) / Math.sqrt(1 + 0.9 * u * u);
+  };
+  const squash = (d: number) => Math.max(0.35, Math.sqrt(Math.max(0, 1 - (bend(d) / LOUPE_R) ** 2)));
+  const map = (g: number) => LOUPE_R + bend(g - x);
   return (
     <View pointerEvents="none" style={[styles.loupe, { left: x - LOUPE_R }]}>
       <View style={styles.loupeClip}>
         <LinearGradient colors={['#fdfcfa', '#f3eee7']} style={StyleSheet.absoluteFill} />
         <Svg width={size} height={size}>
           <KnotGradients />
-          {/* La piste vue à travers le verre : décalée pour que moi tombe au centre */}
-          <G transform={`translate(${LOUPE_R - x} 0)`}>
-            <Seam
-              from={Math.max(0, x - span)}
-              to={Math.min(trackWidth, x + span)}
-              readUntil={x}
-              zoom={LOUPE_ZOOM}
-              origin={x}
-              y={LOUPE_R}
-              gapAt={x}
-            />
-            {knots
-              .filter((percent) => Math.abs((trackWidth * percent) / 100 - x) < span)
-              .map((percent) => (
-                <Knot
-                  key={percent}
-                  x={x + ((trackWidth * percent) / 100 - x) * LOUPE_ZOOM}
-                  reached={percent <= myPercent}
-                  r={KNOT_R * LOUPE_ZOOM}
-                  y={LOUPE_R}
-                />
-              ))}
-            <Line
-              x1={x - (STITCH_LEN * LOUPE_ZOOM) / 2}
-              y1={LOUPE_R}
-              x2={x + (STITCH_LEN * LOUPE_ZOOM) / 2}
-              y2={LOUPE_R}
-              stroke="url(#mine)"
-              strokeWidth={STITCH_WIDTH * LOUPE_ZOOM * 1.15}
-              strokeLinecap="round"
-            />
-          </G>
+          <Seam
+            from={Math.max(0, x - span)}
+            to={Math.min(trackWidth, x + span)}
+            readUntil={x}
+            y={LOUPE_R}
+            map={map}
+            thickness={(g) => STITCH_WIDTH * LOUPE_ZOOM * squash(g - x)}
+            gapAt={x}
+          />
+          {knots
+            .map((percent) => ({ percent, g: (trackWidth * percent) / 100 }))
+            .filter(({ g }) => Math.abs(g - x) < span)
+            .map(({ percent, g }) => (
+              <Knot
+                key={percent}
+                x={map(g)}
+                reached={percent <= myPercent}
+                r={KNOT_R * LOUPE_ZOOM * squash(g - x)}
+                y={LOUPE_R}
+              />
+            ))}
+          <Line
+            x1={LOUPE_R - (STITCH_LEN * LOUPE_ZOOM) / 2}
+            y1={LOUPE_R}
+            x2={LOUPE_R + (STITCH_LEN * LOUPE_ZOOM) / 2}
+            y2={LOUPE_R}
+            stroke="url(#mine)"
+            strokeWidth={STITCH_WIDTH * LOUPE_ZOOM * 1.15}
+            strokeLinecap="round"
+          />
         </Svg>
         {/* Le verre : reflet en haut, lumière concentrée en bas, bord plus sombre (comme Ma page) */}
         <View style={styles.glint} />
