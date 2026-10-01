@@ -5,11 +5,11 @@
  * https://claude.ai/artifact/LHcESZK1418eDJSUatpYP1.
  *
  * - Le chiffre garde notre écriture (Fraunces, « / 624 » pâle et flouté
- *   derrière). On le fait glisser à gauche / à droite : il se dissout comme de
+ *   derrière, un peu plus petit que le chiffre). On le fait glisser à gauche / à droite : il se dissout comme de
  *   l'encre pendant que le suivant s'imprime (« M4 »). La transition suit le
  *   doigt : à mi-geste, on est à mi-chemin.
- * - Dessous, la règle : une page = un point, chocolat si lue, sable si à lire,
- *   et le numéro toutes les dix. Défilement natif (élan, arrêt net sur une
+ * - Dessous, la règle : une page = un point, chocolat si lue, sable si à lire
+ *   (un peu plus gros toutes les dix). Défilement natif (élan, arrêt net sur une
  *   page), un tic par page.
  * - Au centre, une goutte de verre posée sur la ligne : elle grossit les pages
  *   qu'elle couvre (ma page y est une perle lie de vin), s'étire avec la vitesse
@@ -56,16 +56,16 @@ interface PageRulerProps {
 const STEP = 11;
 /** Une dizaine = un élément de la liste (la règle reste légère sur 1 000 pages) */
 const DECADE = STEP * 10;
-const RULER_HEIGHT = 68;
+const RULER_HEIGHT = 48;
 /** La ligne des points, depuis le haut de la règle */
-const LINE_Y = 26;
+const LINE_Y = 24;
 /** Ce que la règle déborde du cadre, de chaque côté (sa marge intérieure) */
 const BLEED = 16;
 /** Glisser le chiffre : 40 pt de doigt = une page */
 const NUMBER_PX = 40;
 /** La goutte de verre : rayon et grossissement */
-const LENS_R = 25;
-const ZOOM = 2.4;
+const LENS_R = 19;
+const ZOOM = 2.2;
 
 const INK = ['#6b5546', colors.dark950] as const;
 const SAND = ['#e6dfd6', '#cfc4b6'] as const;
@@ -317,7 +317,7 @@ function InkNumber({
   const textStyle = [styles.number, { fontSize, lineHeight }];
   return (
     <View>
-      {numberWidth > 0 && <GhostTotal total={total} size={Math.round(fontSize * 0.95)} left={numberWidth * 0.62} />}
+      {numberWidth > 0 && <GhostTotal total={total} size={Math.round(fontSize * 0.72)} left={numberWidth * 0.7} />}
       {/* La place du chiffre (invisible) : donne sa largeur au « / 624 » */}
       <Text onLayout={(e) => setNumberWidth(e.nativeEvent.layout.width)} style={[textStyle, styles.hidden]}>
         {base}
@@ -402,7 +402,7 @@ function GhostTotal({ total, size, left }: { total: number; size: number; left: 
 
 // ─── La règle ────────────────────────────────────────────────────────
 
-/** Dix pages de règle : dix points, et le numéro de la dizaine sous le premier */
+/** Dix pages de règle : dix points */
 const Decade = React.memo(function Decade({
   index,
   totalPages,
@@ -419,9 +419,6 @@ const Decade = React.memo(function Decade({
       {Array.from({ length: count }, (_, i) => (
         <Dot key={i} page={first + i} left={i * STEP} scrollX={scrollX} />
       ))}
-      <Text style={styles.label} numberOfLines={1}>
-        {first}
-      </Text>
     </View>
   );
 });
@@ -446,7 +443,7 @@ function Dot({ page, left, scrollX }: { page: number; left: number; scrollX: Sha
 
 /**
  * Posée au centre de la règle, elle montre les pages qu'elle couvre, grossies.
- * Dedans, une copie de la règle à l'échelle ZOOM, qui défile avec elle.
+ * Dedans, les pages proches à l'échelle ZOOM, qui défilent avec elle.
  */
 function GlassDrop({
   center,
@@ -469,10 +466,6 @@ function GlassDrop({
     const sx = 1 + stretch.value;
     return { transform: [{ translateX: lag.value }, { scaleX: sx }, { scaleY: 1 / Math.sqrt(sx) }] };
   });
-  // La règle grossie : la page p est à (p·STEP − position) · ZOOM du centre de la goutte
-  const inner = useAnimatedStyle(() => ({
-    transform: [{ translateX: LENS_R - (scrollX.value + lag.value) * ZOOM }],
-  }));
   const pages = [];
   for (let p = Math.max(0, base - 3); p <= Math.min(totalPages, base + 4); p++) pages.push(p);
 
@@ -480,24 +473,51 @@ function GlassDrop({
     <Animated.View pointerEvents="none" style={[styles.drop, { left: center - LENS_R }, drop]}>
       <View style={styles.dropClip}>
         <LinearGradient colors={['#fdfcfa', '#f3eee7']} style={StyleSheet.absoluteFill} />
-        <Animated.View style={[styles.dropInner, inner]}>
-          {pages.map((p) => {
-            const s = (p % 10 === 0 ? 7 : 5) * ZOOM;
-            const colorsFor = p === currentPage ? accentGradient : p < currentPage ? INK : SAND;
-            return (
-              <LinearGradient
-                key={p}
-                colors={colorsFor}
-                style={[styles.bigDot, { left: p * STEP * ZOOM - s / 2, top: LENS_R - s / 2, width: s, height: s, borderRadius: s / 2 }]}
-              />
-            );
-          })}
-        </Animated.View>
+        {pages.map((p) => (
+          <LensDot
+            key={p}
+            page={p}
+            colorsFor={p === currentPage ? accentGradient : p < currentPage ? INK : SAND}
+            scrollX={scrollX}
+            lag={lag}
+          />
+        ))}
         {/* Le verre : reflet en haut, lumière concentrée en bas, bord plus sombre */}
         <View style={styles.glint} />
         <View style={styles.caustic} />
         <View style={styles.rim} />
       </View>
+    </Animated.View>
+  );
+}
+
+/**
+ * Une page vue à travers la goutte. Comme dans une bille de verre : grossie au
+ * centre, elle se tasse et s'arrondit en approchant du bord.
+ */
+function LensDot({
+  page,
+  colorsFor,
+  scrollX,
+  lag,
+}: {
+  page: number;
+  colorsFor: readonly [string, string, ...string[]];
+  scrollX: SharedValue<number>;
+  lag: SharedValue<number>;
+}) {
+  const s = (page % 10 === 0 ? 7 : 5) * ZOOM;
+  const style = useAnimatedStyle(() => {
+    const d = (page * STEP - scrollX.value - lag.value) * ZOOM; // distance au centre, grossie
+    const u = d / LENS_R;
+    // la bille : la position se tasse vers le bord, le point s'y aplatit
+    const bent = (LENS_R * u) / Math.sqrt(1 + 0.9 * u * u);
+    const squash = Math.max(0.35, Math.sqrt(Math.max(0, 1 - Math.min(0.9, (bent / LENS_R) ** 2))));
+    return { transform: [{ translateX: LENS_R + bent - s / 2 }, { scaleX: squash }] };
+  });
+  return (
+    <Animated.View style={[styles.bigDot, { top: LENS_R - s / 2, width: s, height: s, borderRadius: s / 2 }, style]}>
+      <LinearGradient colors={colorsFor} style={StyleSheet.absoluteFill} />
     </Animated.View>
   );
 }
@@ -550,17 +570,6 @@ const styles = StyleSheet.create({
     marginTop: -3,
     overflow: 'hidden',
   },
-  label: {
-    position: 'absolute',
-    bottom: 4,
-    left: -20,
-    width: 40,
-    textAlign: 'center',
-    fontFamily: fonts.display,
-    fontSize: 13,
-    color: colors.textPlaceholder,
-    fontVariant: ['tabular-nums'],
-  },
   drop: {
     position: 'absolute',
     top: LINE_Y - LENS_R,
@@ -577,11 +586,10 @@ const styles = StyleSheet.create({
     borderRadius: LENS_R,
     overflow: 'hidden',
   },
-  dropInner: {
-    ...StyleSheet.absoluteFillObject,
-  },
   bigDot: {
     position: 'absolute',
+    left: 0,
+    overflow: 'hidden',
   },
   glint: {
     position: 'absolute',
