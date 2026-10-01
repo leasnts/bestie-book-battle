@@ -10,7 +10,7 @@
  * - les **caps** et la **fin** sont des nœuds de broderie : lie de vin une fois
  *   dépassés, sable sinon. Le cap en cours porte sa date dessous ;
  * - **moi** : une petite goutte de verre posée sur le fil, qui grossit les
- *   points sous elle, ma page en perle lie de vin au centre. C'est la loupe de
+ *   points sous elle, ma page en point lie de vin au centre. C'est la loupe de
  *   Ma page en miniature : la même goutte dit « je suis là » partout ;
  * - le repère de gauche (J-x) dit le temps qu'il reste, la date de fin est au bout.
  *
@@ -21,9 +21,17 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { CheckIcon } from 'lucide-react-native';
 import React, { useState } from 'react';
-import Svg, { Circle, Defs, G, Line, RadialGradient, Stop } from 'react-native-svg';
+import Svg, {
+  Circle,
+  Defs,
+  G,
+  Line,
+  LinearGradient as SvgLinearGradient,
+  RadialGradient,
+  Stop,
+} from 'react-native-svg';
 import { StyleSheet, Text, View } from 'react-native';
-import { colors, fonts, inkAlpha } from '../../utils/constants';
+import { accentGradient, colors, fonts, inkAlpha } from '../../utils/constants';
 import { formatTrackDate, type TrackCap } from '../../utils/track';
 
 interface GoalTrackProps {
@@ -94,7 +102,7 @@ export default function GoalTrack({ myPercent, caps, endDate, leadingLabel }: Go
   );
 }
 
-/** Les dégradés des nœuds : bombés, éclairés en haut à gauche comme la perle de Ma page */
+/** Les dégradés des nœuds : bombés, éclairés en haut à gauche */
 function KnotGradients() {
   return (
     <Defs>
@@ -108,6 +116,11 @@ function KnotGradients() {
         <Stop offset="0.6" stopColor={SAND} />
         <Stop offset="1" stopColor="#b9a891" />
       </RadialGradient>
+      {/* Mon point dans la loupe : le lie de vin de ma page dans Ma page */}
+      <SvgLinearGradient id="mine" x1="0" y1="0" x2="1" y2="0">
+        <Stop offset="0" stopColor={accentGradient[0]} />
+        <Stop offset="1" stopColor={accentGradient[1]} />
+      </SvgLinearGradient>
     </Defs>
   );
 }
@@ -124,6 +137,7 @@ function Seam({
   zoom = 1,
   origin = 0,
   y = TRACK_HEIGHT / 2,
+  gapAt,
 }: {
   from: number;
   to: number;
@@ -131,6 +145,8 @@ function Seam({
   zoom?: number;
   origin?: number;
   y?: number;
+  /** Laisse la place à mon point (dans la loupe) : aucun point du fil ne passe dessous */
+  gapAt?: number;
 }) {
   const at = (x: number) => origin + (x - origin) * zoom;
   const stitches = [];
@@ -139,6 +155,7 @@ function Seam({
   for (let x = Math.floor(from / STITCH_STEP) * STITCH_STEP; x <= to; x += STITCH_STEP) {
     const end = Math.min(x + STITCH_LEN, to);
     if (end <= Math.max(from, 0)) continue;
+    if (gapAt !== undefined && end > gapAt - STITCH_LEN && x < gapAt + STITCH_LEN) continue;
     stitches.push(
       <Line
         key={x}
@@ -171,7 +188,9 @@ function Knot({
 
 /**
  * Moi : la goutte de verre de Ma page, en petit. Elle grossit le fil et les
- * nœuds qu'elle couvre ; ma page y est une perle lie de vin au centre.
+ * nœuds qu'elle couvre ; ma page y est un point de couture lie de vin au
+ * centre, comme dans la loupe de Ma page. Jamais un rond : les ronds sont les
+ * caps (Lea, 2026-10-01).
  */
 function Loupe({
   x,
@@ -202,6 +221,7 @@ function Loupe({
               zoom={LOUPE_ZOOM}
               origin={x}
               y={LOUPE_R}
+              gapAt={x}
             />
             {knots
               .filter((percent) => Math.abs((trackWidth * percent) / 100 - x) < span)
@@ -214,7 +234,15 @@ function Loupe({
                   y={LOUPE_R}
                 />
               ))}
-            <Circle cx={x} cy={LOUPE_R} r={PEARL_R} fill="url(#knotReached)" />
+            <Line
+              x1={x - (STITCH_LEN * LOUPE_ZOOM) / 2}
+              y1={LOUPE_R}
+              x2={x + (STITCH_LEN * LOUPE_ZOOM) / 2}
+              y2={LOUPE_R}
+              stroke="url(#mine)"
+              strokeWidth={STITCH_WIDTH * LOUPE_ZOOM * 1.15}
+              strokeLinecap="round"
+            />
           </G>
         </Svg>
         {/* Le verre : reflet en haut, lumière concentrée en bas, bord plus sombre (comme Ma page) */}
@@ -252,10 +280,9 @@ const SAND = '#d8cbbb';
 const KNOT_R = 3.4;
 /** Ce que le dessin du fil déborde de la piste, de chaque côté */
 const KNOT_PAD = KNOT_R + 1;
-/** La goutte : rayon, grossissement, et ma perle */
+/** La goutte : rayon et grossissement */
 const LOUPE_R = 12.5;
 const LOUPE_ZOOM = 2.2;
-const PEARL_R = 4.6;
 
 // Gardés pour les pistes des autres écrans (ParticipantTimeline, ProgressGauge)
 export const RAIL_HEIGHT = 6;
