@@ -8,7 +8,8 @@
  *   jusqu'à moi, sable après — la même matière que la règle de Ma page et les
  *   autocollants brodés ;
  * - les **caps** et la **fin** sont des nœuds de broderie : lie de vin une fois
- *   dépassés, sable sinon. Le cap en cours porte sa date dessous ;
+ *   dépassés, sable sinon. Plus de date sous le cap en cours (Lea, 2026-10-01) :
+ *   on la trouve dans la fiche du livre ;
  * - **moi** : une petite goutte de verre posée sur le fil, qui grossit les
  *   points sous elle, ma page en point lie de vin au centre. C'est la loupe de
  *   Ma page en miniature : la même goutte dit « je suis là » partout ;
@@ -44,12 +45,6 @@ interface GoalTrackProps {
   leadingLabel?: React.ReactNode;
 }
 
-/**
- * Sous ce %, la date du cap en cours tomberait sur le repère de gauche : on ne
- * l'écrit pas (le nœud reste, et la date est dans la fiche du livre).
- */
-const LEADING_LABEL_CLEARANCE = 30;
-
 export default function GoalTrack({ myPercent, caps, endDate, leadingLabel }: GoalTrackProps) {
   const currentCap = caps.find((cap) => cap.state === 'current') ?? null;
   // Largeur de la piste, pour placer les points du fil
@@ -84,14 +79,6 @@ export default function GoalTrack({ myPercent, caps, endDate, leadingLabel }: Go
           et ne désignent plus rien. Même règle que le chiffre du sélecteur.
         */}
         {leadingLabel && <View style={styles.leading}>{leadingLabel}</View>}
-        {currentCap && !(leadingLabel && currentCap.percent < LEADING_LABEL_CLEARANCE) && (
-          <Text
-            style={[styles.label, styles.capLabel, { left: `${currentCap.percent}%` }]}
-            maxFontSizeMultiplier={1.3}
-          >
-            {formatTrackDate(currentCap.deadline)}
-          </Text>
-        )}
         {endDate && (
           <Text style={[styles.label, styles.endLabel]} maxFontSizeMultiplier={1.3}>
             {formatTrackDate(endDate)}
@@ -281,8 +268,8 @@ const KNOT_R = 3.4;
 /** Ce que le dessin du fil déborde de la piste, de chaque côté */
 const KNOT_PAD = KNOT_R + 1;
 /** La goutte : rayon et grossissement */
-const LOUPE_R = 12.5;
-const LOUPE_ZOOM = 2.2;
+const LOUPE_R = 9;
+const LOUPE_ZOOM = 1.8;
 
 // Gardés pour les pistes des autres écrans (ParticipantTimeline, ProgressGauge)
 export const RAIL_HEIGHT = 6;
@@ -417,10 +404,6 @@ const styles = StyleSheet.create({
     fontFamily: fonts.bodyBold,
     fontSize: 13,
     color: colors.textSecondary,
-  },
-  capLabel: {
-    // Centré sous son nœud : la moitié d'une date courte, à peu près
-    transform: [{ translateX: -26 }],
   },
   endLabel: {
     right: -5,
