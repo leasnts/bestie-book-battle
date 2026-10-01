@@ -30,14 +30,14 @@ import { StyleSheet, View, type LayoutChangeEvent, type StyleProp, type ViewStyl
 import Svg, { Path } from 'react-native-svg';
 import { borderRadius, creamAlpha, glassVeil, spacing } from '../../utils/constants';
 import GlassMaterial from './GlassMaterial';
-import { STITCH, stitchColor } from './NoteSticker';
+import { STICKER_BASE_LARGE, STITCH, stitchColor, stitchInset } from './NoteSticker';
 import PressableScale from './PressableScale';
 
 const RADIUS = borderRadius.xl;
 /** Bord clair qui détache le cadre du fond coloré */
 const EDGE = creamAlpha(0.9);
-/** La couture, en retrait du bord ; son arrondi suit celui du cadre */
-const STITCH_INSET = 6;
+/** La couture, au même écart du bord qu'une grande note ; son arrondi suit celui du cadre */
+const STITCH_INSET = stitchInset(STICKER_BASE_LARGE);
 
 /**
  * Le tracé de la couture. Haut ouvert (`openTop`) : elle descend du haut d'un
@@ -45,7 +45,8 @@ const STITCH_INSET = 6;
  */
 function stitchPath(w: number, h: number, openTop: boolean) {
   const i = STITCH_INSET;
-  const r = RADIUS - i;
+  // Même arrondi de couture que l'autocollant (NoteSticker)
+  const r = RADIUS - i * 0.6;
   const bottom = `V ${h - i - r} Q ${i} ${h - i} ${i + r} ${h - i} H ${w - i - r} Q ${w - i} ${h - i} ${w - i} ${h - i - r}`;
   if (openTop) return `M ${i} 0 ${bottom} V 0`;
   return `M ${i + r} ${i} H ${w - i - r} Q ${w - i} ${i} ${w - i} ${i + r} V ${h - i - r} Q ${w - i} ${h - i} ${w - i - r} ${h - i} H ${i + r} Q ${i} ${h - i} ${i} ${h - i - r} V ${i + r} Q ${i} ${i} ${i + r} ${i} Z`;

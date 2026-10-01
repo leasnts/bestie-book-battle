@@ -61,6 +61,13 @@ interface NoteStickerProps {
 /** Le point de couture, le même sur la note et sur l'intercalaire qui la prolonge */
 export const STITCH = { width: 0.9, dash: '2 1.6' };
 export const stitchColor = (colored: boolean) => inkAlpha(colored ? 0.32 : 0.2);
+/** L'écart entre la couture et le bord, selon le côté qui règle l'autocollant */
+export const stitchInset = (base: number) => base * 0.07;
+/**
+ * Plafond de ce côté pour une grande note : elle garde les détails d'un
+ * autocollant moyen. Les cadres de l'accueil (`GlassSection`) cousent à cet écart.
+ */
+export const STICKER_BASE_LARGE = 96;
 
 export default function NoteSticker({
   color,
@@ -83,7 +90,7 @@ export default function NoteSticker({
   /** Le coin décollé */
   const c = base * 0.34;
   // La couture, près du bord (retour de Lea : plus près que les 12 % d'origine)
-  const inset = base * 0.07;
+  const inset = stitchInset(base);
 
   // Carré arrondi, le coin en haut à droite coupé en diagonale
   // Les deux bouts de la coupe sont adoucis, comme le reste de l'autocollant

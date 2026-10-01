@@ -24,7 +24,7 @@ import type { AnnotationWithAuthor } from '../../services/supabase/annotations';
 import { ANNOTATION_CATEGORIES, formatNotePage, isEmojiOnly } from '../../utils/annotations';
 import { borderRadius, colors, creamAlpha, fonts, inkAlpha, spacing } from '../../utils/constants';
 import { QUICK_REACTIONS } from '../../utils/emojis';
-import NoteSticker from './NoteSticker';
+import NoteSticker, { STICKER_BASE_LARGE } from './NoteSticker';
 import PressableScale from './PressableScale';
 import VoicePlayer from './VoicePlayer';
 
@@ -62,7 +62,7 @@ interface NoteCardProps {
  * les détails d'un autocollant moyen. Le coin décollé fait 34 % de ce côté.
  */
 const STICKER_BASE = 72;
-export const STICKER_BASE_LARGE = 96;
+export { STICKER_BASE_LARGE };
 
 export default function NoteCard({
   note,
