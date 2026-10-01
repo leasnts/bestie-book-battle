@@ -10,29 +10,19 @@
  * - les **caps** et la **fin** sont des nœuds de broderie : lie de vin une fois
  *   dépassés, sable sinon. Plus de date sous le cap en cours (Lea, 2026-10-01) :
  *   on la trouve dans la fiche du livre ;
- * - **moi** : une petite goutte de verre posée sur le fil, qui grossit les
- *   points sous elle, ma page en point lie de vin au centre. C'est la loupe de
- *   Ma page en miniature : la même goutte dit « je suis là » partout ;
+ * - **moi** : là où le fil passe du chocolat au sable (plus de pastille ni de
+ *   loupe, Lea, 2026-10-01) ;
  * - le repère de gauche (J-x) dit le temps qu'il reste, la date de fin est au bout.
  *
  * Tout est en pourcentage : les caps aussi, pour tomber au même endroit quelle
  * que soit l'édition de chacun.
  */
 
-import { LinearGradient } from 'expo-linear-gradient';
 import { CheckIcon } from 'lucide-react-native';
 import React, { useState } from 'react';
-import Svg, {
-  Circle,
-  Defs,
-  G,
-  Line,
-  LinearGradient as SvgLinearGradient,
-  RadialGradient,
-  Stop,
-} from 'react-native-svg';
+import Svg, { Circle, Defs, G, Line, RadialGradient, Stop } from 'react-native-svg';
 import { StyleSheet, Text, View } from 'react-native';
-import { accentGradient, colors, fonts, inkAlpha } from '../../utils/constants';
+import { colors, fonts, inkAlpha } from '../../utils/constants';
 import { formatTrackDate, type TrackCap } from '../../utils/track';
 
 interface GoalTrackProps {
@@ -61,13 +51,12 @@ export default function GoalTrack({ myPercent, caps, endDate, leadingLabel }: Go
             <Svg width={width + 2 * KNOT_PAD} height={TRACK_HEIGHT} style={styles.seam}>
               <KnotGradients />
               <G transform={`translate(${KNOT_PAD} 0)`}>
-                <Seam from={0} to={width} readUntil={meX} />
+                <Seam width={width} readUntil={meX} />
                 {knots.map((percent) => (
                   <Knot key={percent} x={(width * percent) / 100} reached={percent <= myPercent} />
                 ))}
               </G>
             </Svg>
-            <Loupe x={meX} trackWidth={width} knots={knots} myPercent={myPercent} />
           </>
         )}
       </View>
@@ -103,57 +92,23 @@ function KnotGradients() {
         <Stop offset="0.6" stopColor={SAND} />
         <Stop offset="1" stopColor="#b9a891" />
       </RadialGradient>
-      {/* Mon point dans la loupe : le lie de vin de ma page dans Ma page */}
-      <SvgLinearGradient id="mine" x1="0" y1="0" x2="1" y2="0">
-        <Stop offset="0" stopColor={accentGradient[0]} />
-        <Stop offset="1" stopColor={accentGradient[1]} />
-      </SvgLinearGradient>
     </Defs>
   );
 }
 
-/**
- * Le fil en point avant, de `from` à `to` (en points de la piste) : chocolat
- * jusqu'à `readUntil`, sable après. `zoom` et `origin` grossissent le tout
- * autour d'un point (pour la loupe).
- */
-function Seam({
-  from,
-  to,
-  readUntil,
-  y = TRACK_HEIGHT / 2,
-  map = (x) => x,
-  thickness = () => STITCH_WIDTH,
-  gapAt,
-}: {
-  from: number;
-  to: number;
-  readUntil: number;
-  y?: number;
-  /** Où tombe un point de la piste dans le dessin (la loupe le déforme) */
-  map?: (x: number) => number;
-  /** L'épaisseur du fil à cet endroit (la loupe le grossit) */
-  thickness?: (x: number) => number;
-  /** Laisse la place à mon point (dans la loupe) : aucun point du fil ne passe dessous */
-  gapAt?: number;
-}) {
+/** Le fil en point avant : chocolat jusqu'à `readUntil`, sable après */
+function Seam({ width, readUntil }: { width: number; readUntil: number }) {
   const stitches = [];
-  // Les points restent calés sur la piste entière, pour que la loupe grossisse
-  // exactement ceux qu'elle couvre
-  for (let x = Math.floor(from / STITCH_STEP) * STITCH_STEP; x <= to; x += STITCH_STEP) {
-    const start = Math.max(x, 0);
-    const end = Math.min(x + STITCH_LEN, to);
-    if (end <= Math.max(from, 0)) continue;
-    if (gapAt !== undefined && end > gapAt - STITCH_LEN && x < gapAt + STITCH_LEN) continue;
+  for (let x = 0; x <= width; x += STITCH_STEP) {
     stitches.push(
       <Line
         key={x}
-        x1={map(start)}
-        y1={y}
-        x2={map(end)}
-        y2={y}
+        x1={x}
+        y1={TRACK_HEIGHT / 2}
+        x2={Math.min(x + STITCH_LEN, width)}
+        y2={TRACK_HEIGHT / 2}
         stroke={x < readUntil ? THREAD_READ : THREAD_AHEAD}
-        strokeWidth={thickness((start + end) / 2)}
+        strokeWidth={STITCH_WIDTH}
         strokeLinecap="round"
       />,
     );
@@ -161,90 +116,14 @@ function Seam({
   return <>{stitches}</>;
 }
 
-function Knot({
-  x,
-  reached,
-  r = KNOT_R,
-  y = TRACK_HEIGHT / 2,
-}: {
-  x: number;
-  reached: boolean;
-  r?: number;
-  y?: number;
-}) {
-  return <Circle cx={x} cy={y} r={r} fill={reached ? 'url(#knotReached)' : 'url(#knotAhead)'} />;
-}
-
-/**
- * Moi : la goutte de verre de Ma page, en petit. Elle grossit le fil et les
- * nœuds qu'elle couvre ; ma page y est un point de couture lie de vin au
- * centre, comme dans la loupe de Ma page. Jamais un rond : les ronds sont les
- * caps (Lea, 2026-10-01).
- */
-function Loupe({
-  x,
-  trackWidth,
-  knots,
-  myPercent,
-}: {
-  x: number;
-  trackWidth: number;
-  knots: number[];
-  myPercent: number;
-}) {
-  const size = LOUPE_R * 2;
-  // Ce que le verre couvre sur la piste, et un peu plus : tout ce qu'il cache, il le montre
-  const span = LOUPE_R * 1.4;
-  // Comme dans une bille (et la loupe de Ma page) : grossi au centre, tassé vers le bord
-  const bend = (d: number) => {
-    const u = (d * LOUPE_ZOOM) / LOUPE_R;
-    return (LOUPE_R * u) / Math.sqrt(1 + 0.9 * u * u);
-  };
-  const squash = (d: number) => Math.max(0.35, Math.sqrt(Math.max(0, 1 - (bend(d) / LOUPE_R) ** 2)));
-  const map = (g: number) => LOUPE_R + bend(g - x);
+function Knot({ x, reached }: { x: number; reached: boolean }) {
   return (
-    <View pointerEvents="none" style={[styles.loupe, { left: x - LOUPE_R }]}>
-      <View style={styles.loupeClip}>
-        <LinearGradient colors={['#fdfcfa', '#f3eee7']} style={StyleSheet.absoluteFill} />
-        <Svg width={size} height={size}>
-          <KnotGradients />
-          <Seam
-            from={Math.max(0, x - span)}
-            to={Math.min(trackWidth, x + span)}
-            readUntil={x}
-            y={LOUPE_R}
-            map={map}
-            thickness={(g) => STITCH_WIDTH * LOUPE_ZOOM * squash(g - x)}
-            gapAt={x}
-          />
-          {knots
-            .map((percent) => ({ percent, g: (trackWidth * percent) / 100 }))
-            .filter(({ g }) => Math.abs(g - x) < span)
-            .map(({ percent, g }) => (
-              <Knot
-                key={percent}
-                x={map(g)}
-                reached={percent <= myPercent}
-                r={KNOT_R * LOUPE_ZOOM * squash(g - x)}
-                y={LOUPE_R}
-              />
-            ))}
-          <Line
-            x1={LOUPE_R - (STITCH_LEN * LOUPE_ZOOM) / 2}
-            y1={LOUPE_R}
-            x2={LOUPE_R + (STITCH_LEN * LOUPE_ZOOM) / 2}
-            y2={LOUPE_R}
-            stroke="url(#mine)"
-            strokeWidth={STITCH_WIDTH * LOUPE_ZOOM * 1.15}
-            strokeLinecap="round"
-          />
-        </Svg>
-        {/* Le verre : reflet en haut, lumière concentrée en bas, bord plus sombre (comme Ma page) */}
-        <View style={styles.glint} />
-        <View style={styles.caustic} />
-        <View style={styles.rim} />
-      </View>
-    </View>
+    <Circle
+      cx={x}
+      cy={TRACK_HEIGHT / 2}
+      r={KNOT_R}
+      fill={reached ? 'url(#knotReached)' : 'url(#knotAhead)'}
+    />
   );
 }
 
@@ -274,9 +153,6 @@ const SAND = '#d8cbbb';
 const KNOT_R = 3.4;
 /** Ce que le dessin du fil déborde de la piste, de chaque côté */
 const KNOT_PAD = KNOT_R + 1;
-/** La goutte : rayon et grossissement */
-const LOUPE_R = 9;
-const LOUPE_ZOOM = 1.8;
 
 // Gardés pour les pistes des autres écrans (ParticipantTimeline, ProgressGauge)
 export const RAIL_HEIGHT = 6;
@@ -339,49 +215,6 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 0,
     left: -KNOT_PAD,
-  },
-
-  loupe: {
-    position: 'absolute',
-    top: TRACK_HEIGHT / 2 - LOUPE_R,
-    width: LOUPE_R * 2,
-    height: LOUPE_R * 2,
-    borderRadius: LOUPE_R,
-    shadowColor: colors.black,
-    shadowOpacity: 0.16,
-    shadowRadius: 5,
-    shadowOffset: { width: 0, height: 3 },
-  },
-  loupeClip: {
-    flex: 1,
-    borderRadius: LOUPE_R,
-    overflow: 'hidden',
-  },
-  glint: {
-    position: 'absolute',
-    left: LOUPE_R * 0.42,
-    top: LOUPE_R * 0.22,
-    width: LOUPE_R * 0.62,
-    height: LOUPE_R * 0.3,
-    borderRadius: LOUPE_R,
-    backgroundColor: 'rgba(255,255,255,0.85)',
-    transform: [{ rotate: '-18deg' }],
-  },
-  caustic: {
-    position: 'absolute',
-    left: LOUPE_R * 0.55,
-    bottom: LOUPE_R * 0.12,
-    width: LOUPE_R * 0.9,
-    height: LOUPE_R * 0.16,
-    borderRadius: LOUPE_R,
-    backgroundColor: 'rgba(255,255,255,0.55)',
-  },
-  rim: {
-    ...StyleSheet.absoluteFillObject,
-    borderRadius: LOUPE_R,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.9)',
-    boxShadow: 'inset 0 -2px 4px rgba(90,69,54,0.16), 0 0 0 1px rgba(90,69,54,0.22)',
   },
 
   // La fiche du livre : les caps en ronds pleins (CapDot)
