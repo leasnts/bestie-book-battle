@@ -20,7 +20,7 @@ import React, { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { colors, fonts, spacing } from '../../utils/constants';
 import GlassSection from './GlassSection';
-import PageRuler from './PageRuler';
+import PageRuler, { type ClubPin } from './PageRuler';
 import RoundButton from './RoundButton';
 import { QUICK_BAR_HEIGHT } from './QuickNoteBar';
 
@@ -44,6 +44,8 @@ interface PageSectionProps {
   compact?: boolean;
   /** Taille du chiffre, choisie par l'accueil selon la hauteur de l'écran */
   pickerFontSize?: number;
+  /** Les autres membres du club, épinglés sur la règle */
+  club?: ClubPin[];
 }
 
 export default function PageSection({
@@ -57,6 +59,7 @@ export default function PageSection({
   quickBar,
   compact = false,
   pickerFontSize = 88,
+  club,
 }: PageSectionProps) {
   const delta = currentPage - savedPage;
   const hasChanged = delta !== 0;
@@ -73,6 +76,7 @@ export default function PageSection({
           totalPages={totalPages}
           onPageChange={onPageChange}
           fontSize={pickerFontSize}
+          club={club}
         />
       </View>
 

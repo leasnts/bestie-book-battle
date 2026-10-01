@@ -370,6 +370,11 @@ export default function HomeScreen() {
   // ===== Membres du club, pour le cadre Classement =====
   // Même hook que le classement complet : mêmes prénoms, mêmes photos, mêmes %.
   const { participants: leaderboardParticipants, myUserId } = useLeaderboardParticipants();
+  // Les autres sur ma règle : où elles en sont, en % (leur édition n'est pas la mienne)
+  const clubPins = useMemo(
+    () => leaderboardParticipants.filter((p) => p.id !== myUserId),
+    [leaderboardParticipants, myUserId],
+  );
 
   // ===== La piste du livre =====
   // Le club avance à la MÉDIANE des pourcentages : trois lectrices rapides ne
@@ -494,6 +499,7 @@ export default function HomeScreen() {
             quickBar={<QuickNoteBar />}
             compact={compactSpacing}
             pickerFontSize={pickerFontSize}
+            club={clubPins}
           />
         </View>
       ) : !_hasHydrated || (challenges.length === 0 && challengesLoading) ? (

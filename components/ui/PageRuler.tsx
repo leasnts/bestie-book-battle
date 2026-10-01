@@ -17,6 +17,14 @@
  *   page y est une perle lie de vin), les tasse et les arrondit vers le bord
  *   comme une bille, s'étire avec la vitesse et se reforme quand on lâche.
  *
+ * - Au-dessus de la couture, les autres membres du club en épingles de verre
+ *   avec leur photo, là où elles en sont : leur % rapporté à MON édition (on ne
+ *   compare jamais des pages d'éditions différentes). Elles défilent avec la
+ *   règle ; deux épingles trop proches se décalent en hauteur. Hors de vue,
+ *   elles restent amarrées au bord de leur côté (devant à droite, derrière à
+ *   gauche), un peu plus petites et sans pointe, puis glissent en place quand
+ *   on s'en approche.
+ *
  * Fluidité (retour de Lea sur iPhone : « lent et saccadé ») : tout ce qui bouge
  * pendant le geste tourne sur le fil d'animation, sans React. Le chiffre est un
  * texte animé (pas de rendu React par page) et la page n'est remontée à
@@ -27,6 +35,7 @@
 
 import MaskedView from '@react-native-masked-view/masked-view';
 import * as Haptics from 'expo-haptics';
+import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { LayoutChangeEvent, StyleSheet, TextInput, View } from 'react-native';
@@ -50,21 +59,37 @@ import Animated, {
 import Svg, { Defs, FeGaussianBlur, Filter, Text as SvgText } from 'react-native-svg';
 import { accentGradient, colors, fonts } from '../../utils/constants';
 
+/** Un membre du club épinglé sur la règle */
+export interface ClubPin {
+  id: string;
+  name: string;
+  photoUrl: string | null;
+  /** Sa progression en %, dans SON édition */
+  percentage: number;
+}
+
 interface PageRulerProps {
   currentPage: number;
   totalPages: number;
   onPageChange: (page: number) => void;
   /** Taille du chiffre, selon la place */
   fontSize?: number;
+  /** Les autres membres du club */
+  club?: ClubPin[];
 }
 
 /** Un point de couture par page, tous les 11 pt */
 const STEP = 11;
 /** Une dizaine = un élément de la liste (la règle reste légère sur 1 000 pages) */
 const DECADE = STEP * 10;
-const RULER_HEIGHT = 48;
-/** La ligne des points, depuis le haut de la règle */
-const LINE_Y = 24;
+const RULER_HEIGHT = 74;
+/** La ligne des points, depuis le haut de la règle (place au-dessus pour les épingles) */
+const LINE_Y = 50;
+/** L'épingle : une bulle de verre avec la photo, et sa pointe sur la couture */
+const PIN = 24;
+/** Épingles amarrées : marge au bord, et écart entre deux */
+const EDGE = 22;
+const DOCK_GAP = 14;
 /** Ce que la règle déborde du cadre, de chaque côté (sa marge intérieure) */
 const BLEED = 16;
 /** Glisser le chiffre : 40 pt de doigt = une page */
@@ -85,7 +110,7 @@ const stitchThick = (page: number) => (page % 10 === 0 ? 2.8 : 2);
 
 const AnimatedTextInput = Animated.createAnimatedComponent(TextInput);
 
-export default function PageRuler({ currentPage, totalPages, onPageChange, fontSize = 88 }: PageRulerProps) {
+export default function PageRuler({ currentPage, totalPages, onPageChange, fontSize = 88, club = [] }: PageRulerProps) {
   const [width, setWidth] = useState(0);
   const onLayout = (e: LayoutChangeEvent) => setWidth(e.nativeEvent.layout.width);
 
@@ -286,6 +311,7 @@ export default function PageRuler({ currentPage, totalPages, onPageChange, fontS
             />
           </MaskedView>
         )}
+        {width > 0 && <ClubPins club={club} totalPages={totalPages} width={width} scrollX={scrollX} />}
         {width > 0 && <GlassDrop center={width / 2} totalPages={totalPages} scrollX={scrollX} stretch={stretch} lag={lag} />}
       </View>
     </View>
@@ -449,6 +475,105 @@ const Dot = React.memo(function Dot({ page, left, scrollX }: { page: number; lef
   );
 });
 
+// ─── Le club, en épingles ────────────────────────────────────────────
+
+const DEFAULT_AVATAR = require('../../assets/images/profile_picture_default.png');
+const avatarSource = (url: string | null) =>
+  url && (url.startsWith('http://') || url.startsWith('https://')) ? { uri: url } : DEFAULT_AVATAR;
+
+function ClubPins({
+  club,
+  totalPages,
+  width,
+  scrollX,
+}: {
+  club: ClubPin[];
+  totalPages: number;
+  width: number;
+  scrollX: SharedValue<number>;
+}) {
+  // Leur % sur mon édition ; trop proches (moins d'une épingle d'écart), on monte d'un cran
+  const placed = useMemo(() => {
+    const sorted = club
+      .map((m) => ({ ...m, page: Math.round((Math.max(0, Math.min(100, m.percentage)) / 100) * totalPages) }))
+      .sort((a, b) => a.page - b.page);
+    let prev = -Infinity;
+    let level = 0;
+    return sorted.map((m) => {
+      level = (m.page - prev) * STEP < PIN * 0.8 ? level + 1 : 0;
+      prev = m.page;
+      return { ...m, level: Math.min(level, 2) };
+    });
+  }, [club, totalPages]);
+  return (
+    <>
+      {placed.map((m, i) => (
+        <Pin
+          key={m.id}
+          member={m}
+          page={m.page}
+          level={m.level}
+          width={width}
+          // Amarrées au bord : la plus lointaine tout au bord, les autres en rang vers l'intérieur
+          minX={EDGE + i * DOCK_GAP}
+          maxX={width - EDGE - PIN - (placed.length - 1 - i) * DOCK_GAP}
+          scrollX={scrollX}
+        />
+      ))}
+    </>
+  );
+}
+
+function Pin({
+  member,
+  page,
+  level,
+  width,
+  minX,
+  maxX,
+  scrollX,
+}: {
+  member: ClubPin;
+  page: number;
+  level: number;
+  width: number;
+  minX: number;
+  maxX: number;
+  scrollX: SharedValue<number>;
+}) {
+  const move = useAnimatedStyle(() => {
+    const raw = width / 2 + page * STEP - scrollX.value - PIN / 2;
+    const x = Math.max(minX, Math.min(maxX, raw));
+    const docked = Math.min(1, Math.abs(raw - x) / 12);
+    return {
+      transform: [{ translateX: x }, { translateY: docked * level * 10 }, { scale: 1 - 0.18 * docked }],
+      opacity: 1 - 0.2 * docked,
+    };
+  });
+  const stem = useAnimatedStyle(() => {
+    const raw = width / 2 + page * STEP - scrollX.value - PIN / 2;
+    const x = Math.max(minX, Math.min(maxX, raw));
+    return { opacity: Math.abs(raw - x) > 1 ? 0 : 1 };
+  });
+  return (
+    <Animated.View
+      pointerEvents="none"
+      style={[styles.pin, { top: LINE_Y - PIN - 9 - level * 10 }, move]}
+      accessible
+      accessibilityLabel={`${member.name}, ${Math.round(member.percentage)} %`}
+    >
+      {/* La pointe, posée sur la couture */}
+      <Animated.View style={[styles.pinStem, { height: 9 + level * 10 }, stem]} />
+      <View style={styles.pinBubble}>
+        <Image source={avatarSource(member.photoUrl)} style={styles.pinPhoto} contentFit="cover" />
+        {/* Le verre : reflet en haut, liseré clair */}
+        <View style={styles.pinGlint} />
+        <View style={styles.pinRim} />
+      </View>
+    </Animated.View>
+  );
+}
+
 // ─── La goutte de verre ──────────────────────────────────────────────
 
 /**
@@ -588,6 +713,50 @@ const styles = StyleSheet.create({
   dot: {
     position: 'absolute',
     top: LINE_Y,
+  },
+  pin: {
+    position: 'absolute',
+    left: 0,
+    width: PIN,
+    alignItems: 'center',
+  },
+  pinStem: {
+    position: 'absolute',
+    top: PIN - 2,
+    width: 1.5,
+    borderRadius: 1,
+    backgroundColor: 'rgba(90,69,54,0.35)',
+  },
+  pinBubble: {
+    width: PIN,
+    height: PIN,
+    borderRadius: PIN / 2,
+    overflow: 'hidden',
+    backgroundColor: '#f3eee7',
+    shadowColor: colors.black,
+    shadowOpacity: 0.18,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+  },
+  pinPhoto: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  pinGlint: {
+    position: 'absolute',
+    left: PIN * 0.2,
+    top: PIN * 0.1,
+    width: PIN * 0.45,
+    height: PIN * 0.22,
+    borderRadius: PIN,
+    backgroundColor: 'rgba(255,255,255,0.55)',
+    transform: [{ rotate: '-18deg' }],
+  },
+  pinRim: {
+    ...StyleSheet.absoluteFillObject,
+    borderRadius: PIN / 2,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255,255,255,0.9)',
+    boxShadow: '0 0 0 1px rgba(90,69,54,0.22)',
   },
   drop: {
     position: 'absolute',
