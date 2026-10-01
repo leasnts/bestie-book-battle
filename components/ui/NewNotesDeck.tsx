@@ -62,6 +62,7 @@ import { isEmojiOnly, pageFromPosition } from '../../utils/annotations';
 import { peel, roundedRect, toPath, type Point } from '../../utils/peel';
 import {
   accentGradient,
+  borderRadius,
   colors,
   fonts,
   inkGradient,
@@ -499,10 +500,14 @@ function SwipeCard({
   );
 }
 
-/** L'arrondi de la note, le même que son autocollant (NoteSticker, 26 % du côté plafonné) */
+/** Plafond de l'arrondi (celui des cadres de l'accueil), sorti du worklet */
+const RADIUS_MAX = borderRadius.xl;
+
+/** L'arrondi de la note, le même que son autocollant (NoteSticker › stickerRadius) */
 function cornerRadius(w: number, h: number) {
   'worklet';
-  return Math.min(w, h, STICKER_BASE_LARGE) * 0.26;
+  // Pas d'appel à stickerRadius : un worklet ne peut pas l'appeler, même formule
+  return Math.min(Math.min(w, h, STICKER_BASE_LARGE) * 0.26, RADIUS_MAX);
 }
 
 /** Rien de décollé : le masque couvre tout, ombres comprises */
