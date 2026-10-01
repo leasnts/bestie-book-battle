@@ -7,8 +7,10 @@
  *
  * - En haut, ma page en grand. Le total (pages de MON édition) est un « / 624 »
  *   en arrière-plan : plus gros, décalé en bas à droite, pâle et flouté (Lea).
- * - En bas, une règle graduée qu'on fait glisser : un trait par page, un grand
- *   trait et un repère toutes les dix. Le curseur lie de vin marque ma page.
+ * - En bas, une règle de points qu'on fait glisser (2026-10-01, Lea a choisi
+ *   « les points de suspension » + « l'éventail ») : une page = un point, plein
+ *   si lu, évidé sinon, un repère toutes les dix. Les points grossissent autour
+ *   de ma page, comme une loupe sous le doigt ; ma page est la perle lie de vin.
  *   Défilement natif (élan, arrêt net sur une page), un tic par page.
  * - Les bords de la règle s'effacent.
  *
@@ -19,15 +21,16 @@ import MaskedView from '@react-native-masked-view/masked-view';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import {
-  FlatList,
-  LayoutChangeEvent,
-  NativeScrollEvent,
-  NativeSyntheticEvent,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { LayoutChangeEvent, StyleSheet, Text, View } from 'react-native';
+import Animated, {
+  Extrapolation,
+  interpolate,
+  runOnJS,
+  useAnimatedScrollHandler,
+  useAnimatedStyle,
+  useSharedValue,
+  type SharedValue,
+} from 'react-native-reanimated';
 import Svg, { Defs, FeGaussianBlur, Filter, Text as SvgText } from 'react-native-svg';
 import { accentGradient, colors, fonts } from '../../utils/constants';
 
@@ -39,8 +42,8 @@ interface PageRulerProps {
   fontSize?: number;
 }
 
-/** Un trait par page, tous les 8 pt */
-const STEP = 8;
+/** Un point par page, tous les 10 pt */
+const STEP = 10;
 /** Une dizaine = un élément de la liste (la règle reste légère sur 1 000 pages) */
 const DECADE = STEP * 10;
 const RULER_HEIGHT = 64;
@@ -53,7 +56,9 @@ export default function PageRuler({ currentPage, totalPages, onPageChange, fontS
 
   // Le « / 624 » se cale sur la largeur du chiffre
   const [numberWidth, setNumberWidth] = useState(0);
-  const listRef = useRef<FlatList<number>>(null);
+  const listRef = useRef<Animated.FlatList<number>>(null);
+  // Où en est la règle, en points, lu par chaque point pour sa loupe
+  const scrollX = useSharedValue(currentPage * STEP);
   // La page que la règle montre ; sert à ne pas re-défiler quand c'est elle qui l'a changée
   const shownPage = useRef(currentPage);
   const lastTick = useRef(0);
@@ -63,9 +68,8 @@ export default function PageRuler({ currentPage, totalPages, onPageChange, fontS
   // Assez de place après la dernière dizaine pour centrer la dernière page
   const tail = Math.max(0, pad + totalPages * STEP - decades.length * DECADE);
 
-  const onScroll = useCallback(
-    (e: NativeSyntheticEvent<NativeScrollEvent>) => {
-      const page = Math.max(0, Math.min(totalPages, Math.round(e.nativeEvent.contentOffset.x / STEP)));
+  const onPageScrolled = useCallback(
+    (page: number) => {
       if (page === shownPage.current) return;
       shownPage.current = page;
       onPageChange(page);
@@ -75,15 +79,28 @@ export default function PageRuler({ currentPage, totalPages, onPageChange, fontS
         Haptics.selectionAsync().catch(() => {});
       }
     },
-    [onPageChange, totalPages],
+    [onPageChange],
   );
+
+  const lastPage = useSharedValue(currentPage);
+  const onScroll = useAnimatedScrollHandler((e) => {
+    scrollX.value = e.contentOffset.x;
+    const page = Math.max(0, Math.min(totalPages, Math.round(e.contentOffset.x / STEP)));
+    if (page !== lastPage.value) {
+      lastPage.value = page;
+      runOnJS(onPageScrolled)(page);
+    }
+  });
 
   // Changement venu d'ailleurs (↺ annuler, chargement) : la règle suit
   useEffect(() => {
+    // Un décalage posé sans défilement (au chargement) ne passe pas par onScroll : la loupe se recale ici
+    if (Math.round(scrollX.value / STEP) !== currentPage) scrollX.value = currentPage * STEP;
     if (width === 0 || currentPage === shownPage.current) return;
     shownPage.current = currentPage;
+    lastPage.value = currentPage;
     listRef.current?.scrollToOffset({ offset: currentPage * STEP, animated: true });
-  }, [currentPage, width]);
+  }, [currentPage, width, scrollX]);
 
   const step = useCallback(
     (dir: 1 | -1) => {
@@ -131,12 +148,12 @@ export default function PageRuler({ currentPage, totalPages, onPageChange, fontS
               />
             }
           >
-            <FlatList
+            <Animated.FlatList
               ref={listRef}
               horizontal
               data={decades}
               keyExtractor={String}
-              renderItem={({ item }) => <Decade index={item} totalPages={totalPages} />}
+              renderItem={({ item }) => <Decade index={item} totalPages={totalPages} scrollX={scrollX} />}
               getItemLayout={(_, index) => ({ length: DECADE, offset: pad + DECADE * index, index })}
               ListHeaderComponent={<View style={{ width: pad }} />}
               ListFooterComponent={<View style={{ width: tail }} />}
@@ -151,8 +168,8 @@ export default function PageRuler({ currentPage, totalPages, onPageChange, fontS
             />
           </MaskedView>
         )}
-        {/* Le curseur : ma page */}
-        <LinearGradient colors={accentGradient} style={[styles.cursor, { left: width / 2 - 2 }]} pointerEvents="none" />
+        {/* Ma page : la perle lie de vin, posée sur la ligne des points */}
+        <LinearGradient colors={accentGradient} style={[styles.pearl, { left: width / 2 - PEARL / 2 }]} pointerEvents="none" />
       </View>
     </View>
   );
@@ -189,14 +206,22 @@ function GhostTotal({ total, size, left }: { total: number; size: number; left: 
   );
 }
 
-/** Dix pages de règle : le grand trait et son repère, puis neuf petits */
-const Decade = React.memo(function Decade({ index, totalPages }: { index: number; totalPages: number }) {
+/** Dix pages de règle : dix points, et le numéro de la dizaine sous le premier */
+const Decade = React.memo(function Decade({
+  index,
+  totalPages,
+  scrollX,
+}: {
+  index: number;
+  totalPages: number;
+  scrollX: SharedValue<number>;
+}) {
   const first = index * 10;
   const count = Math.min(10, totalPages - first + 1);
   return (
     <View style={styles.decade}>
       {Array.from({ length: count }, (_, i) => (
-        <View key={i} style={[styles.tick, i === 0 && styles.tickMajor, { left: i * STEP }]} />
+        <Dot key={i} page={first + i} left={i * STEP} scrollX={scrollX} />
       ))}
       <Text style={styles.label} numberOfLines={1}>
         {first}
@@ -205,9 +230,33 @@ const Decade = React.memo(function Decade({ index, totalPages }: { index: number
   );
 });
 
+/** Un point = une page. Plein quand elle est lue ; plus gros près de ma page. */
+function Dot({ page, left, scrollX }: { page: number; left: number; scrollX: SharedValue<number> }) {
+  const major = page % 10 === 0;
+  const zoom = useAnimatedStyle(() => {
+    const d = (page * STEP - scrollX.value) / STEP;
+    // La loupe : 1 loin de ma page, jusqu'à 2,2 tout près
+    return { transform: [{ scale: 1 + 1.2 * Math.exp(-(d * d) / 10) }] };
+  });
+  const ink = useAnimatedStyle(() => ({
+    opacity: interpolate(scrollX.value, [page * STEP - STEP / 2, page * STEP - STEP / 2 + 1], [0, 1], Extrapolation.CLAMP),
+  }));
+  const size = major ? 6 : 4;
+  return (
+    <Animated.View style={[styles.dot, { left: left - size / 2, width: size, height: size, borderRadius: size / 2 }, zoom]}>
+      <View style={[styles.dotRing, { borderRadius: size / 2 }]} />
+      <Animated.View style={[StyleSheet.absoluteFill, ink]}>
+        <LinearGradient colors={['#6b5546', colors.dark950]} style={[StyleSheet.absoluteFill, { borderRadius: size / 2 }]} />
+      </Animated.View>
+    </Animated.View>
+  );
+}
+
 // ─── Styles ──────────────────────────────────────────────────────────
 
-const TICK_BOTTOM = 26;
+/** La ligne des points, depuis le haut de la règle */
+const LINE_Y = 24;
+const PEARL = 14;
 
 const styles = StyleSheet.create({
   root: {
@@ -235,19 +284,16 @@ const styles = StyleSheet.create({
     width: DECADE,
     height: RULER_HEIGHT,
   },
-  tick: {
+  dot: {
     position: 'absolute',
-    bottom: TICK_BOTTOM,
-    width: 1,
-    height: 14,
-    marginLeft: -0.5,
-    backgroundColor: '#c9bfb4',
+    top: LINE_Y,
+    marginTop: -2,
+    overflow: 'hidden',
   },
-  tickMajor: {
-    width: 1.5,
-    height: 28,
-    marginLeft: -0.75,
-    backgroundColor: colors.textTertiary,
+  dotRing: {
+    ...StyleSheet.absoluteFillObject,
+    borderWidth: 1,
+    borderColor: '#c9bfb4',
   },
   label: {
     position: 'absolute',
@@ -260,11 +306,15 @@ const styles = StyleSheet.create({
     color: colors.textPlaceholder,
     fontVariant: ['tabular-nums'],
   },
-  cursor: {
+  pearl: {
     position: 'absolute',
-    bottom: TICK_BOTTOM - 4,
-    width: 4,
-    height: 40,
-    borderRadius: 2,
+    top: LINE_Y - PEARL / 2,
+    width: PEARL,
+    height: PEARL,
+    borderRadius: PEARL / 2,
+    shadowColor: '#5e1f2e',
+    shadowOpacity: 0.35,
+    shadowRadius: 5,
+    shadowOffset: { width: 0, height: 3 },
   },
 });
