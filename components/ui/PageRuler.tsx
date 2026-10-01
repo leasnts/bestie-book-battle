@@ -82,6 +82,8 @@ export default function PageRuler({ currentPage, totalPages, onPageChange, fontS
   const baseSV = useSharedValue(currentPage);
 
   const shownPage = useRef(currentPage);
+  const pageRef = useRef(currentPage);
+  pageRef.current = currentPage;
   const lastTick = useRef(0);
 
   const decades = useMemo(() => Array.from({ length: Math.floor(totalPages / 10) + 1 }, (_, i) => i), [totalPages]);
@@ -111,6 +113,9 @@ export default function PageRuler({ currentPage, totalPages, onPageChange, fontS
   const drive = useSharedValue(0);
   const driving = useSharedValue(false);
 
+  // Seul un geste (doigt sur la règle ou sur le chiffre) change la page : nos propres
+  // défilements (chargement, ↺) ne doivent jamais la réécrire
+  const userActive = useSharedValue(false);
   const lastPage = useSharedValue(currentPage);
   const onScroll = useAnimatedScrollHandler({
     onScroll: (e) => {
@@ -126,11 +131,12 @@ export default function PageRuler({ currentPage, totalPages, onPageChange, fontS
       const page = Math.max(0, Math.min(totalPages, Math.round(e.contentOffset.x / STEP)));
       if (page !== lastPage.value) {
         lastPage.value = page;
-        runOnJS(onPageScrolled)(page);
+        if (userActive.value) runOnJS(onPageScrolled)(page);
       }
     },
     onBeginDrag: () => {
       driving.value = false;
+      userActive.value = true;
     },
     onMomentumEnd: () => {
       stretch.value = withSpring(0, { damping: 7, stiffness: 160 });
@@ -149,6 +155,7 @@ export default function PageRuler({ currentPage, totalPages, onPageChange, fontS
     .activeOffsetX([-8, 8])
     .onStart(() => {
       driving.value = true;
+      userActive.value = true;
       drive.value = scrollX.value;
     })
     .onChange((e) => {
@@ -176,8 +183,20 @@ export default function PageRuler({ currentPage, totalPages, onPageChange, fontS
     if (width === 0 || currentPage === shownPage.current) return;
     shownPage.current = currentPage;
     lastPage.value = currentPage;
+    userActive.value = false;
     listRef.current?.scrollToOffset({ offset: currentPage * STEP, animated: true });
-  }, [currentPage, width, scrollX, baseSV, lastPage, listRef]);
+  }, [currentPage, width, scrollX, baseSV, lastPage, listRef, userActive]);
+
+  // Au premier affichage, le décalage initial ne suffit pas à la liste pour dessiner
+  // les dizaines lointaines (page 126 : rien à droite) : on y défile vraiment
+  useEffect(() => {
+    if (width === 0) return;
+    const id = requestAnimationFrame(() => {
+      userActive.value = false;
+      listRef.current?.scrollToOffset({ offset: pageRef.current * STEP, animated: false });
+    });
+    return () => cancelAnimationFrame(id);
+  }, [width, listRef, userActive]);
 
   const step = useCallback(
     (dir: 1 | -1) => {
@@ -233,7 +252,8 @@ export default function PageRuler({ currentPage, totalPages, onPageChange, fontS
               getItemLayout={(_, index) => ({ length: DECADE, offset: pad + DECADE * index, index })}
               ListHeaderComponent={<View style={{ width: pad }} />}
               ListFooterComponent={<View style={{ width: tail }} />}
-              contentOffset={{ x: currentPage * STEP, y: 0 }}
+              // La liste dessine d'abord les dizaines autour de ma page, puis on se cale pile dessus
+              initialScrollIndex={Math.max(0, Math.floor(currentPage / 10) - 1)}
               showsHorizontalScrollIndicator={false}
               snapToInterval={STEP}
               decelerationRate="fast"
@@ -377,7 +397,7 @@ function GhostTotal({ total, size, left }: { total: number; size: number; left: 
   const width = Math.round(label.length * size * 0.58) + margin * 2;
   const height = Math.round(size * 1.25) + margin * 2;
   return (
-    <View pointerEvents="none" style={[styles.ghost, { left: left - margin, top: size * 0.08 - margin }]}>
+    <View pointerEvents="none" style={[styles.ghost, { left: left - margin, top: size * 0.3 - margin }]}>
       <Svg width={width} height={height}>
         <Defs>
           <Filter id="ghostBlur" x="-20%" y="-20%" width="140%" height="140%">
