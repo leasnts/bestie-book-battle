@@ -16,7 +16,7 @@
 
 import React from 'react';
 import Svg, { ClipPath, Defs, G, LinearGradient, Path, Stop, Text as SvgText } from 'react-native-svg';
-import { fonts, inkAlpha, shadowAlpha, stickerMaterial } from '../../utils/constants';
+import { borderRadius, fonts, inkAlpha, shadowAlpha, stickerMaterial } from '../../utils/constants';
 
 interface NoteStickerProps {
   /** Couleur de la catégorie ; `null` pour une note verrouillée */
@@ -61,6 +61,18 @@ interface NoteStickerProps {
 /** Le point de couture, le même sur la note et sur l'intercalaire qui la prolonge */
 export const STITCH = { width: 0.9, dash: '2 1.6' };
 export const stitchColor = (colored: boolean) => inkAlpha(colored ? 0.32 : 0.2);
+/** L'écart entre la couture et le bord, selon le côté qui règle l'autocollant */
+export const stitchInset = (base: number) => base * 0.07;
+/**
+ * Plafond de ce côté pour une grande note : elle garde les détails d'un
+ * autocollant moyen. Les cadres de l'accueil (`GlassSection`) cousent à cet écart.
+ */
+export const STICKER_BASE_LARGE = 96;
+/**
+ * L'arrondi d'un autocollant : 26 % de son côté, plafonné à celui des cadres
+ * de l'accueil (`borderRadius.xl`) — une grande note a le même coin qu'eux.
+ */
+export const stickerRadius = (base: number) => Math.min(base * 0.26, borderRadius.xl);
 
 export default function NoteSticker({
   color,
@@ -79,11 +91,11 @@ export default function NoteSticker({
   // Arrondi, coin décollé et couture suivent le petit côté : une étiquette
   // allongée garde les proportions d'un autocollant carré
   const base = Math.min(w, h, maxBase);
-  const r = base * 0.26;
+  const r = stickerRadius(base);
   /** Le coin décollé */
   const c = base * 0.34;
   // La couture, près du bord (retour de Lea : plus près que les 12 % d'origine)
-  const inset = base * 0.07;
+  const inset = stitchInset(base);
 
   // Carré arrondi, le coin en haut à droite coupé en diagonale
   // Les deux bouts de la coupe sont adoucis, comme le reste de l'autocollant
