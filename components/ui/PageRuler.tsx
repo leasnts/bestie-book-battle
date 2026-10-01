@@ -8,8 +8,10 @@
  *   derrière, un peu plus petit que le chiffre). On le fait glisser à gauche /
  *   à droite : il se dissout comme de l'encre pendant que le suivant s'imprime.
  *   La transition suit le doigt : à mi-geste, on est à mi-chemin.
- * - Dessous, la règle : une page = un point, chocolat si lue, sable si à lire
- *   (un peu plus gros toutes les dix). Défilement natif libre avec son élan,
+ * - Dessous, la règle est une couture : une page = un point de couture (un
+ *   petit trait), fil chocolat si lue, fil sable si à lire, un peu plus épais
+ *   toutes les dix. C'est le même point avant que la couture des autocollants
+ *   brodés (NoteSticker) : une seule matière, le fil, dans toute l'app. Défilement natif libre avec son élan,
  *   puis arrêt en douceur sur la page la plus proche ; un tic par page.
  * - Au centre, une goutte de verre : elle grossit les pages qu'elle couvre (ma
  *   page y est une perle lie de vin), les tasse et les arrondit vers le bord
@@ -56,7 +58,7 @@ interface PageRulerProps {
   fontSize?: number;
 }
 
-/** Un point par page, tous les 11 pt */
+/** Un point de couture par page, tous les 11 pt */
 const STEP = 11;
 /** Une dizaine = un élément de la liste (la règle reste légère sur 1 000 pages) */
 const DECADE = STEP * 10;
@@ -77,6 +79,9 @@ const INK = ['#6b5546', colors.dark950] as const;
 const SAND = ['#e6dfd6', '#cfc4b6'] as const;
 const DOT_READ = '#3a2a20';
 const DOT_UNREAD = '#d9d0c5';
+/** Le point de couture : un trait arrondi, plus court que l'écart entre deux pages */
+const STITCH_LEN = 6.5;
+const stitchThick = (page: number) => (page % 10 === 0 ? 2.8 : 2);
 
 const AnimatedTextInput = Animated.createAnimatedComponent(TextInput);
 
@@ -428,16 +433,20 @@ const Decade = React.memo(function Decade({
 });
 
 /**
- * Un point = une page : sable tant qu'elle est à lire, chocolat une fois lue.
- * Une seule vue par point, teinte unie : à 5 pt un dégradé ne se voit pas, et la
- * règle en affiche des centaines (la goutte, elle, garde ses dégradés).
+ * Un point de couture = une page : fil sable tant qu'elle est à lire, chocolat
+ * une fois lue. Une seule vue par point, teinte unie : à cette taille un dégradé
+ * ne se voit pas, et la règle en affiche des centaines (la goutte garde les siens).
  */
 const Dot = React.memo(function Dot({ page, left, scrollX }: { page: number; left: number; scrollX: SharedValue<number> }) {
-  const size = page % 10 === 0 ? 7 : 5;
+  const t = stitchThick(page);
   const ink = useAnimatedStyle(() => ({
     backgroundColor: scrollX.value >= page * STEP - STEP / 2 ? DOT_READ : DOT_UNREAD,
   }));
-  return <Animated.View style={[styles.dot, { left: left - size / 2, width: size, height: size, borderRadius: size / 2 }, ink]} />;
+  return (
+    <Animated.View
+      style={[styles.dot, { left: left - STITCH_LEN / 2, width: STITCH_LEN, height: t, marginTop: -t / 2, borderRadius: t / 2 }, ink]}
+    />
+  );
 });
 
 // ─── La goutte de verre ──────────────────────────────────────────────
@@ -500,7 +509,8 @@ function LensDot({
   scrollX: SharedValue<number>;
   lag: SharedValue<number>;
 }) {
-  const S = 7 * ZOOM; // la taille d'un repère des dizaines : les autres sont réduits par scale
+  const W = STITCH_LEN * ZOOM; // le point de couture grossi
+  const H = 2.8 * ZOOM; // l'épaisseur d'un repère des dizaines : les autres sont réduits par scaleY
   const geom = useAnimatedStyle(() => {
     const x = scrollX.value + lag.value;
     const base = Math.floor(x / STEP);
@@ -509,10 +519,10 @@ function LensDot({
     const u = d / LENS_R;
     const bent = (LENS_R * u) / Math.sqrt(1 + 0.9 * u * u);
     const squash = Math.max(0.35, Math.sqrt(Math.max(0, 1 - Math.min(0.9, (bent / LENS_R) ** 2))));
-    const size = p % 10 === 0 ? 1 : 5 / 7;
+    const thick = p % 10 === 0 ? 1 : 2 / 2.8;
     return {
       opacity: p < 0 || p > totalPages ? 0 : 1,
-      transform: [{ translateX: LENS_R + bent - S / 2 }, { scaleX: squash * size }, { scaleY: size }],
+      transform: [{ translateX: LENS_R + bent - W / 2 }, { scaleX: squash }, { scaleY: thick }],
     };
   });
   // Lue (chocolat), à lire (sable) ; ma page — la plus proche du centre — en lie de vin
@@ -527,7 +537,7 @@ function LensDot({
     return { opacity: Math.round(scrollX.value / STEP) === p ? 1 : 0 };
   });
   return (
-    <Animated.View style={[styles.bigDot, { top: LENS_R - S / 2, width: S, height: S, borderRadius: S / 2 }, geom]}>
+    <Animated.View style={[styles.bigDot, { top: LENS_R - H / 2, width: W, height: H, borderRadius: H / 2 }, geom]}>
       <LinearGradient colors={SAND} style={StyleSheet.absoluteFill} />
       <Animated.View style={[StyleSheet.absoluteFill, readLayer]}>
         <LinearGradient colors={INK} style={StyleSheet.absoluteFill} />
@@ -578,7 +588,6 @@ const styles = StyleSheet.create({
   dot: {
     position: 'absolute',
     top: LINE_Y,
-    marginTop: -3,
   },
   drop: {
     position: 'absolute',
