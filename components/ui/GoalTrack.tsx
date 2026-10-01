@@ -5,9 +5,10 @@
  * phrase :
  *
  * - un **remplissage** : ma part lue (lie de vin) ;
- * - les **étapes** (caps passés ou à venir, et la fin) sont des ronds pleins,
- *   lie de vin si je les ai dépassées, dans une découpe de la barre ;
- * - le **cap en cours** est un drapeau, avec sa date dessous ;
+ * - les **étapes** (tous les caps, et la fin) sont des ronds pleins, lie de vin
+ *   si je les ai dépassées, dans une découpe de la barre ;
+ * - le **cap en cours** est un rond comme les autres, avec sa date dessous (le
+ *   drapeau était trop laid, Lea, 2026-10-01) ;
  * - la date de fin est au bout, et le repère de gauche (J-x) dit le temps qu'il reste.
  *
  * Plus de pastille « moi » ni de barre du groupe (Lea, 2026-10-01) : Ma page
@@ -17,7 +18,7 @@
  * que soit l'édition de chacun.
  */
 
-import { CheckIcon, FlagIcon } from 'lucide-react-native';
+import { CheckIcon } from 'lucide-react-native';
 import React, { useState } from 'react';
 import Svg, { Circle, Defs, G, LinearGradient as SvgGradient, Mask, Rect, Stop } from 'react-native-svg';
 import { StyleSheet, Text, View } from 'react-native';
@@ -49,9 +50,9 @@ export default function GoalTrack({
   const currentCap = caps.find((cap) => cap.state === 'current') ?? null;
   // Largeur de la piste, pour dessiner la barre découpée en SVG
   const [railWidth, setRailWidth] = useState(0);
-  // Les étapes rondes (caps hors cap en cours, et la fin) : là où la barre est découpée
+  // Les étapes rondes (les caps et la fin) : là où la barre est découpée
   const stepPercents = [
-    ...caps.filter((cap) => cap.state !== 'current').map((cap) => cap.percent),
+    ...caps.map((cap) => cap.percent),
     ...(endDate ? [100] : []),
   ];
 
@@ -93,27 +94,12 @@ export default function GoalTrack({
           </Svg>
         )}
 
-        {caps.map((cap) =>
-          cap.state === 'current' ? (
-            <View key={cap.id} style={[styles.capMark, { left: `${cap.percent}%` }]}>
-              <FlagIcon
-                size={13}
-                color={colors.dark900}
-                strokeWidth={2.4}
-                style={styles.capFlag}
-              />
-            </View>
-          ) : (
-            <View
-              key={cap.id}
-              style={[
-                styles.step,
-                stepStyle(cap.percent, myPercent),
-                { left: `${cap.percent}%` },
-              ]}
-            />
-          ),
-        )}
+        {caps.map((cap) => (
+          <View
+            key={cap.id}
+            style={[styles.step, stepStyle(cap.percent, myPercent), { left: `${cap.percent}%` }]}
+          />
+        ))}
 
         {endDate && (
           <View
@@ -261,21 +247,6 @@ const styles = StyleSheet.create({
   stepClub: {
     backgroundColor: STEP_CLUB,
   },
-  /** Cap en cours : un trait qui traverse la piste, drapeau en haut */
-  capMark: {
-    position: 'absolute',
-    top: 0,
-    width: 2,
-    height: 25,
-    marginLeft: -1,
-    borderRadius: 2,
-    backgroundColor: colors.dark900,
-  },
-  capFlag: {
-    position: 'absolute',
-    left: 1,
-    top: -4,
-  },
   /** La fin du livre : au bout de la piste */
   endStep: {
     left: undefined,
@@ -296,7 +267,7 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
   },
   capLabel: {
-    // Centré sous le drapeau : la moitié d'une date courte, à peu près
+    // Centré sous son rond : la moitié d'une date courte, à peu près
     transform: [{ translateX: -26 }],
   },
   endLabel: {
