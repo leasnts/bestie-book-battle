@@ -285,11 +285,8 @@ export default function BookRoute() {
               <Row
                 key={cap.id}
                 icon={FlagIcon}
-                leading={
-                  cap.state === 'past' ? (
-                    <CapDot percent={cap.percent} myPercent={myPercent} clubPercent={clubPercent} />
-                  ) : undefined
-                }
+                // Le même point que sur la piste de l'accueil : gris tant qu'on n'y est pas
+                leading={<CapDot percent={cap.percent} myPercent={myPercent} clubPercent={clubPercent} />}
                 label={`${capPages(cap)} · ${formatTrackDate(cap.deadline)}`}
                 value={`${reached}/${memberCount}`}
                 valueIcon={UsersIcon}
@@ -424,7 +421,7 @@ function Row({
   icon: typeof FlagIcon;
   label: string;
   value: string;
-  /** Remplace l'icône de gauche (le rond d'un cap passé) */
+  /** Remplace l'icône de gauche (le point d'un cap) */
   leading?: React.ReactNode;
   /** Petite icône devant la valeur, pour dire ce qu'elle compte */
   valueIcon?: typeof FlagIcon;
