@@ -5,26 +5,29 @@
  * https://claude.ai/artifact/LHcESZK1418eDJSUatpYP1.
  *
  * - Le chiffre garde notre écriture (Fraunces, « / 624 » pâle et flouté
- *   derrière, un peu plus petit que le chiffre). On le fait glisser à gauche / à droite : il se dissout comme de
- *   l'encre pendant que le suivant s'imprime (« M4 »). La transition suit le
- *   doigt : à mi-geste, on est à mi-chemin.
+ *   derrière, un peu plus petit que le chiffre). On le fait glisser à gauche /
+ *   à droite : il se dissout comme de l'encre pendant que le suivant s'imprime.
+ *   La transition suit le doigt : à mi-geste, on est à mi-chemin.
  * - Dessous, la règle : une page = un point, chocolat si lue, sable si à lire
- *   (un peu plus gros toutes les dix). Défilement natif (élan, arrêt net sur une
- *   page), un tic par page.
- * - Au centre, une goutte de verre posée sur la ligne : elle grossit les pages
- *   qu'elle couvre (ma page y est une perle lie de vin), s'étire avec la vitesse
- *   et se reforme en tremblant un peu quand on lâche.
+ *   (un peu plus gros toutes les dix). Défilement natif libre avec son élan,
+ *   puis arrêt en douceur sur la page la plus proche ; un tic par page.
+ * - Au centre, une goutte de verre : elle grossit les pages qu'elle couvre (ma
+ *   page y est une perle lie de vin), les tasse et les arrondit vers le bord
+ *   comme une bille, s'étire avec la vitesse et se reforme quand on lâche.
  *
- * Le chiffre et la règle ne font qu'un : glisser le chiffre fait défiler la
- * règle. VoiceOver : réglable (glisser vers le haut / bas = page suivante /
- * précédente).
+ * Fluidité (retour de Lea sur iPhone : « lent et saccadé ») : tout ce qui bouge
+ * pendant le geste tourne sur le fil d'animation, sans React. Le chiffre est un
+ * texte animé (pas de rendu React par page) et la page n'est remontée à
+ * l'accueil qu'une fois la règle arrêtée, comme l'ancien sélecteur.
+ *
+ * VoiceOver : réglable (glisser vers le haut / bas = page suivante / précédente).
  */
 
 import MaskedView from '@react-native-masked-view/masked-view';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { LayoutChangeEvent, StyleSheet, Text, View } from 'react-native';
+import { LayoutChangeEvent, StyleSheet, TextInput, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   Easing,
@@ -32,6 +35,7 @@ import Animated, {
   interpolate,
   runOnJS,
   scrollTo,
+  useAnimatedProps,
   useAnimatedReaction,
   useAnimatedRef,
   useAnimatedScrollHandler,
@@ -66,9 +70,15 @@ const NUMBER_PX = 40;
 /** La goutte de verre : rayon et grossissement */
 const LENS_R = 19;
 const ZOOM = 2.2;
+/** Pages dessinées de part et d'autre dans la goutte */
+const LENS_SPAN = 4;
 
 const INK = ['#6b5546', colors.dark950] as const;
 const SAND = ['#e6dfd6', '#cfc4b6'] as const;
+const DOT_READ = '#3a2a20';
+const DOT_UNREAD = '#d9d0c5';
+
+const AnimatedTextInput = Animated.createAnimatedComponent(TextInput);
 
 export default function PageRuler({ currentPage, totalPages, onPageChange, fontSize = 88 }: PageRulerProps) {
   const [width, setWidth] = useState(0);
@@ -77,9 +87,7 @@ export default function PageRuler({ currentPage, totalPages, onPageChange, fontS
   const listRef = useAnimatedRef<Animated.FlatList<number>>();
   // Où en est la règle, en points : tout le reste (chiffre, goutte) en découle
   const scrollX = useSharedValue(currentPage * STEP);
-  // La page entière sous la goutte, et la suivante : ce que le chiffre affiche
-  const [base, setBase] = useState(currentPage);
-  const baseSV = useSharedValue(currentPage);
+  const maxX = totalPages * STEP;
 
   const shownPage = useRef(currentPage);
   const pageRef = useRef(currentPage);
@@ -90,18 +98,27 @@ export default function PageRuler({ currentPage, totalPages, onPageChange, fontS
   const pad = width / 2;
   // Assez de place après la dernière dizaine pour centrer la dernière page
   const tail = Math.max(0, pad + totalPages * STEP - decades.length * DECADE);
-  const maxX = totalPages * STEP;
 
-  const onPageScrolled = useCallback(
+  const renderDecade = useCallback(
+    ({ item }: { item: number }) => <Decade index={item} totalPages={totalPages} scrollX={scrollX} />,
+    [totalPages, scrollX],
+  );
+
+  /** Un tic par page franchie, sans toucher à l'accueil */
+  const tick = useCallback(() => {
+    const now = Date.now();
+    if (now - lastTick.current > 30) {
+      lastTick.current = now;
+      Haptics.selectionAsync().catch(() => {});
+    }
+  }, []);
+
+  /** La règle s'est arrêtée sur une page : seulement là, l'accueil l'apprend */
+  const commit = useCallback(
     (page: number) => {
       if (page === shownPage.current) return;
       shownPage.current = page;
       onPageChange(page);
-      const now = Date.now();
-      if (now - lastTick.current > 30) {
-        lastTick.current = now;
-        Haptics.selectionAsync().catch(() => {});
-      }
     },
     [onPageChange],
   );
@@ -109,38 +126,51 @@ export default function PageRuler({ currentPage, totalPages, onPageChange, fontS
   // La goutte : étirement selon la vitesse, léger retard derrière le geste
   const stretch = useSharedValue(0);
   const lag = useSharedValue(0);
-  // Glisser le chiffre pilote la règle (sans élan natif : on anime nous-mêmes)
+  // Glisser le chiffre pilote la règle (on anime nous-mêmes, sans élan natif)
   const drive = useSharedValue(0);
   const driving = useSharedValue(false);
-
   // Seul un geste (doigt sur la règle ou sur le chiffre) change la page : nos propres
   // défilements (chargement, ↺) ne doivent jamais la réécrire
   const userActive = useSharedValue(false);
   const lastPage = useSharedValue(currentPage);
+  const prevX = useSharedValue(currentPage * STEP);
+
+  const settle = (x: number) => {
+    'worklet';
+    stretch.value = withSpring(0, { damping: 7, stiffness: 160 });
+    lag.value = withSpring(0, { damping: 14, stiffness: 160 });
+    const page = Math.max(0, Math.min(totalPages, Math.round(x / STEP)));
+    // Arrêt en douceur pile sur la page
+    if (Math.abs(page * STEP - x) > 0.5) scrollTo(listRef, page * STEP, 0, true);
+    if (userActive.value) runOnJS(commit)(page);
+  };
+
   const onScroll = useAnimatedScrollHandler({
     onScroll: (e) => {
-      scrollX.value = e.contentOffset.x;
-      const v = (e as unknown as { velocity?: { x: number } }).velocity?.x ?? 0;
-      stretch.value = withSpring(Math.min(0.5, Math.abs(v) * 0.12), { damping: 9, stiffness: 170 });
-      lag.value = withSpring(Math.max(-9, Math.min(9, -v * 5)), { damping: 14, stiffness: 160 });
-      const b = Math.max(0, Math.min(totalPages, Math.floor(e.contentOffset.x / STEP + 1e-3)));
-      if (b !== baseSV.value) {
-        baseSV.value = b;
-        runOnJS(setBase)(b);
-      }
-      const page = Math.max(0, Math.min(totalPages, Math.round(e.contentOffset.x / STEP)));
+      const x = e.contentOffset.x;
+      // Vitesse lue d'une image à l'autre (pt / image), lissée : l'étirement suit sans à-coups
+      const v = x - prevX.value;
+      prevX.value = x;
+      scrollX.value = x;
+      stretch.value += (Math.min(0.5, Math.abs(v) * 0.045) - stretch.value) * 0.35;
+      lag.value += (Math.max(-9, Math.min(9, -v * 0.8)) - lag.value) * 0.35;
+      const page = Math.max(0, Math.min(totalPages, Math.round(x / STEP)));
       if (page !== lastPage.value) {
         lastPage.value = page;
-        if (userActive.value) runOnJS(onPageScrolled)(page);
+        if (userActive.value) runOnJS(tick)();
       }
     },
     onBeginDrag: () => {
       driving.value = false;
       userActive.value = true;
     },
-    onMomentumEnd: () => {
-      stretch.value = withSpring(0, { damping: 7, stiffness: 160 });
-      lag.value = withSpring(0, { damping: 14, stiffness: 160 });
+    onEndDrag: (e) => {
+      const v = (e as unknown as { velocity?: { x: number } }).velocity?.x ?? 0;
+      // Sans élan, pas de fin d'élan à attendre : on se pose tout de suite
+      if (Math.abs(v) < 0.05) settle(e.contentOffset.x);
+    },
+    onMomentumEnd: (e) => {
+      settle(e.contentOffset.x);
     },
   });
 
@@ -165,38 +195,33 @@ export default function PageRuler({ currentPage, totalPages, onPageChange, fontS
       // Un peu d'élan, puis arrêt net sur une page
       const projected = drive.value - (e.velocityX * 0.18 * STEP) / NUMBER_PX;
       const target = Math.max(0, Math.min(maxX, Math.round(projected / STEP) * STEP));
-      drive.value = withTiming(target, { duration: 420, easing: Easing.out(Easing.cubic) }, () => {
+      drive.value = withTiming(target, { duration: 380, easing: Easing.out(Easing.cubic) }, () => {
         driving.value = false;
-        stretch.value = withSpring(0, { damping: 7, stiffness: 160 });
-        lag.value = withSpring(0, { damping: 14, stiffness: 160 });
+        settle(target);
       });
     });
 
   // Changement venu d'ailleurs (↺ annuler, chargement) : la règle suit
   useEffect(() => {
-    // Un décalage posé sans défilement (au chargement) ne passe pas par onScroll : on recale ici
-    if (Math.round(scrollX.value / STEP) !== currentPage) {
-      scrollX.value = currentPage * STEP;
-      baseSV.value = currentPage;
-      setBase(currentPage);
-    }
     if (width === 0 || currentPage === shownPage.current) return;
     shownPage.current = currentPage;
     lastPage.value = currentPage;
     userActive.value = false;
     listRef.current?.scrollToOffset({ offset: currentPage * STEP, animated: true });
-  }, [currentPage, width, scrollX, baseSV, lastPage, listRef, userActive]);
+  }, [currentPage, width, lastPage, listRef, userActive]);
 
-  // Au premier affichage, le décalage initial ne suffit pas à la liste pour dessiner
-  // les dizaines lointaines (page 126 : rien à droite) : on y défile vraiment
+  // Au premier affichage, on se cale vraiment sur ma page (la liste dessine alors
+  // les dizaines autour d'elle, et la loupe part du bon endroit)
   useEffect(() => {
     if (width === 0) return;
     const id = requestAnimationFrame(() => {
       userActive.value = false;
+      scrollX.value = pageRef.current * STEP;
+      prevX.value = pageRef.current * STEP;
       listRef.current?.scrollToOffset({ offset: pageRef.current * STEP, animated: false });
     });
     return () => cancelAnimationFrame(id);
-  }, [width, listRef, userActive]);
+  }, [width, listRef, userActive, scrollX, prevX]);
 
   const step = useCallback(
     (dir: 1 | -1) => {
@@ -218,14 +243,7 @@ export default function PageRuler({ currentPage, totalPages, onPageChange, fontS
     >
       <GestureDetector gesture={numberPan}>
         <View style={styles.numberBlock}>
-          <InkNumber
-            base={base}
-            next={Math.min(totalPages, base + 1)}
-            total={totalPages}
-            fontSize={fontSize}
-            scrollX={scrollX}
-            baseSV={baseSV}
-          />
+          <InkNumber page={currentPage} total={totalPages} fontSize={fontSize} scrollX={scrollX} />
         </View>
       </GestureDetector>
 
@@ -248,33 +266,22 @@ export default function PageRuler({ currentPage, totalPages, onPageChange, fontS
               horizontal
               data={decades}
               keyExtractor={String}
-              renderItem={({ item }) => <Decade index={item} totalPages={totalPages} scrollX={scrollX} />}
+              renderItem={renderDecade}
               getItemLayout={(_, index) => ({ length: DECADE, offset: pad + DECADE * index, index })}
               ListHeaderComponent={<View style={{ width: pad }} />}
               ListFooterComponent={<View style={{ width: tail }} />}
               // La liste dessine d'abord les dizaines autour de ma page, puis on se cale pile dessus
               initialScrollIndex={Math.max(0, Math.floor(currentPage / 10) - 1)}
               showsHorizontalScrollIndicator={false}
-              snapToInterval={STEP}
-              decelerationRate="fast"
+              decelerationRate={0.994}
               onScroll={onScroll}
               scrollEventThrottle={16}
-              initialNumToRender={12}
-              windowSize={7}
+              initialNumToRender={6}
+              windowSize={9}
             />
           </MaskedView>
         )}
-        {width > 0 && (
-          <GlassDrop
-            center={width / 2}
-            base={base}
-            currentPage={currentPage}
-            totalPages={totalPages}
-            scrollX={scrollX}
-            stretch={stretch}
-            lag={lag}
-          />
-        )}
+        {width > 0 && <GlassDrop center={width / 2} totalPages={totalPages} scrollX={scrollX} stretch={stretch} lag={lag} />}
       </View>
     </View>
   );
@@ -283,113 +290,90 @@ export default function PageRuler({ currentPage, totalPages, onPageChange, fontS
 // ─── Le chiffre à l'encre ────────────────────────────────────────────
 
 /**
- * Deux chiffres superposés, la page et la suivante. Entre les deux, celui qui
- * part se dissout et celui qui arrive s'imprime. Le flou vient d'un double
- * flouté de chaque chiffre, fondu avec le net : RN ne sait pas flouter un texte.
+ * Le chiffre et le suivant, superposés, écrits par le fil d'animation (des
+ * TextInput non modifiables : leur texte change sans passer par React). Celui
+ * qui part se dissout, celui qui arrive s'imprime ; le flou est fait de deux
+ * doubles décalés et pâles, RN ne sachant pas flouter un texte.
  */
 function InkNumber({
-  base,
-  next,
+  page,
   total,
   fontSize,
   scrollX,
-  baseSV,
 }: {
-  base: number;
-  next: number;
+  page: number;
   total: number;
   fontSize: number;
   scrollX: SharedValue<number>;
-  baseSV: SharedValue<number>;
 }) {
-  // Le « / 624 » se cale sur la largeur du chiffre
-  const [numberWidth, setNumberWidth] = useState(0);
   const lineHeight = Math.round(fontSize * 1.05);
+  // La largeur du chiffre, pour caler le « / 624 » (le nombre de chiffres change rarement)
+  const digits = String(page).length;
+  const numberWidth = Math.round(digits * fontSize * 0.6);
 
-  const progress = (x: number, b: number) => {
+  const outText = useAnimatedProps(() => {
+    const b = Math.max(0, Math.min(total, Math.floor(scrollX.value / STEP + 1e-3)));
+    return { text: String(b), defaultValue: String(b) } as never;
+  });
+  const inText = useAnimatedProps(() => {
+    const b = Math.max(0, Math.min(total, Math.floor(scrollX.value / STEP + 1e-3) + 1));
+    return { text: String(b), defaultValue: String(b) } as never;
+  });
+
+  const ease = (x: number) => {
     'worklet';
-    const f = Math.max(0, Math.min(1, x / STEP - b));
+    const f = Math.max(0, Math.min(1, x / STEP - Math.floor(x / STEP + 1e-3)));
     return f * f * (3 - 2 * f);
   };
-  const outSharp = useAnimatedStyle(() => {
-    const e = progress(scrollX.value, baseSV.value);
-    return {
-      opacity: 1 - e,
-      transform: [{ translateX: -e * 18 }, { scale: 1 + e * 0.08 }],
-    };
-  });
-  const outBlur = useAnimatedStyle(() => {
-    const e = progress(scrollX.value, baseSV.value);
-    return { opacity: Math.sin(Math.PI * e) * 0.8 * (1 - e * 0.4), transform: [{ translateX: -e * 18 }, { scale: 1 + e * 0.08 }] };
-  });
-  const inSharp = useAnimatedStyle(() => {
-    const e = progress(scrollX.value, baseSV.value);
-    return {
-      opacity: interpolate(e, [0.25, 1], [0, 1], Extrapolation.CLAMP),
-      transform: [{ translateX: (1 - e) * 18 }, { scale: 0.94 + e * 0.06 }],
-    };
-  });
-  const inBlur = useAnimatedStyle(() => {
-    const e = progress(scrollX.value, baseSV.value);
-    return { opacity: Math.sin(Math.PI * e) * 0.8 * (0.6 + 0.4 * e), transform: [{ translateX: (1 - e) * 18 }, { scale: 0.94 + e * 0.06 }] };
-  });
+  const out = (dx: number, dy: number, k: number) =>
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    useAnimatedStyle(() => {
+      const e = ease(scrollX.value);
+      const blur = Math.sin(Math.PI * e);
+      return {
+        opacity: k === 0 ? 1 - e : 0.35 * blur * (1 - e * 0.5),
+        transform: [{ translateX: -e * 18 + dx * blur }, { translateY: dy * blur }, { scale: 1 + e * 0.08 }],
+      };
+    });
+  const inn = (dx: number, dy: number, k: number) =>
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    useAnimatedStyle(() => {
+      const e = ease(scrollX.value);
+      const blur = Math.sin(Math.PI * e);
+      return {
+        opacity: k === 0 ? interpolate(e, [0.25, 1], [0, 1], Extrapolation.CLAMP) : 0.35 * blur * (0.5 + 0.5 * e),
+        transform: [{ translateX: (1 - e) * 18 + dx * blur }, { translateY: dy * blur }, { scale: 0.94 + e * 0.06 }],
+      };
+    });
+  // Le net, puis ses deux doubles flous (décalés de part et d'autre)
+  const outStyles = [out(0, 0, 0), out(-3, 1.5, 1), out(3, -1.5, 1)];
+  const inStyles = [inn(0, 0, 0), inn(-3, 1.5, 1), inn(3, -1.5, 1)];
 
-  const textStyle = [styles.number, { fontSize, lineHeight }];
+  const textStyle = [styles.number, { fontSize, lineHeight, height: lineHeight }];
+  const layer = (style: object, props: object, key: string) => (
+    <AnimatedTextInput
+      key={key}
+      editable={false}
+      pointerEvents="none"
+      underlineColorAndroid="transparent"
+      defaultValue={String(page)}
+      animatedProps={props}
+      style={[textStyle, styles.layer, style]}
+      importantForAccessibility="no"
+      accessible={false}
+    />
+  );
+
   return (
-    <View>
-      {numberWidth > 0 && <GhostTotal total={total} size={Math.round(fontSize * 0.72)} left={numberWidth * 0.7} />}
-      {/* La place du chiffre (invisible) : donne sa largeur au « / 624 » */}
-      <Text onLayout={(e) => setNumberWidth(e.nativeEvent.layout.width)} style={[textStyle, styles.hidden]}>
-        {base}
-      </Text>
-      <Animated.View style={[styles.layer, outBlur]} pointerEvents="none">
-        <BlurredNumber value={base} size={fontSize} />
-      </Animated.View>
-      <Animated.Text style={[textStyle, styles.layer, outSharp]}>{base}</Animated.Text>
-      {next !== base && (
-        <>
-          <Animated.View style={[styles.layer, inBlur]} pointerEvents="none">
-            <BlurredNumber value={next} size={fontSize} />
-          </Animated.View>
-          <Animated.Text style={[textStyle, styles.layer, inSharp]}>{next}</Animated.Text>
-        </>
-      )}
+    <View style={{ width: numberWidth + 80, height: lineHeight }}>
+      <GhostTotal total={total} size={Math.round(fontSize * 0.72)} left={40 + numberWidth * 0.7} />
+      {outStyles.map((s, i) => layer(s, outText, `o${i}`))}
+      {inStyles.map((s, i) => layer(s, inText, `i${i}`))}
     </View>
   );
 }
 
-/** Le chiffre, flouté comme une tache d'encre */
-function BlurredNumber({ value, size }: { value: number; size: number }) {
-  const label = String(value);
-  const blur = 5;
-  const margin = blur * 3;
-  const w = Math.round(label.length * size * 0.6) + margin * 2;
-  const h = Math.round(size * 1.05) + margin * 2;
-  return (
-    <View style={styles.blurBox}>
-      <Svg width={w} height={h} style={{ marginHorizontal: -margin, marginVertical: -margin }}>
-        <Defs>
-          <Filter id={`ink${value}`} x="-30%" y="-30%" width="160%" height="160%">
-            <FeGaussianBlur stdDeviation={blur} />
-          </Filter>
-        </Defs>
-        <SvgText
-          x={w / 2}
-          y={margin + size * 0.86}
-          textAnchor="middle"
-          fontFamily={fonts.displayHero}
-          fontSize={size}
-          fill={colors.textPrimary}
-          filter={`url(#ink${value})`}
-        >
-          {label}
-        </SvgText>
-      </Svg>
-    </View>
-  );
-}
-
-/** « / 624 » derrière le chiffre : plus gros, décalé, pâle et flouté */
+/** « / 624 » derrière le chiffre : plus petit, décalé, pâle et flouté */
 function GhostTotal({ total, size, left }: { total: number; size: number; left: number }) {
   const label = `/${total}`;
   const blur = 3;
@@ -443,40 +427,35 @@ const Decade = React.memo(function Decade({
   );
 });
 
-/** Un point = une page : sable tant qu'elle est à lire, chocolat une fois lue */
-function Dot({ page, left, scrollX }: { page: number; left: number; scrollX: SharedValue<number> }) {
+/**
+ * Un point = une page : sable tant qu'elle est à lire, chocolat une fois lue.
+ * Une seule vue par point, teinte unie : à 5 pt un dégradé ne se voit pas, et la
+ * règle en affiche des centaines (la goutte, elle, garde ses dégradés).
+ */
+const Dot = React.memo(function Dot({ page, left, scrollX }: { page: number; left: number; scrollX: SharedValue<number> }) {
   const size = page % 10 === 0 ? 7 : 5;
   const ink = useAnimatedStyle(() => ({
-    opacity: interpolate(scrollX.value, [page * STEP - STEP / 2, page * STEP - STEP / 2 + 1], [0, 1], Extrapolation.CLAMP),
+    backgroundColor: scrollX.value >= page * STEP - STEP / 2 ? DOT_READ : DOT_UNREAD,
   }));
-  return (
-    <View style={[styles.dot, { left: left - size / 2, width: size, height: size, borderRadius: size / 2 }]}>
-      <LinearGradient colors={SAND} style={StyleSheet.absoluteFill} />
-      <Animated.View style={[StyleSheet.absoluteFill, ink]}>
-        <LinearGradient colors={INK} style={StyleSheet.absoluteFill} />
-      </Animated.View>
-    </View>
-  );
-}
+  return <Animated.View style={[styles.dot, { left: left - size / 2, width: size, height: size, borderRadius: size / 2 }, ink]} />;
+});
 
 // ─── La goutte de verre ──────────────────────────────────────────────
 
 /**
  * Posée au centre de la règle, elle montre les pages qu'elle couvre, grossies.
- * Dedans, les pages proches à l'échelle ZOOM, qui défilent avec elle.
+ * Dedans, quelques « emplacements » de points qui suivent la règle sur le fil
+ * d'animation : chacun affiche la page qui passe à sa place (lue, à lire, ou la
+ * mienne en lie de vin), sans rendu React pendant le geste.
  */
 function GlassDrop({
   center,
-  base,
-  currentPage,
   totalPages,
   scrollX,
   stretch,
   lag,
 }: {
   center: number;
-  base: number;
-  currentPage: number;
   totalPages: number;
   scrollX: SharedValue<number>;
   stretch: SharedValue<number>;
@@ -486,21 +465,15 @@ function GlassDrop({
     const sx = 1 + stretch.value;
     return { transform: [{ translateX: lag.value }, { scaleX: sx }, { scaleY: 1 / Math.sqrt(sx) }] };
   });
-  const pages = [];
-  for (let p = Math.max(0, base - 3); p <= Math.min(totalPages, base + 4); p++) pages.push(p);
+  const slots = [];
+  for (let k = -LENS_SPAN; k <= LENS_SPAN + 1; k++) slots.push(k);
 
   return (
     <Animated.View pointerEvents="none" style={[styles.drop, { left: center - LENS_R }, drop]}>
       <View style={styles.dropClip}>
         <LinearGradient colors={['#fdfcfa', '#f3eee7']} style={StyleSheet.absoluteFill} />
-        {pages.map((p) => (
-          <LensDot
-            key={p}
-            page={p}
-            colorsFor={p === currentPage ? accentGradient : p < currentPage ? INK : SAND}
-            scrollX={scrollX}
-            lag={lag}
-          />
+        {slots.map((k) => (
+          <LensDot key={k} slot={k} totalPages={totalPages} scrollX={scrollX} lag={lag} />
         ))}
         {/* Le verre : reflet en haut, lumière concentrée en bas, bord plus sombre */}
         <View style={styles.glint} />
@@ -512,32 +485,56 @@ function GlassDrop({
 }
 
 /**
- * Une page vue à travers la goutte. Comme dans une bille de verre : grossie au
- * centre, elle se tasse et s'arrondit en approchant du bord.
+ * Un emplacement dans la goutte : il montre la page `base + slot`, où `base` est
+ * la page sous le centre. Comme dans une bille : grossie au centre, elle se tasse
+ * et s'arrondit en approchant du bord.
  */
 function LensDot({
-  page,
-  colorsFor,
+  slot,
+  totalPages,
   scrollX,
   lag,
 }: {
-  page: number;
-  colorsFor: readonly [string, string, ...string[]];
+  slot: number;
+  totalPages: number;
   scrollX: SharedValue<number>;
   lag: SharedValue<number>;
 }) {
-  const s = (page % 10 === 0 ? 7 : 5) * ZOOM;
-  const style = useAnimatedStyle(() => {
-    const d = (page * STEP - scrollX.value - lag.value) * ZOOM; // distance au centre, grossie
+  const S = 7 * ZOOM; // la taille d'un repère des dizaines : les autres sont réduits par scale
+  const geom = useAnimatedStyle(() => {
+    const x = scrollX.value + lag.value;
+    const base = Math.floor(x / STEP);
+    const p = base + slot;
+    const d = (p * STEP - x) * ZOOM; // distance au centre, grossie
     const u = d / LENS_R;
-    // la bille : la position se tasse vers le bord, le point s'y aplatit
     const bent = (LENS_R * u) / Math.sqrt(1 + 0.9 * u * u);
     const squash = Math.max(0.35, Math.sqrt(Math.max(0, 1 - Math.min(0.9, (bent / LENS_R) ** 2))));
-    return { transform: [{ translateX: LENS_R + bent - s / 2 }, { scaleX: squash }] };
+    const size = p % 10 === 0 ? 1 : 5 / 7;
+    return {
+      opacity: p < 0 || p > totalPages ? 0 : 1,
+      transform: [{ translateX: LENS_R + bent - S / 2 }, { scaleX: squash * size }, { scaleY: size }],
+    };
+  });
+  // Lue (chocolat), à lire (sable) ; ma page — la plus proche du centre — en lie de vin
+  const readLayer = useAnimatedStyle(() => {
+    const x = scrollX.value + lag.value;
+    const p = Math.floor(x / STEP) + slot;
+    return { opacity: scrollX.value >= p * STEP - STEP / 2 ? 1 : 0 };
+  });
+  const mineLayer = useAnimatedStyle(() => {
+    const x = scrollX.value + lag.value;
+    const p = Math.floor(x / STEP) + slot;
+    return { opacity: Math.round(scrollX.value / STEP) === p ? 1 : 0 };
   });
   return (
-    <Animated.View style={[styles.bigDot, { top: LENS_R - s / 2, width: s, height: s, borderRadius: s / 2 }, style]}>
-      <LinearGradient colors={colorsFor} style={StyleSheet.absoluteFill} />
+    <Animated.View style={[styles.bigDot, { top: LENS_R - S / 2, width: S, height: S, borderRadius: S / 2 }, geom]}>
+      <LinearGradient colors={SAND} style={StyleSheet.absoluteFill} />
+      <Animated.View style={[StyleSheet.absoluteFill, readLayer]}>
+        <LinearGradient colors={INK} style={StyleSheet.absoluteFill} />
+      </Animated.View>
+      <Animated.View style={[StyleSheet.absoluteFill, mineLayer]}>
+        <LinearGradient colors={accentGradient} style={StyleSheet.absoluteFill} />
+      </Animated.View>
     </Animated.View>
   );
 }
@@ -559,19 +556,13 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
     fontVariant: ['tabular-nums'],
     textAlign: 'center',
-  },
-  hidden: {
-    opacity: 0,
+    padding: 0,
   },
   layer: {
     position: 'absolute',
-    left: -40,
-    right: -40,
+    left: 0,
+    right: 0,
     top: 0,
-    alignItems: 'center',
-  },
-  blurBox: {
-    alignItems: 'center',
   },
   ghost: {
     position: 'absolute',
@@ -588,7 +579,6 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: LINE_Y,
     marginTop: -3,
-    overflow: 'hidden',
   },
   drop: {
     position: 'absolute',
