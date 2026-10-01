@@ -701,6 +701,8 @@ const styles = StyleSheet.create({
   ruler: {
     height: RULER_HEIGHT,
     marginHorizontal: -BLEED,
+    // La couture descend vers la barre du bas (retour de Lea), le chiffre respire
+    marginBottom: -14,
   },
   decade: {
     width: DECADE,
