@@ -478,6 +478,7 @@ export default function HomeScreen() {
             myPhotoUrl={user?.profile_photo_url ?? null}
             myInitial={(user?.first_name ?? 'M').charAt(0).toUpperCase()}
             caps={caps}
+            streakDays={myStreak}
             compact={compactSpacing}
             onPress={() => router.push('/book')}
           />
@@ -492,7 +493,6 @@ export default function HomeScreen() {
             currentPage={currentPageInput}
             savedPage={lastSavedPage}
             totalPages={totalPages}
-            streakDays={myStreak}
             onPageChange={handlePageChange}
             onSave={handleSave}
             onUndo={handleUndo}
