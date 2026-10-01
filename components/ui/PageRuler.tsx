@@ -681,6 +681,8 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    // Le chiffre et son « / 624 » un peu plus bas, plus près de la couture (Lea)
+    paddingTop: 28,
   },
   number: {
     fontFamily: fonts.displayHero,
@@ -701,8 +703,6 @@ const styles = StyleSheet.create({
   ruler: {
     height: RULER_HEIGHT,
     marginHorizontal: -BLEED,
-    // La couture descend vers la barre du bas (retour de Lea), le chiffre respire
-    marginBottom: -14,
   },
   decade: {
     width: DECADE,
