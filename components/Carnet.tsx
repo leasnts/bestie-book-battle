@@ -55,6 +55,9 @@ import {
   StyleSheet,
   Text,
   View,
+  type NativeScrollEvent,
+  type NativeSyntheticEvent,
+  type ViewToken,
 } from 'react-native';
 import DriftingBackdrop from './ui/DriftingBackdrop';
 import NewNotesDeck from './ui/NewNotesDeck';
@@ -65,7 +68,7 @@ import PressableScale from './ui/PressableScale';
 import GlassButton from './ui/GlassButton';
 import WriteNoteButton from './ui/WriteNoteButton';
 import { SheetPageHeader } from './ui/SheetPage';
-import { SHEET_TOP_INSET, useSheetScrolled } from './ui/SheetHeader';
+import { SHEET_TOP_INSET, SheetBlur, useSheetScrolled } from './ui/SheetHeader';
 import type { AnnotationWithAuthor } from '../services/supabase/annotations';
 import { useAnnotationStore } from '../stores/annotationStore';
 import { useAuthStore } from '../stores/authStore';
@@ -104,6 +107,9 @@ const easeOut = Easing.bezier(...motion.easing.easeOutQuart);
 /** Une entrée de la cascade : monte et apparaît, 400 ms, ease-out-quart */
 const rise = (delay: number) =>
   FadeInDown.duration(motion.duration.entrance).delay(delay).easing(easeOut);
+
+/** La note « en haut de la liste » : la première dont la moitié se voit */
+const VIEWABILITY = { itemVisiblePercentThreshold: 50 };
 
 /** Au-delà, les notes arrivent ensemble : la cascade ne fait pas attendre */
 const CASCADE_MAX = 8;
@@ -182,6 +188,27 @@ export default function Carnet({ mode }: { mode: CarnetMode }) {
   const filterKey = `${sort}:${people.join(',')}:${categories.join(',')}`;
   const { scrolled, onScroll, scrollEventThrottle } = useSheetScrolled();
   const listRef = useRef<SectionList<AnnotationWithAuthor, NoteSection>>(null);
+
+  /**
+   * Le fil reste en haut quand on fait défiler (page entière) : une fois le
+   * compte et le fil sortis de l'écran, une copie du fil se colle sous le titre,
+   * avec une petite bille de verre là où en est la liste (la note en haut).
+   */
+  const summaryBottom = useRef(0);
+  const [pastSummary, setPastSummary] = useState(false);
+  const [focus, setFocus] = useState<number | null>(null);
+  const handleScroll = useCallback(
+    (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+      onScroll(e);
+      const past = summaryBottom.current > 0 && e.nativeEvent.contentOffset.y > summaryBottom.current;
+      setPastSummary((prev) => (prev === past ? prev : past));
+    },
+    [onScroll],
+  );
+  const onViewableItemsChanged = useRef(({ viewableItems }: { viewableItems: ViewToken[] }) => {
+    const first = viewableItems.find((v) => v.item && typeof v.item.position === 'number');
+    if (first) setFocus(first.item.position);
+  }).current;
 
   const myProgress = participants.find((p) => p.user.id === user?.id);
   const myPages = myProgress?.progress.total_pages ?? activeChallenge?.total_pages ?? 0;
@@ -308,13 +335,18 @@ export default function Carnet({ mode }: { mode: CarnetMode }) {
       contentContainerStyle={styles.content}
       contentInsetAdjustmentBehavior={isPage ? 'never' : 'automatic'}
       stickySectionHeadersEnabled={false}
-      onScroll={isPage ? onScroll : undefined}
+      onScroll={isPage ? handleScroll : undefined}
+      onViewableItemsChanged={isPage ? onViewableItemsChanged : undefined}
+      viewabilityConfig={VIEWABILITY}
       scrollEventThrottle={scrollEventThrottle}
       ListHeaderComponent={
         <View style={styles.header}>
           {!isPage && header}
 
-          <Animated.View entering={rise(cascadeDelay.current)}>
+          <Animated.View
+            entering={rise(cascadeDelay.current)}
+            onLayout={(e) => (summaryBottom.current = e.nativeEvent.layout.y + e.nativeEvent.layout.height)}
+          >
             {/* Hors cadre, comme Ma page : le compte à l'encre, puis le fil du livre */}
             <View style={styles.summary}>
               <InkFigure
@@ -509,6 +541,23 @@ export default function Carnet({ mode }: { mode: CarnetMode }) {
 
       <View style={styles.page}>
         {phase === 'list' && list}
+        {/* Le fil collé sous le titre, dès que celui du haut est sorti de l'écran */}
+        {phase === 'list' && pastSummary && (
+          <Animated.View
+            entering={FadeIn.duration(motion.duration.standard)}
+            exiting={FadeOut.duration(motion.duration.instant)}
+            style={styles.stickyTrack}
+          >
+            <SheetBlur />
+            <NotesTrack
+              dots={dots}
+              lockedPositions={ahead.map((note) => note.book_position)}
+              myPosition={myPosition}
+              onSeek={seek}
+              focus={focus}
+            />
+          </Animated.View>
+        )}
         {phase === 'deck' && (
           <Animated.View
             exiting={dissolve}
@@ -596,6 +645,14 @@ const styles = StyleSheet.create({
   pageHeader: {
     paddingHorizontal: spacing.lg,
     zIndex: 1,
+  },
+  stickyTrack: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.xs,
   },
   // La même hauteur que l'en-tête du carnet : le retour ne bouge pas ensuite
   deckHeader: {
