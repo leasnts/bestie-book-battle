@@ -170,7 +170,7 @@ export default function NoteTile({
             </PeelCard>
           </>
         ) : untouched ? (
-          <FirstNote side={side} page={Math.max(1, write.page)} />
+          <FirstNote tile={size} page={Math.max(1, write.page)} />
         ) : (
           <Face size={size} note={null}>
             <View style={styles.blank}>
@@ -199,14 +199,14 @@ const LIFT_UP = 32;
  * remplir, un curseur, le ✎. Son coin respire (se soulève puis se recolle)
  * pour dire « prends-moi ». Mouvement réduit : tout reste immobile.
  */
-function FirstNote({ side, page }: { side: number; page: number }) {
+function FirstNote({ tile, page }: { tile: TileSize; page: number }) {
   const reduced = useReducedMotion();
-  const w = useSharedValue(side);
-  const h = useSharedValue(side);
-  const ax = useSharedValue(side);
-  const ay = useSharedValue(side);
-  const bx = useSharedValue(side - LIFT_REST);
-  const by = useSharedValue(side - LIFT_REST * 0.8);
+  const w = useSharedValue(tile.w);
+  const h = useSharedValue(tile.h);
+  const ax = useSharedValue(tile.w);
+  const ay = useSharedValue(tile.h);
+  const bx = useSharedValue(tile.w - LIFT_REST);
+  const by = useSharedValue(tile.h - LIFT_REST * 0.8);
   const peeling = useSharedValue(1);
   const values = { w, h, ax, ay, bx, by, peeling };
   const caret = useSharedValue(1);
@@ -231,39 +231,45 @@ function FirstNote({ side, page }: { side: number; page: number }) {
         ),
         -1,
       );
-    bx.value = breathe(side - LIFT_REST, side - LIFT_UP);
-    by.value = breathe(side - LIFT_REST * 0.8, side - LIFT_UP * 0.8);
+    bx.value = breathe(tile.w - LIFT_REST, tile.w - LIFT_UP);
+    by.value = breathe(tile.h - LIFT_REST * 0.8, tile.h - LIFT_UP * 0.8);
     caret.value = withRepeat(
       withSequence(withDelay(450, withTiming(0, { duration: 80 })), withDelay(450, withTiming(1, { duration: 80 }))),
       -1,
     );
-  }, [reduced, side, bx, by, caret]);
+  }, [reduced, tile.w, tile.h, bx, by, caret]);
 
   const caretStyle = useAnimatedStyle(() => ({ opacity: caret.value }));
+  // En large, la même inclinaison ferait dépasser les bouts : on la réduit d'autant
+  const lean = tile.h / tile.w;
+  const box = { width: tile.w, height: tile.h };
 
   return (
-    <View style={{ width: side, height: side }}>
+    <View style={box}>
       {/* Le bloc : deux autocollants de couleur dessous, qui dépassent de travers */}
       {(
         [
-          [postIt.sauge, '-9deg', -6],
-          [postIt.jaune, '6deg', 5],
+          [postIt.sauge, -9, -6],
+          [postIt.jaune, 6, 5],
         ] as const
-      ).map(([color, rotate, shift]) => (
+      ).map(([color, angle, shift]) => (
         <View
           key={color}
-          style={[StyleSheet.absoluteFill, { transform: [{ translateX: shift }, { rotate }, { scale: 0.97 }] }]}
+          style={[
+            StyleSheet.absoluteFill,
+            { transform: [{ translateX: shift }, { rotate: `${angle * lean}deg` }, { scale: 0.97 }] },
+          ]}
           pointerEvents="none"
         >
-          <NoteSticker id={`note-tile-pad-${color}`} color={color} size={side} maxBase={STICKER_BASE_LARGE} corner="none" />
+          <NoteSticker id={`note-tile-pad-${color}`} color={color} width={tile.w} height={tile.h} maxBase={STICKER_BASE_LARGE} corner="none" />
         </View>
       ))}
 
       <View style={StyleSheet.absoluteFill} pointerEvents="none">
         <PeelSurface id="tile-first" size={size} values={values} onLayout={measure}>
-          <View style={{ width: side, height: side }}>
+          <View style={box}>
             <View style={StyleSheet.absoluteFill}>
-              <NoteSticker id="note-tile-first" color={postIt.rose} size={side} maxBase={STICKER_BASE_LARGE} corner="none" />
+              <NoteSticker id="note-tile-first" color={postIt.rose} width={tile.w} height={tile.h} maxBase={STICKER_BASE_LARGE} corner="none" />
             </View>
             <View style={styles.content}>
               <View style={styles.head}>
