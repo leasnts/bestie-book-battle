@@ -14,7 +14,8 @@ import { create } from 'zustand';
 import type { AnnotationWithAuthor } from '../services/supabase/annotations';
 import type { AnnotationCategory } from '../types/supabase';
 
-export type CarnetSort = 'page' | 'recent';
+/** Par date d'écriture (plus récentes / plus anciennes d'abord) ou par page (premières / dernières) */
+export type CarnetSort = 'newest' | 'oldest' | 'pageAsc' | 'pageDesc';
 
 interface CarnetViewStore {
   sort: CarnetSort;
@@ -32,14 +33,14 @@ interface CarnetViewStore {
 const toggle = <T,>(list: T[], item: T) => (list.includes(item) ? list.filter((x) => x !== item) : [...list, item]);
 
 export const useCarnetViewStore = create<CarnetViewStore>((set) => ({
-  sort: 'page',
+  sort: 'pageAsc',
   people: [],
   categories: [],
   setSort: (sort) => set({ sort }),
   togglePerson: (userId) => set((s) => ({ people: toggle(s.people, userId) })),
   toggleCategory: (category) => set((s) => ({ categories: toggle(s.categories, category) })),
   clearFilters: () => set({ people: [], categories: [] }),
-  reset: () => set({ sort: 'page', people: [], categories: [] }),
+  reset: () => set({ sort: 'pageAsc', people: [], categories: [] }),
 }));
 
 /** Les notes qui passent le filtre */

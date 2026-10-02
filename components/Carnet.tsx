@@ -33,7 +33,6 @@ import { useRouter } from 'expo-router';
 import {
   ArrowDownUpIcon,
   ChevronLeftIcon,
-  ClockIcon,
   ListFilterIcon,
   LockIcon,
   XIcon,
@@ -70,6 +69,7 @@ import type { AnnotationWithAuthor } from '../services/supabase/annotations';
 import { useAnnotationStore } from '../stores/annotationStore';
 import { useAuthStore } from '../stores/authStore';
 import { filterNotes, useCarnetViewStore } from '../stores/carnetViewStore';
+import { carnetSort, DEFAULT_CARNET_SORT } from './carnetSorts';
 import { useProgressStore } from '../stores/progressStore';
 import { useProjectStore } from '../stores/projectStore';
 import {
@@ -207,10 +207,11 @@ export default function Carnet({ mode }: { mode: CarnetMode }) {
   const slice = Math.max(10, Math.round(myPages / 10));
 
   const sections = useMemo((): NoteSection[] => {
-    // Plus récentes : une seule liste, la dernière écrite en haut
-    if (sort === 'recent') {
-      const data = [...visible].sort((a, b) => (a.created_at < b.created_at ? 1 : -1));
-      return data.length ? [{ title: 'Plus récentes', start: null, data, key: `${filterKey}-recent` }] : [];
+    // Par date d'écriture : une seule liste, sans tranches
+    if (sort === 'newest' || sort === 'oldest') {
+      const dir = sort === 'newest' ? -1 : 1;
+      const data = [...visible].sort((a, b) => (a.created_at < b.created_at ? -dir : dir));
+      return data.length ? [{ title: carnetSort(sort).label, start: null, data, key: `${filterKey}-time` }] : [];
     }
     const news: AnnotationWithAuthor[] = [];
     const groups = new Map<number, AnnotationWithAuthor[]>();
@@ -225,12 +226,14 @@ export default function Carnet({ mode }: { mode: CarnetMode }) {
       if (!groups.has(start)) groups.set(start, []);
       groups.get(start)!.push(note);
     }
+    // Dernières pages : les tranches, et les notes de chaque tranche, à l'envers
+    const desc = sort === 'pageDesc';
     const slices: NoteSection[] = [...groups.entries()]
-      .sort((a, b) => a[0] - b[0])
+      .sort((a, b) => (desc ? b[0] - a[0] : a[0] - b[0]))
       .map(([start, data]) => ({
         title: `p. ${start + 1}–${Math.min(start + slice, myPages)}`,
         start,
-        data,
+        data: desc ? [...data].reverse() : data,
         key: `${filterKey}-${start}`,
       }));
     if (news.length === 0) return slices;
@@ -272,8 +275,8 @@ export default function Carnet({ mode }: { mode: CarnetMode }) {
   const seek = useCallback(
     (position: number) => {
       if (sections.length === 0) return;
-      // Plus récentes : pas de tranches, on va à la note la plus proche de cet endroit
-      if (sort === 'recent') {
+      // Par date : pas de tranches, on va à la note la plus proche de cet endroit
+      if (sort === 'newest' || sort === 'oldest') {
         const data = sections[0].data;
         let itemIndex = 0;
         data.forEach((note, i) => {
@@ -284,10 +287,18 @@ export default function Carnet({ mode }: { mode: CarnetMode }) {
       }
       const page = position * myPages;
       // Les nouvelles ne sont pas une tranche : la piste mène aux pages
-      let index = sections.findIndex(
-        (section) => section.start !== null && page < section.start + slice,
-      );
-      if (index < 0) index = sections.length - 1;
+      // La tranche qui contient cette page, sinon la plus proche (dans un sens comme dans l'autre)
+      let index = -1;
+      let best = Infinity;
+      sections.forEach((section, i) => {
+        if (section.start === null) return;
+        const distance = page < section.start ? section.start - page : Math.max(0, page - (section.start + slice));
+        if (distance < best) {
+          best = distance;
+          index = i;
+        }
+      });
+      if (index < 0) index = 0;
       listRef.current?.scrollToLocation({
         sectionIndex: index,
         itemIndex: 0,
@@ -383,10 +394,15 @@ export default function Carnet({ mode }: { mode: CarnetMode }) {
                 onPress={() => router.push(`/carnet-filter${from}`)}
               />
             </View>
-            {(sort !== 'page' || filtered) && (
+            {(sort !== DEFAULT_CARNET_SORT || filtered) && (
               <View style={styles.badges}>
-                {sort === 'recent' && (
-                  <Pill icon={ClockIcon} label="Plus récentes" removable onPress={() => setSort('page')} />
+                {sort !== DEFAULT_CARNET_SORT && (
+                  <Pill
+                    icon={carnetSort(sort).icon}
+                    label={carnetSort(sort).label}
+                    removable
+                    onPress={() => setSort(DEFAULT_CARNET_SORT)}
+                  />
                 )}
                 {people.map((id) => (
                   <Pill
