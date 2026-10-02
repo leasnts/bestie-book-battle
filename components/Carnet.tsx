@@ -192,7 +192,7 @@ export default function Carnet({ mode }: { mode: CarnetMode }) {
   /**
    * Le fil reste en haut quand on fait défiler (page entière) : une fois le
    * compte et le fil sortis de l'écran, une copie du fil se colle sous le titre,
-   * avec une petite bille de verre là où en est la liste (la note en haut).
+   * avec une goutte de verre là où en est la liste (la note en haut).
    */
   const summaryBottom = useRef(0);
   const [pastSummary, setPastSummary] = useState(false);
@@ -652,6 +652,8 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     paddingHorizontal: spacing.lg,
+    // La place de la goutte au-dessus du fil
+    paddingTop: spacing.md,
     paddingBottom: spacing.xs,
   },
   // La même hauteur que l'en-tête du carnet : le retour ne bouge pas ensuite

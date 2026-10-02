@@ -15,7 +15,7 @@
  */
 
 import React, { useEffect, useState } from 'react';
-import { LayoutChangeEvent, Pressable, StyleSheet } from 'react-native';
+import { LayoutChangeEvent, Pressable, StyleSheet, View } from 'react-native';
 import Animated, { Easing, useAnimatedProps, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import Svg, { Circle, Defs, G, RadialGradient, Stop } from 'react-native-svg';
 import type { AnnotationCategory } from '../../types/supabase';
@@ -43,8 +43,8 @@ interface NotesTrackProps {
   onSeek: (position: number) => void;
   /**
    * Où j'en suis dans la liste en la faisant défiler, 0 → 1 (la note en haut de
-   * l'écran) : une petite bille de verre glisse sur le fil jusque-là. `null` :
-   * pas de bille (au repos, en haut du carnet).
+   * l'écran) : une goutte de verre se pose sur le fil à cet endroit. `null` :
+   * pas de goutte (au repos, en haut du carnet).
    */
   focus?: number | null;
 }
@@ -58,8 +58,10 @@ const NOTE_R = 4.6;
 const PAD = NOTE_R + 1;
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
-/** La bille de verre : à peine plus grosse qu'un nœud de note */
-const LENS = 18;
+/** La goutte : un peu plus petite que les épingles du groupe (24 pt) sur Ma page */
+const DROP = 18;
+/** Ce que la pointe dépasse sous le rond (carré tourné de 45°) */
+const DROP_TIP = (DROP * (Math.SQRT2 - 1)) / 2 + 1;
 const lensEase = Easing.bezier(...motion.easing.easeOutQuart);
 
 export default function NotesTrack({ dots, lockedPositions, myPosition, onSeek, focus = null }: NotesTrackProps) {
@@ -104,10 +106,10 @@ export default function NotesTrack({ dots, lockedPositions, myPosition, onSeek, 
 }
 
 /**
- * La bille de verre : le verre des boutons ronds (`GlassMaterial`), en tout
- * petit, posé sur le fil — la goutte de Ma page, en miniature. Petite exprès :
- * la loupe de la piste de l'accueil, trop grosse, cachait les nœuds voisins.
- * Elle glisse d'une note à l'autre en suivant la liste.
+ * Où en est la liste : une goutte de verre, la pointe sur le fil — la forme
+ * des épingles du groupe sur Ma page (Lea, 2026-10-02), sans photo, en verre
+ * (`GlassMaterial`) : elle situe, rien de plus. Elle glisse d'une note à
+ * l'autre en suivant la liste.
  */
 function Lens({ x }: { x: number | null }) {
   const left = useSharedValue(x ?? 0);
@@ -118,11 +120,18 @@ function Lens({ x }: { x: number | null }) {
   }, [x, left, shown]);
   const style = useAnimatedStyle(() => ({
     opacity: shown.value,
-    transform: [{ translateX: left.value - LENS / 2 }, { scale: 0.7 + shown.value * 0.3 }],
+    transform: [{ translateX: left.value - DROP / 2 }, { translateY: (1 - shown.value) * -4 }],
   }));
   return (
-    <Animated.View style={[styles.lens, style]} pointerEvents="none">
-      <GlassMaterial radius={LENS / 2} veil={0.12} rim />
+    <Animated.View style={[styles.pin, style]} pointerEvents="none">
+      {/* Un carré aux trois coins ronds tourné de 45° : le coin vif fait la pointe */}
+      <View style={styles.drop}>
+        {/* Le verre est rogné à la forme ; l'ombre et le liseré, eux, restent dehors */}
+        <View style={[styles.dropShape, styles.dropClip]}>
+          <GlassMaterial radius={DROP / 2} veil={0.45} />
+        </View>
+        <View style={[styles.dropShape, styles.dropRim]} />
+      </View>
     </Animated.View>
   );
 }
@@ -188,16 +197,39 @@ const styles = StyleSheet.create({
     left: -PAD,
     top: 0,
   },
-  lens: {
+  // La pointe de la goutte touche le fil
+  pin: {
     position: 'absolute',
     left: 0,
-    top: (HEIGHT - LENS) / 2,
-    width: LENS,
-    height: LENS,
-    borderRadius: LENS / 2,
+    top: HEIGHT / 2 - DROP - DROP_TIP + 1,
+    width: DROP,
+    alignItems: 'center',
+  },
+  drop: {
+    width: DROP,
+    height: DROP,
+    transform: [{ rotate: '45deg' }],
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.18,
     shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
   },
+  // Le même liseré que les épingles : blanc, et un filet d'encre autour
+  dropShape: {
+    ...StyleSheet.absoluteFillObject,
+    borderTopLeftRadius: DROP / 2,
+    borderTopRightRadius: DROP / 2,
+    borderBottomLeftRadius: DROP / 2,
+    borderBottomRightRadius: 2,
+  },
+  dropClip: {
+    overflow: 'hidden',
+    backgroundColor: '#f3eee7',
+  },
+  dropRim: {
+    borderWidth: 1.5,
+    borderColor: 'rgba(255,255,255,0.9)',
+    boxShadow: '0 0 0 1px rgba(90,69,54,0.22)',
+  },
+
 });
