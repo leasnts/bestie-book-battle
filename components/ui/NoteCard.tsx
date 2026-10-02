@@ -96,14 +96,14 @@ export default function NoteCard({
   const emojiOnly = isEmojiOnly(note);
   const author = isMine ? 'Moi' : note.author?.first_name || 'Participant';
 
-  // Un emoji seul : la même note, en petit — elle prend la largeur de sa
-  // ligne du haut, l'emoji en grand dessous
+  // Un emoji seul : l'emoji en grand. Dans la liste, toute la largeur comme
+  // les autres (Lea, 2026-10-02) ; dans la pile, la carte reste à sa taille
   const sticker = (
     <View
       style={[
         styles.note,
         large && styles.noteLarge,
-        emojiOnly && (large ? styles.compactLarge : styles.compact),
+        emojiOnly && large && styles.compactLarge,
       ]}
       onLayout={onLayout}
     >
@@ -405,10 +405,7 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.xl + spacing.md,
     gap: spacing.md,
   },
-  // Un emoji seul : une petite note, à la largeur de sa ligne du haut
-  compact: {
-    alignSelf: 'flex-start',
-  },
+  // Un emoji seul, dans la pile : une petite carte, au centre
   compactLarge: {
     alignSelf: 'center',
     minWidth: 220,
