@@ -767,6 +767,8 @@ const styles = StyleSheet.create({
     width: UNLOCKED_SIZE,
     height: UNLOCKED_SIZE,
     marginRight: spacing.sm,
+    // Le bas du cadenas sur la ligne de base du chiffre (centré, il tombait plus bas)
+    transform: [{ translateY: -10 }],
   },
 
   tools: {
