@@ -13,7 +13,7 @@ import React, { useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import Button3D from '../components/Button3D';
 import ChoiceRow from '../components/ui/ChoiceRow';
-import SheetPage, { SheetFooter } from '../components/ui/SheetPage';
+import SheetPage, { SheetStickyFooter, STICKY_FOOTER_SPACE } from '../components/ui/SheetPage';
 import { useAnnotationStore } from '../stores/annotationStore';
 import { useAuthStore } from '../stores/authStore';
 import { filterNotes, useCarnetViewStore } from '../stores/carnetViewStore';
@@ -49,39 +49,58 @@ export default function CarnetFilterRoute() {
   const count = filterNotes(notes, people, categories).length;
 
   return (
-    <SheetPage title="Filtrer" onBack={from ? () => router.back() : undefined}>
-      <Text style={styles.section}>Qui</Text>
-      {members.map((member) => (
-        <ChoiceRow
-          key={member.id}
-          label={member.name}
-          leading={<Image source={member.photo ? { uri: member.photo } : DEFAULT_AVATAR} style={styles.avatar} />}
-          selected={people.includes(member.id)}
-          onPress={() => togglePerson(member.id)}
-        />
-      ))}
+    // Le bouton reste en bas, le contenu défile derrière, flouté
+    <View style={styles.screen} collapsable={false}>
+      <SheetPage
+        title="Filtrer"
+        onBack={from ? () => router.back() : undefined}
+        fit={false}
+        style={styles.scroll}
+        // Dans une View (pour le pied collant) : UIKit ne doit pas décaler le contenu
+        contentInsetAdjustmentBehavior="never"
+        contentContainerStyle={{ paddingBottom: STICKY_FOOTER_SPACE }}
+      >
+        <Text style={styles.section}>Qui</Text>
+        {members.map((member) => (
+          <ChoiceRow
+            key={member.id}
+            label={member.name}
+            leading={
+              <Image source={member.photo ? { uri: member.photo } : DEFAULT_AVATAR} style={styles.avatar} />
+            }
+            selected={people.includes(member.id)}
+            onPress={() => togglePerson(member.id)}
+          />
+        ))}
 
-      <Text style={[styles.section, styles.sectionNext]}>Thème</Text>
-      {CATEGORY_ORDER.map((key) => (
-        <ChoiceRow
-          key={key}
-          label={ANNOTATION_CATEGORIES[key].label}
-          leading={<View style={[styles.swatch, { backgroundColor: ANNOTATION_CATEGORIES[key].color }]} />}
-          selected={categories.includes(key)}
-          onPress={() => toggleCategory(key)}
-        />
-      ))}
-
-      <SheetFooter>
+        <Text style={[styles.section, styles.sectionNext]}>Thème</Text>
+        {CATEGORY_ORDER.map((key) => (
+          <ChoiceRow
+            key={key}
+            label={ANNOTATION_CATEGORIES[key].label}
+            leading={<View style={[styles.swatch, { backgroundColor: ANNOTATION_CATEGORIES[key].color }]} />}
+            selected={categories.includes(key)}
+            onPress={() => toggleCategory(key)}
+          />
+        ))}
+      </SheetPage>
+      <SheetStickyFooter>
         <Button3D onPress={() => router.back()} variant="primary" disabled={count === 0}>
           {count === 0 ? 'Aucune note' : `Voir ${count} note${count > 1 ? 's' : ''}`}
         </Button3D>
-      </SheetFooter>
-    </SheetPage>
+      </SheetStickyFooter>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    backgroundColor: colors.white,
+  },
+  scroll: {
+    flex: 1,
+  },
   section: {
     fontFamily: fonts.bodyExtraBold,
     fontSize: 12,

@@ -402,6 +402,8 @@ export default function Carnet({ mode }: { mode: CarnetMode }) {
               <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
+                // Jamais décalée par UIKit : elle reste à sa place dans la liste
+                contentInsetAdjustmentBehavior="never"
                 contentContainerStyle={styles.aheadRow}
                 style={styles.aheadScroll}
               >
