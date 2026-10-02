@@ -138,16 +138,6 @@ export default function Carnet({ mode }: { mode: CarnetMode }) {
   const { notes, ahead, readIds, markRead, dismissRevealed, toggleReaction } =
     useAnnotationStore();
 
-  // Les post-it de l'accueil ont mené ici : ils se rangent dans le carnet. Le
-  // carnet en garde une copie tant qu'il est ouvert — lire une nouvelle ne la
-  // fait pas sauter ailleurs dans la liste.
-  // En page, c'est la pile qui montre les nouvelles : pas de section en plus.
-  const [fresh] = useState(() => {
-    const { revealedIds, revealedPages } = useAnnotationStore.getState();
-    if (isPage) return { ids: new Set<string>(), pages: null };
-    return { ids: new Set(revealedIds), pages: revealedPages };
-  });
-
   /**
    * La pile : les notes du club que je n'ai pas encore lues, dans l'ordre des
    * pages. Figée à l'ouverture — une note lue ne doit pas faire bouger la pile.
@@ -199,29 +189,19 @@ export default function Carnet({ mode }: { mode: CarnetMode }) {
   const visible = useMemo(() => filterNotes(notes, people, categories), [notes, people, categories]);
 
   /**
-   * Une seule liste, dans l'ordre du tri. Plus de tranches de pages (« p. 1–62 »,
-   * Lea, 2026-10-02) : arbitraires, et chaque note porte déjà sa page. Seules
-   * les nouvelles ont leur section, en haut, quand on trie par page.
+   * Une seule liste, dans l'ordre du tri. Plus de tranches de pages (« p. 1–62 »)
+   * ni de section « Nouvelles » (Lea, 2026-10-02) : les nouvelles se lisent dans
+   * la pile en ouvrant le carnet ; la liste part de ma page et descend vers la
+   * page 1 (le tri par défaut, « Dernières pages »).
    */
   const sections = useMemo((): NoteSection[] => {
     const byTime = sort === 'newest' || sort === 'oldest';
     const dir = sort === 'newest' || sort === 'pageDesc' ? -1 : 1;
-    const news: AnnotationWithAuthor[] = [];
-    const rest: AnnotationWithAuthor[] = [];
-    for (const note of visible) {
-      // Une nouvelle n'apparaît qu'une fois : en haut, pas aussi dans la liste
-      if (!byTime && fresh.ids.has(note.id)) news.push(note);
-      else rest.push(note);
-    }
-    rest.sort((a, b) =>
+    const data = [...visible].sort((a, b) =>
       byTime ? (a.created_at < b.created_at ? -dir : dir) : (a.position - b.position) * dir,
     );
-    const list: NoteSection[] = rest.length ? [{ title: null, data: rest, key: `${filterKey}-list` }] : [];
-    if (news.length === 0) return list;
-
-    const title = fresh.pages ? `Nouvelles · p. ${fresh.pages.from}–${fresh.pages.to}` : 'Nouvelles';
-    return [{ title, data: news, key: `${filterKey}-news` }, ...list];
-  }, [visible, fresh, filterKey, sort]);
+    return data.length ? [{ title: null, data, key: `${filterKey}-list` }] : [];
+  }, [visible, filterKey, sort]);
 
   /** Les notes que je n'ai pas encore ouvertes : ce sont les « nouvelles » */
   const unread = useMemo(
@@ -396,6 +376,35 @@ export default function Carnet({ mode }: { mode: CarnetMode }) {
               </Text>
             </Pressable>
           )}
+
+          {/* En haut, juste avant ma page : qui a des notes plus loin, à venir */}
+          {ahead.length > 0 && (
+            <View style={styles.aheadBlock}>
+              <Text style={styles.sectionTitle}>Plus loin · {ahead.length}</Text>
+              {/* Les trois plus proches de ma page, dans le sens de la liste (de la plus
+                  loin à la plus proche), juste au-dessus de mes pages */}
+              {[...ahead]
+                .sort((x, y) => x.book_position - y.book_position)
+                .slice(0, 3)
+                .reverse()
+                .map((note) => (
+                    <View key={note.id} style={styles.aheadRow}>
+                      <Image
+                        source={
+                          note.profile_photo_url ? { uri: note.profile_photo_url } : DEFAULT_AVATAR
+                        }
+                        style={styles.aheadAvatar}
+                      />
+                      <Text style={styles.aheadName}>{note.first_name || 'Participant'}</Text>
+                      <Text style={styles.aheadPage}>≈ p. {note.my_page}</Text>
+                      <LockIcon size={14} color={colors.textPlaceholder} strokeWidth={2} />
+                    </View>
+                ))}
+              {ahead.length > 3 && (
+                <Text style={styles.aheadMore}>+ {ahead.length - 3} autres</Text>
+          )}
+        </View>
+          )}
         </View>
       }
       renderSectionHeader={({ section }) => {
@@ -448,29 +457,6 @@ export default function Carnet({ mode }: { mode: CarnetMode }) {
         <Text style={styles.empty}>
           {filtered ? 'Rien avec ce filtre' : 'Aucune note ouverte pour l’instant'}
         </Text>
-      }
-      ListFooterComponent={
-        ahead.length > 0 ? (
-          <View style={styles.aheadBlock}>
-            <Text style={styles.sectionTitle}>Plus loin · {ahead.length}</Text>
-            {ahead.slice(0, 3).map((note) => (
-              <View key={note.id} style={styles.aheadRow}>
-                <Image
-                  source={
-                    note.profile_photo_url ? { uri: note.profile_photo_url } : DEFAULT_AVATAR
-                  }
-                  style={styles.aheadAvatar}
-                />
-                <Text style={styles.aheadName}>{note.first_name || 'Participant'}</Text>
-                <Text style={styles.aheadPage}>≈ p. {note.my_page}</Text>
-                <LockIcon size={14} color={colors.textPlaceholder} strokeWidth={2} />
-              </View>
-            ))}
-            {ahead.length > 3 && (
-              <Text style={styles.aheadMore}>+ {ahead.length - 3} autres</Text>
-            )}
-          </View>
-        ) : null
       }
     />
   );
