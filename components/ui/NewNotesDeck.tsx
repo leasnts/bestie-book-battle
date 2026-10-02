@@ -29,7 +29,6 @@
  */
 
 import * as Haptics from 'expo-haptics';
-import MaskedView from '@react-native-masked-view/masked-view';
 import { LinearGradient as ExpoLinearGradient } from 'expo-linear-gradient';
 import { CheckIcon } from 'lucide-react-native';
 import React, { useEffect, useRef, useState } from 'react';
@@ -48,7 +47,6 @@ import Animated, {
   FadeOut,
   interpolate,
   runOnJS,
-  useAnimatedProps,
   useAnimatedStyle,
   useReducedMotion,
   useSharedValue,
@@ -56,22 +54,19 @@ import Animated, {
   withSequence,
   withTiming,
 } from 'react-native-reanimated';
-import Svg, { Defs, G, LinearGradient, Path, Stop } from 'react-native-svg';
 import type { AnnotationWithAuthor } from '../../services/supabase/annotations';
 import { isEmojiOnly, pageFromPosition } from '../../utils/annotations';
-import { peel, roundedRect, toPath, type Point } from '../../utils/peel';
 import {
   accentGradient,
-  borderRadius,
   colors,
   fonts,
   inkGradient,
   motion,
   shadowAlpha,
   spacing,
-  stickerMaterial,
 } from '../../utils/constants';
-import NoteCard, { NoteReactions, STICKER_BASE_LARGE } from './NoteCard';
+import NoteCard, { NoteReactions } from './NoteCard';
+import PeelSurface, { peelAmount } from './PeelSurface';
 import PressableScale from './PressableScale';
 
 interface NewNotesDeckProps {
@@ -104,8 +99,6 @@ const SWIPE_VELOCITY = 800;
 const DONE_PAUSE = 900;
 
 const easeOut = Easing.bezier(...motion.easing.easeOutQuart);
-
-const AnimatedPath = Animated.createAnimatedComponent(Path);
 
 export default function NewNotesDeck({
   notes,
@@ -277,9 +270,7 @@ function SwipeCard({
   const mode = useSharedValue(0);
   const startX = useSharedValue(0);
   const startY = useSharedValue(0);
-
-  /** La marge du dessin du rabat autour de la note : il se rabat jusqu'à une note plus loin */
-  const bleed = size ? Math.max(size.w, size.h) : 0;
+  const values = { w, h, ax, ay, bx, by, peeling };
 
   const onLayout = (e: LayoutChangeEvent) => {
     const { width: lw, height: lh } = e.nativeEvent.layout;
@@ -343,8 +334,7 @@ function SwipeCard({
         bx.value = ax.value + e.translationX;
         by.value = ay.value + e.translationY;
         peeling.value = 1;
-        const r = cornerRadius(w.value, h.value);
-        amount.value = peel(roundedRect(w.value, h.value, r), w.value, h.value, ax.value, ay.value, bx.value, by.value).amount;
+        amount.value = peelAmount(values);
         const nowArmed = amount.value >= PEEL_OFF ? 1 : 0;
         if (nowArmed !== armed.value) {
           armed.value = nowArmed;
@@ -418,25 +408,6 @@ function SwipeCard({
     ],
   }));
 
-  // Ce qui reste collé : le masque de la note
-  const keptProps = useAnimatedProps(() => {
-    if (!peeling.value) return { d: WHOLE };
-    const r = cornerRadius(w.value, h.value);
-    return { d: toPath(peel(roundedRect(w.value, h.value, r), w.value, h.value, ax.value, ay.value, bx.value, by.value).kept) };
-  });
-  // Le dos de la partie décollée, et son ombre portée sur la note
-  const flapProps = useAnimatedProps(() => {
-    if (!peeling.value) return { d: NOTHING };
-    const r = cornerRadius(w.value, h.value);
-    return { d: toPath(peel(roundedRect(w.value, h.value, r), w.value, h.value, ax.value, ay.value, bx.value, by.value).flap) };
-  });
-  const shadowProps = useAnimatedProps(() => {
-    if (!peeling.value) return { d: NOTHING };
-    const r = cornerRadius(w.value, h.value);
-    const flap = peel(roundedRect(w.value, h.value, r), w.value, h.value, ax.value, ay.value, bx.value, by.value).flap;
-    return { d: toPath(flap.map((p) => [p[0] + 2, p[1] + 5] as Point)) };
-  });
-
   // La coche grandit quand on fait glisser : on sait que lâcher suffit
   const markStyle = useAnimatedStyle(() => {
     const p = interpolate(Math.abs(x.value), [30, SWIPE_DISTANCE], [0, 1], 'clamp');
@@ -453,42 +424,9 @@ function SwipeCard({
           importantForAccessibility={depth === 0 ? 'auto' : 'no-hide-descendants'}
           accessibilityElementsHidden={depth !== 0}
         >
-          <MaskedView
-            onLayout={onLayout}
-            maskElement={
-              <Svg style={StyleSheet.absoluteFill}>
-                <AnimatedPath animatedProps={keptProps} fill="black" />
-              </Svg>
-            }
-          >
+          <PeelSurface id={note.id} size={size} values={values} onLayout={onLayout}>
             {children}
-          </MaskedView>
-
-          {/* Le dos de l'autocollant : papier nu, clair au pli, plus sombre à la pointe */}
-          {size && (
-            // Le rabat peut dépasser de la note : le dessin déborde d'une note de chaque côté
-            <Svg
-              style={{
-                position: 'absolute',
-                left: -bleed,
-                top: -bleed,
-                width: size.w + bleed * 2,
-                height: size.h + bleed * 2,
-              }}
-              pointerEvents="none"
-            >
-              <Defs>
-                <LinearGradient id={`back-${note.id}`} x1="0" y1="0" x2="0" y2={size.h} gradientUnits="userSpaceOnUse">
-                  <Stop offset="0" stopColor={stickerMaterial.flap[0]} />
-                  <Stop offset="1" stopColor={stickerMaterial.flap[1]} />
-                </LinearGradient>
-              </Defs>
-              <G transform={`translate(${bleed} ${bleed})`}>
-                <AnimatedPath animatedProps={shadowProps} fill={shadowAlpha(0.2)} />
-                <AnimatedPath animatedProps={flapProps} fill={`url(#back-${note.id})`} />
-              </G>
-            </Svg>
-          )}
+          </PeelSurface>
 
           <Animated.View style={[styles.mark, markStyle]} pointerEvents="none">
             <ExpoLinearGradient colors={inkGradient} style={StyleSheet.absoluteFill} />
@@ -499,20 +437,6 @@ function SwipeCard({
     </View>
   );
 }
-
-/** Plafond de l'arrondi (celui des cadres de l'accueil), sorti du worklet */
-const RADIUS_MAX = borderRadius.xl;
-
-/** L'arrondi de la note, le même que son autocollant (NoteSticker › stickerRadius) */
-function cornerRadius(w: number, h: number) {
-  'worklet';
-  // Pas d'appel à stickerRadius : un worklet ne peut pas l'appeler, même formule
-  return Math.min(Math.min(w, h, STICKER_BASE_LARGE) * 0.26, RADIUS_MAX);
-}
-
-/** Rien de décollé : le masque couvre tout, ombres comprises */
-const WHOLE = 'M-100 -100H4000V4000H-100Z';
-const NOTHING = 'M0 0Z';
 
 /** VoiceOver est-il actif ? (il ne sait pas glisser une carte) */
 function useScreenReader() {
