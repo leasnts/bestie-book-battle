@@ -3,7 +3,7 @@
  *
  * Sheet natif posé sur le carnet. On coche autant qu'on veut : plusieurs
  * personnes, plusieurs thèmes, les deux ensemble. Le carnet suit à chaque
- * coche ; « Voir les notes » referme le sheet en disant combien il en reste.
+ * coche ; « Enregistrer » referme le sheet.
  * Chaque choix revient en badge ✕ sous « Filtrer ».
  */
 
@@ -14,9 +14,8 @@ import { StyleSheet, Text, View } from 'react-native';
 import Button3D from '../components/Button3D';
 import ChoiceRow from '../components/ui/ChoiceRow';
 import SheetPage, { SheetStickyFooter, STICKY_FOOTER_SPACE } from '../components/ui/SheetPage';
-import { useAnnotationStore } from '../stores/annotationStore';
 import { useAuthStore } from '../stores/authStore';
-import { filterNotes, useCarnetViewStore } from '../stores/carnetViewStore';
+import { useCarnetViewStore } from '../stores/carnetViewStore';
 import { useProgressStore } from '../stores/progressStore';
 import { ANNOTATION_CATEGORIES, CATEGORY_ORDER } from '../utils/annotations';
 import { colors, fonts, spacing } from '../utils/constants';
@@ -28,7 +27,6 @@ export default function CarnetFilterRoute() {
   const { from } = useLocalSearchParams<{ from?: string }>();
   const me = useAuthStore((s) => s.user?.id);
   const participants = useProgressStore((s) => s.participants);
-  const notes = useAnnotationStore((s) => s.notes);
   const people = useCarnetViewStore((s) => s.people);
   const categories = useCarnetViewStore((s) => s.categories);
   const togglePerson = useCarnetViewStore((s) => s.togglePerson);
@@ -46,8 +44,7 @@ export default function CarnetFilterRoute() {
         })),
     [participants, me],
   );
-  const count = filterNotes(notes, people, categories).length;
-
+  
   return (
     // Le bouton reste en bas, le contenu défile derrière, flouté
     <View style={styles.screen} collapsable={false}>
@@ -85,8 +82,8 @@ export default function CarnetFilterRoute() {
         ))}
       </SheetPage>
       <SheetStickyFooter>
-        <Button3D onPress={() => router.back()} variant="primary" disabled={count === 0}>
-          {count === 0 ? 'Aucune note' : `Voir ${count} note${count > 1 ? 's' : ''}`}
+        <Button3D onPress={() => router.back()} variant="primary">
+          Enregistrer
         </Button3D>
       </SheetStickyFooter>
     </View>
