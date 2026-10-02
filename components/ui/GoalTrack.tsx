@@ -79,7 +79,7 @@ export default function GoalTrack({ myPercent, caps, endDate, leadingLabel }: Go
 }
 
 /** Les dégradés des nœuds : bombés, éclairés en haut à gauche */
-function KnotGradients() {
+export function KnotGradients() {
   return (
     <Defs>
       <RadialGradient id="knotReached" cx="35%" cy="30%" r="80%">
@@ -96,17 +96,20 @@ function KnotGradients() {
   );
 }
 
-/** Le fil en point avant : chocolat jusqu'à `readUntil`, sable après */
-function Seam({ width, readUntil }: { width: number; readUntil: number }) {
+/**
+ * Le fil en point avant : chocolat jusqu'à `readUntil`, sable après. Partagé
+ * avec la piste du carnet (`NotesTrack`) : un seul fil dans l'app.
+ */
+export function Seam({ width, readUntil, y = TRACK_HEIGHT / 2 }: { width: number; readUntil: number; y?: number }) {
   const stitches = [];
   for (let x = 0; x <= width; x += STITCH_STEP) {
     stitches.push(
       <Line
         key={x}
         x1={x}
-        y1={TRACK_HEIGHT / 2}
+        y1={y}
         x2={Math.min(x + STITCH_LEN, width)}
-        y2={TRACK_HEIGHT / 2}
+        y2={y}
         stroke={x < readUntil ? THREAD_READ : THREAD_AHEAD}
         strokeWidth={STITCH_WIDTH}
         strokeLinecap="round"
@@ -149,8 +152,8 @@ const STITCH_WIDTH = 1.8;
 /** Les couleurs du fil de Ma page (milieu de ses dégradés) */
 const THREAD_READ = '#3f2b20';
 const THREAD_AHEAD = '#d6ccbf';
-const SAND = '#d8cbbb';
-const KNOT_R = 3.4;
+export const SAND = '#d8cbbb';
+export const KNOT_R = 3.4;
 /** Ce que le dessin du fil déborde de la piste, de chaque côté */
 const KNOT_PAD = KNOT_R + 1;
 

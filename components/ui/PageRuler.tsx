@@ -56,8 +56,8 @@ import Animated, {
   withTiming,
   type SharedValue,
 } from 'react-native-reanimated';
-import Svg, { Defs, FeGaussianBlur, Filter, Text as SvgText } from 'react-native-svg';
 import { accentGradient, colors, fonts } from '../../utils/constants';
+import { GhostTotal, INK } from './InkFigure';
 
 /** Un membre du club épinglé sur la règle */
 export interface ClubPin {
@@ -102,7 +102,6 @@ const ZOOM = 2.2;
 /** Pages dessinées de part et d'autre dans la goutte */
 const LENS_SPAN = 4;
 
-const INK = ['#6b5546', colors.dark950] as const;
 const SAND = ['#e6dfd6', '#cfc4b6'] as const;
 const DOT_READ = '#3a2a20';
 const DOT_UNREAD = '#d9d0c5';
@@ -428,37 +427,6 @@ function InkNumber({
   );
 }
 
-/** « / 624 » derrière le chiffre : plus petit, décalé, pâle et flouté */
-function GhostTotal({ total, size, left }: { total: number; size: number; left: number }) {
-  const label = `/${total}`;
-  const blur = 3;
-  const margin = blur * 4;
-  const width = Math.round(label.length * size * 0.58) + margin * 2;
-  const height = Math.round(size * 1.25) + margin * 2;
-  return (
-    <View pointerEvents="none" style={[styles.ghost, { left: left - margin, top: size * 0.3 - margin }]}>
-      <Svg width={width} height={height}>
-        <Defs>
-          <Filter id="ghostBlur" x="-20%" y="-20%" width="140%" height="140%">
-            <FeGaussianBlur stdDeviation={blur} />
-          </Filter>
-        </Defs>
-        <SvgText
-          x={margin}
-          y={margin + size}
-          fontFamily={fonts.displayHero}
-          fontSize={size}
-          fill={colors.textPrimary}
-          fillOpacity={0.16}
-          filter="url(#ghostBlur)"
-        >
-          {label}
-        </SvgText>
-      </Svg>
-    </View>
-  );
-}
-
 // ─── La règle ────────────────────────────────────────────────────────
 
 /** Dix pages de règle : dix points */
@@ -718,9 +686,6 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     top: 0,
-  },
-  ghost: {
-    position: 'absolute',
   },
   ruler: {
     height: RULER_HEIGHT,

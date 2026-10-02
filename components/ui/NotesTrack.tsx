@@ -1,59 +1,62 @@
 /**
  * NotesTrack — la piste du carnet, qui sert d'ascenseur.
  *
- * Le livre entier tient sur une ligne : chaque note est un point posé à sa
- * position, à la couleur de sa catégorie. Toucher la piste saute à cet endroit
- * de la liste — c'est la réponse à « retrouver mes notes sans feuilleter ».
+ *    -●●●●●●○-------○------○------○
+ *      ↑ les notes        ↑ plus loin, verrouillées
  *
- * Au-delà de ma progression, la piste est hachurée : les notes qui s'y trouvent
- * ne sont que des carrés gris. Ni couleur, ni emoji : la couleur d'un post-it
- * dirait déjà de quoi parle la note.
+ * Le fil du livre de l'accueil (`GoalTrack`, Lea, 2026-10-02 : la barre grise
+ * hachurée n'était « pas du tout cohérente ») : point avant chocolat jusqu'à ma
+ * page, sable après. Chaque note y est un nœud brodé, à la couleur de son
+ * thème ; une note plus loin que ma page est un nœud sable, sans couleur — la
+ * couleur dirait déjà de quoi elle parle. La fin du livre, un dernier nœud.
+ *
+ * Toucher la piste saute à cet endroit de la liste : « retrouver mes notes sans
+ * feuilleter ». Un filtre éteint les nœuds des autres, sans les retirer.
  */
 
-import React, { useEffect } from 'react';
-import { LayoutChangeEvent, Pressable, StyleSheet, View } from 'react-native';
-import Animated, {
-  Easing,
-  useAnimatedStyle,
-  useSharedValue,
-  withTiming,
-} from 'react-native-reanimated';
-import { colors, creamAlpha, inkAlpha, motion } from '../../utils/constants';
-import { ANNOTATION_CATEGORIES } from '../../utils/annotations';
+import React, { useEffect, useState } from 'react';
+import { LayoutChangeEvent, Pressable, StyleSheet } from 'react-native';
+import Animated, { Easing, useAnimatedProps, useSharedValue, withTiming } from 'react-native-reanimated';
+import Svg, { Circle, Defs, G, RadialGradient, Stop } from 'react-native-svg';
 import type { AnnotationCategory } from '../../types/supabase';
+import { ANNOTATION_CATEGORIES } from '../../utils/annotations';
+import { inkAlpha, motion } from '../../utils/constants';
+import { KNOT_R, KnotGradients, Seam } from './GoalTrack';
 
 export interface TrackDot {
   id: string;
   position: number;
   category: AnnotationCategory | null;
-  /** Hors du filtre choisi : le point s'efface et rapetisse, sans disparaître */
+  /** Hors du filtre choisi : le nœud s'efface et rapetisse, sans disparaître */
   dimmed?: boolean;
 }
 
 interface NotesTrackProps {
-  /** Les notes lisibles : un point coloré chacune */
+  /** Les notes lisibles : un nœud coloré chacune */
   dots: TrackDot[];
-  /** Les notes encore verrouillées : un carré gris chacune */
+  /** Les notes encore verrouillées : un nœud sable chacune */
   lockedPositions: number[];
-  /** Ma progression, 0 → 1 : la piste est hachurée au-delà */
+  /** Ma progression, 0 → 1 : le fil est chocolat jusque-là */
   myPosition: number;
   /** Toucher la piste : la liste saute à cette position */
   onSeek: (position: number) => void;
 }
 
-/** Au-delà, les points se chevauchent : on n'en dessine plus que la moitié */
+/** Au-delà, les nœuds se chevauchent : on n'en dessine plus que la moitié */
 const MAX_DOTS = 30;
+const HEIGHT = 32;
+/** Une note : un peu plus grosse qu'un cap de l'accueil, pour sa couleur */
+const NOTE_R = 4.6;
+/** Ce que le dessin déborde de la piste de chaque côté : les nœuds du bout entiers */
+const PAD = NOTE_R + 1;
 
-export default function NotesTrack({
-  dots,
-  lockedPositions,
-  myPosition,
-  onSeek,
-}: NotesTrackProps) {
-  const [width, setWidth] = React.useState(0);
+const AnimatedCircle = Animated.createAnimatedComponent(Circle);
+
+export default function NotesTrack({ dots, lockedPositions, myPosition, onSeek }: NotesTrackProps) {
+  const [width, setWidth] = useState(0);
   const onLayout = (e: LayoutChangeEvent) => setWidth(e.nativeEvent.layout.width);
 
-  // Trop de points : on en garde un sur deux, la piste reste lisible
+  // Trop de nœuds : on en garde un sur deux, la piste reste lisible
   const step = Math.max(1, Math.ceil(dots.length / MAX_DOTS));
   const visibleDots = dots.filter((_, index) => index % step === 0);
 
@@ -68,37 +71,47 @@ export default function NotesTrack({
       accessibilityLabel="Piste du livre"
       accessibilityHint="Touche un endroit pour y aller dans la liste"
     >
-      <View style={styles.rail}>
-        <View style={[styles.read, { width: `${myPosition * 100}%` }]} />
-      </View>
-
-      {/* La zone que je n'ai pas encore lue : hachurée à petits traits */}
-      <View style={[styles.locked, { left: `${myPosition * 100}%` }]} pointerEvents="none">
-        {Array.from({ length: 40 }).map((_, index) => (
-          <View key={index} style={styles.hatch} />
-        ))}
-      </View>
-
-      {visibleDots.map((dot) => (
-        <Dot key={dot.id} dot={dot} />
-      ))}
-
-      {lockedPositions.map((position, index) => (
-        <View
-          key={`locked-${index}`}
-          style={[styles.lockedDot, { left: `${position * 100}%` }]}
-          pointerEvents="none"
-        />
-      ))}
-
-      {/* Où j'en suis */}
-      <View style={[styles.me, { left: `${myPosition * 100}%` }]} pointerEvents="none" />
+      {width > 0 && (
+        <Svg width={width + PAD * 2} height={HEIGHT} style={styles.svg} pointerEvents="none">
+          <KnotGradients />
+          <CategoryGradients />
+          <G transform={`translate(${PAD} 0)`}>
+            <Seam width={width} readUntil={width * myPosition} y={HEIGHT / 2} />
+            {lockedPositions.map((position, index) => (
+              <Circle key={`locked-${index}`} cx={width * position} cy={HEIGHT / 2} r={KNOT_R} fill="url(#knotAhead)" />
+            ))}
+            {/* La fin du livre */}
+            <Circle cx={width} cy={HEIGHT / 2} r={KNOT_R} fill="url(#knotAhead)" />
+            {visibleDots.map((dot) => (
+              <Knot key={dot.id} dot={dot} x={width * dot.position} />
+            ))}
+          </G>
+        </Svg>
+      )}
     </Pressable>
   );
 }
 
-/** Un point de note : il suit le filtre en s'effaçant (200 ms, ease-out-quart) */
-function Dot({ dot }: { dot: TrackDot }) {
+/** Les nœuds des thèmes : bombés comme ceux de l'accueil, dans la couleur du thème */
+function CategoryGradients() {
+  return (
+    <Defs>
+      {(Object.keys(ANNOTATION_CATEGORIES) as AnnotationCategory[]).map((category) => {
+        const color = ANNOTATION_CATEGORIES[category].color;
+        return (
+          <RadialGradient key={category} id={`knot-${category}`} cx="35%" cy="30%" r="80%">
+            <Stop offset="0" stopColor={shade(color, 1.05)} />
+            <Stop offset="0.6" stopColor={color} />
+            <Stop offset="1" stopColor={shade(color, 0.72)} />
+          </RadialGradient>
+        );
+      })}
+    </Defs>
+  );
+}
+
+/** Un nœud de note : il suit le filtre en s'effaçant (200 ms, ease-out-quart) */
+function Knot({ dot, x }: { dot: TrackDot; x: number }) {
   const on = useSharedValue(dot.dimmed ? 0 : 1);
   useEffect(() => {
     on.value = withTiming(dot.dimmed ? 0 : 1, {
@@ -106,99 +119,38 @@ function Dot({ dot }: { dot: TrackDot }) {
       easing: Easing.bezier(...motion.easing.easeOutQuart),
     });
   }, [dot.dimmed, on]);
-  const animated = useAnimatedStyle(() => ({
+  const animatedProps = useAnimatedProps(() => ({
     opacity: 0.18 + on.value * 0.82,
-    transform: [{ scale: 0.6 + on.value * 0.4 }],
+    r: NOTE_R * (0.6 + on.value * 0.4),
   }));
   return (
-    <Animated.View
-      style={[
-        styles.dot,
-        { left: `${dot.position * 100}%` },
-        dot.category
-          ? { backgroundColor: ANNOTATION_CATEGORIES[dot.category].color }
-          : styles.dotNeutral,
-        animated,
-      ]}
-      pointerEvents="none"
+    <AnimatedCircle
+      cx={x}
+      cy={HEIGHT / 2}
+      fill={dot.category ? `url(#knot-${dot.category})` : 'url(#knotAhead)'}
+      stroke={inkAlpha(0.28)}
+      strokeWidth={0.8}
+      animatedProps={animatedProps}
     />
   );
 }
 
-const RAIL_TOP = 13;
-const RAIL_HEIGHT = 6;
+/** Une couleur `#rrggbb` éclaircie (> 1) ou assombrie (< 1) */
+function shade(hex: string, k: number) {
+  const n = parseInt(hex.slice(1), 16);
+  const c = (v: number) => Math.round(Math.max(0, Math.min(255, v * k)));
+  return `rgb(${c(n >> 16)}, ${c((n >> 8) & 255)}, ${c(n & 255)})`;
+}
 
 const styles = StyleSheet.create({
-  // Une zone tactile confortable autour d'une piste fine
+  // Une zone tactile confortable autour d'un fil fin
   hit: {
-    height: 32,
+    height: HEIGHT,
     justifyContent: 'center',
   },
-  rail: {
+  svg: {
     position: 'absolute',
-    left: 0,
-    right: 0,
-    top: RAIL_TOP,
-    height: RAIL_HEIGHT,
-    borderRadius: RAIL_HEIGHT / 2,
-    backgroundColor: inkAlpha(0.08),
-    overflow: 'hidden',
-  },
-  read: {
-    height: '100%',
-    backgroundColor: inkAlpha(0.18),
-  },
-
-  locked: {
-    position: 'absolute',
-    right: 0,
-    top: RAIL_TOP,
-    height: RAIL_HEIGHT,
-    flexDirection: 'row',
-    gap: 3,
-    overflow: 'hidden',
-  },
-  hatch: {
-    width: 3,
-    height: RAIL_HEIGHT,
-    backgroundColor: inkAlpha(0.22),
-    transform: [{ skewX: '-20deg' }],
-  },
-
-  dot: {
-    position: 'absolute',
-    top: RAIL_TOP - 3,
-    width: 12,
-    height: 12,
-    marginLeft: -6,
-    borderRadius: 6,
-    borderWidth: 1.5,
-    borderColor: creamAlpha(0.9),
-  },
-  dotNeutral: {
-    backgroundColor: inkAlpha(0.35),
-  },
-
-  /** Une note plus loin : un carré gris, sans couleur de catégorie */
-  lockedDot: {
-    position: 'absolute',
-    top: RAIL_TOP - 2,
-    width: 10,
-    height: 10,
-    marginLeft: -5,
-    borderRadius: 3,
-    backgroundColor: inkAlpha(0.16),
-    borderWidth: 1,
-    borderColor: inkAlpha(0.3),
-  },
-
-  me: {
-    position: 'absolute',
-    top: RAIL_TOP - 6,
-    width: 2,
-    height: 18,
-    marginLeft: -1,
-    borderRadius: 1,
-    backgroundColor: colors.dark900,
+    left: -PAD,
+    top: 0,
   },
 });
