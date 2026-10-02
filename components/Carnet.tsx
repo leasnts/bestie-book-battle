@@ -63,7 +63,6 @@ import {
 import DriftingBackdrop from './ui/DriftingBackdrop';
 import NewNotesDeck from './ui/NewNotesDeck';
 import NoteCard, { LockedNoteCard } from './ui/NoteCard';
-import NoteSticker from './ui/NoteSticker';
 import InkFigure from './ui/InkFigure';
 import NotesTrack, { type TrackDot } from './ui/NotesTrack';
 import PressableScale from './ui/PressableScale';
@@ -452,8 +451,8 @@ export default function Carnet({ mode }: { mode: CarnetMode }) {
             onLayout={(e) => (summaryBottom.current = e.nativeEvent.layout.y + e.nativeEvent.layout.height)}
           >
             {/*
-              Hors cadre, comme Ma page : le compte à l'encre, et à côté un éventail
-              d'autocollants (l'image d'une note dans toute l'app), puis le fil
+              Hors cadre, comme Ma page : le compte à l'encre, et à côté le cadenas
+              ouvert à l'aquarelle (des notes débloquées), puis le fil
             */}
             <View style={styles.summary}>
               <View style={styles.figureRow}>
@@ -463,7 +462,13 @@ export default function Carnet({ mode }: { mode: CarnetMode }) {
                   fontSize={64}
                   accessibilityLabel={`${notes.length} notes ouvertes sur ${notes.length + ahead.length}`}
                 />
-                <StickerFan notes={notes} />
+                <Image
+                  source={UNLOCKED_ART}
+                  style={styles.unlocked}
+                  tintColor={colors.accent}
+                  contentFit="contain"
+                  accessible={false}
+                />
               </View>
               <NotesTrack
                 dots={dots}
@@ -637,37 +642,13 @@ export default function Carnet({ mode }: { mode: CarnetMode }) {
 }
 
 /**
- * Trois autocollants brodés en éventail, aux couleurs des thèmes les plus
- * présents : à côté du compte, ils disent « des notes » sans un mot.
+ * Le cadenas ouvert, à l'aquarelle : à côté du compte, il dit « des notes
+ * débloquées » sans un mot. Fait comme les illustrations des thèmes (un masque :
+ * l'encre = l'opacité, le grain de l'aquarelle dans la transparence), teinté
+ * de lie de vin.
  */
-function StickerFan({ notes }: { notes: AnnotationWithAuthor[] }) {
-  const colors3 = useMemo(() => {
-    const counts = new Map<string, number>();
-    notes.forEach((note) => counts.set(note.category, (counts.get(note.category) ?? 0) + 1));
-    const top = [...counts.entries()].sort((a, b) => b[1] - a[1]).map(([category]) => category);
-    // Jamais vide : sans note, trois autocollants de papier nu
-    return [0, 1, 2].map((i) =>
-      top[i] ? ANNOTATION_CATEGORIES[top[i] as keyof typeof ANNOTATION_CATEGORIES].color : null,
-    );
-  }, [notes]);
-  return (
-    <View style={styles.fan} importantForAccessibility="no-hide-descendants" accessibilityElementsHidden>
-      {FAN.map(({ rotate, x, y }, i) => (
-        <View key={i} style={[styles.fanSticker, { transform: [{ translateX: x }, { translateY: y }, { rotate }] }]}>
-          <NoteSticker id={`fan-${i}`} color={colors3[i]} size={FAN_SIZE} />
-        </View>
-      ))}
-    </View>
-  );
-}
-
-/** L'éventail : du fond (à gauche, penché) au-dessus (à droite, presque droit) */
-const FAN_SIZE = 30;
-const FAN = [
-  { rotate: '-14deg', x: 0, y: 6 },
-  { rotate: '4deg', x: 16, y: 0 },
-  { rotate: '16deg', x: 32, y: 8 },
-];
+const UNLOCKED_ART = require('../assets/images/carnet/unlocked.png');
+const UNLOCKED_SIZE = 52;
 
 /**
  * Une pastille de papier : « Trier » et « Filtrer » (une icône et un mot), ou
@@ -780,15 +761,10 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   // Contre le total fantôme, qui déborde un peu sur sa droite
-  fan: {
-    width: FAN_SIZE + 32,
-    height: FAN_SIZE + 10,
+  unlocked: {
+    width: UNLOCKED_SIZE,
+    height: UNLOCKED_SIZE,
     marginLeft: -spacing.md,
-  },
-  fanSticker: {
-    position: 'absolute',
-    left: 0,
-    top: 0,
   },
 
   tools: {
