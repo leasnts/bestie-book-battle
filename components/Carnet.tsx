@@ -85,10 +85,9 @@ import {
   spacing,
 } from '../utils/constants';
 
-/** Une section de la liste : une tranche de pages, ou les nouvelles (`start: null`) */
+/** Une section de la liste : les nouvelles (avec leur titre), puis toutes les autres (sans titre) */
 type NoteSection = {
-  title: string;
-  start: number | null;
+  title: string | null;
   data: AnnotationWithAuthor[];
   /** Suit le filtre : un nouveau filtre remonte aussi les titres de tranche */
   key: string;
@@ -200,47 +199,29 @@ export default function Carnet({ mode }: { mode: CarnetMode }) {
   const visible = useMemo(() => filterNotes(notes, people, categories), [notes, people, categories]);
 
   /**
-   * Les sections : des tranches de pages de mon édition. Une dizaine de tranches
-   * pour un livre, quelle que soit sa longueur — « p. 1–62 » d'un côté et
-   * « p. 1–1000 » de l'autre doivent se parcourir pareil.
+   * Une seule liste, dans l'ordre du tri. Plus de tranches de pages (« p. 1–62 »,
+   * Lea, 2026-10-02) : arbitraires, et chaque note porte déjà sa page. Seules
+   * les nouvelles ont leur section, en haut, quand on trie par page.
    */
-  const slice = Math.max(10, Math.round(myPages / 10));
-
   const sections = useMemo((): NoteSection[] => {
-    // Par date d'écriture : une seule liste, sans tranches
-    if (sort === 'newest' || sort === 'oldest') {
-      const dir = sort === 'newest' ? -1 : 1;
-      const data = [...visible].sort((a, b) => (a.created_at < b.created_at ? -dir : dir));
-      return data.length ? [{ title: carnetSort(sort).label, start: null, data, key: `${filterKey}-time` }] : [];
-    }
+    const byTime = sort === 'newest' || sort === 'oldest';
+    const dir = sort === 'newest' || sort === 'pageDesc' ? -1 : 1;
     const news: AnnotationWithAuthor[] = [];
-    const groups = new Map<number, AnnotationWithAuthor[]>();
+    const rest: AnnotationWithAuthor[] = [];
     for (const note of visible) {
-      // Une nouvelle n'apparaît qu'une fois : en haut, pas aussi dans sa tranche
-      if (fresh.ids.has(note.id)) {
-        news.push(note);
-        continue;
-      }
-      const page = Math.ceil(note.position * myPages);
-      const start = Math.floor(Math.max(0, page - 1) / slice) * slice;
-      if (!groups.has(start)) groups.set(start, []);
-      groups.get(start)!.push(note);
+      // Une nouvelle n'apparaît qu'une fois : en haut, pas aussi dans la liste
+      if (!byTime && fresh.ids.has(note.id)) news.push(note);
+      else rest.push(note);
     }
-    // Dernières pages : les tranches, et les notes de chaque tranche, à l'envers
-    const desc = sort === 'pageDesc';
-    const slices: NoteSection[] = [...groups.entries()]
-      .sort((a, b) => (desc ? b[0] - a[0] : a[0] - b[0]))
-      .map(([start, data]) => ({
-        title: `p. ${start + 1}–${Math.min(start + slice, myPages)}`,
-        start,
-        data: desc ? [...data].reverse() : data,
-        key: `${filterKey}-${start}`,
-      }));
-    if (news.length === 0) return slices;
+    rest.sort((a, b) =>
+      byTime ? (a.created_at < b.created_at ? -dir : dir) : (a.position - b.position) * dir,
+    );
+    const list: NoteSection[] = rest.length ? [{ title: null, data: rest, key: `${filterKey}-list` }] : [];
+    if (news.length === 0) return list;
 
     const title = fresh.pages ? `Nouvelles · p. ${fresh.pages.from}–${fresh.pages.to}` : 'Nouvelles';
-    return [{ title, start: null, data: news, key: `${filterKey}-news` }, ...slices];
-  }, [visible, myPages, slice, fresh, filterKey, sort]);
+    return [{ title, data: news, key: `${filterKey}-news` }, ...list];
+  }, [visible, fresh, filterKey, sort]);
 
   /** Les notes que je n'ai pas encore ouvertes : ce sont les « nouvelles » */
   const unread = useMemo(
@@ -271,42 +252,20 @@ export default function Carnet({ mode }: { mode: CarnetMode }) {
     return () => clearTimeout(timer);
   }, [phase]);
 
-  /** Toucher la piste : on saute à la tranche de pages correspondante */
+  /** Toucher la piste : on va à la note la plus proche de cet endroit du livre */
   const seek = useCallback(
     (position: number) => {
       if (sections.length === 0) return;
-      // Par date : pas de tranches, on va à la note la plus proche de cet endroit
-      if (sort === 'newest' || sort === 'oldest') {
-        const data = sections[0].data;
-        let itemIndex = 0;
-        data.forEach((note, i) => {
-          if (Math.abs(note.position - position) < Math.abs(data[itemIndex].position - position)) itemIndex = i;
-        });
-        listRef.current?.scrollToLocation({ sectionIndex: 0, itemIndex, viewOffset: 8, animated: true });
-        return;
-      }
-      const page = position * myPages;
-      // Les nouvelles ne sont pas une tranche : la piste mène aux pages
-      // La tranche qui contient cette page, sinon la plus proche (dans un sens comme dans l'autre)
-      let index = -1;
-      let best = Infinity;
-      sections.forEach((section, i) => {
-        if (section.start === null) return;
-        const distance = page < section.start ? section.start - page : Math.max(0, page - (section.start + slice));
-        if (distance < best) {
-          best = distance;
-          index = i;
-        }
+      // La liste, pas les nouvelles : la piste mène aux pages
+      const sectionIndex = sections.length - 1;
+      const data = sections[sectionIndex].data;
+      let itemIndex = 0;
+      data.forEach((note, i) => {
+        if (Math.abs(note.position - position) < Math.abs(data[itemIndex].position - position)) itemIndex = i;
       });
-      if (index < 0) index = 0;
-      listRef.current?.scrollToLocation({
-        sectionIndex: index,
-        itemIndex: 0,
-        viewOffset: 8,
-        animated: true,
-      });
+      listRef.current?.scrollToLocation({ sectionIndex, itemIndex, viewOffset: 8, animated: true });
     },
-    [sections, myPages, slice, sort],
+    [sections],
   );
 
   const markAllRead = useCallback(() => {
@@ -440,7 +399,8 @@ export default function Carnet({ mode }: { mode: CarnetMode }) {
         </View>
       }
       renderSectionHeader={({ section }) => {
-        // Le titre arrive avec la première note de sa tranche
+        if (!section.title) return null;
+        // Le titre arrive avec la première note de sa section
         const delay = noteDelay(section.data[0]?.id ?? '');
         return (
           <Animated.Text
@@ -640,7 +600,8 @@ const styles = StyleSheet.create({
 
   header: {
     gap: spacing.md,
-    marginBottom: spacing.sm,
+    // Plus de titre de tranche entre les boutons et la première note : l'écart le remplace
+    marginBottom: spacing.lg,
   },
   summary: {
     paddingHorizontal: spacing.xs,
