@@ -13,6 +13,7 @@
  * - **moi** : là où le fil passe du chocolat au sable (plus de pastille ni de
  *   loupe, Lea, 2026-10-01) ;
  * - le repère de gauche (J-x) dit le temps qu'il reste, la date de fin est au bout.
+ *   La date de fin est facultative : sans elle, ni J-x ni date, la ligne disparaît.
  *
  * Tout est en pourcentage : les caps aussi, pour tomber au même endroit quelle
  * que soit l'édition de chacun.
@@ -61,19 +62,22 @@ export default function GoalTrack({ myPercent, caps, endDate, leadingLabel }: Go
         )}
       </View>
 
-      <View style={styles.labels}>
-        {/*
-          Les dates sont posées à un endroit précis de la piste : elles suivent
-          le réglage système, mais de façon bornée, sinon elles se chevauchent
-          et ne désignent plus rien. Même règle que le chiffre du sélecteur.
-        */}
-        {leadingLabel && <View style={styles.leading}>{leadingLabel}</View>}
-        {endDate && (
-          <Text style={[styles.label, styles.endLabel]} maxFontSizeMultiplier={1.3}>
-            {formatTrackDate(endDate)}
-          </Text>
-        )}
-      </View>
+      {/* Sans date de fin ni J-x, pas de ligne vide sous la piste */}
+      {(leadingLabel || endDate) && (
+        <View style={styles.labels}>
+          {/*
+            Les dates sont posées à un endroit précis de la piste : elles suivent
+            le réglage système, mais de façon bornée, sinon elles se chevauchent
+            et ne désignent plus rien. Même règle que le chiffre du sélecteur.
+          */}
+          {leadingLabel && <View style={styles.leading}>{leadingLabel}</View>}
+          {endDate && (
+            <Text style={[styles.label, styles.endLabel]} maxFontSizeMultiplier={1.3}>
+              {formatTrackDate(endDate)}
+            </Text>
+          )}
+        </View>
+      )}
     </View>
   );
 }
