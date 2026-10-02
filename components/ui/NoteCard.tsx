@@ -21,7 +21,7 @@ import { EllipsisIcon, SmilePlusIcon, XIcon } from 'lucide-react-native';
 import React, { useMemo, useState } from 'react';
 import { StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native';
 import type { AnnotationWithAuthor } from '../../services/supabase/annotations';
-import { ANNOTATION_CATEGORIES, formatNotePage, isEmojiOnly } from '../../utils/annotations';
+import { ANNOTATION_CATEGORIES, formatNoteDate, formatNotePage, isEmojiOnly } from '../../utils/annotations';
 import { borderRadius, colors, creamAlpha, fonts, inkAlpha, spacing } from '../../utils/constants';
 import { QUICK_REACTIONS } from '../../utils/emojis';
 import NoteSticker, { STICKER_BASE_LARGE } from './NoteSticker';
@@ -125,6 +125,10 @@ export default function NoteCard({
         <Text style={styles.name} numberOfLines={1}>
           {author}
         </Text>
+        {/* Quand elle a été écrite : en léger, juste après le prénom */}
+        <Text style={styles.date} numberOfLines={1}>
+          {formatNoteDate(note.created_at)}
+        </Text>
         <Text style={styles.page}>{page}</Text>
       </View>
 
@@ -160,7 +164,7 @@ export default function NoteCard({
           onPress={onPress}
           style={emojiOnly && styles.compactPress}
           accessibilityRole="button"
-          accessibilityLabel={`Note de ${isMine ? 'moi' : note.author?.first_name}, ${category.label}, ${page}`}
+          accessibilityLabel={`Note de ${isMine ? 'moi' : note.author?.first_name}, ${formatNoteDate(note.created_at)}, ${category.label}, ${page}`}
           accessibilityHint={isMine ? 'Ouvre ma note pour la modifier' : undefined}
         >
           {sticker}
@@ -346,8 +350,16 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: colors.textPrimary,
   },
+  date: {
+    flexShrink: 1,
+    fontFamily: fonts.bodySemiBold,
+    fontSize: 12,
+    color: inkAlpha(0.5),
+    fontVariant: ['tabular-nums'],
+  },
   page: {
     marginLeft: 'auto',
+    paddingLeft: spacing.sm,
     fontFamily: fonts.bodyBold,
     fontSize: 12,
     color: inkAlpha(0.66),
