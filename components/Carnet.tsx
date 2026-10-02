@@ -196,7 +196,10 @@ export default function Carnet({ mode }: { mode: CarnetMode }) {
    * sur le même flou ; une goutte de verre y glisse en continu jusqu'à l'endroit
    * du livre où en est la liste.
    */
-  const summaryBottom = useRef(0);
+  /** Le haut du bloc du compte, et du fil dedans, dans l'en-tête de la liste */
+  const summaryTop = useRef(0);
+  const trackTop = useRef(0);
+  /** Le fil a atteint le titre : il y reste collé */
   const [pastSummary, setPastSummary] = useState(false);
   /** La hauteur de l'en-tête au repos (sans le fil) : la liste commence dessous */
   const [headerHeight, setHeaderHeight] = useState(0);
@@ -208,7 +211,11 @@ export default function Carnet({ mode }: { mode: CarnetMode }) {
     (e: NativeSyntheticEvent<NativeScrollEvent>) => {
       onScroll(e);
       const y = e.nativeEvent.contentOffset.y;
-      const past = summaryBottom.current > 0 && y > summaryBottom.current;
+      // Le fil de la liste arrive sous le titre (là où se pose celui de l'en-tête) :
+      // l'un remplace l'autre au même endroit, on croit voir le fil s'arrêter
+      // (le fil de l'en-tête est sous le titre, moins la marge du bas de l'en-tête, plus la sienne)
+      const stickAt = summaryTop.current + trackTop.current + spacing.md - spacing.sm;
+      const past = trackTop.current > 0 && y >= stickAt;
       setPastSummary((prev) => (prev === past ? prev : past));
 
       // La ligne de lecture, juste sous l'en-tête : entre deux notes, la goutte
@@ -366,11 +373,8 @@ export default function Carnet({ mode }: { mode: CarnetMode }) {
     >
       {/* Le fil, sous le titre, une fois celui du haut sorti de l'écran */}
       {isPage && pastSummary && (
-        <Animated.View
-          entering={FadeIn.duration(motion.duration.standard)}
-          exiting={FadeOut.duration(motion.duration.instant)}
-          style={styles.headerTrack}
-        >
+        // Sans fondu : il prend la place exacte de celui de la liste
+        <View style={styles.headerTrack}>
           <NotesTrack
             dots={dots}
             lockedPositions={ahead.map((note) => note.book_position)}
@@ -378,7 +382,7 @@ export default function Carnet({ mode }: { mode: CarnetMode }) {
             onSeek={seek}
             focus={focus}
           />
-        </Animated.View>
+        </View>
       )}
     </SheetPageHeader>
   );
@@ -449,7 +453,7 @@ export default function Carnet({ mode }: { mode: CarnetMode }) {
 
           <Animated.View
             entering={rise(cascadeDelay.current + motion.stagger)}
-            onLayout={(e) => (summaryBottom.current = e.nativeEvent.layout.y + e.nativeEvent.layout.height)}
+            onLayout={(e) => (summaryTop.current = e.nativeEvent.layout.y)}
           >
             {/*
               Hors cadre, comme Ma page : le cadenas ouvert à l'aquarelle (des notes
@@ -473,12 +477,18 @@ export default function Carnet({ mode }: { mode: CarnetMode }) {
                   accessibilityLabel={`${notes.length} notes ouvertes sur ${notes.length + ahead.length}`}
                 />
               </View>
-              <NotesTrack
-                dots={dots}
-                lockedPositions={ahead.map((note) => note.book_position)}
-                myPosition={myPosition}
-                onSeek={seek}
-              />
+              {/* Caché quand il est collé sous le titre : c'est sa copie, à la même place */}
+              <View
+                onLayout={(e) => (trackTop.current = e.nativeEvent.layout.y)}
+                style={isPage && pastSummary && styles.hidden}
+              >
+                <NotesTrack
+                  dots={dots}
+                  lockedPositions={ahead.map((note) => note.book_position)}
+                  myPosition={myPosition}
+                  onSeek={seek}
+                />
+              </View>
             </View>
           </Animated.View>
 
@@ -732,6 +742,11 @@ const styles = StyleSheet.create({
   // Le fil dans l'en-tête : la place de la goutte au-dessus
   headerTrack: {
     paddingTop: spacing.sm,
+    // La même marge que le bloc du compte : les deux fils se superposent exactement
+    paddingHorizontal: spacing.xs,
+  },
+  hidden: {
+    opacity: 0,
   },
   // La même hauteur que l'en-tête du carnet : le retour ne bouge pas ensuite
   deckHeader: {
