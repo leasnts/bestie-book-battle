@@ -40,7 +40,8 @@ export default function GoalTrack({ myPercent, caps, endDate, leadingLabel }: Go
   const currentCap = caps.find((cap) => cap.state === 'current') ?? null;
   // Largeur de la piste, pour placer les points du fil
   const [width, setWidth] = useState(0);
-  const knots = [...caps.map((cap) => cap.percent), ...(endDate ? [100] : [])];
+  // Un cap à 100 % et la fin tombent sur le même nœud : un seul
+  const knots = [...new Set([...caps.map((cap) => cap.percent), ...(endDate ? [100] : [])])];
   const meX = (width * myPercent) / 100;
 
   return (
