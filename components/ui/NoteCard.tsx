@@ -16,9 +16,10 @@
  * autre édition) : c'est la page où je retrouverai le passage.
  */
 
+import * as Haptics from 'expo-haptics';
 import { Image } from 'expo-image';
 import { EllipsisIcon, LockIcon, SmilePlusIcon, XIcon } from 'lucide-react-native';
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native';
 import type { AnnotationWithAuthor } from '../../services/supabase/annotations';
 import { ANNOTATION_CATEGORIES, formatNoteDate, formatNotePage, isEmojiOnly } from '../../utils/annotations';
@@ -44,11 +45,6 @@ interface NoteCardProps {
   /** Ma note : elle s'ouvre pour être modifiée */
   isMine: boolean;
   onPress?: () => void;
-  /**
-   * Appui long (comme WhatsApp) : la note donne sa place à l'écran, pour que les
-   * réactions s'ouvrent posées dessus (`ReactionOverlay`)
-   */
-  onLongPress?: (frame: NoteFrame) => void;
   /** Moi, pour savoir quelles réactions sont les miennes */
   myUserId?: string;
   /** Ajouter ou retirer ma réaction. Sans elle, les réactions se lisent seulement. */
@@ -69,13 +65,6 @@ interface NoteCardProps {
  */
 const STICKER_BASE = 72;
 
-/** La place d'une note à l'écran */
-export interface NoteFrame {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-}
 export { STICKER_BASE_LARGE };
 
 export default function NoteCard({
@@ -83,7 +72,6 @@ export default function NoteCard({
   myTotalPages,
   isMine,
   onPress,
-  onLongPress,
   myUserId,
   onToggleReaction,
   onMoreReactions,
@@ -112,14 +100,18 @@ export default function NoteCard({
 
   // Un emoji seul : l'emoji en grand. Dans la liste, toute la largeur comme
   // les autres (Lea, 2026-10-02) ; dans la pile, la carte reste à sa taille
-  const stickerRef = useRef<View>(null);
-  const longPress = onLongPress
-    ? () => stickerRef.current?.measureInWindow((x, y, width, height) => onLongPress({ x, y, width, height }))
+  /** Les six réactions rapides ouvertes dans la note (☺+, ou un appui long sur la note) */
+  const [picking, setPicking] = useState(false);
+  const canReact = !!onToggleReaction && !hideReactions && note.visibility === 'club';
+  const longPress = canReact
+    ? () => {
+        Haptics.selectionAsync().catch(() => {});
+        setPicking(true);
+      }
     : undefined;
 
   const sticker = (
     <View
-      ref={stickerRef}
       style={[
         styles.note,
         large && styles.noteLarge,
@@ -239,6 +231,8 @@ export default function NoteCard({
       {!hideReactions && note.visibility === 'club' && (
         <NoteReactions
           inside
+          picking={picking}
+          onPickingChange={setPicking}
           note={note}
           myUserId={myUserId}
           onToggle={onToggleReaction}
@@ -307,6 +301,8 @@ export function NoteReactions({
   onMore,
   quick = false,
   inside = false,
+  picking: pickingProp,
+  onPickingChange,
 }: {
   note: AnnotationWithAuthor;
   myUserId?: string;
@@ -315,8 +311,17 @@ export function NoteReactions({
   quick?: boolean;
   /** Posées sur la note (la liste du carnet) : sur le papier, à gauche du coin corné */
   inside?: boolean;
+  /** Les six rapides ouvertes, piloté par la note (son appui long) */
+  picking?: boolean;
+  onPickingChange?: (picking: boolean) => void;
 }) {
-  const [picking, setPicking] = useState(false);
+  const [pickingState, setPickingState] = useState(false);
+  const picking = pickingProp ?? pickingState;
+  const setPicking = (next: boolean | ((p: boolean) => boolean)) => {
+    const value = typeof next === 'function' ? next(picking) : next;
+    if (onPickingChange) onPickingChange(value);
+    else setPickingState(value);
+  };
   const canReact = !!onToggle;
 
   // Une pastille par emoji, avec son compte ; les plus partagées d'abord
