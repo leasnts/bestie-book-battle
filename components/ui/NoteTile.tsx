@@ -18,12 +18,18 @@
  * marqué comme lu.
  *
  * Quelle note : la première des nouvelles (celles que ma dernière page vient
- * d'ouvrir), sinon la plus récente. Sans note lisible, un autocollant de papier
- * nu : un cadenas et le nombre de notes plus loin, ou rien du tout.
+ * d'ouvrir), sinon la plus récente. Sans note lisible mais des notes plus loin,
+ * un autocollant de papier nu : un cadenas et leur nombre.
+ *
+ * Aucune note du tout : un bloc d'autocollants neuf (`FirstNote`). Celui du
+ * dessus est vierge, lignes vides, curseur qui clignote à ma page, et son coin
+ * se soulève de temps en temps ; le toucher ouvre directement la feuille
+ * d'écriture, pas le carnet vide.
  */
 
 import * as Haptics from 'expo-haptics';
-import { LockIcon, MicIcon, NotebookPenIcon } from 'lucide-react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { LockIcon, MicIcon, PenLineIcon } from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
@@ -34,6 +40,7 @@ import Animated, {
   useReducedMotion,
   useSharedValue,
   withDelay,
+  withRepeat,
   withSequence,
   withTiming,
 } from 'react-native-reanimated';
@@ -44,10 +51,11 @@ import {
   formatVoiceDuration,
   isEmojiOnly,
 } from '../../utils/annotations';
-import { colors, fonts, inkAlpha, motion, spacing } from '../../utils/constants';
+import { colors, fonts, inkAlpha, inkGradient, motion, postIt, spacing } from '../../utils/constants';
 import NoteSticker, { STICKER_BASE_LARGE } from './NoteSticker';
 import PeelSurface, { peelAmount } from './PeelSurface';
 import PressableScale from './PressableScale';
+import { useWriteNote } from './WriteNoteButton';
 
 interface NoteTileProps {
   /**
@@ -111,6 +119,9 @@ export default function NoteTile({
   /** Sa place dans les nouvelles (1, 2…), tant qu'on est dedans */
   const freshPlace = (i: number) => (i < freshCount ? i + 1 : 0);
   const peelOff = () => setTurn((t) => t + 1);
+  /** Rien du tout, ni lisible ni plus loin : on invite à la première note */
+  const untouched = !note && aheadCount === 0;
+  const write = useWriteNote();
 
   const label = note
     ? `Carnet de notes. Note de ${isMine(note) ? 'moi' : note.author?.first_name ?? 'quelqu’un'}${
@@ -118,7 +129,7 @@ export default function NoteTile({
       }`
     : aheadCount > 0
       ? `Carnet de notes, ${aheadCount} ${aheadCount > 1 ? 'notes' : 'note'} plus loin`
-      : 'Carnet de notes';
+      : `Écrire la première note, page ${Math.max(1, write.page)}`;
 
   const face = (n: AnnotationWithAuthor, i: number, at: TileSize) => (
     <Face size={at} note={n}>
@@ -133,13 +144,14 @@ export default function NoteTile({
   );
 
   return (
+    <>
     <PressableScale
       style={wide ? (size ? { height: size.h } : styles.tileWide) : styles.tile}
       onLayout={onLayout}
-      onPress={onPress}
+      onPress={untouched ? write.open : onPress}
       accessibilityRole="button"
       accessibilityLabel={label}
-      accessibilityHint="Ouvre le carnet de notes"
+      accessibilityHint={untouched ? 'Ouvre la feuille d’écriture' : 'Ouvre le carnet de notes'}
       // VoiceOver n'arrache pas : une action « note précédente » à la place du geste
       accessibilityActions={next ? [{ name: 'previous', label: 'Note précédente' }] : undefined}
       onAccessibilityAction={(e) => e.nativeEvent.actionName === 'previous' && peelOff()}
@@ -157,21 +169,129 @@ export default function NoteTile({
               {face(note, at, size)}
             </PeelCard>
           </>
+        ) : untouched ? (
+          <FirstNote tile={size} page={Math.max(1, write.page)} />
         ) : (
           <Face size={size} note={null}>
             <View style={styles.blank}>
-              {aheadCount > 0 ? (
-                <>
-                  <LockIcon size={22} color={colors.textTertiary} strokeWidth={2.2} />
-                  <Text style={styles.blankCount}>{aheadCount}</Text>
-                </>
-              ) : (
-                <NotebookPenIcon size={26} color={colors.textTertiary} strokeWidth={2} />
-              )}
+              <LockIcon size={22} color={colors.textTertiary} strokeWidth={2.2} />
+              <Text style={styles.blankCount}>{aheadCount}</Text>
             </View>
           </Face>
         ))}
     </PressableScale>
+    {write.sheet}
+    </>
+  );
+}
+
+// ─── Aucune note : le bloc d'autocollants neuf ──────────────────────
+
+/** Les lignes vides de l'autocollant vierge, au pas du texte d'une note */
+const BLANK_LINES = 3;
+/** Le coin au repos, déjà un peu soulevé, et quand il se soulève */
+const LIFT_REST = 14;
+const LIFT_UP = 32;
+
+/**
+ * Un bloc neuf : deux autocollants de couleur dépassent dessous, de travers ;
+ * celui du dessus est vierge. Pas de mots : la page où j'en suis, des lignes à
+ * remplir, un curseur, le ✎. Son coin respire (se soulève puis se recolle)
+ * pour dire « prends-moi ». Mouvement réduit : tout reste immobile.
+ */
+function FirstNote({ tile, page }: { tile: TileSize; page: number }) {
+  const reduced = useReducedMotion();
+  const w = useSharedValue(tile.w);
+  const h = useSharedValue(tile.h);
+  const ax = useSharedValue(tile.w);
+  const ay = useSharedValue(tile.h);
+  const bx = useSharedValue(tile.w - LIFT_REST);
+  const by = useSharedValue(tile.h - LIFT_REST * 0.8);
+  const peeling = useSharedValue(1);
+  const values = { w, h, ax, ay, bx, by, peeling };
+  const caret = useSharedValue(1);
+
+  const [size, setSize] = useState<{ w: number; h: number } | null>(null);
+  const measure = (e: LayoutChangeEvent) => {
+    const { width: lw, height: lh } = e.nativeEvent.layout;
+    w.value = lw;
+    h.value = lh;
+    ax.value = lw;
+    ay.value = lh;
+    setSize((prev) => (prev && prev.w === lw && prev.h === lh ? prev : { w: lw, h: lh }));
+  };
+
+  useEffect(() => {
+    if (reduced) return;
+    const breathe = (rest: number, up: number) =>
+      withRepeat(
+        withSequence(
+          withDelay(2600, withTiming(up, { duration: 700, easing: easeOut })),
+          withDelay(250, withTiming(rest, { duration: 650, easing: Easing.inOut(Easing.quad) })),
+        ),
+        -1,
+      );
+    bx.value = breathe(tile.w - LIFT_REST, tile.w - LIFT_UP);
+    by.value = breathe(tile.h - LIFT_REST * 0.8, tile.h - LIFT_UP * 0.8);
+    caret.value = withRepeat(
+      withSequence(withDelay(450, withTiming(0, { duration: 80 })), withDelay(450, withTiming(1, { duration: 80 }))),
+      -1,
+    );
+  }, [reduced, tile.w, tile.h, bx, by, caret]);
+
+  const caretStyle = useAnimatedStyle(() => ({ opacity: caret.value }));
+  // En large, la même inclinaison ferait dépasser les bouts : on la réduit d'autant
+  const lean = tile.h / tile.w;
+  const box = { width: tile.w, height: tile.h };
+
+  return (
+    <View style={box}>
+      {/* Le bloc : deux autocollants de couleur dessous, qui dépassent de travers */}
+      {(
+        [
+          [postIt.sauge, -9, -6],
+          [postIt.jaune, 6, 5],
+        ] as const
+      ).map(([color, angle, shift]) => (
+        <View
+          key={color}
+          style={[
+            StyleSheet.absoluteFill,
+            { transform: [{ translateX: shift }, { rotate: `${angle * lean}deg` }, { scale: 0.97 }] },
+          ]}
+          pointerEvents="none"
+        >
+          <NoteSticker id={`note-tile-pad-${color}`} color={color} width={tile.w} height={tile.h} maxBase={STICKER_BASE_LARGE} corner="none" />
+        </View>
+      ))}
+
+      <View style={StyleSheet.absoluteFill} pointerEvents="none">
+        <PeelSurface id="tile-first" size={size} values={values} onLayout={measure}>
+          <View style={box}>
+            <View style={StyleSheet.absoluteFill}>
+              <NoteSticker id="note-tile-first" color={postIt.rose} width={tile.w} height={tile.h} maxBase={STICKER_BASE_LARGE} corner="none" />
+            </View>
+            <View style={styles.content}>
+              <View style={styles.head}>
+                <Text style={styles.page}>p. {page}</Text>
+              </View>
+              <View style={styles.lines}>
+                {Array.from({ length: BLANK_LINES }, (_, i) => (
+                  <View key={i} style={[styles.line, i === BLANK_LINES - 1 && styles.lineShort]}>
+                    {i === 0 && <Animated.View style={[styles.caret, caretStyle]} />}
+                  </View>
+                ))}
+              </View>
+              <View style={styles.foot}>
+                <LinearGradient colors={inkGradient} style={styles.pen}>
+                  <PenLineIcon size={14} color={colors.white} strokeWidth={2.4} />
+                </LinearGradient>
+              </View>
+            </View>
+          </View>
+        </PeelSurface>
+      </View>
+    </View>
   );
 }
 
@@ -548,6 +668,36 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: colors.textSecondary,
     fontVariant: ['tabular-nums'],
+  },
+
+  lines: {
+    flex: 1,
+    justifyContent: 'center',
+    gap: 19,
+  },
+  line: {
+    height: StyleSheet.hairlineWidth * 2,
+    backgroundColor: inkAlpha(0.16),
+    justifyContent: 'flex-end',
+  },
+  lineShort: {
+    width: '62%',
+  },
+  caret: {
+    position: 'absolute',
+    left: 1,
+    bottom: 3,
+    width: 2,
+    height: 17,
+    borderRadius: 1,
+    backgroundColor: colors.textPrimary,
+  },
+  pen: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 
   blank: {
