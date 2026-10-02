@@ -69,7 +69,7 @@ import PressableScale from './ui/PressableScale';
 import GlassButton from './ui/GlassButton';
 import WriteNoteButton from './ui/WriteNoteButton';
 import { SheetPageHeader } from './ui/SheetPage';
-import { SHEET_TOP_INSET, useSheetScrolled } from './ui/SheetHeader';
+import { SHEET_TOP_INSET, SheetBlur, useSheetScrolled } from './ui/SheetHeader';
 import type { AnnotationWithAuthor } from '../services/supabase/annotations';
 import { useAnnotationStore } from '../stores/annotationStore';
 import { useAuthStore } from '../stores/authStore';
@@ -185,6 +185,8 @@ export default function Carnet({ mode }: { mode: CarnetMode }) {
   /** Le tri et le filtre en un mot : un nouveau choix rejoue la cascade */
   const filterKey = `${sort}:${people.join(',')}:${categories.join(',')}`;
   const { scrolled, onScroll, scrollEventThrottle } = useSheetScrolled();
+  /** Sous la barre d'état : là où commence l'en-tête de la page */
+  const headerTop = insets.top - SHEET_TOP_INSET + spacing.sm;
   const listRef = useRef<SectionList<AnnotationWithAuthor, NoteSection>>(null);
 
   /**
@@ -358,7 +360,8 @@ export default function Carnet({ mode }: { mode: CarnetMode }) {
           <WriteNoteButton />
         )
       }
-      scrolled={isPage && scrolled}
+      // En page entière, le flou est porté par l'en-tête posé sur la liste (jusque sous l'heure)
+      scrolled={false}
     >
       {/* Le fil, sous le titre, une fois celui du haut sorti de l'écran */}
       {isPage && pastSummary && (
@@ -563,7 +566,9 @@ export default function Carnet({ mode }: { mode: CarnetMode }) {
 
   // Page entière : l'en-tête reste en haut, la pile puis la liste passent dessous
   return (
-    <View style={[styles.screen, styles.page, { paddingTop: insets.top - SHEET_TOP_INSET + spacing.sm }]}>
+    // La pile garde sa marge sous la barre d'état ; la liste, elle, monte jusqu'en
+    // haut de l'écran et passe sous l'en-tête et sous l'heure, floutée
+    <View style={[styles.screen, styles.page, phase === 'deck' && { paddingTop: headerTop }]}>
       {/* Pendant la pile : un fond vivant, des taches douces qui dérivent */}
       {phase === 'deck' && (
         <Animated.View exiting={FadeOut.duration(500)} style={StyleSheet.absoluteFill}>
@@ -591,11 +596,13 @@ export default function Carnet({ mode }: { mode: CarnetMode }) {
         // rejoindre sans rien décaler
         <Animated.View
           entering={FadeIn.duration(motion.duration.standard)}
-          style={[styles.pageHeader, styles.pageHeaderOver, { top: insets.top - SHEET_TOP_INSET + spacing.sm }]}
+          style={[styles.pageHeader, styles.pageHeaderOver, { paddingTop: headerTop }]}
           onLayout={(e) => {
             if (!pastSummary) setHeaderHeight(e.nativeEvent.layout.height);
           }}
         >
+          {/* Un seul flou, de l'heure jusque sous le fil */}
+          {scrolled && <SheetBlur />}
           {header}
         </Animated.View>
       )}
@@ -692,6 +699,7 @@ const styles = StyleSheet.create({
   },
   pageHeaderOver: {
     position: 'absolute',
+    top: 0,
     left: 0,
     right: 0,
   },
