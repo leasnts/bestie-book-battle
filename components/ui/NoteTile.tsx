@@ -62,8 +62,16 @@ interface NoteTileProps {
   aheadCount: number;
   /** Le nombre de pages de MON édition */
   myTotalPages: number;
+  /**
+   * Seul dans le livre, pas de classement à côté : le carré prend toute la
+   * largeur et garde la hauteur qu'il aurait eue à côté de lui.
+   */
+  wide?: boolean;
   onPress: () => void;
 }
+
+/** La taille mesurée du carré (ou de la bande, en large) */
+type TileSize = { w: number; h: number };
 
 /** Les barres de l'onde du vocal, dans le carré */
 const WAVE_BARS = 18;
@@ -78,12 +86,15 @@ export default function NoteTile({
   freshCount,
   aheadCount,
   myTotalPages,
+  wide = false,
   onPress,
 }: NoteTileProps) {
-  const [side, setSide] = useState(0);
+  const [size, setSize] = useState<TileSize | null>(null);
   const onLayout = (e: LayoutChangeEvent) => {
     const { width } = e.nativeEvent.layout;
-    setSide((prev) => (prev === width ? prev : width));
+    // En large : la hauteur d'un des deux carrés du bento
+    const height = wide ? (width - spacing.md) / 2 : width;
+    setSize((prev) => (prev && prev.w === width && prev.h === height ? prev : { w: width, h: height }));
   };
 
   /** Combien d'autocollants arrachés depuis la une ; après la dernière, on revient à la une */
@@ -109,8 +120,8 @@ export default function NoteTile({
       ? `Carnet de notes, ${aheadCount} ${aheadCount > 1 ? 'notes' : 'note'} plus loin`
       : 'Carnet de notes';
 
-  const face = (n: AnnotationWithAuthor, i: number) => (
-    <Face side={side} note={n}>
+  const face = (n: AnnotationWithAuthor, i: number, at: TileSize) => (
+    <Face size={at} note={n}>
       <NoteContent
         note={n}
         isMine={isMine(n)}
@@ -123,7 +134,7 @@ export default function NoteTile({
 
   return (
     <PressableScale
-      style={styles.tile}
+      style={wide ? (size ? { height: size.h } : styles.tileWide) : styles.tile}
       onLayout={onLayout}
       onPress={onPress}
       accessibilityRole="button"
@@ -133,21 +144,21 @@ export default function NoteTile({
       accessibilityActions={next ? [{ name: 'previous', label: 'Note précédente' }] : undefined}
       onAccessibilityAction={(e) => e.nativeEvent.actionName === 'previous' && peelOff()}
     >
-      {side > 0 &&
+      {size &&
         (note ? (
           <>
             {/* La clé suit le tour : celui du dessous devient celui du dessus sans être redessiné */}
             {next && (
               <View key={turn + 1} style={StyleSheet.absoluteFill} pointerEvents="none">
-                {face(next, nextAt)}
+                {face(next, nextAt, size)}
               </View>
             )}
-            <PeelCard key={turn} side={side} id={`tile-${turn}`} enabled={!!next} onPeeled={peelOff}>
-              {face(note, at)}
+            <PeelCard key={turn} side={size.h} id={`tile-${turn}`} enabled={!!next} onPeeled={peelOff}>
+              {face(note, at, size)}
             </PeelCard>
           </>
         ) : (
-          <Face side={side} note={null}>
+          <Face size={size} note={null}>
             <View style={styles.blank}>
               {aheadCount > 0 ? (
                 <>
@@ -165,14 +176,23 @@ export default function NoteTile({
 }
 
 /** Un autocollant du carré : le papier brodé de sa catégorie, la note par-dessus */
-function Face({ side, note, children }: { side: number; note: AnnotationWithAuthor | null; children: React.ReactNode }) {
+function Face({
+  size,
+  note,
+  children,
+}: {
+  size: TileSize;
+  note: AnnotationWithAuthor | null;
+  children: React.ReactNode;
+}) {
   return (
-    <View style={{ width: side, height: side }}>
+    <View style={{ width: size.w, height: size.h }}>
       <View style={StyleSheet.absoluteFill} pointerEvents="none">
         <NoteSticker
           id={`note-tile-${note?.id ?? 'blank'}`}
           color={note ? ANNOTATION_CATEGORIES[note.category].color : null}
-          size={side}
+          width={size.w}
+          height={size.h}
           maxBase={STICKER_BASE_LARGE}
           corner="bottom-right"
           watermark={note ? ANNOTATION_CATEGORIES[note.category].label : undefined}
@@ -230,7 +250,7 @@ function PeelCard({
   const tilt = useSharedValue(0);
   const fade = useSharedValue(1);
 
-  const [size, setSize] = useState<{ w: number; h: number } | null>(null);
+  const [size, setSize] = useState<TileSize | null>(null);
   const measure = (e: LayoutChangeEvent) => {
     const { width: lw, height: lh } = e.nativeEvent.layout;
     w.value = lw;
@@ -429,6 +449,10 @@ function VoiceBadge({ seconds, levels }: { seconds: number; levels: number[] | n
 const styles = StyleSheet.create({
   tile: {
     aspectRatio: 1,
+  },
+  // Avant la mesure : à peu près la hauteur d'un carré du bento
+  tileWide: {
+    aspectRatio: 2,
   },
   content: {
     flex: 1,

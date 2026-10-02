@@ -385,6 +385,9 @@ export default function HomeScreen() {
     [leaderboardParticipants, myUserId],
   );
 
+  // Seul dans le livre : pas de classement, le carnet prend toute la largeur
+  const alone = participantsMatchChallenge && participants.length === 1;
+
   // ===== La piste du livre =====
   const myPercent = leaderboardParticipants.find((p) => p.id === myUserId)?.percentage ?? 0;
   // L'édition de référence du challenge : c'est en elle que les caps sont posés
@@ -557,18 +560,21 @@ export default function HomeScreen() {
       )}
 
       {/* ═══════════ CADRE 3 : LE BENTO — CLASSEMENT ET CARNET ═══════════
-        Deux carrés côte à côte : où je me situe dans le club, et la note à la une. */}
+        Deux carrés côte à côte : où je me situe dans le club, et la note à la une.
+        Seul dans le livre, pas de classement : le carnet en une bande pleine largeur. */}
       {activeChallenge && (
         <View style={[styles.bento, { paddingTop: compactSpacing ? spacing.sm : spacing['2xl'] }]}>
-          <View style={styles.bentoCell}>
-            <LeaderboardSection
-              participants={leaderboardParticipants}
-              myUserId={myUserId}
-              onPress={() => router.push('/leaderboard')}
-              compact={compactLeaderboard}
-              square
-            />
-          </View>
+          {!alone && (
+            <View style={styles.bentoCell}>
+              <LeaderboardSection
+                participants={leaderboardParticipants}
+                myUserId={myUserId}
+                onPress={() => router.push('/leaderboard')}
+                compact={compactLeaderboard}
+                square
+              />
+            </View>
+          )}
           <View style={styles.bentoCell}>
             <NoteTile
               notes={tileNotes}
@@ -576,6 +582,7 @@ export default function HomeScreen() {
               freshCount={revealedNotes.length}
               aheadCount={notesMatchChallenge ? notesAhead.length : 0}
               myTotalPages={totalPages}
+              wide={alone}
               onPress={() => router.push('/carnet')}
             />
           </View>

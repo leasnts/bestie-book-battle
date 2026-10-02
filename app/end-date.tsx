@@ -4,6 +4,9 @@
  * Sheet natif (`SheetPage`), ouvert en touchant la date de fin de la fiche du
  * livre (`?from=book`) : il se pose dessus, et un retour y ramène.
  * La date s'enregistre directement dans le store du livre.
+ *
+ * Elle est facultative : on peut lire sans se fixer de fin. « Sans date de
+ * fin » l'efface, et l'accueil perd alors son J-x et sa date sous la piste.
  */
 
 import DateTimePicker, { type DateTimePickerEvent } from '@react-native-community/datetimepicker';
@@ -57,6 +60,18 @@ export default function EndDateRoute() {
     }
   }, [selectedDate, updateActiveChallenge, router]);
 
+  const handleClear = useCallback(async () => {
+    setIsSaving(true);
+    try {
+      await updateActiveChallenge({ target_end_date: null });
+      router.back();
+    } catch {
+      Alert.alert('Erreur', 'Impossible de retirer la date de fin.');
+    } finally {
+      setIsSaving(false);
+    }
+  }, [updateActiveChallenge, router]);
+
   return (
     <SheetPage title="Date de fin" onBack={from ? () => router.back() : undefined}>
       <DateTimePicker
@@ -74,6 +89,12 @@ export default function EndDateRoute() {
         <Button3D onPress={handleSave} variant="primary" loading={isSaving}>
           Enregistrer
         </Button3D>
+
+        {currentDate && (
+          <Button3D onPress={handleClear} variant="secondary" disabled={isSaving}>
+            Sans date de fin
+          </Button3D>
+        )}
       </SheetFooter>
     </SheetPage>
   );
