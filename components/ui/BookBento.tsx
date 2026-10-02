@@ -161,7 +161,7 @@ export default function BookBento({
             pressed && styles.pressed,
           ]}
           accessibilityRole="button"
-          accessibilityLabel={`${members.length} membres, voir le classement`}
+          accessibilityLabel={`${members.length} membres, voir la progression`}
         >
           <View style={styles.tileTop}>
             <Text style={styles.kicker}>Membres</Text>

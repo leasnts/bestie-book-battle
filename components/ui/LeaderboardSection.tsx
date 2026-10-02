@@ -177,13 +177,13 @@ export default function LeaderboardSection({
     <GlassSection
       compact={compact}
       onPress={onPress}
-      accessibilityLabel={`Classement, ${ranked.length} membres`}
-      accessibilityHint="Ouvre le classement complet"
+      accessibilityLabel={`Progression, ${ranked.length} membres`}
+      accessibilityHint="Ouvre la progression complète"
       style={square && styles.square}
     >
       <View style={styles.head}>
         {/* Plus de nombre de membres à côté du titre (Lea, 2026-10-01) : il ne menait nulle part */}
-        <Text style={styles.title}>Classement</Text>
+        <Text style={styles.title}>Progression</Text>
       </View>
 
       <View style={[styles.rows, square && styles.rowsSquare]}>

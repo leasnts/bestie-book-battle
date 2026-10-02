@@ -211,7 +211,7 @@ export default function LeaderboardList({
       ListHeaderComponentStyle={styles.listHeader}
       ListHeaderComponent={
         <SheetPageHeader
-          title="Classement"
+          title="Progression"
           subtitle={
             <PressableScale
               style={styles.sort}
