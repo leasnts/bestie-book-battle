@@ -17,7 +17,7 @@
  */
 
 import { Image } from 'expo-image';
-import { EllipsisIcon, SmilePlusIcon, XIcon } from 'lucide-react-native';
+import { EllipsisIcon, LockIcon, SmilePlusIcon, XIcon } from 'lucide-react-native';
 import React, { useMemo, useState } from 'react';
 import { StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native';
 import type { AnnotationWithAuthor } from '../../services/supabase/annotations';
@@ -219,6 +219,60 @@ export default function NoteCard({
   return <View style={styles.wrap}>{sticker}</View>;
 }
 
+// ─── Une note encore verrouillée ───────────────────────────────────
+
+/**
+ * Une note plus loin que ma page : un autocollant de papier nu (DESIGN.md ›
+ * Autocollants brodés), la même forme que les autres notes, posé dans la même
+ * liste. On voit qui l'a écrite et à quelle page, jamais son contenu ni son
+ * thème ; un cadenas à la place.
+ */
+export function LockedNoteCard({
+  name,
+  photo,
+  page,
+}: {
+  name: string;
+  photo: string | null;
+  /** La page dans MON édition, déjà formatée (« ≈ p. 236 ») */
+  page: string;
+}) {
+  const [size, setSize] = useState<{ width: number; height: number } | null>(null);
+  const onLayout = (e: LayoutChangeEvent) => {
+    const { width, height } = e.nativeEvent.layout;
+    setSize((prev) => (prev && prev.width === width && prev.height === height ? prev : { width, height }));
+  };
+  return (
+    <View
+      style={styles.note}
+      onLayout={onLayout}
+      accessible
+      accessibilityLabel={`Note de ${name}, ${page}, verrouillée jusqu'à ce que tu y arrives`}
+    >
+      {size && (
+        <View style={StyleSheet.absoluteFill} pointerEvents="none">
+          <NoteSticker
+            id={`locked-${name}-${page}`}
+            color={null}
+            width={size.width}
+            height={size.height}
+            maxBase={STICKER_BASE}
+            corner="bottom-right"
+          />
+        </View>
+      )}
+      <View style={styles.head}>
+        <Image source={resolveAvatar(photo)} style={[styles.avatar, styles.lockedFaded]} />
+        <Text style={[styles.name, styles.lockedText]} numberOfLines={1}>
+          {name}
+        </Text>
+        <Text style={styles.page}>{page}</Text>
+        <LockIcon size={13} color={inkAlpha(0.5)} strokeWidth={2.2} />
+      </View>
+    </View>
+  );
+}
+
 // ─── Les réactions d'une note ──────────────────────────────────────
 
 /**
@@ -407,6 +461,12 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: inkAlpha(0.5),
     fontVariant: ['tabular-nums'],
+  },
+  lockedFaded: {
+    opacity: 0.55,
+  },
+  lockedText: {
+    color: colors.textTertiary,
   },
   page: {
     marginLeft: 'auto',

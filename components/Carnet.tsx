@@ -32,9 +32,9 @@
 import { useRouter } from 'expo-router';
 import {
   ArrowDownUpIcon,
+  BookmarkIcon,
   ChevronLeftIcon,
   ListFilterIcon,
-  LockIcon,
   XIcon,
   type LucideIcon,
 } from 'lucide-react-native';
@@ -47,6 +47,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Svg from 'react-native-svg';
 import { Image } from 'expo-image';
 import {
   Pressable,
@@ -57,7 +58,8 @@ import {
 } from 'react-native';
 import DriftingBackdrop from './ui/DriftingBackdrop';
 import NewNotesDeck from './ui/NewNotesDeck';
-import NoteCard from './ui/NoteCard';
+import NoteCard, { LockedNoteCard } from './ui/NoteCard';
+import { Seam } from './ui/GoalTrack';
 import InkFigure from './ui/InkFigure';
 import NotesTrack, { type TrackDot } from './ui/NotesTrack';
 import PressableScale from './ui/PressableScale';
@@ -187,6 +189,17 @@ export default function Carnet({ mode }: { mode: CarnetMode }) {
   const myPosition = positionFromPage(myProgress?.progress.current_page ?? 0, myPages);
 
   const visible = useMemo(() => filterNotes(notes, people, categories), [notes, people, categories]);
+  /**
+   * Les notes plus loin, en haut de la liste quand on trie par page : de la plus
+   * loin à la plus proche de ma page, dans le sens de la liste. Leur thème est
+   * secret : un filtre de thème les cache, un filtre de personne les trie.
+   */
+  const aheadShown = useMemo(() => {
+    if (sort !== 'pageDesc' || categories.length > 0) return [];
+    return ahead
+      .filter((note) => people.length === 0 || people.includes(note.user_id))
+      .sort((x, y) => y.book_position - x.book_position);
+  }, [ahead, sort, people, categories]);
 
   /**
    * Une seule liste, dans l'ordre du tri. Plus de tranches de pages (« p. 1–62 »)
@@ -377,33 +390,23 @@ export default function Carnet({ mode }: { mode: CarnetMode }) {
             </Pressable>
           )}
 
-          {/* En haut, juste avant ma page : qui a des notes plus loin, à venir */}
-          {ahead.length > 0 && (
-            <View style={styles.aheadBlock}>
-              <Text style={styles.sectionTitle}>Plus loin · {ahead.length}</Text>
-              {/* Les trois plus proches de ma page, dans le sens de la liste (de la plus
-                  loin à la plus proche), juste au-dessus de mes pages */}
-              {[...ahead]
-                .sort((x, y) => x.book_position - y.book_position)
-                .slice(0, 3)
-                .reverse()
-                .map((note) => (
-                    <View key={note.id} style={styles.aheadRow}>
-                      <Image
-                        source={
-                          note.profile_photo_url ? { uri: note.profile_photo_url } : DEFAULT_AVATAR
-                        }
-                        style={styles.aheadAvatar}
-                      />
-                      <Text style={styles.aheadName}>{note.first_name || 'Participant'}</Text>
-                      <Text style={styles.aheadPage}>≈ p. {note.my_page}</Text>
-                      <LockIcon size={14} color={colors.textPlaceholder} strokeWidth={2} />
-                    </View>
-                ))}
-              {ahead.length > 3 && (
-                <Text style={styles.aheadMore}>+ {ahead.length - 3} autres</Text>
-          )}
-        </View>
+          {/*
+            En haut, les notes plus loin que ma page : des autocollants de papier
+            nu, dans la même liste que les autres, sans titre. Le repère de ma page
+            les sépare des notes que je peux lire.
+          */}
+          {aheadShown.length > 0 && (
+            <View style={styles.aheadList}>
+              {aheadShown.map((note) => (
+                <LockedNoteCard
+                  key={note.id}
+                  name={note.first_name || 'Participant'}
+                  photo={note.profile_photo_url}
+                  page={`≈ p. ${note.my_page}`}
+                />
+              ))}
+              <PageMark page={myProgress?.progress.current_page ?? 0} />
+            </View>
           )}
         </View>
       }
@@ -513,6 +516,24 @@ export default function Carnet({ mode }: { mode: CarnetMode }) {
           </Animated.View>
         )}
       </View>
+    </View>
+  );
+}
+
+/** Où j'en suis : le fil du livre, chocolat, puis le marque-page et ma page */
+function PageMark({ page }: { page: number }) {
+  const [width, setWidth] = useState(0);
+  return (
+    <View style={styles.mark} accessible accessibilityLabel={`Ma page, ${page}`}>
+      <View style={styles.markThread} onLayout={(e) => setWidth(e.nativeEvent.layout.width)}>
+        {width > 0 && (
+          <Svg width={width} height={8}>
+            <Seam width={width} readUntil={width} y={4} />
+          </Svg>
+        )}
+      </View>
+      <BookmarkIcon size={14} color={colors.accent} fill={colors.accent} strokeWidth={2} />
+      <Text style={styles.markText}>p. {page}</Text>
     </View>
   );
 }
@@ -669,42 +690,25 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 
-  aheadBlock: {
-    marginTop: spacing.sm,
+  aheadList: {
+    gap: spacing.sm,
   },
-  aheadRow: {
+  // Le repère de ma page : le fil, puis le marque-page et le numéro
+  mark: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.sm,
-    minHeight: 40,
-    paddingHorizontal: spacing.md,
-    borderRadius: borderRadius.md,
-    backgroundColor: inkAlpha(0.04),
-    marginBottom: spacing.xs,
+    gap: spacing.xs,
+    marginTop: spacing.sm,
   },
-  aheadAvatar: {
-    width: 22,
-    height: 22,
-    borderRadius: 7,
-    opacity: 0.55,
-  },
-  aheadName: {
+  markThread: {
     flex: 1,
-    fontFamily: fonts.bodySemiBold,
-    fontSize: 14,
-    color: colors.textTertiary,
+    height: 8,
+    marginRight: spacing.xs,
   },
-  aheadPage: {
-    fontFamily: fonts.bodyBold,
+  markText: {
+    fontFamily: fonts.bodyExtraBold,
     fontSize: 13,
-    color: colors.textPlaceholder,
+    color: colors.accent,
     fontVariant: ['tabular-nums'],
-  },
-  aheadMore: {
-    fontFamily: fonts.bodyBold,
-    fontSize: 13,
-    color: colors.textPlaceholder,
-    marginLeft: spacing.md,
-    marginTop: spacing.xs,
   },
 });
