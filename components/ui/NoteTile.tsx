@@ -271,8 +271,10 @@ function PeelCard({
     bx.value = withTiming(ax.value + ux * reach, sweep);
     by.value = withTiming(ay.value + uy * reach, sweep);
 
-    // Une feuille : elle monte, se balance d'un côté puis de l'autre, et s'efface
-    const dir = Math.sign(dx) || 1;
+    // Une feuille : elle monte, se balance d'un côté puis de l'autre, et s'efface.
+    // Retournée du côté où on a tiré, elle revient vers l'autre en montant : elle
+    // ne sort pas par le bord de l'écran (le carré est dans un coin)
+    const dir = -(Math.sign(dx) || 1);
     const half = { duration: 480, easing: sway };
     y.value = withDelay(200, withTiming(-side * 1.6, { duration: 1000, easing: Easing.out(Easing.quad) }));
     x.value = withDelay(200, withSequence(withTiming(dir * side * 0.28, half), withTiming(dir * side * 0.08, half)));
