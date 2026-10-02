@@ -187,3 +187,27 @@ export function isEmojiOnly(note: {
 }): boolean {
   return !note.body && !!note.emoji && !note.audio_path && !note.quote;
 }
+
+/**
+ * Quand la note a été écrite, en court et en français : « à l'instant »,
+ * « il y a 5 min », « 14 h 02 » (aujourd'hui), « hier, 21 h 14 », puis
+ * « 12 sept., 21 h 14 » (l'année en plus si ce n'est pas celle-ci).
+ */
+export function formatNoteDate(iso: string, now: Date = new Date()): string {
+  const date = new Date(iso);
+  const minutes = Math.floor((now.getTime() - date.getTime()) / 60000);
+  if (minutes < 1) return 'à l’instant';
+  if (minutes < 60) return `il y a ${minutes} min`;
+  const time = `${date.getHours()} h ${String(date.getMinutes()).padStart(2, '0')}`;
+  const day = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+  const days = Math.round((day(now) - day(date)) / 86400000);
+  if (days === 0) return time;
+  if (days === 1) return `hier, ${time}`;
+  const sameYear = date.getFullYear() === now.getFullYear();
+  const label = date.toLocaleDateString('fr-FR', {
+    day: 'numeric',
+    month: 'short',
+    ...(sameYear ? {} : { year: 'numeric' }),
+  });
+  return `${label}, ${time}`;
+}
