@@ -221,11 +221,15 @@ export default function NoteCard({
 
 // ─── Une note encore verrouillée ───────────────────────────────────
 
+/** Le côté d'une note verrouillée : un petit carré, elles se rangent en ligne */
+export const LOCKED_NOTE_SIZE = 64;
+
 /**
- * Une note plus loin que ma page : un autocollant de papier nu (DESIGN.md ›
- * Autocollants brodés), la même forme que les autres notes, posé dans la même
- * liste. On voit qui l'a écrite et à quelle page, jamais son contenu ni son
- * thème ; un cadenas à la place.
+ * Une note plus loin que ma page : un petit autocollant carré de papier nu
+ * (DESIGN.md › Autocollants brodés). On voit qui l'a écrite et à quelle page,
+ * jamais son contenu ni son thème ; un cadenas dans le coin. Petit exprès
+ * (Lea, 2026-10-02 : une carte par note prenait trop de place) : elles se
+ * rangent côte à côte, en une ligne.
  */
 export function LockedNoteCard({
   name,
@@ -234,41 +238,19 @@ export function LockedNoteCard({
 }: {
   name: string;
   photo: string | null;
-  /** La page dans MON édition, déjà formatée (« ≈ p. 236 ») */
-  page: string;
+  /** La page dans MON édition */
+  page: number;
 }) {
-  const [size, setSize] = useState<{ width: number; height: number } | null>(null);
-  const onLayout = (e: LayoutChangeEvent) => {
-    const { width, height } = e.nativeEvent.layout;
-    setSize((prev) => (prev && prev.width === width && prev.height === height ? prev : { width, height }));
-  };
   return (
-    <View
-      style={styles.note}
-      onLayout={onLayout}
-      accessible
-      accessibilityLabel={`Note de ${name}, ${page}, verrouillée jusqu'à ce que tu y arrives`}
-    >
-      {size && (
-        <View style={StyleSheet.absoluteFill} pointerEvents="none">
-          <NoteSticker
-            id={`locked-${name}-${page}`}
-            color={null}
-            width={size.width}
-            height={size.height}
-            maxBase={STICKER_BASE}
-            corner="bottom-right"
-          />
-        </View>
-      )}
-      <View style={styles.head}>
-        <Image source={resolveAvatar(photo)} style={[styles.avatar, styles.lockedFaded]} />
-        <Text style={[styles.name, styles.lockedText]} numberOfLines={1}>
-          {name}
-        </Text>
-        <Text style={styles.page}>{page}</Text>
-        <LockIcon size={13} color={inkAlpha(0.5)} strokeWidth={2.2} />
+    <View style={styles.locked} accessible accessibilityLabel={`Note de ${name}, page ${page}, verrouillée`}>
+      <View style={StyleSheet.absoluteFill} pointerEvents="none">
+        <NoteSticker id={`locked-${name}-${page}`} color={null} size={LOCKED_NOTE_SIZE} corner="bottom-right" />
       </View>
+      <View style={styles.lockedTop}>
+        <Image source={resolveAvatar(photo)} style={[styles.avatar, styles.lockedFaded]} />
+        <LockIcon size={12} color={inkAlpha(0.45)} strokeWidth={2.4} />
+      </View>
+      <Text style={styles.lockedPage}>{page}</Text>
     </View>
   );
 }
@@ -462,11 +444,25 @@ const styles = StyleSheet.create({
     color: inkAlpha(0.5),
     fontVariant: ['tabular-nums'],
   },
-  lockedFaded: {
-    opacity: 0.55,
+  locked: {
+    width: LOCKED_NOTE_SIZE,
+    height: LOCKED_NOTE_SIZE,
+    padding: spacing.sm,
+    justifyContent: 'space-between',
   },
-  lockedText: {
-    color: colors.textTertiary,
+  lockedTop: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+  },
+  lockedFaded: {
+    opacity: 0.6,
+  },
+  lockedPage: {
+    fontFamily: fonts.bodyExtraBold,
+    fontSize: 12,
+    color: inkAlpha(0.55),
+    fontVariant: ['tabular-nums'],
   },
   page: {
     marginLeft: 'auto',

@@ -52,6 +52,7 @@ import { Image } from 'expo-image';
 import {
   Pressable,
   SectionList,
+  ScrollView,
   StyleSheet,
   Text,
   View,
@@ -190,15 +191,15 @@ export default function Carnet({ mode }: { mode: CarnetMode }) {
 
   const visible = useMemo(() => filterNotes(notes, people, categories), [notes, people, categories]);
   /**
-   * Les notes plus loin, en haut de la liste quand on trie par page : de la plus
-   * loin à la plus proche de ma page, dans le sens de la liste. Leur thème est
+   * Les notes plus loin, en haut de la liste quand on trie par page : en une
+   * ligne, de la plus proche de ma page à la plus loin. Leur thème est
    * secret : un filtre de thème les cache, un filtre de personne les trie.
    */
   const aheadShown = useMemo(() => {
     if (sort !== 'pageDesc' || categories.length > 0) return [];
     return ahead
       .filter((note) => people.length === 0 || people.includes(note.user_id))
-      .sort((x, y) => y.book_position - x.book_position);
+      .sort((x, y) => x.book_position - y.book_position);
   }, [ahead, sort, people, categories]);
 
   /**
@@ -391,20 +392,28 @@ export default function Carnet({ mode }: { mode: CarnetMode }) {
           )}
 
           {/*
-            En haut, les notes plus loin que ma page : des autocollants de papier
-            nu, dans la même liste que les autres, sans titre. Le repère de ma page
-            les sépare des notes que je peux lire.
+            En haut, les notes plus loin que ma page : de petits autocollants de
+            papier nu, en une ligne, sans titre. Le repère de ma page les sépare
+            des notes que je peux lire.
           */}
           {aheadShown.length > 0 && (
             <View style={styles.aheadList}>
-              {aheadShown.map((note) => (
-                <LockedNoteCard
-                  key={note.id}
-                  name={note.first_name || 'Participant'}
-                  photo={note.profile_photo_url}
-                  page={`≈ p. ${note.my_page}`}
-                />
-              ))}
+              {/* En une ligne, la plus proche de ma page à gauche ; elle défile s'il y en a beaucoup */}
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.aheadRow}
+                style={styles.aheadScroll}
+              >
+                {aheadShown.map((note) => (
+                  <LockedNoteCard
+                    key={note.id}
+                    name={note.first_name || 'Participant'}
+                    photo={note.profile_photo_url}
+                    page={note.my_page}
+                  />
+                ))}
+              </ScrollView>
               <PageMark page={myProgress?.progress.current_page ?? 0} />
             </View>
           )}
@@ -691,7 +700,16 @@ const styles = StyleSheet.create({
   },
 
   aheadList: {
+    gap: spacing.xs,
+  },
+  // La ligne déborde jusqu'aux bords de l'écran en défilant
+  aheadScroll: {
+    marginHorizontal: -spacing.lg,
+  },
+  aheadRow: {
     gap: spacing.sm,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: 2,
   },
   // Le repère de ma page : le fil, puis le marque-page et le numéro
   mark: {
