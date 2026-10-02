@@ -31,7 +31,7 @@
 
 import { useRouter } from 'expo-router';
 import {
-  ArrowDownUpIcon,
+  ChevronDownIcon,
   ChevronLeftIcon,
   ListFilterIcon,
   XIcon,
@@ -47,6 +47,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
+import { LinearGradient } from 'expo-linear-gradient';
 import {
   Pressable,
   SectionList,
@@ -69,7 +70,7 @@ import type { AnnotationWithAuthor } from '../services/supabase/annotations';
 import { useAnnotationStore } from '../stores/annotationStore';
 import { useAuthStore } from '../stores/authStore';
 import { filterNotes, useCarnetViewStore } from '../stores/carnetViewStore';
-import { carnetSort, DEFAULT_CARNET_SORT } from './carnetSorts';
+import { carnetSort } from './carnetSorts';
 import { useProgressStore } from '../stores/progressStore';
 import { useProjectStore } from '../stores/projectStore';
 import {
@@ -77,6 +78,7 @@ import {
   positionFromPage,
 } from '../utils/annotations';
 import {
+  accentGradient,
   borderRadius,
   colors,
   fonts,
@@ -168,7 +170,6 @@ export default function Carnet({ mode }: { mode: CarnetMode }) {
   const sort = useCarnetViewStore((s) => s.sort);
   const people = useCarnetViewStore((s) => s.people);
   const categories = useCarnetViewStore((s) => s.categories);
-  const setSort = useCarnetViewStore((s) => s.setSort);
   const togglePerson = useCarnetViewStore((s) => s.togglePerson);
   const toggleCategory = useCarnetViewStore((s) => s.toggleCategory);
   const resetView = useCarnetViewStore((s) => s.reset);
@@ -335,25 +336,28 @@ export default function Carnet({ mode }: { mode: CarnetMode }) {
           </Animated.View>
 
           <Animated.View entering={rise(cascadeDelay.current + motion.stagger)}>
-            {/* Trier et filtrer, puis ce qui est choisi en badges ✕ */}
+            {/*
+              Le tri en cours est écrit sur son bouton (il y en a toujours un : pas
+              de badge ✕ pour lui) ; « Filtrer » compte ses filtres, et chacun
+              revient dessous en badge ✕.
+            */}
             <View style={styles.tools}>
-              <Pill icon={ArrowDownUpIcon} label="Trier" onPress={() => router.push(`/carnet-sort${from}`)} />
+              <Pill
+                icon={carnetSort(sort).icon}
+                label={carnetSort(sort).label}
+                chevron
+                hint="Changer le tri"
+                onPress={() => router.push(`/carnet-sort${from}`)}
+              />
               <Pill
                 icon={ListFilterIcon}
                 label="Filtrer"
+                count={people.length + categories.length}
                 onPress={() => router.push(`/carnet-filter${from}`)}
               />
             </View>
-            {(sort !== DEFAULT_CARNET_SORT || filtered) && (
+            {filtered && (
               <View style={styles.badges}>
-                {sort !== DEFAULT_CARNET_SORT && (
-                  <Pill
-                    icon={carnetSort(sort).icon}
-                    label={carnetSort(sort).label}
-                    removable
-                    onPress={() => setSort(DEFAULT_CARNET_SORT)}
-                  />
-                )}
                 {people.map((id) => (
                   <Pill
                     key={id}
@@ -535,6 +539,9 @@ function Pill({
   photo,
   color,
   removable = false,
+  chevron = false,
+  count = 0,
+  hint,
   onPress,
 }: {
   label: string;
@@ -542,6 +549,11 @@ function Pill({
   photo?: string | null;
   color?: string;
   removable?: boolean;
+  /** Ouvre un choix (le tri en cours) : un chevron après le mot */
+  chevron?: boolean;
+  /** Combien de choix sont actifs (les filtres) : une pastille lie de vin */
+  count?: number;
+  hint?: string;
   onPress: () => void;
 }) {
   return (
@@ -550,7 +562,8 @@ function Pill({
       pressedScale={0.94}
       onPress={onPress}
       accessibilityRole="button"
-      accessibilityLabel={removable ? `Retirer ${label}` : label}
+      accessibilityLabel={removable ? `Retirer ${label}` : count > 0 ? `${label}, ${count} actifs` : label}
+      accessibilityHint={hint}
     >
       {Icon && <Icon size={16} color={colors.textPrimary} strokeWidth={2.2} />}
       {photo !== undefined && (
@@ -558,6 +571,13 @@ function Pill({
       )}
       {color && <View style={[styles.pillSwatch, { backgroundColor: color }]} />}
       <Text style={styles.pillText}>{label}</Text>
+      {count > 0 && (
+        <View style={styles.pillCount}>
+          <LinearGradient colors={accentGradient} style={StyleSheet.absoluteFill} />
+          <Text style={styles.pillCountText}>{count}</Text>
+        </View>
+      )}
+      {chevron && <ChevronDownIcon size={15} color={colors.textTertiary} strokeWidth={2.4} />}
       {removable && <XIcon size={14} color={colors.textTertiary} strokeWidth={2.4} />}
     </PressableScale>
   );
@@ -638,6 +658,21 @@ const styles = StyleSheet.create({
     width: 20,
     height: 20,
     borderRadius: 6,
+  },
+  pillCount: {
+    minWidth: 18,
+    height: 18,
+    paddingHorizontal: 5,
+    borderRadius: 9,
+    overflow: 'hidden',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  pillCountText: {
+    fontFamily: fonts.bodyExtraBold,
+    fontSize: 11,
+    color: colors.white,
+    fontVariant: ['tabular-nums'],
   },
   pillSwatch: {
     width: 14,
