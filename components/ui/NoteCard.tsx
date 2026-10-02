@@ -18,13 +18,13 @@
 
 import { Image } from 'expo-image';
 import { EllipsisIcon, SmilePlusIcon, XIcon } from 'lucide-react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import React, { useMemo, useState } from 'react';
 import { StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native';
 import type { AnnotationWithAuthor } from '../../services/supabase/annotations';
 import { ANNOTATION_CATEGORIES, formatNoteDate, formatNotePage, isEmojiOnly } from '../../utils/annotations';
-import { borderRadius, colors, creamAlpha, fonts, inkAlpha, spacing } from '../../utils/constants';
+import { borderRadius, colors, creamAlpha, fonts, glassControlVeil, inkAlpha, spacing } from '../../utils/constants';
 import { QUICK_REACTIONS } from '../../utils/emojis';
+import GlassMaterial from './GlassMaterial';
 import NoteSticker, { STICKER_BASE_LARGE } from './NoteSticker';
 import PressableScale from './PressableScale';
 import VoicePlayer from './VoicePlayer';
@@ -222,7 +222,8 @@ export default function NoteCard({
 // ─── Les réactions d'une note ──────────────────────────────────────
 
 /**
- * Une pastille par emoji avec son compte, ma réaction sur un voile lie de vin.
+ * Une pastille de verre par emoji avec son compte (comme nos boutons ronds,
+ * Lea, 2026-10-02) ; ma réaction a son compte en lie de vin.
  *
  * - `quick` (la pile des nouvelles) : les six emojis rapides sont toujours là,
  *   avec leur compte s'il y en a un, puis « … » pour le reste. Un toucher suffit.
@@ -279,6 +280,8 @@ export function NoteReactions({
       : reactions;
 
   if (!canReact && reactions.length === 0) return null;
+  /** Des gélules : l'arrondi du verre suit la hauteur de la pastille */
+  const pillRadius = (quick ? 44 : inside ? 28 : 30) / 2;
 
   return (
     <View style={[styles.footer, quick && styles.footerQuick, inside && styles.footerInside]}>
@@ -286,7 +289,7 @@ export function NoteReactions({
         canReact ? (
           <PressableScale
             key={emoji}
-            style={[styles.reaction, quick && styles.reactionQuick, inside && styles.reactionInside, mine && styles.reactionMine]}
+            style={[styles.reaction, quick && styles.reactionQuick, inside && styles.reactionInside]}
             pressedScale={0.85}
             hitSlop={4}
             onPress={() => react(emoji)}
@@ -295,13 +298,13 @@ export function NoteReactions({
             accessibilityState={{ selected: mine }}
             accessibilityHint={mine ? 'Retire ma réaction' : 'Ajoute ma réaction'}
           >
-            {/* Ma réaction : un voile lie de vin éclairci, pas de contour */}
-            {mine && <LinearGradient colors={MINE_GRADIENT} style={StyleSheet.absoluteFill} />}
+            <PillGlass radius={pillRadius} />
             <Text style={[styles.reactionEmoji, quick && styles.reactionEmojiQuick]}>{emoji}</Text>
             {count > 0 && <Text style={[styles.reactionCount, mine && styles.reactionCountMine]}>{count}</Text>}
           </PressableScale>
         ) : (
           <View key={emoji} style={[styles.reaction, inside && styles.reactionInside]}>
+            <PillGlass radius={pillRadius} />
             <Text style={styles.reactionEmoji}>{emoji}</Text>
             <Text style={styles.reactionCount}>{count}</Text>
           </View>
@@ -319,6 +322,7 @@ export function NoteReactions({
           accessibilityRole="button"
           accessibilityLabel="Tous les emojis"
         >
+          <PillGlass radius={pillRadius} />
           <EllipsisIcon size={16} color={colors.dark900} strokeWidth={2.4} />
         </PressableScale>
       )}
@@ -331,6 +335,7 @@ export function NoteReactions({
           accessibilityRole="button"
           accessibilityLabel={picking ? 'Fermer' : 'Réagir'}
         >
+          <PillGlass radius={pillRadius} />
           {picking ? (
             <XIcon size={15} color={colors.dark900} strokeWidth={2.4} />
           ) : (
@@ -343,8 +348,11 @@ export function NoteReactions({
 }
 
 const AVATAR = 22;
-/** Ma réaction : le lie de vin éclairci sur le papier, plus clair en haut (le même que le groupe sur les pistes) */
-const MINE_GRADIENT = ['#ead6d9', '#dcbfc4'] as const;
+
+/** Le verre des boutons ronds (`GlassButton`), en fond d'une pastille de réaction */
+function PillGlass({ radius }: { radius: number }) {
+  return <GlassMaterial radius={radius} veil={glassControlVeil} rim />;
+}
 
 const styles = StyleSheet.create({
   wrap: {
@@ -473,23 +481,20 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: spacing.sm,
     borderRadius: borderRadius.full,
-    overflow: 'hidden',
-    backgroundColor: inkAlpha(0.05),
+    // Du verre, comme nos boutons ronds ; l'ombre douce de GlassButton
+    shadowColor: colors.black,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
   },
   // Sous la pile : de vraies touches, 44 pt
   reactionQuick: {
     minWidth: 44,
     minHeight: 44,
-    backgroundColor: creamAlpha(0.7),
   },
   // Sur le papier de la note : une pastille crème, plus basse
   reactionInside: {
     minHeight: 28,
-    backgroundColor: creamAlpha(0.55),
-  },
-  // Ma réaction : le voile (MINE_GRADIENT) suffit, sans contour (Lea, 2026-10-02)
-  reactionMine: {
-    backgroundColor: 'transparent',
   },
 
   reactionEmoji: {
