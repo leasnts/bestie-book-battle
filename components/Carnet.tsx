@@ -434,6 +434,7 @@ export default function Carnet({ mode }: { mode: CarnetMode }) {
                 icon={carnetSort(sort).icon}
                 label={carnetSort(sort).label}
                 chevron
+                stretch
                 hint="Changer le tri"
                 onPress={() => router.push(`/carnet-sort${from}`)}
               />
@@ -441,6 +442,7 @@ export default function Carnet({ mode }: { mode: CarnetMode }) {
                 icon={ListFilterIcon}
                 label="Filtrer"
                 count={people.length + categories.length}
+                stretch
                 onPress={() => router.push(`/carnet-filter${from}`)}
               />
             </View>
@@ -644,6 +646,7 @@ function Pill({
   chevron = false,
   count = 0,
   hint,
+  stretch = false,
   onPress,
 }: {
   label: string;
@@ -656,12 +659,14 @@ function Pill({
   /** Combien de choix sont actifs (les filtres) : une pastille lie de vin */
   count?: number;
   hint?: string;
+  /** Les deux boutons du haut se partagent la largeur, à parts égales */
+  stretch?: boolean;
   onPress: () => void;
 }) {
   return (
     <PressableScale
-      style={styles.pill}
-      pressedScale={0.94}
+      style={[styles.pill, stretch && styles.pillStretch]}
+      pressedScale={0.97}
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={removable ? `Retirer ${label}` : count > 0 ? `${label}, ${count} actifs` : label}
@@ -760,6 +765,10 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
     borderWidth: 1,
     borderColor: inkAlpha(0.08),
+  },
+  pillStretch: {
+    flex: 1,
+    justifyContent: 'center',
   },
   pillText: {
     fontFamily: fonts.bodyBold,
