@@ -43,6 +43,7 @@ import Animated, {
   FadeIn,
   FadeInDown,
   FadeOut,
+  useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -57,7 +58,7 @@ import {
   View,
   type NativeScrollEvent,
   type NativeSyntheticEvent,
-  type ViewToken,
+  type CellRendererProps,
 } from 'react-native';
 import DriftingBackdrop from './ui/DriftingBackdrop';
 import NewNotesDeck from './ui/NewNotesDeck';
@@ -68,7 +69,7 @@ import PressableScale from './ui/PressableScale';
 import GlassButton from './ui/GlassButton';
 import WriteNoteButton from './ui/WriteNoteButton';
 import { SheetPageHeader } from './ui/SheetPage';
-import { SHEET_TOP_INSET, SheetBlur, useSheetScrolled } from './ui/SheetHeader';
+import { SHEET_TOP_INSET, useSheetScrolled } from './ui/SheetHeader';
 import type { AnnotationWithAuthor } from '../services/supabase/annotations';
 import { useAnnotationStore } from '../stores/annotationStore';
 import { useAuthStore } from '../stores/authStore';
@@ -107,9 +108,6 @@ const easeOut = Easing.bezier(...motion.easing.easeOutQuart);
 /** Une entrée de la cascade : monte et apparaît, 400 ms, ease-out-quart */
 const rise = (delay: number) =>
   FadeInDown.duration(motion.duration.entrance).delay(delay).easing(easeOut);
-
-/** La note « en haut de la liste » : la première dont la moitié se voit */
-const VIEWABILITY = { itemVisiblePercentThreshold: 50 };
 
 /** Au-delà, les notes arrivent ensemble : la cascade ne fait pas attendre */
 const CASCADE_MAX = 8;
@@ -191,24 +189,63 @@ export default function Carnet({ mode }: { mode: CarnetMode }) {
 
   /**
    * Le fil reste en haut quand on fait défiler (page entière) : une fois le
-   * compte et le fil sortis de l'écran, une copie du fil se colle sous le titre,
-   * avec une goutte de verre là où en est la liste (la note en haut).
+   * compte et le fil sortis de l'écran, le fil rejoint l'en-tête, sous le titre,
+   * sur le même flou ; une goutte de verre y glisse en continu jusqu'à l'endroit
+   * du livre où en est la liste.
    */
   const summaryBottom = useRef(0);
   const [pastSummary, setPastSummary] = useState(false);
-  const [focus, setFocus] = useState<number | null>(null);
+  /** La hauteur de l'en-tête au repos (sans le fil) : la liste commence dessous */
+  const [headerHeight, setHeaderHeight] = useState(0);
+  /** Où en est la liste, 0 → 1, à chaque image */
+  const focus = useSharedValue(0);
+  /** Le haut de chaque note dans la liste, et sa place dans le livre */
+  const noteTops = useRef(new Map<string, { y: number; position: number }>());
   const handleScroll = useCallback(
     (e: NativeSyntheticEvent<NativeScrollEvent>) => {
       onScroll(e);
-      const past = summaryBottom.current > 0 && e.nativeEvent.contentOffset.y > summaryBottom.current;
+      const y = e.nativeEvent.contentOffset.y;
+      const past = summaryBottom.current > 0 && y > summaryBottom.current;
       setPastSummary((prev) => (prev === past ? prev : past));
+
+      // La ligne de lecture, juste sous l'en-tête : entre deux notes, la goutte
+      // est entre leurs deux pages, au prorata de ce qui a défilé
+      const tops = [...noteTops.current.values()].sort((a, b) => a.y - b.y);
+      if (tops.length === 0) return;
+      const line = y + headerHeight + spacing['2xl'];
+      let i = tops.findIndex((t) => t.y > line) - 1;
+      if (i === -2) i = tops.length - 1;
+      if (i < 0) {
+        focus.value = tops[0].position;
+        return;
+      }
+      const next = tops[i + 1];
+      if (!next) {
+        focus.value = tops[i].position;
+        return;
+      }
+      const t = (line - tops[i].y) / Math.max(1, next.y - tops[i].y);
+      focus.value = tops[i].position + (next.position - tops[i].position) * t;
     },
-    [onScroll],
+    [onScroll, headerHeight, focus],
   );
-  const onViewableItemsChanged = useRef(({ viewableItems }: { viewableItems: ViewToken[] }) => {
-    const first = viewableItems.find((v) => v.item && typeof v.item.position === 'number');
-    if (first) setFocus(first.item.position);
-  }).current;
+  /** Chaque note donne sa place dans la liste (le haut de sa cellule) */
+  const NoteCell = useCallback(
+    ({ item, onLayout, children, ...rest }: CellRendererProps<AnnotationWithAuthor>) => (
+      <View
+        {...rest}
+        onLayout={(e) => {
+          onLayout?.(e);
+          if (item && typeof item.position === 'number') {
+            noteTops.current.set(item.id, { y: e.nativeEvent.layout.y, position: item.position });
+          }
+        }}
+      >
+        {children}
+      </View>
+    ),
+    [],
+  );
 
   const myProgress = participants.find((p) => p.user.id === user?.id);
   const myPages = myProgress?.progress.total_pages ?? activeChallenge?.total_pages ?? 0;
@@ -322,7 +359,24 @@ export default function Carnet({ mode }: { mode: CarnetMode }) {
         )
       }
       scrolled={isPage && scrolled}
-    />
+    >
+      {/* Le fil, sous le titre, une fois celui du haut sorti de l'écran */}
+      {isPage && pastSummary && (
+        <Animated.View
+          entering={FadeIn.duration(motion.duration.standard)}
+          exiting={FadeOut.duration(motion.duration.instant)}
+          style={styles.headerTrack}
+        >
+          <NotesTrack
+            dots={dots}
+            lockedPositions={ahead.map((note) => note.book_position)}
+            myPosition={myPosition}
+            onSeek={seek}
+            focus={focus}
+          />
+        </Animated.View>
+      )}
+    </SheetPageHeader>
   );
 
   const list = (
@@ -332,12 +386,11 @@ export default function Carnet({ mode }: { mode: CarnetMode }) {
       // Un nouveau filtre remonte les notes : elles rejouent la cascade
       keyExtractor={(note) => `${filterKey}-${note.id}`}
       style={styles.screen}
-      contentContainerStyle={styles.content}
+      contentContainerStyle={[styles.content, isPage && { paddingTop: headerHeight }]}
       contentInsetAdjustmentBehavior={isPage ? 'never' : 'automatic'}
       stickySectionHeadersEnabled={false}
       onScroll={isPage ? handleScroll : undefined}
-      onViewableItemsChanged={isPage ? onViewableItemsChanged : undefined}
-      viewabilityConfig={VIEWABILITY}
+      CellRendererComponent={isPage ? NoteCell : undefined}
       scrollEventThrottle={scrollEventThrottle}
       ListHeaderComponent={
         <View style={styles.header}>
@@ -534,30 +587,21 @@ export default function Carnet({ mode }: { mode: CarnetMode }) {
           />
         </Animated.View>
       ) : (
-        <Animated.View entering={FadeIn.duration(motion.duration.standard)} style={styles.pageHeader}>
+        // Posé SUR la liste : elle passe dessous, floutée, et le fil peut le
+        // rejoindre sans rien décaler
+        <Animated.View
+          entering={FadeIn.duration(motion.duration.standard)}
+          style={[styles.pageHeader, styles.pageHeaderOver, { top: insets.top - SHEET_TOP_INSET + spacing.sm }]}
+          onLayout={(e) => {
+            if (!pastSummary) setHeaderHeight(e.nativeEvent.layout.height);
+          }}
+        >
           {header}
         </Animated.View>
       )}
 
       <View style={styles.page}>
         {phase === 'list' && list}
-        {/* Le fil collé sous le titre, dès que celui du haut est sorti de l'écran */}
-        {phase === 'list' && pastSummary && (
-          <Animated.View
-            entering={FadeIn.duration(motion.duration.standard)}
-            exiting={FadeOut.duration(motion.duration.instant)}
-            style={styles.stickyTrack}
-          >
-            <SheetBlur />
-            <NotesTrack
-              dots={dots}
-              lockedPositions={ahead.map((note) => note.book_position)}
-              myPosition={myPosition}
-              onSeek={seek}
-              focus={focus}
-            />
-          </Animated.View>
-        )}
         {phase === 'deck' && (
           <Animated.View
             exiting={dissolve}
@@ -646,15 +690,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     zIndex: 1,
   },
-  stickyTrack: {
+  pageHeaderOver: {
     position: 'absolute',
-    top: 0,
     left: 0,
     right: 0,
-    paddingHorizontal: spacing.lg,
-    // La place de la goutte au-dessus du fil
-    paddingTop: spacing.md,
-    paddingBottom: spacing.xs,
+  },
+  // Le fil dans l'en-tête : la place de la goutte au-dessus
+  headerTrack: {
+    paddingTop: spacing.sm,
   },
   // La même hauteur que l'en-tête du carnet : le retour ne bouge pas ensuite
   deckHeader: {

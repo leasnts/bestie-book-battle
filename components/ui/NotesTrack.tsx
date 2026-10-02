@@ -16,7 +16,15 @@
 
 import React, { useEffect, useState } from 'react';
 import { LayoutChangeEvent, Pressable, StyleSheet, View } from 'react-native';
-import Animated, { Easing, useAnimatedProps, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
+import Animated, {
+  Easing,
+  FadeIn,
+  useAnimatedProps,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+  type SharedValue,
+} from 'react-native-reanimated';
 import Svg, { Circle, Defs, G, RadialGradient, Stop } from 'react-native-svg';
 import type { AnnotationCategory } from '../../types/supabase';
 import { ANNOTATION_CATEGORIES } from '../../utils/annotations';
@@ -42,11 +50,11 @@ interface NotesTrackProps {
   /** Toucher la piste : la liste saute à cette position */
   onSeek: (position: number) => void;
   /**
-   * Où j'en suis dans la liste en la faisant défiler, 0 → 1 (la note en haut de
-   * l'écran) : une goutte de verre se pose sur le fil à cet endroit. `null` :
-   * pas de goutte (au repos, en haut du carnet).
+   * Où en est la liste quand on la fait défiler, 0 → 1, mis à jour à chaque
+   * image : une goutte de verre glisse sur le fil en continu. Absent : pas de
+   * goutte (au repos, en haut du carnet).
    */
-  focus?: number | null;
+  focus?: SharedValue<number>;
 }
 
 /** Au-delà, les nœuds se chevauchent : on n'en dessine plus que la moitié */
@@ -62,9 +70,8 @@ const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 const DROP = 18;
 /** Ce que la pointe dépasse sous le rond (carré tourné de 45°) */
 const DROP_TIP = (DROP * (Math.SQRT2 - 1)) / 2 + 1;
-const lensEase = Easing.bezier(...motion.easing.easeOutQuart);
 
-export default function NotesTrack({ dots, lockedPositions, myPosition, onSeek, focus = null }: NotesTrackProps) {
+export default function NotesTrack({ dots, lockedPositions, myPosition, onSeek, focus }: NotesTrackProps) {
   const [width, setWidth] = useState(0);
   const onLayout = (e: LayoutChangeEvent) => setWidth(e.nativeEvent.layout.width);
 
@@ -100,7 +107,7 @@ export default function NotesTrack({ dots, lockedPositions, myPosition, onSeek, 
           </G>
         </Svg>
       )}
-      {width > 0 && <Lens x={focus === null ? null : width * focus} />}
+      {width > 0 && focus && <Lens focus={focus} width={width} />}
     </Pressable>
   );
 }
@@ -109,21 +116,19 @@ export default function NotesTrack({ dots, lockedPositions, myPosition, onSeek, 
  * Où en est la liste : une goutte de verre, la pointe sur le fil — la forme
  * des épingles du groupe sur Ma page (Lea, 2026-10-02), sans photo, en verre
  * (`GlassMaterial`) : elle situe, rien de plus. Elle glisse d'une note à
- * l'autre en suivant la liste.
+ * l'autre en suivant la liste, en continu.
  */
-function Lens({ x }: { x: number | null }) {
-  const left = useSharedValue(x ?? 0);
-  const shown = useSharedValue(x === null ? 0 : 1);
-  useEffect(() => {
-    if (x !== null) left.value = shown.value ? withTiming(x, { duration: 240, easing: lensEase }) : x;
-    shown.value = withTiming(x === null ? 0 : 1, { duration: motion.duration.standard });
-  }, [x, left, shown]);
+function Lens({ focus, width }: { focus: SharedValue<number>; width: number }) {
+  // Elle suit le défilement image par image : pas d'animation à elle, sinon elle traînerait
   const style = useAnimatedStyle(() => ({
-    opacity: shown.value,
-    transform: [{ translateX: left.value - DROP / 2 }, { translateY: (1 - shown.value) * -4 }],
+    transform: [{ translateX: focus.value * width - DROP / 2 }],
   }));
   return (
-    <Animated.View style={[styles.pin, style]} pointerEvents="none">
+    <Animated.View
+      style={[styles.pin, style]}
+      pointerEvents="none"
+      entering={FadeIn.duration(motion.duration.standard)}
+    >
       {/* Un carré aux trois coins ronds tourné de 45° : le coin vif fait la pointe */}
       <View style={styles.drop}>
         {/* Le verre est rogné à la forme ; l'ombre et le liseré, eux, restent dehors */}
