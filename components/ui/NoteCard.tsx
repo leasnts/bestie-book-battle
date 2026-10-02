@@ -120,62 +120,92 @@ export default function NoteCard({
           />
         </View>
       )}
-      <View style={styles.head}>
-        <Image source={resolveAvatar(note.author?.profile_photo_url)} style={styles.avatar} />
-        <Text style={styles.name} numberOfLines={1}>
-          {author}
-        </Text>
-        {/* Quand elle a été écrite : en léger, juste après le prénom */}
-        <Text style={styles.date} numberOfLines={1}>
-          {formatNoteDate(note.created_at)}
-        </Text>
-        <Text style={styles.page}>{page}</Text>
-      </View>
-
-      {!!note.quote && <Text style={[styles.quote, large && styles.quoteLarge]}>{note.quote}</Text>}
-
-      {emojiOnly ? (
-        <Text style={[styles.bigEmoji, large && styles.bigEmojiLarge]}>{note.emoji}</Text>
-      ) : (
-        !!text && (
-          <Text style={[styles.text, large && styles.textLarge]} numberOfLines={6}>
-            {text}
-          </Text>
-        )
-      )}
-
-      {!!note.audio_path && (
-        <VoicePlayer
-          path={note.audio_path}
-          seconds={note.audio_seconds ?? 0}
-          levels={note.audio_levels}
-        />
-      )}
-
-      {note.visibility === 'private' && <Text style={styles.private}>Moi seule</Text>}
-    </View>
-  );
-
-  const content = (
-    <View style={styles.wrap}>
       {onPress ? (
         <PressableScale
+          style={[styles.body, large && styles.bodyLarge]}
           pressedScale={0.99}
           onPress={onPress}
-          style={emojiOnly && styles.compactPress}
           accessibilityRole="button"
           accessibilityLabel={`Note de ${isMine ? 'moi' : note.author?.first_name}, ${formatNoteDate(note.created_at)}, ${category.label}, ${page}`}
           accessibilityHint={isMine ? 'Ouvre ma note pour la modifier' : undefined}
         >
-          {sticker}
+        <View style={styles.head}>
+          <Image source={resolveAvatar(note.author?.profile_photo_url)} style={styles.avatar} />
+          <Text style={styles.name} numberOfLines={1}>
+            {author}
+          </Text>
+          {/* Quand elle a été écrite : en léger, juste après le prénom */}
+          <Text style={styles.date} numberOfLines={1}>
+            {formatNoteDate(note.created_at)}
+          </Text>
+          <Text style={styles.page}>{page}</Text>
+        </View>
+
+        {!!note.quote && <Text style={[styles.quote, large && styles.quoteLarge]}>{note.quote}</Text>}
+
+        {emojiOnly ? (
+          <Text style={[styles.bigEmoji, large && styles.bigEmojiLarge]}>{note.emoji}</Text>
+        ) : (
+          !!text && (
+            <Text style={[styles.text, large && styles.textLarge]} numberOfLines={6}>
+              {text}
+            </Text>
+          )
+        )}
+
+        {!!note.audio_path && (
+          <VoicePlayer
+            path={note.audio_path}
+            seconds={note.audio_seconds ?? 0}
+            levels={note.audio_levels}
+          />
+        )}
+
+        {note.visibility === 'private' && <Text style={styles.private}>Moi seule</Text>}
         </PressableScale>
       ) : (
-        sticker
+        <View style={[styles.body, large && styles.bodyLarge]}>
+        <View style={styles.head}>
+          <Image source={resolveAvatar(note.author?.profile_photo_url)} style={styles.avatar} />
+          <Text style={styles.name} numberOfLines={1}>
+            {author}
+          </Text>
+          {/* Quand elle a été écrite : en léger, juste après le prénom */}
+          <Text style={styles.date} numberOfLines={1}>
+            {formatNoteDate(note.created_at)}
+          </Text>
+          <Text style={styles.page}>{page}</Text>
+        </View>
+
+        {!!note.quote && <Text style={[styles.quote, large && styles.quoteLarge]}>{note.quote}</Text>}
+
+        {emojiOnly ? (
+          <Text style={[styles.bigEmoji, large && styles.bigEmojiLarge]}>{note.emoji}</Text>
+        ) : (
+          !!text && (
+            <Text style={[styles.text, large && styles.textLarge]} numberOfLines={6}>
+              {text}
+            </Text>
+          )
+        )}
+
+        {!!note.audio_path && (
+          <VoicePlayer
+            path={note.audio_path}
+            seconds={note.audio_seconds ?? 0}
+            levels={note.audio_levels}
+          />
+        )}
+
+        {note.visibility === 'private' && <Text style={styles.private}>Moi seule</Text>}
+        </View>
       )}
 
-      {/* Les réactions, sous la note : l'autocollant ne porte que la note */}
+      {/* Les réactions, DANS la note (Lea, 2026-10-02) : en bas, à gauche du coin
+          corné ; hors du toucher de la note, chacune a le sien */}
       {!hideReactions && note.visibility === 'club' && (
         <NoteReactions
+          inside
           note={note}
           myUserId={myUserId}
           onToggle={onToggleReaction}
@@ -185,7 +215,7 @@ export default function NoteCard({
     </View>
   );
 
-  return content;
+  return <View style={styles.wrap}>{sticker}</View>;
 }
 
 // ─── Les réactions d'une note ──────────────────────────────────────
@@ -198,6 +228,7 @@ export default function NoteCard({
  * - Sinon (la liste) : seulement les réactions posées, et `smile-plus` ouvre
  *   les six rapides à la place de la rangée.
  * - Sans `onToggle`, elles se lisent seulement (consultation).
+ * - `inside` : posées dans la note (la liste), sur le papier.
  */
 export function NoteReactions({
   note,
@@ -205,12 +236,15 @@ export function NoteReactions({
   onToggle,
   onMore,
   quick = false,
+  inside = false,
 }: {
   note: AnnotationWithAuthor;
   myUserId?: string;
   onToggle?: (emoji: string) => void;
   onMore?: () => void;
   quick?: boolean;
+  /** Posées sur la note (la liste du carnet) : sur le papier, à gauche du coin corné */
+  inside?: boolean;
 }) {
   const [picking, setPicking] = useState(false);
   const canReact = !!onToggle;
@@ -246,12 +280,12 @@ export function NoteReactions({
   if (!canReact && reactions.length === 0) return null;
 
   return (
-    <View style={[styles.footer, quick && styles.footerQuick]}>
+    <View style={[styles.footer, quick && styles.footerQuick, inside && styles.footerInside]}>
       {shown.map(({ emoji, count, mine }) =>
         canReact ? (
           <PressableScale
             key={emoji}
-            style={[styles.reaction, quick && styles.reactionQuick, mine && styles.reactionMine]}
+            style={[styles.reaction, quick && styles.reactionQuick, inside && styles.reactionInside, mine && styles.reactionMine]}
             pressedScale={0.85}
             hitSlop={4}
             onPress={() => react(emoji)}
@@ -264,7 +298,7 @@ export function NoteReactions({
             {count > 0 && <Text style={styles.reactionCount}>{count}</Text>}
           </PressableScale>
         ) : (
-          <View key={emoji} style={styles.reaction}>
+          <View key={emoji} style={[styles.reaction, inside && styles.reactionInside]}>
             <Text style={styles.reactionEmoji}>{emoji}</Text>
             <Text style={styles.reactionCount}>{count}</Text>
           </View>
@@ -272,7 +306,7 @@ export function NoteReactions({
       )}
       {canReact && (quick || picking) && (
         <PressableScale
-          style={[styles.reaction, quick && styles.reactionQuick]}
+          style={[styles.reaction, quick && styles.reactionQuick, inside && styles.reactionInside]}
           pressedScale={0.85}
           hitSlop={4}
           onPress={() => {
@@ -287,7 +321,7 @@ export function NoteReactions({
       )}
       {canReact && !quick && (
         <PressableScale
-          style={styles.reaction}
+          style={[styles.reaction, inside && styles.reactionInside]}
           pressedScale={0.85}
           hitSlop={4}
           onPress={() => setPicking((p) => !p)}
@@ -330,8 +364,12 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     minWidth: 220,
   },
-  compactPress: {
-    alignSelf: 'flex-start',
+  // Le contenu de la note, qui se touche ; les réactions sont à côté, pas dedans
+  body: {
+    gap: spacing.sm,
+  },
+  bodyLarge: {
+    gap: spacing.md,
   },
   head: {
     flexDirection: 'row',
@@ -412,6 +450,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.xs,
   },
+  // Dans la note : à gauche du coin corné (34 % de STICKER_BASE), jamais dessous
+  footerInside: {
+    marginRight: Math.round(STICKER_BASE * 0.34),
+  },
   footerQuick: {
     justifyContent: 'center',
     gap: spacing.sm,
@@ -435,6 +477,11 @@ const styles = StyleSheet.create({
     minWidth: 44,
     minHeight: 44,
     backgroundColor: creamAlpha(0.7),
+  },
+  // Sur le papier de la note : une pastille crème, plus basse
+  reactionInside: {
+    minHeight: 28,
+    backgroundColor: creamAlpha(0.55),
   },
   // Ma réaction : cerclée d'encre, on sait ce qu'un toucher retirera
   reactionMine: {
