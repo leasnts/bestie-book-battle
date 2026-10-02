@@ -30,10 +30,11 @@
 import { ChevronLeftIcon } from 'lucide-react-native';
 import React, { forwardRef, useCallback } from 'react';
 import { ScrollView, StyleSheet, Text, View, type ScrollViewProps } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFitSheet } from '../../hooks/useFitSheet';
 import { colors, fonts, spacing } from '../../utils/constants';
 import GlassButton from './GlassButton';
-import { SheetStickyHeader, useSheetScrolled } from './SheetHeader';
+import { SheetBlur, SheetStickyHeader, useSheetScrolled } from './SheetHeader';
 
 /** Marge latérale de tous les sheets */
 export const SHEET_GUTTER = spacing.lg;
@@ -217,6 +218,30 @@ export function SheetFooter({ children }: { children: React.ReactNode }) {
   return <View style={styles.footer}>{children}</View>;
 }
 
+/** La hauteur d'un pied collant (un bouton) : la marge à laisser sous le contenu */
+export const STICKY_FOOTER_SPACE = 104;
+
+/**
+ * Le pied collant d'un sheet qui défile (le filtre du carnet) : le bouton reste
+ * en bas, le contenu passe derrière, flouté (`SheetBlur`). À poser à côté de
+ * `SheetPage`, dans une View qui les contient, avec `contentContainerStyle`
+ * `{ paddingBottom: STICKY_FOOTER_SPACE }` pour que la dernière ligne se dégage.
+ */
+export function SheetStickyFooter({ children }: { children: React.ReactNode }) {
+  const insets = useSafeAreaInsets();
+  return (
+    // `collapsable={false}` : le sheet natif n'accepte que la liste et UNE vue à côté ;
+    // aplati, le pied y ferait plusieurs vues et le contenu se placerait mal
+    <View
+      collapsable={false}
+      style={[styles.stickyFooter, { paddingBottom: Math.max(insets.bottom, spacing.lg) }]}
+    >
+      <SheetBlur edge="bottom" />
+      {children}
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   screen: {
     backgroundColor: colors.white,
@@ -260,5 +285,13 @@ const styles = StyleSheet.create({
   footer: {
     paddingTop: spacing['2xl'],
     gap: spacing.md,
+  },
+  stickyFooter: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    paddingTop: spacing.md,
+    paddingHorizontal: SHEET_GUTTER,
   },
 });

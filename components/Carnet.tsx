@@ -31,11 +31,9 @@
 
 import { useRouter } from 'expo-router';
 import {
-  ArrowDownUpIcon,
+  ChevronDownIcon,
   ChevronLeftIcon,
   ListFilterIcon,
-  LockIcon,
-  XIcon,
   type LucideIcon,
 } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -44,32 +42,39 @@ import Animated, {
   FadeIn,
   FadeInDown,
   FadeOut,
+  useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import MaskedView from '@react-native-masked-view/masked-view';
 import { Image } from 'expo-image';
+import { LinearGradient } from 'expo-linear-gradient';
 import {
   Pressable,
   SectionList,
+  ScrollView,
   StyleSheet,
   Text,
   View,
+  type NativeScrollEvent,
+  type NativeSyntheticEvent,
+  type CellRendererProps,
 } from 'react-native';
 import DriftingBackdrop from './ui/DriftingBackdrop';
 import NewNotesDeck from './ui/NewNotesDeck';
-import NoteCard from './ui/NoteCard';
-import InkFigure from './ui/InkFigure';
+import NoteCard, { LockedNoteCard } from './ui/NoteCard';
+import InkFigure, { INK } from './ui/InkFigure';
 import NotesTrack, { type TrackDot } from './ui/NotesTrack';
 import PressableScale from './ui/PressableScale';
 import GlassButton from './ui/GlassButton';
 import WriteNoteButton from './ui/WriteNoteButton';
 import { SheetPageHeader } from './ui/SheetPage';
-import { SHEET_TOP_INSET, useSheetScrolled } from './ui/SheetHeader';
+import { SHEET_TOP_INSET, SheetBlur, useSheetScrolled } from './ui/SheetHeader';
 import type { AnnotationWithAuthor } from '../services/supabase/annotations';
 import { useAnnotationStore } from '../stores/annotationStore';
 import { useAuthStore } from '../stores/authStore';
 import { filterNotes, useCarnetViewStore } from '../stores/carnetViewStore';
-import { carnetSort, DEFAULT_CARNET_SORT } from './carnetSorts';
+import { carnetSort } from './carnetSorts';
 import { useProgressStore } from '../stores/progressStore';
 import { useProjectStore } from '../stores/projectStore';
 import {
@@ -77,6 +82,7 @@ import {
   positionFromPage,
 } from '../utils/annotations';
 import {
+  accentGradient,
   borderRadius,
   colors,
   fonts,
@@ -93,7 +99,6 @@ type NoteSection = {
   key: string;
 };
 
-const DEFAULT_AVATAR = require('../assets/images/profile_picture_default.png');
 
 export type CarnetMode = 'page' | 'sheet' | 'consult';
 
@@ -138,16 +143,6 @@ export default function Carnet({ mode }: { mode: CarnetMode }) {
   const { notes, ahead, readIds, markRead, dismissRevealed, toggleReaction } =
     useAnnotationStore();
 
-  // Les post-it de l'accueil ont mené ici : ils se rangent dans le carnet. Le
-  // carnet en garde une copie tant qu'il est ouvert — lire une nouvelle ne la
-  // fait pas sauter ailleurs dans la liste.
-  // En page, c'est la pile qui montre les nouvelles : pas de section en plus.
-  const [fresh] = useState(() => {
-    const { revealedIds, revealedPages } = useAnnotationStore.getState();
-    if (isPage) return { ids: new Set<string>(), pages: null };
-    return { ids: new Set(revealedIds), pages: revealedPages };
-  });
-
   /**
    * La pile : les notes du club que je n'ai pas encore lues, dans l'ordre des
    * pages. Figée à l'ouverture — une note lue ne doit pas faire bouger la pile.
@@ -178,7 +173,6 @@ export default function Carnet({ mode }: { mode: CarnetMode }) {
   const sort = useCarnetViewStore((s) => s.sort);
   const people = useCarnetViewStore((s) => s.people);
   const categories = useCarnetViewStore((s) => s.categories);
-  const setSort = useCarnetViewStore((s) => s.setSort);
   const togglePerson = useCarnetViewStore((s) => s.togglePerson);
   const toggleCategory = useCarnetViewStore((s) => s.toggleCategory);
   const resetView = useCarnetViewStore((s) => s.reset);
@@ -190,38 +184,108 @@ export default function Carnet({ mode }: { mode: CarnetMode }) {
   /** Le tri et le filtre en un mot : un nouveau choix rejoue la cascade */
   const filterKey = `${sort}:${people.join(',')}:${categories.join(',')}`;
   const { scrolled, onScroll, scrollEventThrottle } = useSheetScrolled();
+  /** Sous la barre d'état : là où commence l'en-tête de la page */
+  const headerTop = insets.top - SHEET_TOP_INSET + spacing.sm;
   const listRef = useRef<SectionList<AnnotationWithAuthor, NoteSection>>(null);
+
+  /**
+   * Le fil reste en haut quand on fait défiler (page entière) : une fois le
+   * compte et le fil sortis de l'écran, le fil rejoint l'en-tête, sous le titre,
+   * sur le même flou ; une goutte de verre y glisse en continu jusqu'à l'endroit
+   * du livre où en est la liste.
+   */
+  /** Le haut du bloc du compte, et du fil dedans, dans l'en-tête de la liste */
+  const summaryTop = useRef(0);
+  const trackTop = useRef(0);
+  /** Le fil a atteint le titre : il y reste collé */
+  const [pastSummary, setPastSummary] = useState(false);
+  /** La hauteur de l'en-tête au repos (sans le fil) : la liste commence dessous */
+  const [headerHeight, setHeaderHeight] = useState(0);
+  /** Où en est la liste, 0 → 1, à chaque image */
+  const focus = useSharedValue(0);
+  /** Le haut de chaque note dans la liste, et sa place dans le livre */
+  const noteTops = useRef(new Map<string, { y: number; position: number }>());
+  const handleScroll = useCallback(
+    (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+      onScroll(e);
+      const y = e.nativeEvent.contentOffset.y;
+      // Le fil de la liste arrive sous le titre (là où se pose celui de l'en-tête) :
+      // l'un remplace l'autre au même endroit, on croit voir le fil s'arrêter
+      // (le fil de l'en-tête est sous le titre, moins la marge du bas de l'en-tête, plus la sienne)
+      const stickAt = summaryTop.current + trackTop.current + spacing.md - spacing.sm;
+      const past = trackTop.current > 0 && y >= stickAt;
+      setPastSummary((prev) => (prev === past ? prev : past));
+
+      // La ligne de lecture, juste sous l'en-tête : entre deux notes, la goutte
+      // est entre leurs deux pages, au prorata de ce qui a défilé
+      const tops = [...noteTops.current.values()].sort((a, b) => a.y - b.y);
+      if (tops.length === 0) return;
+      const line = y + headerHeight + spacing['2xl'];
+      let i = tops.findIndex((t) => t.y > line) - 1;
+      if (i === -2) i = tops.length - 1;
+      if (i < 0) {
+        focus.value = tops[0].position;
+        return;
+      }
+      const next = tops[i + 1];
+      if (!next) {
+        focus.value = tops[i].position;
+        return;
+      }
+      const t = (line - tops[i].y) / Math.max(1, next.y - tops[i].y);
+      focus.value = tops[i].position + (next.position - tops[i].position) * t;
+    },
+    [onScroll, headerHeight, focus],
+  );
+  /** Chaque note donne sa place dans la liste (le haut de sa cellule) */
+  const NoteCell = useCallback(
+    ({ item, onLayout, children, ...rest }: CellRendererProps<AnnotationWithAuthor>) => (
+      <View
+        {...rest}
+        onLayout={(e) => {
+          onLayout?.(e);
+          if (item && typeof item.position === 'number') {
+            noteTops.current.set(item.id, { y: e.nativeEvent.layout.y, position: item.position });
+          }
+        }}
+      >
+        {children}
+      </View>
+    ),
+    [],
+  );
 
   const myProgress = participants.find((p) => p.user.id === user?.id);
   const myPages = myProgress?.progress.total_pages ?? activeChallenge?.total_pages ?? 0;
   const myPosition = positionFromPage(myProgress?.progress.current_page ?? 0, myPages);
 
   const visible = useMemo(() => filterNotes(notes, people, categories), [notes, people, categories]);
+  /**
+   * Les notes plus loin, en haut de la liste quand on trie par page : en une
+   * ligne, de la plus proche de ma page à la plus loin. Leur thème est
+   * secret : un filtre de thème les cache, un filtre de personne les trie.
+   */
+  const aheadShown = useMemo(() => {
+    if (sort !== 'pageDesc' || categories.length > 0) return [];
+    return ahead
+      .filter((note) => people.length === 0 || people.includes(note.user_id))
+      .sort((x, y) => x.book_position - y.book_position);
+  }, [ahead, sort, people, categories]);
 
   /**
-   * Une seule liste, dans l'ordre du tri. Plus de tranches de pages (« p. 1–62 »,
-   * Lea, 2026-10-02) : arbitraires, et chaque note porte déjà sa page. Seules
-   * les nouvelles ont leur section, en haut, quand on trie par page.
+   * Une seule liste, dans l'ordre du tri. Plus de tranches de pages (« p. 1–62 »)
+   * ni de section « Nouvelles » (Lea, 2026-10-02) : les nouvelles se lisent dans
+   * la pile en ouvrant le carnet ; la liste part de ma page et descend vers la
+   * page 1 (le tri par défaut, « Dernières pages »).
    */
   const sections = useMemo((): NoteSection[] => {
     const byTime = sort === 'newest' || sort === 'oldest';
     const dir = sort === 'newest' || sort === 'pageDesc' ? -1 : 1;
-    const news: AnnotationWithAuthor[] = [];
-    const rest: AnnotationWithAuthor[] = [];
-    for (const note of visible) {
-      // Une nouvelle n'apparaît qu'une fois : en haut, pas aussi dans la liste
-      if (!byTime && fresh.ids.has(note.id)) news.push(note);
-      else rest.push(note);
-    }
-    rest.sort((a, b) =>
+    const data = [...visible].sort((a, b) =>
       byTime ? (a.created_at < b.created_at ? -dir : dir) : (a.position - b.position) * dir,
     );
-    const list: NoteSection[] = rest.length ? [{ title: null, data: rest, key: `${filterKey}-list` }] : [];
-    if (news.length === 0) return list;
-
-    const title = fresh.pages ? `Nouvelles · p. ${fresh.pages.from}–${fresh.pages.to}` : 'Nouvelles';
-    return [{ title, data: news, key: `${filterKey}-news` }, ...list];
-  }, [visible, fresh, filterKey, sort]);
+    return data.length ? [{ title: null, data, key: `${filterKey}-list` }] : [];
+  }, [visible, filterKey, sort]);
 
   /** Les notes que je n'ai pas encore ouvertes : ce sont les « nouvelles » */
   const unread = useMemo(
@@ -273,17 +337,6 @@ export default function Carnet({ mode }: { mode: CarnetMode }) {
     unread.forEach((note) => markRead(note.id, user.id));
   }, [unread, markRead, user?.id]);
 
-  /** Qui est qui, pour les badges du filtre */
-  const members = useMemo(
-    () =>
-      new Map(
-        participants.map((p) => [
-          p.user.id,
-          { name: p.user.id === user?.id ? 'Moi' : p.user.first_name || 'Participant', photo: p.user.profile_photo_url },
-        ]),
-      ),
-    [participants, user?.id],
-  );
 
   const noteDelay = (id: string) => {
     const rank = order.get(id) ?? CASCADE_MAX;
@@ -302,8 +355,23 @@ export default function Carnet({ mode }: { mode: CarnetMode }) {
           <WriteNoteButton />
         )
       }
-      scrolled={isPage && scrolled}
-    />
+      // En page entière, le flou est porté par l'en-tête posé sur la liste (jusque sous l'heure)
+      scrolled={false}
+    >
+      {/* Le fil, sous le titre, une fois celui du haut sorti de l'écran */}
+      {isPage && pastSummary && (
+        // Sans fondu : il prend la place exacte de celui de la liste
+        <View style={styles.headerTrack}>
+          <NotesTrack
+            dots={dots}
+            lockedPositions={ahead.map((note) => note.book_position)}
+            myPosition={myPosition}
+            onSeek={seek}
+            focus={focus}
+          />
+        </View>
+      )}
+    </SheetPageHeader>
   );
 
   const list = (
@@ -313,76 +381,80 @@ export default function Carnet({ mode }: { mode: CarnetMode }) {
       // Un nouveau filtre remonte les notes : elles rejouent la cascade
       keyExtractor={(note) => `${filterKey}-${note.id}`}
       style={styles.screen}
-      contentContainerStyle={styles.content}
+      contentContainerStyle={[styles.content, isPage && { paddingTop: headerHeight }]}
       contentInsetAdjustmentBehavior={isPage ? 'never' : 'automatic'}
       stickySectionHeadersEnabled={false}
-      onScroll={isPage ? onScroll : undefined}
+      onScroll={isPage ? handleScroll : undefined}
+      CellRendererComponent={isPage ? NoteCell : undefined}
       scrollEventThrottle={scrollEventThrottle}
       ListHeaderComponent={
         <View style={styles.header}>
           {!isPage && header}
 
           <Animated.View entering={rise(cascadeDelay.current)}>
-            {/* Hors cadre, comme Ma page : le compte à l'encre, puis le fil du livre */}
-            <View style={styles.summary}>
-              <InkFigure
-                value={notes.length}
-                total={notes.length + ahead.length}
-                fontSize={64}
-                accessibilityLabel={`${notes.length} notes ouvertes sur ${notes.length + ahead.length}`}
+            {/*
+              Le tri en cours est écrit sur son bouton ; « Filtrer » porte le nombre
+              de filtres actifs (Lea, 2026-10-02 : pas de badges dessous, on les
+              retire en rouvrant le sheet).
+            */}
+            <View style={styles.tools}>
+              <Pill
+                icon={carnetSort(sort).icon}
+                label={carnetSort(sort).label}
+                chevron
+                stretch
+                hint="Changer le tri"
+                onPress={() => router.push(`/carnet-sort${from}`)}
               />
-              <Text style={styles.summaryCaption} importantForAccessibility="no" accessibilityElementsHidden>
-                notes ouvertes
-              </Text>
-              <NotesTrack
-                dots={dots}
-                lockedPositions={ahead.map((note) => note.book_position)}
-                myPosition={myPosition}
-                onSeek={seek}
+              <Pill
+                icon={ListFilterIcon}
+                label="Filtrer"
+                count={people.length + categories.length}
+                stretch
+                onPress={() => router.push(`/carnet-filter${from}`)}
               />
             </View>
           </Animated.View>
 
-          <Animated.View entering={rise(cascadeDelay.current + motion.stagger)}>
-            {/* Trier et filtrer, puis ce qui est choisi en badges ✕ */}
-            <View style={styles.tools}>
-              <Pill icon={ArrowDownUpIcon} label="Trier" onPress={() => router.push(`/carnet-sort${from}`)} />
-              <Pill
-                icon={ListFilterIcon}
-                label="Filtrer"
-                onPress={() => router.push(`/carnet-filter${from}`)}
-              />
-            </View>
-            {(sort !== DEFAULT_CARNET_SORT || filtered) && (
-              <View style={styles.badges}>
-                {sort !== DEFAULT_CARNET_SORT && (
-                  <Pill
-                    icon={carnetSort(sort).icon}
-                    label={carnetSort(sort).label}
-                    removable
-                    onPress={() => setSort(DEFAULT_CARNET_SORT)}
-                  />
-                )}
-                {people.map((id) => (
-                  <Pill
-                    key={id}
-                    label={members.get(id)?.name ?? 'Participant'}
-                    photo={members.get(id)?.photo ?? null}
-                    removable
-                    onPress={() => togglePerson(id)}
-                  />
-                ))}
-                {categories.map((key) => (
-                  <Pill
-                    key={key}
-                    label={ANNOTATION_CATEGORIES[key].label}
-                    color={ANNOTATION_CATEGORIES[key].color}
-                    removable
-                    onPress={() => toggleCategory(key)}
-                  />
-                ))}
+          <Animated.View
+            entering={rise(cascadeDelay.current + motion.stagger)}
+            onLayout={(e) => (summaryTop.current = e.nativeEvent.layout.y)}
+          >
+            {/*
+              Hors cadre, comme Ma page : le cadenas ouvert à l'aquarelle (des notes
+              débloquées), le compte à l'encre, puis le fil
+            */}
+            <View style={styles.summary}>
+              <View style={styles.figureRow}>
+                {/* Le cadenas, à gauche, à la même encre que le chiffre */}
+                <MaskedView
+                  style={styles.unlocked}
+                  maskElement={<Image source={UNLOCKED_ART} style={StyleSheet.absoluteFill} contentFit="contain" />}
+                  importantForAccessibility="no-hide-descendants"
+                  accessibilityElementsHidden
+                >
+                  <LinearGradient colors={INK} style={StyleSheet.absoluteFill} />
+                </MaskedView>
+                <InkFigure
+                  value={notes.length}
+                  total={notes.length + ahead.length}
+                  fontSize={64}
+                  accessibilityLabel={`${notes.length} notes ouvertes sur ${notes.length + ahead.length}`}
+                />
               </View>
-            )}
+              {/* Caché quand il est collé sous le titre : c'est sa copie, à la même place */}
+              <View
+                onLayout={(e) => (trackTop.current = e.nativeEvent.layout.y)}
+                style={isPage && pastSummary && styles.hidden}
+              >
+                <NotesTrack
+                  dots={dots}
+                  lockedPositions={ahead.map((note) => note.book_position)}
+                  myPosition={myPosition}
+                  onSeek={seek}
+                />
+              </View>
+            </View>
           </Animated.View>
 
           {!inSheet && unread.length > 0 && (
@@ -395,6 +467,33 @@ export default function Carnet({ mode }: { mode: CarnetMode }) {
                 {unread.length} nouvelle{unread.length > 1 ? 's' : ''} · tout marquer comme lu
               </Text>
             </Pressable>
+          )}
+
+          {/*
+            En haut, les notes plus loin que ma page : de petits autocollants de
+            papier nu, en une ligne, sans titre.
+          */}
+          {aheadShown.length > 0 && (
+            <View style={styles.aheadList}>
+              {/* En une ligne, la plus proche de ma page à gauche ; elle défile s'il y en a beaucoup */}
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                // Jamais décalée par UIKit : elle reste à sa place dans la liste
+                contentInsetAdjustmentBehavior="never"
+                contentContainerStyle={styles.aheadRow}
+                style={styles.aheadScroll}
+              >
+                {aheadShown.map((note) => (
+                  <LockedNoteCard
+                    key={note.id}
+                    name={note.first_name || 'Participant'}
+                    photo={note.profile_photo_url}
+                    page={note.my_page}
+                  />
+                ))}
+              </ScrollView>
+            </View>
           )}
         </View>
       }
@@ -449,29 +548,6 @@ export default function Carnet({ mode }: { mode: CarnetMode }) {
           {filtered ? 'Rien avec ce filtre' : 'Aucune note ouverte pour l’instant'}
         </Text>
       }
-      ListFooterComponent={
-        ahead.length > 0 ? (
-          <View style={styles.aheadBlock}>
-            <Text style={styles.sectionTitle}>Plus loin · {ahead.length}</Text>
-            {ahead.slice(0, 3).map((note) => (
-              <View key={note.id} style={styles.aheadRow}>
-                <Image
-                  source={
-                    note.profile_photo_url ? { uri: note.profile_photo_url } : DEFAULT_AVATAR
-                  }
-                  style={styles.aheadAvatar}
-                />
-                <Text style={styles.aheadName}>{note.first_name || 'Participant'}</Text>
-                <Text style={styles.aheadPage}>≈ p. {note.my_page}</Text>
-                <LockIcon size={14} color={colors.textPlaceholder} strokeWidth={2} />
-              </View>
-            ))}
-            {ahead.length > 3 && (
-              <Text style={styles.aheadMore}>+ {ahead.length - 3} autres</Text>
-            )}
-          </View>
-        ) : null
-      }
     />
   );
 
@@ -479,7 +555,9 @@ export default function Carnet({ mode }: { mode: CarnetMode }) {
 
   // Page entière : l'en-tête reste en haut, la pile puis la liste passent dessous
   return (
-    <View style={[styles.screen, styles.page, { paddingTop: insets.top - SHEET_TOP_INSET + spacing.sm }]}>
+    // La pile garde sa marge sous la barre d'état ; la liste, elle, monte jusqu'en
+    // haut de l'écran et passe sous l'en-tête et sous l'heure, floutée
+    <View style={[styles.screen, styles.page, phase === 'deck' && { paddingTop: headerTop }]}>
       {/* Pendant la pile : un fond vivant, des taches douces qui dérivent */}
       {phase === 'deck' && (
         <Animated.View exiting={FadeOut.duration(500)} style={StyleSheet.absoluteFill}>
@@ -503,7 +581,17 @@ export default function Carnet({ mode }: { mode: CarnetMode }) {
           />
         </Animated.View>
       ) : (
-        <Animated.View entering={FadeIn.duration(motion.duration.standard)} style={styles.pageHeader}>
+        // Posé SUR la liste : elle passe dessous, floutée, et le fil peut le
+        // rejoindre sans rien décaler
+        <Animated.View
+          entering={FadeIn.duration(motion.duration.standard)}
+          style={[styles.pageHeader, styles.pageHeaderOver, { paddingTop: headerTop }]}
+          onLayout={(e) => {
+            if (!pastSummary) setHeaderHeight(e.nativeEvent.layout.height);
+          }}
+        >
+          {/* Un seul flou, de l'heure jusque sous le fil */}
+          {scrolled && <SheetBlur />}
           {header}
         </Animated.View>
       )}
@@ -532,40 +620,53 @@ export default function Carnet({ mode }: { mode: CarnetMode }) {
 }
 
 /**
- * Une pastille de papier : « Trier » et « Filtrer » (une icône et un mot), ou
- * un choix en cours (une photo, la couleur d'un thème…) qu'on retire d'un
- * toucher sur sa ✕.
+ * Le cadenas ouvert, à l'aquarelle : à côté du compte, il dit « des notes
+ * débloquées » sans un mot. Fait comme les illustrations des thèmes (un masque :
+ * l'encre = l'opacité, le grain de l'aquarelle dans la transparence), teinté
+ * de la même encre que le chiffre (dégradé `INK`), posé à sa gauche.
  */
+const UNLOCKED_ART = require('../assets/images/carnet/unlocked.png');
+const UNLOCKED_SIZE = 52;
+
+/** Une pastille de papier : « Trier » et « Filtrer », une icône et un mot */
 function Pill({
   label,
   icon: Icon,
-  photo,
-  color,
-  removable = false,
+  chevron = false,
+  count = 0,
+  hint,
+  stretch = false,
   onPress,
 }: {
   label: string;
   icon?: LucideIcon;
-  photo?: string | null;
-  color?: string;
-  removable?: boolean;
+  /** Ouvre un choix (le tri en cours) : un chevron après le mot */
+  chevron?: boolean;
+  /** Combien de choix sont actifs (les filtres) : une pastille lie de vin */
+  count?: number;
+  hint?: string;
+  /** Les deux boutons du haut se partagent la largeur, à parts égales */
+  stretch?: boolean;
   onPress: () => void;
 }) {
   return (
     <PressableScale
-      style={styles.pill}
-      pressedScale={0.94}
+      style={[styles.pill, stretch && styles.pillStretch]}
+      pressedScale={0.97}
       onPress={onPress}
       accessibilityRole="button"
-      accessibilityLabel={removable ? `Retirer ${label}` : label}
+      accessibilityLabel={count > 0 ? `${label}, ${count} actifs` : label}
+      accessibilityHint={hint}
     >
       {Icon && <Icon size={16} color={colors.textPrimary} strokeWidth={2.2} />}
-      {photo !== undefined && (
-        <Image source={photo ? { uri: photo } : DEFAULT_AVATAR} style={styles.pillAvatar} />
-      )}
-      {color && <View style={[styles.pillSwatch, { backgroundColor: color }]} />}
       <Text style={styles.pillText}>{label}</Text>
-      {removable && <XIcon size={14} color={colors.textTertiary} strokeWidth={2.4} />}
+      {count > 0 && (
+        <View style={styles.pillCount}>
+          <LinearGradient colors={accentGradient} style={StyleSheet.absoluteFill} />
+          <Text style={styles.pillCountText}>{count}</Text>
+        </View>
+      )}
+      {chevron && <ChevronDownIcon size={15} color={colors.textTertiary} strokeWidth={2.4} />}
     </PressableScale>
   );
 }
@@ -581,6 +682,21 @@ const styles = StyleSheet.create({
   pageHeader: {
     paddingHorizontal: spacing.lg,
     zIndex: 1,
+  },
+  pageHeaderOver: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+  },
+  // Le fil dans l'en-tête : la place de la goutte au-dessus
+  headerTrack: {
+    paddingTop: spacing.sm,
+    // La même marge que le bloc du compte : les deux fils se superposent exactement
+    paddingHorizontal: spacing.xs,
+  },
+  hidden: {
+    opacity: 0,
   },
   // La même hauteur que l'en-tête du carnet : le retour ne bouge pas ensuite
   deckHeader: {
@@ -606,23 +722,23 @@ const styles = StyleSheet.create({
   summary: {
     paddingHorizontal: spacing.xs,
   },
-  summaryCaption: {
-    fontFamily: fonts.bodyBold,
-    fontSize: 14,
-    color: colors.textTertiary,
-    marginTop: 2,
+  figureRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: spacing.md,
     marginBottom: spacing.sm,
+  },
+  unlocked: {
+    width: UNLOCKED_SIZE,
+    height: UNLOCKED_SIZE,
+    marginRight: spacing.sm,
+    // Le bas du cadenas sur la ligne de base du chiffre (centré, il tombait plus bas)
+    transform: [{ translateY: -10 }],
   },
 
   tools: {
     flexDirection: 'row',
     gap: spacing.sm,
-  },
-  badges: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.sm,
-    marginTop: spacing.sm,
   },
   pill: {
     flexDirection: 'row',
@@ -636,20 +752,29 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: inkAlpha(0.08),
   },
+  pillCount: {
+    minWidth: 18,
+    height: 18,
+    paddingHorizontal: 5,
+    borderRadius: 9,
+    overflow: 'hidden',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  pillCountText: {
+    fontFamily: fonts.bodyExtraBold,
+    fontSize: 11,
+    color: colors.white,
+    fontVariant: ['tabular-nums'],
+  },
+  pillStretch: {
+    flex: 1,
+    justifyContent: 'center',
+  },
   pillText: {
     fontFamily: fonts.bodyBold,
     fontSize: 14,
     color: colors.textPrimary,
-  },
-  pillAvatar: {
-    width: 20,
-    height: 20,
-    borderRadius: 6,
-  },
-  pillSwatch: {
-    width: 14,
-    height: 14,
-    borderRadius: 4,
   },
 
   markAll: {
@@ -683,42 +808,16 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 
-  aheadBlock: {
-    marginTop: spacing.sm,
+  aheadList: {
+    gap: spacing.xs,
+  },
+  // La ligne déborde jusqu'aux bords de l'écran en défilant
+  aheadScroll: {
+    marginHorizontal: -spacing.lg,
   },
   aheadRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
     gap: spacing.sm,
-    minHeight: 40,
-    paddingHorizontal: spacing.md,
-    borderRadius: borderRadius.md,
-    backgroundColor: inkAlpha(0.04),
-    marginBottom: spacing.xs,
-  },
-  aheadAvatar: {
-    width: 22,
-    height: 22,
-    borderRadius: 7,
-    opacity: 0.55,
-  },
-  aheadName: {
-    flex: 1,
-    fontFamily: fonts.bodySemiBold,
-    fontSize: 14,
-    color: colors.textTertiary,
-  },
-  aheadPage: {
-    fontFamily: fonts.bodyBold,
-    fontSize: 13,
-    color: colors.textPlaceholder,
-    fontVariant: ['tabular-nums'],
-  },
-  aheadMore: {
-    fontFamily: fonts.bodyBold,
-    fontSize: 13,
-    color: colors.textPlaceholder,
-    marginLeft: spacing.md,
-    marginTop: spacing.xs,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: 2,
   },
 });

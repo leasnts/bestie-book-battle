@@ -30,17 +30,23 @@ interface CarnetViewStore {
   reset: () => void;
 }
 
+/**
+ * Par défaut, de ma page vers la page 1 : les notes les plus proches de là où
+ * j'en suis d'abord (Lea, 2026-10-02) ; les nouvelles se sont lues dans la pile.
+ */
+export const DEFAULT_CARNET_SORT: CarnetSort = 'pageDesc';
+
 const toggle = <T,>(list: T[], item: T) => (list.includes(item) ? list.filter((x) => x !== item) : [...list, item]);
 
 export const useCarnetViewStore = create<CarnetViewStore>((set) => ({
-  sort: 'pageAsc',
+  sort: DEFAULT_CARNET_SORT,
   people: [],
   categories: [],
   setSort: (sort) => set({ sort }),
   togglePerson: (userId) => set((s) => ({ people: toggle(s.people, userId) })),
   toggleCategory: (category) => set((s) => ({ categories: toggle(s.categories, category) })),
   clearFilters: () => set({ people: [], categories: [] }),
-  reset: () => set({ sort: 'pageAsc', people: [], categories: [] }),
+  reset: () => set({ sort: DEFAULT_CARNET_SORT, people: [], categories: [] }),
 }));
 
 /** Les notes qui passent le filtre */
