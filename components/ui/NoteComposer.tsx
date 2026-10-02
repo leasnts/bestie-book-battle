@@ -231,7 +231,6 @@ export default function NoteComposer({ visible, page, maxPage, draft, onClose, o
           <View style={styles.head}>
             <GlassButton
               icon={XIcon}
-              size={HEAD_BUTTON}
               onPress={close}
               accessibilityLabel="Fermer, garder le brouillon"
             />
@@ -260,7 +259,6 @@ export default function NoteComposer({ visible, page, maxPage, draft, onClose, o
             <View style={styles.grow} />
             <GlassButton
               icon={full ? Minimize2Icon : Maximize2Icon}
-              size={HEAD_BUTTON}
               onPress={toggleFull}
               accessibilityLabel={full ? 'Replier la note' : 'Annoter en pleine page'}
             />

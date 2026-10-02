@@ -45,7 +45,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, glassControlVeil, motion } from '../../utils/constants';
+import { colors, glassControlVeil, motion, ROUND_BUTTON_SIZE } from '../../utils/constants';
 import GlassButton from './GlassButton';
 import GlassMaterial from './GlassMaterial';
 import PressableScale from './PressableScale';
@@ -57,8 +57,8 @@ const ITEM_WIDTH = 60;
 const ITEM_HEIGHT = 48;
 const BAR_PADDING = 5;
 const BAR_HEIGHT = ITEM_HEIGHT + BAR_PADDING * 2;
-/** Bouton « + » : un rond de la hauteur de la barre, à ADD_GAP pt de son bord droit */
-const ADD_SIZE = BAR_HEIGHT;
+/** Bouton « + » : le rond de toute l'app (une seule taille), à ADD_GAP pt du bord droit de la barre */
+const ADD_SIZE = ROUND_BUTTON_SIZE;
 const ADD_GAP = 12;
 
 /**
@@ -191,7 +191,6 @@ export default function GlassTabBar({ state, descriptors, navigation, onAddPress
 
       <GlassButton
         icon={PlusIcon}
-        size={ADD_SIZE}
         style={styles.addButton}
         onPress={onAddPress}
         accessibilityLabel="Ajouter une lecture"

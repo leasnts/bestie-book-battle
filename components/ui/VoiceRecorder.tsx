@@ -99,7 +99,6 @@ export default function VoiceRecorder({
   compact = false,
 }: VoiceRecorderProps) {
   const height = compact ? VOICE_BAR_HEIGHT_COMPACT : HEIGHT;
-  const button = height - PAD * 2;
   const recorder = useAudioRecorder(VOICE_RECORDING);
   const state = useAudioRecorderState(recorder, 100);
   // Le démarrage attend la permission et le micro : entre-temps l'enregistreur a
@@ -254,11 +253,11 @@ export default function VoiceRecorder({
       )}
 
       {recording ? (
-        <RoundButton icon={SquareIcon} variant="light" filled size={button} label="Arrêter le vocal" onPress={finish} />
+        <RoundButton icon={SquareIcon} variant="light" filled label="Arrêter le vocal" onPress={finish} />
       ) : recorded ? (
-        <RoundButton icon={RotateCcwIcon} variant="ghost" size={button} label="Refaire le vocal" onPress={start} />
+        <RoundButton icon={RotateCcwIcon} variant="ghost" label="Refaire le vocal" onPress={start} />
       ) : (
-        <RoundButton icon={MicIcon} variant="dark" size={button} label="Enregistrer une note vocale" onPress={start} />
+        <RoundButton icon={MicIcon} variant="dark" label="Enregistrer une note vocale" onPress={start} />
       )}
 
       {recorded ? (
@@ -301,7 +300,6 @@ export default function VoiceRecorder({
         <RoundButton
           icon={Trash2Icon}
           variant="ghost"
-          size={button}
           label="Supprimer le vocal"
           onPress={() => onChange(null)}
         />
@@ -327,7 +325,10 @@ const BAR_MIN = 4;
 /** La gélule : le bouton rond, et 5 pt tout autour */
 const PAD = 5;
 const HEIGHT = ROUND_BUTTON_SIZE + PAD * 2;
-/** La gélule compacte : les ronds posés à côté (🎙 ❝ ✕) prennent la même hauteur */
+/**
+ * La gélule compacte : de la hauteur des ronds posés à côté (🎙 ❝ ✕), sans
+ * marge autour de son bouton, qui garde sa taille de rond (`ROUND_BUTTON_SIZE`)
+ */
 export const VOICE_BAR_HEIGHT_COMPACT = ROUND_BUTTON_SIZE;
 
 const styles = StyleSheet.create({
@@ -340,6 +341,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   rowCompact: {
+    padding: 0,
     gap: spacing.sm,
     paddingRight: spacing.md,
   },

@@ -489,13 +489,13 @@ bord d'un cadre (`GlassSection` `fadeTop`).
   ✎ ouvre la feuille (`NoteComposer`), où **tout se fait** : elle monte au-dessus
   du clavier, l'accueil s'assombrit. Ligne du haut : ✕, la page (« p. 157 »,
   une gélule en verre qu'on touche pour la changer au pavé numérique), ↗ pleine page,
-  ✓ — **une seule taille sur la ligne, 42 pt** (celle de `RoundButton`). Le
+  ✓ — **une seule taille, 44 pt**, celle de tous les boutons ronds. Le
   thème se choisit en **intercalaires sous la note** (`CategoryPicker`
   `tabs`) : l'illustration aquarelle de chaque thème, sans mot, en masque teinté
   de sa couleur ; la choisie dépasse plus et se tient droite. La note
   (`NoteDraft` `tools`) est **courte au départ**, grandit avec le texte jusqu'à
   sept lignes puis défile ; sans coin corné. En bas à droite, 🎙 et ❝ (le thème en filigrane, en bas à gauche)
-  (`GlassButton` 42, comme tous les boutons-icônes) : 🎙 n'ouvre l'enregistreur qu'au toucher (✕ pour le
+  (`GlassButton`, 44 pt comme tous les boutons-icônes) : 🎙 n'ouvre l'enregistreur qu'au toucher (✕ pour le
   retirer), ❝ photographie la page — texte lu **sur le téléphone** (module maison
   `modules/page-text`, Vision d'Apple, en français), `QuotePicker` : on touche
   les lignes, surlignées en jaune stabilo, et le passage arrive en tête de la
@@ -731,7 +731,7 @@ fond assombri viennent du système.
 de la fiche du livre, pour tous :
 - **en-tête** `SheetPageHeader` : retour (si posé sur un autre sheet), titre en
   Fraunces 26 **ferré à gauche, jamais centré**, sous-titre éventuel, actions à
-  droite en `GlassButton` 36 pt ;
+  droite en `GlassButton` (44 pt, comme tous les ronds) ;
 - **marges de 16 pt** (`SHEET_GUTTER`) sur les côtés ;
 - **action principale** en bas du contenu (`SheetFooter` + `Button3D`
   primaire, « Enregistrer ») ; une suppression en lien rouge en dessous ;
@@ -858,8 +858,15 @@ icône est l'un de ces deux, et rien d'autre :
   construction : s'il y en a partout, plus rien n'est important.
 
 Dans le contenu, `RoundButton` garde aussi `ghost` (↺ 🗑) et `light` (sur la
-gélule lie de vin). 42 pt partout ; plus petit seulement dans une gélule
-compacte (`size`).
+gélule lie de vin).
+
+**Une seule taille, partout, sans exception : 44 pt** (`ROUND_BUTTON_SIZE` dans
+`utils/constants.ts`, icône 19 pt). Règle de Lea (2026-10-02) : un bouton rond
+à icône fait la même taille sur tous les écrans — en-têtes, feuilles, barre
+d'onglets, lecteur de vocal. Les deux composants n'ont **pas** de prop `size` :
+on ne peut pas en faire un plus petit « juste ici ». Une gélule qui contient un
+rond (l'enregistreur compact, le lecteur de vocal) se cale sur lui, pas
+l'inverse.
 
 Jamais de `PressableScale` + `borderRadius: taille / 2` + icône écrit à la main,
 même « juste pour ici » : le « + » de la liste d'emojis l'était, il ne
@@ -874,7 +881,7 @@ peu pour laisser passer la couleur de dessous) et **liseré** (`rim`) — filet 
 dessine la forme même sur fond blanc, doublé d'un reflet crème en diagonale —,
 ombre douce. Le reflet passe par `stopOpacity` : react-native-svg ignore l'alpha
 d'un `rgba()` dans `stopColor`, et le liseré devenait un anneau blanc uniforme.
-58 pt pour le + de la barre d'onglets, 44 pt en haut d'un sheet.
+44 pt partout, comme `RoundButton` (le + de la barre d'onglets compris).
 La barre d'onglets porte le même voile et le même liseré. Ne jamais redessiner
 ce verre ailleurs : le fond gris plat qu'iOS 26 met derrière les boutons de
 barre est retiré (`hidesSharedBackground`) au profit de ce composant.

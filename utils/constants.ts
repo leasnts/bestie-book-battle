@@ -42,6 +42,16 @@ export const glassVeil = 0.56;
  */
 export const glassControlVeil = 0.25;
 
+/**
+ * Les boutons ronds à icône, partout dans l'app (`RoundButton`, `GlassButton`) :
+ * UNE seule taille, jamais d'exception (règle de Lea, 2026-10-02). 44 pt, la
+ * taille tactile minimale de la HIG ; l'icône au même corps dans les deux.
+ */
+export const ROUND_BUTTON_SIZE = 44;
+export const ROUND_BUTTON_ICON = 19;
+/** L'icône pleine (■ arrêter) paraît plus grosse : un peu plus petite */
+export const ROUND_BUTTON_ICON_FILLED = 15;
+
 export const colors = {
   // Dark colors (onboarding, boutons principaux)
   dark950: '#1e140e',          // Fond splash screen

@@ -236,7 +236,6 @@ export default function BookRoute() {
       actions={
         <GlassButton
           icon={EllipsisIcon}
-          size={36}
           onPress={handleMenu}
           accessibilityLabel="Plus d'options"
         />
@@ -266,7 +265,6 @@ export default function BookRoute() {
       <GroupHeader title="Caps">
         <GlassButton
           icon={PlusIcon}
-          size={36}
           onPress={() => router.push('/cap?from=book')}
           accessibilityLabel="Ajouter un cap"
         />

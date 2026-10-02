@@ -3,10 +3,12 @@
  *
  * LE bouton rond en verre d'iOS 26 de l'app : une icône Lucide sur du verre,
  * avec son liseré et une ombre douce. Un seul composant pour tous les usages :
- * - le « + » à droite de la barre d'onglets (58 pt) ;
- * - la bibliothèque, en haut à gauche de l'accueil (44 pt) ;
- * - le retour et les actions de l'en-tête d'un sheet (36 pt, `SheetPageHeader`) ;
- * - étiré en gélule (`stretch`), les quatre façons d'annoter de « Ma page ».
+ * le « + » de la barre d'onglets, la bibliothèque de l'accueil, le retour et
+ * les actions des en-têtes… et, étiré en gélule (`stretch`), les façons
+ * d'annoter de « Ma page ».
+ *
+ * Une seule taille, `ROUND_BUTTON_SIZE`, la même que `RoundButton` : un bouton
+ * rond à icône fait la même taille partout dans l'app (règle de Lea).
  *
  * Tout nouveau bouton rond en verre passe par ici : ne pas redessiner le verre,
  * le liseré ou l'ombre ailleurs.
@@ -18,7 +20,7 @@
 import type { LucideIcon } from 'lucide-react-native';
 import React from 'react';
 import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
-import { colors, glassControlVeil } from '../../utils/constants';
+import { colors, glassControlVeil, ROUND_BUTTON_ICON, ROUND_BUTTON_SIZE } from '../../utils/constants';
 import GlassMaterial from './GlassMaterial';
 import PressableScale from './PressableScale';
 
@@ -27,8 +29,6 @@ interface GlassButtonProps {
   onPress: () => void;
   /** Nom lu par VoiceOver : une icône seule n'a pas de nom sinon */
   accessibilityLabel: string;
-  /** Diamètre en pt (44 minimum, la taille tactile de la HIG) */
-  size?: number;
   /** Prend toute la largeur libre : une gélule, à parts égales avec ses voisins */
   stretch?: boolean;
   /** Un point lie de vin dans le coin : quelque chose attend (un brouillon) */
@@ -41,12 +41,12 @@ export default function GlassButton({
   icon: Icon,
   onPress,
   accessibilityLabel,
-  size = 44,
   stretch = false,
   badge = false,
   style,
 }: GlassButtonProps) {
-  const iconSize = Math.round(size * 0.42);
+  const size = ROUND_BUTTON_SIZE;
+  const iconSize = ROUND_BUTTON_ICON;
   return (
     <PressableScale
       style={[styles.button, { width: stretch ? undefined : size, height: size, borderRadius: size / 2 }, stretch && styles.stretch, style]}

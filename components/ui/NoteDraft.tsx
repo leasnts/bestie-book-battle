@@ -191,11 +191,10 @@ const NoteDraft = forwardRef<TextInput, NoteDraftProps>(function NoteDraft(
         // 🎙 et ❝ en bas à droite ; 🎙 s'étire en gélule, à la même hauteur
         <View style={styles.dock} onLayout={(e) => setDockWidth(e.nativeEvent.layout.width)}>
           <Animated.View style={[styles.tools, toolsStyle]} pointerEvents={voiceOpen ? 'none' : 'auto'}>
-            <GlassButton icon={MicIcon} size={TOOL} onPress={openVoice} accessibilityLabel="Ajouter un vocal" />
+            <GlassButton icon={MicIcon} onPress={openVoice} accessibilityLabel="Ajouter un vocal" />
             {onCite && (
               <GlassButton
                 icon={QuoteIcon}
-                size={TOOL}
                 onPress={onCite}
                 accessibilityLabel="Citer un passage : photographier la page"
               />
@@ -208,7 +207,7 @@ const NoteDraft = forwardRef<TextInput, NoteDraftProps>(function NoteDraft(
                 <View style={styles.grow}>
                   <VoiceRecorder clip={voice} onChange={onVoiceChange} onRecordingChange={onRecordingChange} autoStart compact />
                 </View>
-                <GlassButton icon={XIcon} size={TOOL} onPress={closeVoice} accessibilityLabel="Retirer le vocal" />
+                <GlassButton icon={XIcon} onPress={closeVoice} accessibilityLabel="Retirer le vocal" />
               </View>
             </Animated.View>
           )}

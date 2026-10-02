@@ -7,7 +7,8 @@
  * - `ghost` : les autres, `inkAlpha(0.07)` (↺ annuler, ↺ refaire, 🗑) ;
  * - `light` : sur une surface foncée (■ arrêter, sur la gélule lie de vin).
  *
- * Même taille, même place : seule l'icône change (DESIGN.md › Boutons-icônes).
+ * Même taille partout (`ROUND_BUTTON_SIZE`, aussi celle de `GlassButton`), même
+ * place : seule l'icône change (DESIGN.md › Boutons-icônes).
  * Désactivé, il se grise (`PressableScale`).
  */
 
@@ -15,7 +16,16 @@ import { LinearGradient } from 'expo-linear-gradient';
 import type { LucideIcon } from 'lucide-react-native';
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
-import { colors, creamAlpha, inkAlpha, inkGradient, shadowAlpha } from '../../utils/constants';
+import {
+  colors,
+  creamAlpha,
+  inkAlpha,
+  inkGradient,
+  ROUND_BUTTON_ICON,
+  ROUND_BUTTON_ICON_FILLED,
+  ROUND_BUTTON_SIZE,
+  shadowAlpha,
+} from '../../utils/constants';
 import PressableScale from './PressableScale';
 
 interface RoundButtonProps {
@@ -28,13 +38,11 @@ interface RoundButtonProps {
   disabled?: boolean;
   /** Icône pleine (■ arrêter) */
   filled?: boolean;
-  /** Plus petit dans la feuille rapide ; par défaut `ROUND_BUTTON_SIZE` */
-  size?: number;
   /** Un point lie de vin dans le coin : quelque chose attend (un brouillon) */
   badge?: boolean;
 }
 
-export const ROUND_BUTTON_SIZE = 42;
+export { ROUND_BUTTON_SIZE };
 
 export default function RoundButton({
   icon: Icon,
@@ -44,18 +52,12 @@ export default function RoundButton({
   onPress,
   disabled,
   filled = false,
-  size = ROUND_BUTTON_SIZE,
   badge = false,
 }: RoundButtonProps) {
-  const scale = size / ROUND_BUTTON_SIZE;
   const color = variant === 'dark' ? colors.white : variant === 'light' ? colors.accent : colors.dark900;
   return (
     <PressableScale
-      style={[
-        styles.button,
-        size !== ROUND_BUTTON_SIZE && { width: size, height: size, borderRadius: size / 2 },
-        styles[variant],
-      ]}
+      style={[styles.button, styles[variant]]}
       pressedScale={0.9}
       hitSlop={6}
       disabled={disabled}
@@ -66,9 +68,9 @@ export default function RoundButton({
     >
       {/* Jamais d'aplat : l'encre chocolat, plus claire en haut */}
       {variant === 'dark' && (
-        <LinearGradient colors={inkGradient} style={[StyleSheet.absoluteFill, { borderRadius: size / 2 }]} />
+        <LinearGradient colors={inkGradient} style={[StyleSheet.absoluteFill, styles.round]} />
       )}
-      <Icon size={Math.round((filled ? 15 : 19) * scale)} color={color} fill={filled ? color : 'none'} strokeWidth={2.2} />
+      <Icon size={filled ? ROUND_BUTTON_ICON_FILLED : ROUND_BUTTON_ICON} color={color} fill={filled ? color : 'none'} strokeWidth={2.2} />
       {badge && <View style={styles.badge} />}
     </PressableScale>
   );
@@ -81,6 +83,9 @@ const styles = StyleSheet.create({
     borderRadius: ROUND_BUTTON_SIZE / 2,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  round: {
+    borderRadius: ROUND_BUTTON_SIZE / 2,
   },
   dark: {
     backgroundColor: colors.dark900,

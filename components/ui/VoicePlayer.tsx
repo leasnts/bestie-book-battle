@@ -18,7 +18,7 @@ import { AppState, StyleSheet, Text, View } from 'react-native';
 import { getAudioUrl } from '../../services/supabase/annotations';
 import { formatVoiceDuration, VOICE_BARS } from '../../utils/annotations';
 import { borderRadius, colors, creamAlpha, fonts, inkAlpha, spacing } from '../../utils/constants';
-import PressableScale from './PressableScale';
+import RoundButton from './RoundButton';
 
 interface VoicePlayerProps {
   /** Un vocal envoyé : son chemin dans le bucket */
@@ -99,21 +99,15 @@ export default function VoicePlayer({ path, uri, seconds, levels, compact = fals
 
   return (
     <View style={[styles.player, compact && styles.playerCompact]}>
-      <PressableScale
-        style={[styles.play, compact && styles.playCompact]}
-        pressedScale={0.9}
-        hitSlop={8}
+      {/* Le rond de toute l'app : sa taille, son encre ; il fait le bout gauche de la gélule */}
+      <RoundButton
+        icon={status.playing ? PauseIcon : PlayIcon}
+        variant="dark"
+        filled
         disabled={loading}
         onPress={toggle}
-        accessibilityRole="button"
-        accessibilityLabel={status.playing ? 'Pause' : `Écouter le vocal, ${formatVoiceDuration(seconds)}`}
-      >
-        {status.playing ? (
-          <PauseIcon size={13} color={colors.white} fill={colors.white} strokeWidth={2} />
-        ) : (
-          <PlayIcon size={13} color={colors.white} fill={colors.white} strokeWidth={2} style={styles.playIcon} />
-        )}
-      </PressableScale>
+        label={status.playing ? 'Pause' : `Écouter le vocal, ${formatVoiceDuration(seconds)}`}
+      />
 
       <View style={styles.wave} importantForAccessibility="no-hide-descendants">
         {bars.map((level, index) => (
@@ -136,7 +130,6 @@ export default function VoicePlayer({ path, uri, seconds, levels, compact = fals
 }
 
 const WAVE_HEIGHT = 20;
-const PLAY_SIZE = 30;
 /** Sans onde enregistrée : une ligne régulière plutôt qu'une onde inventée */
 const FLAT = Array.from({ length: VOICE_BARS }, () => 20);
 
@@ -145,32 +138,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
-    minHeight: 40,
-    paddingLeft: 5,
+    paddingLeft: 0,
     paddingRight: spacing.md,
     borderRadius: borderRadius.full,
     backgroundColor: creamAlpha(0.55),
   },
   playerCompact: {
-    minHeight: 32,
-    paddingLeft: 4,
-  },
-  play: {
-    width: PLAY_SIZE,
-    height: PLAY_SIZE,
-    borderRadius: PLAY_SIZE / 2,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.dark900,
-  },
-  playCompact: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-  },
-  // Le triangle est plus lourd à gauche : on le recentre à l'œil
-  playIcon: {
-    marginLeft: 2,
+    gap: spacing.xs,
   },
   wave: {
     flex: 1,

@@ -67,7 +67,7 @@ import {
 } from '../../utils/constants';
 import NoteCard, { NoteReactions } from './NoteCard';
 import PeelSurface, { peelAmount } from './PeelSurface';
-import PressableScale from './PressableScale';
+import RoundButton from './RoundButton';
 
 interface NewNotesDeckProps {
   /** Les nouvelles, dans l'ordre des pages ; figées à l'ouverture du carnet */
@@ -209,15 +209,9 @@ export default function NewNotesDeck({
 
       {/* VoiceOver ne glisse pas : une action à la place du geste */}
       {screenReader && top && (
-        <PressableScale
-          style={styles.a11yButton}
-          onPress={() => swiped(top.id)}
-          accessibilityRole="button"
-          accessibilityLabel="Marquer comme lue"
-        >
-          <ExpoLinearGradient colors={inkGradient} style={StyleSheet.absoluteFill} />
-          <CheckIcon size={20} color={colors.white} strokeWidth={2.4} />
-        </PressableScale>
+        <View style={styles.a11yButton}>
+          <RoundButton icon={CheckIcon} variant="dark" label="Marquer comme lue" onPress={() => swiped(top.id)} />
+        </View>
       )}
     </View>
   );
@@ -539,11 +533,5 @@ const styles = StyleSheet.create({
 
   a11yButton: {
     alignSelf: 'center',
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    overflow: 'hidden',
-    alignItems: 'center',
-    justifyContent: 'center',
   },
 });
