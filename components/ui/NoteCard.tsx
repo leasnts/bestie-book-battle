@@ -223,7 +223,7 @@ export default function NoteCard({
 
 /**
  * Une pastille de verre par emoji avec son compte (comme nos boutons ronds,
- * Lea, 2026-10-02) ; ma réaction a son compte en lie de vin.
+ * Lea, 2026-10-02), le compte à l'encre.
  *
  * - `quick` (la pile des nouvelles) : les six emojis rapides sont toujours là,
  *   avec leur compte s'il y en a un, puis « … » pour le reste. Un toucher suffit.
@@ -300,7 +300,7 @@ export function NoteReactions({
           >
             <PillGlass radius={pillRadius} />
             <Text style={[styles.reactionEmoji, quick && styles.reactionEmojiQuick]}>{emoji}</Text>
-            {count > 0 && <Text style={[styles.reactionCount, mine && styles.reactionCountMine]}>{count}</Text>}
+            {count > 0 && <Text style={styles.reactionCount}>{count}</Text>}
           </PressableScale>
         ) : (
           <View key={emoji} style={[styles.reaction, inside && styles.reactionInside]}>
@@ -502,9 +502,6 @@ const styles = StyleSheet.create({
   },
   reactionEmojiQuick: {
     fontSize: 20,
-  },
-  reactionCountMine: {
-    color: colors.accent,
   },
   reactionCount: {
     fontFamily: fonts.bodyExtraBold,
