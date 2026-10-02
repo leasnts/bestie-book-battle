@@ -32,7 +32,6 @@
 import { useRouter } from 'expo-router';
 import {
   ArrowDownUpIcon,
-  BookmarkIcon,
   ChevronLeftIcon,
   ListFilterIcon,
   XIcon,
@@ -47,7 +46,6 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Svg from 'react-native-svg';
 import { Image } from 'expo-image';
 import {
   Pressable,
@@ -60,7 +58,6 @@ import {
 import DriftingBackdrop from './ui/DriftingBackdrop';
 import NewNotesDeck from './ui/NewNotesDeck';
 import NoteCard, { LockedNoteCard } from './ui/NoteCard';
-import { Seam } from './ui/GoalTrack';
 import InkFigure from './ui/InkFigure';
 import NotesTrack, { type TrackDot } from './ui/NotesTrack';
 import PressableScale from './ui/PressableScale';
@@ -393,8 +390,7 @@ export default function Carnet({ mode }: { mode: CarnetMode }) {
 
           {/*
             En haut, les notes plus loin que ma page : de petits autocollants de
-            papier nu, en une ligne, sans titre. Le repère de ma page les sépare
-            des notes que je peux lire.
+            papier nu, en une ligne, sans titre.
           */}
           {aheadShown.length > 0 && (
             <View style={styles.aheadList}>
@@ -414,7 +410,6 @@ export default function Carnet({ mode }: { mode: CarnetMode }) {
                   />
                 ))}
               </ScrollView>
-              <PageMark page={myProgress?.progress.current_page ?? 0} />
             </View>
           )}
         </View>
@@ -525,24 +520,6 @@ export default function Carnet({ mode }: { mode: CarnetMode }) {
           </Animated.View>
         )}
       </View>
-    </View>
-  );
-}
-
-/** Où j'en suis : le fil du livre, chocolat, puis le marque-page et ma page */
-function PageMark({ page }: { page: number }) {
-  const [width, setWidth] = useState(0);
-  return (
-    <View style={styles.mark} accessible accessibilityLabel={`Ma page, ${page}`}>
-      <View style={styles.markThread} onLayout={(e) => setWidth(e.nativeEvent.layout.width)}>
-        {width > 0 && (
-          <Svg width={width} height={8}>
-            <Seam width={width} readUntil={width} y={4} />
-          </Svg>
-        )}
-      </View>
-      <BookmarkIcon size={14} color={colors.accent} fill={colors.accent} strokeWidth={2} />
-      <Text style={styles.markText}>p. {page}</Text>
     </View>
   );
 }
@@ -710,23 +687,5 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     paddingHorizontal: spacing.lg,
     paddingVertical: 2,
-  },
-  // Le repère de ma page : le fil, puis le marque-page et le numéro
-  mark: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-    marginTop: spacing.sm,
-  },
-  markThread: {
-    flex: 1,
-    height: 8,
-    marginRight: spacing.xs,
-  },
-  markText: {
-    fontFamily: fonts.bodyExtraBold,
-    fontSize: 13,
-    color: colors.accent,
-    fontVariant: ['tabular-nums'],
   },
 });
