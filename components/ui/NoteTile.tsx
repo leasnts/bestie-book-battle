@@ -338,7 +338,8 @@ function PeelCard({
   return (
     <GestureDetector gesture={pan}>
       <Animated.View style={[StyleSheet.absoluteFill, flyStyle]}>
-        <PeelSurface id={id} size={size} values={values} onLayout={measure}>
+        {/* Le carré est petit et dans un coin : tiré à travers l'écran, son rabat va loin */}
+        <PeelSurface id={id} size={size} values={values} reach={2.5} onLayout={measure}>
           {children}
         </PeelSurface>
       </Animated.View>

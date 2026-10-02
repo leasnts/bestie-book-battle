@@ -55,6 +55,7 @@ export default function PeelSurface({
   id,
   size,
   values,
+  reach = 1,
   onLayout,
   children,
 }: {
@@ -63,6 +64,12 @@ export default function PeelSurface({
   /** La taille mesurée de la note (`null` avant la première mesure) */
   size: { w: number; h: number } | null;
   values: PeelValues;
+  /**
+   * Jusqu'où le rabat peut déborder, en tailles de note autour d'elle. Une
+   * petite note qu'on tire loin à travers l'écran (le carré de l'accueil) a
+   * besoin de plus que la pile, où la note fait déjà toute la largeur.
+   */
+  reach?: number;
   onLayout: (e: LayoutChangeEvent) => void;
   children: React.ReactNode;
 }) {
@@ -87,8 +94,8 @@ export default function PeelSurface({
     return { d: toPath(flap.map((p) => [p[0] + 2, p[1] + 5] as Point)) };
   });
 
-  /** La marge du dessin du rabat autour de la note : il se rabat jusqu'à une note plus loin */
-  const bleed = size ? Math.max(size.w, size.h) : 0;
+  /** La marge du dessin du rabat autour de la note : au-delà, il serait coupé net */
+  const bleed = size ? Math.max(size.w, size.h) * reach : 0;
 
   return (
     <>
