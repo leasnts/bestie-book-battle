@@ -71,7 +71,6 @@ const WAVE_BARS = 18;
 const PEEL_OFF = 0.5;
 
 const easeOut = Easing.bezier(...motion.easing.easeOutQuart);
-const sway = Easing.inOut(Easing.sin);
 
 export default function NoteTile({
   notes,
@@ -190,8 +189,8 @@ function Face({ side, note, children }: { side: number; note: AnnotationWithAuth
 /**
  * Tirer un coin vers l'intérieur le décolle (même rendu que la pile). Lâché
  * avant la moitié, il se recolle ; au-delà, le pli traverse tout, et
- * l'autocollant s'envole comme une feuille : il monte en se balançant, tourne
- * un peu, s'efface. Le toucher simple, lui, ouvre toujours le carnet.
+ * l'autocollant s'envole comme un ballon qu'on lâche : il monte de plus en
+ * plus vite, sans tanguer, et s'efface. Le toucher simple, lui, ouvre toujours le carnet.
  *
  * Le geste ne démarre qu'à l'horizontale : glisser vers le haut ou le bas sur
  * le carré fait toujours défiler l'accueil.
@@ -271,17 +270,18 @@ function PeelCard({
     bx.value = withTiming(ax.value + ux * reach, sweep);
     by.value = withTiming(ay.value + uy * reach, sweep);
 
-    // Une feuille : elle monte, se balance d'un côté puis de l'autre, et s'efface.
-    // Retournée du côté où on a tiré, elle revient vers l'autre en montant : elle
-    // ne sort pas par le bord de l'écran (le carré est dans un coin)
+    // Un ballon qu'on lâche : il part doucement puis prend de la vitesse vers le
+    // haut, sans tanguer. Il glisse un peu vers le centre (retourné du côté où
+    // on a tiré, il ne sort pas par le bord de l'écran) et se redresse presque
     const dir = -(Math.sign(dx) || 1);
-    const half = { duration: 480, easing: sway };
-    y.value = withDelay(200, withTiming(-side * 1.6, { duration: 1000, easing: Easing.out(Easing.quad) }));
-    x.value = withDelay(200, withSequence(withTiming(dir * side * 0.28, half), withTiming(dir * side * 0.08, half)));
-    tilt.value = withDelay(200, withSequence(withTiming(dir * 16, half), withTiming(-dir * 8, half)));
+    const rise = { duration: 1400, easing: Easing.in(Easing.quad) };
+    const drift = { duration: 1400, easing: Easing.out(Easing.quad) };
+    y.value = withDelay(220, withTiming(-side * 2.4, rise));
+    x.value = withDelay(220, withTiming(dir * side * 0.18, drift));
+    tilt.value = withDelay(220, withTiming(dir * 3, drift));
     fade.value = withDelay(
-      650,
-      withTiming(0, { duration: 500 }, (f) => {
+      900,
+      withTiming(0, { duration: 700, easing: Easing.in(Easing.quad) }, (f) => {
         'worklet';
         if (f) runOnJS(onPeeled)();
       }),
@@ -331,7 +331,7 @@ function PeelCard({
       { translateX: x.value },
       { translateY: y.value },
       { rotate: `${tilt.value}deg` },
-      { scale: 1 - Math.min(1, -y.value / (side * 1.6)) * 0.12 },
+      { scale: 1 - Math.min(1, -y.value / (side * 2.4)) * 0.2 },
     ],
   }));
 
