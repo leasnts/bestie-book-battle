@@ -366,6 +366,15 @@ export default function HomeScreen() {
       null,
     );
   }, [notesMatchChallenge, notes, revealedNotes]);
+  // À feuilleter sur le carré : la une, puis les autres, de la plus récente à la plus ancienne
+  const tileNotes = useMemo(() => {
+    if (!featuredNote) return [];
+    const rest = notes
+      .filter((note) => note.id !== featuredNote.id && !revealedNotes.includes(note))
+      .sort((a, b) => (a.created_at < b.created_at ? 1 : -1));
+    const fresh = revealedNotes.length > 0 ? revealedNotes : [featuredNote];
+    return [...fresh, ...rest];
+  }, [featuredNote, notes, revealedNotes]);
 
   // ===== Membres du club, pour le cadre Classement =====
   // Même hook que le classement complet : mêmes prénoms, mêmes photos, mêmes %.
@@ -562,8 +571,8 @@ export default function HomeScreen() {
           </View>
           <View style={styles.bentoCell}>
             <NoteTile
-              note={featuredNote}
-              isMine={featuredNote?.user_id === user?.id}
+              notes={tileNotes}
+              myUserId={user?.id}
               freshCount={revealedNotes.length}
               aheadCount={notesMatchChallenge ? notesAhead.length : 0}
               myTotalPages={totalPages}
