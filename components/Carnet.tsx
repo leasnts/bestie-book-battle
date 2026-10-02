@@ -34,7 +34,6 @@ import {
   ChevronDownIcon,
   ChevronLeftIcon,
   ListFilterIcon,
-  XIcon,
   type LucideIcon,
 } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -100,7 +99,6 @@ type NoteSection = {
   key: string;
 };
 
-const DEFAULT_AVATAR = require('../assets/images/profile_picture_default.png');
 
 export type CarnetMode = 'page' | 'sheet' | 'consult';
 
@@ -339,17 +337,6 @@ export default function Carnet({ mode }: { mode: CarnetMode }) {
     unread.forEach((note) => markRead(note.id, user.id));
   }, [unread, markRead, user?.id]);
 
-  /** Qui est qui, pour les badges du filtre */
-  const members = useMemo(
-    () =>
-      new Map(
-        participants.map((p) => [
-          p.user.id,
-          { name: p.user.id === user?.id ? 'Moi' : p.user.first_name || 'Participant', photo: p.user.profile_photo_url },
-        ]),
-      ),
-    [participants, user?.id],
-  );
 
   const noteDelay = (id: string) => {
     const rank = order.get(id) ?? CASCADE_MAX;
@@ -406,9 +393,9 @@ export default function Carnet({ mode }: { mode: CarnetMode }) {
 
           <Animated.View entering={rise(cascadeDelay.current)}>
             {/*
-              Le tri en cours est écrit sur son bouton (il y en a toujours un : pas
-              de badge ✕ pour lui) ; « Filtrer » compte ses filtres, et chacun
-              revient dessous en badge ✕.
+              Le tri en cours est écrit sur son bouton ; « Filtrer » porte le nombre
+              de filtres actifs (Lea, 2026-10-02 : pas de badges dessous, on les
+              retire en rouvrant le sheet).
             */}
             <View style={styles.tools}>
               <Pill
@@ -427,28 +414,6 @@ export default function Carnet({ mode }: { mode: CarnetMode }) {
                 onPress={() => router.push(`/carnet-filter${from}`)}
               />
             </View>
-            {filtered && (
-              <View style={styles.badges}>
-                {people.map((id) => (
-                  <Pill
-                    key={id}
-                    label={members.get(id)?.name ?? 'Participant'}
-                    photo={members.get(id)?.photo ?? null}
-                    removable
-                    onPress={() => togglePerson(id)}
-                  />
-                ))}
-                {categories.map((key) => (
-                  <Pill
-                    key={key}
-                    label={ANNOTATION_CATEGORIES[key].label}
-                    color={ANNOTATION_CATEGORIES[key].color}
-                    removable
-                    onPress={() => toggleCategory(key)}
-                  />
-                ))}
-              </View>
-            )}
           </Animated.View>
 
           <Animated.View
@@ -663,17 +628,10 @@ export default function Carnet({ mode }: { mode: CarnetMode }) {
 const UNLOCKED_ART = require('../assets/images/carnet/unlocked.png');
 const UNLOCKED_SIZE = 52;
 
-/**
- * Une pastille de papier : « Trier » et « Filtrer » (une icône et un mot), ou
- * un choix en cours (une photo, la couleur d'un thème…) qu'on retire d'un
- * toucher sur sa ✕.
- */
+/** Une pastille de papier : « Trier » et « Filtrer », une icône et un mot */
 function Pill({
   label,
   icon: Icon,
-  photo,
-  color,
-  removable = false,
   chevron = false,
   count = 0,
   hint,
@@ -682,9 +640,6 @@ function Pill({
 }: {
   label: string;
   icon?: LucideIcon;
-  photo?: string | null;
-  color?: string;
-  removable?: boolean;
   /** Ouvre un choix (le tri en cours) : un chevron après le mot */
   chevron?: boolean;
   /** Combien de choix sont actifs (les filtres) : une pastille lie de vin */
@@ -700,14 +655,10 @@ function Pill({
       pressedScale={0.97}
       onPress={onPress}
       accessibilityRole="button"
-      accessibilityLabel={removable ? `Retirer ${label}` : count > 0 ? `${label}, ${count} actifs` : label}
+      accessibilityLabel={count > 0 ? `${label}, ${count} actifs` : label}
       accessibilityHint={hint}
     >
       {Icon && <Icon size={16} color={colors.textPrimary} strokeWidth={2.2} />}
-      {photo !== undefined && (
-        <Image source={photo ? { uri: photo } : DEFAULT_AVATAR} style={styles.pillAvatar} />
-      )}
-      {color && <View style={[styles.pillSwatch, { backgroundColor: color }]} />}
       <Text style={styles.pillText}>{label}</Text>
       {count > 0 && (
         <View style={styles.pillCount}>
@@ -716,7 +667,6 @@ function Pill({
         </View>
       )}
       {chevron && <ChevronDownIcon size={15} color={colors.textTertiary} strokeWidth={2.4} />}
-      {removable && <XIcon size={14} color={colors.textTertiary} strokeWidth={2.4} />}
     </PressableScale>
   );
 }
@@ -790,12 +740,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: spacing.sm,
   },
-  badges: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.sm,
-    marginTop: spacing.sm,
-  },
   pill: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -807,20 +751,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
     borderWidth: 1,
     borderColor: inkAlpha(0.08),
-  },
-  pillStretch: {
-    flex: 1,
-    justifyContent: 'center',
-  },
-  pillText: {
-    fontFamily: fonts.bodyBold,
-    fontSize: 14,
-    color: colors.textPrimary,
-  },
-  pillAvatar: {
-    width: 20,
-    height: 20,
-    borderRadius: 6,
   },
   pillCount: {
     minWidth: 18,
@@ -837,10 +767,14 @@ const styles = StyleSheet.create({
     color: colors.white,
     fontVariant: ['tabular-nums'],
   },
-  pillSwatch: {
-    width: 14,
-    height: 14,
-    borderRadius: 4,
+  pillStretch: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+  pillText: {
+    fontFamily: fonts.bodyBold,
+    fontSize: 14,
+    color: colors.textPrimary,
   },
 
   markAll: {
