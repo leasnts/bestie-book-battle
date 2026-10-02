@@ -62,7 +62,8 @@ import {
 } from 'react-native';
 import DriftingBackdrop from './ui/DriftingBackdrop';
 import NewNotesDeck from './ui/NewNotesDeck';
-import NoteCard, { LockedNoteCard } from './ui/NoteCard';
+import NoteCard, { LockedNoteCard, type NoteFrame } from './ui/NoteCard';
+import ReactionOverlay from './ui/ReactionOverlay';
 import InkFigure, { INK } from './ui/InkFigure';
 import NotesTrack, { type TrackDot } from './ui/NotesTrack';
 import PressableScale from './ui/PressableScale';
@@ -194,6 +195,18 @@ export default function Carnet({ mode }: { mode: CarnetMode }) {
    * sur le même flou ; une goutte de verre y glisse en continu jusqu'à l'endroit
    * du livre où en est la liste.
    */
+  /** La note dont on ouvre les réactions d'un appui long, et sa place à l'écran */
+  const [reacting, setReacting] = useState<{ note: AnnotationWithAuthor; frame: NoteFrame } | null>(null);
+  const react = useCallback(
+    (note: AnnotationWithAuthor, emoji: string) => {
+      if (!user?.id) return;
+      toggleReaction(note.id, user.id, emoji);
+      // Réagir, c'est avoir lu
+      if (note.user_id !== user.id) markRead(note.id, user.id);
+    },
+    [toggleReaction, markRead, user?.id],
+  );
+
   /** Le haut du bloc du compte, et du fil dedans, dans l'en-tête de la liste */
   const summaryTop = useRef(0);
   const trackTop = useRef(0);
@@ -374,6 +387,19 @@ export default function Carnet({ mode }: { mode: CarnetMode }) {
     </SheetPageHeader>
   );
 
+  const overlay = reacting && (
+    <ReactionOverlay
+      note={reacting.note}
+      frame={reacting.frame}
+      myUserId={user?.id}
+      myTotalPages={myPages}
+      isMine={reacting.note.user_id === user?.id}
+      onReact={(emoji) => react(reacting.note, emoji)}
+      onMore={() => router.push(`/reactions/${reacting.note.id}`)}
+      onClose={() => setReacting(null)}
+    />
+  );
+
   const list = (
     <SectionList
       ref={listRef}
@@ -389,6 +415,9 @@ export default function Carnet({ mode }: { mode: CarnetMode }) {
       scrollEventThrottle={scrollEventThrottle}
       ListHeaderComponent={
         <View style={styles.header}>
+          {/* Les réactions d'un appui long : une Modal, posée ici pour que la liste
+              reste l'enfant direct de l'écran (condition des sheets natifs) */}
+          {overlay}
           {!isPage && header}
 
           <Animated.View entering={rise(cascadeDelay.current)}>
@@ -539,6 +568,8 @@ export default function Carnet({ mode }: { mode: CarnetMode }) {
                   : undefined
               }
               onMoreReactions={inSheet ? undefined : () => router.push(`/reactions/${item.id}`)}
+              // Appui long : les réactions s'ouvrent posées sur la note (comme WhatsApp)
+              onLongPress={!inSheet && user?.id ? (frame) => setReacting({ note: item, frame }) : undefined}
             />
           </Animated.View>
         );

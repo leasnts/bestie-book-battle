@@ -18,7 +18,7 @@
 
 import { Image } from 'expo-image';
 import { EllipsisIcon, LockIcon, SmilePlusIcon, XIcon } from 'lucide-react-native';
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import { StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native';
 import type { AnnotationWithAuthor } from '../../services/supabase/annotations';
 import { ANNOTATION_CATEGORIES, formatNoteDate, formatNotePage, isEmojiOnly } from '../../utils/annotations';
@@ -44,6 +44,11 @@ interface NoteCardProps {
   /** Ma note : elle s'ouvre pour être modifiée */
   isMine: boolean;
   onPress?: () => void;
+  /**
+   * Appui long (comme WhatsApp) : la note donne sa place à l'écran, pour que les
+   * réactions s'ouvrent posées dessus (`ReactionOverlay`)
+   */
+  onLongPress?: (frame: NoteFrame) => void;
   /** Moi, pour savoir quelles réactions sont les miennes */
   myUserId?: string;
   /** Ajouter ou retirer ma réaction. Sans elle, les réactions se lisent seulement. */
@@ -63,6 +68,14 @@ interface NoteCardProps {
  * les détails d'un autocollant moyen. Le coin décollé fait 34 % de ce côté.
  */
 const STICKER_BASE = 72;
+
+/** La place d'une note à l'écran */
+export interface NoteFrame {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
 export { STICKER_BASE_LARGE };
 
 export default function NoteCard({
@@ -70,6 +83,7 @@ export default function NoteCard({
   myTotalPages,
   isMine,
   onPress,
+  onLongPress,
   myUserId,
   onToggleReaction,
   onMoreReactions,
@@ -98,8 +112,14 @@ export default function NoteCard({
 
   // Un emoji seul : l'emoji en grand. Dans la liste, toute la largeur comme
   // les autres (Lea, 2026-10-02) ; dans la pile, la carte reste à sa taille
+  const stickerRef = useRef<View>(null);
+  const longPress = onLongPress
+    ? () => stickerRef.current?.measureInWindow((x, y, width, height) => onLongPress({ x, y, width, height }))
+    : undefined;
+
   const sticker = (
     <View
+      ref={stickerRef}
       style={[
         styles.note,
         large && styles.noteLarge,
@@ -126,6 +146,8 @@ export default function NoteCard({
           style={[styles.body, large && styles.bodyLarge]}
           pressedScale={0.99}
           onPress={onPress}
+          onLongPress={longPress}
+          delayLongPress={350}
           accessibilityRole="button"
           accessibilityLabel={`Note de ${isMine ? 'moi' : note.author?.first_name}, ${formatNoteDate(note.created_at)}, ${category.label}, ${page}`}
           accessibilityHint={isMine ? 'Ouvre ma note pour la modifier' : undefined}
