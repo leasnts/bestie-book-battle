@@ -47,6 +47,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import MaskedView from '@react-native-masked-view/masked-view';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
@@ -63,7 +64,7 @@ import {
 import DriftingBackdrop from './ui/DriftingBackdrop';
 import NewNotesDeck from './ui/NewNotesDeck';
 import NoteCard, { LockedNoteCard } from './ui/NoteCard';
-import InkFigure from './ui/InkFigure';
+import InkFigure, { INK } from './ui/InkFigure';
 import NotesTrack, { type TrackDot } from './ui/NotesTrack';
 import PressableScale from './ui/PressableScale';
 import GlassButton from './ui/GlassButton';
@@ -451,23 +452,25 @@ export default function Carnet({ mode }: { mode: CarnetMode }) {
             onLayout={(e) => (summaryBottom.current = e.nativeEvent.layout.y + e.nativeEvent.layout.height)}
           >
             {/*
-              Hors cadre, comme Ma page : le compte à l'encre, et à côté le cadenas
-              ouvert à l'aquarelle (des notes débloquées), puis le fil
+              Hors cadre, comme Ma page : le cadenas ouvert à l'aquarelle (des notes
+              débloquées), le compte à l'encre, puis le fil
             */}
             <View style={styles.summary}>
               <View style={styles.figureRow}>
+                {/* Le cadenas, à gauche, à la même encre que le chiffre */}
+                <MaskedView
+                  style={styles.unlocked}
+                  maskElement={<Image source={UNLOCKED_ART} style={StyleSheet.absoluteFill} contentFit="contain" />}
+                  importantForAccessibility="no-hide-descendants"
+                  accessibilityElementsHidden
+                >
+                  <LinearGradient colors={INK} style={StyleSheet.absoluteFill} />
+                </MaskedView>
                 <InkFigure
                   value={notes.length}
                   total={notes.length + ahead.length}
                   fontSize={64}
                   accessibilityLabel={`${notes.length} notes ouvertes sur ${notes.length + ahead.length}`}
-                />
-                <Image
-                  source={UNLOCKED_ART}
-                  style={styles.unlocked}
-                  tintColor={colors.accent}
-                  contentFit="contain"
-                  accessible={false}
                 />
               </View>
               <NotesTrack
@@ -645,7 +648,7 @@ export default function Carnet({ mode }: { mode: CarnetMode }) {
  * Le cadenas ouvert, à l'aquarelle : à côté du compte, il dit « des notes
  * débloquées » sans un mot. Fait comme les illustrations des thèmes (un masque :
  * l'encre = l'opacité, le grain de l'aquarelle dans la transparence), teinté
- * de lie de vin.
+ * de la même encre que le chiffre (dégradé `INK`), posé à sa gauche.
  */
 const UNLOCKED_ART = require('../assets/images/carnet/unlocked.png');
 const UNLOCKED_SIZE = 52;
@@ -760,11 +763,10 @@ const styles = StyleSheet.create({
     marginTop: spacing.md,
     marginBottom: spacing.sm,
   },
-  // Contre le total fantôme, qui déborde un peu sur sa droite
   unlocked: {
     width: UNLOCKED_SIZE,
     height: UNLOCKED_SIZE,
-    marginLeft: -spacing.md,
+    marginRight: spacing.sm,
   },
 
   tools: {
