@@ -6,8 +6,8 @@
  * Deux façons d'annoter ma page enregistrée, sans quitter l'accueil, deux
  * ronds chocolat (`RoundButton` dark) ferrés à droite, icône seule :
  * - ✎ : la feuille (`NoteComposer`), où tout se fait : écrire, dire (🎙), citer
- *   (❝), choisir le thème et la page. Un brouillon laissé met un point lie de
- *   vin sur le crayon ;
+ *   (❝), choisir le thème et la page (`WriteNoteButton`, le même que dans le
+ *   carnet) ;
  * - ☺ : une réaction en un geste, sans note : la liste à la mode sort au-dessus
  *   de la barre et défile ; « + » (secondaire, en verre) ouvre tous les emojis
  *   (/emoji-note).
@@ -16,19 +16,18 @@
  * place, rien ne saute.
  */
 
-import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
-import { PenLineIcon, PlusIcon, SmilePlusIcon, XIcon } from 'lucide-react-native';
+import { PlusIcon, SmilePlusIcon, XIcon } from 'lucide-react-native';
 import React, { useCallback, useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeIn, FadeOut, useReducedMotion, ZoomIn } from 'react-native-reanimated';
-import { useQuickNote, type QuickNote } from '../../hooks/useQuickNote';
+import { useQuickNote } from '../../hooks/useQuickNote';
 import { creamAlpha, inkAlpha, shadowAlpha, spacing } from '../../utils/constants';
 import { TRENDING_EMOJIS } from '../../utils/emojis';
-import NoteComposer, { EMPTY_DRAFT, type ComposerDraft } from './NoteComposer';
 import PressableScale from './PressableScale';
 import GlassButton from './GlassButton';
 import RoundButton, { ROUND_BUTTON_SIZE } from './RoundButton';
+import WriteNoteButton from './WriteNoteButton';
 
 type Mode = 'idle' | 'emoji';
 
@@ -36,47 +35,18 @@ export const QUICK_BAR_HEIGHT = 52;
 
 export default function QuickNoteBar() {
   const router = useRouter();
-  const { post, posting, page, myPages } = useQuickNote();
+  const { add, posting, page } = useQuickNote();
   const reducedMotion = useReducedMotion();
   const [mode, setMode] = useState<Mode>('idle');
-  const [writing, setWriting] = useState(false);
-  const [draft, setDraft] = useState<ComposerDraft>(EMPTY_DRAFT);
 
   const closeMode = useCallback(() => setMode('idle'), []);
-
-  /** Ajoute la note ; `false` si ça n'a pas marché (la personne est prévenue) */
-  const add = useCallback(
-    async (note: QuickNote) => {
-      try {
-        const done = await post(note);
-        if (done) Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
-        return done;
-      } catch (error) {
-        console.error('[Carnet] note rapide impossible', error);
-        Alert.alert('Erreur', "La note n'a pas pu être ajoutée. Réessaie.");
-        return false;
-      }
-    },
-    [post],
-  );
 
   const entering = reducedMotion ? undefined : FadeIn.duration(180);
   const exiting = reducedMotion ? undefined : FadeOut.duration(120);
 
   return (
     <View style={styles.bar}>
-      <RoundButton
-        icon={PenLineIcon}
-        variant="dark"
-        badge={!!(draft.body || draft.quote)}
-        onPress={() => {
-          setMode('idle');
-          setWriting(true);
-        }}
-        label={
-          draft.body ? `Reprendre ma note sur la page ${page} : ${draft.body}` : `Écrire une note sur la page ${page}`
-        }
-      />
+      <WriteNoteButton onOpen={closeMode} />
       <RoundButton
         icon={mode === 'emoji' ? XIcon : SmilePlusIcon}
         variant="dark"
@@ -118,17 +88,6 @@ export default function QuickNoteBar() {
         </Animated.View>
       )}
 
-      <NoteComposer
-        visible={writing}
-        page={page}
-        maxPage={myPages}
-        draft={draft}
-        onClose={(left) => {
-          setDraft(left);
-          setWriting(false);
-        }}
-        onPost={(note) => add(note)}
-      />
     </View>
   );
 }

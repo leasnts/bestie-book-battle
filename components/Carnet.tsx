@@ -57,6 +57,7 @@ import NoteCard from './ui/NoteCard';
 import NotesTrack, { type TrackDot } from './ui/NotesTrack';
 import PressableScale from './ui/PressableScale';
 import GlassButton from './ui/GlassButton';
+import WriteNoteButton from './ui/WriteNoteButton';
 import { SheetPageHeader } from './ui/SheetPage';
 import { SHEET_TOP_INSET, useSheetScrolled } from './ui/SheetHeader';
 import type { AnnotationWithAuthor } from '../services/supabase/annotations';
@@ -312,19 +313,14 @@ export default function Carnet({ mode }: { mode: CarnetMode }) {
     return (cascadeDelay.current ? cascadeDelay.current + 140 : 0) + rank * motion.stagger;
   };
 
-  // L'en-tête commun des sheets ; écrire une note : le rond post-it
+  // L'en-tête commun des sheets ; écrire une note : le même ✎ que sur l'accueil
   const header = (
     <SheetPageHeader
       title="Carnet de notes"
       onBack={inSheet || isPage ? () => router.back() : undefined}
       actions={
         inSheet ? undefined : (
-          <GlassButton
-            icon={StickyNoteIcon}
-            size={36}
-            onPress={() => router.push(`/note/new${from}`)}
-            accessibilityLabel="Annoter la page"
-          />
+          <WriteNoteButton />
         )
       }
       scrolled={isPage && scrolled}
@@ -523,7 +519,7 @@ export default function Carnet({ mode }: { mode: CarnetMode }) {
 
       {/*
         Le verre naît dans une vue en fondu : il reste translucide (DESIGN.md).
-        Pendant la pile, seulement le retour : ni titre ni post-it, la note seule.
+        Pendant la pile, seulement le retour : ni titre ni ✎, la note seule.
       */}
       {phase === 'deck' ? (
         <Animated.View

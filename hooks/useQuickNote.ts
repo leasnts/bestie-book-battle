@@ -8,7 +8,9 @@
  * choisie (un vocal, un emoji), la catégorie par défaut.
  */
 
+import * as Haptics from 'expo-haptics';
 import { useCallback, useMemo, useState } from 'react';
+import { Alert } from 'react-native';
 import { useAnnotationStore, type VoiceClip } from '../stores/annotationStore';
 import { useAuthStore } from '../stores/authStore';
 import { useProgressStore } from '../stores/progressStore';
@@ -70,5 +72,21 @@ export function useQuickNote() {
     [activeChallenge, user?.id, page, myPages, addNote],
   );
 
-  return { post, posting, page, myPages };
+  /** Ajoute la note, avec une vibration ; `false` si ça n'a pas marché (la personne est prévenue) */
+  const add = useCallback(
+    async (note: QuickNote) => {
+      try {
+        const done = await post(note);
+        if (done) Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+        return done;
+      } catch (error) {
+        console.error('[Carnet] note rapide impossible', error);
+        Alert.alert('Erreur', "La note n'a pas pu être ajoutée. Réessaie.");
+        return false;
+      }
+    },
+    [post],
+  );
+
+  return { post, add, posting, page, myPages };
 }
