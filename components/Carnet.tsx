@@ -30,7 +30,15 @@
  */
 
 import { useRouter } from 'expo-router';
-import { ChevronLeftIcon, LockIcon } from 'lucide-react-native';
+import {
+  ArrowDownUpIcon,
+  ChevronLeftIcon,
+  ClockIcon,
+  ListFilterIcon,
+  LockIcon,
+  XIcon,
+  type LucideIcon,
+} from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Animated, {
   Easing,
@@ -41,10 +49,8 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
-import { LinearGradient } from 'expo-linear-gradient';
 import {
   Pressable,
-  ScrollView,
   SectionList,
   StyleSheet,
   Text,
@@ -63,16 +69,14 @@ import { SHEET_TOP_INSET, useSheetScrolled } from './ui/SheetHeader';
 import type { AnnotationWithAuthor } from '../services/supabase/annotations';
 import { useAnnotationStore } from '../stores/annotationStore';
 import { useAuthStore } from '../stores/authStore';
+import { filterNotes, useCarnetViewStore } from '../stores/carnetViewStore';
 import { useProgressStore } from '../stores/progressStore';
 import { useProjectStore } from '../stores/projectStore';
-import type { AnnotationCategory } from '../types/supabase';
 import {
   ANNOTATION_CATEGORIES,
-  CATEGORY_ORDER,
   positionFromPage,
 } from '../utils/annotations';
 import {
-  accentGradient,
   borderRadius,
   colors,
   fonts,
@@ -80,13 +84,6 @@ import {
   motion,
   spacing,
 } from '../utils/constants';
-
-/** Un filtre : tout, moi, une personne, ou une catégorie */
-type Filter =
-  | { kind: 'all' }
-  | { kind: 'mine' }
-  | { kind: 'member'; userId: string; name: string; photo: string | null }
-  | { kind: 'category'; category: AnnotationCategory };
 
 /** Une section de la liste : une tranche de pages, ou les nouvelles (`start: null`) */
 type NoteSection = {
@@ -177,14 +174,22 @@ export default function Carnet({ mode }: { mode: CarnetMode }) {
     dismissRevealed();
   }, [dismissRevealed]);
 
-  const [filter, setFilter] = useState<Filter>({ kind: 'all' });
-  /** Le filtre en un mot : un nouveau filtre rejoue la cascade */
-  const filterKey =
-    filter.kind === 'member'
-      ? filter.userId
-      : filter.kind === 'category'
-        ? filter.category
-        : filter.kind;
+  // Trier et filtrer : choisis dans leurs sheets, partagés par le store ; le
+  // carnet repart de zéro à chaque ouverture
+  const sort = useCarnetViewStore((s) => s.sort);
+  const people = useCarnetViewStore((s) => s.people);
+  const categories = useCarnetViewStore((s) => s.categories);
+  const setSort = useCarnetViewStore((s) => s.setSort);
+  const togglePerson = useCarnetViewStore((s) => s.togglePerson);
+  const toggleCategory = useCarnetViewStore((s) => s.toggleCategory);
+  const resetView = useCarnetViewStore((s) => s.reset);
+  useEffect(() => {
+    resetView();
+    return resetView;
+  }, [resetView]);
+  const filtered = people.length > 0 || categories.length > 0;
+  /** Le tri et le filtre en un mot : un nouveau choix rejoue la cascade */
+  const filterKey = `${sort}:${people.join(',')}:${categories.join(',')}`;
   const { scrolled, onScroll, scrollEventThrottle } = useSheetScrolled();
   const listRef = useRef<SectionList<AnnotationWithAuthor, NoteSection>>(null);
 
@@ -192,18 +197,7 @@ export default function Carnet({ mode }: { mode: CarnetMode }) {
   const myPages = myProgress?.progress.total_pages ?? activeChallenge?.total_pages ?? 0;
   const myPosition = positionFromPage(myProgress?.progress.current_page ?? 0, myPages);
 
-  const visible = useMemo(() => {
-    switch (filter.kind) {
-      case 'mine':
-        return notes.filter((note) => note.user_id === user?.id);
-      case 'member':
-        return notes.filter((note) => note.user_id === filter.userId);
-      case 'category':
-        return notes.filter((note) => note.category === filter.category);
-      default:
-        return notes;
-    }
-  }, [notes, filter, user?.id]);
+  const visible = useMemo(() => filterNotes(notes, people, categories), [notes, people, categories]);
 
   /**
    * Les sections : des tranches de pages de mon édition. Une dizaine de tranches
@@ -212,7 +206,12 @@ export default function Carnet({ mode }: { mode: CarnetMode }) {
    */
   const slice = Math.max(10, Math.round(myPages / 10));
 
-  const sections = useMemo(() => {
+  const sections = useMemo((): NoteSection[] => {
+    // Plus récentes : une seule liste, la dernière écrite en haut
+    if (sort === 'recent') {
+      const data = [...visible].sort((a, b) => (a.created_at < b.created_at ? 1 : -1));
+      return data.length ? [{ title: 'Plus récentes', start: null, data, key: `${filterKey}-recent` }] : [];
+    }
     const news: AnnotationWithAuthor[] = [];
     const groups = new Map<number, AnnotationWithAuthor[]>();
     for (const note of visible) {
@@ -238,7 +237,7 @@ export default function Carnet({ mode }: { mode: CarnetMode }) {
 
     const title = fresh.pages ? `Nouvelles · p. ${fresh.pages.from}–${fresh.pages.to}` : 'Nouvelles';
     return [{ title, start: null, data: news, key: `${filterKey}-news` }, ...slices];
-  }, [visible, myPages, slice, fresh, filterKey]);
+  }, [visible, myPages, slice, fresh, filterKey, sort]);
 
   /** Les notes que je n'ai pas encore ouvertes : ce sont les « nouvelles » */
   const unread = useMemo(
@@ -273,6 +272,16 @@ export default function Carnet({ mode }: { mode: CarnetMode }) {
   const seek = useCallback(
     (position: number) => {
       if (sections.length === 0) return;
+      // Plus récentes : pas de tranches, on va à la note la plus proche de cet endroit
+      if (sort === 'recent') {
+        const data = sections[0].data;
+        let itemIndex = 0;
+        data.forEach((note, i) => {
+          if (Math.abs(note.position - position) < Math.abs(data[itemIndex].position - position)) itemIndex = i;
+        });
+        listRef.current?.scrollToLocation({ sectionIndex: 0, itemIndex, viewOffset: 8, animated: true });
+        return;
+      }
       const page = position * myPages;
       // Les nouvelles ne sont pas une tranche : la piste mène aux pages
       let index = sections.findIndex(
@@ -286,7 +295,7 @@ export default function Carnet({ mode }: { mode: CarnetMode }) {
         animated: true,
       });
     },
-    [sections, myPages, slice],
+    [sections, myPages, slice, sort],
   );
 
   const markAllRead = useCallback(() => {
@@ -294,15 +303,15 @@ export default function Carnet({ mode }: { mode: CarnetMode }) {
     unread.forEach((note) => markRead(note.id, user.id));
   }, [unread, markRead, user?.id]);
 
+  /** Qui est qui, pour les badges du filtre */
   const members = useMemo(
     () =>
-      participants
-        .filter((p) => p.user.id !== user?.id)
-        .map((p) => ({
-          userId: p.user.id,
-          name: p.user.first_name || 'Participant',
-          photo: p.user.profile_photo_url,
-        })),
+      new Map(
+        participants.map((p) => [
+          p.user.id,
+          { name: p.user.id === user?.id ? 'Moi' : p.user.first_name || 'Participant', photo: p.user.profile_photo_url },
+        ]),
+      ),
     [participants, user?.id],
   );
 
@@ -365,48 +374,40 @@ export default function Carnet({ mode }: { mode: CarnetMode }) {
           </Animated.View>
 
           <Animated.View entering={rise(cascadeDelay.current + motion.stagger)}>
-            {/* Filtres */}
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.filters}
-            >
-              <Chip
-                label="Tout"
-                selected={filter.kind === 'all'}
-                onPress={() => setFilter({ kind: 'all' })}
+            {/* Trier et filtrer, puis ce qui est choisi en badges ✕ */}
+            <View style={styles.tools}>
+              <Pill icon={ArrowDownUpIcon} label="Trier" onPress={() => router.push(`/carnet-sort${from}`)} />
+              <Pill
+                icon={ListFilterIcon}
+                label="Filtrer"
+                onPress={() => router.push(`/carnet-filter${from}`)}
               />
-              <Chip
-                label="Moi"
-                selected={filter.kind === 'mine'}
-                onPress={() => setFilter({ kind: 'mine' })}
-              />
-              {members.map((member) => (
-                <Chip
-                  key={member.userId}
-                  label={member.name}
-                  photo={member.photo}
-                  selected={filter.kind === 'member' && filter.userId === member.userId}
-                  onPress={() =>
-                    setFilter({
-                      kind: 'member',
-                      userId: member.userId,
-                      name: member.name,
-                      photo: member.photo,
-                    })
-                  }
-                />
-              ))}
-              {CATEGORY_ORDER.map((key) => (
-                <Chip
-                  key={key}
-                  label={ANNOTATION_CATEGORIES[key].label}
-                  color={ANNOTATION_CATEGORIES[key].color}
-                  selected={filter.kind === 'category' && filter.category === key}
-                  onPress={() => setFilter({ kind: 'category', category: key })}
-                />
-              ))}
-            </ScrollView>
+            </View>
+            {(sort !== 'page' || filtered) && (
+              <View style={styles.badges}>
+                {sort === 'recent' && (
+                  <Pill icon={ClockIcon} label="Plus récentes" removable onPress={() => setSort('page')} />
+                )}
+                {people.map((id) => (
+                  <Pill
+                    key={id}
+                    label={members.get(id)?.name ?? 'Participant'}
+                    photo={members.get(id)?.photo ?? null}
+                    removable
+                    onPress={() => togglePerson(id)}
+                  />
+                ))}
+                {categories.map((key) => (
+                  <Pill
+                    key={key}
+                    label={ANNOTATION_CATEGORIES[key].label}
+                    color={ANNOTATION_CATEGORIES[key].color}
+                    removable
+                    onPress={() => toggleCategory(key)}
+                  />
+                ))}
+              </View>
+            )}
           </Animated.View>
 
           {!inSheet && unread.length > 0 && (
@@ -469,7 +470,7 @@ export default function Carnet({ mode }: { mode: CarnetMode }) {
       }}
       ListEmptyComponent={
         <Text style={styles.empty}>
-          {filter.kind === 'all' ? 'Aucune note ouverte pour l’instant' : 'Rien avec ce filtre'}
+          {filtered ? 'Rien avec ce filtre' : 'Aucune note ouverte pour l’instant'}
         </Text>
       }
       ListFooterComponent={
@@ -554,44 +555,41 @@ export default function Carnet({ mode }: { mode: CarnetMode }) {
   );
 }
 
-/** Un filtre : un mot, éventuellement une photo ou une pastille de couleur */
-function Chip({
+/**
+ * Une pastille de papier : « Trier » et « Filtrer » (une icône et un mot), ou
+ * un choix en cours (une photo, la couleur d'un thème…) qu'on retire d'un
+ * toucher sur sa ✕.
+ */
+function Pill({
   label,
+  icon: Icon,
   photo,
   color,
-  selected,
+  removable = false,
   onPress,
 }: {
   label: string;
+  icon?: LucideIcon;
   photo?: string | null;
   color?: string;
-  selected: boolean;
+  removable?: boolean;
   onPress: () => void;
 }) {
   return (
     <PressableScale
-      style={[styles.chip, selected && styles.chipOn]}
+      style={styles.pill}
       pressedScale={0.94}
       onPress={onPress}
       accessibilityRole="button"
-      accessibilityState={{ selected }}
-      accessibilityLabel={label}
+      accessibilityLabel={removable ? `Retirer ${label}` : label}
     >
-      {/* Choisi : l'accent en dégradé, comme les filtres de la bibliothèque */}
-      {selected && (
-        <Animated.View
-          entering={FadeIn.duration(motion.duration.standard)}
-          exiting={FadeOut.duration(motion.duration.standard)}
-          style={StyleSheet.absoluteFill}
-        >
-          <LinearGradient colors={accentGradient} style={StyleSheet.absoluteFill} />
-        </Animated.View>
-      )}
+      {Icon && <Icon size={16} color={colors.textPrimary} strokeWidth={2.2} />}
       {photo !== undefined && (
-        <Image source={photo ? { uri: photo } : DEFAULT_AVATAR} style={styles.chipAvatar} />
+        <Image source={photo ? { uri: photo } : DEFAULT_AVATAR} style={styles.pillAvatar} />
       )}
-      {color && <View style={[styles.chipDot, { backgroundColor: color }]} />}
-      <Text style={[styles.chipText, selected && styles.chipTextOn]}>{label}</Text>
+      {color && <View style={[styles.pillSwatch, { backgroundColor: color }]} />}
+      <Text style={styles.pillText}>{label}</Text>
+      {removable && <XIcon size={14} color={colors.textTertiary} strokeWidth={2.4} />}
     </PressableScale>
   );
 }
@@ -639,42 +637,41 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
 
-  filters: {
+  tools: {
+    flexDirection: 'row',
     gap: spacing.sm,
-    paddingVertical: 2,
   },
-  chip: {
+  badges: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
+    marginTop: spacing.sm,
+  },
+  pill: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.xs,
-    minHeight: 32,
+    gap: spacing.xs + 2,
+    minHeight: 36,
     paddingHorizontal: spacing.md,
     // Carré arrondi, comme les filtres de la bibliothèque (FilterChips)
     borderRadius: borderRadius.sm,
-    overflow: 'hidden',
     backgroundColor: colors.white,
     borderWidth: 1,
     borderColor: inkAlpha(0.08),
   },
-  chipOn: {
-    borderColor: colors.accent,
-  },
-  chipText: {
+  pillText: {
     fontFamily: fonts.bodyBold,
-    fontSize: 13,
-    color: colors.textSecondary,
+    fontSize: 14,
+    color: colors.textPrimary,
   },
-  chipTextOn: {
-    color: colors.white,
+  pillAvatar: {
+    width: 20,
+    height: 20,
+    borderRadius: 6,
   },
-  chipAvatar: {
-    width: 18,
-    height: 18,
-    borderRadius: 5,
-  },
-  chipDot: {
-    width: 12,
-    height: 12,
+  pillSwatch: {
+    width: 14,
+    height: 14,
     borderRadius: 4,
   },
 

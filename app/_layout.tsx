@@ -316,6 +316,10 @@ function RootLayoutNav() {
         }}
       />
 
+      {/* Trier et filtrer le carnet — posés sur le carnet */}
+      <Stack.Screen name="carnet-sort" options={sheetScreenOptions()} />
+      <Stack.Screen name="carnet-filter" options={sheetScreenOptions([0.75, 0.95])} />
+
       {/* Le carnet en sheet (fiche du livre, lien profond) — haut d'emblée */}
       <Stack.Screen name="notes" options={sheetScreenOptions([0.95])} />
 
