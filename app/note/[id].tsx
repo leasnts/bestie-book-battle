@@ -298,15 +298,14 @@ export default function NoteFormRoute() {
         </Button3D>
 
         {existing && (
-          <Pressable
+          <Button3D
             onPress={handleDelete}
-            style={({ pressed }) => [styles.delete, pressed && { opacity: 0.6 }]}
-            accessibilityRole="button"
+            variant="danger"
+            icon={Trash2Icon}
             accessibilityLabel="Supprimer la note"
           >
-            <Trash2Icon size={17} color={colors.error} strokeWidth={2} />
-            <Text style={styles.deleteText}>Supprimer</Text>
-          </Pressable>
+            Supprimer
+          </Button3D>
         )}
       </SheetFooter>
     </SheetPage>
@@ -433,16 +432,4 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
   },
 
-  delete: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.sm,
-    minHeight: 44,
-  },
-  deleteText: {
-    fontFamily: fonts.bodyBold,
-    fontSize: 15,
-    color: colors.error,
-  },
 });

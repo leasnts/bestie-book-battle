@@ -212,16 +212,9 @@ export default function CapRoute() {
         </Button3D>
 
         {canDelete && (
-          <Pressable
-            onPress={handleDelete}
-            hitSlop={8}
-            style={({ pressed }) => [styles.delete, pressed && { opacity: 0.6 }]}
-            accessibilityRole="button"
-            accessibilityLabel="Supprimer le cap"
-          >
-            <Trash2Icon size={16} color={colors.accent} strokeWidth={2.2} />
-            <Text style={styles.deleteText}>Supprimer le cap</Text>
-          </Pressable>
+          <Button3D onPress={handleDelete} variant="danger" icon={Trash2Icon}>
+            Supprimer le cap
+          </Button3D>
         )}
       </SheetFooter>
     </SheetPage>
@@ -261,17 +254,5 @@ const styles = StyleSheet.create({
     marginTop: spacing.sm,
     height: 150,
     alignSelf: 'center',
-  },
-  delete: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.xs,
-    paddingVertical: spacing.sm,
-  },
-  deleteText: {
-    fontFamily: fonts.bodyBold,
-    fontSize: 15,
-    color: colors.accent,
   },
 });

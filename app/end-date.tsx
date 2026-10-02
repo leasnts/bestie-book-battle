@@ -13,11 +13,11 @@ import DateTimePicker, { type DateTimePickerEvent } from '@react-native-communit
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback, useState } from 'react';
 import { CalendarXIcon } from 'lucide-react-native';
-import { Alert, Pressable, StyleSheet, Text } from 'react-native';
+import { Alert, StyleSheet } from 'react-native';
 import Button3D from '../components/Button3D';
 import SheetPage, { SheetFooter } from '../components/ui/SheetPage';
 import { useProjectStore } from '../stores/projectStore';
-import { colors, fonts, spacing } from '../utils/constants';
+import { colors } from '../utils/constants';
 
 function tomorrow() {
   const d = new Date();
@@ -92,17 +92,9 @@ export default function EndDateRoute() {
         </Button3D>
 
         {currentDate && (
-          <Pressable
-            onPress={handleClear}
-            disabled={isSaving}
-            hitSlop={8}
-            style={({ pressed }) => [styles.clear, pressed && { opacity: 0.6 }]}
-            accessibilityRole="button"
-            accessibilityLabel="Sans date de fin"
-          >
-            <CalendarXIcon size={16} color={colors.accent} strokeWidth={2.2} />
-            <Text style={styles.clearText}>Sans date de fin</Text>
-          </Pressable>
+          <Button3D onPress={handleClear} variant="danger" icon={CalendarXIcon} disabled={isSaving}>
+            Sans date de fin
+          </Button3D>
         )}
       </SheetFooter>
     </SheetPage>
@@ -113,18 +105,5 @@ const styles = StyleSheet.create({
   picker: {
     height: 200,
     alignSelf: 'center',
-  },
-  // Le lien sous le bouton, comme « Supprimer le cap »
-  clear: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.xs,
-    paddingVertical: spacing.sm,
-  },
-  clearText: {
-    fontFamily: fonts.bodyBold,
-    fontSize: 15,
-    color: colors.accent,
   },
 });

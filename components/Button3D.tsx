@@ -4,6 +4,8 @@
  * Deux variants sémantiques :
  * - **primary** (bouton principal / "nir") : fond noyer foncé (colors.dark900), pour l'action principale
  * - **secondary** (bouton secondaire) : fond crème (colors.bgLight), pour actions secondaires ou retour
+ * - **danger** : le secondaire, texte et icône en rouge, pour supprimer / retirer
+ *   (sous le bouton principal d'un sheet : « Supprimer le cap », « Sans date de fin »…)
  * 
  * Le bouton back est un Button3D variant="secondary" en mode icon-only.
  * Il peut aussi contenir du texte comme le primary (ex: "Retour", "Annuler").
@@ -60,7 +62,7 @@ const ICON_LABELS = new Map<LucideIcon, string>([
 interface Button3DProps {
   onPress: () => void;
   children?: React.ReactNode;
-  variant?: 'primary' | 'secondary';
+  variant?: 'primary' | 'secondary' | 'danger';
   disabled?: boolean;
   loading?: boolean;
   /** Icône Lucide (le composant, pas un nom) : icon={ChevronLeftIcon}. Seule banque d'icônes de l'app. */
@@ -101,11 +103,14 @@ export default function Button3D({
   accessibilityHint,
 }: Button3DProps) {
   const isPrimary = variant === 'primary';
+  const isDanger = variant === 'danger';
+  /** Couleur du texte, de l'icône et du chargement sur fond crème */
+  const inkColor = isDanger ? colors.error : colors.textTertiary;
   const isCompact = size === 'compact';
   const showText = !iconOnly && (children !== undefined && children !== null && children !== '');
   const Icon = icon;
   const leadingIcon = iconComponent ?? (Icon ? (
-    <Icon size={isCompact ? 20 : 24} color={isPrimary ? colors.white : colors.textTertiary} />
+    <Icon size={isCompact ? 20 : 24} color={isPrimary ? colors.white : inkColor} />
   ) : null);
   const [pressed, setPressed] = useState(false);
 
@@ -260,7 +265,7 @@ export default function Button3D({
           {/* ====== CONTENU ====== */}
           <View style={[styles.content, isCompact && styles.contentCompact]}>
             {loading ? (
-              <ActivityIndicator color={isPrimary ? colors.white : colors.textTertiary} size="small" />
+              <ActivityIndicator color={isPrimary ? colors.white : inkColor} size="small" />
             ) : iconOnly && leadingIcon ? (
               leadingIcon
             ) : (
@@ -272,6 +277,7 @@ export default function Button3D({
                   <Text style={[
                     styles.text,
                     isPrimary ? styles.primaryText : styles.secondaryText,
+                    isDanger && styles.dangerText,
                     textStyle,
                   ]}>
                     {children}
@@ -382,6 +388,9 @@ const styles = StyleSheet.create({
   },
   secondaryText: {
     color: colors.textPrimary,
+  },
+  dangerText: {
+    color: colors.error,
   },
   iconLeft: {
     marginRight: 10,
