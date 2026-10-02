@@ -266,7 +266,7 @@ function PeelCard({
       far = Math.max(far, (cx - ax.value) * ux + (cy - ay.value) * uy);
     }
     const reach = far * 2 + 2;
-    const sweep = { duration: 320, easing: easeOut };
+    const sweep = { duration: 260, easing: easeOut };
     bx.value = withTiming(ax.value + ux * reach, sweep);
     by.value = withTiming(ay.value + uy * reach, sweep);
 
@@ -274,14 +274,14 @@ function PeelCard({
     // haut, sans tanguer. Il glisse un peu vers le centre (retourné du côté où
     // on a tiré, il ne sort pas par le bord de l'écran) et se redresse presque
     const dir = -(Math.sign(dx) || 1);
-    const rise = { duration: 1400, easing: Easing.in(Easing.quad) };
-    const drift = { duration: 1400, easing: Easing.out(Easing.quad) };
-    y.value = withDelay(220, withTiming(-side * 2.4, rise));
-    x.value = withDelay(220, withTiming(dir * side * 0.18, drift));
-    tilt.value = withDelay(220, withTiming(dir * 3, drift));
+    const rise = { duration: 850, easing: Easing.in(Easing.quad) };
+    const drift = { duration: 850, easing: Easing.out(Easing.quad) };
+    y.value = withDelay(120, withTiming(-side * 2.4, rise));
+    x.value = withDelay(120, withTiming(dir * side * 0.18, drift));
+    tilt.value = withDelay(120, withTiming(dir * 3, drift));
     fade.value = withDelay(
-      900,
-      withTiming(0, { duration: 700, easing: Easing.in(Easing.quad) }, (f) => {
+      520,
+      withTiming(0, { duration: 450, easing: Easing.in(Easing.quad) }, (f) => {
         'worklet';
         if (f) runOnJS(onPeeled)();
       }),
