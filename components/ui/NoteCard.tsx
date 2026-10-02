@@ -162,7 +162,12 @@ export default function NoteCard({
           />
         )}
 
-        {note.visibility === 'private' && <Text style={styles.private}>Moi seule</Text>}
+        {note.visibility === 'private' && (
+            <View style={styles.privateRow}>
+              <LockIcon size={11} color={inkAlpha(0.55)} strokeWidth={2.6} />
+              <Text style={styles.private}>Moi seule</Text>
+            </View>
+          )}
         </PressableScale>
       ) : (
         <View style={[styles.body, large && styles.bodyLarge]}>
@@ -198,7 +203,12 @@ export default function NoteCard({
           />
         )}
 
-        {note.visibility === 'private' && <Text style={styles.private}>Moi seule</Text>}
+        {note.visibility === 'private' && (
+            <View style={styles.privateRow}>
+              <LockIcon size={11} color={inkAlpha(0.55)} strokeWidth={2.6} />
+              <Text style={styles.private}>Moi seule</Text>
+            </View>
+          )}
         </View>
       )}
 
@@ -504,6 +514,12 @@ const styles = StyleSheet.create({
     lineHeight: 25,
   },
 
+  // Une note privée : le cadenas dit qu'elle ne se montre à personne d'autre
+  privateRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
   private: {
     fontFamily: fonts.bodyBold,
     fontSize: 11,
