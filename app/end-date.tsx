@@ -12,7 +12,6 @@
 import DateTimePicker, { type DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback, useState } from 'react';
-import { CalendarXIcon } from 'lucide-react-native';
 import { Alert, StyleSheet } from 'react-native';
 import Button3D from '../components/Button3D';
 import SheetPage, { SheetFooter } from '../components/ui/SheetPage';
@@ -92,7 +91,7 @@ export default function EndDateRoute() {
         </Button3D>
 
         {currentDate && (
-          <Button3D onPress={handleClear} variant="danger" icon={CalendarXIcon} disabled={isSaving}>
+          <Button3D onPress={handleClear} variant="secondary" disabled={isSaving}>
             Sans date de fin
           </Button3D>
         )}

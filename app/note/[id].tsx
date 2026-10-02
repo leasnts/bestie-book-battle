@@ -20,7 +20,7 @@
  */
 
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { MinusIcon, PlusIcon, Trash2Icon } from 'lucide-react-native';
+import { MinusIcon, PlusIcon } from 'lucide-react-native';
 import React, { useCallback, useMemo, useState } from 'react';
 import {
   Alert,
@@ -300,8 +300,7 @@ export default function NoteFormRoute() {
         {existing && (
           <Button3D
             onPress={handleDelete}
-            variant="danger"
-            icon={Trash2Icon}
+            variant="secondary"
             accessibilityLabel="Supprimer la note"
           >
             Supprimer

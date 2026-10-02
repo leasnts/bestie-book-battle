@@ -12,7 +12,6 @@
 
 import DateTimePicker, { type DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Trash2Icon } from 'lucide-react-native';
 import React, { useCallback, useMemo, useState } from 'react';
 import {
   Alert,
@@ -212,7 +211,7 @@ export default function CapRoute() {
         </Button3D>
 
         {canDelete && (
-          <Button3D onPress={handleDelete} variant="danger" icon={Trash2Icon}>
+          <Button3D onPress={handleDelete} variant="secondary">
             Supprimer le cap
           </Button3D>
         )}
