@@ -30,7 +30,7 @@
  */
 
 import { useRouter } from 'expo-router';
-import { ChevronLeftIcon, LockIcon, StickyNoteIcon } from 'lucide-react-native';
+import { ChevronLeftIcon, LockIcon } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Animated, {
   Easing,
@@ -51,9 +51,9 @@ import {
   View,
 } from 'react-native';
 import DriftingBackdrop from './ui/DriftingBackdrop';
-import GlassSection from './ui/GlassSection';
 import NewNotesDeck from './ui/NewNotesDeck';
 import NoteCard from './ui/NoteCard';
+import InkFigure from './ui/InkFigure';
 import NotesTrack, { type TrackDot } from './ui/NotesTrack';
 import PressableScale from './ui/PressableScale';
 import GlassButton from './ui/GlassButton';
@@ -344,31 +344,24 @@ export default function Carnet({ mode }: { mode: CarnetMode }) {
           {!isPage && header}
 
           <Animated.View entering={rise(cascadeDelay.current)}>
-            <GlassSection>
-              <View style={styles.counts}>
-                <View style={styles.count}>
-                  <StickyNoteIcon size={15} color={colors.textTertiary} strokeWidth={2} />
-                  <Text style={styles.countText}>
-                    <Text style={styles.countValue}>{notes.length}</Text> ouvertes
-                  </Text>
-                </View>
-                {ahead.length > 0 && (
-                  <View style={styles.count}>
-                    <LockIcon size={15} color={colors.textTertiary} strokeWidth={2} />
-                    <Text style={styles.countText}>
-                      <Text style={styles.countValue}>{ahead.length}</Text> plus loin
-                    </Text>
-                  </View>
-                )}
-              </View>
-
+            {/* Hors cadre, comme Ma page : le compte à l'encre, puis le fil du livre */}
+            <View style={styles.summary}>
+              <InkFigure
+                value={notes.length}
+                total={notes.length + ahead.length}
+                fontSize={64}
+                accessibilityLabel={`${notes.length} notes ouvertes sur ${notes.length + ahead.length}`}
+              />
+              <Text style={styles.summaryCaption} importantForAccessibility="no" accessibilityElementsHidden>
+                notes ouvertes
+              </Text>
               <NotesTrack
                 dots={dots}
                 lockedPositions={ahead.map((note) => note.book_position)}
                 myPosition={myPosition}
                 onSeek={seek}
               />
-            </GlassSection>
+            </View>
           </Animated.View>
 
           <Animated.View entering={rise(cascadeDelay.current + motion.stagger)}>
@@ -635,24 +628,15 @@ const styles = StyleSheet.create({
     gap: spacing.md,
     marginBottom: spacing.sm,
   },
-  counts: {
-    flexDirection: 'row',
-    gap: spacing.lg,
-    marginBottom: spacing.sm,
+  summary: {
+    paddingHorizontal: spacing.xs,
   },
-  count: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-  },
-  countText: {
+  summaryCaption: {
     fontFamily: fonts.bodyBold,
-    fontSize: 13,
+    fontSize: 14,
     color: colors.textTertiary,
-  },
-  countValue: {
-    fontFamily: fonts.bodyExtraBold,
-    color: colors.textPrimary,
+    marginTop: 2,
+    marginBottom: spacing.sm,
   },
 
   filters: {
