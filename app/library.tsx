@@ -98,7 +98,7 @@ export default function LibraryRoute() {
         filter={filter}
         onFilterChange={setFilter}
         actions={
-          <GlassButton icon={PlusIcon} size={36} onPress={handleAdd} accessibilityLabel="Ajouter une lecture" />
+          <GlassButton icon={PlusIcon} onPress={handleAdd} accessibilityLabel="Ajouter une lecture" />
         }
         // Derrière l'en-tête, calé sur le coin du sheet (l'en-tête en couvre
         // toute la largeur). Tons neutres : aucun livre précis ici.
