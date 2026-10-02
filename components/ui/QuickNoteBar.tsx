@@ -26,7 +26,7 @@ import { creamAlpha, inkAlpha, shadowAlpha, spacing } from '../../utils/constant
 import { TRENDING_EMOJIS } from '../../utils/emojis';
 import PressableScale from './PressableScale';
 import GlassButton from './GlassButton';
-import RoundButton, { ROUND_BUTTON_SIZE } from './RoundButton';
+import RoundButton from './RoundButton';
 import WriteNoteButton from './WriteNoteButton';
 
 type Mode = 'idle' | 'emoji';
@@ -78,7 +78,6 @@ export default function QuickNoteBar() {
           {/* Secondaire : le rond en verre, jamais un bouton-icône redessiné */}
           <GlassButton
             icon={PlusIcon}
-            size={ROUND_BUTTON_SIZE}
             accessibilityLabel="Tous les emojis"
             onPress={() => {
               closeMode();

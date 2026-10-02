@@ -30,7 +30,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { recognizePage, type PageLine } from '../../modules/page-text/src';
-import { colors, creamAlpha, fonts, spacing } from '../../utils/constants';
+import { colors, creamAlpha, fonts, ROUND_BUTTON_SIZE, spacing } from '../../utils/constants';
 import GlassButton from './GlassButton';
 import PressableScale from './PressableScale';
 
@@ -117,7 +117,7 @@ export default function QuotePicker({ photo, onClose, onRetake, onCite }: QuoteP
     <Modal visible={photo !== null} animationType="fade" statusBarTranslucent onRequestClose={onClose}>
       <View style={[styles.screen, { paddingTop: insets.top + spacing.sm, paddingBottom: insets.bottom + spacing.md }]}>
         <View style={styles.head}>
-          <GlassButton icon={XIcon} size={36} onPress={onClose} accessibilityLabel="Fermer" />
+          <GlassButton icon={XIcon} onPress={onClose} accessibilityLabel="Fermer" />
           <View style={styles.hint}>
             <Text style={styles.hintText}>{hint}</Text>
           </View>
@@ -207,8 +207,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     gap: spacing.sm,
   },
+  // La place du ✕ en face, à sa taille
   spacer: {
-    width: 36,
+    width: ROUND_BUTTON_SIZE,
   },
   hint: {
     flex: 1,

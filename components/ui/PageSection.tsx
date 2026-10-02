@@ -22,7 +22,7 @@ import Animated, { FadeIn } from 'react-native-reanimated';
 import { colors, fonts, spacing } from '../../utils/constants';
 import GlassButton from './GlassButton';
 import PageRuler, { type ClubPin } from './PageRuler';
-import RoundButton, { ROUND_BUTTON_SIZE } from './RoundButton';
+import RoundButton from './RoundButton';
 import { QUICK_BAR_HEIGHT } from './QuickNoteBar';
 
 interface PageSectionProps {
@@ -81,7 +81,6 @@ export default function PageSection({
           {/* Secondaire : notre rond en verre, à la taille du ✓ */}
           <GlassButton
             icon={RotateCcwIcon}
-            size={ROUND_BUTTON_SIZE}
             accessibilityLabel="Annuler"
             onPress={onUndo}
           />

@@ -189,7 +189,7 @@ export function SheetPageHeader({
         {/* Retour, titre et actions sur une ligne */}
         <View style={styles.headerRow}>
           {onBack && (
-            <GlassButton icon={ChevronLeftIcon} size={36} onPress={onBack} accessibilityLabel="Retour" />
+            <GlassButton icon={ChevronLeftIcon} onPress={onBack} accessibilityLabel="Retour" />
           )}
           <Text
             style={styles.title}

@@ -528,7 +528,6 @@ export default function Carnet({ mode }: { mode: CarnetMode }) {
         >
           <GlassButton
             icon={ChevronLeftIcon}
-            size={36}
             onPress={() => router.back()}
             accessibilityLabel="Retour"
           />
