@@ -11,7 +11,9 @@
 
 import type { NativeStackNavigationOptions } from '@react-navigation/native-stack';
 import React, { useCallback, useState } from 'react';
+import MaskedView from '@react-native-masked-view/masked-view';
 import { BlurView } from 'expo-blur';
+import { LinearGradient } from 'expo-linear-gradient';
 import {
   StyleSheet,
   View,
@@ -51,7 +53,9 @@ export const SHEET_TOP_INSET = 28;
 
 /** Le flou des bords collants : assez pour ne plus rien lire, et un voile blanc */
 const BLUR = 40;
-const VEIL = 0.55;
+const VEIL = 0.6;
+/** Ce que le flou déborde côté contenu, le temps de s'effacer */
+const BLUR_FADE = 28;
 
 // ─── En-tête collant d'un sheet sans barre ─────────────────────────
 
@@ -90,14 +94,37 @@ export function SheetStickyHeader({
 }
 
 /**
- * Le flou des bords collants d'un sheet (en-tête, pied) : un flou dépoli, voilé
- * de blanc pour que le texte posé dessus reste lisible. Remplit son parent.
+ * Le flou des bords collants d'un sheet (en-tête, pied) : un flou PROGRESSIF
+ * (Lea, 2026-10-02), plein contre le bord et qui s'efface vers le contenu,
+ * voilé de blanc de la même façon pour que le texte posé dessus reste lisible.
+ * Il déborde de son parent de `BLUR_FADE` côté contenu : le contenu ne passe
+ * pas sous une ligne nette, il se brouille peu à peu.
+ *
+ * `edge` : le bord du sheet contre lequel il est posé (en haut pour l'en-tête,
+ * en bas pour le pied).
  */
-export function SheetBlur() {
+export function SheetBlur({ edge = 'top' }: { edge?: 'top' | 'bottom' }) {
+  const top = edge === 'top';
+  // Plein sur les deux tiers côté bord, puis il s'efface
+  const ramp = { start: { x: 0, y: top ? 0 : 1 }, end: { x: 0, y: top ? 1 : 0 }, locations: [0, 0.55, 1] as const };
   return (
-    <View style={StyleSheet.absoluteFill} pointerEvents="none">
-      <BlurView intensity={BLUR} tint="light" style={StyleSheet.absoluteFill} />
-      <View style={[StyleSheet.absoluteFill, styles.veil]} />
+    <View
+      pointerEvents="none"
+      style={[styles.blur, top ? { top: 0, bottom: -BLUR_FADE } : { bottom: 0, top: -BLUR_FADE }]}
+    >
+      <MaskedView
+        style={StyleSheet.absoluteFill}
+        maskElement={
+          <LinearGradient colors={['black', 'black', 'transparent']} {...ramp} style={StyleSheet.absoluteFill} />
+        }
+      >
+        <BlurView intensity={BLUR} tint="light" style={StyleSheet.absoluteFill} />
+      </MaskedView>
+      <LinearGradient
+        colors={[creamAlpha(VEIL), creamAlpha(VEIL), creamAlpha(0)]}
+        {...ramp}
+        style={StyleSheet.absoluteFill}
+      />
     </View>
   );
 }
@@ -117,7 +144,9 @@ const styles = StyleSheet.create({
     paddingTop: SHEET_TOP_INSET,
     paddingBottom: spacing.md,
   },
-  veil: {
-    backgroundColor: creamAlpha(VEIL),
+  blur: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
   },
 });

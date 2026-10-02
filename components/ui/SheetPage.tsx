@@ -236,7 +236,7 @@ export function SheetStickyFooter({ children }: { children: React.ReactNode }) {
       collapsable={false}
       style={[styles.stickyFooter, { paddingBottom: Math.max(insets.bottom, spacing.lg) }]}
     >
-      <SheetBlur />
+      <SheetBlur edge="bottom" />
       {children}
     </View>
   );
