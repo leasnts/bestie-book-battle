@@ -3,7 +3,7 @@
  *
  * Structure (défile si le contenu dépasse, footer poussé en bas sinon) :
  * 1. HEADER   : titre "Profil" (onglet de la barre native, pas de bouton retour)
- * 2. PROFIL   : photo + prénom en Fraunces + bouton "Modifier"
+ * 2. PROFIL   : photo + prénom en `display` + bouton "Modifier"
  * 3. SETTINGS : notifications (toggle natif), inviter, signaler, déconnexion
  * 4. FOOTER   : liens légaux cliquables + version dynamique
  *

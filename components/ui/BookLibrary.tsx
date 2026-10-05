@@ -312,7 +312,7 @@ export default function BookLibrary({
       )}
       // L'en-tête du sheet, filtres compris, reste collé en haut
       ListHeaderComponent={
-        <SheetPageHeader title="Mes lectures" actions={actions} background={headerBackground} scrolled={scrolled}>
+        <SheetPageHeader title="Mes lectures" accent="lectures" actions={actions} background={headerBackground} scrolled={scrolled}>
           <FilterChips options={LIBRARY_FILTERS} value={filter} onChange={onFilterChange} />
         </SheetPageHeader>
       }

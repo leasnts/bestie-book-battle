@@ -29,11 +29,6 @@ import { supabase } from '../supabaseConfig';
 import AnimatedSplash from '../components/AnimatedSplash';
 import { sheetScreenOptions } from '../components/ui/SheetHeader';
 import { useFonts } from 'expo-font';
-import { Nunito_400Regular } from '@expo-google-fonts/nunito/400Regular';
-import { Nunito_500Medium } from '@expo-google-fonts/nunito/500Medium';
-import { Nunito_600SemiBold } from '@expo-google-fonts/nunito/600SemiBold';
-import { Nunito_700Bold } from '@expo-google-fonts/nunito/700Bold';
-import { Nunito_800ExtraBold } from '@expo-google-fonts/nunito/800ExtraBold';
 
 // Désactivé : expo-splash-screen provoque des erreurs "No native splash screen
 // registered" quand on ouvre une Modal (nouveau view controller iOS). L'app
@@ -118,22 +113,21 @@ function RootLayoutNav() {
     polices depuis JavaScript : zéro intervention sur le projet natif, et le
     widget lui-même n'utilise que les polices système.
 
-    Seules les graisses réellement employées sont importées : Nunito par
-    sous-chemin (le barrel du paquet embarquerait les dix-huit), Fraunces depuis
-    assets/fonts, où vivent nos instances « douces » du fichier variable (voir
+    Seules les graisses réellement employées sont chargées, depuis assets/fonts :
+    nos instances statiques de Martian Grotesk et Welcome Valentines (voir
     `fonts` dans utils/constants.ts). Les clés ci-dessous sont les noms utilisés
     dans les styles.
   */
   const [fontsLoaded] = useFonts({
-    FrauncesSoft_400Regular: require('../assets/fonts/FrauncesSoft_400Regular.ttf'),
-    FrauncesSoft_600SemiBold: require('../assets/fonts/FrauncesSoft_600SemiBold.ttf'),
-    FrauncesSoft_700Bold: require('../assets/fonts/FrauncesSoft_700Bold.ttf'),
-    FrauncesSoftDisplay_600SemiBold: require('../assets/fonts/FrauncesSoftDisplay_600SemiBold.ttf'),
-    Nunito_400Regular,
-    Nunito_500Medium,
-    Nunito_600SemiBold,
-    Nunito_700Bold,
-    Nunito_800ExtraBold,
+    MartianGroteskWide_700Bold: require('../assets/fonts/MartianGroteskWide_700Bold.ttf'),
+    MartianGroteskWide_800ExtraBold: require('../assets/fonts/MartianGroteskWide_800ExtraBold.ttf'),
+    MartianGroteskWide_900Black: require('../assets/fonts/MartianGroteskWide_900Black.ttf'),
+    MartianGrotesk_400Regular: require('../assets/fonts/MartianGrotesk_400Regular.ttf'),
+    MartianGrotesk_500Medium: require('../assets/fonts/MartianGrotesk_500Medium.ttf'),
+    MartianGrotesk_600SemiBold: require('../assets/fonts/MartianGrotesk_600SemiBold.ttf'),
+    MartianGrotesk_700Bold: require('../assets/fonts/MartianGrotesk_700Bold.ttf'),
+    MartianGrotesk_800ExtraBold: require('../assets/fonts/MartianGrotesk_800ExtraBold.ttf'),
+    WelcomeValentines_400Regular: require('../assets/fonts/WelcomeValentines_400Regular.ttf'),
   });
 
 

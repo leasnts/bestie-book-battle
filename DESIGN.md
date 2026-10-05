@@ -23,47 +23,47 @@ colors:
   danger: "#EF4444"
 typography:
   hero:
-    fontFamily: "FrauncesSoftDisplay_600SemiBold, Georgia, serif"
+    fontFamily: "MartianGroteskWide_700Bold, system-ui, sans-serif"
     fontSize: "108px"
     fontWeight: 600
     letterSpacing: "-1.6px"
   display:
-    fontFamily: "FrauncesSoft_600SemiBold, Georgia, serif"
+    fontFamily: "MartianGroteskWide_800ExtraBold, system-ui, sans-serif"
     fontSize: "30px"
     fontWeight: 600
     lineHeight: "36px"
     letterSpacing: "-0.3px"
   headline:
-    fontFamily: "FrauncesSoft_600SemiBold, Georgia, serif"
+    fontFamily: "MartianGroteskWide_800ExtraBold, system-ui, sans-serif"
     fontSize: "22px"
     fontWeight: 600
     lineHeight: "28px"
   score:
-    fontFamily: "FrauncesSoft_600SemiBold, Georgia, serif"
+    fontFamily: "MartianGroteskWide_800ExtraBold, system-ui, sans-serif"
     fontSize: "21px"
     fontWeight: 600
   title:
-    fontFamily: "Nunito_600SemiBold, system-ui, sans-serif"
+    fontFamily: "MartianGrotesk_600SemiBold, system-ui, sans-serif"
     fontSize: "18px"
     fontWeight: 600
     lineHeight: "24px"
   body:
-    fontFamily: "Nunito_400Regular, system-ui, sans-serif"
+    fontFamily: "MartianGrotesk_400Regular, system-ui, sans-serif"
     fontSize: "16px"
     fontWeight: 400
     lineHeight: "24px"
   label:
-    fontFamily: "Nunito_500Medium, system-ui, sans-serif"
+    fontFamily: "MartianGrotesk_500Medium, system-ui, sans-serif"
     fontSize: "14px"
     fontWeight: 500
     lineHeight: "20px"
   button:
-    fontFamily: "Nunito_700Bold, system-ui, sans-serif"
+    fontFamily: "MartianGrotesk_700Bold, system-ui, sans-serif"
     fontSize: "16px"
     fontWeight: 700
     lineHeight: "24px"
   caption:
-    fontFamily: "Nunito_600SemiBold, system-ui, sans-serif"
+    fontFamily: "MartianGrotesk_600SemiBold, system-ui, sans-serif"
     fontSize: "12px"
     fontWeight: 600
     lineHeight: "16px"
@@ -196,7 +196,8 @@ Ce que « pas trop » veut dire, concrètement :
 - une matière par zone, pas un collage : pas de papier + aquarelle + tricot au même
   endroit ;
 - pas de clichés fait-main (washi tape, boutons cousus, coutures en pointillés
-  partout, polices manuscrites, fleurs séchées) ;
+  partout, phrases en police manuscrite, fleurs séchées) ; seule exception, le
+  **mot d'accent** d'un titre (voir Typography) ;
 - **garde-fou** : si un écran évoque une boutique de loisirs créatifs, un
   scrapbook, un blog DIY ou une carte de vœux, il a dérivé.
 
@@ -363,10 +364,21 @@ La mécanique reste disponible pour un écran qui parlerait d'un seul livre
 
 ## Typography
 
-**Deux voix, une ambiance plaid** : Fraunces douce (serif old-style aux
-terminaisons arrondies) pour tout ce qui se lit d'un coup d'œil, Nunito
-(sans-serif aux extrémités arrondies) pour tout ce qui se lit vraiment. Space
-Mono est chargé mais inutilisé.
+**Une voix nette, un mot qui chante** : Martian Grotesk (grotesque géométrique,
+licence OFL) pour tout, en version large et grasse pour les titres et les
+nombres. Dans un titre, **un seul mot d'accent** peut passer en Welcome
+Valentines (feutre manuscrit), lie de vin `accent`, 1,25× plus grand : l'œil
+glisse sur la phrase et s'arrête sur lui (« Carnet de *notes* »).
+
+**Mot d'accent, les règles** :
+- un mot, jamais une phrase, et un seul par écran ;
+- dans un titre (`SheetPage` / `SheetPageHeader` prop `accent`, ou `AccentWord`
+  dans un `<Text>`), jamais en texte courant, bouton ou libellé ;
+- le mot qui porte le sens de l'écran, pas un mot au hasard.
+
+**Licence** : Welcome Valentines est en « usage personnel » ; la licence
+commerciale est à acheter avant la sortie (#129). Plan B gratuit : Delicious
+Handrawn (Google Fonts, OFL).
 
 Les noms de police vivent dans `fonts` (`utils/constants.ts`) ; ne jamais écrire
 un nom de fichier de police en dur dans un style.
@@ -383,30 +395,25 @@ un nom de fichier de police en dur dans un style.
 | label | `fonts.bodyMedium` | 14 px / 20 | Libellés, sous-titres, auteurs |
 | button | `fonts.bodyBold` | 16 px / 24 | Boutons |
 | caption | `fonts.bodySemiBold` | 11–12 px / 16 | Badges, compteurs |
+| accent | `fonts.accent` | 1,25× le titre | Le mot d'accent d'un titre, jamais plus |
 
-**Règle de partage** : Fraunces porte les **titres et les nombres**, Nunito tout
-le reste. Deux exceptions assumées : les prénoms restent en Nunito (on scanne une
-liste, on ne lit pas un titre), et **sous 13 px les nombres passent en Nunito**
-(pourcentage de l'anneau d'objectif) — un serif aussi petit s'empâte.
+**Règle de partage** : la version large (`display*`) porte les **titres et les
+nombres**, la version normale (`body*`) tout le reste.
 
 **La graisse vient du fichier, pas de `fontWeight`.** Sur iOS, une police chargée
 par alias ignore `fontWeight` : pour du gras, changer de token
 (`body` → `bodyBold`). Ma ligne du classement passe en `bodyExtraBold` pour
 trancher nettement avec les autres prénoms en `bodySemiBold`.
 
-**Fraunces est une instance maison.** Le fichier variable Google Fonts est figé
-dans `assets/fonts` sur SOFT 100 (terminaisons rondes) et WONK 0 (pas de lettres
-penchées), à deux tailles optiques : 24 pour l'interface, 72 pour les nombres
-géants, plus fins et plus contrastés. Pour régénérer une graisse, repartir du
-fichier variable avec `fontTools.varLib.instancer` et donner à chaque instance
-un nom PostScript unique — expo-font mappe chaque alias sur ce nom.
+**Martian Grotesk est une instance maison.** Le fichier variable (axes `wght`
+100–1000 et `wdth` 75–200) est figé dans `assets/fonts` : largeur 112 pour les
+titres et nombres (`MartianGroteskWide_*`), 100 pour le texte (`MartianGrotesk_*`).
+Pour régénérer une graisse, repartir du fichier variable avec
+`fontTools.varLib.instancer` et donner à chaque instance un nom PostScript unique —
+expo-font mappe chaque alias sur ce nom.
 
-**Pourquoi ces tailles.** À corps égal, Fraunces a une capitale 20 % plus haute
-que Rokkitt, et des chiffres 30 % plus larges. Les titres ont donc été réduits
-d'environ 15 % (36 → 30, 24 → 22, 128 → 108) pour garder la même présence sans
-écraser la hiérarchie. Nunito et Work Sans ont une hauteur d'x équivalente : le
-texte courant garde ses tailles, mais perd le tracking négatif — une police ronde
-serrée s'étouffe.
+**Tailles** : reprises telles quelles de l'ancienne paire Fraunces / Nunito, à
+réajuster écran par écran (#128).
 
 **Dette connue** : l'échelle est en points figés, hors du système de tailles
 d'iOS. Dynamic Type n'est pas suivi.
@@ -493,7 +500,7 @@ compris : le classement complet en montre d'autres, et l'œil doit retrouver les
 mêmes repères. Classement complet (`LeaderboardList`) : mêmes colonnes, plus la
 barre de progression, la couronne et le badge de série.
 
-Le score est en Fraunces aligné à droite, **toujours en %** (cf. Pages ou %),
+Le score est en `display` aligné à droite, **toujours en %** (cf. Pages ou %),
 avec compteur roulant à la mise à jour et glissement des lignes quand l'ordre
 change — les deux se coupent avec « Réduire les animations ».
 
@@ -520,7 +527,7 @@ posé sur le fond neutre.
 
 Le cadre **Le livre** (`BookSection`) ouvre la fiche du livre d'un toucher :
 la couverture à gauche, **toujours de la hauteur du texte** à côté (mesurée) ; à
-droite le titre (Fraunces 20), l'autrice, puis **juste dessous** la
+droite le titre (`display` 20), l'autrice, puis **juste dessous** la
 **piste** (`GoalTrack`) de 0 à 100 % du livre, avec **deux remplissages
 superposés**, comme la barre d'une vidéo (lu / chargé) : devant, en lie de vin,
 **ma** progression jusqu'à ma photo ; derrière, en lie de vin clair, la
@@ -581,11 +588,11 @@ de feuille de cahier à part. Mêmes boutons partout : `GlassButton` (verre),
 
 **Le bento** (Lea, 2026-09-29, #97) : sous « Ma page », deux carrés côte à côte,
 12 pt d'écart. À gauche le **classement** (`LeaderboardSection square`) : lignes
-de 27 pt posées en bas du carré, avatar 22, score en Fraunces 16. À droite le
+de 27 pt posées en bas du carré, avatar 22, score en `display` 16. À droite le
 **carnet** (`NoteTile`) : **uniquement la note à la une**, un `NoteSticker` de la
 taille du carré, sans cadre en verre derrière, coin corné en bas à droite (il
 invite à tourner la page). En haut la catégorie (toujours écrite) et la page ;
-au milieu le texte, la citation en Fraunces italique, l'emoji seul en grand ou
+au milieu le texte, la citation en `display` italique, l'emoji seul en grand ou
 le vocal (onde + durée) ; en bas l'autrice et « 1 / 3 » en lie de vin s'il y a
 des nouvelles. À la une : la première des nouvelles, sinon la plus récente.
 Sans note lisible : papier nu, un cadenas et le nombre de notes plus loin. Tout
@@ -795,7 +802,7 @@ fond assombri viennent du système.
 **Le squelette : `SheetPage`** (`components/ui/SheetPage.tsx`), la mise en page
 de la fiche du livre, pour tous :
 - **en-tête** `SheetPageHeader` : retour (si posé sur un autre sheet), titre en
-  Fraunces 26 **ferré à gauche, jamais centré**, sous-titre éventuel, actions à
+  `display` 26 **ferré à gauche, jamais centré**, sous-titre éventuel, actions à
   droite en `GlassButton` (44 pt, comme tous les ronds) ;
 - **marges de 16 pt** (`SHEET_GUTTER`) sur les côtés ;
 - **action principale** en bas du contenu (`SheetFooter` + `Button3D`
@@ -996,8 +1003,9 @@ système par ailleurs sobre.
 **À ne pas faire**
 
 - Pas d'aplat de couleur sur un bouton, une pastille, un disque ou une capsule.
-- Pas de clichés fait-main (washi tape, coutures en pointillés, police
-  manuscrite) ni de collage de matières : ça tourne au scrapbook.
+- Pas de clichés fait-main (washi tape, coutures en pointillés, phrase en police
+  manuscrite) ni de collage de matières : ça tourne au scrapbook. Le manuscrit,
+  c'est un seul mot d'accent par écran.
 - Pas de `text-subtle` (`#e5e0d9`) en couleur de texte. C'est une bordure.
 - Pas de `#000`, `#fff` ni `rgba(0,0,0,…)` / `rgba(255,255,255,…)` en dur : passer
   par les tokens et les helpers alpha.
@@ -1006,7 +1014,7 @@ système par ailleurs sobre.
 - Pas de carte dans une carte.
 - Pas de rayon codé en dur sur un sheet natif : iOS 26 gère la concentricité.
 - Pas de titre de sheet centré : toujours ferré à gauche (`SheetHeader`).
-- Pas de Fraunces en texte courant, pas de Nunito en score (sauf sous 13 px).
+- Pas de Welcome Valentines hors du mot d'accent d'un titre.
 - Pas de `fontWeight` pour faire du gras : changer de token `fonts`.
 - Pas de bounce, pas d'elastic, pas d'animation de `width` ou de `height`.
 - Pas de fiche produit ni de note sur 5 — c'est Goodreads, l'anti-référence.

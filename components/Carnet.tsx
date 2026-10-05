@@ -349,6 +349,7 @@ export default function Carnet({ mode }: { mode: CarnetMode }) {
   const header = (
     <SheetPageHeader
       title="Carnet de notes"
+      accent="notes"
       onBack={inSheet || isPage ? () => router.back() : undefined}
       actions={
         inSheet ? undefined : (
