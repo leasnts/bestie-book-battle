@@ -93,11 +93,14 @@ export function GhostTotal({
   size,
   left,
   baseline,
+  drop = 0.12,
 }: {
   total: number;
   size: number;
   left: number;
   baseline: number;
+  /** De combien sa ligne de base descend sous celle du chiffre, en fraction de sa taille */
+  drop?: number;
 }) {
   const label = `/${total}`;
   const blur = 3;
@@ -105,7 +108,7 @@ export function GhostTotal({
   const width = figureWidth(label, size) + margin * 2;
   const height = Math.round(size * 1.25) + margin * 2;
   // La ligne de base du total, un peu sous celle du chiffre
-  const top = baseline + size * 0.12 - size;
+  const top = baseline + size * drop - size;
   return (
     <View pointerEvents="none" style={[styles.ghost, { left: left - margin, top: top - margin }]}>
       <Svg width={width} height={height}>

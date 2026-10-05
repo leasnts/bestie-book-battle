@@ -87,7 +87,7 @@ export default function HomeScreen() {
   const compactPage = windowHeight < 830;
   // Taille du chiffre de page : petite sur SE/mini, plus grosse sur les grands
   // écrans où il reste de la place (17 Pro, Pro Max)
-  const pickerFontSize = windowHeight < 830 ? 52 : windowHeight < 900 ? 80 : 88;
+  const pickerFontSize = windowHeight < 830 ? 60 : windowHeight < 900 ? 100 : 108;
   const compactLeaderboard = windowHeight < 700;
   // SE : marges resserrées aussi (entre les cadres et dans les cadres)
   const compactSpacing = compactLeaderboard;
