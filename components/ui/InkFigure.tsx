@@ -19,6 +19,40 @@ import { colors, fonts } from '../../utils/constants';
 /** L'encre du chiffre : plus claire en haut */
 export const INK = ['#6b5546', colors.dark950] as const;
 
+/*
+  Mesures de Martian Grotesk Wide Bold (`fonts.displayHero`), en fraction de
+  la taille du texte. Les boîtes du chiffre et du total en découlent : trop
+  justes, le masque coupe le dessin (haut des chiffres, fin du « /624 »).
+  - GLYPH_EM : la chasse de chaque signe ; la police n'a pas de chiffres à
+    chasse fixe, un « 1 » est bien plus étroit qu'un « 4 »
+  - LINE_EM : la hauteur de ligne de la police (ascendante 1 + descendante 0,2)
+  - FOOTPRINT_EM : la place que le chiffre prend dans la mise en page ; la
+    ligne déborde à parts égales au-dessus et au-dessous, l'encre reste centrée
+*/
+const GLYPH_EM: Record<string, number> = {
+  '0': 0.807, '1': 0.566, '2': 0.728, '3': 0.739, '4': 0.819,
+  '5': 0.766, '6': 0.789, '7': 0.691, '8': 0.753, '9': 0.789, '/': 0.53,
+};
+const LINE_EM = 1.2;
+const FOOTPRINT_EM = 1.05;
+
+/** La boîte du chiffre : assez haute pour la ligne, sans grandir dans la page */
+export function figureBox(fontSize: number) {
+  const lineHeight = Math.ceil(fontSize * LINE_EM);
+  return {
+    lineHeight,
+    /** À poser sur la vue qui contient le chiffre */
+    frame: { height: lineHeight, marginVertical: -Math.round((fontSize * (LINE_EM - FOOTPRINT_EM)) / 2) },
+  };
+}
+
+/** La largeur de « 624 » ou « /624 » écrit en `fontSize` */
+export function figureWidth(text: string, fontSize: number) {
+  let em = 0;
+  for (const c of text) em += GLYPH_EM[c] ?? 0.82;
+  return Math.ceil(em * fontSize);
+}
+
 interface InkFigureProps {
   value: number;
   total: number;
@@ -28,12 +62,12 @@ interface InkFigureProps {
 }
 
 export default function InkFigure({ value, total, fontSize, accessibilityLabel }: InkFigureProps) {
-  const lineHeight = Math.round(fontSize * 1.05);
-  const numberWidth = Math.round(String(value).length * fontSize * 0.6);
+  const { lineHeight, frame } = figureBox(fontSize);
+  const numberWidth = figureWidth(String(value), fontSize);
   const ghostSize = Math.round(fontSize * 0.72);
   return (
     <View
-      style={{ height: lineHeight, width: numberWidth + ghostSize * (String(total).length + 1) * 0.6 }}
+      style={[frame, { width: numberWidth + figureWidth(`/${total}`, ghostSize) }]}
       accessible
       accessibilityLabel={accessibilityLabel}
     >
@@ -53,7 +87,7 @@ export function GhostTotal({ total, size, left }: { total: number; size: number;
   const label = `/${total}`;
   const blur = 3;
   const margin = blur * 4;
-  const width = Math.round(label.length * size * 0.58) + margin * 2;
+  const width = figureWidth(label, size) + margin * 2;
   const height = Math.round(size * 1.25) + margin * 2;
   return (
     <View pointerEvents="none" style={[styles.ghost, { left: left - margin, top: size * 0.3 - margin }]}>

@@ -57,7 +57,7 @@ import Animated, {
   type SharedValue,
 } from 'react-native-reanimated';
 import { accentGradient, colors, fonts } from '../../utils/constants';
-import { GhostTotal, INK } from './InkFigure';
+import { GhostTotal, INK, figureBox, figureWidth } from './InkFigure';
 
 /** Un membre du club épinglé sur la règle */
 export interface ClubPin {
@@ -349,10 +349,9 @@ function InkNumber({
   fontSize: number;
   scrollX: SharedValue<number>;
 }) {
-  const lineHeight = Math.round(fontSize * 1.05);
+  const { lineHeight, frame } = figureBox(fontSize);
   // La largeur du chiffre, pour caler le « / 624 » (le nombre de chiffres change rarement)
-  const digits = String(page).length;
-  const numberWidth = Math.round(digits * fontSize * 0.6);
+  const numberWidth = figureWidth(String(page), fontSize);
 
   const outText = useAnimatedProps(() => {
     const b = Math.max(0, Math.min(total, Math.floor(scrollX.value / STEP + 1e-3)));
@@ -392,7 +391,7 @@ function InkNumber({
   const outStyles = [out(0, 0, 0), out(-3, 1.5, 1), out(3, -1.5, 1)];
   const inStyles = [inn(0, 0, 0), inn(-3, 1.5, 1), inn(3, -1.5, 1)];
 
-  const textStyle = [styles.number, { fontSize, lineHeight, height: lineHeight }];
+  const textStyle = [styles.number, { fontSize, height: lineHeight }];
   const layer = (style: object, props: object, key: string) => (
     <AnimatedTextInput
       key={key}
@@ -408,7 +407,7 @@ function InkNumber({
   );
 
   return (
-    <View style={{ width: numberWidth + 80, height: lineHeight }}>
+    <View style={[frame, { width: numberWidth + 80 }]}>
       <GhostTotal total={total} size={Math.round(fontSize * 0.72)} left={40 + numberWidth * 0.7} />
       {/* Le chiffre est le masque d'un dégradé d'encre : jamais d'aplat (DA) */}
       <MaskedView
