@@ -105,9 +105,8 @@ const LENS_SPAN = 4;
 const SAND = ['#e6dfd6', '#cfc4b6'] as const;
 const DOT_READ = '#3a2a20';
 const DOT_UNREAD = '#d9d0c5';
-/** Le point de couture : un trait arrondi, plus court que l'écart entre deux pages */
-const STITCH_LEN = 6.5;
-const stitchThick = (page: number) => (page % 10 === 0 ? 2.8 : 2);
+/** Le point d'une page : rond, plus gros tous les dix */
+const stitchThick = (page: number) => (page % 10 === 0 ? 3.6 : 2.6);
 
 const AnimatedTextInput = Animated.createAnimatedComponent(TextInput);
 
@@ -450,7 +449,7 @@ const Decade = React.memo(function Decade({
 });
 
 /**
- * Un point de couture = une page : fil sable tant qu'elle est à lire, chocolat
+ * Un point = une page : fil sable tant qu'elle est à lire, chocolat
  * une fois lue. Une seule vue par point, teinte unie : à cette taille un dégradé
  * ne se voit pas, et la règle en affiche des centaines (la goutte garde les siens).
  */
@@ -461,7 +460,7 @@ const Dot = React.memo(function Dot({ page, left, scrollX }: { page: number; lef
   }));
   return (
     <Animated.View
-      style={[styles.dot, { left: left - STITCH_LEN / 2, width: STITCH_LEN, height: t, marginTop: -t / 2, borderRadius: t / 2 }, ink]}
+      style={[styles.dot, { left: left - t / 2, width: t, height: t, marginTop: -t / 2, borderRadius: t / 2 }, ink]}
     />
   );
 });
@@ -619,8 +618,8 @@ function LensDot({
   scrollX: SharedValue<number>;
   lag: SharedValue<number>;
 }) {
-  const W = STITCH_LEN * ZOOM; // le point de couture grossi
-  const H = 2.8 * ZOOM; // l'épaisseur d'un repère des dizaines : les autres sont réduits par scaleY
+  const W = 3.6 * ZOOM; // le point d'un repère des dizaines, grossi : les autres sont réduits par `thick`
+  const H = W;
   const geom = useAnimatedStyle(() => {
     const x = scrollX.value + lag.value;
     const base = Math.floor(x / STEP);
@@ -629,10 +628,10 @@ function LensDot({
     const u = d / LENS_R;
     const bent = (LENS_R * u) / Math.sqrt(1 + 0.9 * u * u);
     const squash = Math.max(0.35, Math.sqrt(Math.max(0, 1 - Math.min(0.9, (bent / LENS_R) ** 2))));
-    const thick = p % 10 === 0 ? 1 : 2 / 2.8;
+    const thick = p % 10 === 0 ? 1 : 2.6 / 3.6;
     return {
       opacity: p < 0 || p > totalPages ? 0 : 1,
-      transform: [{ translateX: LENS_R + bent - W / 2 }, { scaleX: squash }, { scaleY: thick }],
+      transform: [{ translateX: LENS_R + bent - W / 2 }, { scaleX: squash * thick }, { scaleY: thick }],
     };
   });
   // Lue (chocolat), à lire (sable) ; ma page — la plus proche du centre — en lie de vin
