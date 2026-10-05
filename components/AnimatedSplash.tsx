@@ -44,6 +44,8 @@ const EYES_GRADIENT = ['#fdfcfa', '#efe6e0'] as const;
 const T_MEET = 900;
 const T_WINK = T_MEET + 180;
 const MEET_EASING = Easing.out(Easing.poly(5));
+/** Le clin d'œil se ferme de haut en bas, comme une paupière : vers le bas du petit œil (y = 920 sur 1200). */
+const WINK_PIVOT_Y = (920 / LOGO_EYES_VIEWBOX) * SPLASH_LOGO_SIZE;
 
 /**
  * « Lowki » sous les yeux, en tracé (pas en <Text>, ni en image : les deux
@@ -108,7 +110,7 @@ export default function AnimatedSplash({ onFinish, waitFor }: AnimatedSplashProp
     leftX.value = withTiming(0, meet);
     rightX.value = withTiming(0, meet);
 
-    // Clin d'œil : le petit œil se ferme, une fraction de seconde, se rouvre
+    // Clin d'œil : la paupière du petit œil descend, une fraction de seconde, remonte
     winkY.value = withDelay(
       T_WINK,
       withSequence(
@@ -167,8 +169,15 @@ export default function AnimatedSplash({ onFinish, waitFor }: AnimatedSplashProp
   const leftStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: leftX.value }],
   }));
+  // scaleY s'écrase autour du centre de la vue : on recale pour que le bas du
+  // petit œil reste fixe (transformOrigin n'était pas appliqué, l'œil se fermait
+  // vers le haut).
   const rightStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: rightX.value }, { scaleY: winkY.value }],
+    transform: [
+      { translateX: rightX.value },
+      { translateY: (WINK_PIVOT_Y - SPLASH_LOGO_SIZE / 2) * (1 - winkY.value) },
+      { scaleY: winkY.value },
+    ],
   }));
 
   // Fade out global de tout l'écran
@@ -183,7 +192,7 @@ export default function AnimatedSplash({ onFinish, waitFor }: AnimatedSplashProp
         <Animated.View style={[styles.eye, leftStyle]}>
           <Eye side="left" />
         </Animated.View>
-        <Animated.View style={[styles.eye, styles.rightPivot, rightStyle]}>
+        <Animated.View style={[styles.eye, rightStyle]}>
           <Eye side="right" />
         </Animated.View>
         <Svg style={styles.word} viewBox={LOGO_WORD_VIEWBOX}>
@@ -208,8 +217,6 @@ const styles = StyleSheet.create({
   eye: {
     ...StyleSheet.absoluteFillObject,
   },
-  // Le clin d'œil se ferme vers le centre du petit œil (repère 1200 du SVG)
-  rightPivot: { transformOrigin: `${(905 / 12).toFixed(1)}% ${(650 / 12).toFixed(1)}%` },
   word: {
     position: 'absolute',
     ...WORD,
