@@ -41,6 +41,8 @@ export function figureBox(fontSize: number) {
   const lineHeight = Math.ceil(fontSize * LINE_EM);
   return {
     lineHeight,
+    /** La ligne de base des chiffres, depuis le haut de la boîte (l'ascendante, 1 em) */
+    baseline: fontSize,
     /** À poser sur la vue qui contient le chiffre */
     frame: { height: lineHeight, marginVertical: -Math.round((fontSize * (LINE_EM - FOOTPRINT_EM)) / 2) },
   };
@@ -62,7 +64,7 @@ interface InkFigureProps {
 }
 
 export default function InkFigure({ value, total, fontSize, accessibilityLabel }: InkFigureProps) {
-  const { lineHeight, frame } = figureBox(fontSize);
+  const { lineHeight, frame, baseline } = figureBox(fontSize);
   const numberWidth = figureWidth(String(value), fontSize);
   const ghostSize = Math.round(fontSize * 0.72);
   return (
@@ -71,7 +73,7 @@ export default function InkFigure({ value, total, fontSize, accessibilityLabel }
       accessible
       accessibilityLabel={accessibilityLabel}
     >
-      <GhostTotal total={total} size={ghostSize} left={numberWidth * 0.7} />
+      <GhostTotal total={total} size={ghostSize} left={numberWidth * 0.7} baseline={baseline} />
       <MaskedView
         style={{ width: numberWidth, height: lineHeight }}
         maskElement={<Text style={[styles.number, { fontSize, lineHeight }]}>{value}</Text>}
@@ -82,15 +84,30 @@ export default function InkFigure({ value, total, fontSize, accessibilityLabel }
   );
 }
 
-/** « / 624 » derrière le chiffre : plus petit, décalé, pâle et flouté */
-export function GhostTotal({ total, size, left }: { total: number; size: number; left: number }) {
+/**
+ * « / 624 » derrière le chiffre : plus petit, décalé, pâle et flouté.
+ * Calé sur la ligne de base du chiffre (`baseline`), un peu plus bas que lui.
+ */
+export function GhostTotal({
+  total,
+  size,
+  left,
+  baseline,
+}: {
+  total: number;
+  size: number;
+  left: number;
+  baseline: number;
+}) {
   const label = `/${total}`;
   const blur = 3;
   const margin = blur * 4;
   const width = figureWidth(label, size) + margin * 2;
   const height = Math.round(size * 1.25) + margin * 2;
+  // La ligne de base du total, un peu sous celle du chiffre
+  const top = baseline + size * 0.12 - size;
   return (
-    <View pointerEvents="none" style={[styles.ghost, { left: left - margin, top: size * 0.3 - margin }]}>
+    <View pointerEvents="none" style={[styles.ghost, { left: left - margin, top: top - margin }]}>
       <Svg width={width} height={height}>
         <Defs>
           <Filter id="ghostBlur" x="-20%" y="-20%" width="140%" height="140%">

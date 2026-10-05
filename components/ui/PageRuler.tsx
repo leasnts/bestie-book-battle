@@ -349,7 +349,7 @@ function InkNumber({
   fontSize: number;
   scrollX: SharedValue<number>;
 }) {
-  const { lineHeight, frame } = figureBox(fontSize);
+  const { lineHeight, frame, baseline } = figureBox(fontSize);
   // La largeur du chiffre, pour caler le « / 624 » (le nombre de chiffres change rarement)
   const numberWidth = figureWidth(String(page), fontSize);
 
@@ -408,7 +408,7 @@ function InkNumber({
 
   return (
     <View style={[frame, { width: numberWidth + 80 }]}>
-      <GhostTotal total={total} size={Math.round(fontSize * 0.72)} left={40 + numberWidth * 0.7} />
+      <GhostTotal total={total} size={Math.round(fontSize * 0.72)} left={40 + numberWidth * 0.7} baseline={baseline} />
       {/* Le chiffre est le masque d'un dégradé d'encre : jamais d'aplat (DA) */}
       <MaskedView
         style={StyleSheet.absoluteFill}
