@@ -3,8 +3,8 @@
  * feuille d'écriture (`NoteComposer`), où tout se fait : écrire, dire (🎙),
  * citer (❝), choisir le thème et la page.
  *
- * Le même bouton partout où on écrit une note : la barre de « Ma page » sur
- * l'accueil (`QuickNoteBar`) et l'en-tête du carnet. Un brouillon laissé met un
+ * Le bouton de l'en-tête du carnet ; sur l'accueil, la même feuille s'ouvre
+ * par l'intercalaire ✎ du carré Carnet (`NoteTabs`). Un brouillon laissé met un
  * point lie de vin sur le crayon.
  *
  * `useWriteNote` : la même feuille, ouverte par autre chose qu'un rond (le

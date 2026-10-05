@@ -9,8 +9,8 @@
  * - Ma page en grand sur une **règle** qu'on fait glisser (`PageRuler`,
  *   2026-09-30). Ma page est en **pages de mon édition**, d'où le « sur 624 ».
  * - La rangée du bas a une **hauteur fixe** :
- *   - au repos, la barre d'actions rapides (`QuickNoteBar`) ; ma série est
- *     passée à côté du titre du livre (`BookSection`) ;
+ *   - au repos, rien : annoter ma page passe par les intercalaires du carré
+ *     Carnet (`NoteTabs`) ; ma série est à côté du titre du livre (`BookSection`) ;
  *   - quand la page a changé, ↺ annuler, « +14 », ✓ enregistrer.
  *   La barre s'efface : il n'y a jamais de doute sur la page notée.
  */
@@ -23,7 +23,6 @@ import { colors, fonts, spacing } from '../../utils/constants';
 import GlassButton from './GlassButton';
 import PageRuler, { type ClubPin } from './PageRuler';
 import RoundButton from './RoundButton';
-import { QUICK_BAR_HEIGHT } from './QuickNoteBar';
 
 interface PageSectionProps {
   /** Page affichée par le sélecteur */
@@ -37,8 +36,6 @@ interface PageSectionProps {
   onUndo: () => void;
   /** Mon journal (le titre qui l'ouvrait est retiré ; gardé pour y revenir) */
   onJournalPress?: () => void;
-  /** La barre d'actions rapides, au repos */
-  quickBar?: React.ReactNode;
   /** Petit écran : marges resserrées, pour que l'accueil tienne sans défiler */
   compact?: boolean;
   /** Taille du chiffre, choisie par l'accueil selon la hauteur de l'écran */
@@ -54,7 +51,6 @@ export default function PageSection({
   onPageChange,
   onSave,
   onUndo,
-  quickBar,
   compact = false,
   pickerFontSize = 88,
   club,
@@ -92,13 +88,14 @@ export default function PageSection({
           <RoundButton icon={CheckIcon} variant="dark" label="Enregistrer ma page" onPress={onSave} />
         </Animated.View>
       ) : (
-        <View style={styles.bar}>
-          {quickBar}
-        </View>
+        <View style={styles.bar} />
       )}
     </View>
   );
 }
+
+/** La rangée ↺ +14 ✓ : sa place reste réservée, rien ne saute quand elle apparaît */
+const ACTION_ROW_HEIGHT = 52;
 
 // ─── Styles ────────────────────────────────────────────────────────
 // Mesures de la maquette (échelle 0,865) ramenées en points.
@@ -122,14 +119,14 @@ const styles = StyleSheet.create({
 
   // Hauteur fixe, celle de la barre : les boutons apparaissent sans rien déplacer
   row: {
-    height: QUICK_BAR_HEIGHT,
+    height: ACTION_ROW_HEIGHT,
     marginTop: spacing.sm,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
   },
   bar: {
-    height: QUICK_BAR_HEIGHT,
+    height: ACTION_ROW_HEIGHT,
     marginTop: spacing.sm,
   },
   deltaText: {

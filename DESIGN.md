@@ -553,11 +553,12 @@ défile (pas de − / +), ma page en pages de mon édition, ma série en **jours
 (Lea, 2026-09-29) : le cadre sort de sous « Le livre » (28 pt glissés dessous),
 son haut s'efface en fondu, coins droits en haut ; le bas garde l'arrondi et le
 bord d'un cadre (`GlassSection` `fadeTop`).
-- au repos, la **barre d'actions rapides** (`QuickNoteBar`) : ✎ et ☺, deux
-  `RoundButton` `dark` ferrés à droite (là où ✓ apparaît). Tout annote ma
+- au repos, la rangée est vide : ✎ et ☺ sont les **intercalaires du carré
+  Carnet** (`NoteTabs`, Lea 2026-10-05), deux onglets en papier sable qui sortent
+  du haut de la note à la une, le bas glissé dessous. Tout annote ma
   page **enregistrée**, sans quitter l'accueil. ☺ : une réaction en un geste, sans
-  note ; la liste à la mode (`TRENDING_EMOJIS`) sort au-dessus de la barre et
-  défile ; « + » (`GlassButton`, secondaire) ouvre tous les emojis (/emoji-note,
+  note ; l'intercalaire se tire d'un cran, la liste à la mode (`TRENDING_EMOJIS`)
+  sort au-dessus, sur toute la largeur du bento, et défile ; « + » (`GlassButton`, secondaire) ouvre tous les emojis (/emoji-note,
   `EmojiGrid`). Un brouillon laissé met un point lie de vin sur ✎ (`badge`).
   ✎ ouvre la feuille (`NoteComposer`), où **tout se fait** : elle monte au-dessus
   du clavier, l'accueil s'assombrit. Ligne du haut : ✕, la page (« p. 157 »,
