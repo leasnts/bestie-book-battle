@@ -14,10 +14,13 @@ export default {
     // resté clair. Tant qu'un vrai thème sombre n'existe pas, mieux vaut
     // l'assumer que servir un entre-deux incohérent.
     userInterfaceStyle: "light",
+    // Le vrai splash natif est réglé à la main dans ios/…/SplashScreen.storyboard
+    // (fond en dégradé + yeux écartés = 1re image d'AnimatedSplash). Ceci n'en est
+    // que l'approximation, au cas où on régénère le dossier ios.
     splash: {
-      image: "./assets/images/splash-icon.png",
+      image: "./assets/images/splash-eyes.png",
       resizeMode: "contain",
-      backgroundColor: "#fdfcfa",
+      backgroundColor: "#752d3d",
     },
     ios: {
       bundleIdentifier: IS_DEV
