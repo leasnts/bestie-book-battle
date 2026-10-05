@@ -62,6 +62,7 @@ function Stitch({ width, height, openTop }: { width: number; height: number; ope
         stroke={stitchColor(true)}
         strokeWidth={STITCH.width}
         strokeDasharray={STITCH.dash}
+        strokeLinecap={STITCH.cap}
       />
     </Svg>
   );
