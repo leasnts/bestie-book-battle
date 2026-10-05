@@ -618,7 +618,7 @@ const styles = StyleSheet.create({
   // Texture de fond semi-transparente
   backgroundTexture: {
     ...StyleSheet.absoluteFillObject,
-    opacity: 0.05,
+    opacity: 0.025,
   },
 
   // ===== HEADER =====

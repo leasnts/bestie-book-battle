@@ -108,10 +108,10 @@ export default function BookCover({ coverUrl, done = false, outlined = false }: 
 
 const COVER_SHADOW = {
   shadowColor: colors.black,
-  shadowOffset: { width: -4, height: 0 },
-  shadowOpacity: 0.26,
-  shadowRadius: 4,
-  elevation: 4,
+  shadowOffset: { width: -2, height: 0 },
+  shadowOpacity: 0.12,
+  shadowRadius: 3,
+  elevation: 2,
 } as const;
 
 const styles = StyleSheet.create({
