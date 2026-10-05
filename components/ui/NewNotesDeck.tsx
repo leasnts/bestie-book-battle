@@ -66,7 +66,7 @@ import {
   spacing,
 } from '../../utils/constants';
 import NoteCard, { NoteReactions } from './NoteCard';
-import PeelSurface, { peelAmount } from './PeelSurface';
+import PeelSurface, { peelAmount, pullSpeed } from './PeelSurface';
 import RoundButton from './RoundButton';
 
 interface NewNotesDeckProps {
@@ -87,11 +87,13 @@ const DECK_HEIGHT = 320;
 /** Les cartes de dessous : pivotées dans un sens puis dans l'autre */
 const TILTS = [0, -4, 3.5, 0];
 /**
- * Décollée à plus de la moitié : lâcher la fait partir. En dessous, elle se
- * recolle — on peut jouer avec le coin sans qu'elle parte. La vitesse du geste
- * ne compte pas : un mouvement vif ne doit pas la décoller par surprise.
+ * Décollée au tiers : lâcher la fait partir. En dessous, elle se recolle — on
+ * peut jouer avec le coin sans qu'elle parte. Un coup de doigt vif suffit aussi,
+ * mais seulement une fois le coin un peu soulevé : pas de départ par surprise.
  */
-const PEEL_OFF = 0.5;
+const PEEL_OFF = 0.3;
+const FLICK_MIN = 0.08;
+const FLICK_VELOCITY = 500;
 /** Glisser au-delà (ou lancer assez vite) = lue */
 const SWIPE_DISTANCE = 100;
 const SWIPE_VELOCITY = 800;
@@ -346,6 +348,7 @@ function SwipeCard({
       };
 
       if (mode.value === 1) {
+        if (!armed.value && amount.value >= FLICK_MIN && pullSpeed(e, values) > FLICK_VELOCITY) armed.value = 1;
         if (!armed.value) {
           // Lâchée trop tôt : le coin se recolle
           const back = { duration: motion.duration.slow, easing: easeOut };

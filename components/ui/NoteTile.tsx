@@ -53,7 +53,7 @@ import {
 } from '../../utils/annotations';
 import { colors, fonts, inkAlpha, inkGradient, motion, postIt, spacing } from '../../utils/constants';
 import NoteSticker, { STICKER_BASE_LARGE } from './NoteSticker';
-import PeelSurface, { peelAmount } from './PeelSurface';
+import PeelSurface, { peelAmount, pullSpeed } from './PeelSurface';
 import PressableScale from './PressableScale';
 import { useWriteNote } from './WriteNoteButton';
 
@@ -83,8 +83,11 @@ type TileSize = { w: number; h: number };
 
 /** Les barres de l'onde du vocal, dans le carré */
 const WAVE_BARS = 18;
-/** Décollé à plus de la moitié : lâcher le fait s'envoler (comme la pile) */
-const PEEL_OFF = 0.5;
+/** Décollé au tiers : lâcher le fait s'envoler (comme la pile) */
+const PEEL_OFF = 0.3;
+/** Ou un coup de doigt vif, une fois le coin un peu soulevé */
+const FLICK_MIN = 0.08;
+const FLICK_VELOCITY = 500;
 
 const easeOut = Easing.bezier(...motion.easing.easeOutQuart);
 
@@ -327,13 +330,11 @@ function Face({
 // ─── L'autocollant du dessus, qu'on arrache ─────────────────────────
 
 /**
- * Tirer un coin vers l'intérieur le décolle (même rendu que la pile). Lâché
- * avant la moitié, il se recolle ; au-delà, le pli traverse tout, et
+ * Tirer dans n'importe quel sens décolle le coin qui suit le doigt (même rendu
+ * que la pile). Lâché avant le tiers, il se recolle ; au-delà (ou d'un coup de
+ * doigt vif), le pli traverse tout, et
  * l'autocollant s'envole comme un ballon qu'on lâche : il monte de plus en
  * plus vite, sans tanguer, et s'efface. Le toucher simple, lui, ouvre toujours le carnet.
- *
- * Le geste ne démarre qu'à l'horizontale : glisser vers le haut ou le bas sur
- * le carré fait toujours défiler l'accueil.
  */
 function PeelCard({
   side,
@@ -358,7 +359,7 @@ function PeelCard({
   const by = useSharedValue(0);
   const peeling = useSharedValue(0);
   const values = { w, h, ax, ay, bx, by, peeling };
-  /** Passé la moitié : lâcher l'arrache (une vibration l'annonce, une autre si on revient) */
+  /** Passé le tiers : lâcher l'arrache (une vibration l'annonce, une autre si on revient) */
   const armed = useSharedValue(0);
   /** Le coin est tiré vers l'intérieur : sinon le geste ne fait rien */
   const live = useSharedValue(0);
@@ -430,8 +431,7 @@ function PeelCard({
 
   const pan = Gesture.Pan()
     .enabled(enabled && !reduced)
-    .activeOffsetX([-8, 8])
-    .failOffsetY([-14, 14])
+    .minDistance(4)
     .onBegin((e) => {
       startX.value = e.x;
       startY.value = e.y;
@@ -439,11 +439,13 @@ function PeelCard({
       live.value = 0;
     })
     .onStart((e) => {
-      // Le coin le plus proche du doigt ; tiré vers l'intérieur, il se décolle
-      ax.value = startX.value < w.value / 2 ? 0 : w.value;
-      ay.value = startY.value < h.value / 2 ? 0 : h.value;
-      const inward = e.translationX * (w.value / 2 - ax.value) + e.translationY * (h.value / 2 - ay.value) > 0;
-      if (!inward) return;
+      // Le coin qui suit le doigt, où qu'on ait posé le doigt : tirer vers la
+      // droite soulève un coin gauche, vers le bas un coin du haut. Un geste
+      // presque droit garde le coin du côté où le doigt s'est posé
+      const tx = e.translationX;
+      const ty = e.translationY;
+      ax.value = Math.abs(tx) > Math.abs(ty) * 0.4 ? (tx > 0 ? 0 : w.value) : startX.value < w.value / 2 ? 0 : w.value;
+      ay.value = Math.abs(ty) > Math.abs(tx) * 0.4 ? (ty > 0 ? 0 : h.value) : startY.value < h.value / 2 ? 0 : h.value;
       live.value = 1;
       runOnJS(buzz)(Haptics.ImpactFeedbackStyle.Light);
     })
@@ -458,8 +460,9 @@ function PeelCard({
         runOnJS(buzz)(nowArmed ? Haptics.ImpactFeedbackStyle.Medium : Haptics.ImpactFeedbackStyle.Light);
       }
     })
-    .onEnd(() => {
+    .onEnd((e) => {
       if (!live.value) return;
+      if (!armed.value && peelAmount(values) >= FLICK_MIN && pullSpeed(e, values) > FLICK_VELOCITY) armed.value = 1;
       release();
     });
 

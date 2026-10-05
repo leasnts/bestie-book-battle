@@ -47,6 +47,15 @@ export function peelAmount(v: PeelValues) {
     .amount;
 }
 
+/** La vitesse du doigt dans le sens où il tire le coin (pt/s) */
+export function pullSpeed(e: { velocityX: number; velocityY: number }, v: PeelValues) {
+  'worklet';
+  const dx = v.bx.value - v.ax.value;
+  const dy = v.by.value - v.ay.value;
+  const len = Math.hypot(dx, dy) || 1;
+  return (e.velocityX * dx + e.velocityY * dy) / len;
+}
+
 /** Rien de décollé : le masque couvre tout, ombres comprises */
 const WHOLE = 'M-100 -100H4000V4000H-100Z';
 const NOTHING = 'M0 0Z';
