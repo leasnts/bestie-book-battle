@@ -44,7 +44,7 @@ import BookSection from '../../components/ui/BookSection';
 import CoverBackdrop from '../../components/ui/CoverBackdrop';
 import GlassButton from '../../components/ui/GlassButton';
 import NoteTile from '../../components/ui/NoteTile';
-import QuickNoteBar from '../../components/ui/QuickNoteBar';
+import NoteTabs, { NOTE_TABS_HEIGHT } from '../../components/ui/NoteTabs';
 import PageSection from '../../components/ui/PageSection';
 import LeaderboardSection from '../../components/ui/LeaderboardSection';
 import { getAllUserPages } from '../../services/supabase/database';
@@ -484,7 +484,6 @@ export default function HomeScreen() {
             onPageChange={handlePageChange}
             onSave={handleSave}
             onUndo={handleUndo}
-            quickBar={<QuickNoteBar />}
             compact={compactSpacing}
             pickerFontSize={pickerFontSize}
             club={clubPins}
@@ -545,7 +544,13 @@ export default function HomeScreen() {
         Deux carrés côte à côte : où je me situe dans le club, et la note à la une.
         Seul dans le livre, pas de classement : le carnet en une bande pleine largeur. */}
       {activeChallenge && (
-        <View style={[styles.bento, { paddingTop: compactSpacing ? spacing.sm : spacing['2xl'] }]}>
+        <View
+          style={[
+            styles.bento,
+            // De quoi laisser dépasser les intercalaires du carnet
+            { paddingTop: (compactSpacing ? spacing.xs : spacing.md) + NOTE_TABS_HEIGHT },
+          ]}
+        >
           {!alone && (
             <View style={styles.bentoCell}>
               <LeaderboardSection
@@ -558,6 +563,8 @@ export default function HomeScreen() {
             </View>
           )}
           <View style={styles.bentoCell}>
+            {/* Avant la note : le bas des intercalaires glisse dessous */}
+            <NoteTabs />
             <NoteTile
               notes={tileNotes}
               myUserId={user?.id}
