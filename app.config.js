@@ -15,10 +15,10 @@ export default {
     // l'assumer que servir un entre-deux incohérent.
     userInterfaceStyle: "light",
     // Le vrai splash natif est réglé à la main dans ios/…/SplashScreen.storyboard
-    // (fond en dégradé + yeux écartés = 1re image d'AnimatedSplash). Ceci n'en est
+    // (fond en dégradé + « Lowki » = 1re image d'AnimatedSplash). Ceci n'en est
     // que l'approximation, au cas où on régénère le dossier ios.
     splash: {
-      image: "./assets/images/splash-eyes.png",
+      image: "./assets/images/splash-word.png",
       resizeMode: "contain",
       backgroundColor: "#752d3d",
     },

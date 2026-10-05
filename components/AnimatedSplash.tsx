@@ -1,30 +1,27 @@
 /**
- * Splash Screen Animé — « Aimant »
+ * Splash Screen Animé — « Ils se retrouvent »
  *
- * Animation (≈ 1 s) :
- * 1. Le logo entier (yeux collés) et « Lowki » en Welcome Valentines dessous, sur
- *    fond lie de vin. C'est exactement l'image du splash natif
- *    (SplashScreen.storyboard), affichée pendant le chargement de l'app : le
- *    relais est invisible. (Yeux écartés pendant le chargement = ~1,5 s figés.)
- * 2. Dès que React prend la main, les yeux se décollent d'un coup en se penchant,
- *    s'attirent, se cognent (petit écrasement), reculent un poil, se recollent,
- *    puis se redressent.
- * 3. Fade out global → l'app.
+ * Animation (≈ 1,5 s), sans rebond :
+ * 1. « Lowki » seul sur fond lie de vin. C'est exactement l'image du splash natif
+ *    (SplashScreen.storyboard), affichée pendant le chargement : relais invisible.
+ * 2. Les deux yeux arrivent chacun de son bord, comme deux potes qui se croisent
+ *    dans la rue, ralentissent et se collent.
+ * 3. Le petit œil fait un clin d'œil.
+ * 4. Fade out global → l'app.
  *
- * Réglages choisis par Lea dans le labo HTML le 2026-10-05 (vitesse 1, rebond 0,5).
+ * Variante choisie par Lea dans le labo HTML le 2026-10-05.
  */
 
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, useWindowDimensions, View } from 'react-native';
 import Animated, {
   Easing,
   useAnimatedStyle,
   useSharedValue,
+  withDelay,
   withSequence,
-  withSpring,
   withTiming,
-  type SharedValue,
 } from 'react-native-reanimated';
 import Svg, { ClipPath, Defs, LinearGradient as SvgGradient, Path, Stop } from 'react-native-svg';
 import { accentGradient } from '../utils/constants';
@@ -37,23 +34,16 @@ import {
   LOGO_WORD_VIEWBOX,
 } from './brand/logoEyesPath';
 
-/** Côté du carré du logo, en points. Le splash natif utilise la même taille. */
-export const SPLASH_LOGO_SIZE = 220;
-/** Jusqu'où chaque œil se décolle, dans le repère 1200 du SVG. */
-const SPREAD = 130;
-const U = SPLASH_LOGO_SIZE / LOGO_EYES_VIEWBOX;
+/** Côté du carré du logo, en points. */
+const SPLASH_LOGO_SIZE = 220;
 
 /** Les yeux en crème, clair en haut → un peu plus foncé en bas (jamais d'aplat). */
 const EYES_GRADIENT = ['#fdfcfa', '#efe6e0'] as const;
 
-// Ressorts : rebond 0,5 du labo = amorti à 59 % de l'amorti critique (2√raideur).
-const SQUASH_SPRING = { stiffness: 400, damping: 23.6, mass: 1 };
-const LEAN_SPRING = { stiffness: 220, damping: 17.5, mass: 1 };
-
-// Décollés en 160 ms, contact à 440 ms, recollés à 720 ms.
-const T_SPREAD = 160;
-const T_CONTACT = 440;
-const T_RECONTACT = 720;
+// Les yeux arrivent en 900 ms en ralentissant, se posent, puis le clin d'œil.
+const T_MEET = 900;
+const T_WINK = T_MEET + 180;
+const MEET_EASING = Easing.out(Easing.poly(5));
 
 /**
  * « Lowki » sous les yeux, en tracé (pas en <Text>, ni en image : les deux
@@ -95,25 +85,12 @@ function Eye({ side }: { side: Side }) {
   );
 }
 
-function useEyeStyle(x: SharedValue<number>, r: SharedValue<number>, sx: SharedValue<number>, sy: SharedValue<number>) {
-  return useAnimatedStyle(() => ({
-    transform: [
-      { translateX: x.value },
-      { rotate: `${r.value}deg` },
-      { scaleX: sx.value },
-      { scaleY: sy.value },
-    ],
-  }));
-}
-
 export default function AnimatedSplash({ onFinish, waitFor }: AnimatedSplashProps) {
-  const leftX = useSharedValue(0);
-  const rightX = useSharedValue(0);
-  const leftR = useSharedValue(0);
-  const rightR = useSharedValue(0);
-  // L'écrasement est le même pour les deux yeux
-  const squashX = useSharedValue(1);
-  const squashY = useSharedValue(1);
+  // Au départ, chaque œil est poussé d'une largeur d'écran : hors champ.
+  const { width: screenWidth } = useWindowDimensions();
+  const leftX = useSharedValue(-screenWidth);
+  const rightX = useSharedValue(screenWidth);
+  const winkY = useSharedValue(1);
 
   const screenOpacity = useSharedValue(1);
 
@@ -125,44 +102,28 @@ export default function AnimatedSplash({ onFinish, waitFor }: AnimatedSplashProp
   const [forceExit, setForceExit] = useState(false);
 
   // Phase 1 — Animation d'entrée. Pas de fade-out ici.
-  // useLayoutEffect et non useEffect : au lancement, le fil JS est occupé (auth,
-  // polices, stores) et un useEffect partait ~1 s après l'affichage, yeux figés.
+  // useLayoutEffect : l'animation part dans la même image que le premier affichage.
   useLayoutEffect(() => {
-    const lean = { duration: 220, easing: Easing.inOut(Easing.quad) };
-    leftR.value = withTiming(7, lean);
-    rightR.value = withTiming(-7, lean);
+    const meet = { duration: T_MEET, easing: MEET_EASING };
+    leftX.value = withTiming(0, meet);
+    rightX.value = withTiming(0, meet);
 
-    // Décollés d'un coup, attirés (accélère jusqu'au contact), petit recul, recollés
-    const attract = (side: number) =>
+    // Clin d'œil : le petit œil se ferme, une fraction de seconde, se rouvre
+    winkY.value = withDelay(
+      T_WINK,
       withSequence(
-        withTiming(side * SPREAD * U, { duration: T_SPREAD, easing: Easing.out(Easing.quad) }),
-        withTiming(0, { duration: T_CONTACT - T_SPREAD, easing: Easing.in(Easing.cubic) }),
-        withTiming(side * 26 * U, { duration: 120, easing: Easing.out(Easing.quad) }),
-        withTiming(0, { duration: 160, easing: Easing.in(Easing.cubic) }),
-      );
-    leftX.value = attract(-1);
-    rightX.value = attract(1);
+        withTiming(0.1, { duration: 110, easing: Easing.in(Easing.quad) }),
+        withDelay(70, withTiming(1, { duration: 180, easing: Easing.out(Easing.cubic) })),
+      ),
+    );
 
-    const impact = (amount: number) => {
-      squashX.value = withSequence(withTiming(1 - 0.07 * amount, { duration: 0 }), withSpring(1, SQUASH_SPRING));
-      squashY.value = withSequence(withTiming(1 + 0.05 * amount, { duration: 0 }), withSpring(1, SQUASH_SPRING));
-    };
-    const contactTimer = setTimeout(() => impact(1.2), T_CONTACT);
-    const recontactTimer = setTimeout(() => {
-      impact(0.5);
-      leftR.value = withSpring(0, LEAN_SPRING);
-      rightR.value = withSpring(0, LEAN_SPRING);
-    }, T_RECONTACT);
-
-    const entryTimer = setTimeout(() => setEntryDone(true), 1100);
+    const entryTimer = setTimeout(() => setEntryDone(true), T_WINK + 500);
 
     // Filet de sécurité : si après 8s le splash est toujours visible
     // (Supabase hang, réseau mort…), on force la sortie quand même.
     const bailoutTimer = setTimeout(() => setForceExit(true), 8000);
 
     return () => {
-      clearTimeout(contactTimer);
-      clearTimeout(recontactTimer);
       clearTimeout(entryTimer);
       clearTimeout(bailoutTimer);
     };
@@ -203,8 +164,12 @@ export default function AnimatedSplash({ onFinish, waitFor }: AnimatedSplashProp
     onFinishRef.current();
   }, [fadeOutDone]);
 
-  const leftStyle = useEyeStyle(leftX, leftR, squashX, squashY);
-  const rightStyle = useEyeStyle(rightX, rightR, squashX, squashY);
+  const leftStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: leftX.value }],
+  }));
+  const rightStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: rightX.value }, { scaleY: winkY.value }],
+  }));
 
   // Fade out global de tout l'écran
   const screenAnimatedStyle = useAnimatedStyle(() => ({
@@ -215,7 +180,7 @@ export default function AnimatedSplash({ onFinish, waitFor }: AnimatedSplashProp
     <Animated.View style={[styles.container, screenAnimatedStyle]}>
       <LinearGradient colors={accentGradient} style={StyleSheet.absoluteFill} />
       <View style={styles.logo}>
-        <Animated.View style={[styles.eye, styles.leftPivot, leftStyle]}>
+        <Animated.View style={[styles.eye, leftStyle]}>
           <Eye side="left" />
         </Animated.View>
         <Animated.View style={[styles.eye, styles.rightPivot, rightStyle]}>
@@ -240,16 +205,15 @@ const styles = StyleSheet.create({
     height: SPLASH_LOGO_SIZE,
     transform: [{ translateY: LOGO_SHIFT_Y }],
   },
+  eye: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  // Le clin d'œil se ferme vers le centre du petit œil (repère 1200 du SVG)
+  rightPivot: { transformOrigin: `${(905 / 12).toFixed(1)}% ${(650 / 12).toFixed(1)}%` },
   word: {
     position: 'absolute',
     ...WORD,
     left: (SPLASH_LOGO_SIZE - WORD.width) / 2,
     top: SPLASH_LOGO_SIZE / 2 + WORD_CENTER_Y - LOGO_SHIFT_Y - WORD.height / 2,
   },
-  eye: {
-    ...StyleSheet.absoluteFillObject,
-  },
-  // Chaque œil se penche et s'écrase depuis sa base (repère 1200 du SVG)
-  leftPivot: { transformOrigin: `${(380 / 12).toFixed(1)}% ${(1000 / 12).toFixed(1)}%` },
-  rightPivot: { transformOrigin: `${(900 / 12).toFixed(1)}% ${(930 / 12).toFixed(1)}%` },
 });
