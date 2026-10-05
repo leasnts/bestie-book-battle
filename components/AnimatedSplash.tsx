@@ -1,27 +1,77 @@
 /**
- * Splash Screen Animé
- * 
- * Animation :
- * 1. Fade in du texte "b estie / b ook / b attle"
- * 2. Les yeux arrivent vers nous (gros) et se rétrécissent
- *    pour se poser sur les "oo" de "book" — pas de rebond, immobiles à la fin
- * 3. Temps de latence pour lire le splash
- * 4. Fade out global → transition vers l'écran de sign in
+ * Splash Screen Animé — « Ils se retrouvent »
+ *
+ * Animation (≈ 1,5 s), sans rebond :
+ * 1. Le fond rouge seul. C'est exactement l'image du splash natif
+ *    (SplashScreen.storyboard), affichée pendant le chargement : relais invisible.
+ * 2. Les deux yeux arrivent chacun de son bord, comme deux potes qui se croisent
+ *    dans la rue, ralentissent et se collent. « Lowki » apparaît en fondu au
+ *    moment où ils se rejoignent.
+ * 3. Le petit œil fait un clin d'œil.
+ * 4. Fade out global → l'app.
+ *
+ * Variante choisie par Lea dans le labo HTML le 2026-10-05.
  */
 
-import { Image } from 'expo-image';
-import React, { useEffect, useRef, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { StyleSheet, useWindowDimensions, View } from 'react-native';
 import Animated, {
   Easing,
   useAnimatedStyle,
   useSharedValue,
   withDelay,
+  withSequence,
   withTiming,
 } from 'react-native-reanimated';
-import { colors, fonts } from '../utils/constants';
-import PopEyes from './PopEyes';
-import TEXTURE_IMAGE from '../assets/images/61ea1e0c638b5b9c8100383a37a5b488848db623.png';
+import Svg, { ClipPath, Defs, G, LinearGradient as SvgGradient, Path, Stop } from 'react-native-svg';
+import {
+  LOGO_EYES_CLIP,
+  LOGO_EYES_PATH,
+  LOGO_EYES_VIEWBOX,
+  LOGO_WORD_PATH,
+  LOGO_WORD_RATIO,
+  LOGO_WORD_VIEWBOX,
+} from './brand/logoEyesPath';
+
+/** Côté du carré du logo, en points. */
+const SPLASH_LOGO_SIZE = 220;
+
+/**
+ * Ton sur ton, comme les visuels officiels de Lea (« lowki_red ») : fond rouge,
+ * logo d'un rouge plus profond, et un liseré clair d'1 pt sous chaque forme pour
+ * l'effet gravé dans le papier. Dégradés partout (jamais d'aplat), sauf le mot.
+ */
+const SPLASH_BG = ['#a3232b', '#8f1c24'] as const;
+const SHAPE_GRADIENT = ['#6c1419', '#561115'] as const;
+const SHAPE_WORD = '#5f1216';
+const DEBOSS_LIGHT = '#c0454c';
+const DEBOSS_OPACITY = 0.55;
+/** Décalage du liseré, 1 pt, dans le repère 1200 des yeux et celui de la police. */
+const DEBOSS_EYES = 5.5;
+const DEBOSS_WORD = 32;
+
+// Les yeux arrivent en 900 ms en ralentissant, se posent, puis le clin d'œil.
+const T_MEET = 900;
+const T_WINK = T_MEET + 180;
+/** « Lowki » se dévoile quand les yeux se touchent (l'arrivée ralentie les colle visuellement vers 550 ms). */
+const T_WORD = 550;
+const WORD_FADE = 450;
+const MEET_EASING = Easing.out(Easing.poly(5));
+/** Le clin d'œil se ferme de haut en bas, comme une paupière : vers le bas du petit œil (y = 920 sur 1200). */
+const WINK_PIVOT_Y = (920 / LOGO_EYES_VIEWBOX) * SPLASH_LOGO_SIZE;
+
+/**
+ * « Lowki » sous les yeux, en tracé (pas en <Text> : la police n'est pas encore
+ * chargée). Les yeux remontés de 34 pt, le mot centré 83 pt sous le centre de
+ * l'écran, pour centrer l'ensemble yeux + mot.
+ */
+const WORD_HEIGHT = 51.5;
+// Le cadre du mot descend de 2 pt (64 unités) pour laisser la place au liseré
+const WORD = { width: WORD_HEIGHT * LOGO_WORD_RATIO, height: WORD_HEIGHT + 2 };
+const WORD_VIEWBOX = LOGO_WORD_VIEWBOX.replace(/ 1643$/, ' 1707');
+const LOGO_SHIFT_Y = -34;
+const WORD_CENTER_Y = 83;
 
 interface AnimatedSplashProps {
   onFinish: () => void;
@@ -31,11 +81,36 @@ interface AnimatedSplashProps {
   waitFor?: boolean;
 }
 
+type Side = 'left' | 'right';
+
+/** Un œil seul, dans le carré complet du logo (pour garder sa place exacte). */
+function Eye({ side }: { side: Side }) {
+  return (
+    <Svg width={SPLASH_LOGO_SIZE} height={SPLASH_LOGO_SIZE} viewBox={`0 0 ${LOGO_EYES_VIEWBOX} ${LOGO_EYES_VIEWBOX}`}>
+      <Defs>
+        <SvgGradient id="eyes" gradientUnits="userSpaceOnUse" x1="0" y1="200" x2="0" y2="1010">
+          <Stop offset="0" stopColor={SHAPE_GRADIENT[0]} />
+          <Stop offset="1" stopColor={SHAPE_GRADIENT[1]} />
+        </SvgGradient>
+        <ClipPath id="cut">
+          <Path d={LOGO_EYES_CLIP[side]} />
+        </ClipPath>
+      </Defs>
+      <G transform={`translate(0 ${DEBOSS_EYES})`}>
+        <Path d={LOGO_EYES_PATH} fill={DEBOSS_LIGHT} fillOpacity={DEBOSS_OPACITY} clipPath="url(#cut)" />
+      </G>
+      <Path d={LOGO_EYES_PATH} fill="url(#eyes)" clipPath="url(#cut)" />
+    </Svg>
+  );
+}
+
 export default function AnimatedSplash({ onFinish, waitFor }: AnimatedSplashProps) {
-  const textOpacity = useSharedValue(0);
-  
-  const eyesScale = useSharedValue(3);
-  const eyesOpacity = useSharedValue(0);
+  // Au départ, chaque œil est poussé d'une largeur d'écran : hors champ.
+  const { width: screenWidth } = useWindowDimensions();
+  const leftX = useSharedValue(-screenWidth);
+  const rightX = useSharedValue(screenWidth);
+  const winkY = useSharedValue(1);
+  const wordOpacity = useSharedValue(0);
 
   const screenOpacity = useSharedValue(1);
 
@@ -46,28 +121,30 @@ export default function AnimatedSplash({ onFinish, waitFor }: AnimatedSplashProp
   const [fadeOutDone, setFadeOutDone] = useState(false);
   const [forceExit, setForceExit] = useState(false);
 
-  // Phase 1 — Animation d'entrée (texte + yeux). Pas de fade-out ici.
-  useEffect(() => {
-    textOpacity.value = withTiming(1, { duration: 600 });
-    
-    eyesOpacity.value = withDelay(
-      600,
-      withTiming(1, { duration: 180 })
-    );
-    eyesScale.value = withDelay(
-      600,
-      withTiming(1, { 
-        duration: 220,
-        easing: Easing.out(Easing.cubic),
-      })
+  // Phase 1 — Animation d'entrée. Pas de fade-out ici.
+  // useLayoutEffect : l'animation part dans la même image que le premier affichage.
+  useLayoutEffect(() => {
+    const meet = { duration: T_MEET, easing: MEET_EASING };
+    leftX.value = withTiming(0, meet);
+    rightX.value = withTiming(0, meet);
+
+    wordOpacity.value = withDelay(T_WORD, withTiming(1, { duration: WORD_FADE, easing: Easing.inOut(Easing.quad) }));
+
+    // Clin d'œil : la paupière du petit œil descend, une fraction de seconde, remonte
+    winkY.value = withDelay(
+      T_WINK,
+      withSequence(
+        withTiming(0.1, { duration: 110, easing: Easing.in(Easing.quad) }),
+        withDelay(70, withTiming(1, { duration: 180, easing: Easing.out(Easing.cubic) })),
+      ),
     );
 
-    const entryTimer = setTimeout(() => setEntryDone(true), 1500);
+    const entryTimer = setTimeout(() => setEntryDone(true), T_WINK + 500);
 
     // Filet de sécurité : si après 8s le splash est toujours visible
     // (Supabase hang, réseau mort…), on force la sortie quand même.
     const bailoutTimer = setTimeout(() => setForceExit(true), 8000);
-    
+
     return () => {
       clearTimeout(entryTimer);
       clearTimeout(bailoutTimer);
@@ -109,18 +186,21 @@ export default function AnimatedSplash({ onFinish, waitFor }: AnimatedSplashProp
     onFinishRef.current();
   }, [fadeOutDone]);
 
-  // Style animé pour le texte
-  const textAnimatedStyle = useAnimatedStyle(() => ({
-    opacity: textOpacity.value,
+  const leftStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: leftX.value }],
   }));
-
-  // Style animé pour les yeux : scale + opacity
-  const eyesAnimatedStyle = useAnimatedStyle(() => ({
-    opacity: eyesOpacity.value,
+  // scaleY s'écrase autour du centre de la vue : on recale pour que le bas du
+  // petit œil reste fixe (transformOrigin n'était pas appliqué, l'œil se fermait
+  // vers le haut).
+  const rightStyle = useAnimatedStyle(() => ({
     transform: [
-      { scale: eyesScale.value },
+      { translateX: rightX.value },
+      { translateY: (WINK_PIVOT_Y - SPLASH_LOGO_SIZE / 2) * (1 - winkY.value) },
+      { scaleY: winkY.value },
     ],
   }));
+
+  const wordStyle = useAnimatedStyle(() => ({ opacity: wordOpacity.value }));
 
   // Fade out global de tout l'écran
   const screenAnimatedStyle = useAnimatedStyle(() => ({
@@ -129,34 +209,23 @@ export default function AnimatedSplash({ onFinish, waitFor }: AnimatedSplashProp
 
   return (
     <Animated.View style={[styles.container, screenAnimatedStyle]}>
-      {/* Fond noir avec texture */}
-      <View style={StyleSheet.absoluteFill}>
-        <View style={styles.background} />
-        <Image
-          source={TEXTURE_IMAGE}
-          style={styles.texture}
-          contentFit="cover"
-        />
+      <LinearGradient colors={SPLASH_BG} style={StyleSheet.absoluteFill} />
+      <View style={styles.logo}>
+        <Animated.View style={[styles.eye, leftStyle]}>
+          <Eye side="left" />
+        </Animated.View>
+        <Animated.View style={[styles.eye, rightStyle]}>
+          <Eye side="right" />
+        </Animated.View>
+        <Animated.View style={[styles.word, wordStyle]}>
+          <Svg width="100%" height="100%" viewBox={WORD_VIEWBOX}>
+            <G transform={`translate(0 ${DEBOSS_WORD})`}>
+              <Path d={LOGO_WORD_PATH} fill={DEBOSS_LIGHT} fillOpacity={DEBOSS_OPACITY} />
+            </G>
+            <Path d={LOGO_WORD_PATH} fill={SHAPE_WORD} />
+          </Svg>
+        </Animated.View>
       </View>
-
-      {/* Texte "b estie / b ook / b attle" centré */}
-      <Animated.View style={[styles.textContainer, textAnimatedStyle]}>
-        <Text style={styles.text}>b estie</Text>
-        {/* La ligne "b ook" contient un marqueur invisible pour positionner les yeux */}
-        <View style={styles.bookLine}>
-          <Text style={styles.text}>b </Text>
-          <View style={styles.ooContainer}>
-            {/* Les "oo" du texte — cachés par les yeux quand ils sont posés */}
-            <Text style={styles.text}>oo</Text>
-            {/* Yeux mascotte positionnés exactement par-dessus les "oo" */}
-            <Animated.View style={[styles.eyesOverlay, eyesAnimatedStyle]}>
-              <PopEyes size="large" />
-            </Animated.View>
-          </View>
-          <Text style={styles.text}>k</Text>
-        </View>
-        <Text style={styles.text}>b attle</Text>
-      </Animated.View>
     </Animated.View>
   );
 }
@@ -166,40 +235,19 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: colors.dark950,
   },
-  background: {
+  logo: {
+    width: SPLASH_LOGO_SIZE,
+    height: SPLASH_LOGO_SIZE,
+    transform: [{ translateY: LOGO_SHIFT_Y }],
+  },
+  eye: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: colors.dark950,
   },
-  texture: {
-    ...StyleSheet.absoluteFillObject,
-    opacity: 0.05,
-  },
-  textContainer: {
-    alignItems: 'flex-start', // Aligne à gauche pour que les "b" soient empilés verticalement
-    justifyContent: 'center',
-    gap: 16,
-  },
-  text: {
-    fontFamily: fonts.displayHero,
-    fontSize: 60,
-    color: colors.white,
-    letterSpacing: -1.2,
-    lineHeight: 72,
-  },
-  bookLine: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  ooContainer: {
-    position: 'relative',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  eyesOverlay: {
+  word: {
     position: 'absolute',
-    // Centré exactement par-dessus les "oo"
-    alignSelf: 'center',
+    ...WORD,
+    left: (SPLASH_LOGO_SIZE - WORD.width) / 2,
+    top: SPLASH_LOGO_SIZE / 2 + WORD_CENTER_Y - LOGO_SHIFT_Y - WORD.height / 2,
   },
 });

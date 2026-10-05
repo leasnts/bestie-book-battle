@@ -6,7 +6,6 @@
         <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="24053.1"/>
         <capability name="Named colors" minToolsVersion="9.0"/>
         <capability name="Safe area layout guides" minToolsVersion="9.0"/>
-        <capability name="System colors in document resources" minToolsVersion="11.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <scenes>
@@ -17,16 +16,17 @@
                         <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>
                         <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                         <subviews>
-                            <imageView id="EXPO-SplashScreen" userLabel="SplashScreenLegacy" image="SplashScreenLegacy" contentMode="scaleAspectFit" clipsSubviews="true" userInteractionEnabled="false" translatesAutoresizingMaskIntoConstraints="false">
-                                <rect key="frame" x="0" y="0" width="414" height="736"/>
+                            <!-- Fond rouge en dégradé, étiré sur tout l'écran comme le LinearGradient d'AnimatedSplash. Seul : les yeux et « Lowki » arrivent ensuite. PNG sRGB (#a3232b → #8f1c24, profil inclus). Sur le simulateur, la toute première capture de lancement sort plus vive, même avec une couleur unie : artefact de la capture, pas des fichiers. -->
+                            <imageView id="BBB-SplashBackground" userLabel="SplashBackground" image="SplashBackground" contentMode="scaleToFill" clipsSubviews="YES" userInteractionEnabled="NO" translatesAutoresizingMaskIntoConstraints="NO">
+                                <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>
                             </imageView>
                         </subviews>
                         <viewLayoutGuide key="safeArea" id="Rmq-lb-GrQ"/>
                         <constraints>
-                            <constraint firstItem="EXPO-SplashScreen" firstAttribute="top" secondItem="EXPO-ContainerView" secondAttribute="top" id="83fcb9b545b870ba44c24f0feeb116490c499c52"/>
-                            <constraint firstItem="EXPO-SplashScreen" firstAttribute="leading" secondItem="EXPO-ContainerView" secondAttribute="leading" id="61d16215e44b98e39d0a2c74fdbfaaa22601b12c"/>
-                            <constraint firstItem="EXPO-SplashScreen" firstAttribute="trailing" secondItem="EXPO-ContainerView" secondAttribute="trailing" id="f934da460e9ab5acae3ad9987d5b676a108796c1"/>
-                            <constraint firstItem="EXPO-SplashScreen" firstAttribute="bottom" secondItem="EXPO-ContainerView" secondAttribute="bottom" id="d6a0be88096b36fb132659aa90203d39139deda9"/>
+                            <constraint firstItem="BBB-SplashBackground" firstAttribute="top" secondItem="EXPO-ContainerView" secondAttribute="top" id="bbb-bg-top"/>
+                            <constraint firstItem="BBB-SplashBackground" firstAttribute="leading" secondItem="EXPO-ContainerView" secondAttribute="leading" id="bbb-bg-leading"/>
+                            <constraint firstItem="BBB-SplashBackground" firstAttribute="trailing" secondItem="EXPO-ContainerView" secondAttribute="trailing" id="bbb-bg-trailing"/>
+                            <constraint firstItem="BBB-SplashBackground" firstAttribute="bottom" secondItem="EXPO-ContainerView" secondAttribute="bottom" id="bbb-bg-bottom"/>
                         </constraints>
                         <color key="backgroundColor" name="SplashScreenBackground"/>
                     </view>
@@ -37,12 +37,9 @@
         </scene>
     </scenes>
     <resources>
-        <image name="SplashScreenLegacy" width="414" height="736"/>
-        <systemColor name="systemBackgroundColor">
-            <color white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
-        </systemColor>
+        <image name="SplashBackground" width="8" height="1024"/>
         <namedColor name="SplashScreenBackground">
-            <color alpha="1.000" blue="1.00000000000000" green="1.00000000000000" red="1.00000000000000" customColorSpace="sRGB" colorSpace="custom"/>
+            <color red="0.99215686274510" green="0.98823529411765" blue="0.98039215686275" alpha="1.000" customColorSpace="sRGB" colorSpace="custom"/>
         </namedColor>
     </resources>
 </document>
