@@ -177,31 +177,32 @@ export const borderRadius = {
 };
 
 /**
- * Polices : Fraunces douce pour les titres et les nombres, Nunito pour tout le reste.
+ * Polices : Martian Grotesk partout, et un seul mot d'accent par titre en
+ * Welcome Valentines (voir AccentTitle).
  *
  * Chaque valeur est un nom de fichier chargé dans app/_layout.tsx (useFonts) :
  * sur iOS, la graisse vient du fichier, pas de `fontWeight`. Pour mettre du gras,
  * changer de police (body → bodyBold), jamais ajouter `fontWeight`.
  *
- * Les Fraunces sont des instances maison (assets/fonts) du fichier variable
- * Google Fonts, figées sur SOFT 100 (terminaisons arrondies) et WONK 0.
- * - display* : taille optique 24, pour les titres et scores jusqu'à ~40 px
- * - displayHero : taille optique 72, plus fine, réservée aux nombres géants (≥ 56 px)
+ * Les Martian sont des instances maison (assets/fonts) du fichier variable
+ * (licence OFL) :
+ * - display* : largeur 112, plus large et plus franche, pour les titres et nombres
+ * - body* : largeur 100, pour tout ce qui se lit vraiment
  *
- * Fraunces est plus grande que Rokkitt à taille égale (hauteur de capitale +20 %) :
- * les tailles de titres ont été réduites d'environ 15 % pour garder la même présence.
- * Sous 13 px, les nombres passent en Nunito : un serif aussi petit devient illisible.
+ * Welcome Valentines : licence « usage personnel » pour l'instant, la licence
+ * commerciale est à acheter avant la sortie (#129).
  */
 export const fonts = {
-  display: 'FrauncesSoft_600SemiBold',            // Titres, scores, numéros
-  displayRegular: 'FrauncesSoft_400Regular',      // Logo « bestie book battle »
-  displayBold: 'FrauncesSoft_700Bold',            // Saisies de nombres, toast, lettres « b » du logo
-  displayHero: 'FrauncesSoftDisplay_600SemiBold', // Numéro de page géant, splash
-  body: 'Nunito_400Regular',                      // Texte courant, champs
-  bodyMedium: 'Nunito_500Medium',                 // Libellés discrets
-  bodySemiBold: 'Nunito_600SemiBold',             // Prénoms, titres de ligne, libellés
-  bodyBold: 'Nunito_700Bold',                     // Boutons, valeurs mises en avant
-  bodyExtraBold: 'Nunito_800ExtraBold',           // Mon prénom dans le classement
+  display: 'MartianGroteskWide_800ExtraBold',     // Titres, scores, numéros
+  displayRegular: 'MartianGroteskWide_700Bold',   // Logo « bestie book battle »
+  displayBold: 'MartianGroteskWide_900Black',     // Saisies de nombres, toast, lettres « b » du logo
+  displayHero: 'MartianGroteskWide_700Bold',      // Numéro de page géant, splash
+  accent: 'WelcomeValentines_400Regular',         // Le mot d'accent d'un titre, jamais plus
+  body: 'MartianGrotesk_400Regular',              // Texte courant, champs
+  bodyMedium: 'MartianGrotesk_500Medium',         // Libellés discrets
+  bodySemiBold: 'MartianGrotesk_600SemiBold',     // Prénoms, titres de ligne, libellés
+  bodyBold: 'MartianGrotesk_700Bold',             // Boutons, valeurs mises en avant
+  bodyExtraBold: 'MartianGrotesk_800ExtraBold',   // Mon prénom dans le classement
 };
 
 // Tailles de police Figma

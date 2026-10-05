@@ -46,3 +46,6 @@ storybook-static
 # Outillage agent installé localement (skills, binaires) — pas du code produit
 .agents/
 .codex/
+
+# Welcome Valentines : licence « usage personnel », ne pas la publier (#129)
+assets/fonts/WelcomeValentines*

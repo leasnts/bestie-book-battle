@@ -33,6 +33,7 @@ import { ScrollView, StyleSheet, Text, View, type ScrollViewProps } from 'react-
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFitSheet } from '../../hooks/useFitSheet';
 import { colors, fonts, spacing } from '../../utils/constants';
+import AccentWord from './AccentWord';
 import GlassButton from './GlassButton';
 import { SheetBlur, SheetStickyHeader, useSheetScrolled } from './SheetHeader';
 
@@ -42,6 +43,8 @@ export const SHEET_GUTTER = spacing.lg;
 interface SheetPageProps
   extends Omit<ScrollViewProps, 'children' | 'stickyHeaderIndices' | 'onScroll'> {
   title: string;
+  /** Le mot du titre mis en avant (voir AccentWord) */
+  accent?: string;
   /** Une ligne sous le titre (l'auteur d'un livre, le prénom d'une personne) */
   subtitle?: React.ReactNode;
   /** Posé sur un autre sheet : un retour à gauche du titre */
@@ -58,6 +61,7 @@ interface SheetPageProps
 const SheetPage = forwardRef<ScrollView, SheetPageProps>(function SheetPage(
   {
     title,
+    accent,
     subtitle,
     onBack,
     actions,
@@ -90,6 +94,7 @@ const SheetPage = forwardRef<ScrollView, SheetPageProps>(function SheetPage(
     >
       <SheetPageHeader
         title={title}
+        accent={accent}
         subtitle={subtitle}
         onBack={onBack}
         actions={actions}
@@ -145,6 +150,8 @@ export function useSheetScroll({ fit = true }: { fit?: boolean } = {}) {
 
 interface SheetPageHeaderProps {
   title: string;
+  /** Le mot du titre mis en avant (voir AccentWord) */
+  accent?: string;
   /** À la ligne sous le titre : un texte, ou un élément touchable (tri du classement) */
   subtitle?: React.ReactNode;
   onBack?: () => void;
@@ -175,6 +182,7 @@ export function SheetSubtitle({ children }: { children: React.ReactNode }) {
  */
 export function SheetPageHeader({
   title,
+  accent,
   subtitle,
   onBack,
   actions,
@@ -197,7 +205,7 @@ export function SheetPageHeader({
             numberOfLines={titleLines}
             accessibilityRole="header"
           >
-            {title}
+            <AccentWord text={title} accent={accent} size={styles.title.fontSize} />
           </Text>
           {actions && <View style={styles.actions}>{actions}</View>}
         </View>
