@@ -367,8 +367,9 @@ La mécanique reste disponible pour un écran qui parlerait d'un seul livre
 **Une voix nette, un mot qui chante** : Martian Grotesk (grotesque géométrique,
 licence OFL) pour tout, en version large et grasse pour les titres et les
 nombres. Dans un titre, **un seul mot d'accent** peut passer en Welcome
-Valentines (feutre manuscrit), lie de vin `accent`, 1,25× plus grand : l'œil
-glisse sur la phrase et s'arrête sur lui (« Carnet de *notes* »).
+Valentines (feutre manuscrit), **de la couleur du titre** (jamais `accent`),
+1,25× plus grand : l'œil glisse sur la phrase et s'arrête sur lui (« Carnet de
+*notes* »).
 
 **Mot d'accent, les règles** :
 - un mot, jamais une phrase, et un seul par écran ;

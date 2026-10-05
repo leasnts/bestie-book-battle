@@ -3,8 +3,9 @@
  *
  *    Carnet de 𝓷𝓸𝓽𝓮𝓼
  *
- * Tout le titre en Martian Grotesk, un seul mot en Welcome Valentines, lie de
- * vin et un peu plus grand : l'œil glisse sur la phrase et s'arrête sur lui.
+ * Tout le titre en Martian Grotesk, un seul mot en Welcome Valentines, de la
+ * couleur du titre et un peu plus grand : l'œil glisse sur la phrase et
+ * s'arrête sur lui. La police suffit, pas de couleur en plus (Lea, 2026-10-05).
  * Un seul mot d'accent par écran, jamais une phrase (DESIGN.md › Typography).
  *
  * À poser DANS le <Text> du titre : il rend des morceaux de texte imbriqués.
@@ -12,7 +13,7 @@
 
 import React from 'react';
 import { StyleSheet, Text } from 'react-native';
-import { colors, fonts } from '../../utils/constants';
+import { fonts } from '../../utils/constants';
 
 /** Welcome Valentines a un œil plus petit : 1,25× pour égaler le titre */
 export const ACCENT_SCALE = 1.25;
@@ -42,6 +43,5 @@ export default function AccentWord({ text, accent, size }: AccentWordProps) {
 const styles = StyleSheet.create({
   accent: {
     fontFamily: fonts.accent,
-    color: colors.accent,
   },
 });
