@@ -273,7 +273,7 @@ function FirstNote({ tile, page }: { tile: TileSize; page: number }) {
             </View>
             <View style={styles.content}>
               <View style={styles.head}>
-                <Text style={styles.page}>p. {page}</Text>
+                <Text style={styles.page} maxFontSizeMultiplier={1.3}>p. {page}</Text>
               </View>
               <View style={styles.lines}>
                 {Array.from({ length: BLANK_LINES }, (_, i) => (
@@ -509,7 +509,7 @@ function NoteContent({
   return (
     <View style={styles.content}>
       <View style={styles.head}>
-        <Text style={styles.page}>{page}</Text>
+        <Text style={styles.page} maxFontSizeMultiplier={1.3}>{page}</Text>
       </View>
 
       <View style={styles.body}>

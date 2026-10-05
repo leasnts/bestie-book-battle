@@ -34,7 +34,7 @@ const GLYPH_EM: Record<string, number> = {
   '5': 0.766, '6': 0.789, '7': 0.691, '8': 0.753, '9': 0.789, '/': 0.53,
 };
 const LINE_EM = 1.2;
-const FOOTPRINT_EM = 1.05;
+export const FOOTPRINT_EM = 1.05;
 
 /** La boîte du chiffre : assez haute pour la ligne, sans grandir dans la page */
 export function figureBox(fontSize: number) {
@@ -76,7 +76,7 @@ export default function InkFigure({ value, total, fontSize, accessibilityLabel }
       <GhostTotal total={total} size={ghostSize} left={numberWidth * 0.7} baseline={baseline} />
       <MaskedView
         style={{ width: numberWidth, height: lineHeight }}
-        maskElement={<Text style={[styles.number, { fontSize, lineHeight }]}>{value}</Text>}
+        maskElement={<Text allowFontScaling={false} style={[styles.number, { fontSize, lineHeight }]}>{value}</Text>}
       >
         <LinearGradient colors={INK} style={StyleSheet.absoluteFill} />
       </MaskedView>

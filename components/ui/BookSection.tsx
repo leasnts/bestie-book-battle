@@ -84,7 +84,7 @@ export default function BookSection({
           {/* Deux lignes : aux gros corps de texte, « Les nuits blanches » ne
               doit pas se réduire à « Les nu… ». */}
           <View style={styles.titleRow}>
-            <Text style={styles.title} numberOfLines={2}>
+            <Text style={styles.title} numberOfLines={2} maxFontSizeMultiplier={1.3}>
               {challenge.book_title}
             </Text>
             {streakDays > 0 && (
@@ -98,7 +98,7 @@ export default function BookSection({
             )}
           </View>
           {!!challenge.book_author && (
-            <Text style={styles.author} numberOfLines={1}>
+            <Text style={styles.author} numberOfLines={1} maxFontSizeMultiplier={1.3}>
               {challenge.book_author}
             </Text>
           )}
