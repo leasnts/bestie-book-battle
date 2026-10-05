@@ -2,10 +2,11 @@
  * Splash Screen Animé — « Ils se retrouvent »
  *
  * Animation (≈ 1,5 s), sans rebond :
- * 1. « Lowki » seul sur fond lie de vin. C'est exactement l'image du splash natif
+ * 1. Le fond rouge seul. C'est exactement l'image du splash natif
  *    (SplashScreen.storyboard), affichée pendant le chargement : relais invisible.
  * 2. Les deux yeux arrivent chacun de son bord, comme deux potes qui se croisent
- *    dans la rue, ralentissent et se collent.
+ *    dans la rue, ralentissent et se collent. « Lowki » apparaît en fondu au
+ *    moment où ils se rejoignent.
  * 3. Le petit œil fait un clin d'œil.
  * 4. Fade out global → l'app.
  *
@@ -23,8 +24,7 @@ import Animated, {
   withSequence,
   withTiming,
 } from 'react-native-reanimated';
-import Svg, { ClipPath, Defs, LinearGradient as SvgGradient, Path, Stop } from 'react-native-svg';
-import { accentGradient } from '../utils/constants';
+import Svg, { ClipPath, Defs, G, LinearGradient as SvgGradient, Path, Stop } from 'react-native-svg';
 import {
   LOGO_EYES_CLIP,
   LOGO_EYES_PATH,
@@ -37,27 +37,41 @@ import {
 /** Côté du carré du logo, en points. */
 const SPLASH_LOGO_SIZE = 220;
 
-/** Les yeux en crème, clair en haut → un peu plus foncé en bas (jamais d'aplat). */
-const EYES_GRADIENT = ['#fdfcfa', '#efe6e0'] as const;
+/**
+ * Ton sur ton, comme les visuels officiels de Lea (« lowki_red ») : fond rouge,
+ * logo d'un rouge plus profond, et un liseré clair d'1 pt sous chaque forme pour
+ * l'effet gravé dans le papier. Dégradés partout (jamais d'aplat), sauf le mot.
+ */
+const SPLASH_BG = ['#a3232b', '#8f1c24'] as const;
+const SHAPE_GRADIENT = ['#6c1419', '#561115'] as const;
+const SHAPE_WORD = '#5f1216';
+const DEBOSS_LIGHT = '#c0454c';
+const DEBOSS_OPACITY = 0.55;
+/** Décalage du liseré, 1 pt, dans le repère 1200 des yeux et celui de la police. */
+const DEBOSS_EYES = 5.5;
+const DEBOSS_WORD = 32;
 
 // Les yeux arrivent en 900 ms en ralentissant, se posent, puis le clin d'œil.
 const T_MEET = 900;
 const T_WINK = T_MEET + 180;
+/** « Lowki » se dévoile quand les yeux se touchent (l'arrivée ralentie les colle visuellement vers 550 ms). */
+const T_WORD = 550;
+const WORD_FADE = 450;
 const MEET_EASING = Easing.out(Easing.poly(5));
 /** Le clin d'œil se ferme de haut en bas, comme une paupière : vers le bas du petit œil (y = 920 sur 1200). */
 const WINK_PIVOT_Y = (920 / LOGO_EYES_VIEWBOX) * SPLASH_LOGO_SIZE;
 
 /**
- * « Lowki » sous les yeux, en tracé (pas en <Text>, ni en image : les deux
- * arrivent après la première image). Placement identique au storyboard : les
- * yeux remontés de 34 pt, le mot centré 82 pt sous le centre de l'écran, pour
- * centrer l'ensemble yeux + mot.
+ * « Lowki » sous les yeux, en tracé (pas en <Text> : la police n'est pas encore
+ * chargée). Les yeux remontés de 34 pt, le mot centré 83 pt sous le centre de
+ * l'écran, pour centrer l'ensemble yeux + mot.
  */
 const WORD_HEIGHT = 51.5;
-const WORD = { width: WORD_HEIGHT * LOGO_WORD_RATIO, height: WORD_HEIGHT };
-const WORD_COLOR = '#fdfcfa';
+// Le cadre du mot descend de 2 pt (64 unités) pour laisser la place au liseré
+const WORD = { width: WORD_HEIGHT * LOGO_WORD_RATIO, height: WORD_HEIGHT + 2 };
+const WORD_VIEWBOX = LOGO_WORD_VIEWBOX.replace(/ 1643$/, ' 1707');
 const LOGO_SHIFT_Y = -34;
-const WORD_CENTER_Y = 82;
+const WORD_CENTER_Y = 83;
 
 interface AnimatedSplashProps {
   onFinish: () => void;
@@ -75,13 +89,16 @@ function Eye({ side }: { side: Side }) {
     <Svg width={SPLASH_LOGO_SIZE} height={SPLASH_LOGO_SIZE} viewBox={`0 0 ${LOGO_EYES_VIEWBOX} ${LOGO_EYES_VIEWBOX}`}>
       <Defs>
         <SvgGradient id="eyes" gradientUnits="userSpaceOnUse" x1="0" y1="200" x2="0" y2="1010">
-          <Stop offset="0" stopColor={EYES_GRADIENT[0]} />
-          <Stop offset="1" stopColor={EYES_GRADIENT[1]} />
+          <Stop offset="0" stopColor={SHAPE_GRADIENT[0]} />
+          <Stop offset="1" stopColor={SHAPE_GRADIENT[1]} />
         </SvgGradient>
         <ClipPath id="cut">
           <Path d={LOGO_EYES_CLIP[side]} />
         </ClipPath>
       </Defs>
+      <G transform={`translate(0 ${DEBOSS_EYES})`}>
+        <Path d={LOGO_EYES_PATH} fill={DEBOSS_LIGHT} fillOpacity={DEBOSS_OPACITY} clipPath="url(#cut)" />
+      </G>
       <Path d={LOGO_EYES_PATH} fill="url(#eyes)" clipPath="url(#cut)" />
     </Svg>
   );
@@ -93,6 +110,7 @@ export default function AnimatedSplash({ onFinish, waitFor }: AnimatedSplashProp
   const leftX = useSharedValue(-screenWidth);
   const rightX = useSharedValue(screenWidth);
   const winkY = useSharedValue(1);
+  const wordOpacity = useSharedValue(0);
 
   const screenOpacity = useSharedValue(1);
 
@@ -109,6 +127,8 @@ export default function AnimatedSplash({ onFinish, waitFor }: AnimatedSplashProp
     const meet = { duration: T_MEET, easing: MEET_EASING };
     leftX.value = withTiming(0, meet);
     rightX.value = withTiming(0, meet);
+
+    wordOpacity.value = withDelay(T_WORD, withTiming(1, { duration: WORD_FADE, easing: Easing.inOut(Easing.quad) }));
 
     // Clin d'œil : la paupière du petit œil descend, une fraction de seconde, remonte
     winkY.value = withDelay(
@@ -180,6 +200,8 @@ export default function AnimatedSplash({ onFinish, waitFor }: AnimatedSplashProp
     ],
   }));
 
+  const wordStyle = useAnimatedStyle(() => ({ opacity: wordOpacity.value }));
+
   // Fade out global de tout l'écran
   const screenAnimatedStyle = useAnimatedStyle(() => ({
     opacity: screenOpacity.value,
@@ -187,7 +209,7 @@ export default function AnimatedSplash({ onFinish, waitFor }: AnimatedSplashProp
 
   return (
     <Animated.View style={[styles.container, screenAnimatedStyle]}>
-      <LinearGradient colors={accentGradient} style={StyleSheet.absoluteFill} />
+      <LinearGradient colors={SPLASH_BG} style={StyleSheet.absoluteFill} />
       <View style={styles.logo}>
         <Animated.View style={[styles.eye, leftStyle]}>
           <Eye side="left" />
@@ -195,9 +217,14 @@ export default function AnimatedSplash({ onFinish, waitFor }: AnimatedSplashProp
         <Animated.View style={[styles.eye, rightStyle]}>
           <Eye side="right" />
         </Animated.View>
-        <Svg style={styles.word} viewBox={LOGO_WORD_VIEWBOX}>
-          <Path d={LOGO_WORD_PATH} fill={WORD_COLOR} />
-        </Svg>
+        <Animated.View style={[styles.word, wordStyle]}>
+          <Svg width="100%" height="100%" viewBox={WORD_VIEWBOX}>
+            <G transform={`translate(0 ${DEBOSS_WORD})`}>
+              <Path d={LOGO_WORD_PATH} fill={DEBOSS_LIGHT} fillOpacity={DEBOSS_OPACITY} />
+            </G>
+            <Path d={LOGO_WORD_PATH} fill={SHAPE_WORD} />
+          </Svg>
+        </Animated.View>
       </View>
     </Animated.View>
   );
