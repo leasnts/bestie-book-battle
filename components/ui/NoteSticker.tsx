@@ -16,6 +16,7 @@
 
 import React from 'react';
 import Svg, { ClipPath, Defs, G, LinearGradient, Path, Stop, Text as SvgText } from 'react-native-svg';
+import { ACCENT_SCALE } from './AccentWord';
 import { borderRadius, fonts, inkAlpha, shadowAlpha, stickerMaterial } from '../../utils/constants';
 
 interface NoteStickerProps {
@@ -45,8 +46,9 @@ interface NoteStickerProps {
    * Le nom de la catégorie, en très grand et presque transparent, en bas,
    * ferré à gauche sur la marge du texte de la note, coupé par le bas (et par
    * la droite s'il est long) :
-   * il fait partie du fond de l'autocollant. Toujours en minuscules : en grand,
-   * les capitales crieraient.
+   * il fait partie du fond de l'autocollant. En Welcome Valentines, la police
+   * d'accent (Lea, 2026-10-05), et toujours en minuscules : en grand, les
+   * capitales crieraient.
    */
   watermark?: string;
   /** La marge de gauche du texte de la note, pour que le filigrane s'y aligne */
@@ -143,7 +145,8 @@ export default function NoteSticker({
   const fill = color ?? stickerMaterial.locked;
   const flip = corner === 'bottom-right' ? `translate(0 ${h}) scale(1 -1)` : `translate(${w} 0) scale(-1 1)`;
   // Le filigrane : sa base passe juste sous le bord du bas
-  const markSize = base * 0.62;
+  // Welcome Valentines a un œil plus petit : agrandie comme un mot d'accent
+  const markSize = base * 0.62 * ACCENT_SCALE;
 
   return (
     <Svg width={w} height={h}>
@@ -180,7 +183,7 @@ export default function NoteSticker({
           <SvgText
             x={watermarkInset}
             y={h + markSize * 0.02}
-            fontFamily={fonts.display}
+            fontFamily={fonts.accent}
             fontSize={markSize}
             fill={inkAlpha(0.07)}
           >
