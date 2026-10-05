@@ -20,9 +20,13 @@
                             <imageView id="BBB-SplashBackground" userLabel="SplashBackground" image="SplashBackground" contentMode="scaleToFill" clipsSubviews="YES" userInteractionEnabled="NO" translatesAutoresizingMaskIntoConstraints="NO">
                                 <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>
                             </imageView>
-                            <!-- Première image de l'animation : les yeux écartés, centrés, 308 × 220 pt (logo 220 pt + l'écart) -->
+                            <!-- Première image de l'animation : le logo entier, 308 × 220 pt (logo 220 pt + la marge où les yeux se décollent), remontés de 34 pt pour centrer yeux + mot -->
                             <imageView id="BBB-SplashEyes" userLabel="SplashEyes" image="SplashEyes" contentMode="scaleAspectFit" userInteractionEnabled="NO" translatesAutoresizingMaskIntoConstraints="NO">
-                                <rect key="frame" x="42.5" y="316" width="308" height="220"/>
+                                <rect key="frame" x="42.5" y="282" width="308" height="220"/>
+                            </imageView>
+                            <!-- « Lowki » en Welcome Valentines, sous les yeux (même image que dans AnimatedSplash) -->
+                            <imageView id="BBB-SplashWord" userLabel="SplashWord" image="SplashWord" contentMode="scaleAspectFit" userInteractionEnabled="NO" translatesAutoresizingMaskIntoConstraints="NO">
+                                <rect key="frame" x="135.5" y="482" width="121.93" height="51.5"/>
                             </imageView>
                         </subviews>
                         <viewLayoutGuide key="safeArea" id="Rmq-lb-GrQ"/>
@@ -32,8 +36,12 @@
                             <constraint firstItem="BBB-SplashBackground" firstAttribute="trailing" secondItem="EXPO-ContainerView" secondAttribute="trailing" id="bbb-bg-trailing"/>
                             <constraint firstItem="BBB-SplashBackground" firstAttribute="bottom" secondItem="EXPO-ContainerView" secondAttribute="bottom" id="bbb-bg-bottom"/>
                             <constraint firstItem="BBB-SplashEyes" firstAttribute="centerX" secondItem="EXPO-ContainerView" secondAttribute="centerX" id="bbb-eyes-cx"/>
-                            <constraint firstItem="BBB-SplashEyes" firstAttribute="centerY" secondItem="EXPO-ContainerView" secondAttribute="centerY" id="bbb-eyes-cy"/>
+                            <constraint firstItem="BBB-SplashEyes" firstAttribute="centerY" secondItem="EXPO-ContainerView" secondAttribute="centerY" constant="-34" id="bbb-eyes-cy"/>
                             <constraint firstItem="BBB-SplashEyes" firstAttribute="width" constant="308" id="bbb-eyes-w"/>
+                            <constraint firstItem="BBB-SplashWord" firstAttribute="centerX" secondItem="EXPO-ContainerView" secondAttribute="centerX" id="bbb-word-cx"/>
+                            <constraint firstItem="BBB-SplashWord" firstAttribute="centerY" secondItem="EXPO-ContainerView" secondAttribute="centerY" constant="82" id="bbb-word-cy"/>
+                            <constraint firstItem="BBB-SplashWord" firstAttribute="width" constant="121.93" id="bbb-word-w"/>
+                            <constraint firstItem="BBB-SplashWord" firstAttribute="height" constant="51.5" id="bbb-word-h"/>
                             <constraint firstItem="BBB-SplashEyes" firstAttribute="height" constant="220" id="bbb-eyes-h"/>
                         </constraints>
                         <color key="backgroundColor" name="SplashScreenBackground"/>
@@ -47,6 +55,7 @@
     <resources>
         <image name="SplashBackground" width="8" height="1024"/>
         <image name="SplashEyes" width="308" height="220"/>
+        <image name="SplashWord" width="122" height="52"/>
         <namedColor name="SplashScreenBackground">
             <color red="0.99215686274510" green="0.98823529411765" blue="0.98039215686275" alpha="1.000" customColorSpace="sRGB" colorSpace="custom"/>
         </namedColor>

@@ -1,24 +1,26 @@
 /**
  * Splash Screen Animé — « Aimant »
  *
- * Animation (≈ 1,3 s) :
- * 1. Les deux yeux du logo, écartés, sur fond lie de vin. C'est exactement
- *    l'image du splash natif (SplashScreen.storyboard), donc le relais est invisible.
- * 2. Ils se penchent l'un vers l'autre, s'attirent, se cognent (petit écrasement),
- *    reculent un poil, se recollent, puis se redressent.
+ * Animation (≈ 1 s) :
+ * 1. Le logo entier (yeux collés) et « Lowki » en Welcome Valentines dessous, sur
+ *    fond lie de vin. C'est exactement l'image du splash natif
+ *    (SplashScreen.storyboard), affichée pendant le chargement de l'app : le
+ *    relais est invisible. (Yeux écartés pendant le chargement = ~1,5 s figés.)
+ * 2. Dès que React prend la main, les yeux se décollent d'un coup en se penchant,
+ *    s'attirent, se cognent (petit écrasement), reculent un poil, se recollent,
+ *    puis se redressent.
  * 3. Fade out global → l'app.
  *
  * Réglages choisis par Lea dans le labo HTML le 2026-10-05 (vitesse 1, rebond 0,5).
  */
 
 import { LinearGradient } from 'expo-linear-gradient';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, {
   Easing,
   useAnimatedStyle,
   useSharedValue,
-  withDelay,
   withSequence,
   withSpring,
   withTiming,
@@ -26,12 +28,19 @@ import Animated, {
 } from 'react-native-reanimated';
 import Svg, { ClipPath, Defs, LinearGradient as SvgGradient, Path, Stop } from 'react-native-svg';
 import { accentGradient } from '../utils/constants';
-import { LOGO_EYES_CLIP, LOGO_EYES_PATH, LOGO_EYES_VIEWBOX } from './brand/logoEyesPath';
+import {
+  LOGO_EYES_CLIP,
+  LOGO_EYES_PATH,
+  LOGO_EYES_VIEWBOX,
+  LOGO_WORD_PATH,
+  LOGO_WORD_RATIO,
+  LOGO_WORD_VIEWBOX,
+} from './brand/logoEyesPath';
 
 /** Côté du carré du logo, en points. Le splash natif utilise la même taille. */
 export const SPLASH_LOGO_SIZE = 220;
-/** Écart de départ de chaque œil, dans le repère 1200 du SVG (cf. image du splash natif). */
-const START_GAP = 220;
+/** Jusqu'où chaque œil se décolle, dans le repère 1200 du SVG. */
+const SPREAD = 130;
 const U = SPLASH_LOGO_SIZE / LOGO_EYES_VIEWBOX;
 
 /** Les yeux en crème, clair en haut → un peu plus foncé en bas (jamais d'aplat). */
@@ -41,10 +50,22 @@ const EYES_GRADIENT = ['#fdfcfa', '#efe6e0'] as const;
 const SQUASH_SPRING = { stiffness: 400, damping: 23.6, mass: 1 };
 const LEAN_SPRING = { stiffness: 220, damping: 17.5, mass: 1 };
 
-// Le temps fort : les yeux se touchent à 770 ms, se recollent à 1050 ms.
-const T_LEAN = 250;
-const T_CONTACT = 770;
-const T_RECONTACT = 1050;
+// Décollés en 160 ms, contact à 440 ms, recollés à 720 ms.
+const T_SPREAD = 160;
+const T_CONTACT = 440;
+const T_RECONTACT = 720;
+
+/**
+ * « Lowki » sous les yeux, en tracé (pas en <Text>, ni en image : les deux
+ * arrivent après la première image). Placement identique au storyboard : les
+ * yeux remontés de 34 pt, le mot centré 82 pt sous le centre de l'écran, pour
+ * centrer l'ensemble yeux + mot.
+ */
+const WORD_HEIGHT = 51.5;
+const WORD = { width: WORD_HEIGHT * LOGO_WORD_RATIO, height: WORD_HEIGHT };
+const WORD_COLOR = '#fdfcfa';
+const LOGO_SHIFT_Y = -34;
+const WORD_CENTER_Y = 82;
 
 interface AnimatedSplashProps {
   onFinish: () => void;
@@ -86,8 +107,8 @@ function useEyeStyle(x: SharedValue<number>, r: SharedValue<number>, sx: SharedV
 }
 
 export default function AnimatedSplash({ onFinish, waitFor }: AnimatedSplashProps) {
-  const leftX = useSharedValue(-START_GAP * U);
-  const rightX = useSharedValue(START_GAP * U);
+  const leftX = useSharedValue(0);
+  const rightX = useSharedValue(0);
   const leftR = useSharedValue(0);
   const rightR = useSharedValue(0);
   // L'écrasement est le même pour les deux yeux
@@ -104,20 +125,20 @@ export default function AnimatedSplash({ onFinish, waitFor }: AnimatedSplashProp
   const [forceExit, setForceExit] = useState(false);
 
   // Phase 1 — Animation d'entrée. Pas de fade-out ici.
-  useEffect(() => {
+  // useLayoutEffect et non useEffect : au lancement, le fil JS est occupé (auth,
+  // polices, stores) et un useEffect partait ~1 s après l'affichage, yeux figés.
+  useLayoutEffect(() => {
     const lean = { duration: 220, easing: Easing.inOut(Easing.quad) };
-    leftR.value = withDelay(T_LEAN, withTiming(7, lean));
-    rightR.value = withDelay(T_LEAN, withTiming(-7, lean));
+    leftR.value = withTiming(7, lean);
+    rightR.value = withTiming(-7, lean);
 
-    // Attirés (accélère jusqu'au contact), petit recul, puis se recollent
-    const attract = (from: number) =>
-      withDelay(
-        T_LEAN + 220,
-        withSequence(
-          withTiming(0, { duration: 300, easing: Easing.in(Easing.cubic) }),
-          withTiming(from * 26 * U, { duration: 120, easing: Easing.out(Easing.quad) }),
-          withTiming(0, { duration: 160, easing: Easing.in(Easing.cubic) }),
-        ),
+    // Décollés d'un coup, attirés (accélère jusqu'au contact), petit recul, recollés
+    const attract = (side: number) =>
+      withSequence(
+        withTiming(side * SPREAD * U, { duration: T_SPREAD, easing: Easing.out(Easing.quad) }),
+        withTiming(0, { duration: T_CONTACT - T_SPREAD, easing: Easing.in(Easing.cubic) }),
+        withTiming(side * 26 * U, { duration: 120, easing: Easing.out(Easing.quad) }),
+        withTiming(0, { duration: 160, easing: Easing.in(Easing.cubic) }),
       );
     leftX.value = attract(-1);
     rightX.value = attract(1);
@@ -133,7 +154,7 @@ export default function AnimatedSplash({ onFinish, waitFor }: AnimatedSplashProp
       rightR.value = withSpring(0, LEAN_SPRING);
     }, T_RECONTACT);
 
-    const entryTimer = setTimeout(() => setEntryDone(true), 1500);
+    const entryTimer = setTimeout(() => setEntryDone(true), 1100);
 
     // Filet de sécurité : si après 8s le splash est toujours visible
     // (Supabase hang, réseau mort…), on force la sortie quand même.
@@ -200,6 +221,9 @@ export default function AnimatedSplash({ onFinish, waitFor }: AnimatedSplashProp
         <Animated.View style={[styles.eye, styles.rightPivot, rightStyle]}>
           <Eye side="right" />
         </Animated.View>
+        <Svg style={styles.word} viewBox={LOGO_WORD_VIEWBOX}>
+          <Path d={LOGO_WORD_PATH} fill={WORD_COLOR} />
+        </Svg>
       </View>
     </Animated.View>
   );
@@ -214,6 +238,13 @@ const styles = StyleSheet.create({
   logo: {
     width: SPLASH_LOGO_SIZE,
     height: SPLASH_LOGO_SIZE,
+    transform: [{ translateY: LOGO_SHIFT_Y }],
+  },
+  word: {
+    position: 'absolute',
+    ...WORD,
+    left: (SPLASH_LOGO_SIZE - WORD.width) / 2,
+    top: SPLASH_LOGO_SIZE / 2 + WORD_CENTER_Y - LOGO_SHIFT_Y - WORD.height / 2,
   },
   eye: {
     ...StyleSheet.absoluteFillObject,
