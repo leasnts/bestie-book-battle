@@ -1,12 +1,12 @@
 /**
  * NoteTabs — les intercalaires du carré Carnet de l'accueil.
  *
- *      ╭ ✎ ╮╭ ☺ ╮
- *    ┌┄┴┄┄┄┴┴┄┄┄┴┄┄┄┄┐
+ *              ╭ ✎ ╮╭ ☺ ╮
+ *    ┌┄┄┄┄┄┄┄┄┴┄┄┄┴┴┄┄┄┴┄┐
  *    ┆ la note à la une ┆
  *
  * Annoter ma page, c'est écrire dans le carnet : les deux actions sortent du
- * haut de sa note, en papier, comme les intercalaires de la feuille d'écriture
+ * haut de sa note, ferrées à droite, en encre chocolat (Lea, 2026-10-05), comme les intercalaires de la feuille d'écriture
  * (`CategoryPicker`), au lieu de flotter seules sous la règle (Lea,
  * 2026-10-05).
  * - ✎ : la feuille (`NoteComposer`), où tout se fait (`useWriteNote`, la même
@@ -35,7 +35,7 @@ import Animated, {
   ZoomIn,
 } from 'react-native-reanimated';
 import { useQuickNote } from '../../hooks/useQuickNote';
-import { borderRadius, colors, creamAlpha, inkAlpha, motion, postIt, shadowAlpha, spacing } from '../../utils/constants';
+import { borderRadius, colors, creamAlpha, inkAlpha, inkGradient, motion, shadowAlpha, spacing } from '../../utils/constants';
 import { TRENDING_EMOJIS } from '../../utils/emojis';
 import GlassButton from './GlassButton';
 import PressableScale from './PressableScale';
@@ -52,8 +52,7 @@ const TAB_ICON = 20;
 /** Tirer un intercalaire : lent à la fin, comme un onglet de papier qui glisse */
 const TAB_IN_MS = 420;
 
-/** Le papier des intercalaires : le sable de la note, un peu plus sombre en bas */
-const TAB_PAPER = [postIt.sable, '#dccbb0'] as const;
+
 
 type Mode = 'idle' | 'emoji';
 
@@ -176,9 +175,10 @@ function Tab({
       accessibilityLabel={label}
     >
       <Animated.View style={[styles.tab, tabStyle]}>
-        <LinearGradient colors={TAB_PAPER} style={StyleSheet.absoluteFill} />
+        {/* Jamais d'aplat : l'encre chocolat des ronds, plus claire en haut */}
+        <LinearGradient colors={inkGradient} style={StyleSheet.absoluteFill} />
         <View style={styles.tabIcon}>
-          <Icon size={TAB_ICON} color={colors.dark900} strokeWidth={2.2} />
+          <Icon size={TAB_ICON} color={colors.white} strokeWidth={2.2} />
           {badge && <View style={styles.badge} />}
         </View>
       </Animated.View>
@@ -195,8 +195,10 @@ const styles = StyleSheet.create({
     bottom: '100%',
     marginBottom: -NOTE_TABS_TUCK,
   },
+  // Ferrés à droite, au-dessus du « p. 197 »
   tabs: {
-    paddingLeft: spacing.lg,
+    paddingRight: spacing.lg,
+    justifyContent: 'flex-end',
     flexDirection: 'row',
     alignItems: 'flex-end',
     gap: spacing.xs + 2,
