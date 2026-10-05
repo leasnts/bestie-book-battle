@@ -219,6 +219,7 @@ function CategoryTab({
                 stroke={stitchColor(true)}
                 strokeWidth={STITCH.width}
                 strokeDasharray={STITCH.dash}
+                strokeLinecap={STITCH.cap}
               />
             </Svg>
           </Animated.View>

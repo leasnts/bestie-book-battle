@@ -21,7 +21,7 @@
 
 import { CheckIcon } from 'lucide-react-native';
 import React, { useState } from 'react';
-import Svg, { Circle, Defs, G, Line, RadialGradient, Stop } from 'react-native-svg';
+import Svg, { Circle, Defs, G, RadialGradient, Stop } from 'react-native-svg';
 import { StyleSheet, Text, View } from 'react-native';
 import { colors, fonts, inkAlpha } from '../../utils/constants';
 import { formatTrackDate, type TrackCap } from '../../utils/track';
@@ -102,23 +102,14 @@ export function KnotGradients() {
 }
 
 /**
- * Le fil en point avant : chocolat jusqu'à `readUntil`, sable après. Partagé
+ * Le fil en points ronds : chocolat jusqu'à `readUntil`, sable après. Partagé
  * avec la piste du carnet (`NotesTrack`) : un seul fil dans l'app.
  */
 export function Seam({ width, readUntil, y = TRACK_HEIGHT / 2 }: { width: number; readUntil: number; y?: number }) {
   const stitches = [];
   for (let x = 0; x <= width; x += STITCH_STEP) {
     stitches.push(
-      <Line
-        key={x}
-        x1={x}
-        y1={y}
-        x2={Math.min(x + STITCH_LEN, width)}
-        y2={y}
-        stroke={x < readUntil ? THREAD_READ : THREAD_AHEAD}
-        strokeWidth={STITCH_WIDTH}
-        strokeLinecap="round"
-      />,
+      <Circle key={x} cx={x} cy={y} r={STITCH_R} fill={x < readUntil ? THREAD_READ : THREAD_AHEAD} />,
     );
   }
   return <>{stitches}</>;
@@ -150,10 +141,9 @@ function trackLabel(myPercent: number, currentCap: TrackCap | null, endDate: str
 // ─── Styles ────────────────────────────────────────────────────────
 
 const TRACK_HEIGHT = 28;
-/** Le fil : un point de 3,5 pt tous les 6 pt (le point avant de la règle de Ma page, en petit) */
-const STITCH_STEP = 6;
-const STITCH_LEN = 3.5;
-const STITCH_WIDTH = 1.8;
+/** Le fil : un point rond de 2,2 pt tous les 5 pt (les points de la règle de Ma page, en petit) */
+const STITCH_STEP = 5;
+const STITCH_R = 1.1;
 /** Les couleurs du fil de Ma page (milieu de ses dégradés) */
 const THREAD_READ = '#3f2b20';
 const THREAD_AHEAD = '#d6ccbf';

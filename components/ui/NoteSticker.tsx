@@ -58,8 +58,11 @@ interface NoteStickerProps {
   notch?: { left: number; right: number } | null;
 }
 
-/** Le point de couture, le même sur la note et sur l'intercalaire qui la prolonge */
-export const STITCH = { width: 0.9, dash: '2 1.6' };
+/**
+ * Le point de couture, le même sur la note et sur l'intercalaire qui la prolonge :
+ * un point rond (tiret de longueur nulle, bout arrondi) tous les 2,8 pt.
+ */
+export const STITCH = { width: 1.2, dash: '0 2.8', cap: 'round' as const };
 export const stitchColor = (colored: boolean) => inkAlpha(colored ? 0.32 : 0.2);
 /** L'écart entre la couture et le bord, selon le côté qui règle l'autocollant */
 export const stitchInset = (base: number) => base * 0.07;
@@ -193,6 +196,7 @@ export default function NoteSticker({
           stroke={stitchColor(!!color)}
           strokeWidth={STITCH.width}
           strokeDasharray={STITCH.dash}
+          strokeLinecap={STITCH.cap}
         />
       </G>
       <G transform={flip}>
