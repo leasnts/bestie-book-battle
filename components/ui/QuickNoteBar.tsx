@@ -1,10 +1,10 @@
 /**
  * QuickNoteBar — la barre d'actions rapides de « Ma page ».
  *
- *                (✎) (☺)
+ *             (✎) (☺)
  *
  * Deux façons d'annoter ma page enregistrée, sans quitter l'accueil, deux
- * ronds chocolat (`RoundButton` dark) ferrés à droite, icône seule :
+ * ronds chocolat (`RoundButton` dark) centrés sur l'écran, icône seule :
  * - ✎ : la feuille (`NoteComposer`), où tout se fait : écrire, dire (🎙), citer
  *   (❝), choisir le thème et la page (`WriteNoteButton`, le même que dans le
  *   carnet) ;
@@ -96,7 +96,7 @@ const styles = StyleSheet.create({
     height: QUICK_BAR_HEIGHT,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'flex-end',
+    justifyContent: 'center',
     gap: spacing.sm,
   },
   // Les emojis sortent au-dessus de la barre, sur toute sa largeur
