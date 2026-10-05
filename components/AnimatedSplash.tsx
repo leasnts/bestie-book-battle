@@ -1,16 +1,17 @@
 /**
  * Splash Screen Animé — « Ils se retrouvent »
  *
- * Animation (≈ 1,5 s), sans rebond :
+ * Animation (≈ 2,6 s), sans rebond :
  * 1. Le fond rouge seul. C'est exactement l'image du splash natif
  *    (SplashScreen.storyboard), affichée pendant le chargement : relais invisible.
- * 2. Les deux yeux arrivent chacun de son bord, comme deux potes qui se croisent
- *    dans la rue, ralentissent et se collent. « Lowki » apparaît en fondu au
- *    moment où ils se rejoignent.
+ * 2. Les deux yeux, seuls et centrés, arrivent chacun de son bord, comme deux
+ *    potes qui se croisent dans la rue, ralentissent et se collent.
  * 3. Le petit œil fait un clin d'œil.
- * 4. Fade out global → l'app.
+ * 4. Les yeux remontent pour faire place à « Lowki » (Welcome Valentines), qui
+ *    monte en fondu, puis au sous-titre « book club » (Martian Grotesk).
+ * 5. Fade out global → l'app.
  *
- * Variante choisie par Lea dans le labo HTML le 2026-10-05.
+ * Choisi par Lea le 2026-10-05 (labo HTML, puis retouches sur le simulateur).
  */
 
 import { LinearGradient } from 'expo-linear-gradient';
@@ -29,6 +30,9 @@ import {
   LOGO_EYES_CLIP,
   LOGO_EYES_PATH,
   LOGO_EYES_VIEWBOX,
+  LOGO_SUBTITLE_PATH,
+  LOGO_SUBTITLE_RATIO,
+  LOGO_SUBTITLE_VIEWBOX,
   LOGO_WORD_PATH,
   LOGO_WORD_RATIO,
   LOGO_WORD_VIEWBOX,
@@ -40,7 +44,7 @@ const SPLASH_LOGO_SIZE = 220;
 /**
  * Ton sur ton, comme les visuels officiels de Lea (« lowki_red ») : fond rouge,
  * logo d'un rouge plus profond, et un liseré clair d'1 pt sous chaque forme pour
- * l'effet gravé dans le papier. Dégradés partout (jamais d'aplat), sauf le mot.
+ * l'effet gravé dans le papier. Dégradés partout (jamais d'aplat), sauf le texte.
  */
 const SPLASH_BG = ['#a3232b', '#8f1c24'] as const;
 const SHAPE_GRADIENT = ['#6c1419', '#561115'] as const;
@@ -50,28 +54,44 @@ const DEBOSS_OPACITY = 0.55;
 /** Décalage du liseré, 1 pt, dans le repère 1200 des yeux et celui de la police. */
 const DEBOSS_EYES = 5.5;
 const DEBOSS_WORD = 32;
+/** Pour le sous-titre, plus petit : liseré de 0,75 pt. */
+const DEBOSS_SUBTITLE = 47;
 
-// Les yeux arrivent en 900 ms en ralentissant, se posent, puis le clin d'œil.
+// Les yeux arrivent en 900 ms en ralentissant, se posent, puis le clin d'œil
+// (fini vers 1440 ms). Ensuite le titre : les yeux remontent, « Lowki » monte en
+// fondu, puis « book club ».
 const T_MEET = 900;
 const T_WINK = T_MEET + 180;
-/** « Lowki » se dévoile quand les yeux se touchent (l'arrivée ralentie les colle visuellement vers 550 ms). */
-const T_WORD = 550;
-const WORD_FADE = 450;
+const T_REVEAL = 1500;
+const T_WORD = T_REVEAL + 80;
+const T_SUBTITLE = T_REVEAL + 300;
+const REVEAL_DURATION = 550;
+const TEXT_FADE = 450;
+/** Le texte part de 12 pt plus bas et monte à sa place. */
+const TEXT_RISE = 12;
+/** Le temps de lire le tout avant le fondu vers l'app. */
+const T_ENTRY_DONE = T_SUBTITLE + TEXT_FADE + 500;
 const MEET_EASING = Easing.out(Easing.poly(5));
+const REVEAL_EASING = Easing.inOut(Easing.cubic);
 /** Le clin d'œil se ferme de haut en bas, comme une paupière : vers le bas du petit œil (y = 920 sur 1200). */
 const WINK_PIVOT_Y = (920 / LOGO_EYES_VIEWBOX) * SPLASH_LOGO_SIZE;
 
 /**
- * « Lowki » sous les yeux, en tracé (pas en <Text> : la police n'est pas encore
- * chargée). Les yeux remontés de 34 pt, le mot centré 83 pt sous le centre de
- * l'écran, pour centrer l'ensemble yeux + mot.
+ * « Lowki » et « book club » sous les yeux, en tracés (pas en <Text> : les polices
+ * ne sont pas encore chargées). Positions par rapport au centre de l'écran, pour
+ * que l'ensemble final (yeux 150 pt, 16 pt, mot 51,5 pt, 10 pt, sous-titre 13,8 pt)
+ * soit centré : les yeux finissent 44 pt plus haut qu'à leur arrivée.
  */
 const WORD_HEIGHT = 51.5;
-// Le cadre du mot descend de 2 pt (64 unités) pour laisser la place au liseré
+// Les cadres descendent un peu pour laisser la place au liseré (2 pt et 1 pt)
 const WORD = { width: WORD_HEIGHT * LOGO_WORD_RATIO, height: WORD_HEIGHT + 2 };
 const WORD_VIEWBOX = LOGO_WORD_VIEWBOX.replace(/ 1643$/, ' 1707');
-const LOGO_SHIFT_Y = -34;
-const WORD_CENTER_Y = 83;
+const SUBTITLE_HEIGHT = 13.8;
+const SUBTITLE = { width: SUBTITLE_HEIGHT * LOGO_SUBTITLE_RATIO, height: SUBTITLE_HEIGHT + 1 };
+const SUBTITLE_VIEWBOX = LOGO_SUBTITLE_VIEWBOX.replace(/ 865$/, ' 928');
+const EYES_FINAL_Y = -44;
+const WORD_TOP = 46.25;
+const SUBTITLE_TOP = WORD_TOP + WORD_HEIGHT + 10;
 
 interface AnimatedSplashProps {
   onFinish: () => void;
@@ -110,7 +130,9 @@ export default function AnimatedSplash({ onFinish, waitFor }: AnimatedSplashProp
   const leftX = useSharedValue(-screenWidth);
   const rightX = useSharedValue(screenWidth);
   const winkY = useSharedValue(1);
-  const wordOpacity = useSharedValue(0);
+  const eyesY = useSharedValue(0);
+  const wordReveal = useSharedValue(0);
+  const subtitleReveal = useSharedValue(0);
 
   const screenOpacity = useSharedValue(1);
 
@@ -128,8 +150,6 @@ export default function AnimatedSplash({ onFinish, waitFor }: AnimatedSplashProp
     leftX.value = withTiming(0, meet);
     rightX.value = withTiming(0, meet);
 
-    wordOpacity.value = withDelay(T_WORD, withTiming(1, { duration: WORD_FADE, easing: Easing.inOut(Easing.quad) }));
-
     // Clin d'œil : la paupière du petit œil descend, une fraction de seconde, remonte
     winkY.value = withDelay(
       T_WINK,
@@ -139,7 +159,13 @@ export default function AnimatedSplash({ onFinish, waitFor }: AnimatedSplashProp
       ),
     );
 
-    const entryTimer = setTimeout(() => setEntryDone(true), T_WINK + 500);
+    // Le titre : les yeux remontent, le texte monte en fondu dans l'espace libéré
+    eyesY.value = withDelay(T_REVEAL, withTiming(EYES_FINAL_Y, { duration: REVEAL_DURATION, easing: REVEAL_EASING }));
+    const reveal = { duration: TEXT_FADE, easing: Easing.out(Easing.cubic) };
+    wordReveal.value = withDelay(T_WORD, withTiming(1, reveal));
+    subtitleReveal.value = withDelay(T_SUBTITLE, withTiming(1, reveal));
+
+    const entryTimer = setTimeout(() => setEntryDone(true), T_ENTRY_DONE);
 
     // Filet de sécurité : si après 8s le splash est toujours visible
     // (Supabase hang, réseau mort…), on force la sortie quand même.
@@ -200,7 +226,17 @@ export default function AnimatedSplash({ onFinish, waitFor }: AnimatedSplashProp
     ],
   }));
 
-  const wordStyle = useAnimatedStyle(() => ({ opacity: wordOpacity.value }));
+  const eyesStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: eyesY.value }],
+  }));
+  const wordStyle = useAnimatedStyle(() => ({
+    opacity: wordReveal.value,
+    transform: [{ translateY: TEXT_RISE * (1 - wordReveal.value) }],
+  }));
+  const subtitleStyle = useAnimatedStyle(() => ({
+    opacity: subtitleReveal.value,
+    transform: [{ translateY: TEXT_RISE * (1 - subtitleReveal.value) }],
+  }));
 
   // Fade out global de tout l'écran
   const screenAnimatedStyle = useAnimatedStyle(() => ({
@@ -210,12 +246,15 @@ export default function AnimatedSplash({ onFinish, waitFor }: AnimatedSplashProp
   return (
     <Animated.View style={[styles.container, screenAnimatedStyle]}>
       <LinearGradient colors={SPLASH_BG} style={StyleSheet.absoluteFill} />
-      <View style={styles.logo}>
-        <Animated.View style={[styles.eye, leftStyle]}>
-          <Eye side="left" />
-        </Animated.View>
-        <Animated.View style={[styles.eye, rightStyle]}>
-          <Eye side="right" />
+      {/* Point d'ancrage au centre de l'écran : tout se place par rapport à lui */}
+      <View style={styles.center}>
+        <Animated.View style={[styles.logo, eyesStyle]}>
+          <Animated.View style={[styles.eye, leftStyle]}>
+            <Eye side="left" />
+          </Animated.View>
+          <Animated.View style={[styles.eye, rightStyle]}>
+            <Eye side="right" />
+          </Animated.View>
         </Animated.View>
         <Animated.View style={[styles.word, wordStyle]}>
           <Svg width="100%" height="100%" viewBox={WORD_VIEWBOX}>
@@ -223,6 +262,14 @@ export default function AnimatedSplash({ onFinish, waitFor }: AnimatedSplashProp
               <Path d={LOGO_WORD_PATH} fill={DEBOSS_LIGHT} fillOpacity={DEBOSS_OPACITY} />
             </G>
             <Path d={LOGO_WORD_PATH} fill={SHAPE_WORD} />
+          </Svg>
+        </Animated.View>
+        <Animated.View style={[styles.subtitle, subtitleStyle]}>
+          <Svg width="100%" height="100%" viewBox={SUBTITLE_VIEWBOX}>
+            <G transform={`translate(0 ${DEBOSS_SUBTITLE})`}>
+              <Path d={LOGO_SUBTITLE_PATH} fill={DEBOSS_LIGHT} fillOpacity={DEBOSS_OPACITY} />
+            </G>
+            <Path d={LOGO_SUBTITLE_PATH} fill={SHAPE_WORD} />
           </Svg>
         </Animated.View>
       </View>
@@ -236,10 +283,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  center: {
+    width: 0,
+    height: 0,
+  },
   logo: {
+    position: 'absolute',
     width: SPLASH_LOGO_SIZE,
     height: SPLASH_LOGO_SIZE,
-    transform: [{ translateY: LOGO_SHIFT_Y }],
+    left: -SPLASH_LOGO_SIZE / 2,
+    top: -SPLASH_LOGO_SIZE / 2,
   },
   eye: {
     ...StyleSheet.absoluteFillObject,
@@ -247,7 +300,13 @@ const styles = StyleSheet.create({
   word: {
     position: 'absolute',
     ...WORD,
-    left: (SPLASH_LOGO_SIZE - WORD.width) / 2,
-    top: SPLASH_LOGO_SIZE / 2 + WORD_CENTER_Y - LOGO_SHIFT_Y - WORD.height / 2,
+    left: -WORD.width / 2,
+    top: WORD_TOP,
+  },
+  subtitle: {
+    position: 'absolute',
+    ...SUBTITLE,
+    left: -SUBTITLE.width / 2,
+    top: SUBTITLE_TOP,
   },
 });
