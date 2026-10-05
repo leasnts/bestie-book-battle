@@ -57,7 +57,7 @@ import Animated, {
   type SharedValue,
 } from 'react-native-reanimated';
 import { accentGradient, colors, fonts } from '../../utils/constants';
-import { GhostTotal, INK, figureBox, figureWidth } from './InkFigure';
+import { FOOTPRINT_EM, GhostTotal, INK, figureBox, figureWidth } from './InkFigure';
 
 /** Un membre du club épinglé sur la règle */
 export interface ClubPin {
@@ -83,6 +83,10 @@ const STEP = 11;
 /** Une dizaine = un élément de la liste (la règle reste légère sur 1 000 pages) */
 const DECADE = STEP * 10;
 const RULER_HEIGHT = 74;
+/** L'air au-dessus du chiffre, qui le rapproche de la couture */
+const NUMBER_TOP = 28;
+/** Le chiffre ne descend jamais sous cette taille, même sur le plus petit écran */
+const MIN_FONT_SIZE = 36;
 /** La ligne des points, depuis le haut de la règle (place au-dessus pour les épingles) */
 const LINE_Y = 50;
 /** L'épingle : une bulle de verre avec la photo, et sa pointe sur la couture */
@@ -113,6 +117,14 @@ const AnimatedTextInput = Animated.createAnimatedComponent(TextInput);
 export default function PageRuler({ currentPage, totalPages, onPageChange, fontSize = 88, club = [] }: PageRulerProps) {
   const [width, setWidth] = useState(0);
   const onLayout = (e: LayoutChangeEvent) => setWidth(e.nativeEvent.layout.width);
+  // La place laissée au chiffre : s'il en manque, il rétrécit plutôt que de faire
+  // défiler l'accueil (le chiffre occupe FOOTPRINT_EM de sa taille, sous NUMBER_TOP)
+  const [numberSpace, setNumberSpace] = useState(0);
+  const onNumberLayout = (e: LayoutChangeEvent) => setNumberSpace(e.nativeEvent.layout.height);
+  const fittedSize =
+    numberSpace > 0
+      ? Math.max(MIN_FONT_SIZE, Math.min(fontSize, Math.floor((numberSpace - NUMBER_TOP) / FOOTPRINT_EM)))
+      : fontSize;
 
   const listRef = useAnimatedRef<Animated.FlatList<number>>();
   // Où en est la règle, en points : tout le reste (chiffre, goutte) en découle
@@ -283,8 +295,8 @@ export default function PageRuler({ currentPage, totalPages, onPageChange, fontS
       onAccessibilityAction={(e) => step(e.nativeEvent.actionName === 'increment' ? 1 : -1)}
     >
       <GestureDetector gesture={numberPan}>
-        <View style={styles.numberBlock}>
-          <InkNumber page={currentPage} total={totalPages} fontSize={fontSize} scrollX={scrollX} />
+        <View style={styles.numberBlock} onLayout={onNumberLayout}>
+          <InkNumber page={currentPage} total={totalPages} fontSize={fittedSize} scrollX={scrollX} />
         </View>
       </GestureDetector>
 
@@ -395,6 +407,8 @@ function InkNumber({
     <AnimatedTextInput
       key={key}
       editable={false}
+      // Sa taille vient de la place à l'écran (fittedSize), pas du réglage de texte
+      allowFontScaling={false}
       pointerEvents="none"
       underlineColorAndroid="transparent"
       defaultValue={String(page)}
@@ -667,10 +681,11 @@ const styles = StyleSheet.create({
   },
   numberBlock: {
     flex: 1,
+    minHeight: 0,
     alignItems: 'center',
     justifyContent: 'center',
     // Le chiffre et son « / 624 » un peu plus bas, plus près de la couture (Lea)
-    paddingTop: 28,
+    paddingTop: NUMBER_TOP,
   },
   number: {
     fontFamily: fonts.displayHero,

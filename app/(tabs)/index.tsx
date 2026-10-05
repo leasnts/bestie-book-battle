@@ -23,7 +23,6 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
     ActivityIndicator,
     AppState,
-    ScrollView,
     StyleSheet,
     Text,
     View,
@@ -94,11 +93,6 @@ export default function HomeScreen() {
   const compactSpacing = compactLeaderboard;
   // Espace entre les cadres : serré sur SE, plus aéré sur les grands écrans
   const frameGap = { paddingTop: compactSpacing ? spacing.sm : compactPage ? spacing.md : spacing.lg };
-  // Défile seulement si le contenu dépasse vraiment : en pratique, avec le texte
-  // agrandi dans les réglages d'accessibilité. Sinon, rien ne bouge.
-  const [framesHeight, setFramesHeight] = useState(0);
-  const [contentHeight, setContentHeight] = useState(0);
-  const framesOverflow = framesHeight > 0 && contentHeight > framesHeight + 1;
   const { user } = useAuthStore();
 
   // ===== Stores Supabase =====
@@ -452,29 +446,17 @@ export default function HomeScreen() {
       </View>
 
       {/*
-        Les trois cadres. AUCUN défilement sur l'accueil (règle de Lea) : tout
-        tient sur tous les iPhone, du SE au Pro Max (versions compactes sur les
-        petits écrans). La ScrollView ne s'active que si le contenu dépasse
-        vraiment, c'est-à-dire avec le texte agrandi dans les réglages
-        d'accessibilité : là, défiler vaut mieux que couper les lettres.
+        Les trois cadres. AUCUN défilement sur l'accueil (règle de Lea) : une vue
+        fixe, pas de ScrollView. Le livre et le bento gardent leur taille ; « Ma
+        page » prend la place qui reste et son chiffre rétrécit pour y tenir, du
+        SE au Pro Max, même avec le texte agrandi.
       */}
-      <ScrollView
-        style={styles.frames}
-        // flexGrow : « Ma page » peut prendre la place qui reste
-        contentContainerStyle={{
-          flexGrow: 1,
+      <View
+        style={[
+          styles.frames,
           // De l'air au-dessus de la barre d'onglets, sauf sur SE où chaque point compte
-          // « Ma page » prend la place qui reste, un peu moins haute grâce à cet air
-          paddingBottom: tabBarInset + (compactSpacing ? spacing.md : spacing['4xl']),
-        }}
-        scrollEnabled={framesOverflow}
-        // La feuille pour annoter la page vit dans ce défilement (dans l'arbre
-        // React, même ouverte par-dessus tout) : sans ceci, clavier ouvert, le
-        // premier toucher sur ✕, ↗ ou ✓ ne servait qu'à fermer le clavier.
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={framesOverflow}
-        onLayout={(e) => setFramesHeight(e.nativeEvent.layout.height)}
-        onContentSizeChange={(_w, h) => setContentHeight(h)}
+          { paddingBottom: tabBarInset + (compactSpacing ? spacing.md : spacing['4xl']) },
+        ]}
       >
       {/* ═══════════ CADRE 1 : LE LIVRE ═══════════ */}
       {activeChallenge && (
@@ -588,7 +570,7 @@ export default function HomeScreen() {
           </View>
         </View>
       )}
-      </ScrollView>
+      </View>
 
       {/* ═══════════ TOAST DELTA — FEUILLE QUI TOMBE ═══════════
         Toujours monté dans le DOM mais invisible (opacity: 0 par défaut).
@@ -633,7 +615,7 @@ const styles = StyleSheet.create({
   headerSpacer: {
     width: 44,
   },
-  // La zone qui porte les trois cadres (défile seulement si ça dépasse)
+  // La zone qui porte les trois cadres : la hauteur de l'écran, jamais plus
   frames: {
     flex: 1,
   },
@@ -653,7 +635,9 @@ const styles = StyleSheet.create({
   // Le cadre « Ma page » occupe toute la largeur, comme les deux autres
   // flexGrow : sur les grands écrans, ce cadre prend la place qui reste en bas
   pageSection: {
-    flexGrow: 1,
+    // flex 1 + minHeight 0 : prend la place qui reste, et rétrécit s'il en manque
+    flex: 1,
+    minHeight: 0,
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.md,
   },

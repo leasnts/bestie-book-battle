@@ -106,14 +106,17 @@ export default function PageSection({
 const styles = StyleSheet.create({
   // Pas de cadre : juste de l'air en haut et en bas, aligné sur les bords des cadres
   frame: {
-    flexGrow: 1,
+    // Prend la hauteur que l'accueil lui laisse, jamais plus (pas de défilement)
+    flex: 1,
+    minHeight: 0,
     paddingVertical: spacing.lg,
   },
   frameCompact: {
     paddingVertical: spacing.md,
   },
   book: {
-    flexGrow: 1,
+    flex: 1,
+    minHeight: 0,
     marginTop: spacing.xs,
   },
 
