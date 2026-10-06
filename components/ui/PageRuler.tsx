@@ -83,8 +83,8 @@ const STEP = 11;
 /** Une dizaine = un élément de la liste (la règle reste légère sur 1 000 pages) */
 const DECADE = STEP * 10;
 const RULER_HEIGHT = 74;
-/** L'air au-dessus du chiffre, qui le rapproche de la couture */
-const NUMBER_TOP = 28;
+/** L'air au-dessus du chiffre : aucun, il est posé en bas, contre la couture */
+const NUMBER_TOP = 0;
 /** Le chiffre ne descend jamais sous cette taille, même sur le plus petit écran */
 const MIN_FONT_SIZE = 36;
 /** La ligne des points, depuis le haut de la règle (place au-dessus pour les épingles) */
@@ -421,7 +421,8 @@ function InkNumber({
 
   return (
     <View style={[frame, { width: numberWidth + 80 }]}>
-      <GhostTotal total={total} size={Math.round(fontSize * 0.72)} left={40 + numberWidth * 0.7} baseline={baseline} />
+      {/* Le total, nettement en contrebas de ma page */}
+      <GhostTotal total={total} size={Math.round(fontSize * 0.72)} left={40 + numberWidth * 0.7} baseline={baseline} drop={0.4} />
       {/* Le chiffre est le masque d'un dégradé d'encre : jamais d'aplat (DA) */}
       <MaskedView
         style={StyleSheet.absoluteFill}
@@ -683,8 +684,9 @@ const styles = StyleSheet.create({
     flex: 1,
     minHeight: 0,
     alignItems: 'center',
-    justifyContent: 'center',
-    // Le chiffre et son « / 624 » un peu plus bas, plus près de la couture (Lea)
+    // Le chiffre posé en bas, près de la couture (Lea) : toute la place au-dessus
+    // lui revient, il grossit au lieu de laisser du vide
+    justifyContent: 'flex-end',
     paddingTop: NUMBER_TOP,
   },
   number: {
