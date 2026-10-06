@@ -163,7 +163,7 @@ function Row({
 /**
  * Un groupe de deux n'a rien à classer : une liste de deux lignes laissait le
  * carré à moitié vide. À la place, les deux avatars en grand, chacun avec son
- * %, et entre eux un bout de fil cousu qui porte l'écart. Le 1er à gauche.
+ * %, et entre eux un bout de fil cousu. Le 1er à gauche.
  */
 function Side({
   participant,
@@ -198,14 +198,11 @@ function Side({
 
 function Duel({ pair, animate }: { pair: RankedParticipant[]; animate: boolean }) {
   const [first, second] = pair;
-  const gap = formatScore(first) - formatScore(second);
   return (
     <View style={styles.duel}>
       <View style={styles.duelRow}>
         <Side participant={first} animate={animate} />
         <View style={styles.duelThread}>
-          <View style={styles.duelStitch} />
-          <Text style={styles.duelGap}>{gap === 0 ? '=' : gap}</Text>
           <View style={styles.duelStitch} />
         </View>
         <Side participant={second} animate={animate} end />
@@ -446,7 +443,7 @@ const styles = StyleSheet.create({
   duelScoreUnit: {
     fontSize: 13,
   },
-  /** Le fil entre les deux, à hauteur des avatars ; l'écart cousu au milieu */
+  /** Le fil entre les deux, à hauteur des avatars */
   duelThread: {
     flex: 1,
     alignSelf: 'flex-start',
@@ -462,12 +459,6 @@ const styles = StyleSheet.create({
     borderTopWidth: 1.5,
     borderStyle: 'dashed',
     borderColor: colors.textPlaceholder,
-  },
-  duelGap: {
-    fontFamily: fonts.display,
-    fontSize: 13,
-    color: colors.textPrimary,
-    fontVariant: ['tabular-nums'],
   },
 
   /** Trait pointillé : un saut dans le classement, pas une séparation */
