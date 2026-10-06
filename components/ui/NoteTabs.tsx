@@ -230,11 +230,12 @@ const styles = StyleSheet.create({
     borderColor: colors.white,
     backgroundColor: colors.accent,
   },
-  // Au-dessus des intercalaires, ferrée sur le bord droit du carré
+  // Au-dessus de l'intercalaire tiré (sa part glissée sous la note comprise),
+  // ferrée sur le bord droit du carré
   emojis: {
     position: 'absolute',
     right: 0,
-    bottom: NOTE_TABS_HEIGHT + TAB_PULL + spacing.xs,
+    bottom: NOTE_TABS_HEIGHT + NOTE_TABS_TUCK + TAB_PULL + spacing.sm,
     flexDirection: 'row',
     alignItems: 'center',
     padding: 5,
