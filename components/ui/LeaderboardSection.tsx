@@ -165,7 +165,8 @@ function Row({
 /**
  * Un groupe de deux n'a rien à classer : une liste de deux lignes laissait le
  * carré à moitié vide. À la place, les deux avatars en grand, chacun avec son
- * %, et entre eux un bout de fil cousu. Le 1er à gauche.
+ * %, et entre eux un bout de fil cousu. Le plus avancé à droite, comme sur
+ * la piste qui avance de gauche à droite.
  */
 function Side({
   participant,
@@ -180,13 +181,11 @@ function Side({
   const score = useRollingCounter(formatScore(participant), 800, animate);
   return (
     <View style={[styles.duelSide, end && styles.duelSideEnd]}>
-      <View style={[styles.duelRing, participant.isMe && styles.duelRingMe]}>
-        <Image
-          source={resolveAvatar(participant.photoUrl)}
-          style={styles.duelAvatar}
-          contentFit="cover"
-        />
-      </View>
+      <Image
+        source={resolveAvatar(participant.photoUrl)}
+        style={styles.duelAvatar}
+        contentFit="cover"
+      />
       <Text style={[styles.duelName, participant.isMe && styles.duelNameMe]} numberOfLines={1}>
         {participant.name}
       </Text>
@@ -205,7 +204,7 @@ function Duel({ pair, animate }: { pair: RankedParticipant[]; animate: boolean }
   return (
     <View style={styles.duel}>
       <View style={styles.duelRow}>
-        <Side participant={first} animate={animate} />
+        <Side participant={second} animate={animate} />
         <View
           style={styles.duelThread}
           onLayout={(e) => setThreadWidth(e.nativeEvent.layout.width)}
@@ -217,7 +216,7 @@ function Duel({ pair, animate }: { pair: RankedParticipant[]; animate: boolean }
             </Svg>
           )}
         </View>
-        <Side participant={second} animate={animate} end />
+        <Side participant={first} animate={animate} end />
       </View>
     </View>
   );
@@ -421,16 +420,6 @@ const styles = StyleSheet.create({
   duelSideEnd: {
     alignItems: 'flex-end',
   },
-  /** L'anneau existe toujours (transparent) : les deux avatars restent alignés */
-  duelRing: {
-    padding: 1.5,
-    borderRadius: 13,
-    borderWidth: 1.5,
-    borderColor: 'transparent',
-  },
-  duelRingMe: {
-    borderColor: colors.textPrimary,
-  },
   duelAvatar: {
     width: DUEL_AVATAR,
     height: DUEL_AVATAR,
@@ -461,7 +450,7 @@ const styles = StyleSheet.create({
   duelThread: {
     flex: 1,
     alignSelf: 'flex-start',
-    height: DUEL_AVATAR + 6,
+    height: DUEL_AVATAR,
     marginHorizontal: spacing.sm,
     justifyContent: 'center',
   },
