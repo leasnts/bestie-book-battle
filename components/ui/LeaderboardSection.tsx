@@ -35,6 +35,7 @@ import { colors, creamAlpha, fonts, inkAlpha, motion, spacing } from '../../util
 import {
   formatScore,
   LeaderboardParticipant,
+  PODIUM_SLOTS,
   rankParticipants,
   RankedParticipant,
   selectVisibleRows,
@@ -172,6 +173,7 @@ export default function LeaderboardSection({
 
   const ranked = useMemo(() => rankParticipants(participants, myUserId), [participants, myUserId]);
   const { rows, pinnedMe } = useMemo(() => selectVisibleRows(ranked, compact), [ranked, compact]);
+  const spread = square && !pinnedMe;
 
   return (
     <GlassSection
@@ -188,8 +190,17 @@ export default function LeaderboardSection({
 
       <View style={[styles.rows, square && styles.rowsSquare]}>
         {rows.map((participant) => (
-          <Row key={participant.id} participant={participant} animate={animate} square={square} />
+          <React.Fragment key={participant.id}>
+            {/* En carré sans ma ligne épinglée : 2 ou 3 lignes ne remplissent pas
+                le cadre. Un ressort avant chaque ligne les répartit sur la hauteur,
+                la dernière reste posée en bas comme dans le cas épinglé. */}
+            {spread && <View style={styles.spring} />}
+            <Row participant={participant} animate={animate} square={square} />
+          </React.Fragment>
         ))}
+        {/* À deux, la 2e ligne posée en bas laissait un vide lourd au-dessus :
+            un dernier ressort centre la paire dans le cadre. */}
+        {spread && rows.length < PODIUM_SLOTS && <View style={styles.spring} />}
 
         {/* Ma ligne, quand je suis hors du top 3 : le pointillé dit qu'il y a
             du monde entre les deux, sans écrire combien. */}
@@ -238,6 +249,9 @@ const styles = StyleSheet.create({
   rowsSquare: {
     flex: 1,
     justifyContent: 'flex-end',
+  },
+  spring: {
+    flex: 1,
   },
   rowSquare: {
     minHeight: 27,
