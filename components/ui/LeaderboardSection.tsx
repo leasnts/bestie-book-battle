@@ -35,6 +35,7 @@ import { colors, creamAlpha, fonts, inkAlpha, motion, spacing } from '../../util
 import {
   formatScore,
   LeaderboardParticipant,
+  PODIUM_SLOTS,
   rankParticipants,
   RankedParticipant,
   selectVisibleRows,
@@ -197,6 +198,9 @@ export default function LeaderboardSection({
             <Row participant={participant} animate={animate} square={square} />
           </React.Fragment>
         ))}
+        {/* À deux, la 2e ligne posée en bas laissait un vide lourd au-dessus :
+            un dernier ressort centre la paire dans le cadre. */}
+        {spread && rows.length < PODIUM_SLOTS && <View style={styles.spring} />}
 
         {/* Ma ligne, quand je suis hors du top 3 : le pointillé dit qu'il y a
             du monde entre les deux, sans écrire combien. */}
