@@ -25,6 +25,7 @@
 import { Image } from 'expo-image';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
+import Svg from 'react-native-svg';
 import Animated, {
   Easing,
   FadeIn,
@@ -41,6 +42,7 @@ import {
   selectVisibleRows,
 } from '../../utils/leaderboard';
 import GlassSection from './GlassSection';
+import { Seam } from './GoalTrack';
 
 // ─── Props ─────────────────────────────────────────────────────────
 
@@ -198,12 +200,22 @@ function Side({
 
 function Duel({ pair, animate }: { pair: RankedParticipant[]; animate: boolean }) {
   const [first, second] = pair;
+  // Largeur du fil, pour y placer les points
+  const [threadWidth, setThreadWidth] = useState(0);
   return (
     <View style={styles.duel}>
       <View style={styles.duelRow}>
         <Side participant={first} animate={animate} />
-        <View style={styles.duelThread}>
-          <View style={styles.duelStitch} />
+        <View
+          style={styles.duelThread}
+          onLayout={(e) => setThreadWidth(e.nativeEvent.layout.width)}
+        >
+          {/* Le même fil à points que la piste du livre (GoalTrack) */}
+          {threadWidth > 0 && (
+            <Svg width={threadWidth} height={THREAD_HEIGHT}>
+              <Seam width={threadWidth} readUntil={threadWidth} y={THREAD_HEIGHT / 2} />
+            </Svg>
+          )}
         </View>
         <Side participant={second} animate={animate} end />
       </View>
@@ -284,6 +296,8 @@ const ROW_HEIGHT = 36;
 const RANK_WIDTH = 23;
 /** Avatars du face-à-face : assez grands pour remplir le carré à deux */
 const DUEL_AVATAR = 36;
+/** Hauteur du dessin du fil : assez pour ses points */
+const THREAD_HEIGHT = 4;
 
 const styles = StyleSheet.create({
   // minHeight, pas height : aux gros corps de texte le titre doit pouvoir
@@ -448,17 +462,8 @@ const styles = StyleSheet.create({
     flex: 1,
     alignSelf: 'flex-start',
     height: DUEL_AVATAR + 6,
-    marginTop: spacing.xs,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 3,
-  },
-  duelStitch: {
-    flex: 1,
-    height: 0,
-    borderTopWidth: 1.5,
-    borderStyle: 'dashed',
-    borderColor: colors.textPlaceholder,
+    marginHorizontal: spacing.sm,
+    justifyContent: 'center',
   },
 
   /** Trait pointillé : un saut dans le classement, pas une séparation */
