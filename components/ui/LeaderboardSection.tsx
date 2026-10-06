@@ -159,6 +159,61 @@ function Row({
   );
 }
 
+// ─── À deux : face-à-face ─────────────────────────────────────────
+/**
+ * Un groupe de deux n'a rien à classer : une liste de deux lignes laissait le
+ * carré à moitié vide. À la place, les deux avatars en grand, chacun avec son
+ * %, et entre eux un bout de fil cousu qui porte l'écart. Le 1er à gauche.
+ */
+function Side({
+  participant,
+  animate,
+  end = false,
+}: {
+  participant: RankedParticipant;
+  animate: boolean;
+  /** Côté droit : tout s'aligne sur le bord droit du cadre */
+  end?: boolean;
+}) {
+  const score = useRollingCounter(formatScore(participant), 800, animate);
+  return (
+    <View style={[styles.duelSide, end && styles.duelSideEnd]}>
+      <View style={[styles.duelRing, participant.isMe && styles.duelRingMe]}>
+        <Image
+          source={resolveAvatar(participant.photoUrl)}
+          style={styles.duelAvatar}
+          contentFit="cover"
+        />
+      </View>
+      <Text style={[styles.duelName, participant.isMe && styles.duelNameMe]} numberOfLines={1}>
+        {participant.name}
+      </Text>
+      <Text style={styles.duelScore}>
+        {score}
+        <Text style={styles.duelScoreUnit}>%</Text>
+      </Text>
+    </View>
+  );
+}
+
+function Duel({ pair, animate }: { pair: RankedParticipant[]; animate: boolean }) {
+  const [first, second] = pair;
+  const gap = formatScore(first) - formatScore(second);
+  return (
+    <View style={styles.duel}>
+      <View style={styles.duelRow}>
+        <Side participant={first} animate={animate} />
+        <View style={styles.duelThread}>
+          <View style={styles.duelStitch} />
+          <Text style={styles.duelGap}>{gap === 0 ? '=' : gap}</Text>
+          <View style={styles.duelStitch} />
+        </View>
+        <Side participant={second} animate={animate} end />
+      </View>
+    </View>
+  );
+}
+
 // ─── Le cadre ─────────────────────────────────────────────────────
 
 export default function LeaderboardSection({
@@ -174,12 +229,16 @@ export default function LeaderboardSection({
   const ranked = useMemo(() => rankParticipants(participants, myUserId), [participants, myUserId]);
   const { rows, pinnedMe } = useMemo(() => selectVisibleRows(ranked, compact), [ranked, compact]);
   const spread = square && !pinnedMe;
+  const duel = square && ranked.length === 2;
+  const a11y = duel
+    ? `Progression, ${ranked.map((p) => `${p.name} ${formatScore(p)} pour cent`).join(', ')}`
+    : `Progression, ${ranked.length} membres`;
 
   return (
     <GlassSection
       compact={compact}
       onPress={onPress}
-      accessibilityLabel={`Progression, ${ranked.length} membres`}
+      accessibilityLabel={a11y}
       accessibilityHint="Ouvre la progression complète"
       style={square && styles.square}
     >
@@ -188,29 +247,33 @@ export default function LeaderboardSection({
         <Text style={styles.title}>Progression</Text>
       </View>
 
-      <View style={[styles.rows, square && styles.rowsSquare]}>
-        {rows.map((participant) => (
-          <React.Fragment key={participant.id}>
-            {/* En carré sans ma ligne épinglée : 2 ou 3 lignes ne remplissent pas
+      {duel ? (
+        <Duel pair={ranked} animate={animate} />
+      ) : (
+        <View style={[styles.rows, square && styles.rowsSquare]}>
+          {rows.map((participant) => (
+            <React.Fragment key={participant.id}>
+              {/* En carré sans ma ligne épinglée : 2 ou 3 lignes ne remplissent pas
                 le cadre. Un ressort avant chaque ligne les répartit sur la hauteur,
                 la dernière reste posée en bas comme dans le cas épinglé. */}
-            {spread && <View style={styles.spring} />}
-            <Row participant={participant} animate={animate} square={square} />
-          </React.Fragment>
-        ))}
-        {/* À deux, la 2e ligne posée en bas laissait un vide lourd au-dessus :
+              {spread && <View style={styles.spring} />}
+              <Row participant={participant} animate={animate} square={square} />
+            </React.Fragment>
+          ))}
+          {/* À deux, la 2e ligne posée en bas laissait un vide lourd au-dessus :
             un dernier ressort centre la paire dans le cadre. */}
-        {spread && rows.length < PODIUM_SLOTS && <View style={styles.spring} />}
+          {spread && rows.length < PODIUM_SLOTS && <View style={styles.spring} />}
 
-        {/* Ma ligne, quand je suis hors du top 3 : le pointillé dit qu'il y a
+          {/* Ma ligne, quand je suis hors du top 3 : le pointillé dit qu'il y a
             du monde entre les deux, sans écrire combien. */}
-        {pinnedMe && (
-          <>
-            <View style={styles.gap} />
-            <Row participant={pinnedMe} animate={animate} square={square} />
-          </>
-        )}
-      </View>
+          {pinnedMe && (
+            <>
+              <View style={styles.gap} />
+              <Row participant={pinnedMe} animate={animate} square={square} />
+            </>
+          )}
+        </View>
+      )}
     </GlassSection>
   );
 }
@@ -222,6 +285,8 @@ const AVATAR_SIZE = 30;
 const ROW_HEIGHT = 36;
 /** Colonne du rang : trois chiffres tiennent sans pousser les avatars */
 const RANK_WIDTH = 23;
+/** Avatars du face-à-face : assez grands pour remplir le carré à deux */
+const DUEL_AVATAR = 36;
 
 const styles = StyleSheet.create({
   // minHeight, pas height : aux gros corps de texte le titre doit pouvoir
@@ -325,6 +390,84 @@ const styles = StyleSheet.create({
   },
   scoreUnit: {
     fontSize: 14,
+  },
+
+  // Face-à-face (groupe de deux)
+  duel: {
+    flex: 1,
+    justifyContent: 'center',
+    paddingTop: spacing.xs,
+  },
+  /** Les avatars collés aux bords : le milieu reste au fil */
+  duelRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  duelSide: {
+    alignItems: 'flex-start',
+    gap: 3,
+  },
+  duelSideEnd: {
+    alignItems: 'flex-end',
+  },
+  /** L'anneau existe toujours (transparent) : les deux avatars restent alignés */
+  duelRing: {
+    padding: 1.5,
+    borderRadius: 13,
+    borderWidth: 1.5,
+    borderColor: 'transparent',
+  },
+  duelRingMe: {
+    borderColor: colors.textPrimary,
+  },
+  duelAvatar: {
+    width: DUEL_AVATAR,
+    height: DUEL_AVATAR,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: creamAlpha(0.6),
+  },
+  duelName: {
+    maxWidth: '100%',
+    fontFamily: fonts.bodySemiBold,
+    fontSize: 13,
+    color: colors.textSecondary,
+  },
+  duelNameMe: {
+    fontFamily: fonts.bodyExtraBold,
+    color: colors.textPrimary,
+  },
+  duelScore: {
+    fontFamily: fonts.display,
+    fontSize: 20,
+    color: colors.textPrimary,
+    fontVariant: ['tabular-nums'],
+  },
+  duelScoreUnit: {
+    fontSize: 13,
+  },
+  /** Le fil entre les deux, à hauteur des avatars ; l'écart cousu au milieu */
+  duelThread: {
+    flex: 1,
+    alignSelf: 'flex-start',
+    height: DUEL_AVATAR + 6,
+    marginTop: spacing.xs,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+  },
+  duelStitch: {
+    flex: 1,
+    height: 0,
+    borderTopWidth: 1.5,
+    borderStyle: 'dashed',
+    borderColor: colors.textPlaceholder,
+  },
+  duelGap: {
+    fontFamily: fonts.display,
+    fontSize: 13,
+    color: colors.textPrimary,
+    fontVariant: ['tabular-nums'],
   },
 
   /** Trait pointillé : un saut dans le classement, pas une séparation */
