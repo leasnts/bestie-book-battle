@@ -168,18 +168,18 @@ export const postIt = {
 
 /**
  * Le ton sur ton de chaque post-it (DESIGN.md › Charte Lowki) : la même teinte
- * et la même saturation, un cran plus foncée, posée pleine. Chaque ton est à la même distance de sa
- * note (≈ 12 % de clarté pour le filigrane, 18 % pour la couture), pour qu'aucun
+ * un peu moins saturée, un cran plus foncée, posée pleine. Chaque ton est à la même distance de sa
+ * note (≈ 9 % de clarté pour le filigrane, 15 % pour la couture), pour qu'aucun
  * ne ressorte plus qu'un autre. En dessous, le voile sombre du bas de la note
  * (`NoteSticker`) avale le filigrane. Jamais pour le texte, qui reste à l'encre.
  */
 export const postItDeep: Record<keyof typeof postIt, { mark: string; stitch: string }> = {
-  rose: { mark: '#bb7f84', stitch: '#a86d73', },
-  peche: { mark: '#be8b72', stitch: '#aa7960', },
-  bleu: { mark: '#9badb3', stitch: '#899aa1', },
-  jaune: { mark: '#c5b26a', stitch: '#b29f58', },
-  sauge: { mark: '#b0ab81', stitch: '#9d986f', },
-  sable: { mark: '#af9372', stitch: '#9d8160', },
+  rose: { mark: '#c18a8f', stitch: '#ae787d', },
+  peche: { mark: '#c4957f', stitch: '#b0836d', },
+  bleu: { mark: '#a6b6bc', stitch: '#94a3a9', },
+  jaune: { mark: '#cdbc7c', stitch: '#b9a96a', },
+  sauge: { mark: '#b8b48e', stitch: '#a6a17c', },
+  sable: { mark: '#b79c7f', stitch: '#a48a6d', },
 };
 
 /** Le ton sur ton d'une couleur de post-it, `null` si ce n'en est pas une */
