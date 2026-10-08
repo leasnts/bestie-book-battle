@@ -98,7 +98,9 @@ function LeaderboardRow({
         accessibilityHint={onPress ? 'Ouvre son journal de lecture' : undefined}
       >
       {/* ── Rang ── */}
-      <Text style={[styles.rank, isMe && styles.rankMe]}>{rank}</Text>
+      <Text style={[styles.rank, isMe && styles.rankMe]}>
+        <AccentUnit size={styles.rank.fontSize}>{String(rank)}</AccentUnit>
+      </Text>
 
       {/* ── Avatar (+ couronne pour le leader) ── */}
       <View style={styles.avatarWrapper}>

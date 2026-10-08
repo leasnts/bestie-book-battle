@@ -142,7 +142,9 @@ function Row({
       accessible
       accessibilityLabel={`${participant.rank}, ${participant.name}, ${score} pour cent`}
     >
-      <Text style={[styles.rank, square && styles.rankSquare]}>{participant.rank}</Text>
+      <Text style={[styles.rank, square && styles.rankSquare]}>
+        <AccentUnit size={square ? styles.rankSquare.fontSize : styles.rank.fontSize}>{String(participant.rank)}</AccentUnit>
+      </Text>
       <Image
         source={resolveAvatar(participant.photoUrl)}
         style={[styles.avatar, square && styles.avatarSquare]}

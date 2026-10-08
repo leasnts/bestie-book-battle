@@ -66,6 +66,7 @@ import {
   median,
   type TrackCap,
 } from '../utils/track';
+import { AccentUnits } from '../components/ui/AccentWord';
 
 export default function BookRoute() {
   const router = useRouter();
@@ -445,7 +446,7 @@ function Row({
         )}
       </View>
       <Text style={[styles.rowLabel, dimmed && styles.rowLabelDimmed]} numberOfLines={1}>
-        {label}
+        <AccentUnits text={label} size={styles.rowLabel.fontSize} />
       </Text>
       {tag && (
         <View style={styles.tag}>

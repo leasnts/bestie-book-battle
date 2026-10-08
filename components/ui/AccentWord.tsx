@@ -41,7 +41,8 @@ export default function AccentWord({ text, accent, size }: AccentWordProps) {
 }
 
 /**
- * AccentUnit — le petit signe collé à un nombre, « p. » ou « % ».
+ * AccentUnit — le petit signe collé à un nombre, « p. » ou « % », et le
+ * rang d'un classement (1, 2, 3…).
  *
  *    p. 169      52 %      (le signe à la main, le nombre en Martian)
  *
