@@ -3,9 +3,9 @@ import {useLoop} from './loop';
 import {
   ACCENT_FONT,
   BEIGE,
-  CHOCO,
-  CHOCO_FORM_BOTTOM,
-  CHOCO_FORM_TOP,
+  RED,
+  RED_FORM_BOTTOM,
+  RED_FORM_TOP,
 } from './theme';
 
 
@@ -54,9 +54,9 @@ const Phone = ({src, cx, cy, scale, tilt, phase, sweepAt}: PhoneProps) => {
         borderRadius: 112,
         padding: BEZEL,
         boxSizing: 'border-box',
-        background: 'linear-gradient(180deg, #4a3428 0%, #1e140e 100%)',
+        background: 'linear-gradient(180deg, #3d1a1c 0%, #16080a 100%)',
         boxShadow:
-          '0 60px 120px rgba(25, 10, 4, 0.55), 0 12px 30px rgba(25, 10, 4, 0.35), inset 0 2px 0 rgba(255, 236, 220, 0.18)',
+          '0 60px 120px rgba(40, 6, 8, 0.55), 0 12px 30px rgba(40, 6, 8, 0.35), inset 0 2px 0 rgba(255, 236, 220, 0.18)',
       }}
     >
       <div
@@ -85,7 +85,7 @@ const Phone = ({src, cx, cy, scale, tilt, phase, sweepAt}: PhoneProps) => {
   );
 };
 
-// Fond chocolat : dégradé (jamais d'aplat), lavis d'aquarelle qui respirent, grain de papier.
+// Fond rouge : dégradé (jamais d'aplat), lavis d'aquarelle qui respirent, grain de papier.
 const Backdrop = () => {
   const {turn} = useLoop();
   const blooms = [
@@ -95,7 +95,7 @@ const Backdrop = () => {
   ];
   return (
     <AbsoluteFill
-      style={{background: `linear-gradient(180deg, #7b3f22 0%, ${CHOCO} 45%, #552a17 100%)`}}
+      style={{background: `linear-gradient(180deg, #ad2a33 0%, ${RED} 45%, #82171e 100%)`}}
     >
       {blooms.map((b, i) => {
         const x = b.x * W + Math.cos(turn + b.p) * 60;
@@ -112,8 +112,8 @@ const Backdrop = () => {
               borderRadius: '50%',
               background:
                 i === 0
-                  ? 'radial-gradient(circle, rgba(150, 86, 52, 0.55) 0%, rgba(150, 86, 52, 0) 65%)'
-                  : `radial-gradient(circle, rgba(63, 31, 18, ${b.a}) 0%, rgba(63, 31, 18, 0) 70%)`,
+                  ? 'radial-gradient(circle, rgba(196, 64, 70, 0.5) 0%, rgba(196, 64, 70, 0) 65%)'
+                  : `radial-gradient(circle, rgba(86, 17, 21, ${b.a}) 0%, rgba(86, 17, 21, 0) 70%)`,
             }}
           />
         );
@@ -129,21 +129,21 @@ const Backdrop = () => {
   );
 };
 
-// Le fil cousu qui relie les téléphones en passant sous le nom.
+// Le fil cousu en points qui relie les téléphones en passant sous le nom.
 const Thread = () => {
   const {frame, durationInFrames} = useLoop();
-  const period = 54;
-  const offset = -(frame / durationInFrames) * period * 4;
+  const period = 30;
+  const offset = -(frame / durationInFrames) * period * 10;
   const d = `M -100 1290 C 700 1420, 1200 1150, 1920 1180 S 3200 1420, 3940 1250`;
   return (
     <svg width={W} height={H} style={{position: 'absolute', inset: 0}}>
-      <path d={d} fill="none" stroke="rgba(30, 12, 5, 0.35)" strokeWidth={9} strokeDasharray="32 22" strokeDashoffset={offset} strokeLinecap="round" transform="translate(0 5)" />
-      <path d={d} fill="none" stroke={BEIGE} strokeWidth={8} strokeDasharray="32 22" strokeDashoffset={offset} strokeLinecap="round" />
+      <path d={d} fill="none" stroke="rgba(60, 8, 12, 0.4)" strokeWidth={13} strokeDasharray={`0 ${period}`} strokeDashoffset={offset} strokeLinecap="round" transform="translate(0 5)" />
+      <path d={d} fill="none" stroke={BEIGE} strokeWidth={13} strokeDasharray={`0 ${period}`} strokeDashoffset={offset} strokeLinecap="round" />
     </svg>
   );
 };
 
-// « Lowki » ton sur ton : forme chocolat plus profonde, liseré clair dessous (gravé).
+// « Lowki » ton sur ton : forme rouge plus profonde, liseré clair dessous (gravé).
 const Wordmark = () => {
   const {turn} = useLoop();
   const lift = Math.sin(turn) * 6;
@@ -158,11 +158,11 @@ const Wordmark = () => {
   };
   return (
     <div style={{position: 'absolute', left: 0, right: 0, top: 420 + lift, height: 700}}>
-      <div style={{...base, color: 'rgba(255, 226, 200, 0.22)', transform: 'translateY(6px)'}}>{text}</div>
+      <div style={{...base, color: 'rgba(255, 214, 210, 0.2)', transform: 'translateY(6px)'}}>{text}</div>
       <div
         style={{
           ...base,
-          backgroundImage: `linear-gradient(180deg, ${CHOCO_FORM_TOP} 20%, ${CHOCO_FORM_BOTTOM} 80%)`,
+          backgroundImage: `linear-gradient(180deg, ${RED_FORM_TOP} 20%, ${RED_FORM_BOTTOM} 80%)`,
           WebkitBackgroundClip: 'text',
           backgroundClip: 'text',
           color: 'transparent',
