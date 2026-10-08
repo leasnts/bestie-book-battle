@@ -21,6 +21,14 @@ colors:
   success: "#10B981"
   warning: "#F59E0B"
   danger: "#EF4444"
+  lowki-butter: "#F5E6A8"
+  lowki-butter-deep: "#D6C36F"
+  lowki-beige: "#C5A47E"
+  lowki-beige-deep: "#9F7C59"
+  lowki-red: "#A62F43"
+  lowki-red-deep: "#7C2031"
+  lowki-chocolate: "#633D32"
+  lowki-chocolate-deep: "#482B24"
 typography:
   hero:
     fontFamily: "MartianGroteskWide_700Bold, system-ui, sans-serif"
@@ -209,6 +217,34 @@ Ce que « pas trop » veut dire, concrètement :
 de vin**, et des couleurs uniquement porteuses de sens. Décidé par Lea le
 2026-09-24 (#73) : avant, chaque écran prenait sa teinte (noyer, encre, lie de
 vin…) et ça partait dans tous les sens.
+
+### Charte Lowki
+
+**La charte officielle de la marque** (Lea, 2026-10-08, `color palette lowki.png`).
+Quatre tons, chacun en **paire clair → foncé** : la paire est le dégradé tout
+prêt. Tokens : `lowki` dans `utils/constants.ts`.
+
+| Ton | Clair (haut) | Foncé (bas) |
+|---|---|---|
+| Beurre | `#F5E6A8` | `#D6C36F` |
+| Beige | `#C5A47E` | `#9F7C59` |
+| Rouge | `#A62F43` | `#7C2031` |
+| Chocolat | `#633D32` | `#482B24` |
+
+**Ton sur ton** : sur le clair d'une paire, la forme ou le titre prend
+**exactement le foncé de la même paire**, avec un liseré clair dessous (gravé
+dans le papier), comme le logo. Jamais deux tons qui contrastent l'un sur
+l'autre (beurre sur rouge, rouge sur beurre…) pour la forme.
+
+**Ce qui doit se lire** (sous-titre, corps de texte) sort du ton sur ton :
+chocolat `#482B24` sur beurre et beige, beurre `#F5E6A8` sur rouge et chocolat
+(5,3:1 au moins, mesuré).
+
+Elle remplace la palette du 2026-10-05 (rouge `#9c1f27`, beige `#c0a283`,
+chocolat `#6b351d`). Déjà utilisée : les captures App Store. **L'app n'est pas
+encore passée dessus** : basculer l'encre, l'accent et le papier vers ces tons
+est l'issue #131, à comparer sur 2-3 écrans avant de trancher. D'ici là, les
+trois tons ci-dessous restent ceux de l'app.
 
 ### Trois tons, pas plus
 
