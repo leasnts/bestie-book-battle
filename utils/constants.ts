@@ -52,6 +52,25 @@ export const ROUND_BUTTON_ICON = 19;
 /** L'icône pleine (■ arrêter) paraît plus grosse : un peu plus petite */
 export const ROUND_BUTTON_ICON_FILLED = 15;
 
+/**
+ * La charte officielle Lowki (Lea, 2026-10-08) : quatre tons, chacun en paire
+ * clair → foncé. Une paire est déjà un dégradé (clair en haut, foncé en bas).
+ *
+ * Ton sur ton : sur un fond `light`, la forme ou le titre prend le `dark` de la
+ * même paire, avec un liseré clair dessous (gravé). Contraste faible voulu : le
+ * texte qu'il faut lire (sous-titre, corps) passe en chocolat `dark` sur beurre
+ * et beige, en beurre `light` sur rouge et chocolat (≥ 5,3:1, mesuré).
+ *
+ * Pas encore branchée sur l'app : le basculement du design system (encre,
+ * accent, papier) est l'issue #131 (DESIGN.md › Charte Lowki).
+ */
+export const lowki = {
+  butter: { light: '#F5E6A8', dark: '#D6C36F' },
+  beige: { light: '#C5A47E', dark: '#9F7C59' },
+  red: { light: '#A62F43', dark: '#7C2031' },
+  chocolate: { light: '#633D32', dark: '#482B24' },
+} as const;
+
 export const colors = {
   // Dark colors (onboarding, boutons principaux)
   dark950: '#1e140e',          // Fond splash screen
