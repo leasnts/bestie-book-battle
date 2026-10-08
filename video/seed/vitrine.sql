@@ -28,3 +28,6 @@ commit;
 update challenges set book_title='Les Sept Maris d''Evelyn Hugo', book_author='Taylor Jenkins Reid', total_pages=400, cover_url='https://covers.openlibrary.org/b/id/8354226-L.jpg', cover_palette=null where id='f76f5ecd-32c8-42b6-9014-4b8b0262408b';
 update challenges set book_title='Bonjour tristesse', book_author='Françoise Sagan', total_pages=154, cover_url='https://covers.openlibrary.org/b/id/52680-L.jpg', cover_palette=null where id='9ffad21c-9458-49df-a56b-81c47dfd723d';
 update user_progress set current_page=97, progress_percentage=62.99, total_pages=154 where challenge_id='9ffad21c-9458-49df-a56b-81c47dfd723d';
+
+-- Top 3 : Emma, Lucas, Chloé (une seule fille de plus que de garçons dans le podium)
+update user_progress set current_page=29, progress_percentage=39.19, last_updated_at=now() where challenge_id='4c6650d1-a213-48d2-8f86-7aaf52cf2be9' and user_id='aaaaaaaa-1111-4000-a000-000000000003';
