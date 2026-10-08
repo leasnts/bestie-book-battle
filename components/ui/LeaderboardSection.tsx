@@ -43,6 +43,7 @@ import {
 } from '../../utils/leaderboard';
 import GlassSection from './GlassSection';
 import { Seam } from './GoalTrack';
+import { AccentUnit } from './AccentWord';
 
 // ─── Props ─────────────────────────────────────────────────────────
 
@@ -155,7 +156,7 @@ function Row({
       </Text>
       <Text style={[styles.score, square && styles.scoreSquare]}>
         {displayScore}
-        <Text style={[styles.scoreUnit, square && styles.scoreUnitSquare]}>%</Text>
+        <AccentUnit size={square ? styles.scoreUnitSquare.fontSize : styles.scoreUnit.fontSize}>%</AccentUnit>
       </Text>
     </Animated.View>
   );
@@ -191,7 +192,7 @@ function Side({
       </Text>
       <Text style={styles.duelScore}>
         {score}
-        <Text style={styles.duelScoreUnit}>%</Text>
+        <AccentUnit size={styles.duelScoreUnit.fontSize}>%</AccentUnit>
       </Text>
     </View>
   );

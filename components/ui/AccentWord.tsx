@@ -40,6 +40,34 @@ export default function AccentWord({ text, accent, size }: AccentWordProps) {
   );
 }
 
+/**
+ * AccentUnit — le petit signe collé à un nombre, « p. » ou « % ».
+ *
+ *    p. 169      52 %      (le signe à la main, le nombre en Martian)
+ *
+ * Le nombre reste en Martian, son signe passe en Welcome Valentines, de la
+ * même couleur : écrit à la main à côté du chiffre (Lea, 2026-10-08). Ne
+ * compte pas comme le mot d'accent de l'écran, c'est un détail de nombre.
+ * À poser DANS le <Text> du nombre. `size` = la taille que le signe avait.
+ */
+export function AccentUnit({ children, size }: { children: string; size: number }) {
+  return <Text style={[styles.accent, { fontSize: size * ACCENT_SCALE }]}>{children}</Text>;
+}
+
+/** « p. » et « % » d'un texte tout fait (« ≈ p. 230 », « p. 12–40 ») */
+const UNIT = /(\bp\.|%)/;
+
+/** Un texte avec ses « p. » et « % » en AccentUnit, le reste tel quel */
+export function AccentUnits({ text, size }: { text: string; size: number }) {
+  return (
+    <>
+      {text.split(UNIT).map((part, i) =>
+        i % 2 ? <AccentUnit key={i} size={size}>{part}</AccentUnit> : part,
+      )}
+    </>
+  );
+}
+
 const styles = StyleSheet.create({
   accent: {
     fontFamily: fonts.accent,

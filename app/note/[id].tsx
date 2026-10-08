@@ -46,6 +46,7 @@ import {
 } from '../../utils/annotations';
 import { borderRadius, colors, fonts, inkAlpha, spacing } from '../../utils/constants';
 import { TRENDING_EMOJIS } from '../../utils/emojis';
+import { AccentUnit } from '../../components/ui/AccentWord';
 
 /** Le vocal affiché : déjà envoyé (`path`) ou tout juste enregistré (`uri`) */
 interface NoteVoice {
@@ -207,7 +208,7 @@ export default function NoteFormRoute() {
           onPress={() => setPage((p) => Math.max(0, p - 1))}
         />
         <Text style={styles.page}>
-          <Text style={styles.pagePrefix}>p. </Text>
+          <Text style={styles.pagePrefix}><AccentUnit size={styles.pagePrefix.fontSize}>p.</AccentUnit> </Text>
           {page}
         </Text>
         <Stepper

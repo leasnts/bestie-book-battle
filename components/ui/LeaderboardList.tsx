@@ -30,6 +30,7 @@ import {
 } from '../../utils/leaderboard';
 import { borderRadius, colors, fonts, inkAlpha, motion, spacing } from '../../utils/constants';
 import { ChevronDownIcon, ChevronUpIcon, FlameIcon } from 'lucide-react-native';
+import { AccentUnit } from './AccentWord';
 
 // ─── Props ─────────────────────────────────────────────────────────
 
@@ -131,7 +132,7 @@ function LeaderboardRow({
 
           <View style={styles.spacer} />
 
-          <Text style={styles.score}>{score}%</Text>
+          <Text style={styles.score}>{score}<AccentUnit size={styles.score.fontSize}>%</AccentUnit></Text>
         </View>
 
         <View style={styles.progressTrack}>

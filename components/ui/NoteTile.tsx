@@ -56,6 +56,7 @@ import NoteSticker, { STICKER_BASE_LARGE } from './NoteSticker';
 import PeelSurface, { peelAmount, pullSpeed } from './PeelSurface';
 import PressableScale from './PressableScale';
 import { useWriteNote } from './WriteNoteButton';
+import { AccentUnit, AccentUnits } from './AccentWord';
 
 interface NoteTileProps {
   /**
@@ -276,7 +277,7 @@ function FirstNote({ tile, page }: { tile: TileSize; page: number }) {
             </View>
             <View style={styles.content}>
               <View style={styles.head}>
-                <Text style={styles.page} maxFontSizeMultiplier={1.3}>p. {page}</Text>
+                <Text style={styles.page} maxFontSizeMultiplier={1.3}><AccentUnit size={styles.page.fontSize}>p.</AccentUnit> {page}</Text>
               </View>
               <View style={styles.lines}>
                 {Array.from({ length: BLANK_LINES }, (_, i) => (
@@ -512,7 +513,7 @@ function NoteContent({
   return (
     <View style={styles.content}>
       <View style={styles.head}>
-        <Text style={styles.page} maxFontSizeMultiplier={1.3}>{page}</Text>
+        <Text style={styles.page} maxFontSizeMultiplier={1.3}><AccentUnits text={page} size={styles.page.fontSize} /></Text>
       </View>
 
       <View style={styles.body}>
