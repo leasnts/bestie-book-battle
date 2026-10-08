@@ -929,9 +929,15 @@ toute nouvelle vue qui parle de notes reprend ce composant.
   s'incurve un peu (le coin se roule) et les jonctions sont adoucies : aucun
   angle droit, nulle part.
 - **Couture** : points ronds tout autour (`STITCH`, partout dans l'app : cadres, notes, fil des pistes, règle de pages — plus de tirets, demandé par Lea le 2026-10-05), à 7 % du bord (près du bord, demandé par Lea le 2026-09-28), encre à 32 % (20 % sur
-  une note verrouillée) — c'est elle qui dit « brodé, fait main ».
+  une note verrouillée ; sur une note, le foncé de sa catégorie, voir Couleur) — c'est elle qui dit « brodé, fait main ».
 - **Couleur** : celle de la catégorie de la note (`postIt`, via
-  `ANNOTATION_CATEGORIES`), avec un voile clair en haut et plus sombre en bas
+  `ANNOTATION_CATEGORIES`), tirée de la charte Lowki (2026-10-08) : rouge pâli,
+  terre cuite, beurre, olive, beige ; seul le bleu grisé de Snif sort de la
+  charte. **Ton sur ton** : le filigrane et la couture prennent la même teinte un
+  cran plus foncée, pleine (`postItDeep`), à la même distance pour chaque
+  couleur (≈ 9 % de clarté le filigrane, 15 % la couture, un peu moins saturé que la note ; en dessous, le
+  voile sombre du bas avale le filigrane). Le numéro de page aussi, plus foncé
+  (≈ 37 %, au moins 4:1, en gras). Le texte reste à l'encre. Un voile clair en haut et plus sombre en bas
   (jamais d'aplat). Une note **verrouillée** est en papier nu `#efe9df` : on voit
   qu'elle est là, rien de plus (règle du carnet).
 - **Rabat** : dégradé crème `#fdfbf8` → `#d8d1c6`, petite ombre dessous.

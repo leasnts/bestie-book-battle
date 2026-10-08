@@ -145,21 +145,49 @@ export const dangerGradient = ['#d4453f', '#a92f2a'] as const;
 export const inkGradient = ['#5a4536', '#1e140e'] as const;
 
 /**
- * Les six post-it du carnet — des pastels tirés vers le noyer.
+ * Les six post-it du carnet — tirés de la charte Lowki (Lea, 2026-10-08).
+ *
+ * Chacune vient d'un ton de la charte : le rouge pâli en vieux rose, la terre
+ * cuite entre rouge et chocolat, le beurre, le beurre foncé en olive, le beige.
+ * Seul le bleu de Snif sort de la charte (les larmes), gardé grisé pour rester
+ * de la famille.
  *
  * Une couleur = une catégorie, la même pour tout le club. L'encre `ink` garde
- * au moins 10:1 sur chacune (mesuré), donc le texte d'une note reste lisible
+ * au moins 7:1 sur chacune (mesuré), donc le texte d'une note reste lisible
  * quelle que soit la catégorie. La couleur n'est jamais la seule information :
  * le nom de la catégorie s'affiche toujours (DESIGN.md › Carnet).
  */
 export const postIt = {
-  rose: '#efcfca',    // J’adore
-  peche: '#f3cdb0',   // Spicy
-  bleu: '#cadbe6',    // Snif
-  jaune: '#f3e2a0',   // Ahahah
-  sauge: '#d3dfc2',   // Théorie
-  sable: '#e8dbc6',   // Note
+  rose: '#e3a4a9',    // J’adore — rouge Lowki pâli
+  peche: '#e5b096',   // Spicy — terre cuite, entre rouge et chocolat
+  bleu: '#c1d3da',    // Snif — bleu grisé, hors charte
+  jaune: '#ecd990',   // Ahahah — beurre Lowki
+  sauge: '#d6d1a6',   // Théorie — olive, beurre foncé pâli
+  sable: '#d6b896',   // Note — beige Lowki
 };
+
+/**
+ * Le ton sur ton de chaque post-it (DESIGN.md › Charte Lowki) : la même teinte
+ * un peu moins saturée, un cran plus foncée, posée pleine. Chaque ton est à la même distance de sa
+ * note (≈ 9 % de clarté pour le filigrane, 15 % pour la couture), pour qu'aucun
+ * ne ressorte plus qu'un autre. En dessous, le voile sombre du bas de la note
+ * (`NoteSticker`) avale le filigrane. Le numéro de page aussi, plus foncé
+ * (≈ 37 %) pour se lire : au moins 4:1 sur sa note (texte gras). Le texte reste à l'encre.
+ */
+export const postItDeep: Record<keyof typeof postIt, { mark: string; stitch: string; page: string }> = {
+  rose: { mark: '#c18a8f', stitch: '#ae787d', page: '#673c41', },
+  peche: { mark: '#c4957f', stitch: '#b0836d', page: '#6a4634', },
+  bleu: { mark: '#a6b6bc', stitch: '#94a3a9', page: '#556266', },
+  jaune: { mark: '#cdbc7c', stitch: '#b9a96a', page: '#756731', },
+  sauge: { mark: '#b8b48e', stitch: '#a6a17c', page: '#646041', },
+  sable: { mark: '#b79c7f', stitch: '#a48a6d', page: '#604c34', },
+};
+
+/** Le ton sur ton d'une couleur de post-it, `null` si ce n'en est pas une */
+export function postItDeepOf(color: string | null | undefined) {
+  const key = (Object.keys(postIt) as (keyof typeof postIt)[]).find((k) => postIt[k] === color);
+  return key ? postItDeep[key] : null;
+}
 
 /**
  * La matière des autocollants de notes (`NoteSticker`), hors couleur de

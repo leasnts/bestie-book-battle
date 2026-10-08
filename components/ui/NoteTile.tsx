@@ -51,7 +51,7 @@ import {
   formatVoiceDuration,
   isEmojiOnly,
 } from '../../utils/annotations';
-import { colors, fonts, inkAlpha, inkGradient, motion, postIt, spacing } from '../../utils/constants';
+import { colors, fonts, inkAlpha, inkGradient, motion, postIt, postItDeepOf, spacing } from '../../utils/constants';
 import NoteSticker, { STICKER_BASE_LARGE } from './NoteSticker';
 import PeelSurface, { peelAmount, pullSpeed } from './PeelSurface';
 import PressableScale from './PressableScale';
@@ -506,6 +506,8 @@ function NoteContent({
   myTotalPages: number;
 }) {
   const page = formatNotePage(note.position, note.edition_total_pages, myTotalPages);
+  // Le numéro de page, ton sur ton dans le foncé de la catégorie
+  const pageTone = postItDeepOf(ANNOTATION_CATEGORIES[note.category].color)?.page ?? colors.textPrimary;
   const author = isMine ? 'Moi' : note.author?.first_name || 'Participant';
   // Une note, c'est un emoji seul OU un texte : l'emoji d'une ancienne note passe en tête
   const text = note.body ? (note.emoji ? `${note.emoji} ${note.body}` : note.body) : null;
@@ -513,7 +515,9 @@ function NoteContent({
   return (
     <View style={styles.content}>
       <View style={styles.head}>
-        <Text style={styles.page} maxFontSizeMultiplier={1.3}><AccentUnits text={page} size={styles.page.fontSize} color={styles.page.color} /></Text>
+        <Text style={[styles.page, { color: pageTone }]} maxFontSizeMultiplier={1.3}>
+          <AccentUnits text={page} size={styles.page.fontSize} color={pageTone} />
+        </Text>
       </View>
 
       <View style={styles.body}>
