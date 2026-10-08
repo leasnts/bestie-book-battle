@@ -1,124 +1,129 @@
-import {AbsoluteFill, Img, staticFile} from 'remotion';
+import {AbsoluteFill, Easing, interpolate} from 'remotion';
+import {Eyes, Subtitle, Word} from './Logo';
 import {useLoop} from './loop';
-import {
-  ACCENT_FONT,
-  BEIGE,
-  RED,
-  RED_FORM_BOTTOM,
-  RED_FORM_TOP,
-} from './theme';
-
+import {Sticker} from './Sticker';
+import {BG, POST_IT} from './theme';
 
 const W = 3840;
 const H = 1646;
 
-// Rapport largeur / hauteur des captures du simulateur (iPhone 17).
-const SCREEN_RATIO = 1206 / 2622;
-const PHONE_SCREEN_H = 1380;
-const BEZEL = 20;
+/**
+ * Le logo complet, proportions du splash : yeux, « Lowki », « book club ».
+ * Les yeux occupent 95 → 1020 de leur repère 1200 : on centre ce qui se voit.
+ */
+const EYES = 600;
+const WORD_H = 206;
+const SUB_H = 55;
+const GAP_WORD = 64;
+const GAP_SUB = 40;
+const EYES_VISIBLE = {top: (95 / 1200) * EYES, bottom: (1020 / 1200) * EYES};
+const BLOCK = EYES_VISIBLE.bottom - EYES_VISIBLE.top + GAP_WORD + WORD_H + GAP_SUB + SUB_H;
+const EYES_TOP = H / 2 - BLOCK / 2 - EYES_VISIBLE.top;
+const WORD_TOP = EYES_TOP + EYES_VISIBLE.bottom + GAP_WORD;
+const SUB_TOP = WORD_TOP + WORD_H + GAP_SUB;
+/** Le point que les yeux regardent depuis : le milieu des pupilles. */
+const EYES_CENTER = {x: W / 2, y: EYES_TOP + (600 / 1200) * EYES};
 
-type PhoneProps = {
-  src: string;
-  cx: number;
-  cy: number;
-  scale: number;
-  tilt: number;
-  phase: number;
-  sweepAt: number;
-};
+/** Une note arrive toutes les 2 s ; elle reste 5 s puis se décolle. */
+const EVERY = 60;
+const IN = 18;
+const STAY = 150;
+const OUT = 20;
+/** Décale la ronde des notes : la première image (l'affiche) en montre déjà trois. */
+const PHASE = 24;
 
-const Phone = ({src, cx, cy, scale, tilt, phase, sweepAt}: PhoneProps) => {
-  const {turn, frame, durationInFrames} = useLoop();
-  const screenW = PHONE_SCREEN_H * SCREEN_RATIO;
-  const w = screenW + BEZEL * 2;
-  const h = PHONE_SCREEN_H + BEZEL * 2;
+const NOTES = [
+  {x: 1080, y: 470, size: 300, rot: -8, color: POST_IT.rose, emoji: '🥹'},
+  {x: 2840, y: 1130, size: 320, rot: 7, color: POST_IT.jaune, emoji: '😂'},
+  {x: 540, y: 1150, size: 340, rot: 6, color: POST_IT.sauge, emoji: '🤔'},
+  {x: 3280, y: 470, size: 330, rot: -6, color: POST_IT.peche, emoji: '🔥'},
+  {x: 1300, y: 1230, size: 260, rot: -4, color: POST_IT.bleu, emoji: '😭'},
+];
 
-  // Flotte doucement : un aller-retour par boucle, décalé d'un téléphone à l'autre.
-  const dy = Math.sin(turn + phase) * 22;
-  const rot = tilt + Math.sin(turn + phase + 1) * 0.8;
+const ease = Easing.out(Easing.cubic);
+const clamp = {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'} as const;
 
-  // Un reflet traverse le verre une fois par boucle.
-  const sweepLen = 40;
-  const local = (frame - sweepAt + durationInFrames) % durationInFrames;
-  const sweep = local < sweepLen ? local / sweepLen : -1;
-
+const NoteOnBoard = ({note, index}: {note: (typeof NOTES)[number]; index: number}) => {
+  const {frame, durationInFrames, turn} = useLoop();
+  const local = (frame + PHASE - index * EVERY + durationInFrames) % durationInFrames;
+  if (local > STAY + OUT) return null;
+  const inP = interpolate(local, [0, IN], [0, 1], {...clamp, easing: ease});
+  const outP = interpolate(local, [STAY, STAY + OUT], [0, 1], {...clamp, easing: Easing.in(Easing.cubic)});
+  // Posée : elle arrive d'un peu plus haut et plus grande, comme collée d'un geste
+  // Décollée : elle se soulève, tourne un peu et s'efface
+  const y = note.y + (1 - inP) * -36 + outP * -50 + Math.sin(turn + index) * 8;
+  const scale = 1 + (1 - inP) * 0.12 - outP * 0.08;
+  const rot = note.rot + (1 - inP) * 6 - outP * 10;
+  const opacity = Math.min(inP, 1 - outP);
   return (
     <div
       style={{
         position: 'absolute',
-        left: cx - w / 2,
-        top: cy - h / 2 + dy,
-        width: w,
-        height: h,
-        transform: `scale(${scale}) rotate(${rot}deg)`,
-        borderRadius: 112,
-        padding: BEZEL,
-        boxSizing: 'border-box',
-        background: 'linear-gradient(180deg, #3d1a1c 0%, #16080a 100%)',
-        boxShadow:
-          '0 60px 120px rgba(40, 6, 8, 0.55), 0 12px 30px rgba(40, 6, 8, 0.35), inset 0 2px 0 rgba(255, 236, 220, 0.18)',
+        left: note.x - note.size / 2,
+        top: y - note.size / 2,
+        opacity,
+        transform: `rotate(${rot}deg) scale(${scale})`,
+        filter: `drop-shadow(0 ${10 + (1 - inP) * 20}px ${24 + (1 - inP) * 20}px rgba(40, 6, 8, 0.35))`,
       }}
     >
-      <div
-        style={{
-          position: 'relative',
-          width: '100%',
-          height: '100%',
-          borderRadius: 92,
-          overflow: 'hidden',
-        }}
-      >
-        <Img src={staticFile(src)} style={{width: '100%', height: '100%', display: 'block'}} />
-        {sweep >= 0 ? (
-          <div
-            style={{
-              position: 'absolute',
-              inset: 0,
-              background:
-                'linear-gradient(115deg, rgba(255,255,255,0) 35%, rgba(255,250,240,0.28) 50%, rgba(255,255,255,0) 65%)',
-              transform: `translateX(${(sweep * 2 - 1) * 120}%)`,
-            }}
-          />
-        ) : null}
-      </div>
+      <Sticker size={note.size} color={note.color} emoji={note.emoji} id={`n${index}`} />
     </div>
   );
 };
 
-// Fond rouge : dégradé (jamais d'aplat), lavis d'aquarelle qui respirent, grain de papier.
+/** Les yeux suivent chaque note qui arrive, puis reviennent flâner. */
+const useGaze = () => {
+  const {frame, durationInFrames, turn} = useLoop();
+  let x = Math.sin(turn * 2) * 0.12;
+  let y = Math.cos(turn * 3) * 0.08;
+  NOTES.forEach((note, i) => {
+    const local = (frame + PHASE - i * EVERY + durationInFrames) % durationInFrames;
+    const w = interpolate(local, [2, 12, 38, 52], [0, 1, 1, 0], {...clamp, easing: Easing.inOut(Easing.sin)});
+    const dx = note.x - EYES_CENTER.x;
+    const dy = note.y - EYES_CENTER.y;
+    const len = Math.hypot(dx, dy);
+    x = x * (1 - w) + (dx / len) * w;
+    y = y * (1 - w) + (dy / len) * w;
+  });
+  return {x, y};
+};
+
+/** Deux battements de cils et un clin d'œil du petit œil. */
+const useLids = () => {
+  const {frame} = useLoop();
+  const blink = (at: number, len: number) =>
+    interpolate(frame, [at, at + len / 2, at + len], [1, 0.06, 1], {...clamp, easing: Easing.inOut(Easing.quad)});
+  const both = Math.min(blink(56, 8), blink(178, 8));
+  return {left: both, right: Math.min(both, blink(268, 14))};
+};
+
+// Fond rouge : dégradé du splash (jamais d'aplat), lavis qui respirent, grain de papier.
 const Backdrop = () => {
   const {turn} = useLoop();
   const blooms = [
-    {x: 0.5, y: 0.45, r: 1500, a: 0.55, p: 0},
-    {x: 0.18, y: 0.8, r: 1100, a: 0.45, p: 2},
-    {x: 0.84, y: 0.2, r: 1200, a: 0.4, p: 4},
+    {x: 0.5, y: 0.42, r: 1700, light: true, p: 0},
+    {x: 0.15, y: 0.85, r: 1200, light: false, p: 2},
+    {x: 0.86, y: 0.18, r: 1300, light: false, p: 4},
   ];
   return (
-    <AbsoluteFill
-      style={{background: `linear-gradient(180deg, #ad2a33 0%, ${RED} 45%, #82171e 100%)`}}
-    >
-      {blooms.map((b, i) => {
-        const x = b.x * W + Math.cos(turn + b.p) * 60;
-        const y = b.y * H + Math.sin(turn + b.p) * 40;
-        return (
-          <div
-            key={i}
-            style={{
-              position: 'absolute',
-              left: x - b.r / 2,
-              top: y - b.r / 2,
-              width: b.r,
-              height: b.r,
-              borderRadius: '50%',
-              background:
-                i === 0
-                  ? 'radial-gradient(circle, rgba(196, 64, 70, 0.5) 0%, rgba(196, 64, 70, 0) 65%)'
-                  : `radial-gradient(circle, rgba(86, 17, 21, ${b.a}) 0%, rgba(86, 17, 21, 0) 70%)`,
-            }}
-          />
-        );
-      })}
-      <svg width={W} height={H} style={{position: 'absolute', inset: 0, mixBlendMode: 'multiply', opacity: 0.35}}>
+    <AbsoluteFill style={{background: `linear-gradient(180deg, ${BG[0]} 0%, ${BG[1]} 100%)`}}>
+      {blooms.map((b, i) => (
+        <div
+          key={i}
+          style={{
+            position: 'absolute',
+            left: b.x * W + Math.cos(turn + b.p) * 60 - b.r / 2,
+            top: b.y * H + Math.sin(turn + b.p) * 40 - b.r / 2,
+            width: b.r,
+            height: b.r,
+            borderRadius: '50%',
+            background: b.light
+              ? 'radial-gradient(circle, rgba(196, 64, 70, 0.4) 0%, rgba(196, 64, 70, 0) 65%)'
+              : 'radial-gradient(circle, rgba(86, 17, 21, 0.4) 0%, rgba(86, 17, 21, 0) 70%)',
+          }}
+        />
+      ))}
+      <svg width={W} height={H} style={{position: 'absolute', inset: 0, mixBlendMode: 'multiply', opacity: 0.3}}>
         <filter id="grain">
           <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="3" stitchTiles="stitch" />
           <feColorMatrix type="saturate" values="0" />
@@ -129,62 +134,24 @@ const Backdrop = () => {
   );
 };
 
-// Le fil cousu en points qui relie les téléphones en passant sous le nom.
-const Thread = () => {
-  const {frame, durationInFrames} = useLoop();
-  const period = 30;
-  const offset = -(frame / durationInFrames) * period * 10;
-  const d = `M -100 1290 C 700 1420, 1200 1150, 1920 1180 S 3200 1420, 3940 1250`;
-  return (
-    <svg width={W} height={H} style={{position: 'absolute', inset: 0}}>
-      <path d={d} fill="none" stroke="rgba(60, 8, 12, 0.4)" strokeWidth={13} strokeDasharray={`0 ${period}`} strokeDashoffset={offset} strokeLinecap="round" transform="translate(0 5)" />
-      <path d={d} fill="none" stroke={BEIGE} strokeWidth={13} strokeDasharray={`0 ${period}`} strokeDashoffset={offset} strokeLinecap="round" />
-    </svg>
-  );
-};
-
-// « Lowki » ton sur ton : forme rouge plus profonde, liseré clair dessous (gravé).
-const Wordmark = () => {
-  const {turn} = useLoop();
-  const lift = Math.sin(turn) * 6;
-  const text = 'Lowki';
-  const base: React.CSSProperties = {
-    position: 'absolute',
-    inset: 0,
-    fontFamily: ACCENT_FONT,
-    fontSize: 640,
-    lineHeight: 1,
-    textAlign: 'center',
-  };
-  return (
-    <div style={{position: 'absolute', left: 0, right: 0, top: 420 + lift, height: 700}}>
-      <div style={{...base, color: 'rgba(255, 214, 210, 0.2)', transform: 'translateY(6px)'}}>{text}</div>
-      <div
-        style={{
-          ...base,
-          backgroundImage: `linear-gradient(180deg, ${RED_FORM_TOP} 20%, ${RED_FORM_BOTTOM} 80%)`,
-          WebkitBackgroundClip: 'text',
-          backgroundClip: 'text',
-          color: 'transparent',
-        }}
-      >
-        {text}
-      </div>
-    </div>
-  );
-};
-
 export const StoreHeader = () => {
-  const cy = H / 2 + 40;
+  const gaze = useGaze();
+  const open = useLids();
   return (
     <AbsoluteFill style={{overflow: 'hidden'}}>
       <Backdrop />
-      <Thread />
-      <Phone src="screens/library.png" cx={60} cy={cy + 90} scale={0.84} tilt={-7} phase={2.4} sweepAt={170} />
-      <Phone src="screens/home.png" cx={720} cy={cy} scale={1} tilt={-3.5} phase={0} sweepAt={20} />
-      <Phone src="screens/carnet.png" cx={W - 720} cy={cy} scale={1} tilt={3.5} phase={1.6} sweepAt={95} />
-      <Phone src="screens/leaderboard.png" cx={W - 60} cy={cy + 90} scale={0.84} tilt={7} phase={4} sweepAt={240} />
-      <Wordmark />
+      {NOTES.map((note, i) => (
+        <NoteOnBoard key={i} note={note} index={i} />
+      ))}
+      <div style={{position: 'absolute', left: W / 2 - EYES / 2, top: EYES_TOP}}>
+        <Eyes size={EYES} gaze={gaze} open={open} />
+      </div>
+      <div style={{position: 'absolute', left: 0, right: 0, top: WORD_TOP, display: 'flex', justifyContent: 'center'}}>
+        <Word height={WORD_H} />
+      </div>
+      <div style={{position: 'absolute', left: 0, right: 0, top: SUB_TOP, display: 'flex', justifyContent: 'center'}}>
+        <Subtitle height={SUB_H} />
+      </div>
     </AbsoluteFill>
   );
 };
