@@ -70,8 +70,7 @@ export const stitchColor = (colored: boolean) => inkAlpha(colored ? 0.32 : 0.2);
  * La couture d'une note : ton sur ton, dans le foncé de sa catégorie
  * (`postItDeep`) ; à l'encre pâle sur une note verrouillée.
  */
-export const noteStitchColor = (color: string | null) => postItDeepOf(color) ?? stitchColor(!!color);
-export const NOTE_STITCH_OPACITY = 0.75;
+export const noteStitchColor = (color: string | null) => postItDeepOf(color)?.stitch ?? stitchColor(!!color);
 /** L'écart entre la couture et le bord, selon le côté qui règle l'autocollant */
 export const stitchInset = (base: number) => base * 0.07;
 /**
@@ -193,8 +192,7 @@ export default function NoteSticker({
             y={h + markSize * 0.02}
             fontFamily={fonts.accent}
             fontSize={markSize}
-            fill={deep ?? inkAlpha(0.07)}
-            fillOpacity={deep ? 0.28 : 1}
+            fill={deep?.mark ?? inkAlpha(0.07)}
           >
             {watermark.toLocaleLowerCase('fr')}
           </SvgText>
@@ -206,7 +204,6 @@ export default function NoteSticker({
           d={notched ? notchStitch : stitch}
           fill="none"
           stroke={noteStitchColor(color)}
-          strokeOpacity={deep ? NOTE_STITCH_OPACITY : 1}
           strokeWidth={STITCH.width}
           strokeDasharray={STITCH.dash}
           strokeLinecap={STITCH.cap}

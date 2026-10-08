@@ -167,21 +167,23 @@ export const postIt = {
 };
 
 /**
- * Le ton sur ton de chaque post-it (DESIGN.md › Charte Lowki) : le foncé de la
- * même famille, pour le filigrane, la couture et l'icône d'une note. Jamais
- * pour son texte, qui reste à l'encre.
+ * Le ton sur ton de chaque post-it (DESIGN.md › Charte Lowki) : la même teinte,
+ * un cran plus foncée, posée pleine. Chaque ton est à la même distance de sa
+ * note (≈ 11 % de clarté pour le filigrane, 17 % pour la couture), pour qu'aucun
+ * ne ressorte plus qu'un autre. Moins de 11 %, le voile sombre du bas de la note
+ * (`NoteSticker`) avale le filigrane. Jamais pour le texte, qui reste à l'encre.
  */
-export const postItDeep: Record<keyof typeof postIt, string> = {
-  rose: '#A62F43',    // rouge Lowki
-  peche: '#a55f44',
-  bleu: '#6c8492',
-  jaune: '#D6C36F',   // beurre foncé Lowki
-  sauge: '#868350',
-  sable: '#9F7C59',   // beige foncé Lowki
+export const postItDeep: Record<keyof typeof postIt, { mark: string; stitch: string }> = {
+  rose: { mark: '#c67e85', stitch: '#b66a72' },
+  peche: { mark: '#c88b6c', stitch: '#b77756' },
+  bleu: { mark: '#9cb1b9', stitch: '#889ea7' },
+  jaune: { mark: '#ccb55b', stitch: '#bba23c' },
+  sauge: { mark: '#b4ae7b', stitch: '#a29c65' },
+  sable: { mark: '#b7946c', stitch: '#9F7C59' },   // couture : beige foncé Lowki
 };
 
 /** Le ton sur ton d'une couleur de post-it, `null` si ce n'en est pas une */
-export function postItDeepOf(color: string | null | undefined): string | null {
+export function postItDeepOf(color: string | null | undefined) {
   const key = (Object.keys(postIt) as (keyof typeof postIt)[]).find((k) => postIt[k] === color);
   return key ? postItDeep[key] : null;
 }
