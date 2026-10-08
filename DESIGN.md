@@ -935,7 +935,7 @@ toute nouvelle vue qui parle de notes reprend ce composant.
   terre cuite, beurre, olive, beige ; seul le bleu grisé de Snif sort de la
   charte. **Ton sur ton** : le filigrane et la couture prennent la même teinte un
   cran plus foncée, pleine (`postItDeep`), à la même distance pour chaque
-  couleur (≈ 16 % de clarté le filigrane, 23 % la couture ; en dessous, le
+  couleur (≈ 13 % de clarté le filigrane, 20 % la couture ; en dessous, le
   voile sombre du bas avale le filigrane). Le texte reste à l'encre. Un voile clair en haut et plus sombre en bas
   (jamais d'aplat). Une note **verrouillée** est en papier nu `#efe9df` : on voit
   qu'elle est là, rien de plus (règle du carnet).
