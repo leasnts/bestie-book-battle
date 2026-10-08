@@ -936,7 +936,8 @@ toute nouvelle vue qui parle de notes reprend ce composant.
   charte. **Ton sur ton** : le filigrane et la couture prennent la même teinte un
   cran plus foncée, pleine (`postItDeep`), à la même distance pour chaque
   couleur (≈ 9 % de clarté le filigrane, 15 % la couture, un peu moins saturé que la note ; en dessous, le
-  voile sombre du bas avale le filigrane). Le texte reste à l'encre. Un voile clair en haut et plus sombre en bas
+  voile sombre du bas avale le filigrane). Le numéro de page aussi, plus foncé
+  (≈ 42 %, au moins 4,5:1). Le texte reste à l'encre. Un voile clair en haut et plus sombre en bas
   (jamais d'aplat). Une note **verrouillée** est en papier nu `#efe9df` : on voit
   qu'elle est là, rien de plus (règle du carnet).
 - **Rabat** : dégradé crème `#fdfbf8` → `#d8d1c6`, petite ombre dessous.

@@ -171,15 +171,16 @@ export const postIt = {
  * un peu moins saturée, un cran plus foncée, posée pleine. Chaque ton est à la même distance de sa
  * note (≈ 9 % de clarté pour le filigrane, 15 % pour la couture), pour qu'aucun
  * ne ressorte plus qu'un autre. En dessous, le voile sombre du bas de la note
- * (`NoteSticker`) avale le filigrane. Jamais pour le texte, qui reste à l'encre.
+ * (`NoteSticker`) avale le filigrane. Le numéro de page aussi, plus foncé
+ * (≈ 42 %) pour se lire : au moins 4,5:1 sur sa note. Le texte reste à l'encre.
  */
-export const postItDeep: Record<keyof typeof postIt, { mark: string; stitch: string }> = {
-  rose: { mark: '#c18a8f', stitch: '#ae787d', },
-  peche: { mark: '#c4957f', stitch: '#b0836d', },
-  bleu: { mark: '#a6b6bc', stitch: '#94a3a9', },
-  jaune: { mark: '#cdbc7c', stitch: '#b9a96a', },
-  sauge: { mark: '#b8b48e', stitch: '#a6a17c', },
-  sable: { mark: '#b79c7f', stitch: '#a48a6d', },
+export const postItDeep: Record<keyof typeof postIt, { mark: string; stitch: string; page: string }> = {
+  rose: { mark: '#c18a8f', stitch: '#ae787d', page: '#5b2d32', },
+  peche: { mark: '#c4957f', stitch: '#b0836d', page: '#5e3723', },
+  bleu: { mark: '#a6b6bc', stitch: '#94a3a9', page: '#465459', },
+  jaune: { mark: '#cdbc7c', stitch: '#b9a96a', page: '#685816', },
+  sauge: { mark: '#b8b48e', stitch: '#a6a17c', page: '#565230', },
+  sable: { mark: '#b79c7f', stitch: '#a48a6d', page: '#543d22', },
 };
 
 /** Le ton sur ton d'une couleur de post-it, `null` si ce n'en est pas une */

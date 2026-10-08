@@ -23,7 +23,7 @@ import React, { useMemo, useState } from 'react';
 import { StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native';
 import type { AnnotationWithAuthor } from '../../services/supabase/annotations';
 import { ANNOTATION_CATEGORIES, formatNoteDate, formatNotePage, isEmojiOnly } from '../../utils/annotations';
-import { borderRadius, colors, creamAlpha, fonts, glassControlVeil, inkAlpha, spacing } from '../../utils/constants';
+import { borderRadius, colors, creamAlpha, fonts, glassControlVeil, inkAlpha, postItDeepOf, spacing } from '../../utils/constants';
 import { QUICK_REACTIONS } from '../../utils/emojis';
 import GlassMaterial from './GlassMaterial';
 import NoteSticker, { STICKER_BASE_LARGE } from './NoteSticker';
@@ -81,6 +81,8 @@ export default function NoteCard({
 }: NoteCardProps) {
   const category = ANNOTATION_CATEGORIES[note.category];
   const page = formatNotePage(note.position, note.edition_total_pages, myTotalPages);
+  // Le numéro de page, ton sur ton dans le foncé de la catégorie
+  const pageTone = postItDeepOf(category.color)?.page;
   /** L'autocollant se dessine à la taille de la note, une fois mesurée */
   const [size, setSize] = useState<{ width: number; height: number } | null>(null);
   const onLayout = (e: LayoutChangeEvent) => {
@@ -153,7 +155,7 @@ export default function NoteCard({
           <Text style={styles.date} numberOfLines={1}>
             {formatNoteDate(note.created_at)}
           </Text>
-          <Text style={styles.page}>{page}</Text>
+          <Text style={[styles.page, !!pageTone && { color: pageTone }]}>{page}</Text>
         </View>
 
         {!!note.quote && <Text style={[styles.quote, large && styles.quoteLarge]}>{note.quote}</Text>}
@@ -194,7 +196,7 @@ export default function NoteCard({
           <Text style={styles.date} numberOfLines={1}>
             {formatNoteDate(note.created_at)}
           </Text>
-          <Text style={styles.page}>{page}</Text>
+          <Text style={[styles.page, !!pageTone && { color: pageTone }]}>{page}</Text>
         </View>
 
         {!!note.quote && <Text style={[styles.quote, large && styles.quoteLarge]}>{note.quote}</Text>}

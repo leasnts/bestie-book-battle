@@ -51,7 +51,7 @@ import {
   formatVoiceDuration,
   isEmojiOnly,
 } from '../../utils/annotations';
-import { colors, fonts, inkAlpha, inkGradient, motion, postIt, spacing } from '../../utils/constants';
+import { colors, fonts, inkAlpha, inkGradient, motion, postIt, postItDeepOf, spacing } from '../../utils/constants';
 import NoteSticker, { STICKER_BASE_LARGE } from './NoteSticker';
 import PeelSurface, { peelAmount, pullSpeed } from './PeelSurface';
 import PressableScale from './PressableScale';
@@ -512,7 +512,12 @@ function NoteContent({
   return (
     <View style={styles.content}>
       <View style={styles.head}>
-        <Text style={styles.page} maxFontSizeMultiplier={1.3}>{page}</Text>
+        <Text
+          style={[styles.page, { color: postItDeepOf(ANNOTATION_CATEGORIES[note.category].color)?.page ?? colors.textPrimary }]}
+          maxFontSizeMultiplier={1.3}
+        >
+          {page}
+        </Text>
       </View>
 
       <View style={styles.body}>
