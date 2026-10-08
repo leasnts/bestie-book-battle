@@ -244,7 +244,7 @@ export default function NoteComposer({ visible, page, maxPage, draft, onClose, o
             >
               {/* Le même verre que les boutons ronds : on voit qu'elle se touche */}
               <GlassMaterial radius={HEAD_BUTTON / 2} veil={glassControlVeil} rim />
-              <Text style={styles.pageLabel}><AccentUnit size={styles.pageLabel.fontSize}>p.</AccentUnit></Text>
+              <Text style={styles.pageLabel}><AccentUnit size={styles.pageLabel.fontSize} color={styles.pageInput.color}>p.</AccentUnit></Text>
               <TextInput
                 ref={pageInput}
                 style={styles.pageInput}

@@ -91,7 +91,7 @@ export function ProgressBar({
       
       {/* Affichage du pourcentage à droite de la barre */}
       {showPercentage && (
-        <Text style={styles.percentageText}>{Math.round(clampedPercentage)}<AccentUnit size={styles.percentageText.fontSize}>%</AccentUnit></Text>
+        <Text style={styles.percentageText}>{Math.round(clampedPercentage)}<AccentUnit size={styles.percentageText.fontSize} color={styles.percentageText.color}>%</AccentUnit></Text>
       )}
     </View>
   );

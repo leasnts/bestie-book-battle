@@ -158,7 +158,7 @@ function Row({
       </Text>
       <Text style={[styles.score, square && styles.scoreSquare]}>
         {displayScore}
-        <AccentUnit size={square ? styles.scoreUnitSquare.fontSize : styles.scoreUnit.fontSize}>%</AccentUnit>
+        <AccentUnit size={square ? styles.scoreUnitSquare.fontSize : styles.scoreUnit.fontSize} color={styles.score.color}>%</AccentUnit>
       </Text>
     </Animated.View>
   );
@@ -194,7 +194,7 @@ function Side({
       </Text>
       <Text style={styles.duelScore}>
         {score}
-        <AccentUnit size={styles.duelScoreUnit.fontSize}>%</AccentUnit>
+        <AccentUnit size={styles.duelScoreUnit.fontSize} color={styles.duelScore.color}>%</AccentUnit>
       </Text>
     </View>
   );

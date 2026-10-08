@@ -134,7 +134,7 @@ function LeaderboardRow({
 
           <View style={styles.spacer} />
 
-          <Text style={styles.score}>{score}<AccentUnit size={styles.score.fontSize}>%</AccentUnit></Text>
+          <Text style={styles.score}>{score}<AccentUnit size={styles.score.fontSize} color={styles.score.color}>%</AccentUnit></Text>
         </View>
 
         <View style={styles.progressTrack}>

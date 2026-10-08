@@ -446,7 +446,7 @@ function Row({
         )}
       </View>
       <Text style={[styles.rowLabel, dimmed && styles.rowLabelDimmed]} numberOfLines={1}>
-        <AccentUnits text={label} size={styles.rowLabel.fontSize} />
+        <AccentUnits text={label} size={styles.rowLabel.fontSize} color={styles.rowLabel.color} />
       </Text>
       {tag && (
         <View style={styles.tag}>

@@ -208,7 +208,7 @@ export default function NoteFormRoute() {
           onPress={() => setPage((p) => Math.max(0, p - 1))}
         />
         <Text style={styles.page}>
-          <Text style={styles.pagePrefix}><AccentUnit size={styles.pagePrefix.fontSize}>p.</AccentUnit> </Text>
+          <Text style={styles.pagePrefix}><AccentUnit size={styles.pagePrefix.fontSize} color={styles.page.color}>p.</AccentUnit> </Text>
           {page}
         </Text>
         <Stepper

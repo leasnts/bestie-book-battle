@@ -143,7 +143,7 @@ export default function ParticipantTimeline({
                   <View style={styles.step}>
                     <View style={styles.stepDot} />
                   </View>
-                  <Text style={styles.entryPage}><AccentUnit size={styles.entryPage.fontSize}>p.</AccentUnit> {entry.page_number}</Text>
+                  <Text style={styles.entryPage}><AccentUnit size={styles.entryPage.fontSize} color={styles.entryPage.color}>p.</AccentUnit> {entry.page_number}</Text>
                   {entry.pages_read !== 0 && (
                     <Text style={styles.entryDelta}>
                       {entry.pages_read > 0 ? '+' : '−'}

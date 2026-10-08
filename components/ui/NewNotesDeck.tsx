@@ -149,7 +149,7 @@ export default function NewNotesDeck({
             <Text style={styles.countNow}>{shown}</Text>
             <Text style={styles.countTotal}> / {notes.length}</Text>
           </Text>
-          <Text style={styles.range}><AccentUnits text={range} size={styles.range.fontSize} /></Text>
+          <Text style={styles.range}><AccentUnits text={range} size={styles.range.fontSize} color={styles.range.color} /></Text>
         </View>
       </View>
 

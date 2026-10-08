@@ -154,7 +154,7 @@ export default function NoteCard({
           <Text style={styles.date} numberOfLines={1}>
             {formatNoteDate(note.created_at)}
           </Text>
-          <Text style={styles.page}><AccentUnits text={page} size={styles.page.fontSize} /></Text>
+          <Text style={styles.page}><AccentUnits text={page} size={styles.page.fontSize} color={styles.page.color} /></Text>
         </View>
 
         {!!note.quote && <Text style={[styles.quote, large && styles.quoteLarge]}>{note.quote}</Text>}
@@ -195,7 +195,7 @@ export default function NoteCard({
           <Text style={styles.date} numberOfLines={1}>
             {formatNoteDate(note.created_at)}
           </Text>
-          <Text style={styles.page}><AccentUnits text={page} size={styles.page.fontSize} /></Text>
+          <Text style={styles.page}><AccentUnits text={page} size={styles.page.fontSize} color={styles.page.color} /></Text>
         </View>
 
         {!!note.quote && <Text style={[styles.quote, large && styles.quoteLarge]}>{note.quote}</Text>}

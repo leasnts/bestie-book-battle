@@ -41,29 +41,50 @@ export default function AccentWord({ text, accent, size }: AccentWordProps) {
 }
 
 /**
- * AccentUnit — le petit signe collé à un nombre, « p. » ou « % », et le
- * rang d'un classement (1, 2, 3…).
+ * AccentUnit — le petit signe collé à un nombre, « p. », « % » ou « ≈ », et
+ * le rang d'un classement (1, 2, 3…).
  *
  *    p. 169      52 %      (le signe à la main, le nombre en Martian)
  *
- * Le nombre reste en Martian, son signe passe en Welcome Valentines, de la
- * même couleur : écrit à la main à côté du chiffre (Lea, 2026-10-08). Ne
- * compte pas comme le mot d'accent de l'écran, c'est un détail de nombre.
- * À poser DANS le <Text> du nombre. `size` = la taille que le signe avait.
+ * Le nombre reste en Martian, son signe passe en Welcome Valentines, un
+ * chouilla plus pâle que lui : écrit à la main à côté du chiffre, sans lui
+ * voler la vedette (Lea, 2026-10-08). Ne compte pas comme le mot d'accent de
+ * l'écran, c'est un détail de nombre.
+ * À poser DANS le <Text> du nombre. `size` = la taille que le signe avait,
+ * `color` = celle du nombre auquel il est collé (absente : pas de fondu).
  */
-export function AccentUnit({ children, size }: { children: string; size: number }) {
-  return <Text style={[styles.accent, { fontSize: size * ACCENT_SCALE }]}>{children}</Text>;
+export function AccentUnit({ children, size, color }: { children: string; size: number; color?: string }) {
+  return (
+    <Text style={[styles.accent, { fontSize: size * ACCENT_SCALE }, color && { color: faded(color) }]}>
+      {children}
+    </Text>
+  );
 }
 
-/** « p. » et « % » d'un texte tout fait (« ≈ p. 230 », « p. 12–40 ») */
-const UNIT = /(\bp\.|%)/;
+/** Ce qu'il reste d'opacité au signe, par rapport à son nombre */
+const UNIT_ALPHA = 0.6;
 
-/** Un texte avec ses « p. » et « % » en AccentUnit, le reste tel quel */
-export function AccentUnits({ text, size }: { text: string; size: number }) {
+/** La même couleur, moins opaque : « #33231a » ou « rgba(…, 0.66) » */
+function faded(color: string) {
+  const rgba = color.match(/^rgba?\(([^)]+)\)$/);
+  if (rgba) {
+    const [r, g, b, a = '1'] = rgba[1].split(',').map((v) => v.trim());
+    return `rgba(${r},${g},${b},${Number(a) * UNIT_ALPHA})`;
+  }
+  const hex = color.replace('#', '');
+  const [r, g, b] = [0, 2, 4].map((i) => parseInt(hex.slice(i, i + 2), 16));
+  return `rgba(${r},${g},${b},${UNIT_ALPHA})`;
+}
+
+/** « p. », « % » et « ≈ » d'un texte tout fait (« ≈ p. 230 », « p. 12–40 ») */
+const UNIT = /(\bp\.|%|≈)/;
+
+/** Un texte avec ses signes en AccentUnit, le reste tel quel */
+export function AccentUnits({ text, size, color }: { text: string; size: number; color?: string }) {
   return (
     <>
       {text.split(UNIT).map((part, i) =>
-        i % 2 ? <AccentUnit key={i} size={size}>{part}</AccentUnit> : part,
+        i % 2 ? <AccentUnit key={i} size={size} color={color}>{part}</AccentUnit> : part,
       )}
     </>
   );

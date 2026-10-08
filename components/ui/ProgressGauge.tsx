@@ -184,7 +184,7 @@ function Legend({ label, value, dot }: { label: string; value: SharedValue<numbe
     <View style={styles.legendItem}>
       <View style={[styles.dot, { backgroundColor: dot }]} />
       <Text style={styles.legendLabel}>{label}</Text>
-      <Text style={styles.legendValue}>{shown} <AccentUnit size={styles.legendValue.fontSize}>%</AccentUnit></Text>
+      <Text style={styles.legendValue}>{shown} <AccentUnit size={styles.legendValue.fontSize} color={styles.legendValue.color}>%</AccentUnit></Text>
     </View>
   );
 }
