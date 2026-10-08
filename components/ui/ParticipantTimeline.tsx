@@ -25,6 +25,7 @@ import { ProgressHistory } from '../../types/supabase';
 import { accentGradient, colors, fonts, spacing } from '../../utils/constants';
 import { RAIL_HEIGHT, STEP_GAP, STEP_SIZE } from './GoalTrack';
 import SheetPage from './SheetPage';
+import { AccentUnit } from './AccentWord';
 
 // ─── Props ─────────────────────────────────────────────────────────
 
@@ -142,7 +143,7 @@ export default function ParticipantTimeline({
                   <View style={styles.step}>
                     <View style={styles.stepDot} />
                   </View>
-                  <Text style={styles.entryPage}>p. {entry.page_number}</Text>
+                  <Text style={styles.entryPage}><AccentUnit size={styles.entryPage.fontSize} color={styles.entryPage.color}>p.</AccentUnit> {entry.page_number}</Text>
                   {entry.pages_read !== 0 && (
                     <Text style={styles.entryDelta}>
                       {entry.pages_read > 0 ? '+' : '−'}

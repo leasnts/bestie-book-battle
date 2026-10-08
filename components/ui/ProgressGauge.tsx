@@ -28,6 +28,7 @@ import Animated, {
 import Svg, { Defs, G, LinearGradient, Mask, Rect, Stop } from 'react-native-svg';
 import { accentGradient, colors, fonts, inkAlpha, motion } from '../../utils/constants';
 import { CLUB_GRADIENT } from './GoalTrack';
+import { AccentUnit } from './AccentWord';
 
 const AnimatedRect = Animated.createAnimatedComponent(Rect);
 
@@ -183,7 +184,7 @@ function Legend({ label, value, dot }: { label: string; value: SharedValue<numbe
     <View style={styles.legendItem}>
       <View style={[styles.dot, { backgroundColor: dot }]} />
       <Text style={styles.legendLabel}>{label}</Text>
-      <Text style={styles.legendValue}>{shown} %</Text>
+      <Text style={styles.legendValue}>{shown} <AccentUnit size={styles.legendValue.fontSize} color={styles.legendValue.color}>%</AccentUnit></Text>
     </View>
   );
 }

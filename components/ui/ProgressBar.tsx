@@ -10,6 +10,7 @@
 import React, { useEffect, useRef } from 'react';
 import { View, StyleSheet, Animated, Text } from 'react-native';
 import { animationDuration, borderRadius, colors, fonts } from '../../utils/constants';
+import { AccentUnit } from './AccentWord';
 
 interface ProgressBarProps {
   /** Pourcentage de progression (0-100) */
@@ -90,7 +91,7 @@ export function ProgressBar({
       
       {/* Affichage du pourcentage à droite de la barre */}
       {showPercentage && (
-        <Text style={styles.percentageText}>{Math.round(clampedPercentage)}%</Text>
+        <Text style={styles.percentageText}>{Math.round(clampedPercentage)}<AccentUnit size={styles.percentageText.fontSize} color={styles.percentageText.color}>%</AccentUnit></Text>
       )}
     </View>
   );

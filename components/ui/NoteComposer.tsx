@@ -60,6 +60,7 @@ import GlassMaterial from './GlassMaterial';
 import NoteDraft from './NoteDraft';
 import QuotePicker, { type PagePhoto } from './QuotePicker';
 import RoundButton, { ROUND_BUTTON_SIZE } from './RoundButton';
+import { AccentUnit } from './AccentWord';
 
 /** Ce que la feuille garde quand on la ferme sans ajouter la note */
 export interface ComposerDraft {
@@ -243,7 +244,7 @@ export default function NoteComposer({ visible, page, maxPage, draft, onClose, o
             >
               {/* Le même verre que les boutons ronds : on voit qu'elle se touche */}
               <GlassMaterial radius={HEAD_BUTTON / 2} veil={glassControlVeil} rim />
-              <Text style={styles.pageLabel}>p.</Text>
+              <Text style={styles.pageLabel}><AccentUnit size={styles.pageLabel.fontSize} color={styles.pageInput.color}>p.</AccentUnit></Text>
               <TextInput
                 ref={pageInput}
                 style={styles.pageInput}

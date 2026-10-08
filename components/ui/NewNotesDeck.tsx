@@ -68,6 +68,7 @@ import {
 import NoteCard, { NoteReactions } from './NoteCard';
 import PeelSurface, { peelAmount, pullSpeed } from './PeelSurface';
 import RoundButton from './RoundButton';
+import { AccentUnits } from './AccentWord';
 
 interface NewNotesDeckProps {
   /** Les nouvelles, dans l'ordre des pages ; figées à l'ouverture du carnet */
@@ -148,7 +149,7 @@ export default function NewNotesDeck({
             <Text style={styles.countNow}>{shown}</Text>
             <Text style={styles.countTotal}> / {notes.length}</Text>
           </Text>
-          <Text style={styles.range}>{range}</Text>
+          <Text style={styles.range}><AccentUnits text={range} size={styles.range.fontSize} color={styles.range.color} /></Text>
         </View>
       </View>
 
