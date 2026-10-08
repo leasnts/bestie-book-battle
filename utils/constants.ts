@@ -145,20 +145,25 @@ export const dangerGradient = ['#d4453f', '#a92f2a'] as const;
 export const inkGradient = ['#5a4536', '#1e140e'] as const;
 
 /**
- * Les six post-it du carnet — des pastels tirés vers le noyer.
+ * Les six post-it du carnet — tirés de la charte Lowki (Lea, 2026-10-08).
+ *
+ * Même clarté pour toutes, et chacune vient d'un ton de la charte : le rouge
+ * pâli en vieux rose, le rouge vers le chocolat en terre cuite, le beurre tel
+ * quel, le beurre foncé en olive, le beige pâli en sable. Seul le bleu de Snif
+ * sort de la charte (les larmes), gardé grisé pour rester de la famille.
  *
  * Une couleur = une catégorie, la même pour tout le club. L'encre `ink` garde
- * au moins 10:1 sur chacune (mesuré), donc le texte d'une note reste lisible
+ * au moins 9:1 sur chacune (mesuré), donc le texte d'une note reste lisible
  * quelle que soit la catégorie. La couleur n'est jamais la seule information :
  * le nom de la catégorie s'affiche toujours (DESIGN.md › Carnet).
  */
 export const postIt = {
-  rose: '#efcfca',    // J’adore
-  peche: '#f3cdb0',   // Spicy
-  bleu: '#cadbe6',    // Snif
-  jaune: '#f3e2a0',   // Ahahah
-  sauge: '#d3dfc2',   // Théorie
-  sable: '#e8dbc6',   // Note
+  rose: '#edbfbd',    // J’adore — rouge Lowki pâli
+  peche: '#f2c0a5',   // Spicy — terre cuite, entre rouge et chocolat
+  bleu: '#c1d3da',    // Snif — bleu grisé, hors charte
+  jaune: '#f5e6a8',   // Ahahah — beurre Lowki, tel quel
+  sauge: '#d6d1a6',   // Théorie — olive, beurre foncé pâli
+  sable: '#e6ceb3',   // Note — beige Lowki pâli
 };
 
 /**
