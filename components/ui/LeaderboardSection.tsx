@@ -43,6 +43,7 @@ import {
 } from '../../utils/leaderboard';
 import GlassSection from './GlassSection';
 import { Seam } from './GoalTrack';
+import { AccentUnit } from './AccentWord';
 
 // ─── Props ─────────────────────────────────────────────────────────
 
@@ -141,7 +142,9 @@ function Row({
       accessible
       accessibilityLabel={`${participant.rank}, ${participant.name}, ${score} pour cent`}
     >
-      <Text style={[styles.rank, square && styles.rankSquare]}>{participant.rank}</Text>
+      <Text style={[styles.rank, square && styles.rankSquare]}>
+        <AccentUnit size={square ? styles.rankSquare.fontSize : styles.rank.fontSize}>{String(participant.rank)}</AccentUnit>
+      </Text>
       <Image
         source={resolveAvatar(participant.photoUrl)}
         style={[styles.avatar, square && styles.avatarSquare]}
@@ -155,7 +158,7 @@ function Row({
       </Text>
       <Text style={[styles.score, square && styles.scoreSquare]}>
         {displayScore}
-        <Text style={[styles.scoreUnit, square && styles.scoreUnitSquare]}>%</Text>
+        <AccentUnit size={square ? styles.scoreUnitSquare.fontSize : styles.scoreUnit.fontSize} color={styles.score.color}>%</AccentUnit>
       </Text>
     </Animated.View>
   );
@@ -191,7 +194,7 @@ function Side({
       </Text>
       <Text style={styles.duelScore}>
         {score}
-        <Text style={styles.duelScoreUnit}>%</Text>
+        <AccentUnit size={styles.duelScoreUnit.fontSize} color={styles.duelScore.color}>%</AccentUnit>
       </Text>
     </View>
   );

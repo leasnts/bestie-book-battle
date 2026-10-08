@@ -56,6 +56,7 @@ import NoteSticker, { STICKER_BASE_LARGE } from './NoteSticker';
 import PeelSurface, { peelAmount, pullSpeed } from './PeelSurface';
 import PressableScale from './PressableScale';
 import { useWriteNote } from './WriteNoteButton';
+import { AccentUnit, AccentUnits } from './AccentWord';
 
 interface NoteTileProps {
   /**
@@ -276,7 +277,7 @@ function FirstNote({ tile, page }: { tile: TileSize; page: number }) {
             </View>
             <View style={styles.content}>
               <View style={styles.head}>
-                <Text style={styles.page} maxFontSizeMultiplier={1.3}>p. {page}</Text>
+                <Text style={styles.page} maxFontSizeMultiplier={1.3}><AccentUnit size={styles.page.fontSize} color={styles.page.color}>p.</AccentUnit> {page}</Text>
               </View>
               <View style={styles.lines}>
                 {Array.from({ length: BLANK_LINES }, (_, i) => (
@@ -505,6 +506,8 @@ function NoteContent({
   myTotalPages: number;
 }) {
   const page = formatNotePage(note.position, note.edition_total_pages, myTotalPages);
+  // Le numéro de page, ton sur ton dans le foncé de la catégorie
+  const pageTone = postItDeepOf(ANNOTATION_CATEGORIES[note.category].color)?.page ?? colors.textPrimary;
   const author = isMine ? 'Moi' : note.author?.first_name || 'Participant';
   // Une note, c'est un emoji seul OU un texte : l'emoji d'une ancienne note passe en tête
   const text = note.body ? (note.emoji ? `${note.emoji} ${note.body}` : note.body) : null;
@@ -512,11 +515,8 @@ function NoteContent({
   return (
     <View style={styles.content}>
       <View style={styles.head}>
-        <Text
-          style={[styles.page, { color: postItDeepOf(ANNOTATION_CATEGORIES[note.category].color)?.page ?? colors.textPrimary }]}
-          maxFontSizeMultiplier={1.3}
-        >
-          {page}
+        <Text style={[styles.page, { color: pageTone }]} maxFontSizeMultiplier={1.3}>
+          <AccentUnits text={page} size={styles.page.fontSize} color={pageTone} />
         </Text>
       </View>
 

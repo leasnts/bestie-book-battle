@@ -29,6 +29,7 @@ import GlassMaterial from './GlassMaterial';
 import NoteSticker, { STICKER_BASE_LARGE } from './NoteSticker';
 import PressableScale from './PressableScale';
 import VoicePlayer from './VoicePlayer';
+import { AccentUnits } from './AccentWord';
 
 const DEFAULT_AVATAR = require('../../assets/images/profile_picture_default.png');
 
@@ -155,7 +156,9 @@ export default function NoteCard({
           <Text style={styles.date} numberOfLines={1}>
             {formatNoteDate(note.created_at)}
           </Text>
-          <Text style={[styles.page, !!pageTone && { color: pageTone }]}>{page}</Text>
+          <Text style={[styles.page, !!pageTone && { color: pageTone }]}>
+            <AccentUnits text={page} size={styles.page.fontSize} color={pageTone ?? styles.page.color} />
+          </Text>
         </View>
 
         {!!note.quote && <Text style={[styles.quote, large && styles.quoteLarge]}>{note.quote}</Text>}
@@ -196,7 +199,9 @@ export default function NoteCard({
           <Text style={styles.date} numberOfLines={1}>
             {formatNoteDate(note.created_at)}
           </Text>
-          <Text style={[styles.page, !!pageTone && { color: pageTone }]}>{page}</Text>
+          <Text style={[styles.page, !!pageTone && { color: pageTone }]}>
+            <AccentUnits text={page} size={styles.page.fontSize} color={pageTone ?? styles.page.color} />
+          </Text>
         </View>
 
         {!!note.quote && <Text style={[styles.quote, large && styles.quoteLarge]}>{note.quote}</Text>}

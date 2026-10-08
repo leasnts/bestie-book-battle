@@ -30,6 +30,7 @@ import {
 } from '../../utils/leaderboard';
 import { borderRadius, colors, fonts, inkAlpha, motion, spacing } from '../../utils/constants';
 import { ChevronDownIcon, ChevronUpIcon, FlameIcon } from 'lucide-react-native';
+import { AccentUnit } from './AccentWord';
 
 // ─── Props ─────────────────────────────────────────────────────────
 
@@ -97,7 +98,9 @@ function LeaderboardRow({
         accessibilityHint={onPress ? 'Ouvre son journal de lecture' : undefined}
       >
       {/* ── Rang ── */}
-      <Text style={[styles.rank, isMe && styles.rankMe]}>{rank}</Text>
+      <Text style={[styles.rank, isMe && styles.rankMe]}>
+        <AccentUnit size={styles.rank.fontSize}>{String(rank)}</AccentUnit>
+      </Text>
 
       {/* ── Avatar (+ couronne pour le leader) ── */}
       <View style={styles.avatarWrapper}>
@@ -131,7 +134,7 @@ function LeaderboardRow({
 
           <View style={styles.spacer} />
 
-          <Text style={styles.score}>{score}%</Text>
+          <Text style={styles.score}>{score}<AccentUnit size={styles.score.fontSize} color={styles.score.color}>%</AccentUnit></Text>
         </View>
 
         <View style={styles.progressTrack}>
