@@ -147,24 +147,44 @@ export const inkGradient = ['#5a4536', '#1e140e'] as const;
 /**
  * Les six post-it du carnet — tirés de la charte Lowki (Lea, 2026-10-08).
  *
- * Même clarté pour toutes, et chacune vient d'un ton de la charte : le rouge
- * pâli en vieux rose, le rouge vers le chocolat en terre cuite, le beurre tel
- * quel, le beurre foncé en olive, le beige pâli en sable. Seul le bleu de Snif
- * sort de la charte (les larmes), gardé grisé pour rester de la famille.
+ * Chacune vient d'un ton de la charte : le rouge pâli en vieux rose, la terre
+ * cuite entre rouge et chocolat, le beurre, le beurre foncé en olive, le beige.
+ * Seul le bleu de Snif sort de la charte (les larmes), gardé grisé pour rester
+ * de la famille.
  *
  * Une couleur = une catégorie, la même pour tout le club. L'encre `ink` garde
- * au moins 9:1 sur chacune (mesuré), donc le texte d'une note reste lisible
+ * au moins 7:1 sur chacune (mesuré), donc le texte d'une note reste lisible
  * quelle que soit la catégorie. La couleur n'est jamais la seule information :
  * le nom de la catégorie s'affiche toujours (DESIGN.md › Carnet).
  */
 export const postIt = {
-  rose: '#edbfbd',    // J’adore — rouge Lowki pâli
-  peche: '#f2c0a5',   // Spicy — terre cuite, entre rouge et chocolat
+  rose: '#e3a4a9',    // J’adore — rouge Lowki pâli
+  peche: '#e5b096',   // Spicy — terre cuite, entre rouge et chocolat
   bleu: '#c1d3da',    // Snif — bleu grisé, hors charte
-  jaune: '#f5e6a8',   // Ahahah — beurre Lowki, tel quel
+  jaune: '#ecd990',   // Ahahah — beurre Lowki
   sauge: '#d6d1a6',   // Théorie — olive, beurre foncé pâli
-  sable: '#e6ceb3',   // Note — beige Lowki pâli
+  sable: '#d6b896',   // Note — beige Lowki
 };
+
+/**
+ * Le ton sur ton de chaque post-it (DESIGN.md › Charte Lowki) : le foncé de la
+ * même famille, pour le filigrane, la couture et l'icône d'une note. Jamais
+ * pour son texte, qui reste à l'encre.
+ */
+export const postItDeep: Record<keyof typeof postIt, string> = {
+  rose: '#A62F43',    // rouge Lowki
+  peche: '#a55f44',
+  bleu: '#6c8492',
+  jaune: '#D6C36F',   // beurre foncé Lowki
+  sauge: '#868350',
+  sable: '#9F7C59',   // beige foncé Lowki
+};
+
+/** Le ton sur ton d'une couleur de post-it, `null` si ce n'en est pas une */
+export function postItDeepOf(color: string | null | undefined): string | null {
+  const key = (Object.keys(postIt) as (keyof typeof postIt)[]).find((k) => postIt[k] === color);
+  return key ? postItDeep[key] : null;
+}
 
 /**
  * La matière des autocollants de notes (`NoteSticker`), hors couleur de

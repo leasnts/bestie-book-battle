@@ -33,7 +33,7 @@ import Animated, {
 import type { AnnotationCategory } from '../../types/supabase';
 import { ANNOTATION_CATEGORIES, CATEGORY_ICONS, CATEGORY_ORDER } from '../../utils/annotations';
 import { borderRadius, colors, fonts, inkAlpha, motion, shadowAlpha, spacing } from '../../utils/constants';
-import { STITCH, stitchColor } from './NoteSticker';
+import { NOTE_STITCH_OPACITY, STITCH, noteStitchColor } from './NoteSticker';
 import PressableScale from './PressableScale';
 
 /** La part de l'intercalaire cachée sous la note */
@@ -216,7 +216,8 @@ function CategoryTab({
               <Path
                 d={stitch}
                 fill="none"
-                stroke={stitchColor(true)}
+                stroke={noteStitchColor(option.color)}
+                strokeOpacity={NOTE_STITCH_OPACITY}
                 strokeWidth={STITCH.width}
                 strokeDasharray={STITCH.dash}
                 strokeLinecap={STITCH.cap}

@@ -17,7 +17,7 @@
 import React from 'react';
 import Svg, { ClipPath, Defs, G, LinearGradient, Path, Stop, Text as SvgText } from 'react-native-svg';
 import { ACCENT_SCALE } from './AccentWord';
-import { borderRadius, fonts, inkAlpha, shadowAlpha, stickerMaterial } from '../../utils/constants';
+import { borderRadius, fonts, inkAlpha, postItDeepOf, shadowAlpha, stickerMaterial } from '../../utils/constants';
 
 interface NoteStickerProps {
   /** Couleur de la catégorie ; `null` pour une note verrouillée */
@@ -66,6 +66,12 @@ interface NoteStickerProps {
  */
 export const STITCH = { width: 1.2, dash: '0 2.8', cap: 'round' as const };
 export const stitchColor = (colored: boolean) => inkAlpha(colored ? 0.32 : 0.2);
+/**
+ * La couture d'une note : ton sur ton, dans le foncé de sa catégorie
+ * (`postItDeep`) ; à l'encre pâle sur une note verrouillée.
+ */
+export const noteStitchColor = (color: string | null) => postItDeepOf(color) ?? stitchColor(!!color);
+export const NOTE_STITCH_OPACITY = 0.75;
 /** L'écart entre la couture et le bord, selon le côté qui règle l'autocollant */
 export const stitchInset = (base: number) => base * 0.07;
 /**
@@ -143,6 +149,8 @@ export default function NoteSticker({
   const flapShadow = flapAt(1.5);
 
   const fill = color ?? stickerMaterial.locked;
+  // Le ton sur ton : filigrane et couture dans le foncé de la catégorie
+  const deep = postItDeepOf(color);
   const flip = corner === 'bottom-right' ? `translate(0 ${h}) scale(1 -1)` : `translate(${w} 0) scale(-1 1)`;
   // Le filigrane : sa base passe juste sous le bord du bas
   // Welcome Valentines a un œil plus petit : agrandie comme un mot d'accent
@@ -185,7 +193,8 @@ export default function NoteSticker({
             y={h + markSize * 0.02}
             fontFamily={fonts.accent}
             fontSize={markSize}
-            fill={inkAlpha(0.07)}
+            fill={deep ?? inkAlpha(0.07)}
+            fillOpacity={deep ? 0.28 : 1}
           >
             {watermark.toLocaleLowerCase('fr')}
           </SvgText>
@@ -196,7 +205,8 @@ export default function NoteSticker({
         <Path
           d={notched ? notchStitch : stitch}
           fill="none"
-          stroke={stitchColor(!!color)}
+          stroke={noteStitchColor(color)}
+          strokeOpacity={deep ? NOTE_STITCH_OPACITY : 1}
           strokeWidth={STITCH.width}
           strokeDasharray={STITCH.dash}
           strokeLinecap={STITCH.cap}
