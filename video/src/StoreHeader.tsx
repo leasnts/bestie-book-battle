@@ -1,8 +1,7 @@
 import {AbsoluteFill, Easing, interpolate} from 'remotion';
 import {Eyes, Subtitle, Word} from './Logo';
 import {useLoop} from './loop';
-import {Sticker} from './Sticker';
-import {BG, POST_IT} from './theme';
+import {BG} from './theme';
 
 const W = 3840;
 const H = 1646;
@@ -21,80 +20,44 @@ const BLOCK = EYES_VISIBLE.bottom - EYES_VISIBLE.top + GAP_WORD + WORD_H + GAP_S
 const EYES_TOP = H / 2 - BLOCK / 2 - EYES_VISIBLE.top;
 const WORD_TOP = EYES_TOP + EYES_VISIBLE.bottom + GAP_WORD;
 const SUB_TOP = WORD_TOP + WORD_H + GAP_SUB;
-/** Le point que les yeux regardent depuis : le milieu des pupilles. */
-const EYES_CENTER = {x: W / 2, y: EYES_TOP + (600 / 1200) * EYES};
 
-/** Une note arrive toutes les 2 s ; elle reste 5 s puis se décolle. */
-const EVERY = 60;
-const IN = 18;
-const STAY = 150;
-const OUT = 20;
-/** Décale la ronde des notes : la première image (l'affiche) en montre déjà trois. */
-const PHASE = 24;
-
-const NOTES = [
-  {x: 1080, y: 470, size: 300, rot: -8, color: POST_IT.rose, emoji: '🥹'},
-  {x: 2840, y: 1130, size: 320, rot: 7, color: POST_IT.jaune, emoji: '😂'},
-  {x: 540, y: 1150, size: 340, rot: 6, color: POST_IT.sauge, emoji: '🤔'},
-  {x: 3280, y: 470, size: 330, rot: -6, color: POST_IT.peche, emoji: '🔥'},
-  {x: 1300, y: 1230, size: 260, rot: -4, color: POST_IT.bleu, emoji: '😭'},
-];
-
-const ease = Easing.out(Easing.cubic);
 const clamp = {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'} as const;
 
-const NoteOnBoard = ({note, index}: {note: (typeof NOTES)[number]; index: number}) => {
-  const {frame, durationInFrames, turn} = useLoop();
-  const local = (frame + PHASE - index * EVERY + durationInFrames) % durationInFrames;
-  if (local > STAY + OUT) return null;
-  const inP = interpolate(local, [0, IN], [0, 1], {...clamp, easing: ease});
-  const outP = interpolate(local, [STAY, STAY + OUT], [0, 1], {...clamp, easing: Easing.in(Easing.cubic)});
-  // Posée : elle arrive d'un peu plus haut et plus grande, comme collée d'un geste
-  // Décollée : elle se soulève, tourne un peu et s'efface
-  const y = note.y + (1 - inP) * -36 + outP * -50 + Math.sin(turn + index) * 8;
-  const scale = 1 + (1 - inP) * 0.12 - outP * 0.08;
-  const rot = note.rot + (1 - inP) * 6 - outP * 10;
-  const opacity = Math.min(inP, 1 - outP);
-  return (
-    <div
-      style={{
-        position: 'absolute',
-        left: note.x - note.size / 2,
-        top: y - note.size / 2,
-        opacity,
-        transform: `rotate(${rot}deg) scale(${scale})`,
-        filter: `drop-shadow(0 ${10 + (1 - inP) * 20}px ${24 + (1 - inP) * 20}px rgba(40, 6, 8, 0.35))`,
-      }}
-    >
-      <Sticker size={note.size} color={note.color} emoji={note.emoji} id={`n${index}`} />
-    </div>
-  );
-};
+/**
+ * Le regard, en étapes posées : un coup d'œil à gauche, à droite, en l'air,
+ * puis retour face à nous. La dernière étape retombe sur la première (boucle).
+ */
+const GAZE: {at: number; x: number; y: number}[] = [
+  {at: 0, x: 0, y: 0.15},
+  {at: 22, x: 0, y: 0.15},
+  {at: 34, x: -1, y: 0.05},
+  {at: 74, x: -1, y: 0.05},
+  {at: 92, x: 1, y: -0.1},
+  {at: 134, x: 1, y: -0.1},
+  {at: 150, x: -0.45, y: -0.9},
+  {at: 182, x: -0.45, y: -0.9},
+  {at: 198, x: 0, y: 0},
+  {at: 280, x: 0, y: 0},
+  {at: 300, x: 0, y: 0.15},
+];
 
-/** Les yeux suivent chaque note qui arrive, puis reviennent flâner. */
 const useGaze = () => {
-  const {frame, durationInFrames, turn} = useLoop();
-  let x = Math.sin(turn * 2) * 0.12;
-  let y = Math.cos(turn * 3) * 0.08;
-  NOTES.forEach((note, i) => {
-    const local = (frame + PHASE - i * EVERY + durationInFrames) % durationInFrames;
-    const w = interpolate(local, [2, 12, 38, 52], [0, 1, 1, 0], {...clamp, easing: Easing.inOut(Easing.sin)});
-    const dx = note.x - EYES_CENTER.x;
-    const dy = note.y - EYES_CENTER.y;
-    const len = Math.hypot(dx, dy);
-    x = x * (1 - w) + (dx / len) * w;
-    y = y * (1 - w) + (dy / len) * w;
-  });
-  return {x, y};
+  const {frame} = useLoop();
+  const at = GAZE.map((g) => g.at);
+  const opts = {...clamp, easing: Easing.inOut(Easing.cubic)};
+  return {
+    x: interpolate(frame, at, GAZE.map((g) => g.x), opts),
+    y: interpolate(frame, at, GAZE.map((g) => g.y), opts),
+  };
 };
 
-/** Deux battements de cils et un clin d'œil du petit œil. */
+/** Deux battements de cils, quand le regard change de côté, et un clin d'œil du petit œil. */
 const useLids = () => {
   const {frame} = useLoop();
   const blink = (at: number, len: number) =>
     interpolate(frame, [at, at + len / 2, at + len], [1, 0.06, 1], {...clamp, easing: Easing.inOut(Easing.quad)});
-  const both = Math.min(blink(56, 8), blink(178, 8));
-  return {left: both, right: Math.min(both, blink(268, 14))};
+  const both = Math.min(blink(82, 8), blink(186, 8));
+  return {left: both, right: Math.min(both, blink(232, 14))};
 };
 
 // Fond rouge : dégradé du splash (jamais d'aplat), lavis qui respirent, grain de papier.
@@ -140,9 +103,6 @@ export const StoreHeader = () => {
   return (
     <AbsoluteFill style={{overflow: 'hidden'}}>
       <Backdrop />
-      {NOTES.map((note, i) => (
-        <NoteOnBoard key={i} note={note} index={i} />
-      ))}
       <div style={{position: 'absolute', left: W / 2 - EYES / 2, top: EYES_TOP}}>
         <Eyes size={EYES} gaze={gaze} open={open} />
       </div>

@@ -18,7 +18,7 @@ const [OUTLINE, LEFT_HOLE, LEFT_PUPIL, RIGHT_HOLE, RIGHT_PUPIL] = LOGO_EYES_PATH
 const RING = OUTLINE + LEFT_HOLE + RIGHT_HOLE;
 
 /** Jusqu'où la pupille se déplace dans son creux (repère 1200). */
-const GAZE_REACH = {left: 44, right: 34};
+const GAZE_REACH = {left: 62, right: 46};
 /** Les paupières se ferment vers le bas de chaque œil, comme au splash. */
 const LID_PIVOT = {left: 975, right: 920};
 const DEBOSS_EYES = 5.5;
