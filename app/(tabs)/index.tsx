@@ -11,8 +11,7 @@
  * 2. SÉLECTEUR DE PAGE : scroll pour choisir sa page + boutons annuler/valider
  * 3. TOP 3 : le podium du challenge, plus ta ligne si tu n'y es pas
  * 
- * Le fond utilise une texture "noise" semi-transparente (comme l'onboarding),
- * remplaçant les anciennes lignes de cahier.
+ * Le fond est le papier uni (colors.bgApp), sans texture ni dégradé.
  * 
  * Données : tout vient de Supabase via les stores Zustand (authStore, projectStore, progressStore).
  */
@@ -41,7 +40,6 @@ import Button3D from '../../components/Button3D';
 import PageTransition from '../../components/PageTransition';
 import PopEyes from '../../components/PopEyes';
 import BookSection from '../../components/ui/BookSection';
-import CoverBackdrop from '../../components/ui/CoverBackdrop';
 import GlassButton from '../../components/ui/GlassButton';
 import NoteTile from '../../components/ui/NoteTile';
 import NoteTabs, { NOTE_TABS_HEIGHT } from '../../components/ui/NoteTabs';
@@ -63,8 +61,6 @@ import { getActiveStreak } from '../../utils/streak';
 import { useTabBarInset } from '../../components/ui/GlassTabBar';
 import { BookOpenIcon, CirclePlusIcon, LibraryBigIcon } from 'lucide-react-native';
 
-// Texture de fond "noise" réutilisée depuis l'onboarding
-const TEXTURE_IMAGE = require('../../assets/images/61ea1e0c638b5b9c8100383a37a5b488848db623.png');
 
 /**
  * Résout la source d'un avatar utilisateur.
@@ -418,16 +414,6 @@ export default function HomeScreen() {
   return (
     <PageTransition>
     <View style={styles.container}>
-      {/* Fond neutre en taches dégradées : plus les couleurs de la couverture */}
-      <CoverBackdrop />
-
-      {/* Texture de fond "noise" semi-transparente */}
-      <Image
-        source={TEXTURE_IMAGE}
-        style={styles.backgroundTexture}
-        contentFit="cover"
-      />
-
       {/* ═══════════ HEADER ═══════════ */}
       <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
         {/* Bibliothèque — toutes mes lectures, sur des étagères. Le même rond en
@@ -601,14 +587,10 @@ const styles = StyleSheet.create({
   // ===== CONTAINER PRINCIPAL =====
   container: {
     flex: 1,
-    backgroundColor: colors.bgLight,
+    backgroundColor: colors.bgApp,
   },
 
   // Texture de fond semi-transparente
-  backgroundTexture: {
-    ...StyleSheet.absoluteFillObject,
-    opacity: 0.025,
-  },
 
   // ===== HEADER =====
   // En-tête resserré (72 → 56 pt) pour que les trois cadres tiennent sans défiler

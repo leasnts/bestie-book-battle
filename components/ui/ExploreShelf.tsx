@@ -30,8 +30,8 @@ const COVER_W = Math.round(COVER_H * COVER_RATIO);
 const SIDE = spacing.lg;
 /** Largeur du fondu aux bords de l'écran */
 const FADE_W = spacing['4xl'];
-/** Le papier (bgLight #f5f3ef) à une opacité donnée : un fondu vers `transparent` grise */
-const paper = (alpha: number) => `rgba(245,243,239,${alpha})`;
+/** Le fond des écrans (bgApp #ede8e0) à une opacité donnée : un fondu vers `transparent` grise */
+const paper = (alpha: number) => `rgba(237,232,224,${alpha})`;
 /** Fondu doux, en courbe : le bord garde un peu du livre, jamais un voile blanc net */
 const FADE_COLORS = [paper(0.85), paper(0.55), paper(0.25), paper(0.08), paper(0)] as const;
 const FADE_STOPS = [0, 0.25, 0.5, 0.75, 1] as const;

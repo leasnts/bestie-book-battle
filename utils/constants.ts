@@ -81,7 +81,8 @@ export const colors = {
   white: '#fdfcfa',            // Background inputs, cartes — blanc à peine chaud, pas blanc pur
   black: '#1e140e',            // Uniquement pour les ombres portées, jamais pour du texte ni un fond
   bgSecondary: '#faf8f5',      // Background cartes non-sélectionnées
-  bgLight: '#f5f3ef',          // Fond d'app, bouton back, bouton secondaire
+  bgLight: '#f5f3ef',          // Bouton back, bouton secondaire, fonds de sheet
+  bgApp: '#ede8e0',            // Fond des écrans (onglets, activité) : un cran sous les cadres pour qu'ils ressortent
 
   // Text colors — contrastes WCAG mesurés sur bgLight / bgSecondary / white
   textPrimary: '#33231a',      // Texte principal (900) — 13,6 / 14,2 / 14,7
