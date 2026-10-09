@@ -28,7 +28,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import React, { useState } from 'react';
 import { StyleSheet, View, type LayoutChangeEvent, type StyleProp, type ViewStyle } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
-import { borderRadius, creamAlpha, glassVeil, spacing } from '../../utils/constants';
+import { borderRadius, creamAlpha, glassVeil, paperFrameGradient, spacing } from '../../utils/constants';
 import GlassMaterial from './GlassMaterial';
 import { STICKER_BASE_LARGE, STITCH, stitchColor, stitchInset } from './NoteSticker';
 import PressableScale from './PressableScale';
@@ -86,6 +86,11 @@ interface GlassSectionProps {
    * son bord.
    */
   fadeTop?: number;
+  /**
+   * Papier beige au lieu du verre : posé sur un fond clair (un sheet), le verre
+   * blanc s'y perd. Même couture, même rayon.
+   */
+  paper?: boolean;
 }
 
 export default function GlassSection({
@@ -96,6 +101,7 @@ export default function GlassSection({
   style,
   compact = false,
   fadeTop = 0,
+  paper = false,
 }: GlassSectionProps) {
   const [size, setSize] = useState({ width: 0, height: 0 });
   const onLayout = (e: LayoutChangeEvent) => {
@@ -124,7 +130,11 @@ export default function GlassSection({
         </MaskedView>
       ) : (
         <>
-          <GlassMaterial radius={RADIUS} veil={glassVeil} edgeColor={EDGE} />
+          {paper ? (
+            <LinearGradient colors={paperFrameGradient} style={[StyleSheet.absoluteFill, styles.paper]} />
+          ) : (
+            <GlassMaterial radius={RADIUS} veil={glassVeil} edgeColor={EDGE} />
+          )}
           <Stitch {...size} openTop={false} />
         </>
       )}
@@ -163,6 +173,9 @@ const styles = StyleSheet.create({
   },
   contentCompact: {
     padding: spacing.md,
+  },
+  paper: {
+    borderRadius: RADIUS,
   },
   maskColumn: {
     flex: 1,

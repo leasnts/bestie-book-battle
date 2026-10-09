@@ -39,6 +39,8 @@ import { dayString } from '../utils/streak';
 
 const WEEKDAYS = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
 const ROW = 44;
+// Les deux icônes des repères : la flamme a de l'air autour, le marque-page non
+const STAT_ICON = 30;
 const DISC = 36;
 /** Pas plus d'un an en arrière */
 const MAX_MONTHS = 12;
@@ -206,7 +208,7 @@ function MonthPage({ first, width, today, read, saved }: MonthPageProps) {
     <View style={{ width }}>
       {/* Les deux repères du mois */}
       <View style={styles.stats}>
-        <GlassSection compact style={styles.statFrame}>
+        <GlassSection paper compact style={styles.statFrame}>
           <View
             style={styles.stat}
             accessible
@@ -219,13 +221,13 @@ function MonthPage({ first, width, today, read, saved }: MonthPageProps) {
             </View>
           </View>
         </GlassSection>
-        <GlassSection compact style={styles.statFrame}>
+        <GlassSection paper compact style={styles.statFrame}>
           <View
             style={styles.stat}
             accessible
             accessibilityLabel={`${savedCount} marque-page${savedCount > 1 ? 's' : ''} posé${savedCount > 1 ? 's' : ''} ce mois`}
           >
-            <BonusBookmark size={28} />
+            <BonusBookmark size={STAT_ICON - 4} />
             <View>
               <Text style={styles.statValue}>{savedCount}</Text>
               <Text style={styles.statLabel}>{savedCount > 1 ? 'marque-pages' : 'marque-page'}</Text>
@@ -235,7 +237,7 @@ function MonthPage({ first, width, today, read, saved }: MonthPageProps) {
       </View>
 
       {/* Le calendrier */}
-      <GlassSection style={styles.calendar}>
+      <GlassSection paper style={styles.calendar}>
         <View style={styles.row}>
           {WEEKDAYS.map((letter, i) => (
             <Text key={i} style={[styles.weekday, { width: cellWidth }]}>
@@ -376,8 +378,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.xs,
   },
   statIcon: {
-    width: 28,
-    height: 28,
+    width: STAT_ICON,
+    height: STAT_ICON,
   },
   statValue: {
     fontFamily: fonts.display,
