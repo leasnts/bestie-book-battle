@@ -207,6 +207,7 @@ function MonthPage({ first, width, today, read, saved, used }: MonthPageProps) {
   const readCount = [...read].filter(inMonth).length;
   // Un jour compte dans la série s'il est lu ou gardé
   const kept = (d: string | null) => !!d && (read.has(d) || saved.has(d));
+  const isBonus = (d: string | null) => !!d && saved.has(d) && !read.has(d);
 
   // La marge intérieure du cadre (16 pt de chaque côté)
   const cellWidth = (width - spacing.lg * 2) / 7;
@@ -260,16 +261,15 @@ function MonthPage({ first, width, today, read, saved, used }: MonthPageProps) {
           grid.map((week, r) => (
             <View key={r} style={styles.row}>
               {/* Le ruban sous chaque série de jours qui se suivent dans la semaine */}
-              {ribbons(week, kept).map(([from, to]) => (
-                <LinearGradient
-                  key={from}
-                  colors={RIBBON}
-                  style={[
-                    styles.ribbon,
-                    { left: from * cellWidth + (cellWidth - DISC) / 2, width: (to - from) * cellWidth + DISC },
-                  ]}
-                />
-              ))}
+              {ribbons(week, kept).map(([from, to]) => {
+                // Un bout sur un marque-page part de son milieu : le ruban, plus
+                // large que le marque-page, ne dépasse pas autour
+                const left = (from + 0.5) * cellWidth - (isBonus(week[from]) ? 0 : DISC / 2);
+                const right = (to + 0.5) * cellWidth + (isBonus(week[to]) ? 0 : DISC / 2);
+                return (
+                  <LinearGradient key={from} colors={RIBBON} style={[styles.ribbon, { left, width: right - left }]} />
+                );
+              })}
               {week.map((day, c) =>
                 day ? (
                   <DayCell
