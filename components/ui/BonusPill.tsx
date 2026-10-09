@@ -13,11 +13,7 @@ import { fonts, lowki } from '../../utils/constants';
 import { STREAK_BONUS_PER_BOOK } from '../../utils/streak';
 import GlassPill from './GlassPill';
 
-const BOOKMARKS = {
-  1: require('../../assets/images/bookmark/bookmark-1.png'),
-  2: require('../../assets/images/bookmark/bookmark-2.png'),
-} as const;
-const BOOKMARK = BOOKMARKS[2];
+const BOOKMARK = require('../../assets/images/bookmark/bookmark.png');
 
 /** Le marque-page aquarelle de la série : à reprendre tel quel (semaine, sheet) */
 export function BonusBookmark({ size = 22 }: { size?: number }) {
