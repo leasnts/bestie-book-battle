@@ -44,6 +44,8 @@ const ROW = 44;
 // Les deux icônes des repères ; le marque-page, étroit, prend un peu plus
 const STAT_ICON = 30;
 const DISC = 36;
+// Le marque-page d'un jour gardé : plus grand que le disque, son haut aligné sur le haut des disques
+const DAY_BOOKMARK = DISC + 8;
 /** Pas plus d'un an en arrière */
 const MAX_MONTHS = 12;
 /** Le ruban d'une série : le rouge de la charte, à peine posé */
@@ -326,7 +328,7 @@ function DayCell({ day, width, isToday, future, read, bonus, runStart }: DayCell
       {read && runStart && <LinearGradient colors={[lowki.red.light, lowki.red.dark]} style={styles.disc} />}
       {bonus && (
         <View style={styles.discBox}>
-          <BonusBookmark size={DISC + 8} />
+          <BonusBookmark size={DAY_BOOKMARK} />
         </View>
       )}
       {isToday && !read && (
@@ -430,6 +432,7 @@ const styles = StyleSheet.create({
     height: DISC,
     alignItems: 'center',
     justifyContent: 'center',
+    transform: [{ translateY: (DAY_BOOKMARK - DISC) / 2 }],
   },
   todayFill: {
     opacity: 0.2,
