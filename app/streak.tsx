@@ -174,7 +174,7 @@ function DayCell({ letter, label, isToday, future, read, bonus }: DayCellProps) 
       <Text style={[styles.weekday, isToday && styles.weekdayToday]}>{letter}</Text>
       {read ? (
         <LinearGradient colors={[lowki.red.light, lowki.red.dark]} style={styles.cell}>
-          <CheckIcon size={18} color={lowki.butter.light} strokeWidth={3} />
+          <CheckIcon size={20} color={lowki.butter.light} strokeWidth={4} />
         </LinearGradient>
       ) : bonus ? (
         <View style={styles.cell}>
