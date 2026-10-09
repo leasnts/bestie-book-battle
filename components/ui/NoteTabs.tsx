@@ -20,6 +20,7 @@
  * glisse dessous (`NOTE_TABS_TUCK`). La cellule laisse `NOTE_TABS_HEIGHT` au-dessus.
  */
 
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { PenLineIcon, PlusIcon, SmilePlusIcon, XIcon, type LucideIcon } from 'lucide-react-native';
 import React, { useCallback, useEffect, useState } from 'react';
@@ -35,7 +36,7 @@ import Animated, {
   ZoomIn,
 } from 'react-native-reanimated';
 import { useQuickNote } from '../../hooks/useQuickNote';
-import { borderRadius, colors, creamAlpha, glassControlVeil, inkAlpha, motion, shadowAlpha, spacing } from '../../utils/constants';
+import { borderRadius, colors, creamAlpha, inkAlpha, motion, shadowAlpha, spacing } from '../../utils/constants';
 import { TRENDING_EMOJIS } from '../../utils/emojis';
 import GlassButton from './GlassButton';
 import GlassMaterial from './GlassMaterial';
@@ -52,6 +53,8 @@ const TAB_WIDTH = 56;
 const TAB_ICON = 20;
 /** Tirer un intercalaire : lent à la fin, comme un onglet de papier qui glisse */
 const TAB_IN_MS = 420;
+/** Un voile sable sur le verre : nu, il sort blanc laiteux sur le papier (Lea, 2026-10-09) */
+const TAB_TINT = ['rgba(214, 184, 150, 0.35)', 'rgba(183, 156, 127, 0.5)'] as const;
 
 
 
@@ -177,7 +180,8 @@ function Tab({
     >
       <Animated.View style={[styles.tab, tabStyle]}>
         {/* Le verre de GlassButton : le bas, arrondi aussi, reste glissé sous la note */}
-        <GlassMaterial radius={borderRadius.md} veil={glassControlVeil} rim />
+        <GlassMaterial radius={borderRadius.md} rim />
+        <LinearGradient colors={TAB_TINT} style={[StyleSheet.absoluteFill, styles.tint]} pointerEvents="none" />
         <View style={styles.tabIcon}>
           <Icon size={TAB_ICON} color={colors.dark900} strokeWidth={2.25} />
           {badge && <View style={styles.badge} />}
@@ -216,6 +220,9 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     alignItems: 'center',
     paddingTop: (NOTE_TABS_HEIGHT - TAB_ICON) / 2,
+  },
+  tint: {
+    borderRadius: borderRadius.md,
   },
   tabIcon: {
     width: TAB_ICON,
