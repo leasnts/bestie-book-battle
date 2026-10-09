@@ -1,8 +1,7 @@
 /**
  * Les yeux de l'en-tête de l'accueil, en un seul tracé (repère 1533 × 1188, cadré
- * au plus près). Source : « eyes.svg » de Lea. Cinq formes dans cet ordre : le
- * sticker (silhouette), le trait du gros œil, son blanc, le trait du petit œil,
- * son blanc.
+ * au plus près). Source : « eyes.svg » de Lea. Une seule couleur : les cils,
+ * l'anneau et la pupille sont évidés (règle de remplissage nonzero).
  */
 export const POP_EYES_WIDTH = 1533;
 export const POP_EYES_HEIGHT = 1188;

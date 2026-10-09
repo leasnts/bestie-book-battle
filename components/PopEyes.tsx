@@ -21,15 +21,8 @@ interface PopEyesProps {
   style?: ViewStyle;
 }
 
-/** Les 5 formes du tracé, peintes dans l'ordre (cf. popEyesPath.ts). */
-const [STICKER, BIG_LINE, BIG_WHITE, SMALL_LINE, SMALL_WHITE] = POP_EYES_PATH.split(/(?=M)/);
-
-/** Ton sur ton avec bgApp (#ede8e0) : sticker un cran dessous, trait en sable, blanc crème. */
-const PAPER_TONES = {
-  sticker: ['#e3dcd0', '#d6ccbe'],
-  line: ['#c9bba7', '#ad9c86'],
-  white: ['#faf8f4', '#efe9e0'],
-} as const;
+/** Ton sur ton avec bgApp (#ede8e0) : la forme quelques crans dessous, les traits évidés laissent voir le fond. */
+const PAPER_GRADIENT = ['#d9cfc1', '#c4b6a3'] as const;
 
 function PaperEyes({ width }: { width: number }) {
   return (
@@ -39,18 +32,12 @@ function PaperEyes({ width }: { width: number }) {
       viewBox={`0 0 ${POP_EYES_WIDTH} ${POP_EYES_HEIGHT}`}
     >
       <Defs>
-        {Object.entries(PAPER_TONES).map(([id, [top, bottom]]) => (
-          <LinearGradient key={id} id={id} x1="0" y1="0" x2="0" y2="1">
-            <Stop offset="0" stopColor={top} />
-            <Stop offset="1" stopColor={bottom} />
-          </LinearGradient>
-        ))}
+        <LinearGradient id="paper" x1="0" y1="0" x2="0" y2="1">
+          <Stop offset="0" stopColor={PAPER_GRADIENT[0]} />
+          <Stop offset="1" stopColor={PAPER_GRADIENT[1]} />
+        </LinearGradient>
       </Defs>
-      <Path d={STICKER} fill="url(#sticker)" />
-      <Path d={BIG_LINE} fill="url(#line)" />
-      <Path d={BIG_WHITE} fill="url(#white)" />
-      <Path d={SMALL_LINE} fill="url(#line)" />
-      <Path d={SMALL_WHITE} fill="url(#white)" />
+      <Path d={POP_EYES_PATH} fill="url(#paper)" />
     </Svg>
   );
 }
