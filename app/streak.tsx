@@ -3,15 +3,16 @@
  *
  * Un coup d'œil, rien à faire : le mois, dans les cadres en verre brodés de
  * l'accueil (GlassSection).
- * - Deux repères du mois : les jours lus (la flamme), les marque-pages posés.
+ * - Le mois en titre, son nom en mot d'accent ; ‹ › » à droite.
+ * - Deux repères : les jours lus du mois (la flamme), les marque-pages posés
+ *   sur ce livre (« 1 / 3 »).
  * - Le calendrier : une série court comme un ruban rouge léger sous ses jours,
  *   le premier jour de la série en disque rouge, un jour gardé par un
  *   marque-page porte le marque-page. Aujourd'hui, pas encore lu : un disque
  *   beige léger cerclé de points rouges. Les jours à venir s'effacent.
  *
  * On glisse d'un mois à l'autre jusqu'au début du livre (ou avec ‹ ›), et »
- * ramène au mois en cours. Les marque-pages qu'il me reste sont en haut à
- * droite, la même gélule que la série.
+ * ramène au mois en cours.
  */
 
 import { LinearGradient } from 'expo-linear-gradient';
@@ -26,7 +27,8 @@ import {
   type NativeScrollEvent,
   type NativeSyntheticEvent,
 } from 'react-native';
-import BonusPill, { BonusBookmark } from '../components/ui/BonusPill';
+import { AccentUnit } from '../components/ui/AccentWord';
+import { BonusBookmark } from '../components/ui/BonusPill';
 import GlassButton from '../components/ui/GlassButton';
 import SheetPage from '../components/ui/SheetPage';
 import GlassSection from '../components/ui/GlassSection';
@@ -35,7 +37,7 @@ import { useMyStreak } from '../hooks/useMyStreak';
 import { getReadingDays } from '../services/supabase/database';
 import { useProjectStore } from '../stores/projectStore';
 import { colors, fonts, lowki, spacing } from '../utils/constants';
-import { dayString } from '../utils/streak';
+import { dayString, STREAK_BONUS_PER_BOOK } from '../utils/streak';
 
 const WEEKDAYS = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
 const ROW = 44;
@@ -94,7 +96,7 @@ function monthGrid(first: string): (string | null)[][] {
 }
 
 export default function StreakRoute() {
-  const { userId, challengeId, bonusDates, bonusesLeft } = useMyStreak();
+  const { userId, challengeId, bonusDates } = useMyStreak();
   const startedAt = useProjectStore((s) => s.activeChallenge?.started_at ?? s.activeChallenge?.created_at ?? null);
   const today = dayString(0);
 
@@ -138,28 +140,30 @@ export default function StreakRoute() {
   );
 
   const read = useMemo(() => new Set(readDays), [readDays]);
+  // Le titre du sheet : le mois affiché, son nom en mot d'accent
+  const title = monthLabel(months[page] ?? months[months.length - 1]);
   const saved = useMemo(() => new Set(bonusDates), [bonusDates]);
 
   return (
-    <SheetPage title="Ma série" accent="série" actions={<BonusPill left={bonusesLeft} />}>
-      {/* Quel mois, et de quoi en changer */}
-      <View style={styles.monthBar}>
-        <Text style={styles.month} numberOfLines={1}>
-          {monthLabel(months[page] ?? months[months.length - 1])}
-        </Text>
-        {/* Au bout (début du livre, ce mois-ci), la flèche s'efface */}
-        <View style={page === 0 && styles.disabled} pointerEvents={page === 0 ? 'none' : 'auto'}>
-          <GlassButton icon={ChevronLeftIcon} onPress={() => goTo(page - 1)} accessibilityLabel="Mois précédent" />
+    <SheetPage
+      title={title}
+      accent={title.split(' ')[0]}
+      actions={
+        <View style={styles.arrows}>
+          {/* Au bout (début du livre, ce mois-ci), la flèche s'efface */}
+          <View style={page === 0 && styles.disabled} pointerEvents={page === 0 ? 'none' : 'auto'}>
+            <GlassButton icon={ChevronLeftIcon} onPress={() => goTo(page - 1)} accessibilityLabel="Mois précédent" />
+          </View>
+          <View style={isCurrent && styles.disabled} pointerEvents={isCurrent ? 'none' : 'auto'}>
+            <GlassButton icon={ChevronRightIcon} onPress={() => goTo(page + 1)} accessibilityLabel="Mois suivant" />
+          </View>
+          {/* Dans le passé : d'un toucher, retour à ce mois-ci */}
+          {!isCurrent && (
+            <GlassButton icon={ChevronsRightIcon} onPress={() => goTo(months.length - 1)} accessibilityLabel="Revenir à ce mois-ci" />
+          )}
         </View>
-        <View style={isCurrent && styles.disabled} pointerEvents={isCurrent ? 'none' : 'auto'}>
-          <GlassButton icon={ChevronRightIcon} onPress={() => goTo(page + 1)} accessibilityLabel="Mois suivant" />
-        </View>
-        {/* Dans le passé : d'un toucher, retour à ce mois-ci */}
-        {!isCurrent && (
-          <GlassButton icon={ChevronsRightIcon} onPress={() => goTo(months.length - 1)} accessibilityLabel="Revenir à ce mois-ci" />
-        )}
-      </View>
-
+      }
+    >
       {/* Les mois, à glisser */}
       <ScrollView
         ref={scrollRef}
@@ -178,7 +182,7 @@ export default function StreakRoute() {
         onMomentumScrollEnd={onScrollEnd}
       >
         {months.map((m) => (
-          <MonthPage key={m} first={m} width={pageWidth} today={today} read={read} saved={saved} />
+          <MonthPage key={m} first={m} width={pageWidth} today={today} read={read} saved={saved} used={bonusDates.length} />
         ))}
       </ScrollView>
     </SheetPage>
@@ -191,13 +195,14 @@ interface MonthPageProps {
   today: string;
   read: Set<string>;
   saved: Set<string>;
+  /** Marque-pages posés sur ce livre, sur STREAK_BONUS_PER_BOOK */
+  used: number;
 }
 
-function MonthPage({ first, width, today, read, saved }: MonthPageProps) {
+function MonthPage({ first, width, today, read, saved, used }: MonthPageProps) {
   const grid = useMemo(() => monthGrid(first), [first]);
   const inMonth = (d: string) => d.startsWith(first.slice(0, 7));
   const readCount = [...read].filter(inMonth).length;
-  const savedCount = [...saved].filter((d) => inMonth(d) && !read.has(d)).length;
   // Un jour compte dans la série s'il est lu ou gardé
   const kept = (d: string | null) => !!d && (read.has(d) || saved.has(d));
 
@@ -225,12 +230,15 @@ function MonthPage({ first, width, today, read, saved }: MonthPageProps) {
           <View
             style={styles.stat}
             accessible
-            accessibilityLabel={`${savedCount} marque-page${savedCount > 1 ? 's' : ''} posé${savedCount > 1 ? 's' : ''} ce mois`}
+            accessibilityLabel={`${used} marque-page${used > 1 ? 's' : ''} posé${used > 1 ? 's' : ''} sur ${STREAK_BONUS_PER_BOOK} pour ce livre`}
           >
             <BonusBookmark size={STAT_ICON - 4} />
             <View>
-              <Text style={styles.statValue}>{savedCount}</Text>
-              <Text style={styles.statLabel}>{savedCount > 1 ? 'marque-pages' : 'marque-page'}</Text>
+              <Text style={styles.statValue}>
+                {used}
+                <AccentUnit size={16} color={colors.textPrimary}>{` / ${STREAK_BONUS_PER_BOOK}`}</AccentUnit>
+              </Text>
+              <Text style={styles.statLabel}>marque-pages</Text>
             </View>
           </View>
         </GlassSection>
@@ -343,18 +351,9 @@ function DayCell({ day, width, isToday, future, read, bonus, runStart }: DayCell
 }
 
 const styles = StyleSheet.create({
-  monthBar: {
+  arrows: {
     flexDirection: 'row',
-    alignItems: 'center',
     gap: spacing.sm,
-    marginTop: spacing.sm,
-    marginBottom: spacing.md,
-  },
-  month: {
-    flex: 1,
-    fontFamily: fonts.display,
-    fontSize: 18,
-    color: colors.textPrimary,
   },
   disabled: {
     opacity: 0.35,
