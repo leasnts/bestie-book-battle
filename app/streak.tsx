@@ -8,8 +8,8 @@
  *   sur ce livre (« 1 / 3 »).
  * - Le calendrier : une série court comme un ruban rouge léger sous ses jours,
  *   le premier jour de la série sous sa flamme, un jour gardé par un
- *   marque-page porte le marque-page. Aujourd'hui, pas encore lu : son chiffre
- *   en rouge. Les jours à venir s'effacent.
+ *   marque-page porte le marque-page. Aujourd'hui : un point sous son chiffre,
+ *   et le chiffre en rouge tant qu'il n'est pas lu. Les jours à venir s'effacent.
  *
  * On glisse d'un mois à l'autre jusqu'au début du livre (ou avec ‹ ›), et »
  * ramène au mois en cours.
@@ -363,6 +363,8 @@ function DayCell({ day, width, isToday, future, read, bonus, runStart }: DayCell
       >
         {n}
       </Text>
+      {/* Aujourd'hui, lu ou non : un point sous le chiffre */}
+      {isToday && <View style={[styles.todayDot, read && runStart && styles.todayDotOnFlame]} />}
     </View>
   );
 }
@@ -472,7 +474,18 @@ const styles = StyleSheet.create({
     fontFamily: fonts.bodyBold,
     color: colors.white,
   },
-  // Aujourd'hui, pas encore lu : le chiffre en rouge, rien d'autre
+  todayDot: {
+    position: 'absolute',
+    bottom: (ROW - DISC) / 2 + 4,
+    width: 5,
+    height: 5,
+    borderRadius: 2.5,
+    backgroundColor: lowki.red.light,
+  },
+  todayDotOnFlame: {
+    backgroundColor: colors.white,
+  },
+  // Aujourd'hui, pas encore lu : le chiffre en rouge
   dayToday: {
     fontFamily: fonts.bodyBold,
     color: lowki.red.light,
