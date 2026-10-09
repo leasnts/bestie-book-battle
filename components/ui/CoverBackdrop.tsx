@@ -2,8 +2,8 @@
  * CoverBackdrop — le fond de l'accueil, un dégradé linéaire sur le papier.
  *
  * Pourquoi : du verre posé sur un blanc chaud uni ne se voit presque pas, il n'a
- * rien à flouter. Le fond descend donc du papier clair vers le sable, de haut en
- * bas. Plus de taches (Lea, 2026-10-09 : trop d'auras plus ou moins foncées).
+ * rien à flouter. Le fond descend donc d'un blanc cassé vers un blanc un peu
+ * plus chaud, de haut en bas (Lea : à peine, jamais foncé). Plus de taches (Lea, 2026-10-09 : trop d'auras plus ou moins foncées).
  *
  * Par défaut, et c'est ce qu'utilise l'accueil : des tons **neutres** tirés de la
  * palette (beige, sable, chocolat clair). Les couleurs de la couverture en fond
@@ -38,9 +38,8 @@ export const NEUTRAL_BACKDROP: CoverPalette = ['#cdb8a3', '#a88f7b', '#e2d4c4'];
  * Dégradés, jamais d'aplat).
  */
 const STOPS = [
-  { at: '0%', color: 2, strength: 0.35 },
-  { at: '55%', color: 0, strength: 0.4 },
-  { at: '100%', color: 1, strength: 0.45 },
+  { at: '0%', color: 2, strength: 0.05 },
+  { at: '100%', color: 0, strength: 0.25 },
 ] as const;
 
 /** Le dégradé CSS du fond pour une palette */
