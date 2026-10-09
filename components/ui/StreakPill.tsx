@@ -10,7 +10,7 @@
  * - en cours (lu aujourd'hui) : la flamme et le nombre en rouge plein ;
  * - qui va mourir (pas encore lu aujourd'hui, ou hier manqué) : flamme et
  *   nombre en rouge atténué ;
- * - éteinte (pas de série) : flamme et 0 en beige.
+ * - éteinte (pas de série) : flamme et 0 grisés.
  *
  * Un toucher ouvre la semaine de ma série (/streak).
  */
@@ -18,7 +18,7 @@
 import React from 'react';
 import { Image } from 'expo-image';
 import { StyleSheet, Text } from 'react-native';
-import { fonts, lowki } from '../../utils/constants';
+import { colors, fonts, lowki } from '../../utils/constants';
 import type { StreakState } from '../../utils/streak';
 import GlassPill from './GlassPill';
 
@@ -51,10 +51,10 @@ export default function StreakPill({ days, state, onPress }: StreakPillProps) {
     >
       <Image
         source={STREAK_FLAME}
-        style={[styles.flame, dying && styles.dim]}
-        tintColor={off ? lowki.beige.dark : undefined}
+        style={[styles.flame, dying && styles.dim, off && styles.off]}
+        tintColor={off ? colors.textTertiary : undefined}
       />
-      <Text style={[styles.days, dying && styles.dim, off && styles.daysOff]} maxFontSizeMultiplier={1.3}>
+      <Text style={[styles.days, dying && styles.dim, off && styles.daysOff, off && styles.off]} maxFontSizeMultiplier={1.3}>
         {days}
       </Text>
     </GlassPill>
@@ -62,7 +62,7 @@ export default function StreakPill({ days, state, onPress }: StreakPillProps) {
 }
 
 const styles = StyleSheet.create({
-  // Éteinte : la silhouette de la flamme, en beige (tintColor d'expo-image ;
+  // Éteinte : la silhouette de la flamme, grisée (tintColor d'expo-image ;
   // celui du style de l'Image de React Native ne s'applique pas)
   flame: {
     width: 20,
@@ -78,7 +78,11 @@ const styles = StyleSheet.create({
   dim: {
     opacity: 0.45,
   },
+  // Éteinte : grisée, comme un bouton désactivé
   daysOff: {
-    color: lowki.beige.dark,
+    color: colors.textTertiary,
+  },
+  off: {
+    opacity: 0.4,
   },
 });
