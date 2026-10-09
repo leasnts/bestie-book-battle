@@ -44,8 +44,10 @@ const ROW = 44;
 // Les deux icônes des repères ; le marque-page, étroit, prend un peu plus
 const STAT_ICON = 30;
 const DISC = 36;
-// Le marque-page d'un jour gardé : plus grand que le disque, son haut aligné sur le haut des disques
-const DAY_BOOKMARK = DISC + 8;
+// Le marque-page d'un jour gardé : aussi large qu'un disque, son bout rond
+// posé pile sur le haut du disque (l'image est carrée, le marque-page fait
+// 814 × 1032 dedans)
+const DAY_BOOKMARK = Math.round((DISC * 1032) / 814);
 /** Pas plus d'un an en arrière */
 const MAX_MONTHS = 12;
 /** Le ruban d'une série : le rouge de la charte, à peine posé */
@@ -207,7 +209,6 @@ function MonthPage({ first, width, today, read, saved, used }: MonthPageProps) {
   const readCount = [...read].filter(inMonth).length;
   // Un jour compte dans la série s'il est lu ou gardé
   const kept = (d: string | null) => !!d && (read.has(d) || saved.has(d));
-  const isBonus = (d: string | null) => !!d && saved.has(d) && !read.has(d);
 
   // La marge intérieure du cadre (16 pt de chaque côté)
   const cellWidth = (width - spacing.lg * 2) / 7;
@@ -261,15 +262,16 @@ function MonthPage({ first, width, today, read, saved, used }: MonthPageProps) {
           grid.map((week, r) => (
             <View key={r} style={styles.row}>
               {/* Le ruban sous chaque série de jours qui se suivent dans la semaine */}
-              {ribbons(week, kept).map(([from, to]) => {
-                // Un bout sur un marque-page part de son milieu : le ruban, plus
-                // large que le marque-page, ne dépasse pas autour
-                const left = (from + 0.5) * cellWidth - (isBonus(week[from]) ? 0 : DISC / 2);
-                const right = (to + 0.5) * cellWidth + (isBonus(week[to]) ? 0 : DISC / 2);
-                return (
-                  <LinearGradient key={from} colors={RIBBON} style={[styles.ribbon, { left, width: right - left }]} />
-                );
-              })}
+              {ribbons(week, kept).map(([from, to]) => (
+                <LinearGradient
+                  key={from}
+                  colors={RIBBON}
+                  style={[
+                    styles.ribbon,
+                    { left: from * cellWidth + (cellWidth - DISC) / 2, width: (to - from) * cellWidth + DISC },
+                  ]}
+                />
+              ))}
               {week.map((day, c) =>
                 day ? (
                   <DayCell
