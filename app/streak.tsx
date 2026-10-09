@@ -462,7 +462,7 @@ const styles = StyleSheet.create({
   },
   dayOnBookmark: {
     fontFamily: fonts.bodyBold,
-    color: lowki.chocolate.dark,
+    color: colors.white,
   },
   dayToday: {
     fontFamily: fonts.bodyBold,
