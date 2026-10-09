@@ -8,8 +8,8 @@
  *   sur ce livre (« 1 / 3 »).
  * - Le calendrier : une série court comme un ruban rouge léger sous ses jours,
  *   le premier jour de la série sous sa flamme, un jour gardé par un
- *   marque-page porte le marque-page. Aujourd'hui, pas encore lu : un disque
- *   beige léger cerclé de points rouges. Les jours à venir s'effacent.
+ *   marque-page porte le marque-page. Aujourd'hui, pas encore lu : son chiffre
+ *   en rouge. Les jours à venir s'effacent.
  *
  * On glisse d'un mois à l'autre jusqu'au début du livre (ou avec ‹ ›), et »
  * ramène au mois en cours.
@@ -352,12 +352,6 @@ function DayCell({ day, width, isToday, future, read, bonus, runStart }: DayCell
           <BonusBookmark size={DAY_BOOKMARK} />
         </View>
       )}
-      {isToday && !read && (
-        <>
-          <LinearGradient colors={[lowki.beige.light, lowki.beige.dark]} style={[styles.disc, styles.todayFill]} />
-          <View style={[styles.disc, styles.todayRing]} />
-        </>
-      )}
       <Text
         style={[
           styles.dayNumber,
@@ -460,14 +454,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     transform: [{ translateY: (DAY_BOOKMARK - DISC) / 2 }],
   },
-  todayFill: {
-    opacity: 0.2,
-  },
-  todayRing: {
-    borderWidth: 2,
-    borderStyle: 'dotted',
-    borderColor: lowki.red.light,
-  },
   dayNumber: {
     fontFamily: fonts.bodySemiBold,
     fontSize: 15,
@@ -486,9 +472,10 @@ const styles = StyleSheet.create({
     fontFamily: fonts.bodyBold,
     color: colors.white,
   },
+  // Aujourd'hui, pas encore lu : le chiffre en rouge, rien d'autre
   dayToday: {
     fontFamily: fonts.bodyBold,
-    color: colors.textPrimary,
+    color: lowki.red.light,
   },
   dayFuture: {
     opacity: 0.4,
