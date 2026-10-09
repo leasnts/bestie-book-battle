@@ -82,10 +82,15 @@ function prevMonth(first: string): string {
   return iso(d);
 }
 
-/** « Octobre 2026 » ; `short` (« Sept. 2026 ») quand le titre partage sa ligne avec trois boutons */
-function monthLabel(first: string, short = false): string {
-  const label = new Date(`${first}T00:00:00Z`).toLocaleDateString('fr-FR', {
-    month: short ? 'short' : 'long',
+/**
+ * « Octobre 2026 ». Le titre partage sa ligne avec trois boutons : un nom de
+ * mois trop long passe en court (« Sept. 2026 »).
+ */
+function monthLabel(first: string): string {
+  const date = new Date(`${first}T00:00:00Z`);
+  const long = date.toLocaleDateString('fr-FR', { month: 'long', timeZone: 'UTC' });
+  const label = date.toLocaleDateString('fr-FR', {
+    month: long.length > 8 ? 'short' : 'long',
     year: 'numeric',
     timeZone: 'UTC',
   });
@@ -160,7 +165,7 @@ export default function StreakRoute() {
   const saved = useMemo(() => new Set(bonusDates), [bonusDates]);
   const month = months[page] ?? months[months.length - 1];
   // Le titre du sheet : le mois affiché, l'année en mot d'accent
-  const title = monthLabel(month, !isCurrent);
+  const title = monthLabel(month);
   const readCount = [...read].filter((d) => d.startsWith(month.slice(0, 7))).length;
   const used = bonusDates.length;
   const entering = (direction > 0 ? FadeInRight : FadeInLeft).duration(220);
@@ -181,10 +186,11 @@ export default function StreakRoute() {
           <View style={isCurrent && styles.disabled} pointerEvents={isCurrent ? 'none' : 'auto'}>
             <GlassButton icon={ChevronRightIcon} onPress={() => goTo(page + 1)} accessibilityLabel="Mois suivant" />
           </View>
-          {/* Dans le passé : d'un toucher, retour à ce mois-ci */}
-          {!isCurrent && (
+          {/* Retour à ce mois-ci. Toujours là, effacé sur ce mois-ci : les
+              flèches ne bougent jamais sous le doigt */}
+          <View style={isCurrent && styles.disabled} pointerEvents={isCurrent ? 'none' : 'auto'}>
             <GlassButton icon={ChevronsRightIcon} onPress={() => goTo(months.length - 1)} accessibilityLabel="Revenir à ce mois-ci" />
-          )}
+          </View>
         </View>
       }
     >
