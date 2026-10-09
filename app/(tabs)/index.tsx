@@ -36,11 +36,13 @@ import Animated, {
     withTiming,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import Button3D from '../../components/Button3D';
 import PageTransition from '../../components/PageTransition';
 import PopEyes from '../../components/PopEyes';
 import BookSection from '../../components/ui/BookSection';
 import GlassButton from '../../components/ui/GlassButton';
+import StreakPill from '../../components/ui/StreakPill';
 import NoteTile from '../../components/ui/NoteTile';
 import NoteTabs, { NOTE_TABS_HEIGHT } from '../../components/ui/NoteTabs';
 import PageSection from '../../components/ui/PageSection';
@@ -57,7 +59,8 @@ import { useProgressStore } from '../../stores/progressStore';
 import { useAnnotationStore } from '../../stores/annotationStore';
 import { useProjectStore } from '../../stores/projectStore';
 import { colors, fonts, shadowAlpha, spacing } from '../../utils/constants';
-import { getActiveStreak } from '../../utils/streak';
+import { dayString } from '../../utils/streak';
+import { useMyStreak } from '../../hooks/useMyStreak';
 import { useTabBarInset } from '../../components/ui/GlassTabBar';
 import { BookOpenIcon, CirclePlusIcon, LibraryBigIcon } from 'lucide-react-native';
 
@@ -250,11 +253,24 @@ export default function HomeScreen() {
   // Savoir si l'utilisateur a bougé le scroll
   const hasChanged = currentPageInput !== lastSavedPage;
 
-  // Ma série en jours, affichée dans le cadre « Ma page »
-  const myStreak = getActiveStreak(
-    myProgress?.streak_count ?? 0,
-    myProgress?.last_streak_date ?? null,
-  );
+  // Ma série : la gélule en haut à droite
+  const myStreakInfo = useMyStreak();
+
+  // Hier manqué et un marque-page en poche : on le propose, une fois par jour
+  // et par livre, avant que la lecture du jour ne relance la série à 1.
+  useEffect(() => {
+    const { state, challengeId } = myStreakInfo;
+    if (state !== 'missed' || !challengeId) return;
+    const key = `streakSaveShown:${challengeId}`;
+    const today = dayString(0);
+    AsyncStorage.getItem(key)
+      .then((shown) => {
+        if (shown === today) return;
+        AsyncStorage.setItem(key, today).catch(() => {});
+        router.push('/streak-save');
+      })
+      .catch(() => {});
+  }, [myStreakInfo.state, myStreakInfo.challengeId]);
 
   // Progression moyenne du groupe (basée sur les pourcentages individuels)
   const averagePercentage = participantsMatchChallenge
@@ -418,17 +434,28 @@ export default function HomeScreen() {
       <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
         {/* Bibliothèque — toutes mes lectures, sur des étagères. Le même rond en
             verre que le « + » de la barre d'onglets */}
-        <GlassButton
-          icon={LibraryBigIcon}
-          onPress={() => router.push('/library')}
-          accessibilityLabel="Mes lectures"
-        />
+        <View style={styles.headerSide}>
+          <GlassButton
+            icon={LibraryBigIcon}
+            onPress={() => router.push('/library')}
+            accessibilityLabel="Mes lectures"
+          />
+        </View>
 
         {/* PopEyes mascotte — décoratif */}
         <PopEyes size="small" />
 
-        {/* Cale de la largeur du bouton bibliothèque : garde PopEyes au centre */}
-        <View style={styles.headerSpacer} />
+        {/* Ma série, en miroir de la bibliothèque. Les deux côtés partagent la
+            largeur : PopEyes reste au centre, quelle que soit la gélule */}
+        <View style={[styles.headerSide, styles.headerSideEnd]}>
+          {myStreakInfo.loaded && (
+            <StreakPill
+              days={myStreakInfo.days}
+              state={myStreakInfo.state}
+              onPress={() => router.push('/streak')}
+            />
+          )}
+        </View>
       </View>
 
       {/*
@@ -452,7 +479,6 @@ export default function HomeScreen() {
             coverUrl={myCoverUrl(activeChallenge, myProgress ?? cachedMyProgress)}
             myPercent={myPercent}
             caps={caps}
-            streakDays={myStreak}
             compact={compactSpacing}
             onPress={() => router.push('/book')}
           />
@@ -601,8 +627,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingBottom: spacing.sm,
   },
-  headerSpacer: {
-    width: 44,
+  headerSide: {
+    flex: 1,
+    flexDirection: 'row',
+  },
+  headerSideEnd: {
+    justifyContent: 'flex-end',
   },
   // La zone qui porte les trois cadres : la hauteur de l'écran, jamais plus
   frames: {

@@ -345,6 +345,10 @@ function RootLayoutNav() {
       {/* Recherche d'un livre (onboarding) : haute d'emblée, le clavier et les résultats */}
       <Stack.Screen name="book-search" options={sheetScreenOptions([0.95])} />
 
+      {/* Ma série : la semaine (gélule de l'accueil) et le marque-page d'un jour manqué */}
+      <Stack.Screen name="streak" options={sheetScreenOptions()} />
+      <Stack.Screen name="streak-save" options={sheetScreenOptions()} />
+
       {/* Bibliothèque : toutes mes lectures, sur des étagères, à la hauteur des étagères */}
       <Stack.Screen name="library" options={sheetScreenOptions()} />
 

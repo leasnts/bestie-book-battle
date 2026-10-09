@@ -61,6 +61,47 @@ export function isStreakAtRisk(lastStreakDate: Date | string | undefined | null)
   return lastRead === yesterday && lastRead !== today;
 }
 
+/** Marque-pages par livre : de quoi garder sa série malgré un jour manqué */
+export const STREAK_BONUS_PER_BOOK = 3;
+
+/**
+ * Les quatre états de ma série, ce que dit la gélule de l'accueil :
+ * - `active` : lu aujourd'hui, la flamme brûle ;
+ * - `atRisk` : lu hier, pas encore aujourd'hui, elle s'éteint à minuit ;
+ * - `missed` : hier manqué, mais un marque-page peut encore la garder ;
+ * - `inactive` : pas de série.
+ *
+ * Les jours sont ceux du serveur (UTC), comme le trigger update_streak.
+ */
+export type StreakState = 'active' | 'atRisk' | 'missed' | 'inactive';
+
+export function getStreakState(
+  streakCount: number,
+  lastStreakDate: string | null | undefined,
+  bonusDates: string[] = [],
+): { state: StreakState; days: number } {
+  if (!streakCount || !lastStreakDate) return { state: 'inactive', days: 0 };
+  const lastRead = lastStreakDate.split('T')[0];
+  if (lastRead === dayString(0)) return { state: 'active', days: streakCount };
+  if (lastRead === dayString(1)) return { state: 'atRisk', days: streakCount };
+  if (lastRead === dayString(2) && bonusesLeft(bonusDates) > 0) {
+    return { state: 'missed', days: streakCount };
+  }
+  return { state: 'inactive', days: 0 };
+}
+
+/** Marque-pages qu'il me reste sur ce livre */
+export function bonusesLeft(bonusDates: string[] = []): number {
+  return Math.max(0, STREAK_BONUS_PER_BOOK - bonusDates.length);
+}
+
+/** Le jour d'il y a `daysAgo` jours, en YYYY-MM-DD (UTC, comme le serveur) */
+export function dayString(daysAgo: number): string {
+  const d = new Date();
+  d.setUTCDate(d.getUTCDate() - daysAgo);
+  return getDateString(d);
+}
+
 function getDateString(date: Date): string {
   return date.toISOString().split('T')[0];
 }
