@@ -11,7 +11,7 @@
  * 2. SÉLECTEUR DE PAGE : scroll pour choisir sa page + boutons annuler/valider
  * 3. TOP 3 : le podium du challenge, plus ta ligne si tu n'y es pas
  * 
- * Le fond est un dégradé linéaire papier → sable (CoverBackdrop), sans texture.
+ * Le fond est le papier uni (colors.bgLight), sans texture ni dégradé.
  * 
  * Données : tout vient de Supabase via les stores Zustand (authStore, projectStore, progressStore).
  */
@@ -40,7 +40,6 @@ import Button3D from '../../components/Button3D';
 import PageTransition from '../../components/PageTransition';
 import PopEyes from '../../components/PopEyes';
 import BookSection from '../../components/ui/BookSection';
-import CoverBackdrop from '../../components/ui/CoverBackdrop';
 import GlassButton from '../../components/ui/GlassButton';
 import NoteTile from '../../components/ui/NoteTile';
 import NoteTabs, { NOTE_TABS_HEIGHT } from '../../components/ui/NoteTabs';
@@ -415,9 +414,6 @@ export default function HomeScreen() {
   return (
     <PageTransition>
     <View style={styles.container}>
-      {/* Fond neutre en dégradé linéaire : plus les couleurs de la couverture */}
-      <CoverBackdrop />
-
       {/* ═══════════ HEADER ═══════════ */}
       <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
         {/* Bibliothèque — toutes mes lectures, sur des étagères. Le même rond en
