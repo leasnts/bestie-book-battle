@@ -1,10 +1,8 @@
 /**
  * BonusPill — mes marque-pages sur ce livre (3 par livre), la même gélule
- * que la série de l'accueil, en version marque-page : le marque-page beurre
- * aquarelle, le nombre qu'il en reste.
- *
- * Le beurre ne se lit pas en texte sur le verre clair (1,2:1) : il colore le
- * marque-page, et le nombre reste en chocolat.
+ * que la série de l'accueil, en version marque-page : le marque-page
+ * chocolat à l'aquarelle, à bout rond (Lea, 2026-10-09), le nombre qu'il en
+ * reste.
  */
 
 import React from 'react';
