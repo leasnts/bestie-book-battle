@@ -6,7 +6,7 @@
  *    ┆ la note à la une ┆
  *
  * Annoter ma page, c'est écrire dans le carnet : les deux actions sortent du
- * haut de sa note, ferrées à droite, en verre comme nos boutons ronds (Lea,
+ * haut de sa note, ferrées à droite, dans le verre des cadres de l'accueil (Lea,
  * 2026-10-09 : plus de chocolat), comme les intercalaires de la feuille d'écriture
  * (`CategoryPicker`), au lieu de flotter seules sous la règle (Lea,
  * 2026-10-05).
@@ -20,7 +20,6 @@
  * glisse dessous (`NOTE_TABS_TUCK`). La cellule laisse `NOTE_TABS_HEIGHT` au-dessus.
  */
 
-import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { PenLineIcon, PlusIcon, SmilePlusIcon, XIcon, type LucideIcon } from 'lucide-react-native';
 import React, { useCallback, useEffect, useState } from 'react';
@@ -36,7 +35,7 @@ import Animated, {
   ZoomIn,
 } from 'react-native-reanimated';
 import { useQuickNote } from '../../hooks/useQuickNote';
-import { borderRadius, colors, creamAlpha, inkAlpha, motion, shadowAlpha, spacing } from '../../utils/constants';
+import { borderRadius, colors, creamAlpha, glassVeil, inkAlpha, motion, shadowAlpha, spacing } from '../../utils/constants';
 import { TRENDING_EMOJIS } from '../../utils/emojis';
 import GlassButton from './GlassButton';
 import GlassMaterial from './GlassMaterial';
@@ -53,8 +52,8 @@ const TAB_WIDTH = 56;
 const TAB_ICON = 20;
 /** Tirer un intercalaire : lent à la fin, comme un onglet de papier qui glisse */
 const TAB_IN_MS = 420;
-/** Un voile sable sur le verre : nu, il sort blanc laiteux sur le papier (Lea, 2026-10-09) */
-const TAB_TINT = ['rgba(214, 184, 150, 0.35)', 'rgba(183, 156, 127, 0.5)'] as const;
+/** Le bord clair des cadres de l'accueil (`GlassSection`) */
+const TAB_EDGE = creamAlpha(0.9);
 
 
 
@@ -179,9 +178,8 @@ function Tab({
       accessibilityLabel={label}
     >
       <Animated.View style={[styles.tab, tabStyle]}>
-        {/* Le verre de GlassButton : le bas, arrondi aussi, reste glissé sous la note */}
-        <GlassMaterial radius={borderRadius.md} rim />
-        <LinearGradient colors={TAB_TINT} style={[StyleSheet.absoluteFill, styles.tint]} pointerEvents="none" />
+        {/* Le verre des cadres de l'accueil (Le livre, Progression) ; le bas reste glissé sous la note */}
+        <GlassMaterial radius={borderRadius.md} veil={glassVeil} edgeColor={TAB_EDGE} />
         <View style={styles.tabIcon}>
           <Icon size={TAB_ICON} color={colors.dark900} strokeWidth={2.25} />
           {badge && <View style={styles.badge} />}
@@ -211,18 +209,10 @@ const styles = StyleSheet.create({
   tabPress: {
     justifyContent: 'flex-end',
   },
-  // L'ombre douce de GlassButton, sans overflow pour ne pas la couper
   tab: {
     width: TAB_WIDTH,
-    shadowColor: colors.black,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.12,
-    shadowRadius: 12,
     alignItems: 'center',
     paddingTop: (NOTE_TABS_HEIGHT - TAB_ICON) / 2,
-  },
-  tint: {
-    borderRadius: borderRadius.md,
   },
   tabIcon: {
     width: TAB_ICON,
