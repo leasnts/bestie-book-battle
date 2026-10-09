@@ -3,7 +3,7 @@
  *
  * Un coup d'œil, rien à faire : le mois, dans les cadres en verre brodés de
  * l'accueil (GlassSection).
- * - Le mois en titre, son nom en mot d'accent ; ‹ › » à droite.
+ * - Le mois en titre, l'année en mot d'accent ; ‹ › » à droite.
  * - Deux repères : les jours lus du mois (la flamme), les marque-pages posés
  *   sur ce livre (« 1 / 3 »).
  * - Le calendrier : une série court comme un ruban rouge léger sous ses jours,
@@ -140,14 +140,14 @@ export default function StreakRoute() {
   );
 
   const read = useMemo(() => new Set(readDays), [readDays]);
-  // Le titre du sheet : le mois affiché, son nom en mot d'accent
+  // Le titre du sheet : le mois affiché, l'année en mot d'accent
   const title = monthLabel(months[page] ?? months[months.length - 1]);
   const saved = useMemo(() => new Set(bonusDates), [bonusDates]);
 
   return (
     <SheetPage
       title={title}
-      accent={title.split(' ')[0]}
+      accent={title.split(' ')[1]}
       actions={
         <View style={styles.arrows}>
           {/* Au bout (début du livre, ce mois-ci), la flèche s'efface */}
