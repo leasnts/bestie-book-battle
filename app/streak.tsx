@@ -7,7 +7,8 @@
  * - Deux repères : les jours lus du mois (la flamme), les marque-pages posés
  *   sur ce livre (« 1 / 3 »).
  * - Le calendrier : une série court comme un ruban rouge léger sous ses jours,
- *   le premier jour de la série sous sa flamme, un jour gardé par un
+ *   le premier jour d'une série (2 jours ou plus) sous sa flamme, un jour lu
+ *   seul en disque rouge, un jour gardé par un
  *   marque-page porte le marque-page. Aujourd'hui : un point sous son chiffre,
  *   et le chiffre en rouge tant qu'il n'est pas lu. Les jours à venir s'effacent.
  *
@@ -288,6 +289,8 @@ function MonthGrid({ first, cellWidth, today, read, saved }: MonthGridProps) {
                 bonus={saved.has(day) && !read.has(day)}
                 // Le premier jour d'une série : la veille ne compte pas
                 runStart={kept(day) && !kept(addDays(day, -1))}
+                // Un jour lu seul, sans veille ni lendemain : pas encore une série
+                alone={kept(day) && !kept(addDays(day, -1)) && !kept(addDays(day, 1))}
               />
             ) : (
               <View key={`empty-${c}`} style={{ width: cellWidth }} />
@@ -323,14 +326,17 @@ interface DayCellProps {
   read: boolean;
   bonus: boolean;
   runStart: boolean;
+  alone: boolean;
 }
 
-function DayCell({ day, width, isToday, future, read, bonus, runStart }: DayCellProps) {
+function DayCell({ day, width, isToday, future, read, bonus, runStart, alone }: DayCellProps) {
   const n = Number(day.slice(8));
   const status = read ? 'lu' : bonus ? 'gardé par un marque-page' : future ? 'à venir' : isToday ? 'pas encore lu' : 'pas lu';
   return (
     <View style={[styles.cell, { width }]} accessible accessibilityLabel={`${n}${isToday ? ", aujourd'hui" : ''}, ${status}`}>
-      {read && runStart && (
+      {/* Un jour lu seul : le disque rouge ; une vraie série s'allume sous sa flamme */}
+      {read && alone && <LinearGradient colors={[lowki.red.light, lowki.red.dark]} style={styles.disc} />}
+      {read && runStart && !alone && (
         <Image
           source={DAY_FLAME}
           style={[
