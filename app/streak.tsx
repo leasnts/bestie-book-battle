@@ -3,11 +3,11 @@
  *
  * Un coup d'œil, rien à faire : le nombre de jours, puis une semaine (lundi →
  * dimanche) :
- * - lu : un disque rouge et une coche ;
+ * - lu : un disque rouge et une coche blanche ;
  * - gardé par un marque-page : le marque-page ;
- * - rien : un disque beige ;
- * - aujourd'hui, pas encore lu : un cercle en points rouges, à remplir ;
- * - les jours à venir : un cercle en points beiges.
+ * - rien : un disque beige clair ;
+ * - les jours à venir : le disque beige, plus léger encore ;
+ * - aujourd'hui, pas encore lu : ce disque léger, cerclé de points rouges.
  *
  * On glisse d'une semaine à l'autre jusqu'au début du livre (ou avec ‹ ›), et
  * » ramène à la semaine en cours. Les marque-pages qu'il me
@@ -174,16 +174,21 @@ function DayCell({ letter, label, isToday, future, read, bonus }: DayCellProps) 
       <Text style={[styles.weekday, isToday && styles.weekdayToday]}>{letter}</Text>
       {read ? (
         <LinearGradient colors={[lowki.red.light, lowki.red.dark]} style={styles.cell}>
-          <CheckIcon size={20} color={lowki.butter.light} strokeWidth={4} />
+          <CheckIcon size={20} color={colors.white} strokeWidth={4} />
         </LinearGradient>
       ) : bonus ? (
         <View style={styles.cell}>
           <BonusBookmark size={30} />
         </View>
-      ) : future || isToday ? (
-        <View style={[styles.cell, styles.ring, isToday ? styles.ringToday : styles.ringFuture]} />
       ) : (
-        <LinearGradient colors={[lowki.beige.light, lowki.beige.dark]} style={[styles.cell, styles.empty]} />
+        <View style={styles.cell}>
+          <LinearGradient
+            colors={[lowki.beige.light, lowki.beige.dark]}
+            style={[StyleSheet.absoluteFill, styles.disc, future || isToday ? styles.ahead : styles.empty]}
+          />
+          {/* Aujourd'hui, pas encore lu : le contour en points rouges, à remplir */}
+          {isToday && <View style={[StyleSheet.absoluteFill, styles.disc, styles.ringToday]} />}
+        </View>
       )}
     </View>
   );
@@ -231,19 +236,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  // Un jour sans lecture : le disque beige, discret
-  empty: {
-    opacity: 0.55,
+  disc: {
+    borderRadius: CELL / 2,
   },
-  ring: {
-    borderWidth: 2,
-    borderStyle: 'dotted',
+  // Un jour passé sans lecture : le disque beige, clair
+  empty: {
+    opacity: 0.4,
+  },
+  // Aujourd'hui et les jours à venir : le même disque, plus léger encore
+  ahead: {
+    opacity: 0.2,
   },
   ringToday: {
+    borderWidth: 2,
+    borderStyle: 'dotted',
     borderColor: lowki.red.light,
-  },
-  ringFuture: {
-    borderColor: lowki.beige.light,
-    opacity: 0.6,
   },
 });
