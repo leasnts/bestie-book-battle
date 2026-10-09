@@ -16,7 +16,7 @@ import GlassPill from './GlassPill';
 const BOOKMARK = require('../../assets/images/bookmark/bookmark.png');
 
 /** Le marque-page aquarelle de la série : à reprendre tel quel (semaine, sheet) */
-export function BonusBookmark({ size = 22 }: { size?: number }) {
+export function BonusBookmark({ size = 26 }: { size?: number }) {
   return <Image source={BOOKMARK} style={{ width: size, height: size }} />;
 }
 

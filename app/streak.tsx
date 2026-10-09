@@ -41,7 +41,7 @@ import { dayString, STREAK_BONUS_PER_BOOK } from '../utils/streak';
 
 const WEEKDAYS = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
 const ROW = 44;
-// Les deux icônes des repères : la flamme a de l'air autour, le marque-page non
+// Les deux icônes des repères ; le marque-page, étroit, prend un peu plus
 const STAT_ICON = 30;
 const DISC = 36;
 /** Pas plus d'un an en arrière */
@@ -232,7 +232,7 @@ function MonthPage({ first, width, today, read, saved, used }: MonthPageProps) {
             accessible
             accessibilityLabel={`${used} marque-page${used > 1 ? 's' : ''} posé${used > 1 ? 's' : ''} sur ${STREAK_BONUS_PER_BOOK} pour ce livre`}
           >
-            <BonusBookmark size={STAT_ICON - 4} />
+            <BonusBookmark size={STAT_ICON + 6} />
             <View>
               <Text style={styles.statValue}>
                 {used}
@@ -326,7 +326,7 @@ function DayCell({ day, width, isToday, future, read, bonus, runStart }: DayCell
       {read && runStart && <LinearGradient colors={[lowki.red.light, lowki.red.dark]} style={styles.disc} />}
       {bonus && (
         <View style={styles.discBox}>
-          <BonusBookmark size={DISC} />
+          <BonusBookmark size={DISC + 8} />
         </View>
       )}
       {isToday && !read && (
@@ -373,7 +373,7 @@ const styles = StyleSheet.create({
   stat: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.md,
+    gap: spacing.sm,
     paddingHorizontal: spacing.xs,
   },
   statIcon: {
