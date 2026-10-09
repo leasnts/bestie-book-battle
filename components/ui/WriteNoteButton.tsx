@@ -11,7 +11,7 @@
  * carré Carnet vide de l'accueil, qui invite à la première note).
  */
 
-import { PenLineIcon } from 'lucide-react-native';
+import { PlusIcon } from 'lucide-react-native';
 import React, { useState } from 'react';
 import { useQuickNote } from '../../hooks/useQuickNote';
 import NoteComposer, { EMPTY_DRAFT, type ComposerDraft } from './NoteComposer';
@@ -50,7 +50,7 @@ export default function WriteNoteButton({ onOpen }: WriteNoteButtonProps) {
   return (
     <>
       <GlassButton
-        icon={PenLineIcon}
+        icon={PlusIcon}
         badge={!!(draft.body || draft.quote)}
         onPress={() => {
           onOpen?.();

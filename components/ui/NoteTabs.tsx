@@ -10,7 +10,7 @@
  * 2026-10-09 : plus de chocolat), comme les intercalaires de la feuille d'écriture
  * (`CategoryPicker`), au lieu de flotter seules sous la règle (Lea,
  * 2026-10-05).
- * - ✎ : la feuille (`NoteComposer`), où tout se fait (`useWriteNote`, la même
+ * - + : la feuille (`NoteComposer`), où tout se fait (`useWriteNote`, la même
  *   que dans le carnet). Un brouillon laissé met un point lie de vin dessus.
  * - ☺ : une réaction en un geste, sans note. L'intercalaire se tire d'un cran ;
  *   la liste à la mode sort au-dessus, sur toute la largeur du bento, et
@@ -21,7 +21,7 @@
  */
 
 import { useRouter } from 'expo-router';
-import { PenLineIcon, PlusIcon, SmilePlusIcon, XIcon, type LucideIcon } from 'lucide-react-native';
+import { PlusIcon, SmilePlusIcon, XIcon, type LucideIcon } from 'lucide-react-native';
 import React, { useCallback, useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import Animated, {
@@ -76,7 +76,7 @@ export default function NoteTabs() {
     <View style={styles.layer} pointerEvents="box-none">
       <View style={styles.tabs}>
       <Tab
-        icon={PenLineIcon}
+        icon={PlusIcon}
         badge={!!(draft.body || draft.quote)}
         label={draft.body ? `Reprendre ma note sur la page ${page} : ${draft.body}` : `Écrire une note sur la page ${page}`}
         onPress={() => {
