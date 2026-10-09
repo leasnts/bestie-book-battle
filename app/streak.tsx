@@ -23,7 +23,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Image, StyleSheet, Text, View } from 'react-native';
 import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
 import Animated, { FadeInLeft, FadeInRight, LinearTransition, runOnJS } from 'react-native-reanimated';
-import { AccentUnit } from '../components/ui/AccentWord';
+import { ACCENT_SCALE, AccentUnit } from '../components/ui/AccentWord';
 import { BonusBookmark } from '../components/ui/BonusPill';
 import GlassButton from '../components/ui/GlassButton';
 import SheetPage from '../components/ui/SheetPage';
@@ -421,10 +421,11 @@ const styles = StyleSheet.create({
     height: ROW,
     alignItems: 'center',
   },
+  // Les jours de la semaine à la main (Welcome Valentines, à l'œil du corps 13)
   weekday: {
     textAlign: 'center',
-    fontFamily: fonts.bodyMedium,
-    fontSize: 13,
+    fontFamily: fonts.accent,
+    fontSize: 13 * ACCENT_SCALE,
     color: colors.textTertiary,
   },
   ribbon: {
