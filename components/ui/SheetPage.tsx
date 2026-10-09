@@ -201,7 +201,7 @@ export function SheetPageHeader({
             <GlassButton icon={ChevronLeftIcon} onPress={onBack} accessibilityLabel="Retour" />
           )}
           <Text
-            style={styles.title}
+            style={[styles.title, accent && styles.titleAccent]}
             numberOfLines={titleLines}
             accessibilityRole="header"
           >
@@ -276,6 +276,12 @@ const styles = StyleSheet.create({
     fontSize: 26,
     lineHeight: 31,
     color: colors.textPrimary,
+  },
+  // Le mot d'accent (Welcome Valentines, 1,25×) monte plus haut que la ligne :
+  // de l'air au-dessus pour qu'iOS ne coupe pas ses hampes, sans bouger le titre
+  titleAccent: {
+    paddingTop: 6,
+    marginTop: -6,
   },
   subtitle: {
     fontFamily: fonts.body,
