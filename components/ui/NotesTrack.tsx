@@ -234,7 +234,7 @@ const styles = StyleSheet.create({
   dropRim: {
     borderWidth: 1.5,
     borderColor: 'rgba(255,255,255,0.9)',
-    boxShadow: '0 0 0 1px rgba(90,69,54,0.22)',
+    boxShadow: '0 0 0 1px rgba(99,61,50,0.22)',
   },
 
 });

@@ -236,7 +236,7 @@ const styles = StyleSheet.create({
   fill: {
     flex: 1,
   },
-  // Le passage cité : un filet lie de vin à gauche, comme sur la note publiée
+  // Le passage cité : un filet rouge à gauche, comme sur la note publiée
   quote: {
     paddingLeft: spacing.md,
     paddingVertical: 0,

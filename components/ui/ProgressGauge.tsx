@@ -6,8 +6,8 @@
  *      ● Toi 34 %       ● Club 30 %      plus court. Bouts contre les côtés de la tuile
  *
  * Deux rangées dans les mêmes colonnes, pour que les deux se voient toujours
- * (sur une seule rangée, le club disparaissait sous moi) : moi en lie de vin,
- * le club en lie de vin clair. À l'apparition, ils se remplissent (le club,
+ * (sur une seule rangée, le club disparaissait sous moi) : moi en rouge,
+ * le club en rouge clair. À l'apparition, ils se remplissent (le club,
  * puis moi, décalé) et les pourcentages comptent jusqu'à leur valeur, sur la
  * même courbe. Avec « Réduire les animations », tout est posé d'emblée.
  */

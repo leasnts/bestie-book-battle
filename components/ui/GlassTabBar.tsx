@@ -62,7 +62,7 @@ const ADD_SIZE = ROUND_BUTTON_SIZE;
 const ADD_GAP = 12;
 
 /**
- * Opacité d'une icône non sélectionnée. Même encre noyer que l'icône active,
+ * Opacité d'une icône non sélectionnée. Même encre chocolat que l'icône active,
  * juste plus effacée : 50 % donne 3,05:1 sur le verre crème, au-dessus du
  * minimum de 3:1 pour une icône porteuse de sens. Ne pas descendre en dessous.
  */
@@ -91,7 +91,7 @@ export function useTabBarInset() {
 // ─── Icône ─────────────────────────────────────────────────────────────────────
 
 /**
- * Icône Lucide à deux états, empilés et fondus l'un dans l'autre, en encre noyer :
+ * Icône Lucide à deux états, empilés et fondus l'un dans l'autre, en encre chocolat :
  * trait fin à IDLE_ICON_OPACITY au repos ; trait plus épais et pleine opacité
  * une fois actif. On anime seulement l'opacité.
  */

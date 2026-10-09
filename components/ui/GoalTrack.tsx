@@ -7,7 +7,7 @@
  * - le **fil** en point avant, un point tous les quelques points : chocolat
  *   jusqu'à moi, sable après — la même matière que la règle de Ma page et les
  *   autocollants brodés ;
- * - les **caps** et la **fin** sont des nœuds de broderie : lie de vin une fois
+ * - les **caps** et la **fin** sont des nœuds de broderie : rouge une fois
  *   dépassés, sable sinon. Plus de date sous le cap en cours (Lea, 2026-10-01) :
  *   on la trouve dans la fiche du livre ;
  * - **moi** : là où le fil passe du chocolat au sable (plus de pastille ni de
@@ -23,7 +23,7 @@ import { CheckIcon } from 'lucide-react-native';
 import React, { useState } from 'react';
 import Svg, { Circle, Defs, G, RadialGradient, Stop } from 'react-native-svg';
 import { StyleSheet, Text, View } from 'react-native';
-import { colors, fonts, inkAlpha } from '../../utils/constants';
+import { colors, fonts, inkAlpha, lowki } from '../../utils/constants';
 import { formatTrackDate, type TrackCap } from '../../utils/track';
 
 interface GoalTrackProps {
@@ -88,9 +88,9 @@ export function KnotGradients() {
   return (
     <Defs>
       <RadialGradient id="knotReached" cx="35%" cy="30%" r="80%">
-        <Stop offset="0" stopColor="#b0596b" />
+        <Stop offset="0" stopColor="#bc6271" />
         <Stop offset="0.55" stopColor={colors.accent} />
-        <Stop offset="1" stopColor="#4f1826" />
+        <Stop offset="1" stopColor={lowki.red.dark} />
       </RadialGradient>
       <RadialGradient id="knotAhead" cx="35%" cy="30%" r="80%">
         <Stop offset="0" stopColor="#f4ece1" />
@@ -145,7 +145,7 @@ const TRACK_HEIGHT = 28;
 const STITCH_STEP = 5;
 const STITCH_R = 1.1;
 /** Les couleurs du fil de Ma page (milieu de ses dégradés) */
-const THREAD_READ = '#3f2b20';
+const THREAD_READ = '#56342b';
 const THREAD_AHEAD = '#d6ccbf';
 export const SAND = '#d8cbbb';
 export const KNOT_R = 3.4;
@@ -161,11 +161,11 @@ export const STEP_GAP = 2;
 /** Le fond de la barre : l'encre à 10 % */
 export const RAIL_COLOR = inkAlpha(0.1);
 /** Gris des étapes pas encore atteintes : le gris de la barre, mais opaque */
-const STEP_AHEAD = '#e2ddd8';
-/** Le club, derrière ma barre : le lie de vin éclairci sur le papier, opaque */
-export const CLUB_GRADIENT = ['#e2c9cd', '#d3b3b9'] as const;
+const STEP_AHEAD = '#e4dfdb';
+/** Le club, derrière ma barre : le rouge Lowki éclairci sur le papier, opaque */
+export const CLUB_GRADIENT = ['#eacfd2', '#e1babf'] as const;
 /** Étape dépassée par le club seulement : la même couleur que sa barre (milieu du dégradé) */
-const STEP_CLUB = '#dabec3';
+const STEP_CLUB = '#e6c5c9';
 
 /**
  * Une étape de la piste, en plus gros, hors de la piste (la liste des caps de

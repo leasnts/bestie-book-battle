@@ -48,10 +48,10 @@ TAIL_END = 60                    # pointe des deux bouts du V
 NOTCH = 6                        # profondeur du V
 BORDER_INSET = 2.2               # surpiqûre : distance au bord du ruban
 
-WINE = ("#8c3b4c", "#5e1f2e")
+WINE = ("#A62F43", "#7C2031")  # rouge Lowki
 ECRU = ("#f3e9df", "#e1cfbf")
 CREAM_THREAD = "#f6ede4"
-WINE_THREAD = "#7a2e3e"
+WINE_THREAD = "#a62f43"
 
 VARIANTS = {
     # Couleur d'accent lie de vin : essai (demande de Lea, 2026-09-17)
@@ -255,7 +255,7 @@ def render(name, spec, rng):
     alpha = np.clip(mask + shadow * (1 - mask), 0, 1)
     shadow_only = (1 - mask) * shadow
     # Là où il n'y a que l'ombre, la couleur est l'ombre elle-même (noyer très sombre)
-    ink = hex_rgb("#1e140e")
+    ink = hex_rgb("#2e1b16")
     rgb = (rgb * mask[..., None] + ink * shadow_only[..., None]) / np.maximum(alpha[..., None], 1e-4)
 
     rgba = np.dstack([np.clip(rgb, 0, 1), alpha])

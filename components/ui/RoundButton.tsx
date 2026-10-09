@@ -5,7 +5,7 @@
  * - `dark` : l'action principale, encre chocolat en dégradé (✓ enregistrer,
  *   ✓ ajouter la note, 🎙 enregistrer, ✎ ☺ de « Ma page ») ;
  * - `ghost` : les autres, `inkAlpha(0.07)` (↺ annuler, ↺ refaire, 🗑) ;
- * - `light` : sur une surface foncée (■ arrêter, sur la gélule lie de vin).
+ * - `light` : sur une surface foncée (■ arrêter, sur la gélule rouge).
  *
  * Même taille partout (`ROUND_BUTTON_SIZE`, aussi celle de `GlassButton`), même
  * place : seule l'icône change (DESIGN.md › Boutons-icônes).
@@ -38,7 +38,7 @@ interface RoundButtonProps {
   disabled?: boolean;
   /** Icône pleine (■ arrêter) */
   filled?: boolean;
-  /** Un point lie de vin dans le coin : quelque chose attend (un brouillon) */
+  /** Un point rouge dans le coin : quelque chose attend (un brouillon) */
   badge?: boolean;
 }
 

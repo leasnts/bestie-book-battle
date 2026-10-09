@@ -2,7 +2,7 @@
  * CategoryPicker — choisir la couleur (la catégorie) d'une note.
  *
  * Chaque pastille a la couleur de sa catégorie et **son nom écrit** : la couleur
- * seule exclurait les personnes daltoniennes. La choisie est entourée de lie de vin.
+ * seule exclurait les personnes daltoniennes. La choisie est entourée de rouge.
  *
  * Un seul sélecteur : l'éditeur de note (en grille) et la feuille rapide de
  * « Ma page » (en intercalaires, `tabs`). Les intercalaires n'ont pas de mot :

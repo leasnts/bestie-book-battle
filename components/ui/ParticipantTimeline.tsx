@@ -13,7 +13,7 @@
  *    ◉  p. 36   +20      16:43
  *
  * Le fil EST la piste de l'accueil, à la verticale : même barre (6 pt, dégradé
- * lie de vin, ce sont mes pages lues), mêmes étapes (rond de 9 pt dans un
+ * rouge, ce sont mes pages lues), mêmes étapes (rond de 9 pt dans un
  * anneau vide de 2 pt), continu du haut en bas, sans trou entre les jours.
  *
  * Mise en page : `SheetPage`, le squelette commun à tous les sheets.

@@ -64,7 +64,7 @@ export function AccentUnit({ children, size, color }: { children: string; size: 
 /** Ce qu'il reste d'opacité au signe, par rapport à son nombre */
 const UNIT_ALPHA = 0.6;
 
-/** La même couleur, moins opaque : « #33231a » ou « rgba(…, 0.66) » */
+/** La même couleur, moins opaque : « #482b24 » ou « rgba(…, 0.66) » */
 function faded(color: string) {
   const rgba = color.match(/^rgba?\(([^)]+)\)$/);
   if (rgba) {
