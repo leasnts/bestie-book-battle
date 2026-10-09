@@ -6,10 +6,11 @@
  *    ┆ la note à la une ┆
  *
  * Annoter ma page, c'est écrire dans le carnet : les deux actions sortent du
- * haut de sa note, ferrées à droite, en encre chocolat (Lea, 2026-10-05), comme les intercalaires de la feuille d'écriture
+ * haut de sa note, ferrées à droite, dans le verre des cadres de l'accueil (Lea,
+ * 2026-10-09 : plus de chocolat), comme les intercalaires de la feuille d'écriture
  * (`CategoryPicker`), au lieu de flotter seules sous la règle (Lea,
  * 2026-10-05).
- * - ✎ : la feuille (`NoteComposer`), où tout se fait (`useWriteNote`, la même
+ * - + : la feuille (`NoteComposer`), où tout se fait (`useWriteNote`, la même
  *   que dans le carnet). Un brouillon laissé met un point lie de vin dessus.
  * - ☺ : une réaction en un geste, sans note. L'intercalaire se tire d'un cran ;
  *   la liste à la mode sort au-dessus, sur toute la largeur du bento, et
@@ -19,9 +20,8 @@
  * glisse dessous (`NOTE_TABS_TUCK`). La cellule laisse `NOTE_TABS_HEIGHT` au-dessus.
  */
 
-import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { PenLineIcon, PlusIcon, SmilePlusIcon, XIcon, type LucideIcon } from 'lucide-react-native';
+import { PlusIcon, SmilePlusIcon, XIcon, type LucideIcon } from 'lucide-react-native';
 import React, { useCallback, useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import Animated, {
@@ -35,9 +35,10 @@ import Animated, {
   ZoomIn,
 } from 'react-native-reanimated';
 import { useQuickNote } from '../../hooks/useQuickNote';
-import { borderRadius, colors, creamAlpha, inkAlpha, inkGradient, motion, shadowAlpha, spacing } from '../../utils/constants';
+import { borderRadius, colors, creamAlpha, glassVeil, inkAlpha, motion, shadowAlpha, spacing } from '../../utils/constants';
 import { TRENDING_EMOJIS } from '../../utils/emojis';
 import GlassButton from './GlassButton';
+import GlassMaterial from './GlassMaterial';
 import PressableScale from './PressableScale';
 import { useWriteNote } from './WriteNoteButton';
 
@@ -51,6 +52,8 @@ const TAB_WIDTH = 56;
 const TAB_ICON = 20;
 /** Tirer un intercalaire : lent à la fin, comme un onglet de papier qui glisse */
 const TAB_IN_MS = 420;
+/** Le bord clair des cadres de l'accueil (`GlassSection`) */
+const TAB_EDGE = creamAlpha(0.9);
 
 
 
@@ -73,7 +76,7 @@ export default function NoteTabs() {
     <View style={styles.layer} pointerEvents="box-none">
       <View style={styles.tabs}>
       <Tab
-        icon={PenLineIcon}
+        icon={PlusIcon}
         badge={!!(draft.body || draft.quote)}
         label={draft.body ? `Reprendre ma note sur la page ${page} : ${draft.body}` : `Écrire une note sur la page ${page}`}
         onPress={() => {
@@ -175,10 +178,10 @@ function Tab({
       accessibilityLabel={label}
     >
       <Animated.View style={[styles.tab, tabStyle]}>
-        {/* Jamais d'aplat : l'encre chocolat des ronds, plus claire en haut */}
-        <LinearGradient colors={inkGradient} style={StyleSheet.absoluteFill} />
+        {/* Le verre des cadres de l'accueil (Le livre, Progression) ; le bas reste glissé sous la note */}
+        <GlassMaterial radius={borderRadius.md} veil={glassVeil} edgeColor={TAB_EDGE} />
         <View style={styles.tabIcon}>
-          <Icon size={TAB_ICON} color={colors.white} strokeWidth={2.2} />
+          <Icon size={TAB_ICON} color={colors.dark900} strokeWidth={2.25} />
           {badge && <View style={styles.badge} />}
         </View>
       </Animated.View>
@@ -208,9 +211,6 @@ const styles = StyleSheet.create({
   },
   tab: {
     width: TAB_WIDTH,
-    borderTopLeftRadius: borderRadius.md,
-    borderTopRightRadius: borderRadius.md,
-    overflow: 'hidden',
     alignItems: 'center',
     paddingTop: (NOTE_TABS_HEIGHT - TAB_ICON) / 2,
   },
@@ -218,16 +218,14 @@ const styles = StyleSheet.create({
     width: TAB_ICON,
     height: TAB_ICON,
   },
-  // Cerclé de crème, comme sur le ✎ du carnet
+  // Le point lie de vin de GlassButton
   badge: {
     position: 'absolute',
-    top: -4,
-    right: -6,
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    borderWidth: 1.5,
-    borderColor: colors.white,
+    top: -3,
+    right: -2,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
     backgroundColor: colors.accent,
   },
   // Au-dessus de l'intercalaire tiré (sa part glissée sous la note comprise),

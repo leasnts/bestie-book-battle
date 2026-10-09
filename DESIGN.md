@@ -590,7 +590,7 @@ défile (pas de − / +), ma page en pages de mon édition, ma série en **jours
 son haut s'efface en fondu, coins droits en haut ; le bas garde l'arrondi et le
 bord d'un cadre (`GlassSection` `fadeTop`).
 - au repos, la rangée est vide : ✎ et ☺ sont les **intercalaires du carré
-  Carnet** (`NoteTabs`, Lea 2026-10-05), deux onglets en encre chocolat (`inkGradient`),
+  Carnet** (`NoteTabs`, Lea 2026-10-05), deux onglets dans le verre des cadres (`GlassMaterial` + `glassVeil`, comme `GlassSection` ; Lea 2026-10-09 : plus de chocolat),
   ferrés à droite, qui sortent du haut de la note à la une, le bas glissé dessous. Tout annote ma
   page **enregistrée**, sans quitter l'accueil. ☺ : une réaction en un geste, sans
   note ; l'intercalaire se tire d'un cran, la liste à la mode (`TRENDING_EMOJIS`)
