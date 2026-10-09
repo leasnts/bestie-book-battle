@@ -5,7 +5,7 @@
  *
  * Le bouton de l'en-tête du carnet ; sur l'accueil, la même feuille s'ouvre
  * par l'intercalaire ✎ du carré Carnet (`NoteTabs`). Un brouillon laissé met un
- * point lie de vin sur le crayon.
+ * point rouge sur le crayon.
  *
  * `useWriteNote` : la même feuille, ouverte par autre chose qu'un rond (le
  * carré Carnet vide de l'accueil, qui invite à la première note).

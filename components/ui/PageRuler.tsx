@@ -14,7 +14,7 @@
  *   brodés (NoteSticker) : une seule matière, le fil, dans toute l'app. Défilement natif libre avec son élan,
  *   puis arrêt en douceur sur la page la plus proche ; un tic par page.
  * - Au centre, une goutte de verre : elle grossit les pages qu'elle couvre (ma
- *   page y est une perle lie de vin), les tasse et les arrondit vers le bord
+ *   page y est une perle rouge), les tasse et les arrondit vers le bord
  *   comme une bille, s'étire avec la vitesse et se reforme quand on lâche.
  *
  * - Au-dessus de la couture, les autres membres du club en épingles de verre
@@ -107,7 +107,7 @@ const ZOOM = 2.2;
 const LENS_SPAN = 4;
 
 const SAND = ['#e6dfd6', '#cfc4b6'] as const;
-const DOT_READ = '#3a2a20';
+const DOT_READ = '#56342b';
 const DOT_UNREAD = '#d9d0c5';
 /** Le point d'une page : rond, plus gros tous les dix */
 const stitchThick = (page: number) => (page % 10 === 0 ? 3.6 : 2.6);
@@ -579,7 +579,7 @@ function Pin({
  * Posée au centre de la règle, elle montre les pages qu'elle couvre, grossies.
  * Dedans, quelques « emplacements » de points qui suivent la règle sur le fil
  * d'animation : chacun affiche la page qui passe à sa place (lue, à lire, ou la
- * mienne en lie de vin), sans rendu React pendant le geste.
+ * mienne en rouge), sans rendu React pendant le geste.
  */
 function GlassDrop({
   center,
@@ -649,7 +649,7 @@ function LensDot({
       transform: [{ translateX: LENS_R + bent - W / 2 }, { scaleX: squash * thick }, { scaleY: thick }],
     };
   });
-  // Lue (chocolat), à lire (sable) ; ma page — la plus proche du centre — en lie de vin
+  // Lue (chocolat), à lire (sable) ; ma page — la plus proche du centre — en rouge
   const readLayer = useAnimatedStyle(() => {
     const x = scrollX.value + lag.value;
     const p = Math.floor(x / STEP) + slot;
@@ -752,7 +752,7 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: 2,
     borderWidth: 1.5,
     borderColor: 'rgba(255,255,255,0.9)',
-    boxShadow: '0 0 0 1px rgba(90,69,54,0.22)',
+    boxShadow: '0 0 0 1px rgba(99,61,50,0.22)',
   },
   drop: {
     position: 'absolute',
@@ -799,6 +799,6 @@ const styles = StyleSheet.create({
     borderRadius: LENS_R,
     borderWidth: 1.5,
     borderColor: 'rgba(255,255,255,0.9)',
-    boxShadow: 'inset 0 -3px 6px rgba(90,69,54,0.16), 0 0 0 1px rgba(90,69,54,0.22)',
+    boxShadow: 'inset 0 -3px 6px rgba(99,61,50,0.16), 0 0 0 1px rgba(99,61,50,0.22)',
   },
 });

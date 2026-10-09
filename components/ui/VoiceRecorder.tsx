@@ -7,7 +7,7 @@
  * Une gélule, des places fixes, seules les icônes changent. **Le même
  * enregistreur partout** (règle de Lea, 2026-09-29) : dans l'éditeur de note, dans
  * la barre d'actions rapides de « Ma page », pour commenter une citation.
- * Pendant l'enregistrement, la gélule passe en lie de vin :
+ * Pendant l'enregistrement, la gélule passe en rouge :
  *
  * |            | gauche      | centre                    | droite       |
  * |------------|-------------|---------------------------|--------------|
@@ -15,7 +15,7 @@
  * | enregistre | ■ arrêter   | onde en direct, fluide    | `0:09`, gras |
  * | enregistré | ↺ refaire   | ▶ réécouter (VoicePlayer) | 🗑 supprimer |
  *
- * Le toucher passe **aussitôt** en lie de vin, sans attendre que le micro
+ * Le toucher passe **aussitôt** en rouge, sans attendre que le micro
  * s'ouvre.
  *
  * - AAC mono ≈ 32 kbps (≈ 240 Ko/min) : le Go gratuit de Supabase tient ≈ 70 h.

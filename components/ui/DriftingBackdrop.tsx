@@ -2,7 +2,7 @@
  * DriftingBackdrop — un fond vivant : des taches douces qui dérivent lentement.
  *
  * Derrière la pile des nouvelles du carnet. Les trois tons de l'app, adoucis
- * (sable, chocolat clair, un souffle de lie de vin), en deux couches qui
+ * (sable, chocolat clair, un souffle de rouge Lowki), en deux couches qui
  * glissent en sens contraire sur une quinzaine de secondes : ça respire sans
  * attirer l'œil loin de la note.
  *
@@ -31,9 +31,9 @@ const BACK = [
   'radial-gradient(55% 35% at 85% 70%, rgba(168,143,123,0.32) 0%, rgba(168,143,123,0) 70%)',
 ].join(', ');
 
-/** Un souffle de lie de vin et de sable clair, qui passe devant */
+/** Un souffle de rouge Lowki et de sable clair, qui passe devant */
 const FRONT = [
-  'radial-gradient(45% 30% at 80% 25%, rgba(140,59,76,0.13) 0%, rgba(140,59,76,0) 70%)',
+  'radial-gradient(45% 30% at 80% 25%, rgba(166,47,67,0.13) 0%, rgba(166,47,67,0) 70%)',
   'radial-gradient(50% 32% at 25% 80%, rgba(226,212,196,0.6) 0%, rgba(226,212,196,0) 70%)',
 ].join(', ');
 

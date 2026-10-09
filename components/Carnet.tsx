@@ -643,7 +643,7 @@ function Pill({
   icon?: LucideIcon;
   /** Ouvre un choix (le tri en cours) : un chevron après le mot */
   chevron?: boolean;
-  /** Combien de choix sont actifs (les filtres) : une pastille lie de vin */
+  /** Combien de choix sont actifs (les filtres) : une pastille rouge */
   count?: number;
   hint?: string;
   /** Les deux boutons du haut se partagent la largeur, à parts égales */

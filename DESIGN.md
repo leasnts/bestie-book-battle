@@ -1,17 +1,18 @@
 ---
 name: Bestie Book Battle
-description: Le carnet de lecture partagé — cosy fait main (papier, aquarelle, maille), encre noyer en dégradé sur papier blanc chaud, animé par des réactions taquines
+description: Le carnet de lecture partagé — cosy fait main (papier, aquarelle, maille), encre chocolat en dégradé sur papier blanc chaud, animé par des réactions taquines
 colors:
-  ink: "#33231a"
-  ink-deep: "#1e140e"
-  ink-panel: "#2a1c14"
+  ink: "#482b24"
+  ink-deep: "#2e1b16"
+  ink-panel: "#3a231d"
   paper: "#f5f3ef"
   surface: "#fdfcfa"
   surface-raised: "#faf8f5"
-  text-primary: "#33231a"
-  text-secondary: "#5a4536"
-  text-tertiary: "#6b5546"
-  text-placeholder: "#7a6453"
+  text-primary: "#482b24"
+  text-secondary: "#633d32"
+  text-tertiary: "#775046"
+  text-placeholder: "#8a5d51"
+  accent: "#a62f43"
   text-subtle: "#e5e0d9"
   rule: "#e5e0d9"
   rule-light: "#eeebe6"
@@ -78,8 +79,12 @@ typography:
 gradients:
   # Jamais d'aplat : toute surface remplie est un dégradé vertical, clair en haut, foncé en bas
   ink:
-    from: "#5a4536"
-    to: "#1e140e"
+    from: "#633d32"
+    to: "#482b24"
+    direction: "top-to-bottom"
+  accent:
+    from: "#a62f43"
+    to: "#7c2031"
     direction: "top-to-bottom"
 rounded:
   xs: "2px"
@@ -127,7 +132,7 @@ components:
     rounded: "{rounded.lg}"
     padding: "16px 20px"
   badge-streak:
-    backgroundColor: "rgba(51,35,26,0.1)"
+    backgroundColor: "rgba(72,43,36,0.1)"
     textColor: "{colors.text-tertiary}"
     typography: "{typography.caption}"
     rounded: "{rounded.sm}"
@@ -213,8 +218,8 @@ Ce que « pas trop » veut dire, concrètement :
 
 ## Colors
 
-**Stratégie : restrained.** Neutres teintés + **une seule couleur d'accent, le lie
-de vin**, et des couleurs uniquement porteuses de sens. Décidé par Lea le
+**Stratégie : restrained.** Neutres teintés + **une seule couleur d'accent, le rouge
+Lowki**, et des couleurs uniquement porteuses de sens. Décidé par Lea le
 2026-09-24 (#73) : avant, chaque écran prenait sa teinte (noyer, encre, lie de
 vin…) et ça partait dans tous les sens.
 
@@ -241,18 +246,18 @@ chocolat `#482B24` sur beurre et beige, beurre `#F5E6A8` sur rouge et chocolat
 (5,3:1 au moins, mesuré).
 
 Elle remplace la palette du 2026-10-05 (rouge `#9c1f27`, beige `#c0a283`,
-chocolat `#6b351d`). Déjà utilisée : les captures App Store. **L'app n'est pas
-encore passée dessus** : basculer l'encre, l'accent et le papier vers ces tons
-est l'issue #131, à comparer sur 2-3 écrans avant de trancher. D'ici là, les
-trois tons ci-dessous restent ceux de l'app.
+chocolat `#6b351d`). **L'app est passée dessus le 2026-10-09 (#131)** : l'encre
+est le chocolat, l'accent le rouge, le papier reste blanc chaud (le beige est un
+fond de papier, jamais une grande surface mise en avant).
 
 ### Trois tons, pas plus
 
 La palette de l'app tient en **trois tons** (Lea, 2026-09-24) :
 
-1. **Lie de vin** — l'accent : états et choix (`accent`, `accentGradient`) ;
-2. **Chocolat foncé** — l'encre : texte, actions, boutons (`ink` `#33231a`, dégradé
-   `#5a4536` → `#1e140e`). Le marron reste central, il n'est pas remplacé ;
+1. **Rouge Lowki** — l'accent : états et choix (`accent` `#a62f43`, dégradé
+   `#A62F43` → `#7C2031`) ;
+2. **Chocolat Lowki** — l'encre : texte, actions, boutons (`ink` `#482b24`, dégradé
+   `#633D32` → `#482B24`). Le marron reste central, il n'est pas remplacé ;
 3. **Beige / blanc** — le papier : fonds, surfaces, écru des signets, aquarelle
    (`paper`, `surface`, crème).
 
@@ -260,12 +265,12 @@ Tout nouvel élément prend l'un des trois. Exceptions : les couleurs d'une
 couverture quand l'écran parle de ce livre, et les couleurs porteuses de sens
 ci-dessous (à ramener un jour vers ces tons).
 
-### L'accent lie de vin
+### L'accent rouge
 
 | Token | Valeur | Rôle |
 |---|---|---|
-| `accentGradient` | `#8c3b4c` → `#5e1f2e` | Toute surface remplie d'accent, toujours en dégradé. Crème dessus : 7,9:1. |
-| `colors.accent` | `#7a2e3e` | Traits d'accent : bordures, points, icônes, filets, interrupteur. |
+| `accentGradient` | `#A62F43` → `#7C2031` | Toute surface remplie d'accent, toujours en dégradé. Crème dessus : 6,6:1. |
+| `colors.accent` | `#a62f43` | Traits d'accent : bordures, points, icônes, filets, interrupteur. |
 
 **La règle : l'encre agit, l'accent dit où l'on en est.**
 - **Accent** : ce qui dit un **état** ou un **choix** — progression (piste de
@@ -289,7 +294,7 @@ comme éclairée par-dessus.
 
 | Dégradé | Haut | Bas | Pour |
 |---|---|---|---|
-| `ink` | `#5a4536` (`text-secondary`) | `#1e140e` (`ink-deep`) | Boutons primaires, pastilles et disques encre, capsules, remplissages de progression |
+| `ink` | `#633D32` (`text-secondary`, chocolat Lowki clair) | `#482B24` (`ink`, chocolat Lowki foncé) | Boutons primaires, pastilles et disques encre, capsules, remplissages de progression |
 
 - **Concerne** : boutons, boutons ronds, pastilles, disques, capsules, badges,
   barres et anneaux de progression, puces pleines.
@@ -308,39 +313,39 @@ comme éclairée par-dessus.
 
 | Token | Valeur | Rôle |
 |---|---|---|
-| `ink` | `#33231a` | Encre noyer foncé. Texte principal, boutons primaires. |
-| `ink-deep` | `#1e140e` | Fond du splash. Base de toutes les ombres. |
-| `ink-panel` | `#2a1c14` | Fond des cartes livre. |
+| `ink` | `#482b24` | Encre chocolat Lowki. Texte principal. |
+| `ink-deep` | `#2e1b16` | Chocolat profond. Base de toutes les ombres. |
+| `ink-panel` | `#3a231d` | Fond des cartes livre. |
 | `paper` | `#f5f3ef` | Fond d'app. Porte une texture noise à 5% d'opacité. |
 | `surface` | `#fdfcfa` | Cartes, champs, sheets. Blanc à peine chaud, ni `#ffffff` ni crème. |
 | `surface-raised` | `#faf8f5` | Cartes non sélectionnées. |
 
-Les neutres ne sont pas des gris : ils tirent vers le marron noyer. **Aucun noir
+Les neutres ne sont pas des gris : ils tirent vers le chocolat. **Aucun noir
 ni blanc pur dans l'app**, ombres et reflets compris — un `rgba(0,0,0,…)` ressort
 gris sur le papier et refroidit tout. Les transparences passent par trois helpers
 de `utils/constants.ts` : `inkAlpha()` (teintes et bordures sur fond clair),
 `shadowAlpha()` (ombres, voiles), `creamAlpha()` (reflets et bordures claires sur
-fond sombre). Les illustrations PNG sont passées en duotone noyer/crème.
+fond sombre). Les illustrations PNG sont passées en duotone marron/crème.
 Toute extension de la palette doit rester sur cette teinte chaude.
 
 ### Texte
 
-`text-primary` `#33231a` → `text-secondary` `#5a4536` → `text-tertiary` `#6b5546`
-→ `text-placeholder` `#7a6453` → `text-subtle` `#e5e0d9`.
+`text-primary` `#482b24` → `text-secondary` `#633d32` → `text-tertiary` `#775046`
+→ `text-placeholder` `#8a5d51` → `text-subtle` `#e5e0d9`.
 
 **Contraste mesuré** (ratios WCAG calculés, pas estimés) :
 
 | Texte | sur `paper` #f5f3ef | sur `surface` #fdfcfa | sur `surface-raised` #faf8f5 |
 |---|---|---|---|
-| `text-primary` | 13,57 ✅ | 14,67 ✅ | 14,19 ✅ |
-| `text-secondary` | 8,10 ✅ | 8,76 ✅ | 8,47 ✅ |
-| `text-tertiary` | 6,29 ✅ | 6,80 ✅ | 6,57 ✅ |
-| `text-placeholder` | 5,02 ✅ | 5,43 ✅ | 5,25 ✅ |
+| `text-primary` | 11,51 ✅ | 12,44 ✅ | 12,03 ✅ |
+| `text-secondary` | 8,44 ✅ | 9,13 ✅ | 8,83 ✅ |
+| `text-tertiary` | 6,27 ✅ | 6,78 ✅ | 6,56 ✅ |
+| `text-placeholder` | 5,03 ✅ | 5,44 ✅ | 5,26 ✅ |
 | `text-subtle` | 1,18 ❌ | 1,28 ❌ | 1,24 ❌ |
 
 **`text-subtle` (`#e5e0d9`) n'est lisible que sur fond sombre.** À 1,2:1 sur fond
-clair il est invisible ; sur les cartes `ink-panel` (`#2a1c14`) il atteint
-12,6:1. C'est donc un token à double emploi : bordure sur fond clair, **texte sur
+clair il est invisible ; sur les cartes `ink-panel` (`#3a231d`) il atteint
+11,1:1. C'est donc un token à double emploi : bordure sur fond clair, **texte sur
 fond sombre**. Les auteurs de livres sur les cartes sombres de l'onboarding et de
 l'invitation l'utilisent correctement. Ne jamais le poser sur `paper`,
 `surface` ou `surface-raised`.
@@ -369,7 +374,7 @@ telles — non tranché.
 Feature à venir, et principe directeur : **chaque book club choisit sa couleur**.
 Le système reste sobre pour que cette couleur ait de la place, et c'est elle
 qui signe l'identité d'un club donné. En attendant, l'emplacement d'accent porte
-le lie de vin (`accent`, `accentGradient`).
+le rouge (`accent`, `accentGradient`).
 
 Conséquences sur la construction : réserver un emplacement d'accent unique,
 paramétrable par challenge, plutôt que de disséminer des couleurs codées en dur.
@@ -488,10 +493,10 @@ poids typographique, jamais par des ombres décoratives.
 
 | Ombre | Valeur | Porte |
 |---|---|---|
-| `button` | `0 4px 6px rgba(30,20,14,0.25)` | Boutons primaires. Franc, assumé. |
-| `buttonLight` | `0 0 6px rgba(30,20,14,0.1)` | Boutons secondaires. |
-| `cardSelected` | `0 4px 20px rgba(30,20,14,0.09)` | Carte active parmi plusieurs. |
-| `xs` | `0 1px 2px rgba(30,20,14,0.05)` | Champs de saisie. |
+| `button` | `0 4px 6px rgba(46,27,22,0.25)` | Boutons primaires. Franc, assumé. |
+| `buttonLight` | `0 0 6px rgba(46,27,22,0.1)` | Boutons secondaires. |
+| `cardSelected` | `0 4px 20px rgba(46,27,22,0.09)` | Carte active parmi plusieurs. |
+| `xs` | `0 1px 2px rgba(46,27,22,0.05)` | Champs de saisie. |
 
 Le `Button3D` pousse la logique jusqu'au bout : ombre portée + ombres internes,
 et l'élément s'enfonce à l'appui. C'est la signature tactile du système.
@@ -566,15 +571,15 @@ Le cadre **Le livre** (`BookSection`) ouvre la fiche du livre d'un toucher :
 la couverture à gauche, **toujours de la hauteur du texte** à côté (mesurée) ; à
 droite le titre (`display` 20), l'autrice, puis **juste dessous** la
 **piste** (`GoalTrack`) de 0 à 100 % du livre, avec **deux remplissages
-superposés**, comme la barre d'une vidéo (lu / chargé) : devant, en lie de vin,
-**ma** progression jusqu'à ma photo ; derrière, en lie de vin clair, la
+superposés**, comme la barre d'une vidéo (lu / chargé) : devant, en rouge,
+**ma** progression jusqu'à ma photo ; derrière, en beurre, la
 **médiane** du club (pas la moyenne : trois lectrices rapides fausseraient le
 repère). Une seule barre pour le club faisait croire que j'avais atteint des
 étapes que seul le club avait dépassées. **Étapes** (caps et fin du livre) en
 ronds pleins de 9 pt, un peu plus gros que la barre, qui est **découpée** de
 2 pt tout autour (masque SVG) : un vrai vide où l'on voit le fond, qui détache le
-point. Pas de liseré blanc : il ressortait sur le verre, qui n'est pas blanc : lie de
-vin si **je** les ai dépassées, lie de vin clair (la même couleur que la barre
+point. Pas de liseré blanc : il ressortait sur le verre, qui n’est pas blanc : rouge
+si **je** les ai dépassées, beurre (la même couleur que la barre
 du club) si seul le club les a dépassées, gris de la barre, opaque, sinon, cap en cours en
 drapeau daté, date de fin au bout — et **sur la ligne de la
 date de fin**, à gauche sous le départ de la piste, `👥 26 %`, le club (la date
@@ -595,7 +600,7 @@ bord d'un cadre (`GlassSection` `fadeTop`).
   page **enregistrée**, sans quitter l'accueil. ☺ : une réaction en un geste, sans
   note ; l'intercalaire se tire d'un cran, la liste à la mode (`TRENDING_EMOJIS`)
   sort au-dessus, sur toute la largeur du bento, et défile ; « + » (`GlassButton`, secondaire) ouvre tous les emojis (/emoji-note,
-  `EmojiGrid`). Un brouillon laissé met un point lie de vin sur ✎ (`badge`).
+  `EmojiGrid`). Un brouillon laissé met un point rouge sur ✎ (`badge`).
   ✎ ouvre la feuille (`NoteComposer`), où **tout se fait** : elle monte au-dessus
   du clavier, l'accueil s'assombrit. Ligne du haut : ✕, la page (« p. 157 »,
   une gélule en verre qu'on touche pour la changer au pavé numérique), ↗ pleine page,
@@ -616,7 +621,7 @@ bord d'un cadre (`GlassSection` `fadeTop`).
 **Un seul enregistreur vocal** (`VoiceRecorder`, Lea, 2026-09-29) : le même dans
 la barre, dans la note qu'on écrit (`NoteDraft`, éditeur et feuille rapide).
 Une gélule `inkAlpha(0.06)`, le bouton rond à gauche (🎙, ■, ↺), le temps ferré
-à droite en gras. Au toucher elle passe **aussitôt** en dégradé lie de vin ;
+à droite en gras. Au toucher elle passe **aussitôt** en dégradé rouge ;
 barres de 4 pt arrondies qui glissent vers leur niveau (140 ms), en crème.
 Enregistré : ▶ réécouter (`VoicePlayer`) et 🗑.
 
@@ -631,7 +636,7 @@ de 27 pt posées en bas du carré, avatar 22, score en `display` 16. À droite l
 taille du carré, sans cadre en verre derrière, coin corné en bas à droite (il
 invite à tourner la page). En haut la catégorie (toujours écrite) et la page ;
 au milieu le texte, la citation en `display` italique, l'emoji seul en grand ou
-le vocal (onde + durée) ; en bas l'autrice et « 1 / 3 » en lie de vin s'il y a
+le vocal (onde + durée) ; en bas l'autrice et « 1 / 3 » en rouge s'il y a
 des nouvelles. À la une : la première des nouvelles, sinon la plus récente.
 Sans note lisible : papier nu, un cadenas et le nombre de notes plus loin. Tout
 le carré ouvre `/carnet`. L'ancienne porte du carnet (`NotesDoor`) a disparu.
@@ -698,7 +703,7 @@ Changer de livre ou en ajouter un se fait dans la **bibliothèque**, route
 (`GlassButton`) à droite du titre (même parcours que le + de la barre d'onglets).
 Dessous, quatre capsules de filtre (`FilterChips`) : **Tout**, **En cours**,
 **Non lus**, **Lus**, une toujours sélectionnée (Tout par défaut). Carrés arrondis
-(8 pt), pas des pilules. Sélectionnée : **lie de vin** en dégradé (`accentGradient`,
+(8 pt), pas des pilules. Sélectionnée : **rouge** en dégradé (`accentGradient`,
 la couleur d'accent, la même que les signets), texte crème ; sinon contour sur
 fond blanc. Les filtres passent
 **par-dessus** l'aquarelle du coin (elle est dans l'en-tête de la liste, dessous). Le filtre n'est pas retenu et le sheet ne rétrécit pas quand on
@@ -729,15 +734,15 @@ arrête de grandir et la liste défile.
 chaque couverture, calculé sur **ma** progression, jamais sur celle du club :
 - **pas commencé** : rien ;
 - **nouveau** : seul le dernier livre ajouté, tant qu'il n'est pas commencé —
-  ruban écru, surpiqûre et étincelle Lucide (`sparkle`) lie de vin ;
-- **en cours** : ruban écru que le **lie de vin de « terminé » imprègne depuis le
+  ruban écru, surpiqûre et étincelle Lucide (`sparkle`) rouge ;
+- **en cours** : ruban écru que le **rouge de « terminé » imprègne depuis le
   bout du V, à mon %** (10 % au moins, sinon on ne le voit pas), comme une
   teinture qui monte dans le tissu : à 100 %, c'est le signet « terminé ». Une
   seule couleur d'accent pour les états (le noyer faisait une couleur de plus).
   Front **ondulé et net** (le fondu faisait flou), avec une ligne à peine plus
   foncée là où la teinture s'accumule (comme le bord d'une aquarelle). Dans la
   partie teinte, la surpiqûre passe en crème ;
-- **terminé** : ruban lie de vin, surpiqûre crème, coche Lucide (`check`) crème.
+- **terminé** : ruban rouge, surpiqûre crème, coche Lucide (`check`) crème.
 
 Essais écartés : pastille en pourcentage « 58 % », anneau de progression sur flou
 dépoli, autocollant rond.
@@ -800,7 +805,7 @@ Pendant une recherche : des silhouettes de lignes, jamais de spinner.
 La fiche d'un livre (`/explore-book`, sheet sans titre) : couverture, titre,
 autrice (la toucher cherche ses livres), `518 p. · 2023`, puis trois places
 fixes : **Lancer une lecture** (ou **Ouvrir** s'il est déjà dans ma
-bibliothèque), ♥ envie (lie de vin quand gardé), partager. Pas de note, pas
+bibliothèque), ♥ envie (rouge quand gardé), partager. Pas de note, pas
 d'avis, pas de résumé.
 
 ### Barre d'onglets
@@ -899,9 +904,9 @@ du textile réaliste.
 
 | Variante | Ruban | Surpiqûre | Icône Lucide | Pour |
 |---|---|---|---|---|
-| `done` | lie de vin `#8c3b4c` → `#5e1f2e` | crème | `check` crème | livre terminé |
-| `reading` | écru, imprégné de lie de vin `#8c3b4c` → `#5e1f2e` à mon % | lie de vin / crème | — | livre en cours |
-| `new` | écru `#f3e9df` → `#e1cfbf` | lie de vin | `sparkle` lie de vin, **pleine** | dernier livre ajouté |
+| `done` | rouge `#A62F43` → `#7C2031` | crème | `check` crème | livre terminé |
+| `reading` | écru, imprégné de rouge `#A62F43` → `#7C2031` à mon % | rouge / crème | — | livre en cours |
+| `new` | écru `#f3e9df` → `#e1cfbf` | rouge | `sparkle` rouge, **pleine** | dernier livre ajouté |
 
 **Pictogrammes : icônes Lucide posées sur le ruban**, jamais brodées ni dessinées
 dans l'image (règle « Lucide uniquement » ; la coche brodée faisait grossière). Le
@@ -911,7 +916,7 @@ ruban brodé porte la matière, l'icône porte le sens.
 (écru, avec ombre) et `progress-fill` (noyer, sans ombre pour ne pas la doubler) — et révèle la seconde sous le front (masque SVG : vagues + fondu). Les
 tissus et la surpiqûre coïncident au pixel.
 
-Le lie de vin est un **essai de couleur d'accent** (issue dédiée sur le BBB
+Le rouge est un **essai de couleur d'accent** (issue dédiée sur le BBB
 Roadmap), pas encore adopté pour le reste de l'app. Premier essai en noyer et
 sable : terne, « pas ouf ».
 
@@ -974,7 +979,7 @@ icône est l'un de ces deux, et rien d'autre :
   construction : s'il y en a partout, plus rien n'est important.
 
 Dans le contenu, `RoundButton` garde aussi `ghost` (↺ 🗑) et `light` (sur la
-gélule lie de vin).
+gélule rouge).
 
 **Une seule taille, partout, sans exception : 44 pt** (`ROUND_BUTTON_SIZE` dans
 `utils/constants.ts`, icône 19 pt). Règle de Lea (2026-10-02) : un bouton rond

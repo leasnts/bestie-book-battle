@@ -18,7 +18,7 @@ export default {
     // (fond rouge en dégradé seul = 1re image d'AnimatedSplash). Ceci n'en est
     // que l'approximation, au cas où on régénère le dossier ios.
     splash: {
-      backgroundColor: "#99202a",
+      backgroundColor: "#a62f43",
     },
     ios: {
       bundleIdentifier: IS_DEV

@@ -2,7 +2,7 @@
  * Composant Button3D - Boutons avec effet 3D pixel-perfect
  * 
  * Deux variants sémantiques :
- * - **primary** (bouton principal / "nir") : fond noyer foncé (colors.dark900), pour l'action principale
+ * - **primary** (bouton principal / "nir") : fond chocolat foncé (colors.dark900), pour l'action principale
  * - **secondary** (bouton secondaire) : fond crème (colors.bgLight), pour actions secondaires ou retour
  * 
  * Le bouton back est un Button3D variant="secondary" en mode icon-only.

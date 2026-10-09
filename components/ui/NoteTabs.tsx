@@ -11,7 +11,7 @@
  * (`CategoryPicker`), au lieu de flotter seules sous la règle (Lea,
  * 2026-10-05).
  * - + : la feuille (`NoteComposer`), où tout se fait (`useWriteNote`, la même
- *   que dans le carnet). Un brouillon laissé met un point lie de vin dessus.
+ *   que dans le carnet). Un brouillon laissé met un point rouge dessus.
  * - ☺ : une réaction en un geste, sans note. L'intercalaire se tire d'un cran ;
  *   la liste à la mode sort au-dessus, sur toute la largeur du bento, et
  *   défile ; « + » (en verre) ouvre tous les emojis (/emoji-note).
@@ -218,7 +218,7 @@ const styles = StyleSheet.create({
     width: TAB_ICON,
     height: TAB_ICON,
   },
-  // Le point lie de vin de GlassButton
+  // Le point rouge de GlassButton
   badge: {
     position: 'absolute',
     top: -3,

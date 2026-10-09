@@ -12,7 +12,7 @@
  * passent donc derrière elle.
  *
  * Sur chaque couverture, selon MA progression, un signet brodé qui pend du haut
- * (RibbonBookmark) : rempli de lie de vin à mon % pour un livre en cours, coche
+ * (RibbonBookmark) : rempli de rouge à mon % pour un livre en cours, coche
  * pour un livre terminé, étincelle pour le dernier livre ajouté pas encore
  * commencé. Un autre livre pas commencé n'a rien.
  *

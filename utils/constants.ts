@@ -9,20 +9,21 @@
  */
 
 /**
- * Palette "noyer sur papier blanc" : chocolat chaud, plaid, lumière tamisée.
+ * Palette « chocolat sur papier blanc » (charte Lowki, #131) : chocolat chaud,
+ * plaid, lumière tamisée.
  *
- * L'encre est un marron noyer foncé, le papier un blanc à peine chaud. Aucun
+ * L'encre est le chocolat Lowki, le papier un blanc à peine chaud. Aucun
  * noir pur ni blanc pur dans l'app : même les ombres et les reflets partent de
  * ces deux teintes, sinon ils ressortent gris et refroidissent tout.
  *
  * Les canaux RGB bruts servent à composer des transparences qui restent dans la
  * teinte (voir inkAlpha, shadowAlpha, creamAlpha plus bas).
  */
-const INK_RGB = '51,35,26';     // #33231a
-const SHADOW_RGB = '30,20,14';  // #1e140e
+const INK_RGB = '72,43,36';     // #482b24 — chocolat Lowki foncé
+const SHADOW_RGB = '46,27,22';  // #2e1b16 — chocolat profond
 const CREAM_RGB = '253,252,250'; // #fdfcfa
 
-/** Encre noyer transparente : teintes de fond, bordures, séparateurs sur fond clair */
+/** Encre chocolat transparente : teintes de fond, bordures, séparateurs sur fond clair */
 export const inkAlpha = (alpha: number) => `rgba(${INK_RGB},${alpha})`;
 /** Ombre marron très sombre transparente : ombres portées, ombres internes, voiles */
 export const shadowAlpha = (alpha: number) => `rgba(${SHADOW_RGB},${alpha})`;
@@ -61,8 +62,8 @@ export const ROUND_BUTTON_ICON_FILLED = 15;
  * texte qu'il faut lire (sous-titre, corps) passe en chocolat `dark` sur beurre
  * et beige, en beurre `light` sur rouge et chocolat (≥ 5,3:1, mesuré).
  *
- * Pas encore branchée sur l'app : le basculement du design system (encre,
- * accent, papier) est l'issue #131 (DESIGN.md › Charte Lowki).
+ * Branchée sur l'app (#131) : l'encre (`colors.textPrimary`, `inkGradient`) est
+ * le chocolat, l'accent (`colors.accent`, `accentGradient`) le rouge.
  */
 export const lowki = {
   butter: { light: '#F5E6A8', dark: '#D6C36F' },
@@ -73,26 +74,26 @@ export const lowki = {
 
 export const colors = {
   // Dark colors (onboarding, boutons principaux)
-  dark950: '#1e140e',          // Fond splash screen
-  dark900: '#33231a',          // Boutons principaux, texte principal — noyer foncé
-  dark800: '#2a1c14',          // Fond carte livre
+  dark950: '#2e1b16',          // Chocolat profond : bas des dégradés d'encre, ombres
+  dark900: '#482b24',          // Boutons principaux, texte principal — chocolat Lowki foncé
+  dark800: '#3a231d',          // Fond carte livre
 
   // Light colors (backgrounds)
   white: '#fdfcfa',            // Background inputs, cartes — blanc à peine chaud, pas blanc pur
-  black: '#1e140e',            // Uniquement pour les ombres portées, jamais pour du texte ni un fond
+  black: '#2e1b16',            // Uniquement pour les ombres portées, jamais pour du texte ni un fond
   bgSecondary: '#faf8f5',      // Background cartes non-sélectionnées
   bgLight: '#f5f3ef',          // Bouton back, bouton secondaire, fonds de sheet
   bgApp: '#ede8e0',            // Fond des écrans (onglets, activité) : un cran sous les cadres pour qu'ils ressortent
 
   // Text colors — contrastes WCAG mesurés sur bgLight / bgSecondary / white
-  textPrimary: '#33231a',      // Texte principal (900) — 13,6 / 14,2 / 14,7
-  textSecondary: '#5a4536',    // Texte secondaire (700) — 8,1 / 8,5 / 8,8
-  textTertiary: '#6b5546',     // Texte tertiaire (600) — 6,3 / 6,6 / 6,8
-  textPlaceholder: '#7a6453',  // Placeholders (500) — 5,0 / 5,3 / 5,4
-  textSubtle: '#e5e0d9',       // Texte subtle (300) — lisible uniquement sur fond sombre (12,6 sur dark800)
+  textPrimary: '#482b24',      // Texte principal (900) — chocolat Lowki foncé — 11,5 / 12,0 / 12,4
+  textSecondary: '#633d32',    // Texte secondaire (700) — chocolat Lowki clair — 8,4 / 8,8 / 9,1
+  textTertiary: '#775046',     // Texte tertiaire (600) — 6,3 / 6,6 / 6,8
+  textPlaceholder: '#8a5d51',  // Placeholders (500) — 5,0 / 5,3 / 5,4
+  textSubtle: '#e5e0d9',       // Texte subtle (300) — lisible uniquement sur fond sombre (11,1 sur dark800)
 
-  // Accent lie de vin, pour les traits (cf. accentGradient pour les surfaces)
-  accent: '#7a2e3e',
+  // Accent rouge Lowki, pour les traits (cf. accentGradient pour les surfaces) — 6,1 / 6,4 / 6,6
+  accent: '#a62f43',
 
   // Border colors
   border: '#e5e0d9',           // Bordure inputs
@@ -124,17 +125,17 @@ export const colors = {
 };
 
 /**
- * L'accent lie de vin : la seule couleur d'accent de l'app, pour ce qui dit
+ * L'accent rouge Lowki : la seule couleur d'accent de l'app, pour ce qui dit
  * « état » ou « choisi » (progression, sélection, interrupteur, signets). La
  * navigation (onglets, +, bibliothèque) reste en encre. Les boutons d'action restent en encre : l'encre agit, l'accent dit
  * où l'on en est. Un seul emplacement, pour qu'une couleur de club puisse un
  * jour le remplacer (DESIGN.md › Colors).
  *
  * - `accentGradient` pour toute surface remplie (jamais d'aplat), clair en haut →
- *   foncé en bas ; crème dessus : 7,9:1 sur le clair ;
+ *   foncé en bas ; crème dessus : 6,6:1 sur le clair ;
  * - `colors.accent` pour les traits : bordures, points, icônes, interrupteur.
  */
-export const accentGradient = ['#8c3b4c', '#5e1f2e'] as const;
+export const accentGradient = [lowki.red.light, lowki.red.dark] as const;
 
 /**
  * Le rouge des suppressions (glisser pour supprimer) : le seul rouge de l'app,
@@ -142,8 +143,8 @@ export const accentGradient = ['#8c3b4c', '#5e1f2e'] as const;
  */
 export const dangerGradient = ['#d4453f', '#a92f2a'] as const;
 
-/** L'encre en surface (boutons d'action) : chocolat, clair en haut → foncé en bas */
-export const inkGradient = ['#5a4536', '#1e140e'] as const;
+/** L'encre en surface (boutons d'action) : chocolat Lowki, clair en haut → foncé en bas ; crème dessus : 9,1:1 */
+export const inkGradient = [lowki.chocolate.light, lowki.chocolate.dark] as const;
 
 /** Le papier beige des cadres posés dans un sheet (GlassSection `paper`) */
 export const paperFrameGradient = ['#f1ebe2', '#e7dfd2'] as const;
@@ -157,7 +158,7 @@ export const paperFrameGradient = ['#f1ebe2', '#e7dfd2'] as const;
  * de la famille.
  *
  * Une couleur = une catégorie, la même pour tout le club. L'encre `ink` garde
- * au moins 7:1 sur chacune (mesuré), donc le texte d'une note reste lisible
+ * au moins 6:1 sur chacune (mesuré), donc le texte d'une note reste lisible
  * quelle que soit la catégorie. La couleur n'est jamais la seule information :
  * le nom de la catégorie s'affiche toujours (DESIGN.md › Carnet).
  */

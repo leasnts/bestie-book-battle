@@ -46,10 +46,10 @@ const SPLASH_LOGO_SIZE = 220;
  * logo d'un rouge plus profond, et un liseré clair d'1 pt sous chaque forme pour
  * l'effet gravé dans le papier. Dégradés partout (jamais d'aplat), sauf le texte.
  */
-const SPLASH_BG = ['#a3232b', '#8f1c24'] as const;
-const SHAPE_GRADIENT = ['#6c1419', '#561115'] as const;
-const SHAPE_WORD = '#5f1216';
-const DEBOSS_LIGHT = '#c0454c';
+const SPLASH_BG = ['#a62f43', '#92293b'] as const;
+const SHAPE_GRADIENT = ['#6e1f2c', '#581924'] as const;
+const SHAPE_WORD = '#611b27';
+const DEBOSS_LIGHT = '#c35164';
 const DEBOSS_OPACITY = 0.55;
 /** Décalage du liseré, 1 pt, dans le repère 1200 des yeux et celui de la police. */
 const DEBOSS_EYES = 5.5;
