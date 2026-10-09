@@ -178,7 +178,7 @@ function DayCell({ letter, label, isToday, future, read, bonus }: DayCellProps) 
         </LinearGradient>
       ) : bonus ? (
         <View style={styles.cell}>
-          <BonusBookmark size={24} />
+          <BonusBookmark size={30} />
         </View>
       ) : future || isToday ? (
         <View style={[styles.cell, styles.ring, isToday ? styles.ringToday : styles.ringFuture]} />

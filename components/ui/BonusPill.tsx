@@ -1,22 +1,27 @@
 /**
  * BonusPill — mes marque-pages sur ce livre (3 par livre), la même gélule
  * que la série de l'accueil, en version marque-page : le marque-page beurre
- * de la charte, le nombre qu'il en reste.
+ * aquarelle, le nombre qu'il en reste.
  *
- * Le beurre seul ne se lit pas sur le verre clair (1,2:1) : il colore le
- * marque-page, liseré beurre foncé, et le nombre reste en chocolat.
+ * Le beurre ne se lit pas en texte sur le verre clair (1,2:1) : il colore le
+ * marque-page, et le nombre reste en chocolat.
  */
 
-import { BookmarkIcon } from 'lucide-react-native';
 import React from 'react';
-import { StyleSheet, Text } from 'react-native';
+import { Image, StyleSheet, Text } from 'react-native';
 import { fonts, lowki } from '../../utils/constants';
 import { STREAK_BONUS_PER_BOOK } from '../../utils/streak';
 import GlassPill from './GlassPill';
 
-/** Le marque-page de la série : à reprendre tel quel (semaine, sheet) */
-export function BonusBookmark({ size = 20 }: { size?: number }) {
-  return <BookmarkIcon size={size} strokeWidth={2.25} color={lowki.butter.dark} fill={lowki.butter.light} />;
+const BOOKMARKS = {
+  1: require('../../assets/images/bookmark/bookmark-1.png'),
+  2: require('../../assets/images/bookmark/bookmark-2.png'),
+} as const;
+const BOOKMARK = BOOKMARKS[2];
+
+/** Le marque-page aquarelle de la série : à reprendre tel quel (semaine, sheet) */
+export function BonusBookmark({ size = 22 }: { size?: number }) {
+  return <Image source={BOOKMARK} style={{ width: size, height: size }} />;
 }
 
 export default function BonusPill({ left }: { left: number }) {
