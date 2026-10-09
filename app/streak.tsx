@@ -41,8 +41,10 @@ import { dayString, STREAK_BONUS_PER_BOOK } from '../utils/streak';
 
 const WEEKDAYS = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
 const ROW = 44;
-// Les deux icônes des repères ; le marque-page, étroit, prend un peu plus
-const STAT_ICON = 30;
+// Les deux icônes des repères, à la même taille à l'œil : la flamme a du vide
+// autour d'elle dans son image ; le marque-page, plein, se tient un peu plus petit
+const STAT_ICON = 34;
+const STAT_BOOKMARK = 29;
 const DISC = 36;
 // Le marque-page d'un jour gardé : aussi large qu'un disque, son bout rond
 // posé pile sur le haut du disque (l'image est carrée, le marque-page fait
@@ -236,7 +238,7 @@ function MonthPage({ first, width, today, read, saved, used }: MonthPageProps) {
             accessible
             accessibilityLabel={`${used} marque-page${used > 1 ? 's' : ''} posé${used > 1 ? 's' : ''} sur ${STREAK_BONUS_PER_BOOK} pour ce livre`}
           >
-            <BonusBookmark size={STAT_ICON + 6} />
+            <BonusBookmark size={STAT_BOOKMARK} />
             <View>
               <Text style={styles.statValue}>
                 {used}
