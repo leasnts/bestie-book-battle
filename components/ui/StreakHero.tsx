@@ -4,7 +4,8 @@
  */
 
 import React from 'react';
-import { Image, StyleSheet, Text, View } from 'react-native';
+import { Image } from 'expo-image';
+import { StyleSheet, Text, View } from 'react-native';
 import { colors, fonts, lowki, spacing } from '../../utils/constants';
 import { STREAK_FLAME } from './StreakPill';
 
@@ -21,7 +22,11 @@ export default function StreakHero({ days, flame = 'lit' }: StreakHeroProps) {
       accessible
       accessibilityLabel={days > 0 ? `${days} jour${days > 1 ? 's' : ''} d'affilée` : 'Pas de série'}
     >
-      <Image source={STREAK_FLAME} style={[styles.flame, flame === 'dim' && styles.dim, flame === 'off' && styles.off]} />
+      <Image
+        source={STREAK_FLAME}
+        style={[styles.flame, flame === 'dim' && styles.dim]}
+        tintColor={flame === 'off' ? lowki.beige.light : undefined}
+      />
       <Text style={styles.days}>{days}</Text>
       <Text style={styles.unit}>{days > 1 ? 'jours' : 'jour'}</Text>
     </View>
@@ -41,9 +46,6 @@ const styles = StyleSheet.create({
   },
   dim: {
     opacity: 0.5,
-  },
-  off: {
-    tintColor: lowki.beige.light,
   },
   days: {
     fontFamily: fonts.display,

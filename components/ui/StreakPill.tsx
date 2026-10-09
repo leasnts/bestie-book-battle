@@ -6,26 +6,18 @@
  * (`ROUND_BUTTON_SIZE`), même ombre. La flamme Lowki à l'aquarelle, le nombre
  * de jours en rouge de la charte, sans « j ».
  *
- * Trois visages (voir `getStreakState`) :
- * - en cours (lu aujourd'hui) : la flamme pleine ;
- * - qui va mourir (pas encore lu aujourd'hui, ou hier manqué) : la flamme
- *   respire, pâlit et revient, comme une braise ;
- * - éteinte (pas de série) : une flamme sable et un 0.
+ * Trois visages (voir `getStreakState`), sans animation :
+ * - en cours (lu aujourd'hui) : la flamme et le nombre en rouge plein ;
+ * - qui va mourir (pas encore lu aujourd'hui, ou hier manqué) : flamme et
+ *   nombre en rouge atténué ;
+ * - éteinte (pas de série) : flamme et 0 grisés.
  *
  * Un toucher ouvre la semaine de ma série (/streak).
  */
 
-import React, { useEffect } from 'react';
-import { Image, StyleSheet, Text } from 'react-native';
-import Animated, {
-  cancelAnimation,
-  Easing,
-  useAnimatedStyle,
-  useReducedMotion,
-  useSharedValue,
-  withRepeat,
-  withTiming,
-} from 'react-native-reanimated';
+import React from 'react';
+import { Image } from 'expo-image';
+import { StyleSheet, Text } from 'react-native';
 import { colors, fonts, lowki } from '../../utils/constants';
 import type { StreakState } from '../../utils/streak';
 import GlassPill from './GlassPill';
@@ -51,29 +43,18 @@ export default function StreakPill({ days, state, onPress }: StreakPillProps) {
   const dying = state === 'atRisk' || state === 'missed';
   const off = state === 'inactive';
 
-  // La braise : la flamme pâlit et revient, lentement
-  const reduceMotion = useReducedMotion();
-  const glow = useSharedValue(1);
-  useEffect(() => {
-    if (dying && !reduceMotion) {
-      glow.value = withRepeat(withTiming(0.35, { duration: 1100, easing: Easing.inOut(Easing.sin) }), -1, true);
-    } else {
-      cancelAnimation(glow);
-      glow.value = dying ? 0.5 : 1;
-    }
-  }, [dying, reduceMotion, glow]);
-  const flameStyle = useAnimatedStyle(() => ({ opacity: glow.value }));
-
   return (
     <GlassPill
       onPress={onPress}
       accessibilityLabel={LABELS[state](days)}
       accessibilityHint="Ouvre ma série de la semaine"
     >
-      <Animated.View style={flameStyle}>
-        <Image source={STREAK_FLAME} style={[styles.flame, off && styles.flameOff]} />
-      </Animated.View>
-      <Text style={[styles.days, off && styles.daysOff]} maxFontSizeMultiplier={1.3}>
+      <Image
+        source={STREAK_FLAME}
+        style={[styles.flame, dying && styles.dim, off && styles.off]}
+        tintColor={off ? colors.textTertiary : undefined}
+      />
+      <Text style={[styles.days, dying && styles.dim, off && styles.daysOff, off && styles.off]} maxFontSizeMultiplier={1.3}>
         {days}
       </Text>
     </GlassPill>
@@ -81,13 +62,11 @@ export default function StreakPill({ days, state, onPress }: StreakPillProps) {
 }
 
 const styles = StyleSheet.create({
+  // Éteinte : la silhouette de la flamme, grisée (tintColor d'expo-image ;
+  // celui du style de l'Image de React Native ne s'applique pas)
   flame: {
     width: 20,
     height: 20,
-  },
-  // Éteinte : la silhouette de la flamme, en sable
-  flameOff: {
-    tintColor: lowki.beige.light,
   },
   days: {
     fontFamily: fonts.bodyBold,
@@ -95,7 +74,15 @@ const styles = StyleSheet.create({
     color: lowki.red.light,
     fontVariant: ['tabular-nums'],
   },
+  // Va mourir : flamme et nombre atténués ensemble
+  dim: {
+    opacity: 0.45,
+  },
+  // Éteinte : grisée, comme un bouton désactivé
   daysOff: {
     color: colors.textTertiary,
+  },
+  off: {
+    opacity: 0.4,
   },
 });
