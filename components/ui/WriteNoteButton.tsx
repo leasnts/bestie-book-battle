@@ -1,5 +1,5 @@
 /**
- * WriteNoteButton — le ✎ qui annote ma page : un rond chocolat qui ouvre la
+ * WriteNoteButton — le ✎ qui annote ma page : un rond en verre qui ouvre la
  * feuille d'écriture (`NoteComposer`), où tout se fait : écrire, dire (🎙),
  * citer (❝), choisir le thème et la page.
  *
@@ -15,7 +15,7 @@ import { PenLineIcon } from 'lucide-react-native';
 import React, { useState } from 'react';
 import { useQuickNote } from '../../hooks/useQuickNote';
 import NoteComposer, { EMPTY_DRAFT, type ComposerDraft } from './NoteComposer';
-import RoundButton from './RoundButton';
+import GlassButton from './GlassButton';
 
 interface WriteNoteButtonProps {
   /** Juste avant d'ouvrir la feuille (fermer ce qui est ouvert à côté) */
@@ -49,15 +49,14 @@ export default function WriteNoteButton({ onOpen }: WriteNoteButtonProps) {
 
   return (
     <>
-      <RoundButton
+      <GlassButton
         icon={PenLineIcon}
-        variant="dark"
         badge={!!(draft.body || draft.quote)}
         onPress={() => {
           onOpen?.();
           open();
         }}
-        label={
+        accessibilityLabel={
           draft.body ? `Reprendre ma note sur la page ${page} : ${draft.body}` : `Écrire une note sur la page ${page}`
         }
       />
