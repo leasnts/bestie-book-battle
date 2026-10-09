@@ -37,7 +37,7 @@ export default function TabLayout() {
       tabBar={(props) => <GlassTabBar {...props} onAddPress={handleAddChallenge} />}
       screenOptions={{
         headerShown: false,
-        sceneStyle: { backgroundColor: colors.bgLight },
+        sceneStyle: { backgroundColor: colors.bgApp },
       }}
     >
       <Tabs.Screen

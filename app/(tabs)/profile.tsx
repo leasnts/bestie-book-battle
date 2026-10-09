@@ -416,7 +416,7 @@ function EditButton({ onPress }: { onPress: () => void }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.bgLight,
+    backgroundColor: colors.bgApp,
   },
   scroll: { flex: 1 },
   scrollContent: { flexGrow: 1 },

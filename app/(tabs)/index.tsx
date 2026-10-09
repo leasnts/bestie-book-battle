@@ -11,7 +11,7 @@
  * 2. SÉLECTEUR DE PAGE : scroll pour choisir sa page + boutons annuler/valider
  * 3. TOP 3 : le podium du challenge, plus ta ligne si tu n'y es pas
  * 
- * Le fond est le papier uni (colors.bgLight), sans texture ni dégradé.
+ * Le fond est le papier uni (colors.bgApp), sans texture ni dégradé.
  * 
  * Données : tout vient de Supabase via les stores Zustand (authStore, projectStore, progressStore).
  */
@@ -587,7 +587,7 @@ const styles = StyleSheet.create({
   // ===== CONTAINER PRINCIPAL =====
   container: {
     flex: 1,
-    backgroundColor: colors.bgLight,
+    backgroundColor: colors.bgApp,
   },
 
   // Texture de fond semi-transparente

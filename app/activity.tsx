@@ -210,7 +210,7 @@ function EmptyState() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.bgLight,
+    backgroundColor: colors.bgApp,
   },
 
   // Header
