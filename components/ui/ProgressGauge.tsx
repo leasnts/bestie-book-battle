@@ -1,9 +1,9 @@
 /**
  * ProgressGauge — la progression du club en traits, pour la fiche du livre.
  *
- *    ● Toi                      34 %
+ *    Toi                        34 %
  *    ▮▮▮▮▮▮▮▮▮▮▮╷╷╷╷╷╷╷╷╷╷╷╷╷╷╷╷╷╷╷   ← moi : des traits verticaux, comme la
- *    ● Club                     30 %     tranche des pages ; dessous, le club, en
+ *    Club                       30 %     tranche des pages ; dessous, le club, en
  *    ▪▪▪▪▪▪▪▪▪··················      plus court. Bouts contre les côtés de la tuile
  *
  * Deux rangées dans les mêmes colonnes, pour que les deux se voient toujours
@@ -129,7 +129,7 @@ export default function ProgressGauge({
   );
 }
 
-/** Une rangée : « ● Toi … 34 % », puis ses traits qui se remplissent dessous */
+/** Une rangée : « Toi … 34 % », puis ses traits qui se remplissent dessous */
 function GaugeRow({
   id,
   label,
@@ -154,7 +154,7 @@ function GaugeRow({
   return (
     <View style={styles.row}>
       <View style={{ paddingHorizontal: legendInset }}>
-        <Legend label={label} value={value} dot={gradient[1]} />
+        <Legend label={label} value={value} />
       </View>
       {width > 0 && (
         <Svg width={width} height={length}>
@@ -181,7 +181,7 @@ function GaugeRow({
 }
 
 /** Un pourcentage qui compte en même temps que ses traits */
-function Legend({ label, value, dot }: { label: string; value: SharedValue<number>; dot: string }) {
+function Legend({ label, value }: { label: string; value: SharedValue<number> }) {
   const [shown, setShown] = useState(() => Math.round(value.value));
   useAnimatedReaction(
     () => Math.round(value.value),
@@ -191,7 +191,6 @@ function Legend({ label, value, dot }: { label: string; value: SharedValue<numbe
   );
   return (
     <View style={styles.legendItem}>
-      <View style={[styles.dot, { backgroundColor: dot }]} />
       <Text style={[styles.legendLabel, styles.legendLabelGrow]}>{label}</Text>
       <Text style={styles.legendValue}>{shown} <AccentUnit size={styles.legendValue.fontSize} color={styles.legendValue.color}>%</AccentUnit></Text>
     </View>
@@ -216,11 +215,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-  },
-  dot: {
-    width: 7,
-    height: 7,
-    borderRadius: 4,
   },
   legendLabel: {
     fontFamily: fonts.bodyBold,
