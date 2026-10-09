@@ -7,27 +7,23 @@
  * - Deux repères : les jours lus du mois (la flamme), les marque-pages posés
  *   sur ce livre (« 1 / 3 »).
  * - Le calendrier : une série court comme un ruban rouge léger sous ses jours,
- *   le premier jour de la série en disque rouge, un jour gardé par un
- *   marque-page porte le marque-page. Aujourd'hui, pas encore lu : un disque
- *   beige léger cerclé de points rouges. Les jours à venir s'effacent.
+ *   le premier jour d'une série (2 jours ou plus) sous sa flamme, un jour lu
+ *   seul en disque rouge, un jour gardé par un
+ *   marque-page porte le marque-page. Aujourd'hui : un point sous son chiffre,
+ *   et le chiffre en rouge tant qu'il n'est pas lu. Les jours à venir s'effacent.
  *
- * On glisse d'un mois à l'autre jusqu'au début du livre (ou avec ‹ ›), et »
- * ramène au mois en cours.
+ * On change de mois jusqu'au début du livre en glissant sur le calendrier (ou
+ * avec ‹ ›), et » ramène au mois en cours. Les cadres ne bougent pas : seul
+ * leur contenu glisse.
  */
 
 import { LinearGradient } from 'expo-linear-gradient';
 import { ChevronLeftIcon, ChevronRightIcon, ChevronsRightIcon } from 'lucide-react-native';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import {
-  Image,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-  type NativeScrollEvent,
-  type NativeSyntheticEvent,
-} from 'react-native';
-import { AccentUnit } from '../components/ui/AccentWord';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { Image, StyleSheet, Text, View } from 'react-native';
+import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
+import Animated, { FadeInLeft, FadeInRight, LinearTransition, runOnJS } from 'react-native-reanimated';
+import { ACCENT_SCALE, AccentUnit } from '../components/ui/AccentWord';
 import { BonusBookmark } from '../components/ui/BonusPill';
 import GlassButton from '../components/ui/GlassButton';
 import SheetPage from '../components/ui/SheetPage';
@@ -41,14 +37,27 @@ import { dayString, STREAK_BONUS_PER_BOOK } from '../utils/streak';
 
 const WEEKDAYS = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
 const ROW = 44;
-// Les deux icônes des repères ; le marque-page, étroit, prend un peu plus
-const STAT_ICON = 30;
+// Les deux icônes des repères, à la même taille à l'œil : la flamme a du vide
+// autour d'elle dans son image ; le marque-page, plein, se tient un peu plus petit
+const STAT_ICON = 34;
+const STAT_BOOKMARK = 29;
 const DISC = 36;
-// Le marque-page d'un jour gardé : plus grand que le disque, son haut aligné sur le haut des disques
-const DAY_BOOKMARK = DISC + 8;
+// Le marque-page d'un jour gardé : aussi large qu'un disque, son bout rond
+// posé pile sur le haut du disque (l'image est carrée, le marque-page fait
+// 814 × 1032 dedans)
+const DAY_BOOKMARK = Math.round((DISC * 1032) / 814);
 /** Pas plus d'un an en arrière */
 const MAX_MONTHS = 12;
 /** Le ruban d'une série : le rouge de la charte, à peine posé */
+/**
+ * La flamme d'un premier jour de série (flamme_calendar de Lea) : un rond
+ * rouge, la flamme par-dessus. Le rond se cale pile sur le disque des autres
+ * jours ; les pointes dépassent au-dessus, le petit pic en dessous. Mesuré
+ * sur l'image d'origine (1206 px) : rond de centre (612,5 ; 728,5), rayon 406,7.
+ */
+const DAY_FLAME = require('../assets/images/streak/flame-calendar.png');
+const DAY_FLAME_SIZE = DISC / 2 / (406.7 / 1206);
+const DAY_FLAME_CENTER = { x: (612.5 / 1206) * DAY_FLAME_SIZE, y: (728.5 / 1206) * DAY_FLAME_SIZE };
 const RIBBON = [`${lowki.red.light}24`, `${lowki.red.dark}24`] as const;
 
 /** YYYY-MM-DD d'un jour UTC */
@@ -73,9 +82,15 @@ function prevMonth(first: string): string {
   return iso(d);
 }
 
+/**
+ * « Octobre 2026 ». Le titre partage sa ligne avec trois boutons : un nom de
+ * mois trop long passe en court (« Sept. 2026 »).
+ */
 function monthLabel(first: string): string {
-  const label = new Date(`${first}T00:00:00Z`).toLocaleDateString('fr-FR', {
-    month: 'long',
+  const date = new Date(`${first}T00:00:00Z`);
+  const long = date.toLocaleDateString('fr-FR', { month: 'long', timeZone: 'UTC' });
+  const label = date.toLocaleDateString('fr-FR', {
+    month: long.length > 8 ? 'short' : 'long',
     year: 'numeric',
     timeZone: 'UTC',
   });
@@ -119,32 +134,44 @@ export default function StreakRoute() {
       .catch(() => {});
   }, [userId, challengeId, months]);
 
-  // ── Défilement par mois ──
-  const scrollRef = useRef<ScrollView>(null);
-  const [pageWidth, setPageWidth] = useState(0);
+  // ── Changer de mois ──
+  // Les cadres restent en place : seul leur contenu change, avec un léger
+  // glissé dans le sens du mois (de droite pour le suivant, de gauche pour le
+  // précédent).
   const [page, setPage] = useState(months.length - 1);
+  const [direction, setDirection] = useState<1 | -1>(1);
   const isCurrent = page === months.length - 1;
 
   const goTo = useCallback(
     (index: number) => {
       const target = Math.max(0, Math.min(months.length - 1, index));
-      scrollRef.current?.scrollTo({ x: target * pageWidth, animated: true });
+      if (target === page) return;
+      setDirection(target > page ? 1 : -1);
       setPage(target);
     },
-    [pageWidth, months.length],
+    [months.length, page],
   );
 
-  const onScrollEnd = useCallback(
-    (e: NativeSyntheticEvent<NativeScrollEvent>) => {
-      if (pageWidth > 0) setPage(Math.round(e.nativeEvent.contentOffset.x / pageWidth));
-    },
-    [pageWidth],
-  );
+  // Glisser sur le calendrier change de mois, comme les flèches
+  const swipe = Gesture.Pan()
+    .activeOffsetX([-20, 20])
+    .failOffsetY([-12, 12])
+    .onEnd((e) => {
+      if (e.translationX < -50 || e.velocityX < -500) runOnJS(goTo)(page + 1);
+      else if (e.translationX > 50 || e.velocityX > 500) runOnJS(goTo)(page - 1);
+    });
 
   const read = useMemo(() => new Set(readDays), [readDays]);
-  // Le titre du sheet : le mois affiché, l'année en mot d'accent
-  const title = monthLabel(months[page] ?? months[months.length - 1]);
   const saved = useMemo(() => new Set(bonusDates), [bonusDates]);
+  const month = months[page] ?? months[months.length - 1];
+  // Le titre du sheet : le mois affiché, l'année en mot d'accent
+  const title = monthLabel(month);
+  const readCount = [...read].filter((d) => d.startsWith(month.slice(0, 7))).length;
+  const used = bonusDates.length;
+  const entering = (direction > 0 ? FadeInRight : FadeInLeft).duration(220);
+
+  const [calendarWidth, setCalendarWidth] = useState(0);
+  const cellWidth = calendarWidth / 7;
 
   return (
     <SheetPage
@@ -159,61 +186,15 @@ export default function StreakRoute() {
           <View style={isCurrent && styles.disabled} pointerEvents={isCurrent ? 'none' : 'auto'}>
             <GlassButton icon={ChevronRightIcon} onPress={() => goTo(page + 1)} accessibilityLabel="Mois suivant" />
           </View>
-          {/* Dans le passé : d'un toucher, retour à ce mois-ci */}
-          {!isCurrent && (
+          {/* Retour à ce mois-ci. Toujours là, effacé sur ce mois-ci : les
+              flèches ne bougent jamais sous le doigt */}
+          <View style={isCurrent && styles.disabled} pointerEvents={isCurrent ? 'none' : 'auto'}>
             <GlassButton icon={ChevronsRightIcon} onPress={() => goTo(months.length - 1)} accessibilityLabel="Revenir à ce mois-ci" />
-          )}
+          </View>
         </View>
       }
     >
-      {/* Les mois, à glisser */}
-      <ScrollView
-        ref={scrollRef}
-        horizontal
-        pagingEnabled
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.pages}
-        onLayout={(e) => {
-          const width = e.nativeEvent.layout.width;
-          if (width !== pageWidth) {
-            setPageWidth(width);
-            // Ouvre sur ce mois-ci
-            requestAnimationFrame(() => scrollRef.current?.scrollTo({ x: page * width, animated: false }));
-          }
-        }}
-        onMomentumScrollEnd={onScrollEnd}
-      >
-        {months.map((m) => (
-          <MonthPage key={m} first={m} width={pageWidth} today={today} read={read} saved={saved} used={bonusDates.length} />
-        ))}
-      </ScrollView>
-    </SheetPage>
-  );
-}
-
-interface MonthPageProps {
-  first: string;
-  width: number;
-  today: string;
-  read: Set<string>;
-  saved: Set<string>;
-  /** Marque-pages posés sur ce livre, sur STREAK_BONUS_PER_BOOK */
-  used: number;
-}
-
-function MonthPage({ first, width, today, read, saved, used }: MonthPageProps) {
-  const grid = useMemo(() => monthGrid(first), [first]);
-  const inMonth = (d: string) => d.startsWith(first.slice(0, 7));
-  const readCount = [...read].filter(inMonth).length;
-  // Un jour compte dans la série s'il est lu ou gardé
-  const kept = (d: string | null) => !!d && (read.has(d) || saved.has(d));
-
-  // La marge intérieure du cadre (16 pt de chaque côté)
-  const cellWidth = (width - spacing.lg * 2) / 7;
-
-  return (
-    <View style={{ width }}>
-      {/* Les deux repères du mois */}
+      {/* Les deux repères */}
       <View style={styles.stats}>
         <GlassSection paper compact style={styles.statFrame}>
           <View
@@ -222,19 +203,20 @@ function MonthPage({ first, width, today, read, saved, used }: MonthPageProps) {
             accessibilityLabel={`${readCount} jour${readCount > 1 ? 's' : ''} lu${readCount > 1 ? 's' : ''} ce mois`}
           >
             <Image source={STREAK_FLAME} style={styles.statIcon} />
-            <View>
+            <Animated.View key={month} entering={entering}>
               <Text style={styles.statValue}>{readCount}</Text>
               <Text style={styles.statLabel}>{readCount > 1 ? 'jours lus' : 'jour lu'}</Text>
-            </View>
+            </Animated.View>
           </View>
         </GlassSection>
+        {/* Les marque-pages comptent pour tout le livre : ils ne changent pas avec le mois */}
         <GlassSection paper compact style={styles.statFrame}>
           <View
             style={styles.stat}
             accessible
             accessibilityLabel={`${used} marque-page${used > 1 ? 's' : ''} posé${used > 1 ? 's' : ''} sur ${STREAK_BONUS_PER_BOOK} pour ce livre`}
           >
-            <BonusBookmark size={STAT_ICON + 6} />
+            <BonusBookmark size={STAT_BOOKMARK} />
             <View>
               <Text style={styles.statValue}>
                 {used}
@@ -246,51 +228,83 @@ function MonthPage({ first, width, today, read, saved, used }: MonthPageProps) {
         </GlassSection>
       </View>
 
-      {/* Le calendrier */}
-      <GlassSection paper style={styles.calendar}>
-        <View style={styles.row}>
-          {WEEKDAYS.map((letter, i) => (
-            <Text key={i} style={[styles.weekday, { width: cellWidth }]}>
-              {letter}
-            </Text>
-          ))}
-        </View>
+      {/* Le calendrier : le cadre reste, le mois glisse dedans */}
+      <GestureHandlerRootView>
+        <GestureDetector gesture={swipe}>
+          <Animated.View layout={LinearTransition.duration(220)} style={styles.calendar}>
+            <GlassSection paper>
+              <View onLayout={(e) => setCalendarWidth(e.nativeEvent.layout.width)}>
+                <View style={styles.row}>
+                  {WEEKDAYS.map((letter, i) => (
+                    <Text key={i} style={[styles.weekday, { width: cellWidth }]}>
+                      {letter}
+                    </Text>
+                  ))}
+                </View>
+                {calendarWidth > 0 && (
+                  <Animated.View key={month} entering={entering}>
+                    <MonthGrid first={month} cellWidth={cellWidth} today={today} read={read} saved={saved} />
+                  </Animated.View>
+                )}
+              </View>
+            </GlassSection>
+          </Animated.View>
+        </GestureDetector>
+      </GestureHandlerRootView>
+    </SheetPage>
+  );
+}
 
-        {width > 0 &&
-          grid.map((week, r) => (
-            <View key={r} style={styles.row}>
-              {/* Le ruban sous chaque série de jours qui se suivent dans la semaine */}
-              {ribbons(week, kept).map(([from, to]) => (
-                <LinearGradient
-                  key={from}
-                  colors={RIBBON}
-                  style={[
-                    styles.ribbon,
-                    { left: from * cellWidth + (cellWidth - DISC) / 2, width: (to - from) * cellWidth + DISC },
-                  ]}
-                />
-              ))}
-              {week.map((day, c) =>
-                day ? (
-                  <DayCell
-                    key={day}
-                    day={day}
-                    width={cellWidth}
-                    isToday={day === today}
-                    future={day > today}
-                    read={read.has(day)}
-                    bonus={saved.has(day) && !read.has(day)}
-                    // Le premier jour d'une série : la veille ne compte pas
-                    runStart={kept(day) && !kept(addDays(day, -1))}
-                  />
-                ) : (
-                  <View key={`empty-${c}`} style={{ width: cellWidth }} />
-                ),
-              )}
-            </View>
+interface MonthGridProps {
+  first: string;
+  cellWidth: number;
+  today: string;
+  read: Set<string>;
+  saved: Set<string>;
+}
+
+function MonthGrid({ first, cellWidth, today, read, saved }: MonthGridProps) {
+  const grid = useMemo(() => monthGrid(first), [first]);
+  // Un jour compte dans la série s'il est lu ou gardé
+  const kept = (d: string | null) => !!d && (read.has(d) || saved.has(d));
+
+  return (
+    <>
+      {grid.map((week, r) => (
+        <View key={r} style={styles.row}>
+          {/* Le ruban sous chaque série de jours qui se suivent dans la semaine */}
+          {ribbons(week, kept).map(([from, to]) => (
+            <LinearGradient
+              key={from}
+              colors={RIBBON}
+              style={[
+                styles.ribbon,
+                { left: from * cellWidth + (cellWidth - DISC) / 2, width: (to - from) * cellWidth + DISC },
+              ]}
+            />
           ))}
-      </GlassSection>
-    </View>
+          {week.map((day, c) =>
+            day ? (
+              <DayCell
+                key={day}
+                day={day}
+                width={cellWidth}
+                isToday={day === today}
+                future={day > today}
+                read={read.has(day)}
+                bonus={saved.has(day) && !read.has(day)}
+                // Le premier jour d'une série : la veille ne compte pas
+                runStart={kept(day) && !kept(addDays(day, -1))}
+                // Un jour lu seul, sans veille ni lendemain : pas encore une série
+                alone={kept(day) && !kept(addDays(day, -1)) && !kept(addDays(day, 1))}
+              />
+            ) : (
+              <View key={`empty-${c}`} style={{ width: cellWidth }} />
+            ),
+          )}
+        </View>
+      ))}
+    </>
   );
 }
 
@@ -318,24 +332,29 @@ interface DayCellProps {
   read: boolean;
   bonus: boolean;
   runStart: boolean;
+  alone: boolean;
 }
 
-function DayCell({ day, width, isToday, future, read, bonus, runStart }: DayCellProps) {
+function DayCell({ day, width, isToday, future, read, bonus, runStart, alone }: DayCellProps) {
   const n = Number(day.slice(8));
   const status = read ? 'lu' : bonus ? 'gardé par un marque-page' : future ? 'à venir' : isToday ? 'pas encore lu' : 'pas lu';
   return (
     <View style={[styles.cell, { width }]} accessible accessibilityLabel={`${n}${isToday ? ", aujourd'hui" : ''}, ${status}`}>
-      {read && runStart && <LinearGradient colors={[lowki.red.light, lowki.red.dark]} style={styles.disc} />}
+      {/* Un jour lu seul : le disque rouge ; une vraie série s'allume sous sa flamme */}
+      {read && alone && <LinearGradient colors={[lowki.red.light, lowki.red.dark]} style={styles.disc} />}
+      {read && runStart && !alone && (
+        <Image
+          source={DAY_FLAME}
+          style={[
+            styles.dayFlame,
+            { left: width / 2 - DAY_FLAME_CENTER.x, top: ROW / 2 - DAY_FLAME_CENTER.y },
+          ]}
+        />
+      )}
       {bonus && (
         <View style={styles.discBox}>
           <BonusBookmark size={DAY_BOOKMARK} />
         </View>
-      )}
-      {isToday && !read && (
-        <>
-          <LinearGradient colors={[lowki.beige.light, lowki.beige.dark]} style={[styles.disc, styles.todayFill]} />
-          <View style={[styles.disc, styles.todayRing]} />
-        </>
       )}
       <Text
         style={[
@@ -348,6 +367,8 @@ function DayCell({ day, width, isToday, future, read, bonus, runStart }: DayCell
       >
         {n}
       </Text>
+      {/* Aujourd'hui, lu ou non : un point sous le chiffre */}
+      {isToday && <View style={[styles.todayDot, read && runStart && styles.todayDotOnFlame]} />}
     </View>
   );
 }
@@ -359,9 +380,6 @@ const styles = StyleSheet.create({
   },
   disabled: {
     opacity: 0.35,
-  },
-  pages: {
-    alignItems: 'flex-start',
   },
 
   // ── Les repères du mois ──
@@ -403,10 +421,11 @@ const styles = StyleSheet.create({
     height: ROW,
     alignItems: 'center',
   },
+  // Les jours de la semaine à la main (Welcome Valentines, à l'œil du corps 13)
   weekday: {
     textAlign: 'center',
-    fontFamily: fonts.bodyMedium,
-    fontSize: 13,
+    fontFamily: fonts.accent,
+    fontSize: 13 * ACCENT_SCALE,
     color: colors.textTertiary,
   },
   ribbon: {
@@ -426,6 +445,11 @@ const styles = StyleSheet.create({
     height: DISC,
     borderRadius: DISC / 2,
   },
+  dayFlame: {
+    position: 'absolute',
+    width: DAY_FLAME_SIZE,
+    height: DAY_FLAME_SIZE,
+  },
   discBox: {
     position: 'absolute',
     width: DISC,
@@ -433,14 +457,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     transform: [{ translateY: (DAY_BOOKMARK - DISC) / 2 }],
-  },
-  todayFill: {
-    opacity: 0.2,
-  },
-  todayRing: {
-    borderWidth: 2,
-    borderStyle: 'dotted',
-    borderColor: lowki.red.light,
   },
   dayNumber: {
     fontFamily: fonts.bodySemiBold,
@@ -458,11 +474,23 @@ const styles = StyleSheet.create({
   },
   dayOnBookmark: {
     fontFamily: fonts.bodyBold,
-    color: lowki.chocolate.dark,
+    color: colors.white,
   },
+  todayDot: {
+    position: 'absolute',
+    bottom: (ROW - DISC) / 2 + 4,
+    width: 5,
+    height: 5,
+    borderRadius: 2.5,
+    backgroundColor: lowki.red.light,
+  },
+  todayDotOnFlame: {
+    backgroundColor: colors.white,
+  },
+  // Aujourd'hui, pas encore lu : le chiffre en rouge
   dayToday: {
     fontFamily: fonts.bodyBold,
-    color: colors.textPrimary,
+    color: lowki.red.light,
   },
   dayFuture: {
     opacity: 0.4,
