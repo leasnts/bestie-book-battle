@@ -1,8 +1,9 @@
 /**
  * Route /streak — ma série, ouverte en touchant la gélule de l'accueil.
  *
- * Un coup d'œil, rien à faire : le nombre de jours, puis le mois.
- * - Deux repères du mois : les jours lus, les marque-pages posés.
+ * Un coup d'œil, rien à faire : le mois, dans les cadres en verre brodés de
+ * l'accueil (GlassSection).
+ * - Deux repères du mois : les jours lus (la flamme), les marque-pages posés.
  * - Le calendrier : une série court comme un ruban rouge léger sous ses jours,
  *   le premier jour de la série en disque rouge, un jour gardé par un
  *   marque-page porte le marque-page. Aujourd'hui, pas encore lu : un disque
@@ -14,9 +15,10 @@
  */
 
 import { LinearGradient } from 'expo-linear-gradient';
-import { CheckIcon, ChevronLeftIcon, ChevronRightIcon, ChevronsRightIcon } from 'lucide-react-native';
+import { ChevronLeftIcon, ChevronRightIcon, ChevronsRightIcon } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
+  Image,
   ScrollView,
   StyleSheet,
   Text,
@@ -27,17 +29,17 @@ import {
 import BonusPill, { BonusBookmark } from '../components/ui/BonusPill';
 import GlassButton from '../components/ui/GlassButton';
 import SheetPage from '../components/ui/SheetPage';
-import StreakHero from '../components/ui/StreakHero';
+import GlassSection from '../components/ui/GlassSection';
+import { STREAK_FLAME } from '../components/ui/StreakPill';
 import { useMyStreak } from '../hooks/useMyStreak';
 import { getReadingDays } from '../services/supabase/database';
 import { useProjectStore } from '../stores/projectStore';
-import { borderRadius, colors, fonts, lowki, spacing } from '../utils/constants';
+import { colors, fonts, lowki, spacing } from '../utils/constants';
 import { dayString } from '../utils/streak';
 
 const WEEKDAYS = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
 const ROW = 44;
 const DISC = 36;
-const CALENDAR_PADDING = spacing.sm;
 /** Pas plus d'un an en arrière */
 const MAX_MONTHS = 12;
 /** Le ruban d'une série : le rouge de la charte, à peine posé */
@@ -90,7 +92,7 @@ function monthGrid(first: string): (string | null)[][] {
 }
 
 export default function StreakRoute() {
-  const { userId, challengeId, state, days, bonusDates, bonusesLeft } = useMyStreak();
+  const { userId, challengeId, bonusDates, bonusesLeft } = useMyStreak();
   const startedAt = useProjectStore((s) => s.activeChallenge?.started_at ?? s.activeChallenge?.created_at ?? null);
   const today = dayString(0);
 
@@ -138,8 +140,6 @@ export default function StreakRoute() {
 
   return (
     <SheetPage title="Ma série" accent="série" actions={<BonusPill left={bonusesLeft} />}>
-      <StreakHero days={days} flame={state === 'inactive' ? 'off' : 'lit'} />
-
       {/* Quel mois, et de quoi en changer */}
       <View style={styles.monthBar}>
         <Text style={styles.month} numberOfLines={1}>
@@ -199,40 +199,43 @@ function MonthPage({ first, width, today, read, saved }: MonthPageProps) {
   // Un jour compte dans la série s'il est lu ou gardé
   const kept = (d: string | null) => !!d && (read.has(d) || saved.has(d));
 
-  const cellWidth = (width - CALENDAR_PADDING * 2 - 2) / 7;
+  // La marge intérieure du cadre (16 pt de chaque côté)
+  const cellWidth = (width - spacing.lg * 2) / 7;
 
   return (
     <View style={{ width }}>
       {/* Les deux repères du mois */}
       <View style={styles.stats}>
-        <View
-          style={styles.stat}
-          accessible
-          accessibilityLabel={`${readCount} jour${readCount > 1 ? 's' : ''} lu${readCount > 1 ? 's' : ''} ce mois`}
-        >
-          <LinearGradient colors={[lowki.red.light, lowki.red.dark]} style={styles.statDisc}>
-            <CheckIcon size={13} color={colors.white} strokeWidth={4} />
-          </LinearGradient>
-          <View>
-            <Text style={styles.statValue}>{readCount}</Text>
-            <Text style={styles.statLabel}>{readCount > 1 ? 'jours lus' : 'jour lu'}</Text>
+        <GlassSection compact style={styles.statFrame}>
+          <View
+            style={styles.stat}
+            accessible
+            accessibilityLabel={`${readCount} jour${readCount > 1 ? 's' : ''} lu${readCount > 1 ? 's' : ''} ce mois`}
+          >
+            <Image source={STREAK_FLAME} style={styles.statIcon} />
+            <View>
+              <Text style={styles.statValue}>{readCount}</Text>
+              <Text style={styles.statLabel}>{readCount > 1 ? 'jours lus' : 'jour lu'}</Text>
+            </View>
           </View>
-        </View>
-        <View
-          style={styles.stat}
-          accessible
-          accessibilityLabel={`${savedCount} marque-page${savedCount > 1 ? 's' : ''} posé${savedCount > 1 ? 's' : ''} ce mois`}
-        >
-          <BonusBookmark size={24} />
-          <View>
-            <Text style={styles.statValue}>{savedCount}</Text>
-            <Text style={styles.statLabel}>{savedCount > 1 ? 'marque-pages' : 'marque-page'}</Text>
+        </GlassSection>
+        <GlassSection compact style={styles.statFrame}>
+          <View
+            style={styles.stat}
+            accessible
+            accessibilityLabel={`${savedCount} marque-page${savedCount > 1 ? 's' : ''} posé${savedCount > 1 ? 's' : ''} ce mois`}
+          >
+            <BonusBookmark size={28} />
+            <View>
+              <Text style={styles.statValue}>{savedCount}</Text>
+              <Text style={styles.statLabel}>{savedCount > 1 ? 'marque-pages' : 'marque-page'}</Text>
+            </View>
           </View>
-        </View>
+        </GlassSection>
       </View>
 
       {/* Le calendrier */}
-      <View style={styles.calendar}>
+      <GlassSection style={styles.calendar}>
         <View style={styles.row}>
           {WEEKDAYS.map((letter, i) => (
             <Text key={i} style={[styles.weekday, { width: cellWidth }]}>
@@ -274,7 +277,7 @@ function MonthPage({ first, width, today, read, saved }: MonthPageProps) {
               )}
             </View>
           ))}
-      </View>
+      </GlassSection>
     </View>
   );
 }
@@ -342,7 +345,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
-    marginTop: spacing['2xl'],
+    marginTop: spacing.sm,
     marginBottom: spacing.md,
   },
   month: {
@@ -363,24 +366,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: spacing.md,
   },
-  stat: {
+  statFrame: {
     flex: 1,
+  },
+  stat: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.md,
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.lg,
-    borderRadius: borderRadius.xl,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.bgSecondary,
+    paddingHorizontal: spacing.xs,
   },
-  statDisc: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
+  statIcon: {
+    width: 28,
+    height: 28,
   },
   statValue: {
     fontFamily: fonts.display,
@@ -397,12 +394,6 @@ const styles = StyleSheet.create({
   // ── Le calendrier ──
   calendar: {
     marginTop: spacing.md,
-    paddingHorizontal: CALENDAR_PADDING,
-    paddingVertical: spacing.md,
-    borderRadius: borderRadius.xl,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.bgSecondary,
   },
   row: {
     flexDirection: 'row',
