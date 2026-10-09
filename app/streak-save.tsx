@@ -15,7 +15,7 @@ import { useRouter } from 'expo-router';
 import React, { useCallback, useState } from 'react';
 import { Alert } from 'react-native';
 import Button3D from '../components/Button3D';
-import BonusMarks from '../components/ui/BonusMarks';
+import BonusPill from '../components/ui/BonusPill';
 import SheetPage, { SheetFooter } from '../components/ui/SheetPage';
 import StreakHero from '../components/ui/StreakHero';
 import { useMyStreak } from '../hooks/useMyStreak';
@@ -44,9 +44,13 @@ export default function StreakSaveRoute() {
   }, [challengeId, loadChallengeProgress, router]);
 
   return (
-    <SheetPage title="Garder ma série" accent="série" subtitle="Hier, pas de lecture">
+    <SheetPage
+      title="Garder ma série"
+      accent="série"
+      subtitle="Hier, pas de lecture"
+      actions={<BonusPill left={bonusesLeft} />}
+    >
       <StreakHero days={days} flame="dim" />
-      <BonusMarks left={bonusesLeft} />
 
       <SheetFooter>
         <Button3D onPress={handleUse} variant="primary" loading={isSaving} disabled={bonusesLeft === 0}>

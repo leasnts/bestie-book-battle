@@ -26,10 +26,9 @@ import Animated, {
   withRepeat,
   withTiming,
 } from 'react-native-reanimated';
-import { colors, fonts, glassControlVeil, lowki, ROUND_BUTTON_SIZE } from '../../utils/constants';
+import { colors, fonts, lowki } from '../../utils/constants';
 import type { StreakState } from '../../utils/streak';
-import GlassMaterial from './GlassMaterial';
-import PressableScale from './PressableScale';
+import GlassPill from './GlassPill';
 
 /** La flamme Lowki, à reprendre partout où l'on parle de la série */
 export const STREAK_FLAME = require('../../assets/images/streak/streak-2.png');
@@ -66,42 +65,22 @@ export default function StreakPill({ days, state, onPress }: StreakPillProps) {
   const flameStyle = useAnimatedStyle(() => ({ opacity: glow.value }));
 
   return (
-    <PressableScale
-      style={styles.pill}
-      pressedScale={0.94}
+    <GlassPill
       onPress={onPress}
-      accessibilityRole="button"
       accessibilityLabel={LABELS[state](days)}
       accessibilityHint="Ouvre ma série de la semaine"
     >
-      <GlassMaterial radius={ROUND_BUTTON_SIZE / 2} veil={glassControlVeil} rim />
       <Animated.View style={flameStyle}>
         <Image source={STREAK_FLAME} style={[styles.flame, off && styles.flameOff]} />
       </Animated.View>
       <Text style={[styles.days, off && styles.daysOff]} maxFontSizeMultiplier={1.3}>
         {days}
       </Text>
-    </PressableScale>
+    </GlassPill>
   );
 }
 
 const styles = StyleSheet.create({
-  // L'ombre vit sur la gélule, sans overflow (comme GlassButton)
-  pill: {
-    height: ROUND_BUTTON_SIZE,
-    minWidth: ROUND_BUTTON_SIZE,
-    borderRadius: ROUND_BUTTON_SIZE / 2,
-    paddingLeft: 12,
-    paddingRight: 15,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 5,
-    shadowColor: colors.black,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.12,
-    shadowRadius: 12,
-  },
   flame: {
     width: 20,
     height: 20,
