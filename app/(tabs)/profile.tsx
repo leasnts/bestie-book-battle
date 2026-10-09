@@ -54,7 +54,6 @@ import { BellIcon, ChevronRightIcon, InboxIcon, FlaskConicalIcon, LogOutIcon, Pe
 
 // ─── Constantes ────────────────────────────────────────────────────────────────
 
-const TEXTURE_IMAGE = require('../../assets/images/61ea1e0c638b5b9c8100383a37a5b488848db623.png');
 const APP_VERSION = Constants.expoConfig?.version ?? '1.0';
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -222,8 +221,6 @@ export default function ProfileScreen() {
   return (
     <PageTransition>
     <View style={styles.container}>
-      <Image source={TEXTURE_IMAGE} style={styles.backgroundTexture} contentFit="cover" />
-
       {/*
         Défilement : la barre d'onglets flottante prend ~70 pt en bas, le contenu
         ne tient plus d'un bloc sur les petits écrans ni en gros corps de texte.
@@ -420,10 +417,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.bgLight,
-  },
-  backgroundTexture: {
-    ...StyleSheet.absoluteFillObject,
-    opacity: 0.05,
   },
   scroll: { flex: 1 },
   scrollContent: { flexGrow: 1 },

@@ -24,7 +24,7 @@
  * Toucher un livre ouvre sa fiche (route /explore-book, sheet natif) : lancer
  * une lecture, le garder en envie, le partager.
  *
- * Fond papier uni + texture, SANS les taches de l'accueil : les étagères
+ * Fond papier uni, SANS le dégradé de l'accueil : les étagères
  * s'effacent aux bords en fondu couleur papier, qui ferait une bande claire
  * sur les taches. Titre ferré à gauche, comme tous les titres de l'app.
  */
@@ -45,7 +45,6 @@ import { useExploreStore } from '../../stores/exploreStore';
 import type { BookSearchResult } from '../../types/bookSearch';
 import { borderRadius, colors, fonts, shadows, spacing } from '../../utils/constants';
 
-const TEXTURE_IMAGE = require('../../assets/images/61ea1e0c638b5b9c8100383a37a5b488848db623.png');
 
 const SHELVES = catalog.shelves as { key: string; label: string; books: BookSearchResult[] }[];
 
@@ -83,8 +82,6 @@ export default function ExploreScreen() {
   return (
     <PageTransition>
       <View style={styles.container}>
-        <Image source={TEXTURE_IMAGE} style={styles.backgroundTexture} contentFit="cover" />
-
         <View style={[styles.header, { paddingTop: insets.top + spacing.lg }]}>
           <Text style={styles.headerTitle} accessibilityRole="header">
             Explorer
@@ -162,10 +159,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.bgLight,
-  },
-  backgroundTexture: {
-    ...StyleSheet.absoluteFillObject,
-    opacity: 0.05,
   },
   header: {
     paddingHorizontal: spacing.lg,

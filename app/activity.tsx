@@ -37,7 +37,6 @@ import { ChevronLeftIcon } from 'lucide-react-native';
 
 // ─── Assets ──────────────────────────────────────────────────────────────────
 
-const TEXTURE_IMAGE = require('../assets/images/61ea1e0c638b5b9c8100383a37a5b488848db623.png');
 
 /**
  * Image BBB par défaut.
@@ -120,13 +119,6 @@ export default function ActivityScreen() {
     <PageTransition>
     <GestureDetector gesture={swipeGesture}>
     <SafeAreaView style={styles.container} edges={['top']}>
-      {/* Texture de fond noise à 5% d'opacité */}
-      <Image
-        source={TEXTURE_IMAGE}
-        style={styles.backgroundTexture}
-        contentFit="cover"
-      />
-
       {/* ── Header ── */}
       <View style={styles.header}>
         <Button3D
@@ -219,10 +211,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.bgLight,
-  },
-  backgroundTexture: {
-    ...StyleSheet.absoluteFillObject,
-    opacity: 0.05,
   },
 
   // Header
