@@ -3,11 +3,12 @@
  *
  *    ▮▮▮▮▮▮▮▮▮▮▮╷╷╷╷╷╷╷╷╷╷╷╷╷╷╷╷╷╷╷   ← moi : des traits verticaux, comme la
  *    ▪▪▪▪▪▪▪▪▪··················      tranche des pages ; dessous, le club, en
- *      ● Toi 34 %       ● Club 30 %      plus court. Bouts contre les côtés de la tuile
+ *    ● Toi      34 %                   plus court. Bouts contre les côtés de la tuile
+ *    ● Club     30 %
  *
  * Deux rangées dans les mêmes colonnes, pour que les deux se voient toujours
  * (sur une seule rangée, le club disparaissait sous moi) : moi en rouge,
- * le club en rouge clair. À l'apparition, ils se remplissent (le club,
+ * le club en beurre. À l'apparition, ils se remplissent (le club,
  * puis moi, décalé) et les pourcentages comptent jusqu'à leur valeur, sur la
  * même courbe. Avec « Réduire les animations », tout est posé d'emblée.
  */
@@ -162,7 +163,7 @@ export default function ProgressGauge({
 
       {/* Sous les traits, côte à côte */}
       <View style={{ paddingHorizontal: legendInset }}>
-        <View style={styles.legendColumn}>
+        <View style={styles.legendRows}>
           <Legend label="Toi" value={me} dot={accentGradient[0]} />
           <Legend label="Club" value={club} dot={CLUB_GRADIENT[1]} />
         </View>
@@ -183,7 +184,7 @@ function Legend({ label, value, dot }: { label: string; value: SharedValue<numbe
   return (
     <View style={styles.legendItem}>
       <View style={[styles.dot, { backgroundColor: dot }]} />
-      <Text style={styles.legendLabel}>{label}</Text>
+      <Text style={[styles.legendLabel, styles.legendLabelGrow]}>{label}</Text>
       <Text style={styles.legendValue}>{shown} <AccentUnit size={styles.legendValue.fontSize} color={styles.legendValue.color}>%</AccentUnit></Text>
     </View>
   );
@@ -197,15 +198,14 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
   },
-  /** Toi à gauche, le club à droite */
-  legendColumn: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  /** Toi, puis le club dessous : côte à côte, ils se collaient dans la tuile */
+  legendRows: {
+    gap: 2,
   },
   legendItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 6,
   },
   dot: {
     width: 7,
@@ -216,6 +216,9 @@ const styles = StyleSheet.create({
     fontFamily: fonts.bodyBold,
     fontSize: 12,
     color: colors.textTertiary,
+  },
+  legendLabelGrow: {
+    flex: 1,
   },
   legendValue: {
     fontFamily: fonts.display,

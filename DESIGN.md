@@ -572,14 +572,14 @@ la couverture à gauche, **toujours de la hauteur du texte** à côté (mesurée
 droite le titre (`display` 20), l'autrice, puis **juste dessous** la
 **piste** (`GoalTrack`) de 0 à 100 % du livre, avec **deux remplissages
 superposés**, comme la barre d'une vidéo (lu / chargé) : devant, en rouge,
-**ma** progression jusqu'à ma photo ; derrière, en rouge clair, la
+**ma** progression jusqu'à ma photo ; derrière, en beurre, la
 **médiane** du club (pas la moyenne : trois lectrices rapides fausseraient le
 repère). Une seule barre pour le club faisait croire que j'avais atteint des
 étapes que seul le club avait dépassées. **Étapes** (caps et fin du livre) en
 ronds pleins de 9 pt, un peu plus gros que la barre, qui est **découpée** de
 2 pt tout autour (masque SVG) : un vrai vide où l'on voit le fond, qui détache le
 point. Pas de liseré blanc : il ressortait sur le verre, qui n’est pas blanc : rouge
-si **je** les ai dépassées, rouge clair (la même couleur que la barre
+si **je** les ai dépassées, beurre (la même couleur que la barre
 du club) si seul le club les a dépassées, gris de la barre, opaque, sinon, cap en cours en
 drapeau daté, date de fin au bout — et **sur la ligne de la
 date de fin**, à gauche sous le départ de la piste, `👥 26 %`, le club (la date

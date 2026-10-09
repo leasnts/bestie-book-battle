@@ -162,10 +162,10 @@ export const STEP_GAP = 2;
 export const RAIL_COLOR = inkAlpha(0.1);
 /** Gris des étapes pas encore atteintes : le gris de la barre, mais opaque */
 const STEP_AHEAD = '#e4dfdb';
-/** Le club, derrière ma barre : le rouge Lowki éclairci sur le papier, opaque */
-export const CLUB_GRADIENT = ['#eacfd2', '#e1babf'] as const;
+/** Le club, à côté de moi (rouge) : le beurre de la charte Lowki, en dégradé */
+export const CLUB_GRADIENT = [lowki.butter.light, lowki.butter.dark] as const;
 /** Étape dépassée par le club seulement : la même couleur que sa barre (milieu du dégradé) */
-const STEP_CLUB = '#e6c5c9';
+const STEP_CLUB = '#e6d58b';
 
 /**
  * Une étape de la piste, en plus gros, hors de la piste (la liste des caps de
