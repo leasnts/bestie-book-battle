@@ -16,7 +16,8 @@
  */
 
 import React, { useEffect } from 'react';
-import { Image, StyleSheet, Text } from 'react-native';
+import { Image } from 'expo-image';
+import { StyleSheet, Text } from 'react-native';
 import Animated, {
   cancelAnimation,
   Easing,
@@ -71,7 +72,7 @@ export default function StreakPill({ days, state, onPress }: StreakPillProps) {
       accessibilityHint="Ouvre ma série de la semaine"
     >
       <Animated.View style={flameStyle}>
-        <Image source={STREAK_FLAME} style={[styles.flame, off && styles.flameOff]} />
+        <Image source={STREAK_FLAME} style={styles.flame} tintColor={off ? lowki.beige.light : undefined} />
       </Animated.View>
       <Text style={[styles.days, off && styles.daysOff]} maxFontSizeMultiplier={1.3}>
         {days}
@@ -81,13 +82,11 @@ export default function StreakPill({ days, state, onPress }: StreakPillProps) {
 }
 
 const styles = StyleSheet.create({
+  // Éteinte : la silhouette de la flamme, en sable (tintColor d'expo-image ;
+  // celui du style de l'Image de React Native ne s'applique pas)
   flame: {
     width: 20,
     height: 20,
-  },
-  // Éteinte : la silhouette de la flamme, en sable
-  flameOff: {
-    tintColor: lowki.beige.light,
   },
   days: {
     fontFamily: fonts.bodyBold,
