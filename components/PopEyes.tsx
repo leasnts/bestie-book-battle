@@ -11,20 +11,19 @@ import React from 'react';
 import { StyleSheet, View, ViewStyle } from 'react-native';
 import Svg, { Defs, LinearGradient, Path, Stop } from 'react-native-svg';
 
+import { lowki } from '../utils/constants';
 import { POP_EYES_HEIGHT, POP_EYES_PATH, POP_EYES_WIDTH } from './brand/popEyesPath';
 
 interface PopEyesProps {
   variant?: 'together' | 'left' | 'right';
   size?: 'small' | 'medium' | 'large';
-  /** `ink` : l'image chocolat. `paper` : ton sur ton avec le fond de l'app (bgApp), yeux ensemble seulement. */
-  tone?: 'ink' | 'paper';
+  /** Le tracé vectoriel (eyes.svg) en chocolat Lowki plutôt que l'image, yeux ensemble seulement. */
+  vector?: boolean;
   style?: ViewStyle;
 }
 
-/** Ton sur ton avec bgApp (#ede8e0) : la forme quelques crans dessous, les traits évidés laissent voir le fond. */
-const PAPER_GRADIENT = ['#d9cfc1', '#c4b6a3'] as const;
-
-function PaperEyes({ width }: { width: number }) {
+/** Une seule forme en chocolat Lowki ; les traits évidés laissent voir le fond. */
+function VectorEyes({ width }: { width: number }) {
   return (
     <Svg
       width={width}
@@ -32,12 +31,12 @@ function PaperEyes({ width }: { width: number }) {
       viewBox={`0 0 ${POP_EYES_WIDTH} ${POP_EYES_HEIGHT}`}
     >
       <Defs>
-        <LinearGradient id="paper" x1="0" y1="0" x2="0" y2="1">
-          <Stop offset="0" stopColor={PAPER_GRADIENT[0]} />
-          <Stop offset="1" stopColor={PAPER_GRADIENT[1]} />
+        <LinearGradient id="eyes" x1="0" y1="0" x2="0" y2="1">
+          <Stop offset="0" stopColor={lowki.chocolate.light} />
+          <Stop offset="1" stopColor={lowki.chocolate.dark} />
         </LinearGradient>
       </Defs>
-      <Path d={POP_EYES_PATH} fill="url(#paper)" />
+      <Path d={POP_EYES_PATH} fill="url(#eyes)" />
     </Svg>
   );
 }
@@ -51,15 +50,15 @@ const SIZES = {
 export default function PopEyes({ 
   variant = 'together', 
   size = 'medium', 
-  tone = 'ink',
+  vector = false,
   style 
 }: PopEyesProps) {
   const dimensions = SIZES[size];
 
-  if (tone === 'paper' && variant === 'together') {
+  if (vector && variant === 'together') {
     return (
       <View style={[styles.container, dimensions, style]}>
-        <PaperEyes width={dimensions.width} />
+        <VectorEyes width={dimensions.width} />
       </View>
     );
   }

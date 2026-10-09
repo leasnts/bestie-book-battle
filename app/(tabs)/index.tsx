@@ -443,7 +443,7 @@ export default function HomeScreen() {
         </View>
 
         {/* PopEyes mascotte — décoratif */}
-        <PopEyes size="small" tone="paper" />
+        <PopEyes size="small" vector />
 
         {/* Ma série, en miroir de la bibliothèque. Les deux côtés partagent la
             largeur : PopEyes reste au centre, quelle que soit la gélule */}
