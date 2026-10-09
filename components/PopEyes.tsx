@@ -11,7 +11,7 @@ import React from 'react';
 import { StyleSheet, View, ViewStyle } from 'react-native';
 import Svg, { Defs, LinearGradient, Path, Stop } from 'react-native-svg';
 
-import { LOGO_EYES_PATH } from './brand/logoEyesPath';
+import { POP_EYES_HEIGHT, POP_EYES_PATH, POP_EYES_WIDTH } from './brand/popEyesPath';
 
 interface PopEyesProps {
   variant?: 'together' | 'left' | 'right';
@@ -21,15 +21,8 @@ interface PopEyesProps {
   style?: ViewStyle;
 }
 
-/**
- * Le tracé du logo se découpe en 5 formes, peintes dans cet ordre : le sticker
- * (silhouette), le trait du gros œil (contour, cils, pupille), son blanc, puis
- * le trait et le blanc du petit œil.
- */
-const [STICKER, BIG_LINE, BIG_WHITE, SMALL_LINE, SMALL_WHITE] = LOGO_EYES_PATH.split(/(?=M)/);
-
-/** Cadre utile des yeux dans le repère 1200 × 1200 du logo. */
-const EYES_VIEWBOX = '72 190 1056 819';
+/** Les 5 formes du tracé, peintes dans l'ordre (cf. popEyesPath.ts). */
+const [STICKER, BIG_LINE, BIG_WHITE, SMALL_LINE, SMALL_WHITE] = POP_EYES_PATH.split(/(?=M)/);
 
 /** Ton sur ton avec bgApp (#ede8e0) : sticker un cran dessous, trait en sable, blanc crème. */
 const PAPER_TONES = {
@@ -40,7 +33,11 @@ const PAPER_TONES = {
 
 function PaperEyes({ width }: { width: number }) {
   return (
-    <Svg width={width} height={(width * 819) / 1056} viewBox={EYES_VIEWBOX}>
+    <Svg
+      width={width}
+      height={(width * POP_EYES_HEIGHT) / POP_EYES_WIDTH}
+      viewBox={`0 0 ${POP_EYES_WIDTH} ${POP_EYES_HEIGHT}`}
+    >
       <Defs>
         {Object.entries(PAPER_TONES).map(([id, [top, bottom]]) => (
           <LinearGradient key={id} id={id} x1="0" y1="0" x2="0" y2="1">
