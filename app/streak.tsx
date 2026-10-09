@@ -7,7 +7,7 @@
  * - Deux repères : les jours lus du mois (la flamme), les marque-pages posés
  *   sur ce livre (« 1 / 3 »).
  * - Le calendrier : une série court comme un ruban rouge léger sous ses jours,
- *   le premier jour de la série en disque rouge, un jour gardé par un
+ *   le premier jour de la série sous sa flamme, un jour gardé par un
  *   marque-page porte le marque-page. Aujourd'hui, pas encore lu : un disque
  *   beige léger cerclé de points rouges. Les jours à venir s'effacent.
  *
@@ -53,6 +53,15 @@ const DAY_BOOKMARK = Math.round((DISC * 1032) / 814);
 /** Pas plus d'un an en arrière */
 const MAX_MONTHS = 12;
 /** Le ruban d'une série : le rouge de la charte, à peine posé */
+/**
+ * La flamme d'un premier jour de série (flamme_calendar de Lea) : un rond
+ * rouge, la flamme par-dessus. Le rond se cale pile sur le disque des autres
+ * jours ; les pointes dépassent au-dessus, le petit pic en dessous. Mesuré
+ * sur l'image d'origine (1206 px) : rond de centre (612,5 ; 728,5), rayon 406,7.
+ */
+const DAY_FLAME = require('../assets/images/streak/flame-calendar.png');
+const DAY_FLAME_SIZE = DISC / 2 / (406.7 / 1206);
+const DAY_FLAME_CENTER = { x: (612.5 / 1206) * DAY_FLAME_SIZE, y: (728.5 / 1206) * DAY_FLAME_SIZE };
 const RIBBON = [`${lowki.red.light}24`, `${lowki.red.dark}24`] as const;
 
 /** YYYY-MM-DD d'un jour UTC */
@@ -329,7 +338,15 @@ function DayCell({ day, width, isToday, future, read, bonus, runStart }: DayCell
   const status = read ? 'lu' : bonus ? 'gardé par un marque-page' : future ? 'à venir' : isToday ? 'pas encore lu' : 'pas lu';
   return (
     <View style={[styles.cell, { width }]} accessible accessibilityLabel={`${n}${isToday ? ", aujourd'hui" : ''}, ${status}`}>
-      {read && runStart && <LinearGradient colors={[lowki.red.light, lowki.red.dark]} style={styles.disc} />}
+      {read && runStart && (
+        <Image
+          source={DAY_FLAME}
+          style={[
+            styles.dayFlame,
+            { left: width / 2 - DAY_FLAME_CENTER.x, top: ROW / 2 - DAY_FLAME_CENTER.y },
+          ]}
+        />
+      )}
       {bonus && (
         <View style={styles.discBox}>
           <BonusBookmark size={DAY_BOOKMARK} />
@@ -429,6 +446,11 @@ const styles = StyleSheet.create({
     width: DISC,
     height: DISC,
     borderRadius: DISC / 2,
+  },
+  dayFlame: {
+    position: 'absolute',
+    width: DAY_FLAME_SIZE,
+    height: DAY_FLAME_SIZE,
   },
   discBox: {
     position: 'absolute',
