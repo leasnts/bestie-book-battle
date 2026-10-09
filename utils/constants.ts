@@ -145,6 +145,9 @@ export const dangerGradient = ['#d4453f', '#a92f2a'] as const;
 /** L'encre en surface (boutons d'action) : chocolat, clair en haut → foncé en bas */
 export const inkGradient = ['#5a4536', '#1e140e'] as const;
 
+/** Le papier beige des cadres posés dans un sheet (GlassSection `paper`) */
+export const paperFrameGradient = ['#f1ebe2', '#e7dfd2'] as const;
+
 /**
  * Les six post-it du carnet — tirés de la charte Lowki (Lea, 2026-10-08).
  *
