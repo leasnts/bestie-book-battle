@@ -1,10 +1,10 @@
 /**
  * ProgressGauge — la progression du club en traits, pour la fiche du livre.
  *
+ *    ● Toi                      34 %
  *    ▮▮▮▮▮▮▮▮▮▮▮╷╷╷╷╷╷╷╷╷╷╷╷╷╷╷╷╷╷╷   ← moi : des traits verticaux, comme la
- *    ▪▪▪▪▪▪▪▪▪··················      tranche des pages ; dessous, le club, en
- *    ● Toi      34 %                   plus court. Bouts contre les côtés de la tuile
- *    ● Club     30 %
+ *    ● Club                     30 %     tranche des pages ; dessous, le club, en
+ *    ▪▪▪▪▪▪▪▪▪··················      plus court. Bouts contre les côtés de la tuile
  *
  * Deux rangées dans les mêmes colonnes, pour que les deux se voient toujours
  * (sur une seule rangée, le club disparaissait sous moi) : moi en rouge,
@@ -49,12 +49,9 @@ interface ProgressGaugeProps {
 /** Nombre de traits, de bord à bord */
 const BAR_COUNT = 30;
 const BAR_WIDTH = 3.5;
-/** Deux rangées, dans les mêmes colonnes : moi (longue) au-dessus du club */
-const ME_LENGTH = 18;
-const CLUB_LENGTH = 9;
-const ROW_GAP = 4;
-const CLUB_Y = ME_LENGTH + ROW_GAP;
-const HEIGHT = CLUB_Y + CLUB_LENGTH;
+/** Deux rangées, dans les mêmes colonnes : moi (plus longue) au-dessus du club */
+const ME_LENGTH = 12;
+const CLUB_LENGTH = 8;
 
 /** Les traits, du bord gauche au bord droit, régulièrement espacés */
 function barsFor(width: number) {
@@ -103,71 +100,82 @@ export default function ProgressGauge({
       accessible
       accessibilityLabel={`La moitié du club est à ${Math.round(clubPercent)} %, toi à ${Math.round(myPercent)} %`}
     >
-      {/* Les traits, centrés dans la place entre le titre et la légende */}
-      <View style={styles.barsArea}>
-        {size && (
-          <Svg width={size.width} height={HEIGHT}>
-            <Defs>
-              <LinearGradient id="gaugeMe" x1="0" y1="0" x2="0" y2="1">
-                <Stop offset="0" stopColor={accentGradient[0]} />
-                <Stop offset="1" stopColor={accentGradient[1]} />
-              </LinearGradient>
-              <LinearGradient id="gaugeClub" x1="0" y1="0" x2="0" y2="1">
-                <Stop offset="0" stopColor={CLUB_GRADIENT[0]} />
-                <Stop offset="1" stopColor={CLUB_GRADIENT[1]} />
-              </LinearGradient>
-              {/* Seuls les traits laissent voir les remplissages qui passent dessous */}
-              <Mask
-                id="gaugeBars"
-                maskUnits="userSpaceOnUse"
-                x={0}
-                y={0}
-                width={size.width}
-                height={HEIGHT}
-              >
-                {bars.map((x, i) => (
-                  <G key={i}>
-                    <Rect
-                      x={x}
-                      y={0}
-                      width={BAR_WIDTH}
-                      height={ME_LENGTH}
-                      rx={BAR_WIDTH / 2}
-                      fill="#fff"
-                    />
-                    <Rect
-                      x={x}
-                      y={CLUB_Y}
-                      width={BAR_WIDTH}
-                      height={CLUB_LENGTH}
-                      rx={BAR_WIDTH / 2}
-                      fill="#fff"
-                    />
-                  </G>
-                ))}
-              </Mask>
-            </Defs>
-            <G mask="url(#gaugeBars)">
-              <Rect width={size.width} height={HEIGHT} fill={inkAlpha(0.12)} />
-              <AnimatedRect
-                y={CLUB_Y}
-                height={CLUB_LENGTH}
-                fill="url(#gaugeClub)"
-                animatedProps={clubFill}
-              />
-              <AnimatedRect height={ME_LENGTH} fill="url(#gaugeMe)" animatedProps={meFill} />
-            </G>
-          </Svg>
-        )}
+      {/* Toi puis le club : chacun son libellé et son pourcentage, sa rangée de traits dessous */}
+      <View style={styles.rows}>
+        <GaugeRow
+          id="gaugeMe"
+          label="Toi"
+          value={me}
+          gradient={accentGradient}
+          length={ME_LENGTH}
+          width={width}
+          bars={bars}
+          fill={meFill}
+          legendInset={legendInset}
+        />
+        <GaugeRow
+          id="gaugeClub"
+          label="Club"
+          value={club}
+          gradient={CLUB_GRADIENT}
+          length={CLUB_LENGTH}
+          width={width}
+          bars={bars}
+          fill={clubFill}
+          legendInset={legendInset}
+        />
       </View>
+    </View>
+  );
+}
 
-      {/* Sous les traits, côte à côte */}
+/** Une rangée : « ● Toi … 34 % », puis ses traits qui se remplissent dessous */
+function GaugeRow({
+  id,
+  label,
+  value,
+  gradient,
+  length,
+  width,
+  bars,
+  fill,
+  legendInset,
+}: {
+  id: string;
+  label: string;
+  value: SharedValue<number>;
+  gradient: readonly [string, string];
+  length: number;
+  width: number;
+  bars: number[];
+  fill: Partial<{ width: number }>;
+  legendInset: number;
+}) {
+  return (
+    <View style={styles.row}>
       <View style={{ paddingHorizontal: legendInset }}>
-        <View style={styles.legendRows}>
-          <Legend label="Toi" value={me} dot={accentGradient[0]} />
-          <Legend label="Club" value={club} dot={CLUB_GRADIENT[1]} />
-        </View>
+        <Legend label={label} value={value} dot={gradient[1]} />
       </View>
+      {width > 0 && (
+        <Svg width={width} height={length}>
+          <Defs>
+            <LinearGradient id={id} x1="0" y1="0" x2="0" y2="1">
+              <Stop offset="0" stopColor={gradient[0]} />
+              <Stop offset="1" stopColor={gradient[1]} />
+            </LinearGradient>
+            {/* Seuls les traits laissent voir le remplissage qui passe dessous */}
+            <Mask id={`${id}Bars`} maskUnits="userSpaceOnUse" x={0} y={0} width={width} height={length}>
+              {bars.map((x, i) => (
+                <Rect key={i} x={x} y={0} width={BAR_WIDTH} height={length} rx={BAR_WIDTH / 2} fill="#fff" />
+              ))}
+            </Mask>
+          </Defs>
+          <G mask={`url(#${id}Bars)`}>
+            <Rect width={width} height={length} fill={inkAlpha(0.12)} />
+            <AnimatedRect height={length} fill={`url(#${id})`} animatedProps={fill} />
+          </G>
+        </Svg>
+      )}
     </View>
   );
 }
@@ -194,13 +202,15 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  barsArea: {
-    flex: 1,
-    justifyContent: 'center',
-  },
   /** Toi, puis le club dessous : côte à côte, ils se collaient dans la tuile */
-  legendRows: {
-    gap: 2,
+  /** Calées en bas de la tuile, comme les chiffres des autres tuiles : de l'air sous le titre */
+  rows: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    gap: 8,
+  },
+  row: {
+    gap: 4,
   },
   legendItem: {
     flexDirection: 'row',
