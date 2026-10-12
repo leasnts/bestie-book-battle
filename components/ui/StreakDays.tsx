@@ -13,7 +13,7 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import React from 'react';
 import { Image, StyleSheet, Text, View } from 'react-native';
-import Animated, { Easing, FadeIn, FadeInDown } from 'react-native-reanimated';
+import Animated, { Easing, FadeInDown, LinearTransition } from 'react-native-reanimated';
 import { colors, fonts, lowki } from '../../utils/constants';
 import { ACCENT_SCALE } from './AccentWord';
 import { BonusBookmark } from './BonusPill';
@@ -39,8 +39,9 @@ const RIBBON = [`${lowki.red.light}24`, `${lowki.red.dark}24`] as const;
 
 /** Le marque-page qui se pose : il descend dans sa case, sans rebond */
 const BOOKMARK_DROP = FadeInDown.duration(420).easing(Easing.out(Easing.cubic));
-/** Le ruban se recoud juste après */
-const RIBBON_JOIN = FadeIn.duration(300).delay(260);
+/** Le marque-page posé, le ruban s'allonge jusqu'à lui : il se recoud */
+export const BOOKMARK_LANDS = 380;
+const RIBBON_JOIN = LinearTransition.delay(BOOKMARK_LANDS - 60).duration(380).easing(Easing.inOut(Easing.cubic));
 
 /** YYYY-MM-DD, `n` jours après `day` (UTC, comme le serveur) */
 export function addDays(day: string, n: number): string {
@@ -88,9 +89,10 @@ export function DaysRow({ days, cellWidth, today, read, saved, dropping, awaitin
   return (
     <View style={styles.row}>
       {ribbons(days, kept).map(([from, to]) => (
+        // Clé = le début du ruban : quand il s'allonge, c'est le même qui grandit
         <Animated.View
-          key={`${from}-${to}`}
-          entering={dropping ? RIBBON_JOIN : undefined}
+          key={from}
+          layout={dropping ? RIBBON_JOIN : undefined}
           style={[
             styles.ribbon,
             { left: from * cellWidth + (cellWidth - DISC) / 2, width: (to - from) * cellWidth + DISC },

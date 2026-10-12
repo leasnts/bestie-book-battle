@@ -7,9 +7,12 @@
  * ne retombe pas à 1. Sinon, « Pas cette fois » la laisse s'éteindre.
  *
  * Pas d'explication en phrases : on voit la semaine, comme le calendrier de
- * /streak — ma série en ruban, puis hier, vide, qui la coupe. « Poser un
- * marque-page » le fait descendre dans la case d'hier, le ruban se recoud, la
- * flamme se rallume, puis le sheet se ferme.
+ * /streak — ma série en ruban, puis hier qui la coupe, son marque-page en
+ * filigrane ; la flamme et le chiffre pâlis. « Poser un marque-page » joue la
+ * série sauvée : le marque-page descend dans la case d'hier, le ruban se
+ * recoud jusqu'à lui, puis la flamme reprend vie (halo, braises) et le chiffre
+ * sa couleur, chaque temps marqué d'un retour haptique. Puis le sheet se ferme.
+ * « Perdre ma série » la laisse s'éteindre.
  *
  * À faire avant d'enregistrer une page : lire aujourd'hui sans marque-page
  * relance la série à 1 (trigger update_streak).
@@ -23,7 +26,7 @@ import Button3D from '../components/Button3D';
 import BonusPill from '../components/ui/BonusPill';
 import GlassSection from '../components/ui/GlassSection';
 import SheetPage, { SheetFooter } from '../components/ui/SheetPage';
-import { addDays, DaysRow, WeekdayRow, weekdayOf } from '../components/ui/StreakDays';
+import { addDays, BOOKMARK_LANDS, DaysRow, WeekdayRow, weekdayOf } from '../components/ui/StreakDays';
 import StreakHero from '../components/ui/StreakHero';
 import { useMyStreak } from '../hooks/useMyStreak';
 import { getReadingDays, spendStreakBonus } from '../services/supabase/database';
@@ -31,8 +34,10 @@ import { useProgressStore } from '../stores/progressStore';
 import { spacing } from '../utils/constants';
 import { dayString } from '../utils/streak';
 
-/** Le temps de voir le marque-page se poser et le ruban se recoudre, avant de fermer */
-const CLOSE_AFTER = 1100;
+/** La flamme se rallume une fois le ruban recousu */
+const REVIVE_AT = BOOKMARK_LANDS + 360;
+/** Le temps de voir la série reprendre vie, avant de fermer */
+const CLOSE_AFTER = REVIVE_AT + 1300;
 
 export default function StreakSaveRoute() {
   const router = useRouter();
@@ -72,21 +77,30 @@ export default function StreakSaveRoute() {
     if (!challengeId || dropped) return;
     setIsSaving(true);
     setDropped(true);
+    // Un retour haptique par temps : le marque-page se pose, la flamme repart
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    const landed = setTimeout(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium), BOOKMARK_LANDS);
+    const revived = setTimeout(
+      () => Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success),
+      REVIVE_AT,
+    );
     try {
       const ok = await spendStreakBonus(challengeId);
       if (!ok) {
+        clearTimeout(landed);
+        clearTimeout(revived);
         setDropped(false);
         router.back();
         return;
       }
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       await Promise.all([
         loadChallengeProgress(challengeId),
         new Promise((resolve) => setTimeout(resolve, CLOSE_AFTER)),
       ]);
       router.back();
     } catch {
+      clearTimeout(landed);
+      clearTimeout(revived);
       setDropped(false);
       Alert.alert('Erreur', 'Impossible de poser le marque-page.');
     } finally {
@@ -98,10 +112,9 @@ export default function StreakSaveRoute() {
     <SheetPage
       title="Garder ma série"
       accent="série"
-      subtitle="Hier, pas de lecture"
       actions={<BonusPill left={pillLeft} />}
     >
-      <StreakHero days={days} flame={dropped ? 'lit' : 'dim'} />
+      <StreakHero days={days} flame="dim" revive={dropped} delay={REVIVE_AT} />
 
       <GlassSection paper style={{ marginTop: spacing.lg }}>
         <View onLayout={(e) => setWidth(e.nativeEvent.layout.width)}>
@@ -132,7 +145,7 @@ export default function StreakSaveRoute() {
           Poser un marque-page
         </Button3D>
         <Button3D onPress={() => router.back()} variant="secondary" disabled={isSaving}>
-          Pas cette fois
+          Perdre ma série
         </Button3D>
       </SheetFooter>
     </SheetPage>
