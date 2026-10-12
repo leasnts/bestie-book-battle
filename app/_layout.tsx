@@ -351,6 +351,8 @@ function RootLayoutNav() {
 
       {/* Bibliothèque : toutes mes lectures, sur des étagères, à la hauteur des étagères */}
       <Stack.Screen name="library" options={sheetScreenOptions()} />
+      {/* TEMP — écoute des sons (#160) */}
+      <Stack.Screen name="sound-lab" options={sheetScreenOptions([0.95])} />
 
       {/* Garde les routes d'auth mais cachées (pour éviter les erreurs) */}
       <Stack.Screen
