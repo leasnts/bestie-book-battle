@@ -107,7 +107,8 @@ const MOMENTS: { label: string; livre: number; cuelume: number; buzz: Buzz }[] =
 
 // Les trois moments refaits (« horribles », Lea) : trois versions chacun, à choisir
 const POSTER = MOMENTS[3].buzz;
-const TOURNER = MOMENTS[5].buzz;
+// La vibration du carnet quand une nouvelle note part (NewNotesDeck)
+const LUE = impact(Light);
 const FINI = MOMENTS[10].buzz;
 const VARIANTS: { label: string; sources: number[]; buzz: Buzz }[] = [
   {
@@ -120,13 +121,13 @@ const VARIANTS: { label: string; sources: number[]; buzz: Buzz }[] = [
     buzz: POSTER,
   },
   {
-    label: 'Tourner une page',
+    label: 'Note lue',
     sources: [
-      require('../assets/sounds/lab/v2/page-courte.wav'),
-      require('../assets/sounds/lab/v2/page-moyenne.wav'),
-      require('../assets/sounds/lab/v2/page-longue.wav'),
+      require('../assets/sounds/lab/v2/lue-envol.wav'),
+      require('../assets/sounds/lab/v2/lue-pichenette.wav'),
+      require('../assets/sounds/lab/v2/lue-kalimba.wav'),
     ],
-    buzz: TOURNER,
+    buzz: LUE,
   },
   {
     label: 'Livre fini',
