@@ -76,7 +76,7 @@ interface DaysRowProps {
   saved: Set<string>;
   /** Ce jour vient d'être gardé : son marque-page descend, le ruban se recoud */
   dropping?: string;
-  /** Ce jour attend un marque-page (/streak-save) : sa case, cousue en pointillé */
+  /** Ce jour attend un marque-page (/streak-save) : le marque-page en filigrane, à sa place */
   awaiting?: string;
 }
 
@@ -169,7 +169,11 @@ function DayCell({ day, width, isToday, future, read, bonus, dropping, awaiting,
           ]}
         />
       )}
-      {awaiting && <View style={styles.slot} />}
+      {awaiting && (
+        <View style={[styles.discBox, styles.ghost]}>
+          <BonusBookmark size={DAY_BOOKMARK} />
+        </View>
+      )}
       {bonus && (
         <Animated.View entering={dropping ? BOOKMARK_DROP : undefined} style={styles.discBox}>
           <BonusBookmark size={DAY_BOOKMARK} />
@@ -223,15 +227,9 @@ const styles = StyleSheet.create({
     height: DISC,
     borderRadius: DISC / 2,
   },
-  // La case vide d'un jour qui attend son marque-page : une couture en points
-  slot: {
-    position: 'absolute',
-    width: DISC,
-    height: DISC,
-    borderRadius: DISC / 2,
-    borderWidth: 1.5,
-    borderStyle: 'dotted',
-    borderColor: lowki.red.light,
+  // Le jour qui attend son marque-page : le marque-page en filigrane, à peine là
+  ghost: {
+    opacity: 0.18,
   },
   dayFlame: {
     position: 'absolute',
