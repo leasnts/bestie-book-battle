@@ -4,7 +4,7 @@
  *    feel('poster')   → la bulle qui éclate + deux tapotements
  *
  * Un nom = un seul rôle, partout le même (idée reprise de cuelume.dev). Les
- * sons sont faits des matières du livre : mine de crayon, carton, tampon,
+ * sons sont faits des matières du livre : mine de crayon, carton, kalimba,
  * marimba en bois, marque-page, livre qu'on referme. Choisis à l'oreille par
  * Lea sur l'écran d'écoute ; fabriqués par `scripts/sounds/` (CC0 Kenney pour
  * le livre qui se referme).
@@ -64,7 +64,7 @@ const HAPTICS: Record<FeelName, [number, Tap][]> = {
   valider: [[0, Heavy], [70, Rigid]],
   poster: [[0, Medium], [50, Heavy]],
   reagir: [[0, Rigid]],
-  lue: [[0, Medium]],
+  lue: [[0, Medium], [45, Rigid]],
   fermer: [[100, Heavy]],
   objectif: [[0, Heavy], [90, 'success']],
   serie: [[0, Medium], [50, Heavy], [250, 'success']],

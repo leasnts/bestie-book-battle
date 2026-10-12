@@ -11,4 +11,4 @@ node scripts/sounds/matieres.mjs <dossier de sortie> [nom]
 node scripts/sounds/matieres-v2.mjs <dossier de sortie> x <dossier samples> [nom]
 ```
 
-Correspondance avec `utils/feel.ts` : tic = crayon, appui = carton, valider = tampon, poster = note-bulle, reagir = reaction, lue = lue-pichenette, fermer = fermer, objectif = reussite, serie = marque-page, depasser = depasser, fini = fin-referme, erreur = erreur.
+Correspondance avec `utils/feel.ts` : tic = crayon, appui = carton, valider = valider-coche, poster = note-bulle, reagir = reagir-bulle, lue = lue-kalimba-aigu, fermer = fermer, objectif = reussite, serie = marque-page, depasser = depasser, fini = fin-referme, erreur = erreur.
