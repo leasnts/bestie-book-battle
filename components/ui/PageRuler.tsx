@@ -34,7 +34,7 @@
  */
 
 import MaskedView from '@react-native-masked-view/masked-view';
-import * as Haptics from 'expo-haptics';
+import { feel } from '../../utils/feel';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -151,7 +151,7 @@ export default function PageRuler({ currentPage, totalPages, onPageChange, fontS
     const now = Date.now();
     if (now - lastTick.current > 30) {
       lastTick.current = now;
-      Haptics.selectionAsync().catch(() => {});
+      feel('tic');
     }
   }, []);
 

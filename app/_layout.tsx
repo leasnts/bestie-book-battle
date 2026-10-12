@@ -25,6 +25,7 @@ import { scheduleDailyReminder } from '../services/notifications';
 import { useAuthStore } from '../stores/authStore';
 import { useProjectStore } from '../stores/projectStore';
 import { colors } from '../utils/constants';
+import { prepareFeel } from '../utils/feel';
 import { supabase } from '../supabaseConfig';
 import AnimatedSplash from '../components/AnimatedSplash';
 import { sheetScreenOptions } from '../components/ui/SheetHeader';
@@ -130,6 +131,11 @@ function RootLayoutNav() {
     WelcomeValentines_400Regular: require('../assets/fonts/WelcomeValentines_400Regular.ttf'),
   });
 
+
+  // Sons de l'app : mode ambiance (muets en silencieux) et fichiers chargés d'avance
+  useEffect(() => {
+    prepareFeel();
+  }, []);
 
   // Initialise l'auth
   useEffect(() => {

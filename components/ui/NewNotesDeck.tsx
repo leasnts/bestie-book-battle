@@ -29,6 +29,7 @@
  */
 
 import * as Haptics from 'expo-haptics';
+import { buzz, feel } from '../../utils/feel';
 import { LinearGradient as ExpoLinearGradient } from 'expo-linear-gradient';
 import { CheckIcon } from 'lucide-react-native';
 import React, { useEffect, useRef, useState } from 'react';
@@ -306,8 +307,6 @@ function SwipeCard({
     );
   }, [hint, reduced, size, ax, ay, bx, by, peeling]);
 
-  const buzz = (style: Haptics.ImpactFeedbackStyle) => Haptics.impactAsync(style).catch(() => {});
-
   const pan = Gesture.Pan()
     .enabled(depth === 0)
     .minDistance(6)
@@ -325,7 +324,7 @@ function SwipeCard({
         const inward =
           e.translationX * (w.value / 2 - ax.value) + e.translationY * (h.value / 2 - ay.value) > 0;
         mode.value = inward && !reduced ? 1 : 2;
-        if (mode.value === 1) runOnJS(buzz)(Haptics.ImpactFeedbackStyle.Light);
+        if (mode.value === 1) runOnJS(buzz)(Haptics.ImpactFeedbackStyle.Medium);
       }
       if (mode.value === 1) {
         bx.value = ax.value + e.translationX;
@@ -335,7 +334,7 @@ function SwipeCard({
         const nowArmed = amount.value >= PEEL_OFF ? 1 : 0;
         if (nowArmed !== armed.value) {
           armed.value = nowArmed;
-          runOnJS(buzz)(nowArmed ? Haptics.ImpactFeedbackStyle.Medium : Haptics.ImpactFeedbackStyle.Light);
+          runOnJS(buzz)(nowArmed ? Haptics.ImpactFeedbackStyle.Heavy : Haptics.ImpactFeedbackStyle.Medium);
         }
       } else {
         x.value = e.translationX;
@@ -361,6 +360,7 @@ function SwipeCard({
           return;
         }
         // Assez tirée : le pli traverse toute la note, puis elle s'envole, dos visible
+        runOnJS(feel)('lue');
         const dx = bx.value - ax.value;
         const dy = by.value - ay.value;
         const len = Math.hypot(dx, dy) || 1;
@@ -386,7 +386,7 @@ function SwipeCard({
         y.value = withTiming(0, { duration: motion.duration.slow, easing: easeOut });
         return;
       }
-      runOnJS(buzz)(Haptics.ImpactFeedbackStyle.Light);
+      runOnJS(feel)('lue');
       if (reduced) {
         fade.value = withTiming(0, { duration: motion.duration.standard }, done);
         return;

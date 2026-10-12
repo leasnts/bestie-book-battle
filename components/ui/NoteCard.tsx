@@ -16,7 +16,7 @@
  * autre édition) : c'est la page où je retrouverai le passage.
  */
 
-import * as Haptics from 'expo-haptics';
+import { buzz } from '../../utils/feel';
 import { Image } from 'expo-image';
 import { EllipsisIcon, LockIcon, SmilePlusIcon, XIcon } from 'lucide-react-native';
 import React, { useMemo, useState } from 'react';
@@ -108,7 +108,7 @@ export default function NoteCard({
   const canReact = !!onToggleReaction && !hideReactions && note.visibility === 'club';
   const longPress = canReact
     ? () => {
-        Haptics.selectionAsync().catch(() => {});
+        buzz('selection');
         setPicking(true);
       }
     : undefined;

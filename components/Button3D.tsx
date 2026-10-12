@@ -11,6 +11,7 @@
  * Effet 3D : gradients concentrés aux bords, inversés au press.
  */
 
+import { feel } from '../utils/feel';
 import { colors, creamAlpha, fonts, inkAlpha, shadowAlpha } from '../utils/constants';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
@@ -118,7 +119,10 @@ export default function Button3D({
 
   return (
     <Pressable
-      onPress={onPress}
+      onPress={() => {
+        feel('appui');
+        onPress();
+      }}
       onPressIn={() => setPressed(true)}
       onPressOut={() => setPressed(false)}
       disabled={disabled || loading}

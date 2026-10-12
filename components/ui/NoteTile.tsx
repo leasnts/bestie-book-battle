@@ -28,6 +28,7 @@
  */
 
 import * as Haptics from 'expo-haptics';
+import { buzz } from '../../utils/feel';
 import { LinearGradient } from 'expo-linear-gradient';
 import { LockIcon, MicIcon, PenLineIcon } from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
@@ -380,7 +381,6 @@ function PeelCard({
     setSize((prev) => (prev && prev.w === lw && prev.h === lh ? prev : { w: lw, h: lh }));
   };
 
-  const buzz = (style: Haptics.ImpactFeedbackStyle) => Haptics.impactAsync(style).catch(() => {});
 
   /** Le doigt lâche : le coin se recolle, ou l'autocollant s'envole */
   const release = () => {
@@ -448,7 +448,7 @@ function PeelCard({
       ax.value = Math.abs(tx) > Math.abs(ty) * 0.4 ? (tx > 0 ? 0 : w.value) : startX.value < w.value / 2 ? 0 : w.value;
       ay.value = Math.abs(ty) > Math.abs(tx) * 0.4 ? (ty > 0 ? 0 : h.value) : startY.value < h.value / 2 ? 0 : h.value;
       live.value = 1;
-      runOnJS(buzz)(Haptics.ImpactFeedbackStyle.Light);
+      runOnJS(buzz)(Haptics.ImpactFeedbackStyle.Medium);
     })
     .onUpdate((e) => {
       if (!live.value) return;
@@ -458,7 +458,7 @@ function PeelCard({
       const nowArmed = peelAmount(values) >= PEEL_OFF ? 1 : 0;
       if (nowArmed !== armed.value) {
         armed.value = nowArmed;
-        runOnJS(buzz)(nowArmed ? Haptics.ImpactFeedbackStyle.Medium : Haptics.ImpactFeedbackStyle.Light);
+        runOnJS(buzz)(nowArmed ? Haptics.ImpactFeedbackStyle.Heavy : Haptics.ImpactFeedbackStyle.Medium);
       }
     })
     .onEnd((e) => {

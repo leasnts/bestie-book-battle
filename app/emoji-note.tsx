@@ -6,7 +6,6 @@
  * (`EmojiGrid`) ; un toucher ajoute la note au carnet de notes et ferme.
  */
 
-import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
 import React, { useCallback } from 'react';
 import { Alert, StyleSheet } from 'react-native';
@@ -24,7 +23,6 @@ export default function EmojiNoteRoute() {
       if (posting) return;
       try {
         await post({ emoji });
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
         router.back();
       } catch (error) {
         console.error('[Carnet] note emoji impossible', error);
