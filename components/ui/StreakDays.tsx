@@ -86,6 +86,8 @@ interface DaysRowProps {
 export function DaysRow({ days, cellWidth, today, read, saved, dropping, awaiting }: DaysRowProps) {
   // Un jour compte dans la série s'il est lu ou gardé
   const kept = (d: string | null) => !!d && (read.has(d) || saved.has(d));
+  // Le début de la série en cours (vivante tant qu'hier compte) : seule sa flamme brûle
+  const current = currentRunStart(today, kept);
 
   return (
     <View style={styles.row}>
@@ -116,6 +118,8 @@ export function DaysRow({ days, cellWidth, today, read, saved, dropping, awaitin
             awaiting={!!awaiting?.includes(day) && !saved.has(day) && !read.has(day)}
             // Le premier jour d'une série (même d'un seul jour) : la veille ne compte pas
             runStart={kept(day) && !kept(addDays(day, -1))}
+            // Une série d'avant : sa flamme s'est éteinte
+            past={day !== current}
           />
         ) : (
           <View key={`empty-${c}`} style={{ width: cellWidth }} />
@@ -123,6 +127,14 @@ export function DaysRow({ days, cellWidth, today, read, saved, dropping, awaitin
       )}
     </View>
   );
+}
+
+/** Le premier jour de la série en cours, ou null si elle est perdue */
+function currentRunStart(today: string, kept: (d: string | null) => boolean): string | null {
+  let day = kept(today) ? today : addDays(today, -1);
+  if (!kept(day)) return null;
+  while (kept(addDays(day, -1))) day = addDays(day, -1);
+  return day;
 }
 
 /** Les colonnes [début, fin] des jours gardés qui se suivent dans une rangée */
@@ -151,9 +163,10 @@ interface DayCellProps {
   dropping: boolean;
   awaiting: boolean;
   runStart: boolean;
+  past: boolean;
 }
 
-function DayCell({ day, width, isToday, future, read, bonus, dropping, awaiting, runStart }: DayCellProps) {
+function DayCell({ day, width, isToday, future, read, bonus, dropping, awaiting, runStart, past }: DayCellProps) {
   const n = Number(day.slice(8));
   const status = read ? 'lu' : bonus ? 'gardé par un marque-page' : future ? 'à venir' : isToday ? 'pas encore lu' : 'pas lu';
   return (
@@ -165,6 +178,7 @@ function DayCell({ day, width, isToday, future, read, bonus, dropping, awaiting,
           contentFit="contain"
           style={[
             styles.dayFlame,
+            past && styles.dayFlamePast,
             { left: width / 2 - DAY_FLAME_CENTER.x, top: DAY_ROW / 2 - DAY_FLAME_CENTER.y },
           ]}
         />
@@ -182,7 +196,7 @@ function DayCell({ day, width, isToday, future, read, bonus, dropping, awaiting,
       <Text
         style={[
           styles.dayNumber,
-          read && (runStart ? styles.dayOnDisc : styles.dayRead),
+          read && (runStart && !past ? styles.dayOnDisc : styles.dayRead),
           bonus && styles.dayOnBookmark,
           isToday && !read && styles.dayToday,
           future && styles.dayFuture,
@@ -191,7 +205,7 @@ function DayCell({ day, width, isToday, future, read, bonus, dropping, awaiting,
         {n}
       </Text>
       {/* Aujourd'hui, lu ou non : un point sous le chiffre */}
-      {isToday && <View style={[styles.todayDot, read && runStart && styles.todayDotOnFlame]} />}
+      {isToday && <View style={[styles.todayDot, read && runStart && !past && styles.todayDotOnFlame]} />}
     </View>
   );
 }
@@ -229,6 +243,9 @@ const styles = StyleSheet.create({
     position: 'absolute',
     width: DAY_FLAME_SIZE,
     height: DAY_FLAME_SIZE,
+  },
+  dayFlamePast: {
+    opacity: 0.25,
   },
   discBox: {
     position: 'absolute',
