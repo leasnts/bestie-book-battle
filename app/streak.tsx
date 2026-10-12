@@ -17,7 +17,6 @@
  * leur contenu glisse.
  */
 
-import { LinearGradient } from 'expo-linear-gradient';
 import { ChevronLeftIcon, ChevronRightIcon, ChevronsRightIcon } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Image, StyleSheet, Text, View } from 'react-native';
@@ -25,6 +24,7 @@ import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-g
 import Animated, { FadeInLeft, FadeInRight, LinearTransition, runOnJS } from 'react-native-reanimated';
 import { ACCENT_SCALE, AccentUnit } from '../components/ui/AccentWord';
 import { BonusBookmark } from '../components/ui/BonusPill';
+import { addDays, DaysRow, WeekdayRow, WEEKDAYS } from '../components/ui/StreakDays';
 import GlassButton from '../components/ui/GlassButton';
 import SheetPage from '../components/ui/SheetPage';
 import GlassSection from '../components/ui/GlassSection';
@@ -32,43 +32,19 @@ import { STREAK_FLAME } from '../components/ui/StreakPill';
 import { useMyStreak } from '../hooks/useMyStreak';
 import { getReadingDays } from '../services/supabase/database';
 import { useProjectStore } from '../stores/projectStore';
-import { colors, fonts, lowki, spacing } from '../utils/constants';
+import { colors, fonts, spacing } from '../utils/constants';
 import { dayString, STREAK_BONUS_PER_BOOK } from '../utils/streak';
 
-const WEEKDAYS = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
-const ROW = 44;
 // Les deux icônes des repères, à la même taille à l'œil : la flamme a du vide
 // autour d'elle dans son image ; le marque-page, plein, se tient un peu plus petit
 const STAT_ICON = 34;
 const STAT_BOOKMARK = 29;
-const DISC = 36;
-// Le marque-page d'un jour gardé : aussi large qu'un disque, son bout rond
-// posé pile sur le haut du disque (l'image est carrée, le marque-page fait
-// 814 × 1032 dedans)
-const DAY_BOOKMARK = Math.round((DISC * 1032) / 814);
 /** Pas plus d'un an en arrière */
 const MAX_MONTHS = 12;
-/** Le ruban d'une série : le rouge de la charte, à peine posé */
-/**
- * La flamme d'un premier jour de série (flamme_calendar de Lea) : un rond
- * rouge, la flamme par-dessus. Le rond se cale pile sur le disque des autres
- * jours ; les pointes dépassent au-dessus, le petit pic en dessous. Mesuré
- * sur l'image d'origine (1206 px) : rond de centre (612,5 ; 728,5), rayon 406,7.
- */
-const DAY_FLAME = require('../assets/images/streak/flame-calendar.png');
-const DAY_FLAME_SIZE = DISC / 2 / (406.7 / 1206);
-const DAY_FLAME_CENTER = { x: (612.5 / 1206) * DAY_FLAME_SIZE, y: (728.5 / 1206) * DAY_FLAME_SIZE };
-const RIBBON = [`${lowki.red.light}24`, `${lowki.red.dark}24`] as const;
 
 /** YYYY-MM-DD d'un jour UTC */
 function iso(d: Date) {
   return d.toISOString().split('T')[0];
-}
-
-function addDays(day: string, n: number): string {
-  const d = new Date(`${day}T00:00:00Z`);
-  d.setUTCDate(d.getUTCDate() + n);
-  return iso(d);
 }
 
 /** Le 1er du mois de `day` */
@@ -234,13 +210,7 @@ export default function StreakRoute() {
           <Animated.View layout={LinearTransition.duration(220)} style={styles.calendar}>
             <GlassSection paper>
               <View onLayout={(e) => setCalendarWidth(e.nativeEvent.layout.width)}>
-                <View style={styles.row}>
-                  {WEEKDAYS.map((letter, i) => (
-                    <Text key={i} style={[styles.weekday, { width: cellWidth }]}>
-                      {letter}
-                    </Text>
-                  ))}
-                </View>
+                <WeekdayRow letters={WEEKDAYS} cellWidth={cellWidth} />
                 {calendarWidth > 0 && (
                   <Animated.View key={month} entering={entering}>
                     <MonthGrid first={month} cellWidth={cellWidth} today={today} read={read} saved={saved} />
@@ -265,111 +235,12 @@ interface MonthGridProps {
 
 function MonthGrid({ first, cellWidth, today, read, saved }: MonthGridProps) {
   const grid = useMemo(() => monthGrid(first), [first]);
-  // Un jour compte dans la série s'il est lu ou gardé
-  const kept = (d: string | null) => !!d && (read.has(d) || saved.has(d));
-
   return (
     <>
       {grid.map((week, r) => (
-        <View key={r} style={styles.row}>
-          {/* Le ruban sous chaque série de jours qui se suivent dans la semaine */}
-          {ribbons(week, kept).map(([from, to]) => (
-            <LinearGradient
-              key={from}
-              colors={RIBBON}
-              style={[
-                styles.ribbon,
-                { left: from * cellWidth + (cellWidth - DISC) / 2, width: (to - from) * cellWidth + DISC },
-              ]}
-            />
-          ))}
-          {week.map((day, c) =>
-            day ? (
-              <DayCell
-                key={day}
-                day={day}
-                width={cellWidth}
-                isToday={day === today}
-                future={day > today}
-                read={read.has(day)}
-                bonus={saved.has(day) && !read.has(day)}
-                // Le premier jour d'une série : la veille ne compte pas
-                runStart={kept(day) && !kept(addDays(day, -1))}
-                // Un jour lu seul, sans veille ni lendemain : pas encore une série
-                alone={kept(day) && !kept(addDays(day, -1)) && !kept(addDays(day, 1))}
-              />
-            ) : (
-              <View key={`empty-${c}`} style={{ width: cellWidth }} />
-            ),
-          )}
-        </View>
+        <DaysRow key={r} days={week} cellWidth={cellWidth} today={today} read={read} saved={saved} />
       ))}
     </>
-  );
-}
-
-/** Les colonnes [début, fin] des jours gardés qui se suivent dans une semaine */
-function ribbons(week: (string | null)[], kept: (d: string | null) => boolean): [number, number][] {
-  const out: [number, number][] = [];
-  let start = -1;
-  week.forEach((day, i) => {
-    if (kept(day)) {
-      if (start < 0) start = i;
-    } else if (start >= 0) {
-      out.push([start, i - 1]);
-      start = -1;
-    }
-  });
-  if (start >= 0) out.push([start, week.length - 1]);
-  return out;
-}
-
-interface DayCellProps {
-  day: string;
-  width: number;
-  isToday: boolean;
-  future: boolean;
-  read: boolean;
-  bonus: boolean;
-  runStart: boolean;
-  alone: boolean;
-}
-
-function DayCell({ day, width, isToday, future, read, bonus, runStart, alone }: DayCellProps) {
-  const n = Number(day.slice(8));
-  const status = read ? 'lu' : bonus ? 'gardé par un marque-page' : future ? 'à venir' : isToday ? 'pas encore lu' : 'pas lu';
-  return (
-    <View style={[styles.cell, { width }]} accessible accessibilityLabel={`${n}${isToday ? ", aujourd'hui" : ''}, ${status}`}>
-      {/* Un jour lu seul : le disque rouge ; une vraie série s'allume sous sa flamme */}
-      {read && alone && <LinearGradient colors={[lowki.red.light, lowki.red.dark]} style={styles.disc} />}
-      {read && runStart && !alone && (
-        <Image
-          source={DAY_FLAME}
-          style={[
-            styles.dayFlame,
-            { left: width / 2 - DAY_FLAME_CENTER.x, top: ROW / 2 - DAY_FLAME_CENTER.y },
-          ]}
-        />
-      )}
-      {bonus && (
-        <View style={styles.discBox}>
-          <BonusBookmark size={DAY_BOOKMARK} />
-        </View>
-      )}
-      <Text
-        style={[
-          styles.dayNumber,
-          read && (runStart ? styles.dayOnDisc : styles.dayRead),
-          bonus && styles.dayOnBookmark,
-          isToday && !read && styles.dayToday,
-          future && styles.dayFuture,
-        ]}
-      >
-        {n}
-      </Text>
-      {/* Aujourd'hui, lu ou non : un point sous le chiffre */}
-      {isToday && <View style={[styles.todayDot, read && runStart && styles.todayDotOnFlame]} />}
-    </View>
   );
 }
 
@@ -415,84 +286,5 @@ const styles = StyleSheet.create({
   // ── Le calendrier ──
   calendar: {
     marginTop: spacing.md,
-  },
-  row: {
-    flexDirection: 'row',
-    height: ROW,
-    alignItems: 'center',
-  },
-  // Les jours de la semaine à la main (Welcome Valentines, à l'œil du corps 13)
-  weekday: {
-    textAlign: 'center',
-    fontFamily: fonts.accent,
-    fontSize: 13 * ACCENT_SCALE,
-    color: colors.textTertiary,
-  },
-  ribbon: {
-    position: 'absolute',
-    top: (ROW - DISC) / 2,
-    height: DISC,
-    borderRadius: DISC / 2,
-  },
-  cell: {
-    height: ROW,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  disc: {
-    position: 'absolute',
-    width: DISC,
-    height: DISC,
-    borderRadius: DISC / 2,
-  },
-  dayFlame: {
-    position: 'absolute',
-    width: DAY_FLAME_SIZE,
-    height: DAY_FLAME_SIZE,
-  },
-  discBox: {
-    position: 'absolute',
-    width: DISC,
-    height: DISC,
-    alignItems: 'center',
-    justifyContent: 'center',
-    transform: [{ translateY: (DAY_BOOKMARK - DISC) / 2 }],
-  },
-  dayNumber: {
-    fontFamily: fonts.bodySemiBold,
-    fontSize: 15,
-    color: colors.textTertiary,
-    fontVariant: ['tabular-nums'],
-  },
-  dayRead: {
-    fontFamily: fonts.bodyBold,
-    color: lowki.red.light,
-  },
-  dayOnDisc: {
-    fontFamily: fonts.bodyBold,
-    color: colors.white,
-  },
-  dayOnBookmark: {
-    fontFamily: fonts.bodyBold,
-    color: colors.white,
-  },
-  todayDot: {
-    position: 'absolute',
-    bottom: (ROW - DISC) / 2 + 4,
-    width: 5,
-    height: 5,
-    borderRadius: 2.5,
-    backgroundColor: lowki.red.light,
-  },
-  todayDotOnFlame: {
-    backgroundColor: colors.white,
-  },
-  // Aujourd'hui, pas encore lu : le chiffre en rouge
-  dayToday: {
-    fontFamily: fonts.bodyBold,
-    color: lowki.red.light,
-  },
-  dayFuture: {
-    opacity: 0.4,
   },
 });
