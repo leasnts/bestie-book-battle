@@ -245,7 +245,7 @@ const styles = StyleSheet.create({
     height: DAY_FLAME_SIZE,
   },
   dayFlamePast: {
-    opacity: 0.25,
+    opacity: 0.4,
   },
   discBox: {
     position: 'absolute',
