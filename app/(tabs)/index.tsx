@@ -256,7 +256,7 @@ export default function HomeScreen() {
   // Ma série : la gélule en haut à droite
   const myStreakInfo = useMyStreak();
 
-  // Hier manqué et un marque-page en poche : on le propose, une fois par jour
+  // Des jours manqués et assez de marque-pages en poche : on les propose, une fois par jour
   // et par livre, avant que la lecture du jour ne relance la série à 1.
   useEffect(() => {
     const { state, challengeId } = myStreakInfo;

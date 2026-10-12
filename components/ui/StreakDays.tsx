@@ -75,10 +75,10 @@ interface DaysRowProps {
   today: string;
   read: Set<string>;
   saved: Set<string>;
-  /** Ce jour vient d'être gardé : son marque-page descend, le ruban se recoud */
-  dropping?: string;
-  /** Ce jour attend un marque-page (/streak-save) : le marque-page en filigrane, à sa place */
-  awaiting?: string;
+  /** Ces jours viennent d'être gardés : leurs marque-pages descendent, le ruban se recoud */
+  dropping?: string[];
+  /** Ces jours attendent un marque-page (/streak-save) : le marque-page en filigrane, à sa place */
+  awaiting?: string[];
 }
 
 /** Une rangée de jours, avec le ruban sous chaque série qui s'y suit */
@@ -92,7 +92,7 @@ export function DaysRow({ days, cellWidth, today, read, saved, dropping, awaitin
         // Clé = le début du ruban : quand il s'allonge, c'est le même qui grandit
         <Animated.View
           key={from}
-          layout={dropping ? RIBBON_JOIN : undefined}
+          layout={dropping?.length ? RIBBON_JOIN : undefined}
           style={[
             styles.ribbon,
             { left: from * cellWidth + (cellWidth - DISC) / 2, width: (to - from) * cellWidth + DISC },
@@ -111,8 +111,8 @@ export function DaysRow({ days, cellWidth, today, read, saved, dropping, awaitin
             future={day > today}
             read={read.has(day)}
             bonus={saved.has(day) && !read.has(day)}
-            dropping={day === dropping}
-            awaiting={day === awaiting && !saved.has(day) && !read.has(day)}
+            dropping={!!dropping?.includes(day)}
+            awaiting={!!awaiting?.includes(day) && !saved.has(day) && !read.has(day)}
             // Le premier jour d'une série : la veille ne compte pas
             runStart={kept(day) && !kept(addDays(day, -1))}
             // Un jour lu seul, sans veille ni lendemain : pas encore une série

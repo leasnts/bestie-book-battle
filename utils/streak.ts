@@ -68,7 +68,8 @@ export const STREAK_BONUS_PER_BOOK = 3;
  * Les quatre états de ma série, ce que dit la gélule de l'accueil :
  * - `active` : lu aujourd'hui, la flamme brûle ;
  * - `atRisk` : lu hier, pas encore aujourd'hui, elle s'éteint à minuit ;
- * - `missed` : hier manqué, mais un marque-page peut encore la garder ;
+ * - `missed` : un ou plusieurs jours manqués, mais il reste assez de
+ *   marque-pages pour les garder tous (un par jour) ;
  * - `inactive` : pas de série.
  *
  * Les jours sont ceux du serveur (UTC), comme le trigger update_streak.
@@ -79,15 +80,19 @@ export function getStreakState(
   streakCount: number,
   lastStreakDate: string | null | undefined,
   bonusDates: string[] = [],
-): { state: StreakState; days: number } {
-  if (!streakCount || !lastStreakDate) return { state: 'inactive', days: 0 };
+): { state: StreakState; days: number; missedDays: string[] } {
+  if (!streakCount || !lastStreakDate) return { state: 'inactive', days: 0, missedDays: [] };
   const lastRead = lastStreakDate.split('T')[0];
-  if (lastRead === dayString(0)) return { state: 'active', days: streakCount };
-  if (lastRead === dayString(1)) return { state: 'atRisk', days: streakCount };
-  if (lastRead === dayString(2) && bonusesLeft(bonusDates) > 0) {
-    return { state: 'missed', days: streakCount };
+  if (lastRead === dayString(0)) return { state: 'active', days: streakCount, missedDays: [] };
+  if (lastRead === dayString(1)) return { state: 'atRisk', days: streakCount, missedDays: [] };
+  // Les jours manqués, du lendemain de la dernière lecture jusqu'à hier :
+  // un marque-page chacun, il faut de quoi tous les couvrir
+  const missedDays: string[] = [];
+  for (let n = 1; dayString(n) > lastRead && n <= STREAK_BONUS_PER_BOOK + 1; n++) missedDays.unshift(dayString(n));
+  if (missedDays.length > 0 && missedDays.length <= bonusesLeft(bonusDates)) {
+    return { state: 'missed', days: streakCount, missedDays };
   }
-  return { state: 'inactive', days: 0 };
+  return { state: 'inactive', days: 0, missedDays: [] };
 }
 
 /** Marque-pages qu'il me reste sur ce livre */

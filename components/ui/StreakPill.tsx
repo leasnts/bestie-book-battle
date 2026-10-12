@@ -8,7 +8,7 @@
  *
  * Trois visages (voir `getStreakState`), sans animation :
  * - en cours (lu aujourd'hui) : la flamme et le nombre en rouge plein ;
- * - qui va mourir (pas encore lu aujourd'hui, ou hier manqué) : flamme et
+ * - qui va mourir (pas encore lu aujourd'hui, ou un jour manqué) : flamme et
  *   nombre en rouge atténué ;
  * - éteinte (pas de série) : flamme et 0 grisés.
  *
@@ -35,7 +35,7 @@ interface StreakPillProps {
 const LABELS: Record<StreakState, (days: number) => string> = {
   active: (d) => `Série de ${d} jour${d > 1 ? 's' : ''}`,
   atRisk: (d) => `Série de ${d} jour${d > 1 ? 's' : ''}, à garder aujourd'hui`,
-  missed: (d) => `Série de ${d} jour${d > 1 ? 's' : ''}, hier manqué`,
+  missed: (d) => `Série de ${d} jour${d > 1 ? 's' : ''}, en pause`,
   inactive: () => 'Pas de série',
 };
 
