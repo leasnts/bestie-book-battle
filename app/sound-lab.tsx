@@ -105,11 +105,64 @@ const MOMENTS: { label: string; livre: number; cuelume: number; buzz: Buzz }[] =
   },
 ];
 
-function PlayButton({ label, onPress }: { label: string; onPress: () => void }) {
+// Les trois moments refaits (« horribles », Lea) : trois versions chacun, à choisir
+const POSTER = MOMENTS[3].buzz;
+const TOURNER = MOMENTS[5].buzz;
+const FINI = MOMENTS[10].buzz;
+const VARIANTS: { label: string; sources: number[]; buzz: Buzz }[] = [
+  {
+    label: 'Poster une note',
+    sources: [
+      require('../assets/sounds/lab/v2/note-bulle.wav'),
+      require('../assets/sounds/lab/v2/note-postit.wav'),
+      require('../assets/sounds/lab/v2/note-kalimba.wav'),
+    ],
+    buzz: POSTER,
+  },
+  {
+    label: 'Tourner une page',
+    sources: [
+      require('../assets/sounds/lab/v2/page-courte.wav'),
+      require('../assets/sounds/lab/v2/page-moyenne.wav'),
+      require('../assets/sounds/lab/v2/page-longue.wav'),
+    ],
+    buzz: TOURNER,
+  },
+  {
+    label: 'Livre fini',
+    sources: [
+      require('../assets/sounds/lab/v2/fin-accord.wav'),
+      require('../assets/sounds/lab/v2/fin-referme.wav'),
+      require('../assets/sounds/lab/v2/fin-boite-a-musique.wav'),
+    ],
+    buzz: FINI,
+  },
+];
+
+function PlayButton({
+  label,
+  mark,
+  narrow,
+  onPress,
+}: {
+  label: string;
+  mark?: string;
+  narrow?: boolean;
+  onPress: () => void;
+}) {
   return (
-    <PressableScale onPress={onPress} pressedScale={0.94} style={styles.play} accessibilityLabel={label}>
+    <PressableScale
+      onPress={onPress}
+      pressedScale={0.94}
+      style={[styles.play, narrow && styles.playNarrow]}
+      accessibilityLabel={label}
+    >
       <LinearGradient colors={paperFrameGradient} style={StyleSheet.absoluteFill} />
-      <Volume2 size={18} color={colors.textSecondary} strokeWidth={2} />
+      {mark ? (
+        <Text style={styles.mark}>{mark}</Text>
+      ) : (
+        <Volume2 size={18} color={colors.textSecondary} strokeWidth={2} />
+      )}
     </PressableScale>
   );
 }
@@ -122,6 +175,7 @@ export default function SoundLabRoute() {
     setAudioModeAsync({ playsInSilentMode: true, interruptionMode: 'mixWithOthers' }).catch(() => {});
     for (const m of MOMENTS)
       for (const src of [m.livre, m.cuelume]) players.current.set(src, createAudioPlayer(src));
+    for (const v of VARIANTS) for (const src of v.sources) players.current.set(src, createAudioPlayer(src));
     const map = players.current;
     return () => {
       map.forEach((p) => p.remove());
@@ -140,6 +194,25 @@ export default function SoundLabRoute() {
 
   return (
     <SheetPage title="Sons" fit={false}>
+      <Text style={styles.section}>Nouvelles versions</Text>
+      {VARIANTS.map((v) => (
+        <View key={v.label} style={styles.row}>
+          <Text style={styles.moment}>{v.label}</Text>
+          <View style={styles.pair}>
+            {v.sources.map((src, i) => (
+              <PlayButton
+                key={src}
+                narrow
+                mark={String(i + 1)}
+                label={`${v.label}, version ${i + 1}`}
+                onPress={() => play(src, v.buzz)}
+              />
+            ))}
+          </View>
+        </View>
+      ))}
+
+      <Text style={[styles.section, styles.sectionGap]}>Première écoute</Text>
       <View style={styles.legend}>
         <Text style={[styles.col, styles.colLabel]}>Livre</Text>
         <Text style={[styles.col, styles.colLabel]}>Cuelume</Text>
@@ -160,6 +233,19 @@ export default function SoundLabRoute() {
 const PLAY_WIDTH = 72;
 
 const styles = StyleSheet.create({
+  section: {
+    fontFamily: fonts.bodySemiBold,
+    fontSize: fontSize.sm,
+    color: colors.textTertiary,
+    marginBottom: spacing.xs,
+  },
+  sectionGap: { marginTop: spacing['2xl'] },
+  playNarrow: { width: 52 },
+  mark: {
+    fontFamily: fonts.bodyBold,
+    fontSize: fontSize.md,
+    color: colors.textSecondary,
+  },
   legend: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
