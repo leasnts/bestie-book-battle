@@ -52,23 +52,25 @@ const SOUNDS: Record<FeelName, number> = {
 /** Volume des sons : présents sans couvrir la musique ni la voix d'une note */
 const VOLUME = 0.6;
 
-const { Light, Medium, Heavy, Soft, Rigid } = Haptics.ImpactFeedbackStyle;
+const { Light, Medium, Heavy, Rigid } = Haptics.ImpactFeedbackStyle;
 type Tap = Haptics.ImpactFeedbackStyle | 'selection' | 'success' | 'error';
 
 /** La vibration de chaque moment : des tapotements, chacun à son délai (ms) */
 const HAPTICS: Record<FeelName, [number, Tap][]> = {
-  tic: [[0, 'selection']],
-  appui: [[0, Light]],
-  valider: [[0, Rigid]],
-  poster: [[0, Soft], [40, Medium]],
-  reagir: [[0, Soft]],
-  lue: [[0, Light]],
-  fermer: [[100, Medium]],
-  objectif: [[0, 'success']],
-  serie: [[0, Light], [50, Heavy]],
-  depasser: [[0, Light], [55, Medium], [110, Heavy]],
-  fini: [[0, Medium], [220, Light], [290, Light], [360, Medium], [430, 'success']],
-  erreur: [[0, 'error']],
+  // Lea, 2026-10-12 : « à peine perceptibles ». On monte d'un cran partout,
+  // et chaque note d'un son a son tapotement.
+  tic: [[0, Light]],
+  appui: [[0, Medium]],
+  valider: [[0, Heavy], [70, Rigid]],
+  poster: [[0, Medium], [50, Heavy]],
+  reagir: [[0, Rigid]],
+  lue: [[0, Medium]],
+  fermer: [[100, Heavy]],
+  objectif: [[0, Heavy], [90, 'success']],
+  serie: [[0, Medium], [50, Heavy], [250, 'success']],
+  depasser: [[0, Medium], [55, Heavy], [110, Heavy]],
+  fini: [[0, Heavy], [220, Medium], [290, Medium], [360, Heavy], [430, 'success']],
+  erreur: [[0, 'error'], [110, Heavy]],
 };
 
 function tap(kind: Tap) {
@@ -113,18 +115,25 @@ export function prepareFeel() {
   (Object.keys(SOUNDS) as FeelName[]).forEach(player);
 }
 
+/** La vibration d'un moment, seule */
+export function vibrate(name: FeelName) {
+  for (const [delay, kind] of HAPTICS[name]) {
+    if (delay === 0) tap(kind);
+    else setTimeout(() => tap(kind), delay);
+  }
+}
+
 /** Joue un moment : son et vibration, selon les réglages du profil */
 export function feel(name: FeelName) {
   const { sounds, haptics } = useFeelStore.getState();
-  if (haptics)
-    for (const [delay, kind] of HAPTICS[name]) {
-      if (delay === 0) tap(kind);
-      else setTimeout(() => tap(kind), delay);
-    }
+  if (haptics) vibrate(name);
   if (sounds) {
-    const p = player(name);
-    p.seekTo(0);
-    p.play();
+    // Un son raté ne doit jamais casser le geste qui l'a lancé
+    try {
+      const p = player(name);
+      p.seekTo(0).catch(() => {});
+      p.play();
+    } catch {}
   }
 }
 

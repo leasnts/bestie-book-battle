@@ -95,6 +95,18 @@ const SOUNDS = {
   "lue-envol": async (c, d) => { await sample(c, d, "cloth4", { rate: 1.3 }); },
   "lue-pichenette": async (c, d) => { strike(c, d, { f: 1800, decay: 0.025, peak: 0.25, modes: WOOD }); bubble(c, d, { at: 0.02, f: 600, to: 1100, peak: 0.4, decay: 0.08 }); },
   "lue-kalimba": async (c, d) => { strike(c, d, { f: N.E6, decay: 0.25, peak: 0.28, modes: KALIMBA }); strike(c, d, { at: 0.06, f: N.A5 * 2, decay: 0.4, peak: 0.24, modes: KALIMBA }); },
+  // Valider sa page (v3) : progresser, sans souffle
+  "valider-coche": async (c, d) => { strike(c, d, { f: N.G5, decay: 0.3, peak: 0.3, modes: KALIMBA }); strike(c, d, { at: 0.07, f: N.D6, decay: 0.5, peak: 0.3, modes: KALIMBA }); },
+  "valider-carillon": async (c, d) => { strike(c, d, { f: N.C5, decay: 0.4, peak: 0.25, modes: MARIMBA }); strike(c, d, { at: 0.01, f: N.E6, decay: 0.9, peak: 0.22, modes: BELL }); },
+  "valider-marches": async (c, d) => { [N.C6, N.E6, N.G6].forEach((f, i) => strike(c, d, { at: i * 0.05, f, decay: 0.3, peak: 0.25, modes: MARIMBA })); },
+  // Réagir (v3) : plus aigu
+  "reagir-bulle": async (c, d) => { bubble(c, d, { f: 900, to: 1700, peak: 0.45, decay: 0.07 }); },
+  "reagir-kalimba": async (c, d) => { strike(c, d, { f: 1760, decay: 0.25, peak: 0.3, modes: KALIMBA }); },
+  "reagir-tinte": async (c, d) => { strike(c, d, { f: N.C7, decay: 0.35, peak: 0.25, modes: BELL }); },
+  // Note lue (v3) : plus aigu
+  "lue-pichenette-aigue": async (c, d) => { strike(c, d, { f: 2600, decay: 0.02, peak: 0.22, modes: WOOD }); bubble(c, d, { at: 0.015, f: 1000, to: 1900, peak: 0.4, decay: 0.07 }); },
+  "lue-kalimba-aigu": async (c, d) => { strike(c, d, { f: N.G6, decay: 0.18, peak: 0.28, modes: KALIMBA }); strike(c, d, { at: 0.045, f: N.C7, decay: 0.3, peak: 0.24, modes: KALIMBA }); },
+  "lue-sifflet": async (c, d) => { bubble(c, d, { f: 1200, to: 2600, peak: 0.3, decay: 0.12 }); },
   // Livre fini
   "fin-accord": async (c, d) => {
     [N.C5, N.E5, N.G5, N.C6].forEach((f, i) => strike(c, d, { at: i * 0.085, f, decay: 0.9, peak: 0.28, modes: MARIMBA }));

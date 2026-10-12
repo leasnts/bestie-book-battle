@@ -324,7 +324,7 @@ function SwipeCard({
         const inward =
           e.translationX * (w.value / 2 - ax.value) + e.translationY * (h.value / 2 - ay.value) > 0;
         mode.value = inward && !reduced ? 1 : 2;
-        if (mode.value === 1) runOnJS(buzz)(Haptics.ImpactFeedbackStyle.Light);
+        if (mode.value === 1) runOnJS(buzz)(Haptics.ImpactFeedbackStyle.Medium);
       }
       if (mode.value === 1) {
         bx.value = ax.value + e.translationX;
@@ -334,7 +334,7 @@ function SwipeCard({
         const nowArmed = amount.value >= PEEL_OFF ? 1 : 0;
         if (nowArmed !== armed.value) {
           armed.value = nowArmed;
-          runOnJS(buzz)(nowArmed ? Haptics.ImpactFeedbackStyle.Medium : Haptics.ImpactFeedbackStyle.Light);
+          runOnJS(buzz)(nowArmed ? Haptics.ImpactFeedbackStyle.Heavy : Haptics.ImpactFeedbackStyle.Medium);
         }
       } else {
         x.value = e.translationX;
