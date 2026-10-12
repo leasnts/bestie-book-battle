@@ -196,7 +196,7 @@ function DayCell({ day, width, isToday, future, read, bonus, dropping, awaiting,
       <Text
         style={[
           styles.dayNumber,
-          read && (runStart && !past ? styles.dayOnDisc : styles.dayRead),
+          read && (runStart ? styles.dayOnDisc : styles.dayRead),
           bonus && styles.dayOnBookmark,
           isToday && !read && styles.dayToday,
           future && styles.dayFuture,
