@@ -17,7 +17,7 @@ export function useMyStreak() {
     )?.progress,
   );
   const bonusDates = progress?.streak_bonus_dates ?? [];
-  const { state, days } = getStreakState(
+  const { state, days, missedDays } = getStreakState(
     progress?.streak_count ?? 0,
     progress?.last_streak_date ?? null,
     bonusDates,
@@ -28,6 +28,7 @@ export function useMyStreak() {
     loaded: !!progress,
     state,
     days,
+    missedDays,
     bonusDates,
     bonusesLeft: bonusesLeft(bonusDates),
   };
