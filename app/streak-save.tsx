@@ -20,7 +20,7 @@
  * relance la série à 1 (trigger update_streak).
  */
 
-import * as Haptics from 'expo-haptics';
+import { buzz, feel } from '../utils/feel';
 import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Alert, View } from 'react-native';
@@ -95,9 +95,9 @@ export default function StreakSaveRoute() {
       }
       setDropped(days);
       // Un retour haptique par temps : le marque-page se pose, la flamme repart
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      setTimeout(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium), BOOKMARK_LANDS);
-      setTimeout(() => Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success), REVIVE_AT);
+      buzz();
+      setTimeout(() => feel('serie'), BOOKMARK_LANDS);
+      setTimeout(() => buzz('success'), REVIVE_AT);
       await Promise.all([
         loadChallengeProgress(challengeId),
         new Promise((resolve) => setTimeout(resolve, CLOSE_AFTER)),

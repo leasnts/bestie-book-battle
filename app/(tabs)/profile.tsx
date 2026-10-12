@@ -39,6 +39,7 @@ import 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import PageTransition from '../../components/PageTransition';
 import { useAuthStore } from '../../stores/authStore';
+import { useFeelStore } from '../../stores/feelStore';
 import { useProjectStore } from '../../stores/projectStore';
 import {
   colors,
@@ -48,9 +49,10 @@ import {
   shadowAlpha,
   spacing,
 } from '../../utils/constants';
+import { buzz, feel } from '../../utils/feel';
 import { useTabBarInset } from '../../components/ui/GlassTabBar';
 import { resolvePhotoSource } from '../../utils/profilePhoto';
-import { BellIcon, ChevronRightIcon, InboxIcon, FlaskConicalIcon, LogOutIcon, PencilIcon, ShareIcon, Trash2Icon, TriangleAlertIcon } from 'lucide-react-native';
+import { BellIcon, ChevronRightIcon, InboxIcon, FlaskConicalIcon, LogOutIcon, PencilIcon, ShareIcon, Trash2Icon, TriangleAlertIcon, VibrateIcon, Volume2Icon } from 'lucide-react-native';
 
 // ─── Constantes ────────────────────────────────────────────────────────────────
 
@@ -61,6 +63,7 @@ const APP_VERSION = Constants.expoConfig?.version ?? '1.0';
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export default function ProfileScreen() {
+  const { sounds, haptics, setSounds, setHaptics } = useFeelStore();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const tabBarInset = useTabBarInset();
@@ -264,6 +267,39 @@ export default function ProfileScreen() {
           <Switch
             value={notificationsEnabled}
             onValueChange={handleToggleNotifications}
+            trackColor={{ false: colors.border, true: colors.accent }}
+            thumbColor={colors.white}
+          />
+        </View>
+
+        {/* Sons et vibrations de l'app (#160) : réglages du téléphone, activés par défaut */}
+        <View style={styles.settingRow}>
+          <View style={styles.settingLeft}>
+            <Volume2Icon size={24} color={colors.textSecondary} />
+            <Text style={styles.settingLabel}>Sons</Text>
+          </View>
+          <Switch
+            value={sounds}
+            onValueChange={(on) => {
+              setSounds(on);
+              if (on) feel('appui');
+            }}
+            trackColor={{ false: colors.border, true: colors.accent }}
+            thumbColor={colors.white}
+          />
+        </View>
+
+        <View style={styles.settingRow}>
+          <View style={styles.settingLeft}>
+            <VibrateIcon size={24} color={colors.textSecondary} />
+            <Text style={styles.settingLabel}>Vibrations</Text>
+          </View>
+          <Switch
+            value={haptics}
+            onValueChange={(on) => {
+              setHaptics(on);
+              if (on) buzz();
+            }}
             trackColor={{ false: colors.border, true: colors.accent }}
             thumbColor={colors.white}
           />

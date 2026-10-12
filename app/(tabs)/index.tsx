@@ -21,6 +21,7 @@ import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
     ActivityIndicator,
+    Alert,
     AppState,
     StyleSheet,
     Text,
@@ -59,6 +60,7 @@ import { useProgressStore } from '../../stores/progressStore';
 import { useAnnotationStore } from '../../stores/annotationStore';
 import { useProjectStore } from '../../stores/projectStore';
 import { colors, fonts, shadowAlpha, spacing } from '../../utils/constants';
+import { feel, type FeelName } from '../../utils/feel';
 import { dayString } from '../../utils/streak';
 import { useMyStreak } from '../../hooks/useMyStreak';
 import { useTabBarInset } from '../../components/ui/GlassTabBar';
@@ -294,10 +296,17 @@ export default function HomeScreen() {
     // Capture le delta AVANT la sauvegarde (après, lastSavedPage va changer)
     const previousPage = lastSavedPage;
     const delta = currentPageInput - previousPage;
+    // Mon rang et mon % avant : pour savoir si je passe devant quelqu'un ou un cap
+    const meBefore = participants.find((p) => p.progress.user_id === user.id);
 
     try {
       await updateProgress(activeChallenge.id, user.id, currentPageInput);
       setLastProgressChallengeId(activeChallenge.id);
+
+      const meAfter = useProgressStore
+        .getState()
+        .participants.find((p) => p.progress.user_id === user.id);
+      feel(saveMoment(meBefore, meAfter, previousPage));
 
       // Ma progression a bougé : le serveur ouvre les notes que je viens de
       // dépasser. Elles arrivent en post-it pendant que la feuille tombe.
@@ -345,7 +354,29 @@ export default function HomeScreen() {
       }
     } catch (error) {
       console.error('Erreur lors de la sauvegarde:', error);
+      feel('erreur');
+      Alert.alert('Page non enregistrée', 'Réessaie dans un instant.');
     }
+  };
+
+  /**
+   * Le moment à faire sentir après l'enregistrement : le plus fort l'emporte,
+   * un seul son. Livre fini > passer devant quelqu'un > cap atteint > page posée.
+   */
+  const saveMoment = (
+    before: { rank: number; percentage: number } | undefined,
+    after: { rank: number; percentage: number } | undefined,
+    previousPage: number,
+  ): FeelName => {
+    if (previousPage < totalPages && currentPageInput >= totalPages) return 'fini';
+    if (before && after && participants.length > 1 && after.rank < before.rank) return 'depasser';
+    if (
+      before &&
+      after &&
+      caps.some((c) => c.state === 'current' && before.percentage < c.percent && after.percentage >= c.percent)
+    )
+      return 'objectif';
+    return 'valider';
   };
 
   // ===== Annuler le changement (bouton undo ↩) =====

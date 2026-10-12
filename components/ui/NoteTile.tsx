@@ -28,6 +28,7 @@
  */
 
 import * as Haptics from 'expo-haptics';
+import { buzz } from '../../utils/feel';
 import { LinearGradient } from 'expo-linear-gradient';
 import { LockIcon, MicIcon, PenLineIcon } from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
@@ -380,7 +381,6 @@ function PeelCard({
     setSize((prev) => (prev && prev.w === lw && prev.h === lh ? prev : { w: lw, h: lh }));
   };
 
-  const buzz = (style: Haptics.ImpactFeedbackStyle) => Haptics.impactAsync(style).catch(() => {});
 
   /** Le doigt lâche : le coin se recolle, ou l'autocollant s'envole */
   const release = () => {

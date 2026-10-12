@@ -15,6 +15,7 @@ import { setAudioModeAsync, useAudioPlayer, useAudioPlayerStatus } from 'expo-au
 import { PauseIcon, PlayIcon } from 'lucide-react-native';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { AppState, StyleSheet, Text, View } from 'react-native';
+import { restoreAmbientAudio } from '../../utils/feel';
 import { getAudioUrl } from '../../services/supabase/annotations';
 import { formatVoiceDuration, VOICE_BARS } from '../../utils/annotations';
 import { borderRadius, colors, creamAlpha, fonts, inkAlpha, spacing } from '../../utils/constants';
@@ -49,6 +50,7 @@ export default function VoicePlayer({ path, uri, seconds, levels, compact = fals
     if (status.didJustFinish) {
       player.pause();
       player.seekTo(0);
+      restoreAmbientAudio();
     }
   }, [status.didJustFinish, player]);
 
@@ -59,13 +61,17 @@ export default function VoicePlayer({ path, uri, seconds, levels, compact = fals
     });
     return () => {
       sub.remove();
-      if (pauseCurrent === pause) pauseCurrent = null;
+      if (pauseCurrent === pause) {
+        pauseCurrent = null;
+        restoreAmbientAudio();
+      }
     };
   }, [player, pause]);
 
   const toggle = useCallback(async () => {
     if (status.playing) {
       player.pause();
+      restoreAmbientAudio();
       return;
     }
 

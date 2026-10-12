@@ -29,6 +29,7 @@
  */
 
 import * as Haptics from 'expo-haptics';
+import { buzz, feel } from '../../utils/feel';
 import { LinearGradient as ExpoLinearGradient } from 'expo-linear-gradient';
 import { CheckIcon } from 'lucide-react-native';
 import React, { useEffect, useRef, useState } from 'react';
@@ -306,8 +307,6 @@ function SwipeCard({
     );
   }, [hint, reduced, size, ax, ay, bx, by, peeling]);
 
-  const buzz = (style: Haptics.ImpactFeedbackStyle) => Haptics.impactAsync(style).catch(() => {});
-
   const pan = Gesture.Pan()
     .enabled(depth === 0)
     .minDistance(6)
@@ -361,6 +360,7 @@ function SwipeCard({
           return;
         }
         // Assez tirée : le pli traverse toute la note, puis elle s'envole, dos visible
+        runOnJS(feel)('lue');
         const dx = bx.value - ax.value;
         const dy = by.value - ay.value;
         const len = Math.hypot(dx, dy) || 1;
@@ -386,7 +386,7 @@ function SwipeCard({
         y.value = withTiming(0, { duration: motion.duration.slow, easing: easeOut });
         return;
       }
-      runOnJS(buzz)(Haptics.ImpactFeedbackStyle.Light);
+      runOnJS(feel)('lue');
       if (reduced) {
         fade.value = withTiming(0, { duration: motion.duration.standard }, done);
         return;

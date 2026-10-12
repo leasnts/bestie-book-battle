@@ -19,7 +19,7 @@
 
 import { LinearGradient } from 'expo-linear-gradient';
 import { Image } from 'expo-image';
-import * as Haptics from 'expo-haptics';
+import { feel } from '../../utils/feel';
 import React, { useEffect, useState } from 'react';
 import Svg, { Path } from 'react-native-svg';
 import { StyleSheet, Text, View } from 'react-native';
@@ -120,7 +120,7 @@ function CategoryTabs({ value, onChange }: Pick<CategoryPickerProps, 'value' | '
           selected={key === value}
           onPress={() => {
             if (key === value) return;
-            Haptics.selectionAsync().catch(() => {});
+            feel('tic');
             onChange(key);
           }}
         />
