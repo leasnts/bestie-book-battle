@@ -465,7 +465,7 @@ export function NoteReactions({
  * - Sinon, toucher l'emoji le tamponne sur place, sans voyage.
  * - Retirer ma réaction reste immobile ; « Réduire les animations » : rien ne bouge.
  */
-const STAMP_FALL = 240;
+const STAMP_FALL = 180;
 /** Le sheet du sélecteur se range avant que l'emoji tombe */
 const STAMP_AFTER_SHEET = 320;
 
@@ -491,8 +491,8 @@ function StampedEmoji({
     squash.value = withDelay(
       delay,
       withSequence(
-        withTiming(1, { duration: 70, easing: Easing.out(Easing.quad) }),
-        withSpring(0, { damping: 8, stiffness: 320 }),
+        withTiming(1, { duration: 50, easing: Easing.out(Easing.quad) }),
+        withSpring(0, { damping: 14, stiffness: 700 }),
       ),
     );
   };
