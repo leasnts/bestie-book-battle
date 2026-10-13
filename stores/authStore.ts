@@ -321,8 +321,10 @@ export const useAuthStore = create<AuthStore>()(
         );
 
         if (profileError) {
-          console.warn('Profile fetch failed after refresh', profileError.message);
-          set({ user: null, isInitialized: true, isLoading: false });
+          // supabase-js renvoie une coupure réseau comme une erreur, sans lever :
+          // la session existe, donc on garde la personne en cache (persistée).
+          console.warn('Profile fetch failed, keeping cached user:', profileError.message);
+          set({ isInitialized: true, isLoading: false });
           return;
         }
 
