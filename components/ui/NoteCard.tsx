@@ -19,8 +19,18 @@
 import { buzz } from '../../utils/feel';
 import { Image } from 'expo-image';
 import { EllipsisIcon, LockIcon, SmilePlusIcon, XIcon } from 'lucide-react-native';
-import React, { useMemo, useState } from 'react';
-import { StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { StyleSheet, Text, View, type LayoutChangeEvent, type StyleProp, type TextStyle } from 'react-native';
+import Animated, {
+  Easing,
+  useAnimatedStyle,
+  useReducedMotion,
+  useSharedValue,
+  withDelay,
+  withSequence,
+  withSpring,
+  withTiming,
+} from 'react-native-reanimated';
 import type { AnnotationWithAuthor } from '../../services/supabase/annotations';
 import { ANNOTATION_CATEGORIES, formatNoteDate, formatNotePage, isEmojiOnly } from '../../utils/annotations';
 import { borderRadius, colors, creamAlpha, fonts, glassControlVeil, inkAlpha, postItDeepOf, spacing } from '../../utils/constants';
@@ -343,6 +353,20 @@ export function NoteReactions({
     return [...groups.values()].sort((a, b) => b.count - a.count);
   }, [note.reactions, myUserId]);
 
+  /**
+   * Mes réactions au rendu d'avant : une pastille qui naît avec ma réaction
+   * dedans vient du sélecteur complet, son emoji y tombe comme un tampon.
+   */
+  const myEmojis = useMemo(
+    () => new Set(reactions.filter((r) => r.mine).map((r) => r.emoji)),
+    [reactions],
+  );
+  const seenMine = useRef<Set<string> | null>(null);
+  const mineBefore = seenMine.current;
+  useEffect(() => {
+    seenMine.current = myEmojis;
+  }, [myEmojis]);
+
   const react = (emoji: string) => {
     setPicking(false);
     onToggle?.(emoji);
@@ -379,14 +403,19 @@ export function NoteReactions({
             accessibilityHint={mine ? 'Retire ma réaction' : 'Ajoute ma réaction'}
           >
             <PillGlass radius={pillRadius} />
-            <Text style={[styles.reactionEmoji, quick && styles.reactionEmojiQuick]}>{emoji}</Text>
-            {count > 0 && <Text style={styles.reactionCount}>{count}</Text>}
+            <StampedEmoji
+              emoji={emoji}
+              mine={mine}
+              landed={!!mineBefore && mine && !mineBefore.has(emoji)}
+              style={[styles.reactionEmoji, quick && styles.reactionEmojiQuick]}
+            />
+            {count > 0 && <RollingCount count={count} />}
           </PressableScale>
         ) : (
           <View key={emoji} style={[styles.reaction, inside && styles.reactionInside]}>
             <PillGlass radius={pillRadius} />
             <Text style={styles.reactionEmoji}>{emoji}</Text>
-            <Text style={styles.reactionCount}>{count}</Text>
+            <RollingCount count={count} />
           </View>
         ),
       )}
@@ -423,6 +452,109 @@ export function NoteReactions({
           )}
         </PressableScale>
       )}
+    </View>
+  );
+}
+
+/**
+ * Le tampon d'une réaction (#168, idée reprise de bencho.dev, traduite en
+ * encre) : l'emoji que je pose s'écrase sur le papier puis rebondit.
+ *
+ * - `landed` : la pastille naît avec ma réaction (choisie dans le sélecteur
+ *   complet) ; l'emoji tombe d'en haut, le temps que le sheet se range.
+ * - Sinon, toucher l'emoji le tamponne sur place, sans voyage.
+ * - Retirer ma réaction reste immobile ; « Réduire les animations » : rien ne bouge.
+ */
+const STAMP_FALL = 240;
+/** Le sheet du sélecteur se range avant que l'emoji tombe */
+const STAMP_AFTER_SHEET = 320;
+
+function StampedEmoji({
+  emoji,
+  mine,
+  landed,
+  style,
+}: {
+  emoji: string;
+  mine: boolean;
+  landed: boolean;
+  style: StyleProp<TextStyle>;
+}) {
+  const reducedMotion = useReducedMotion();
+  /** 0 = en l'air, 1 = posé */
+  const fall = useSharedValue(landed && !reducedMotion ? 0 : 1);
+  /** 1 = écrasé à plat, 0 = au repos */
+  const squash = useSharedValue(0);
+  const wasMine = useRef(mine);
+
+  const press = (delay: number) => {
+    squash.value = withDelay(
+      delay,
+      withSequence(
+        withTiming(1, { duration: 70, easing: Easing.out(Easing.quad) }),
+        withSpring(0, { damping: 8, stiffness: 320 }),
+      ),
+    );
+  };
+
+  // Né avec ma réaction : il tombe, puis s'écrase
+  useEffect(() => {
+    if (!landed || reducedMotion) return;
+    fall.value = withDelay(
+      STAMP_AFTER_SHEET,
+      withTiming(1, { duration: STAMP_FALL, easing: Easing.in(Easing.quad) }),
+    );
+    press(STAMP_AFTER_SHEET + STAMP_FALL);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Touché sur place : il s'écrase tout de suite
+  useEffect(() => {
+    if (mine && !wasMine.current && !reducedMotion) press(0);
+    wasMine.current = mine;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mine]);
+
+  const animatedStyle = useAnimatedStyle(() => {
+    const air = 1 - fall.value;
+    return {
+      opacity: Math.min(1, fall.value * 4),
+      transform: [
+        { translateY: -26 * air },
+        { scale: 1 + 0.7 * air },
+        { scaleX: 1 + 0.32 * squash.value },
+        { scaleY: 1 - 0.3 * squash.value },
+      ],
+    };
+  });
+
+  return <Animated.Text style={[style, styles.stamp, animatedStyle]}>{emoji}</Animated.Text>;
+}
+
+/** Le compte d'une réaction : le nouveau chiffre monte (ou descend) à sa place */
+function RollingCount({ count }: { count: number }) {
+  const reducedMotion = useReducedMotion();
+  const before = useRef(count);
+  /** 1 = arrive d'en dessous, -1 = d'au-dessus, 0 = en place */
+  const roll = useSharedValue(0);
+
+  useEffect(() => {
+    if (count !== before.current && !reducedMotion) {
+      roll.value = count > before.current ? 1 : -1;
+      roll.value = withTiming(0, { duration: 260, easing: Easing.out(Easing.cubic) });
+    }
+    before.current = count;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [count]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    opacity: 1 - Math.abs(roll.value),
+    transform: [{ translateY: 10 * roll.value }],
+  }));
+
+  return (
+    <View style={styles.countWindow}>
+      <Animated.Text style={[styles.reactionCount, animatedStyle]}>{count}</Animated.Text>
     </View>
   );
 }
@@ -605,6 +737,14 @@ const styles = StyleSheet.create({
   },
   reactionEmojiQuick: {
     fontSize: 20,
+  },
+  // Le tampon s'écrase sur sa base, comme posé sur le papier
+  stamp: {
+    transformOrigin: 'center bottom',
+  },
+  // Le chiffre qui défile ne déborde pas de sa ligne
+  countWindow: {
+    overflow: 'hidden',
   },
   reactionCount: {
     fontFamily: fonts.bodyExtraBold,
