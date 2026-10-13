@@ -37,6 +37,7 @@ import { useProgressStore } from '../stores/progressStore';
 import { useProjectStore } from '../stores/projectStore';
 import { borderRadius, colors, fonts, fontSize, shadowAlpha, shadows, spacing } from '../utils/constants';
 import { extractCoverPalette, type CoverPalette } from '../utils/coverPalette';
+import { CoverImage } from '../components/ui/BookCover';
 
 // Retire la barre « OK » native au-dessus du clavier numérique d'iOS
 const ACCESSORY_ID = 'editbook-pages-empty';
@@ -170,7 +171,7 @@ export default function EditBookRoute() {
       >
         {displayCoverUrl ? (
           <View style={styles.cover}>
-            <Image source={{ uri: displayCoverUrl }} style={StyleSheet.absoluteFill} contentFit="cover" />
+            <CoverImage uri={displayCoverUrl} style={StyleSheet.absoluteFill} />
             <View style={styles.coverOverlay}>
               <CameraIcon size={20} color={colors.white} />
               <Text style={styles.coverOverlayText}>Modifier</Text>

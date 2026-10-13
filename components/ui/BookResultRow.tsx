@@ -15,6 +15,7 @@ import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { BookSearchResult } from '../../types/bookSearch';
 import { borderRadius, colors, fonts, fontSize, inkAlpha, paperFrameGradient, spacing } from '../../utils/constants';
+import { CoverFinish } from './BookCover';
 
 /** Construit la ligne "éditeur, année" pour distinguer les éditions */
 function formatEdition(publisher: string | null, publishedDate: string | null): string | null {
@@ -50,6 +51,7 @@ export default function BookResultRow({
             </Text>
           </LinearGradient>
         )}
+        <CoverFinish />
       </View>
 
       <View style={styles.info}>

@@ -32,6 +32,7 @@ import { useProjectStore } from '../../stores/projectStore';
 import { borderRadius, colors, fonts, fontSize, spacing } from '../../utils/constants';
 import { extractCoverPalette } from '../../utils/coverPalette';
 import { BookOpenIcon, ChevronLeftIcon, CopyIcon, ShareIcon, XIcon } from 'lucide-react-native';
+import { CoverImage } from '../../components/ui/BookCover';
 
 // Assets
 const TEXTURE_IMAGE = require('../../assets/images/61ea1e0c638b5b9c8100383a37a5b488848db623.png');
@@ -275,8 +276,8 @@ export default function OnboardingCompleteScreen() {
                             <View style={styles.bookCardContent}>
                                 {/* Cover image — hauteur = bloc texte, ratio conservé (gauche) */}
                                 {coverUri ? (
-                                    <Image
-                                        source={{ uri: coverUri }}
+                                    <CoverImage
+                                        uri={coverUri}
                                         style={[
                                             styles.coverImage,
                                             {
@@ -284,7 +285,6 @@ export default function OnboardingCompleteScreen() {
                                                 width: bookInfoHeight * COVER_ASPECT_RATIO,
                                             },
                                         ]}
-                                        contentFit="cover"
                                     />
                                 ) : (
                                     <View
