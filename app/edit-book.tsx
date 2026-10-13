@@ -38,6 +38,7 @@ import { useProjectStore } from '../stores/projectStore';
 import { borderRadius, colors, fonts, fontSize, shadowAlpha, shadows, spacing } from '../utils/constants';
 import { extractCoverPalette, type CoverPalette } from '../utils/coverPalette';
 import { CoverImage } from '../components/ui/BookCover';
+import { StitchBorder } from '../components/ui/Stitch';
 
 // Retire la barre « OK » native au-dessus du clavier numérique d'iOS
 const ACCESSORY_ID = 'editbook-pages-empty';
@@ -179,6 +180,7 @@ export default function EditBookRoute() {
           </View>
         ) : (
           <View style={[styles.cover, styles.coverPlaceholder]}>
+            <StitchBorder radius={borderRadius.sm} />
             <CloudUploadIcon size={32} color={colors.textTertiary} />
             <Text style={styles.coverPlaceholderText}>Ajouter une couverture</Text>
           </View>
@@ -268,10 +270,8 @@ const styles = StyleSheet.create({
     color: colors.white,
     letterSpacing: 0.3,
   },
+  /** Pas encore de couverture : une zone cousue (#112), pas des tirets */
   coverPlaceholder: {
-    borderWidth: 2,
-    borderColor: colors.border,
-    borderStyle: 'dashed',
     justifyContent: 'center',
     alignItems: 'center',
     gap: 8,

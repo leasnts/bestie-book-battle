@@ -33,6 +33,7 @@ import { borderRadius, colors, fonts, fontSize, spacing } from '../../utils/cons
 import { extractCoverPalette } from '../../utils/coverPalette';
 import { BookOpenIcon, ChevronLeftIcon, CopyIcon, ShareIcon, XIcon } from 'lucide-react-native';
 import { CoverImage } from '../../components/ui/BookCover';
+import { StitchBorder } from '../../components/ui/Stitch';
 
 // Assets
 const TEXTURE_IMAGE = require('../../assets/images/61ea1e0c638b5b9c8100383a37a5b488848db623.png');
@@ -296,6 +297,7 @@ export default function OnboardingCompleteScreen() {
                                             },
                                         ]}
                                     >
+                                        <StitchBorder radius={borderRadius.xs} color={colors.alphaWhite30} />
                                         <BookOpenIcon size={40} color={colors.alphaWhite30} />
                                     </View>
                                 )}
@@ -463,9 +465,6 @@ const styles = StyleSheet.create({
     },
     coverPlaceholder: {
         borderRadius: borderRadius.xs,
-        borderWidth: 1,
-        borderStyle: 'dashed',
-        borderColor: colors.alphaWhite10,
         backgroundColor: colors.alphaWhite10,
         justifyContent: 'center',
         alignItems: 'center',
