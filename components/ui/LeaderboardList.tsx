@@ -31,6 +31,7 @@ import {
 import { borderRadius, colors, fonts, inkAlpha, motion, spacing } from '../../utils/constants';
 import { ChevronDownIcon, ChevronUpIcon, FlameIcon } from 'lucide-react-native';
 import { AccentUnit } from './AccentWord';
+import { StitchBorder } from './Stitch';
 
 // ─── Props ─────────────────────────────────────────────────────────
 
@@ -127,6 +128,9 @@ function LeaderboardRow({
             <View
               style={[styles.streakBadge, participant.streakAtRisk && styles.streakBadgeAtRisk]}
             >
+              {participant.streakAtRisk && (
+                <StitchBorder radius={borderRadius.sm} inset={0} color={inkAlpha(0.3)} />
+              )}
               <FlameIcon size={11} color={colors.textTertiary} fill={colors.textTertiary} />
               <Text style={styles.streakText}>{participant.streak}</Text>
             </View>
@@ -398,10 +402,10 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
     borderRadius: borderRadius.sm,
   },
+  /** Série en suspens : la bordure devient une couture (#112) */
   streakBadgeAtRisk: {
     opacity: 0.6,
-    borderStyle: 'dashed',
-    borderColor: inkAlpha(0.3),
+    borderColor: 'transparent',
   },
   streakText: {
     fontFamily: fonts.bodySemiBold,
