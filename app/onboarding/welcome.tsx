@@ -32,6 +32,7 @@ import { useProjectStore } from '../../stores/projectStore';
 import { useProgressStore } from '../../stores/progressStore';
 import { createOrUpdateUserProfile } from '../../services/supabase/auth';
 import { BookOpenIcon, ChevronLeftIcon, XIcon } from 'lucide-react-native';
+import { CoverImage } from '../../components/ui/BookCover';
 
 // Assets
 const TEXTURE_IMAGE = require('../../assets/images/61ea1e0c638b5b9c8100383a37a5b488848db623.png');
@@ -184,8 +185,8 @@ export default function OnboardingWelcomeScreen() {
                                 <View style={styles.bookCardContent}>
                                     {/* Cover image — hauteur = bloc texte, ratio conservé */}
                                     {coverUrl ? (
-                                        <Image
-                                            source={{ uri: coverUrl }}
+                                        <CoverImage
+                                            uri={coverUrl}
                                             style={[
                                                 styles.coverImage,
                                                 {
@@ -193,7 +194,6 @@ export default function OnboardingWelcomeScreen() {
                                                     width: bookInfoHeight * COVER_ASPECT_RATIO,
                                                 },
                                             ]}
-                                            contentFit="cover"
                                         />
                                     ) : (
                                         <View

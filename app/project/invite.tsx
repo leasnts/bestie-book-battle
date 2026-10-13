@@ -1,5 +1,4 @@
 import * as Clipboard from 'expo-clipboard';
-import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import React, { useEffect, useState } from 'react';
@@ -9,6 +8,7 @@ import { getChallengeByInviteCode } from '../../services/supabase/database';
 import { Challenge } from '../../types/supabase';
 import { colors, fonts } from '../../utils/constants';
 import { ArrowRightIcon, CopyIcon, ShareIcon } from 'lucide-react-native';
+import { CoverImage } from '../../components/ui/BookCover';
 
 export default function InviteScreen() {
     const router = useRouter();
@@ -80,12 +80,7 @@ export default function InviteScreen() {
                 {challenge && (
                     <View style={styles.coverContainer}>
                         {challenge.cover_url && (
-                            <Image
-                                source={{ uri: challenge.cover_url }}
-                                style={styles.coverImage}
-                                contentFit="cover"
-                                transition={500}
-                            />
+                            <CoverImage uri={challenge.cover_url} style={styles.coverImage} transition={500} />
                         )}
                         <Text style={styles.bookTitle}>{challenge.book_title}</Text>
                         {challenge.book_author && (

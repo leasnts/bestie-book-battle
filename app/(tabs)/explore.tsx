@@ -15,7 +15,8 @@
  *    └───────────────────────────────┘
  *
  * - **Recherche** : titre, auteur ou saga. Taper remplace les étagères par les
- *   résultats (Google Books, repli Open Library).
+ *   résultats au fil de la frappe (Apple Books, repli Open Library ; les
+ *   livres des étagères qui correspondent d'abord, sans attendre le réseau).
  * - **Mes envies** : les livres gardés pour plus tard, en première étagère.
  * - **Étagères par genre** : les livres les plus lus en ce moment, choisis à la
  *   main et figés dans constants/exploreCatalog.json (s'affichent sans réseau ;
@@ -52,9 +53,7 @@ export default function ExploreScreen() {
   const insets = useSafeAreaInsets();
   const tabBarInset = useTabBarInset();
   const router = useRouter();
-  const { query, setQuery, results, isSearching, error, clearResults } = useBookSearch({
-    withTrending: false,
-  });
+  const { query, setQuery, results, isSearching, error, clearResults } = useBookSearch();
   const favorites = useExploreStore((state) => state.favorites);
   const openBook = useExploreStore((state) => state.openBook);
   const pendingQuery = useExploreStore((state) => state.pendingQuery);
@@ -115,7 +114,7 @@ export default function ExploreScreen() {
 
         {searching ? (
           <FlatList
-            data={isSearching ? [] : results}
+            data={results}
             keyExtractor={(item) => item.id}
             renderItem={({ item }) => <BookResultRow book={item} onPress={() => handleOpen(item)} />}
             ListEmptyComponent={

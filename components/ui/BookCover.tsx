@@ -17,7 +17,7 @@
 
 import { Image } from 'expo-image';
 import React from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { Challenge } from '../../types/supabase';
 import { colors, creamAlpha, inkAlpha, shadowAlpha } from '../../utils/constants';
@@ -28,16 +28,50 @@ export const COVER_RATIO = 50 / 70;
 // Image par défaut si pas de couverture
 const DEFAULT_COVER = require('../../assets/images/random_cover_1.png');
 
-// Texture de vrai livre (reliure, coins usés, rayures) posée sur chaque couverture.
-// Transparente au centre : seuls les bords et les reflets ressortent.
-const COVER_TEXTURE = require('../../assets/images/cover_book_60.png');
+// Le « vrai livre » posé sur chaque couverture (scripts/generate-cover-overlay.py,
+// variante pelliculé) : reliure et charnière à gauche, reflet glacé en
+// diagonale, bords arrondis. Deux calques : les ombres en noir, la lumière en blanc.
+const COVER_SHADE = require('../../assets/images/cover-shade.png');
+const COVER_LIGHT = require('../../assets/images/cover-light.png');
 
-/** La couverture + la texture par-dessus */
-const TexturedCover = ({ coverUrl }: { coverUrl: string | null | undefined }) => (
+/**
+ * La finition « vrai livre », à poser par-dessus N'IMPORTE quelle couverture
+ * (le parent la rogne à ses coins). Partout où l'app montre une couverture.
+ */
+export const CoverFinish = () => (
   <>
-    <Image source={resolveCoverImage(coverUrl)} style={styles.cover} contentFit="cover" />
-    <Image source={COVER_TEXTURE} style={styles.texture} contentFit="fill" pointerEvents="none" />
+    <Image source={COVER_SHADE} style={StyleSheet.absoluteFill} contentFit="fill" pointerEvents="none" />
+    <Image source={COVER_LIGHT} style={StyleSheet.absoluteFill} contentFit="fill" pointerEvents="none" />
   </>
+);
+
+/**
+ * Une couverture à partir d'une URL, avec sa finition : remplace un simple
+ * `<Image>` de couverture. `style` fixe taille et rayon, comme pour l'image.
+ */
+export function CoverImage({
+  uri,
+  style,
+  transition,
+}: {
+  uri: string;
+  style?: StyleProp<ViewStyle>;
+  transition?: number;
+}) {
+  return (
+    <View style={[styles.coverImageBox, style]}>
+      <Image source={{ uri }} style={StyleSheet.absoluteFill} contentFit="cover" transition={transition} />
+      <CoverFinish />
+    </View>
+  );
+}
+
+/** La couverture + sa finition par-dessus */
+const TexturedCover = ({ coverUrl }: { coverUrl: string | null | undefined }) => (
+  <View style={styles.cover}>
+    <Image source={resolveCoverImage(coverUrl)} style={StyleSheet.absoluteFill} contentFit="cover" />
+    <CoverFinish />
+  </View>
 );
 
 /**
@@ -125,10 +159,10 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
     borderRadius: 2,
+    overflow: 'hidden',
   },
-  texture: {
-    ...StyleSheet.absoluteFillObject,
-    borderRadius: 2,
+  coverImageBox: {
+    overflow: 'hidden',
   },
   // Posé PAR-DESSUS l'image : une bordure sur le conteneur rognerait la couverture
   outline: {

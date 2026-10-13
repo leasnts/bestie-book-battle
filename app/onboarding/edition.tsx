@@ -36,6 +36,7 @@ import ImageCropModal, { PendingImage } from '../../components/ui/ImageCropModal
 import { useOnboardingStore } from '../../stores/onboardingStore';
 import type { BookSearchResult } from '../../types/bookSearch';
 import { borderRadius, colors, fonts, spacing } from '../../utils/constants';
+import { CoverImage } from '../../components/ui/BookCover';
 
 // Asset : texture de fond
 const TEXTURE_IMAGE = require('../../assets/images/61ea1e0c638b5b9c8100383a37a5b488848db623.png');
@@ -184,7 +185,7 @@ export default function OnboardingEditionScreen() {
                     {/* Couverture : toucher = chercher son édition ou la photographier */}
                     <View style={styles.coverZone}>
                         {cover ? (
-                            <Image source={{ uri: cover }} style={styles.coverImage} contentFit="cover" />
+                            <CoverImage uri={cover} style={styles.coverImage} />
                         ) : (
                             <BookOpenIcon size={40} color={colors.textPlaceholder} />
                         )}

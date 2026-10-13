@@ -2,15 +2,16 @@
  * Génère constants/exploreCatalog.json : les étagères par genre de l'onglet Explorer.
  *
  * Les livres sont choisis à la main (les plus lus en ce moment en France), puis
- * complétés ici une fois pour toutes via Open Library : couverture (l'édition
- * française quand elle existe), nombre de pages, année. Le résultat est commité :
+ * complétés ici une fois pour toutes : nombre de pages et année via Open
+ * Library, couverture de l'édition française via Apple Books (Open Library
+ * n'a souvent que l'anglaise). Le résultat est commité :
  * l'onglet s'affiche tout de suite, sans réseau, et ne dépend d'aucun quota.
  *
  * Mettre à jour les étagères : modifier SHELVES ci-dessous, puis
  *    node scripts/build-explore-catalog.mjs
  */
 
-import { writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -154,7 +155,32 @@ async function lookup({ title, author, search }) {
   };
 }
 
+/** Plié pour comparer : sans accents, majuscules ni ponctuation */
+const fold = (text) => text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '');
+
+/** La couverture française en HD : le premier livre Apple Books du même titre et du même auteur */
+async function appleCover({ title, author }) {
+  const params = new URLSearchParams({ term: `${title} ${author}`, media: 'ebook', country: 'fr', limit: '10' });
+  const response = await fetch(`https://itunes.apple.com/search?${params}`);
+  if (!response.ok) return null;
+  const lastName = fold(author.split(' ').pop());
+  const wanted = fold(title);
+  const match = (await response.json()).results.find(
+    (r) => fold(r.artistName).includes(lastName) && fold(r.trackName).includes(wanted),
+  );
+  return match?.artworkUrl100?.replace(/\/\d+x\d+bb\./, '/600x600bb.') ?? null;
+}
+
+const out = join(dirname(fileURLToPath(import.meta.url)), '..', 'constants', 'exploreCatalog.json');
+
+// Les livres déjà complétés ne repassent pas par Open Library (lent)
 const cache = new Map();
+if (existsSync(out)) {
+  for (const book of JSON.parse(readFileSync(out, 'utf8')).shelves.flatMap((s) => s.books)) {
+    cache.set(`${book.title}|${book.author}`, book);
+  }
+}
+
 const shelves = [];
 for (const shelf of SHELVES) {
   const books = [];
@@ -162,6 +188,9 @@ for (const shelf of SHELVES) {
     const cacheKey = `${book.title}|${book.author}`;
     if (!cache.has(cacheKey)) cache.set(cacheKey, await lookup(book).catch((e) => (console.warn(e.message), null)));
     const found = cache.get(cacheKey);
+    const cover = await appleCover(book).catch(() => null);
+    if (found && cover) found.coverUrl = cover;
+    else if (found) console.warn(`  (pas de couverture française pour ${book.title})`);
     if (found?.coverUrl) books.push(found);
     else console.warn(`✗ ${shelf.label} : ${book.title} (pas trouvé ou sans couverture)`);
   }
@@ -169,6 +198,5 @@ for (const shelf of SHELVES) {
   console.log(`✓ ${shelf.label} : ${books.length}/${shelf.books.length}`);
 }
 
-const out = join(dirname(fileURLToPath(import.meta.url)), '..', 'constants', 'exploreCatalog.json');
 writeFileSync(out, `${JSON.stringify({ generatedAt: new Date().toISOString().slice(0, 10), shelves }, null, 2)}\n`);
 console.log(`→ ${out}`);

@@ -10,11 +10,12 @@
  */
 
 import { Image } from 'expo-image';
-import { BookOpenIcon } from 'lucide-react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { BookSearchResult } from '../../types/bookSearch';
-import { borderRadius, colors, fonts, fontSize, inkAlpha, spacing } from '../../utils/constants';
+import { borderRadius, colors, fonts, fontSize, inkAlpha, paperFrameGradient, spacing } from '../../utils/constants';
+import { CoverFinish } from './BookCover';
 
 /** Construit la ligne "éditeur, année" pour distinguer les éditions */
 function formatEdition(publisher: string | null, publishedDate: string | null): string | null {
@@ -43,10 +44,14 @@ export default function BookResultRow({
         {book.coverUrl ? (
           <Image source={{ uri: book.coverUrl }} style={styles.coverImage} contentFit="cover" transition={150} />
         ) : (
-          <View style={styles.coverPlaceholder}>
-            <BookOpenIcon size={20} color={colors.textPlaceholder} />
-          </View>
+          // Pas d'image : le titre composé sur papier, pour qu'il y ait toujours une couverture
+          <LinearGradient colors={paperFrameGradient} style={styles.coverPlaceholder}>
+            <Text style={styles.coverTitle} numberOfLines={4}>
+              {book.title}
+            </Text>
+          </LinearGradient>
         )}
+        <CoverFinish />
       </View>
 
       <View style={styles.info}>
@@ -108,7 +113,13 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
     justifyContent: 'center',
-    alignItems: 'center',
+    padding: spacing.xs,
+  },
+  coverTitle: {
+    fontFamily: fonts.display,
+    fontSize: 7,
+    lineHeight: 9,
+    color: colors.textPrimary,
   },
   info: {
     flex: 1,
