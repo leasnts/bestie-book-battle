@@ -524,6 +524,27 @@ alpha (`inkAlpha(0.1)`). Les bordures claires sur fond sombre passent par
 **Le rayon d'un sheet natif iOS ne se spécifie pas** : laissé vide, iOS 26
 applique son propre rayon, concentrique avec la courbure de l'écran.
 
+### Le fil
+
+Une seule matière pour les traits qui ne sont pas des filets pleins : **le fil**
+(#112). Jamais de tirets (`borderStyle: 'dashed'`, `strokeDasharray` à tirets) :
+une couture en **points ronds**.
+
+- **Le point de couture** (`STITCH` de `NoteSticker`) : point rond de 1,2 pt, un
+  tous les 2,8 pt, encre à 32 % (`stitchColor`). Cadres de l'accueil, autocollants,
+  intercalaires, et tout ce qui passe par `components/ui/Stitch.tsx` :
+  - `StitchLine` : une ligne cousue (le saut avant ma ligne dans le classement) ;
+  - `StitchBorder` : la couture tout le tour d'une vue, à la place d'une bordure
+    en tirets (zones « ajouter une couverture », série en suspens). Par défaut à
+    l'écart du bord des cadres ; `inset={0}` pour une petite pastille.
+- **Le fil de progression** (`Seam` de `GoalTrack`) : points plus gros (2,2 pt
+  tous les 5 pt), chocolat lu / sable à lire. Pistes du livre et du carnet, règle
+  de Ma page.
+
+Le fil remplace un trait qui existe déjà ; il n'en ajoute pas. Un filet plein
+(séparateur de liste, bord d'un champ) reste un filet plein : coudre partout est
+le cliché à éviter (voir Direction artistique).
+
 ## Components
 
 ### Boutons — `Button3D`

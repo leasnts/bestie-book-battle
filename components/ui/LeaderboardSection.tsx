@@ -43,6 +43,8 @@ import {
 } from '../../utils/leaderboard';
 import GlassSection from './GlassSection';
 import { Seam } from './GoalTrack';
+import { stitchColor } from './NoteSticker';
+import { StitchLine } from './Stitch';
 import { AccentUnit } from './AccentWord';
 
 // ─── Props ─────────────────────────────────────────────────────────
@@ -276,10 +278,10 @@ export default function LeaderboardSection({
           {spread && rows.length < PODIUM_SLOTS && <View style={styles.spring} />}
 
           {/* Ma ligne, quand je suis hors du top 3 : le pointillé dit qu'il y a
-            du monde entre les deux, sans écrire combien. */}
+            du monde entre les deux, sans écrire combien. Une couture, comme tout trait de l'app (#112). */}
           {pinnedMe && (
             <>
-              <View style={styles.gap} />
+              <StitchLine color={stitchColor(false)} style={styles.gap} />
               <Row participant={pinnedMe} animate={animate} square={square} />
             </>
           )}
@@ -458,12 +460,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
 
-  /** Trait pointillé : un saut dans le classement, pas une séparation */
+  /** Couture : un saut dans le classement, pas une séparation */
   gap: {
-    height: 0,
     marginVertical: 5,
-    borderTopWidth: 1,
-    borderStyle: 'dashed',
-    borderColor: inkAlpha(0.2),
   },
 });
