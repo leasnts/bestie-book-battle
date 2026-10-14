@@ -3,7 +3,7 @@
  * l'éditeur complet : la barre d'actions rapides de « Ma page » (✎ : texte, vocal,
  * citation ; ☺ : emoji). La page se change dans la feuille.
  *
- * Mêmes règles que l'éditeur `note/[id]` : la note s'écrit dans les pages de MON
+ * Mêmes règles que la modification d'une note (`useEditNote`) : la note s'écrit dans les pages de MON
  * édition et voyage en position (0 → 1), visible par le club. Sans catégorie
  * choisie (un vocal, un emoji), la catégorie par défaut.
  */

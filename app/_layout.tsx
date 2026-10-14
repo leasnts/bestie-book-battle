@@ -324,7 +324,6 @@ function RootLayoutNav() {
       <Stack.Screen name="notes" options={sheetScreenOptions([0.95])} />
 
       {/* Écrire une note — ouvert par le bouton post-it */}
-      <Stack.Screen name="note/[id]" options={sheetScreenOptions([0.75, 0.95])} />
 
       {/* Toutes les réactions d'une note — ouvert par « … » */}
       <Stack.Screen name="reactions/[id]" options={sheetScreenOptions([0.6, 0.95])} />
