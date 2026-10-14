@@ -202,7 +202,8 @@ export function postItDeepOf(color: string | null | undefined) {
  */
 export const stickerMaterial = {
   locked: '#efe9df',
-  flap: ['#fdfbf8', '#d8d1c6'] as const,
+  // Le dos blanc, comme les cadres : il se détache du fond beige
+  flap: ['#fefdfb', '#ebe6de'] as const,
 };
 
 // Espacements alignés avec Figma (tokens spacing-*)

@@ -14,8 +14,8 @@
  * on lit d'abord ce qui est nouveau, seul, puis le carnet entier apparaît.
  *
  * - **Glisser à gauche ou à droite = lue.** Les deux sens font la même chose :
- *   on passe à la suivante, sans choix à faire. Une coche apparaît pendant le
- *   geste, la carte s'envole en tournant un peu, la suivante se redresse.
+ *   on passe à la suivante, sans choix à faire. Pas de coche (Lea) : la carte
+ *   s'envole en tournant un peu ; la suivante reste où elle est, de travers.
  * - Chaque carte a la taille de sa note : un emoji seul est un petit autocollant.
  *   Les suivantes dépassent derrière, pivotées, comme des autocollants posés
  *   en tas — elles se voient quelle que soit leur taille.
@@ -46,7 +46,6 @@ import Animated, {
   Easing,
   FadeIn,
   FadeOut,
-  interpolate,
   runOnJS,
   useAnimatedStyle,
   useReducedMotion,
@@ -61,7 +60,6 @@ import {
   accentGradient,
   colors,
   fonts,
-  inkGradient,
   motion,
   shadowAlpha,
   spacing,
@@ -86,8 +84,15 @@ interface NewNotesDeckProps {
 
 /** La place de la pile : de quoi poser une note de six lignes */
 const DECK_HEIGHT = 320;
-/** Les cartes de dessous : pivotées dans un sens puis dans l'autre */
-const TILTS = [0, -4, 3.5, 0];
+/**
+ * Chaque carte garde son inclinaison, posée une fois pour toutes : quand celle
+ * du dessus part, la suivante ne se replace pas (Lea : « à chaque fois ça se
+ * replace, c'est chiant »). Une droite, puis un sens, puis l'autre.
+ */
+const TILTS = [0, -4, 3.5];
+/** La nouvelle du fond : elle attend que celle du dessus soit partie, puis se dévoile */
+const APPEAR_DELAY = 250;
+const APPEAR_MS = 900;
 /**
  * Décollée au tiers : lâcher la fait partir. En dessous, elle se recolle — on
  * peut jouer avec le coin sans qu'elle parte. Un coup de doigt vif suffit aussi,
@@ -158,11 +163,13 @@ export default function NewNotesDeck({
         {/* La carte du dessus en dernier : elle se dessine par-dessus les autres */}
         {[...pile].reverse().map((note) => {
           const depth = pile.indexOf(note);
+          const tilt = TILTS[notes.indexOf(note) % TILTS.length];
           return (
             <SwipeCard
               key={note.id}
               note={note}
               depth={depth}
+              tilt={tilt}
               appearing={!firstIds.current.has(note.id)}
               hint={note.id === first?.id}
               compact={isEmojiOnly(note)}
@@ -226,6 +233,7 @@ export default function NewNotesDeck({
 function SwipeCard({
   note,
   depth,
+  tilt,
   appearing,
   hint,
   compact,
@@ -235,6 +243,8 @@ function SwipeCard({
   note: AnnotationWithAuthor;
   /** 0 = dessus ; 1 et 2 dépassent derrière, pivotées */
   depth: number;
+  /** Son inclinaison, la même du fond de la pile jusqu'au dessus */
+  tilt: number;
   /** Arrivée dans la pile après l'ouverture : elle apparaît au fond */
   appearing: boolean;
   /** La première carte : un coin se soulève et se recolle, pour montrer qu'elle se décolle */
@@ -250,7 +260,8 @@ function SwipeCard({
   const x = useSharedValue(0);
   const y = useSharedValue(0);
   const fade = useSharedValue(1);
-  const place = useSharedValue(appearing ? depth + 1 : depth);
+  /** Arrivée au fond de la pile : elle naît en fondu, lentement, sans surgir */
+  const appear = useSharedValue(appearing ? 0 : 1);
 
   // Décoller : le coin A tiré en B, sur une note de w × h
   const [size, setSize] = useState<{ w: number; h: number } | null>(null);
@@ -277,10 +288,15 @@ function SwipeCard({
     setSize((prev) => (prev && prev.w === lw && prev.h === lh ? prev : { w: lw, h: lh }));
   };
 
-  // Sa place dans la pile : elle se redresse quand celle du dessus part
+  // Les autres ne bougent pas : seule la nouvelle du fond apparaît, après le départ de celle du dessus
   useEffect(() => {
-    place.value = withTiming(depth, { duration: motion.duration.slow, easing: easeOut });
-  }, [depth, place]);
+    if (!appearing) return;
+    if (reduced) {
+      appear.value = 1;
+      return;
+    }
+    appear.value = withDelay(APPEAR_DELAY, withTiming(1, { duration: APPEAR_MS, easing: Easing.inOut(Easing.quad) }));
+  }, [appearing, appear, reduced]);
 
   // À l'ouverture, le coin en bas à droite se soulève un peu et se recolle
   const hinted = useRef(false);
@@ -397,20 +413,14 @@ function SwipeCard({
     });
 
   const cardStyle = useAnimatedStyle(() => ({
-    opacity: fade.value * interpolate(place.value, [0, 2, 3], [1, 1, 0]),
+    opacity: fade.value * appear.value,
     transform: [
       { translateX: x.value },
       { translateY: y.value * 0.25 },
-      { rotate: `${x.value * 0.05 + interpolate(place.value, [0, 1, 2, 3], TILTS)}deg` },
-      { scale: interpolate(place.value, [0, 1, 3], [1, 0.97, 0.94]) },
+      { rotate: `${x.value * 0.05 + tilt}deg` },
+      { scale: 0.96 + appear.value * 0.04 },
     ],
   }));
-
-  // La coche grandit quand on fait glisser : on sait que lâcher suffit
-  const markStyle = useAnimatedStyle(() => {
-    const p = interpolate(Math.abs(x.value), [30, SWIPE_DISTANCE], [0, 1], 'clamp');
-    return { opacity: p, transform: [{ scale: 0.6 + p * 0.4 }] };
-  });
 
   return (
     <View style={styles.slot} pointerEvents="box-none">
@@ -426,10 +436,6 @@ function SwipeCard({
             {children}
           </PeelSurface>
 
-          <Animated.View style={[styles.mark, markStyle]} pointerEvents="none">
-            <ExpoLinearGradient colors={inkGradient} style={StyleSheet.absoluteFill} />
-            <CheckIcon size={18} color={colors.white} strokeWidth={2.6} />
-          </Animated.View>
         </Animated.View>
       </GestureDetector>
     </View>
@@ -497,17 +503,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.14,
     shadowRadius: 18,
     shadowOffset: { width: 0, height: 10 },
-  },
-  mark: {
-    position: 'absolute',
-    top: -spacing.md,
-    right: -spacing.sm,
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    overflow: 'hidden',
-    alignItems: 'center',
-    justifyContent: 'center',
   },
 
   allRead: {
