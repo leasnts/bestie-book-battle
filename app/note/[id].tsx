@@ -30,6 +30,7 @@ import {
   View,
 } from 'react-native';
 import CategoryPicker from '../../components/ui/CategoryPicker';
+import GlassButton from '../../components/ui/GlassButton';
 import NoteDraft from '../../components/ui/NoteDraft';
 import PressableScale from '../../components/ui/PressableScale';
 import SheetPage, { SheetFooter } from '../../components/ui/SheetPage';
@@ -202,18 +203,18 @@ export default function NoteFormRoute() {
     >
       {/* ─── La page ─── */}
       <View style={styles.pageRow}>
-        <Stepper
+        <GlassButton
           icon={MinusIcon}
-          label="Une page en arrière"
+          accessibilityLabel="Une page en arrière"
           onPress={() => setPage((p) => Math.max(0, p - 1))}
         />
         <Text style={styles.page}>
           <Text style={styles.pagePrefix}><AccentUnit size={styles.pagePrefix.fontSize} color={styles.page.color}>p.</AccentUnit> </Text>
           {page}
         </Text>
-        <Stepper
+        <GlassButton
           icon={PlusIcon}
-          label="Une page en avant"
+          accessibilityLabel="Une page en avant"
           onPress={() => setPage((p) => Math.min(myPages, p + 1))}
         />
       </View>
@@ -312,33 +313,7 @@ export default function NoteFormRoute() {
   );
 }
 
-/** Le − et le + de la page : deux ronds identiques, seule l'icône change */
-function Stepper({
-  icon: Icon,
-  label,
-  onPress,
-}: {
-  icon: typeof PlusIcon;
-  label: string;
-  onPress: () => void;
-}) {
-  return (
-    <PressableScale
-      style={styles.stepper}
-      pressedScale={0.9}
-      hitSlop={8}
-      onPress={onPress}
-      accessibilityRole="button"
-      accessibilityLabel={label}
-    >
-      <Icon size={18} color={colors.dark900} strokeWidth={2.6} />
-    </PressableScale>
-  );
-}
-
 // ─── Styles ────────────────────────────────────────────────────────
-
-const STEPPER_SIZE = 36;
 
 const styles = StyleSheet.create({
   content: {
@@ -352,14 +327,6 @@ const styles = StyleSheet.create({
     gap: spacing.lg,
     marginTop: spacing.sm,
     marginBottom: spacing.md,
-  },
-  stepper: {
-    width: STEPPER_SIZE,
-    height: STEPPER_SIZE,
-    borderRadius: STEPPER_SIZE / 2,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: inkAlpha(0.07),
   },
   page: {
     fontFamily: fonts.display,

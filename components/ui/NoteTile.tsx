@@ -561,9 +561,9 @@ function VoiceBadge({ seconds, levels }: { seconds: number; levels: number[] | n
   });
   return (
     <View style={styles.voice}>
-      <View style={styles.voiceIcon}>
+      <LinearGradient colors={inkGradient} style={styles.voiceIcon}>
         <MicIcon size={13} color={colors.white} strokeWidth={2.4} />
-      </View>
+      </LinearGradient>
       <View style={styles.wave}>
         {bars.map((height, index) => (
           <View key={index} style={[styles.waveBar, { height }]} />
@@ -657,7 +657,6 @@ const styles = StyleSheet.create({
     borderRadius: 13,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.dark900,
   },
   wave: {
     flex: 1,

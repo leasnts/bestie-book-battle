@@ -47,6 +47,7 @@ import {
   MAX_VOICE_SECONDS,
 } from '../../utils/annotations';
 import { accentGradient, colors, creamAlpha, fonts, inkAlpha, spacing } from '../../utils/constants';
+import GlassButton from './GlassButton';
 import RoundButton, { ROUND_BUTTON_SIZE } from './RoundButton';
 import VoicePlayer from './VoicePlayer';
 
@@ -257,7 +258,7 @@ export default function VoiceRecorder({
       {recording ? (
         <RoundButton icon={SquareIcon} variant="light" filled label="Arrêter le vocal" onPress={finish} />
       ) : recorded ? (
-        <RoundButton icon={RotateCcwIcon} variant="ghost" label="Refaire le vocal" onPress={start} />
+        <GlassButton icon={RotateCcwIcon} accessibilityLabel="Refaire le vocal" onPress={start} />
       ) : (
         <RoundButton icon={MicIcon} variant="dark" label="Enregistrer une note vocale" onPress={start} />
       )}
@@ -299,12 +300,7 @@ export default function VoiceRecorder({
       )}
 
       {recorded && (
-        <RoundButton
-          icon={Trash2Icon}
-          variant="ghost"
-          label="Supprimer le vocal"
-          onPress={() => onChange(null)}
-        />
+        <GlassButton icon={Trash2Icon} accessibilityLabel="Supprimer le vocal" onPress={() => onChange(null)} />
       )}
     </View>
   );

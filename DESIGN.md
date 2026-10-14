@@ -999,8 +999,9 @@ icône est l'un de ces deux, et rien d'autre :
   ■ / 🎙 de l'enregistreur, ✎ ☺ de « Ma page » (choix de Lea). Rare par
   construction : s'il y en a partout, plus rien n'est important.
 
-Dans le contenu, `RoundButton` garde aussi `ghost` (↺ 🗑) et `light` (sur la
-gélule rouge).
+Dans le contenu, `RoundButton` garde aussi `light` (■ sur la gélule rouge).
+L'ancien `ghost` (aplat gris) n'existe plus : ↺ 🗑 de l'enregistreur et − / + de
+la page d'une note sont des `GlassButton` (#106).
 
 **Une seule taille, partout, sans exception : 44 pt** (`ROUND_BUTTON_SIZE` dans
 `utils/constants.ts`, icône 19 pt). Règle de Lea (2026-10-02) : un bouton rond

@@ -4,8 +4,9 @@
  *
  * - `dark` : l'action principale, encre chocolat en dégradé (✓ enregistrer,
  *   ✓ ajouter la note, 🎙 enregistrer, ✎ ☺ de « Ma page ») ;
- * - `ghost` : les autres, `inkAlpha(0.07)` (↺ annuler, ↺ refaire, 🗑) ;
  * - `light` : sur une surface foncée (■ arrêter, sur la gélule rouge).
+ *
+ * Les autres actions (↺ refaire, 🗑, − / + de la page…) passent par `GlassButton`.
  *
  * Même taille partout (`ROUND_BUTTON_SIZE`, aussi celle de `GlassButton`), même
  * place : seule l'icône change (DESIGN.md › Boutons-icônes).
@@ -19,7 +20,6 @@ import { StyleSheet, View } from 'react-native';
 import {
   colors,
   creamAlpha,
-  inkAlpha,
   inkGradient,
   ROUND_BUTTON_ICON,
   ROUND_BUTTON_ICON_FILLED,
@@ -30,7 +30,7 @@ import PressableScale from './PressableScale';
 
 interface RoundButtonProps {
   icon: LucideIcon;
-  variant: 'dark' | 'ghost' | 'light';
+  variant: 'dark' | 'light';
   /** Ce que VoiceOver annonce */
   label: string;
   hint?: string;
@@ -105,9 +105,6 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: colors.white,
     backgroundColor: colors.accent,
-  },
-  ghost: {
-    backgroundColor: inkAlpha(0.07),
   },
   light: {
     backgroundColor: creamAlpha(0.95),
