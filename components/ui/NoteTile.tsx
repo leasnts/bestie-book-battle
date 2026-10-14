@@ -93,6 +93,15 @@ const FLICK_VELOCITY = 500;
 
 const easeOut = Easing.bezier(...motion.easing.easeOutQuart);
 
+/** Les autocollants qui dépassent dessous, de travers : [angle, décalage] (le bloc neuf, la pile des nouvelles) */
+const PAD_TILT = [
+  [-9, -6],
+  [6, 5],
+] as const;
+
+/** La pastille des nouvelles : blanc des cadres, jamais d'aplat */
+const freshGradient = ['#fefdfb', '#f3efe9'] as const;
+
 export default function NoteTile({
   notes,
   myUserId,
@@ -124,6 +133,9 @@ export default function NoteTile({
   /** Sa place dans les nouvelles (1, 2…), tant qu'on est dedans */
   const freshPlace = (i: number) => (i < freshCount ? i + 1 : 0);
   const peelOff = () => setTurn((t) => t + 1);
+  /** Des nouvelles encore derrière celle du dessus : elles dépassent en pile, de travers */
+  const pile = at < freshCount ? notes.slice(at + 1, Math.min(freshCount, at + 1 + PAD_TILT.length)) : [];
+  const lean = size ? size.h / size.w : 1;
   /** Rien du tout, ni lisible ni plus loin : on invite à la première note */
   const untouched = !note && aheadCount === 0;
   const write = useWriteNote();
@@ -164,6 +176,25 @@ export default function NoteTile({
       {size &&
         (note ? (
           <>
+            {pile.map((n, i) => (
+              <View
+                key={n.id}
+                style={[
+                  StyleSheet.absoluteFill,
+                  { transform: [{ translateX: PAD_TILT[i][1] }, { rotate: `${PAD_TILT[i][0] * lean}deg` }, { scale: 0.97 }] },
+                ]}
+                pointerEvents="none"
+              >
+                <NoteSticker
+                  id={`note-tile-pile-${n.id}`}
+                  color={ANNOTATION_CATEGORIES[n.category].color}
+                  width={size.w}
+                  height={size.h}
+                  maxBase={STICKER_BASE_LARGE}
+                  corner="none"
+                />
+              </View>
+            ))}
             {/* La clé suit le tour : celui du dessous devient celui du dessus sans être redessiné */}
             {next && (
               <View key={turn + 1} style={StyleSheet.absoluteFill} pointerEvents="none">
@@ -252,17 +283,12 @@ function FirstNote({ tile, page }: { tile: TileSize; page: number }) {
   return (
     <View style={box}>
       {/* Le bloc : deux autocollants de couleur dessous, qui dépassent de travers */}
-      {(
-        [
-          [postIt.sauge, -9, -6],
-          [postIt.jaune, 6, 5],
-        ] as const
-      ).map(([color, angle, shift]) => (
+      {([postIt.sauge, postIt.jaune] as const).map((color, i) => (
         <View
           key={color}
           style={[
             StyleSheet.absoluteFill,
-            { transform: [{ translateX: shift }, { rotate: `${angle * lean}deg` }, { scale: 0.97 }] },
+            { transform: [{ translateX: PAD_TILT[i][1] }, { rotate: `${PAD_TILT[i][0] * lean}deg` }, { scale: 0.97 }] },
           ]}
           pointerEvents="none"
         >
@@ -515,6 +541,14 @@ function NoteContent({
   return (
     <View style={styles.content}>
       <View style={styles.head}>
+        {/* Des nouvelles à lire : combien il en reste, sur une pastille papier */}
+        {freshAt > 0 && (
+          <LinearGradient colors={freshGradient} style={styles.fresh}>
+            <Text style={styles.freshText} maxFontSizeMultiplier={1.3}>
+              {freshCount - freshAt + 1}
+            </Text>
+          </LinearGradient>
+        )}
         <Text style={[styles.page, { color: pageTone }]} maxFontSizeMultiplier={1.3}>
           <AccentUnits text={page} size={styles.page.fontSize} color={pageTone} />
         </Text>
@@ -542,12 +576,6 @@ function NoteContent({
         <Text style={styles.author} numberOfLines={1}>
           {author}
         </Text>
-        {freshAt > 0 && (
-          <Text style={styles.fresh}>
-            {freshAt}{' '}/{' '}
-            {freshCount}
-          </Text>
-        )}
       </View>
     </View>
   );
@@ -592,7 +620,7 @@ const styles = StyleSheet.create({
   },
   head: {
     flexDirection: 'row',
-    alignItems: 'baseline',
+    alignItems: 'center',
     gap: spacing.sm,
   },
   page: {
@@ -637,11 +665,19 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: inkAlpha(0.66),
   },
+  // Le papier blanc des cadres, posé sur l'autocollant
   fresh: {
-    marginLeft: 'auto',
+    minWidth: 24,
+    height: 24,
+    paddingHorizontal: 6,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  freshText: {
     fontFamily: fonts.bodyExtraBold,
-    fontSize: 12,
-    color: colors.accent,
+    fontSize: 13,
+    color: colors.textPrimary,
     fontVariant: ['tabular-nums'],
   },
 
