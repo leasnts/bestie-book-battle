@@ -1000,8 +1000,12 @@ icône est l'un de ces deux, et rien d'autre :
   construction : s'il y en a partout, plus rien n'est important.
 
 Dans le contenu, `RoundButton` garde aussi `light` (■ sur la gélule rouge).
-L'ancien `ghost` (aplat gris) n'existe plus : ↺ 🗑 de l'enregistreur et − / + de
-la page d'une note sont des `GlassButton` (#106).
+L'ancien `ghost` (aplat gris) n'existe plus : ↺ 🗑 de l'enregistreur sont des
+`GlassButton` (#106).
+
+**Une seule feuille pour écrire une note** : `NoteComposer`, aussi pour modifier
+une de mes notes (toucher ma note dans le carnet l'ouvre remplie, 🗑 en verre
+dans l'en-tête). Pas de second éditeur.
 
 **Une seule taille, partout, sans exception : 44 pt** (`ROUND_BUTTON_SIZE` dans
 `utils/constants.ts`, icône 19 pt). Règle de Lea (2026-10-02) : un bouton rond
