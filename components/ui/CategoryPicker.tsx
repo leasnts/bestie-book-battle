@@ -1,12 +1,9 @@
 /**
  * CategoryPicker — choisir la couleur (la catégorie) d'une note.
  *
- * Chaque pastille a la couleur de sa catégorie et **son nom écrit** : la couleur
- * seule exclurait les personnes daltoniennes. La choisie est entourée de rouge.
- *
- * Un seul sélecteur : l'éditeur de note (en grille) et la feuille rapide de
- * « Ma page » (en intercalaires, `tabs`). Les intercalaires n'ont pas de mot :
- * l'illustration de la catégorie, et son nom pour VoiceOver.
+ * Des intercalaires sous la note, dans la feuille d'écriture (`NoteComposer`).
+ * Ils n'ont pas de mot : l'illustration de la catégorie (la couleur seule
+ * exclurait les personnes daltoniennes), et son nom pour VoiceOver.
  *
  *   ┆ Une pensée, un avis…            ┆
  *   ╰┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄╯
@@ -22,7 +19,7 @@ import { Image } from 'expo-image';
 import { feel } from '../../utils/feel';
 import React, { useEffect, useState } from 'react';
 import Svg, { Path } from 'react-native-svg';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import Animated, {
   Easing,
   useAnimatedStyle,
@@ -32,7 +29,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import type { AnnotationCategory } from '../../types/supabase';
 import { ANNOTATION_CATEGORIES, CATEGORY_ICONS, CATEGORY_ORDER } from '../../utils/annotations';
-import { borderRadius, colors, fonts, inkAlpha, motion, shadowAlpha, spacing } from '../../utils/constants';
+import { borderRadius, motion, spacing } from '../../utils/constants';
 import { STITCH, noteStitchColor } from './NoteSticker';
 import PressableScale from './PressableScale';
 
@@ -69,47 +66,15 @@ export function tabStitchNotch(width: number, category: AnnotationCategory) {
 interface CategoryPickerProps {
   value: AnnotationCategory;
   onChange: (category: AnnotationCategory) => void;
-  /**
-   * `grid` : trois par ligne ; `tabs` : des intercalaires collés sous la note
-   * (à poser juste après elle, sans écart)
-   */
-  layout?: 'grid' | 'tabs';
-}
-
-export default function CategoryPicker({ value, onChange, layout = 'grid' }: CategoryPickerProps) {
-  if (layout === 'tabs') return <CategoryTabs value={value} onChange={onChange} />;
-
-  const chips = CATEGORY_ORDER.map((key) => {
-    const option = ANNOTATION_CATEGORIES[key];
-    const selected = key === value;
-    return (
-      <PressableScale
-        key={key}
-        style={[styles.chip, styles.chipGrid, selected && styles.chipOn]}
-        pressedScale={0.96}
-        onPress={() => onChange(key)}
-        accessibilityRole="button"
-        accessibilityLabel={option.label}
-        accessibilityState={{ selected }}
-      >
-        {/* Jamais d'aplat : la couleur de la catégorie, un voile clair en haut */}
-        <LinearGradient colors={[option.color, shade(option.color)]} style={StyleSheet.absoluteFill} />
-        <Text style={styles.text} numberOfLines={1}>
-          {option.label}
-        </Text>
-      </PressableScale>
-    );
-  });
-
-  return <View style={styles.grid}>{chips}</View>;
 }
 
 /**
  * Les intercalaires : on tire celui de la couleur voulue, il dépasse plus que les
  * autres. Pas de mot : l'illustration de la catégorie, en bas, coupée par le bord,
- * dans un ton plus sombre de la couleur (VoiceOver lit le nom).
+ * dans un ton plus sombre de la couleur (VoiceOver lit le nom). À poser juste
+ * après la note, sans écart.
  */
-function CategoryTabs({ value, onChange }: Pick<CategoryPickerProps, 'value' | 'onChange'>) {
+export default function CategoryPicker({ value, onChange }: CategoryPickerProps) {
   return (
     <View style={styles.tabs}>
       {CATEGORY_ORDER.map((key, index) => (
@@ -239,35 +204,6 @@ function shade(hex: string, k = 0.92) {
 }
 
 const styles = StyleSheet.create({
-  grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.sm,
-  },
-  chip: {
-    minHeight: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: spacing.md,
-    borderRadius: borderRadius.md,
-    borderWidth: 2,
-    borderColor: 'transparent',
-    overflow: 'hidden',
-  },
-  chipGrid: {
-    flexGrow: 1,
-    flexBasis: '30%',
-  },
-  chipOn: {
-    borderColor: colors.accent,
-    shadowColor: shadowAlpha(0.2),
-  },
-  text: {
-    fontFamily: fonts.bodyExtraBold,
-    fontSize: 13,
-    color: colors.textPrimary,
-  },
-
   // Les intercalaires glissent sous le bord de la note (le haut est caché),
   // entre les deux arrondis du bas, à parts égales
   tabs: {

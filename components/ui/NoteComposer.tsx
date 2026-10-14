@@ -17,15 +17,18 @@
  * - 🎙 n'ouvre l'enregistreur qu'au toucher ; ❝ photographie la page, on
  *   touche les lignes (`QuotePicker`), le passage arrive en tête, modifiable.
  *
- * Mêmes pièces que partout : `GlassButton` pour ✕ et ↗, `RoundButton` pour ✓,
- * `NoteDraft` et `CategoryPicker` comme dans l'éditeur de note.
+ * Mêmes pièces que partout : `GlassButton` pour ✕ ↗ 🗑, `RoundButton` pour ✓,
+ * `NoteDraft` et `CategoryPicker`.
  *
  * Toucher un bouton pendant qu'on tape agit tout de suite, sans d'abord fermer
  * le clavier. ✕ ou le fond : la feuille se referme et **garde le brouillon**.
+ *
+ * La même feuille modifie une de mes notes (`note`, depuis le carnet) : elle
+ * s'ouvre remplie, ✓ enregistre, 🗑 supprime ; pas de brouillon gardé.
  */
 
 import * as ImagePicker from 'expo-image-picker';
-import { CheckIcon, Maximize2Icon, Minimize2Icon, XIcon } from 'lucide-react-native';
+import { CheckIcon, Maximize2Icon, Minimize2Icon, Trash2Icon, XIcon } from 'lucide-react-native';
 import React, { useEffect, useRef, useState } from 'react';
 import {
   Alert,
@@ -51,13 +54,13 @@ import Animated, {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { isAvailable as canReadPages } from '../../modules/page-text/src';
 import type { VoiceClip } from '../../stores/annotationStore';
-import type { AnnotationCategory } from '../../types/supabase';
+import type { Annotation, AnnotationCategory } from '../../types/supabase';
 import { ANNOTATION_CATEGORIES, DEFAULT_CATEGORY } from '../../utils/annotations';
 import { colors, creamAlpha, fonts, glassControlVeil, motion, shadowAlpha, spacing } from '../../utils/constants';
 import CategoryPicker, { tabStitchNotch } from './CategoryPicker';
 import GlassButton from './GlassButton';
 import GlassMaterial from './GlassMaterial';
-import NoteDraft from './NoteDraft';
+import NoteDraft, { type DraftVoice } from './NoteDraft';
 import QuotePicker, { type PagePhoto } from './QuotePicker';
 import RoundButton, { ROUND_BUTTON_SIZE } from './RoundButton';
 import { AccentUnit } from './AccentWord';
@@ -71,8 +74,13 @@ export interface ComposerDraft {
 
 export interface ComposedNote {
   body: string;
+  /** Un emoji seul (une note modifiée qui n'était qu'un emoji) */
+  emoji: string | null;
   quote: string | null;
+  /** Un nouvel enregistrement, ou rien */
   voice: VoiceClip | null;
+  /** Le vocal a changé : remplacé par `voice`, ou supprimé si `voice` est vide */
+  voiceChanged: boolean;
   category: AnnotationCategory;
   page: number;
 }
@@ -89,6 +97,10 @@ interface NoteComposerProps {
   onClose: (draft: ComposerDraft) => void;
   /** Ajouter la note. `false` : ça n'a pas marché, la feuille reste ouverte. */
   onPost: (note: ComposedNote) => Promise<boolean>;
+  /** Une de mes notes à modifier : la feuille s'ouvre remplie */
+  note?: Annotation | null;
+  /** 🗑 : supprimer la note modifiée. `true` : c'est fait, la feuille se ferme. */
+  onDelete?: () => Promise<boolean>;
 }
 
 export const EMPTY_DRAFT: ComposerDraft = { body: '', quote: '', category: DEFAULT_CATEGORY };
@@ -100,11 +112,22 @@ const HEAD_BUTTON = ROUND_BUTTON_SIZE;
 /** iOS ne présente pas une vue par-dessus une autre qui se ferme : on attend la fin du fondu */
 const MODAL_SWAP_MS = 450;
 
-export default function NoteComposer({ visible, page, maxPage, draft, onClose, onPost }: NoteComposerProps) {
+export default function NoteComposer({
+  visible,
+  page,
+  maxPage,
+  draft,
+  onClose,
+  onPost,
+  note = null,
+  onDelete,
+}: NoteComposerProps) {
   const [body, setBody] = useState(draft.body);
+  const [emoji, setEmoji] = useState<string | null>(null);
   const [category, setCategory] = useState(draft.category);
   const [passage, setPassage] = useState(draft.quote);
-  const [voice, setVoice] = useState<VoiceClip | null>(null);
+  const [voice, setVoice] = useState<DraftVoice | null>(null);
+  const [voiceChanged, setVoiceChanged] = useState(false);
   const [recording, setRecording] = useState(false);
   const [full, setFull] = useState(false);
   const [posting, setPosting] = useState(false);
@@ -122,22 +145,53 @@ export default function NoteComposer({ visible, page, maxPage, draft, onClose, o
   /** La hauteur de ce que contient la feuille : elle se pose à sa taille */
   const contentHeight = useSharedValue(0);
 
-  // Chaque ouverture repart du brouillon, sur ma page enregistrée
+  // Chaque ouverture repart du brouillon, sur ma page enregistrée ; ou de la note modifiée
   useEffect(() => {
     if (!visible) return;
-    setBody(draft.body);
-    setCategory(draft.category);
-    setPassage(draft.quote);
-    setVoice(null);
+    if (note) {
+      // Un emoji seul reste en grand ; avec du texte, il passe en tête du texte
+      setEmoji(note.body ? null : note.emoji);
+      setBody(note.body && note.emoji ? `${note.emoji} ${note.body}` : (note.body ?? ''));
+      setCategory(note.category);
+      setPassage(note.quote ?? '');
+      setVoice(
+        note.audio_path
+          ? { path: note.audio_path, seconds: note.audio_seconds ?? 0, levels: note.audio_levels }
+          : null,
+      );
+      setPageText(String(note.page));
+    } else {
+      setEmoji(null);
+      setBody(draft.body);
+      setCategory(draft.category);
+      setPassage(draft.quote);
+      setVoice(null);
+      setPageText(String(page));
+    }
+    setVoiceChanged(false);
     setFull(false);
-    setPageText(String(page));
     expanded.value = 0;
     shown.value = withTiming(1, timing(reducedMotion));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible]);
 
   /** La page choisie, toujours entre 1 et la dernière page de mon édition */
-  const chosenPage = clampPage(Number(pageText), page, maxPage);
+  const chosenPage = clampPage(Number(pageText), note?.page ?? page, maxPage);
+
+  const changeVoice = (clip: VoiceClip | null) => {
+    setVoice(clip);
+    setVoiceChanged(true);
+  };
+
+  const changeBody = (next: string) => {
+    // On commence à écrire après un emoji seul : il passe dans le texte
+    if (emoji && !body && next) {
+      setBody(`${emoji} ${next}`);
+      setEmoji(null);
+      return;
+    }
+    setBody(next);
+  };
 
   const toggleFull = () => {
     const next = !full;
@@ -150,22 +204,30 @@ export default function NoteComposer({ visible, page, maxPage, draft, onClose, o
     setTimeout(then, reducedMotion ? 0 : 180);
   };
 
-  const close = () => leave(() => onClose({ body, quote: passage, category }));
+  // Une note modifiée ne laisse pas de brouillon : le brouillon reste celui d'avant
+  const close = () => leave(() => onClose(note ? draft : { body, quote: passage, category }));
 
-  const empty = !body.trim() && !passage.trim() && !voice;
+  const empty = !body.trim() && !passage.trim() && !voice && !emoji;
 
   const post = async () => {
     if (empty || recording || posting) return;
     setPosting(true);
     const done = await onPost({
       body: body.trim(),
+      emoji,
       quote: passage.trim() || null,
-      voice,
+      voice: voice?.uri ? { uri: voice.uri, seconds: voice.seconds, levels: voice.levels ?? [] } : null,
+      voiceChanged,
       category,
       page: chosenPage,
     });
     setPosting(false);
-    if (done) leave(() => onClose(EMPTY_DRAFT));
+    if (done) leave(() => onClose(note ? draft : EMPTY_DRAFT));
+  };
+
+  const remove = async () => {
+    if (!onDelete || posting) return;
+    if (await onDelete()) leave(() => onClose(draft));
   };
 
   // ❝ : la photo de la page. Sans appareil (simulateur), on la choisit dans la photothèque.
@@ -233,7 +295,7 @@ export default function NoteComposer({ visible, page, maxPage, draft, onClose, o
             <GlassButton
               icon={XIcon}
               onPress={close}
-              accessibilityLabel="Fermer, garder le brouillon"
+              accessibilityLabel={note ? 'Fermer sans enregistrer' : 'Fermer, garder le brouillon'}
             />
             {/* La page de la note : ma page enregistrée, qu'on peut changer */}
             <Pressable
@@ -258,6 +320,9 @@ export default function NoteComposer({ visible, page, maxPage, draft, onClose, o
               />
             </Pressable>
             <View style={styles.grow} />
+            {note && onDelete && (
+              <GlassButton icon={Trash2Icon} onPress={remove} accessibilityLabel="Supprimer la note" />
+            )}
             <GlassButton
               icon={full ? Minimize2Icon : Maximize2Icon}
               onPress={toggleFull}
@@ -266,7 +331,7 @@ export default function NoteComposer({ visible, page, maxPage, draft, onClose, o
             <RoundButton
               icon={CheckIcon}
               variant="dark"
-              label="Ajouter la note au carnet de notes"
+              label={note ? 'Enregistrer la note' : 'Ajouter la note au carnet de notes'}
               disabled={empty || recording || posting}
               onPress={post}
             />
@@ -278,30 +343,30 @@ export default function NoteComposer({ visible, page, maxPage, draft, onClose, o
             <View style={[styles.sticker, full && styles.grow]}>
               <NoteDraft
                 ref={input}
-                id="composer"
+                id={note ? `composer-${note.id}` : 'composer'}
                 color={style.color}
                 label={style.label}
                 quote={passage ? passage : null}
                 onQuoteChange={setPassage}
+                emoji={emoji}
                 body={body}
-                onBodyChange={setBody}
+                onBodyChange={changeBody}
                 placeholder={
                   passage ? 'Ta pensée, ton avis sur ce passage…' : 'Une pensée, un avis, un élément à retenir…'
                 }
                 voice={voice}
-                onVoiceChange={setVoice}
+                onVoiceChange={changeVoice}
                 onRecordingChange={setRecording}
                 large={full}
                 corner="none"
                 fill={full}
-                tools
                 onCite={canReadPages ? takePhoto : undefined}
                 // La couture descend dans l'intercalaire choisi : une seule pièce
                 stitchNotch={(width) => tabStitchNotch(width, category)}
                 autoFocus
               />
             </View>
-            <CategoryPicker value={category} onChange={setCategory} layout="tabs" />
+            <CategoryPicker value={category} onChange={setCategory} />
           </View>
         </ScrollView>
       </Animated.View>
