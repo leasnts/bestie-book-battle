@@ -2,19 +2,18 @@
  * Composant Button3D - Boutons avec effet 3D pixel-perfect
  * 
  * Deux variants sémantiques :
- * - **primary** (bouton principal) : chocolat en relief (InkBevel : cerne, liseré, fond en dégradé), pour l'action principale
- * - **secondary** (bouton secondaire) : fond crème (colors.bgLight), pour actions secondaires ou retour
+ * - **primary** (bouton principal) : chocolat en relief (Bevel `ink` : cerne, liseré, fond en dégradé), pour l'action principale
+ * - **secondary** (bouton secondaire) : papier en relief (Bevel `paper`), pour actions secondaires ou retour
  * 
  * Le bouton back est un Button3D variant="secondary" en mode icon-only.
  * Il peut aussi contenir du texte comme le primary (ex: "Retour", "Annuler").
  * 
- * Effet 3D : secondaire en gradients aux bords, primaire en liseré ; inversés au press.
+ * Effet 3D : liseré clair en haut, inversé au press.
  */
 
 import { feel } from '../utils/feel';
-import { colors, creamAlpha, fonts, inkAlpha, shadowAlpha } from '../utils/constants';
-import { LinearGradient } from 'expo-linear-gradient';
-import InkBevel from './ui/InkBevel';
+import { colors, fonts } from '../utils/constants';
+import Bevel from './ui/Bevel';
 import {
   CheckIcon,
   ChevronLeftIcon,
@@ -153,57 +152,15 @@ export default function Button3D({
         isPrimary ? styles.primaryShadow : styles.secondaryShadow,
       ]}>
         
-        {/* Bouton avec overflow hidden pour clipper les gradients */}
+        {/* Bouton avec overflow hidden pour clipper le relief */}
         <View style={[
           styles.button,
           isCompact && styles.buttonCompact,
           isPrimary ? styles.primaryFill : styles.secondaryFill,
         ]}>
 
-          {/* ====== INNER SHADOWS simulées via LinearGradient ====== */}
-
-          {/* Primaire : cerne, liseré et fond en dégradé chocolat (InkBevel) */}
-          {isPrimary && (
-            <InkBevel radius={isCompact ? 12 : 24} pressed={pressed} />
-          )}
-
-          {/* Secondary button inner shadows */}
-          {!isPrimary && !pressed && (
-            <LinearGradient
-              colors={[
-                creamAlpha(0.6),
-                creamAlpha(0),
-                shadowAlpha(0),
-                shadowAlpha(0.15),
-              ]}
-              locations={[0, 0.3, 0.7, 1]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 0, y: 1 }}
-              style={styles.gradientOverlay}
-            />
-          )}
-
-          {!isPrimary && pressed && (
-            <LinearGradient
-              colors={[
-                shadowAlpha(0.15),
-                shadowAlpha(0),
-                creamAlpha(0),
-                creamAlpha(0.6),
-              ]}
-              locations={[0, 0.3, 0.7, 1]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 0, y: 1 }}
-              style={styles.gradientOverlay}
-            />
-          )}
-
-          {/* ====== STROKE : bordure du secondaire (le primaire a la sienne dans InkBevel) ====== */}
-          {!isPrimary && <View style={[
-            styles.strokeBorder,
-            isCompact && styles.strokeBorderCompact,
-            styles.secondaryStroke,
-          ]} />}
+          {/* Cerne, liseré et fond en dégradé : chocolat ou papier (Bevel) */}
+          <Bevel tone={isPrimary ? 'ink' : 'paper'} radius={isCompact ? 12 : 24} pressed={pressed} />
 
           {/* ====== CONTENU ====== */}
           <View style={[styles.content, isCompact && styles.contentCompact]}>
@@ -269,8 +226,8 @@ const styles = StyleSheet.create({
   secondaryShadow: {
     shadowColor: colors.black,
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
     elevation: 2,
   },
 
@@ -289,24 +246,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.bgLight,
   },
 
-  // Gradients overlay (absoluteFill)
-  gradientOverlay: {
-    ...StyleSheet.absoluteFill,
-  },
-  
-  // Stroke border (1px inside, gradient simulé avec borderColor)
-  strokeBorder: {
-    ...StyleSheet.absoluteFill,
-    borderRadius: 24,
-    borderWidth: 1,
-  },
-  strokeBorderCompact: {
-    borderRadius: 12,
-  },
-  secondaryStroke: {
-    borderColor: inkAlpha(0.08),
-  },
-  
   // Contenu
   content: {
     flexDirection: 'row',

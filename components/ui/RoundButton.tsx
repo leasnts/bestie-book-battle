@@ -2,7 +2,7 @@
  * RoundButton — LE bouton rond plein de l'app, pour les actions dans le contenu
  * (à distinguer de `GlassButton`, le rond en verre des en-têtes et de la barre).
  *
- * - `dark` : l'action principale, chocolat en relief (`InkBevel`, comme Button3D) (✓ enregistrer,
+ * - `dark` : l'action principale, chocolat en relief (`Bevel`, comme Button3D) (✓ enregistrer,
  *   ✓ ajouter la note, 🎙 enregistrer, ✎ ☺ de « Ma page ») ;
  * - `light` : sur une surface foncée (■ arrêter, sur la gélule rouge).
  *
@@ -23,7 +23,7 @@ import {
   ROUND_BUTTON_ICON_FILLED,
   ROUND_BUTTON_SIZE,
 } from '../../utils/constants';
-import InkBevel from './InkBevel';
+import Bevel from './Bevel';
 import PressableScale from './PressableScale';
 
 interface RoundButtonProps {
@@ -65,7 +65,7 @@ export default function RoundButton({
       accessibilityHint={hint}
     >
       {/* Le même chocolat en relief que Button3D primaire */}
-      {variant === 'dark' && <InkBevel radius={ROUND_BUTTON_SIZE / 2} />}
+      {variant === 'dark' && <Bevel tone="ink" radius={ROUND_BUTTON_SIZE / 2} />}
       <Icon size={filled ? ROUND_BUTTON_ICON_FILLED : ROUND_BUTTON_ICON} color={color} fill={filled ? color : 'none'} strokeWidth={2.2} />
       {badge && <View style={styles.badge} />}
     </PressableScale>

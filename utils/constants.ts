@@ -147,18 +147,26 @@ export const dangerGradient = ['#d4453f', '#a92f2a'] as const;
 export const inkGradient = [lowki.chocolate.light, lowki.chocolate.dark] as const;
 
 /**
- * Le bouton marron en relief (Button3D primaire, RoundButton `dark`), d'après la
- * maquette « Accept » de Lea (2026-10-23), traduite en chocolat Lowki :
- * - `fill` : le fond, un cran plus sombre en haut — c'est le liseré qui éclaire ;
- * - `stroke` : liseré intérieur de 1,5 pt, clair en haut → fondu au fond en bas ;
- * - `ring` : cerne extérieur de 1,5 pt, chocolat presque noir ;
- * - ombre portée douce `0 2px 4px` à 10 %.
- * À l'appui, le liseré s'inverse : la lumière passe en bas, le bouton s'enfonce.
+ * Les boutons en relief (`Bevel`), d'après les maquettes « Accept » et « Reject »
+ * de Lea (2026-10-23), traduites dans la charte :
+ * - `ink` : Button3D primaire et RoundButton `dark`, le chocolat Lowki ;
+ * - `paper` : Button3D secondaire, le papier.
+ * Chaque matière a un `fill` (fond), un `stroke` (liseré intérieur, clair en haut
+ * → fondu en bas) et un `ring` (cerne extérieur). Le fond de l'encre est un cran
+ * plus sombre en haut : c'est le liseré qui éclaire. Ombre portée commune douce,
+ * `0 2px 4px` à 10 %. À l'appui, le liseré s'inverse : le bouton s'enfonce.
  */
-export const inkBevel = {
-  fill: [lowki.chocolate.dark, lowki.chocolate.light],
-  stroke: ['#7c5649', '#5e3a30'],
-  ring: '#1e110d',
+export const bevel = {
+  ink: {
+    fill: [lowki.chocolate.dark, lowki.chocolate.light],
+    stroke: ['#7c5649', '#5e3a30'],
+    ring: '#1e110d',
+  },
+  paper: {
+    fill: ['#f1ece4', '#e8e1d6'],
+    stroke: [creamAlpha(1), creamAlpha(0)],
+    ring: shadowAlpha(0.16),
+  },
   strokeWidth: 1.5,
   ringWidth: 1.5,
 } as const;
