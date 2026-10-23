@@ -2,7 +2,7 @@
  * 👤 Page Profil — v4 : ma vie de lectrice
  *
  *    ┌──────────────────────────────────┐
- *    │ ▦▦ patchwork de la charte ▦▦ (⚙) │  ← la roue dentée ouvre les Réglages
+ *    │ ▚▚ damier sur la charte ▚▚▚ (⚙) │  ← la roue dentée ouvre les Réglages
  *    │            [ photo ]             │
  *    │              Lea                 │
  *    │          [ Modifier ]            │
@@ -37,7 +37,7 @@ import { POP_EYES_HEIGHT, POP_EYES_PATH, POP_EYES_WIDTH } from '../../components
 import AccentWord from '../../components/ui/AccentWord';
 import BookCover, { COVER_RATIO } from '../../components/ui/BookCover';
 import { SHELF_BAR_H, SHELF_OVERLAP, ShelfBar } from '../../components/ui/BookLibrary';
-import PatchworkBackdrop from '../../components/ui/PatchworkBackdrop';
+import CheckerBackdrop from '../../components/ui/CheckerBackdrop';
 import PressableScale from '../../components/ui/PressableScale';
 import GlassButton from '../../components/ui/GlassButton';
 import GlassSection from '../../components/ui/GlassSection';
@@ -121,9 +121,9 @@ export default function ProfileScreen() {
         contentInsetAdjustmentBehavior="never"
         showsVerticalScrollIndicator={false}
       >
-        {/* ═══════════ EN-TÊTE : moi, sur le patchwork de la charte ═══════════ */}
+        {/* ═══════════ EN-TÊTE : moi, sur le damier de la charte ═══════════ */}
         <View style={[styles.hero, { paddingTop: insets.top + spacing['3xl'] }]}>
-          <PatchworkBackdrop />
+          <CheckerBackdrop />
           <GlassButton
             icon={SettingsIcon}
             onPress={() => router.push('/settings')}
@@ -322,7 +322,8 @@ const styles = StyleSheet.create({
     fontFamily: fonts.display,
     fontSize: 28,
     lineHeight: 34,
-    color: colors.textPrimary,
+    // Blanc sur le damier coloré (Lea, 2026-10-23)
+    color: colors.white,
   },
   editButton: {
     marginTop: spacing.md,
