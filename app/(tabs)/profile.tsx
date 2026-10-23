@@ -2,15 +2,17 @@
  * 👤 Page Profil — v4 : ma vie de lectrice
  *
  *    ┌──────────────────────────────────┐
- *    │ ░░ fond papier vivant ░░    (⚙)  │  ← la roue dentée ouvre les Réglages
+ *    │ ▦▦ patchwork de la charte ▦▦ (⚙) │  ← la roue dentée ouvre les Réglages
  *    │            [ photo ]             │
  *    │              Lea                 │
  *    │          [ Modifier ]            │
  *    │  ┌────────────────────────────┐  │
  *    │  │ livres finis │ pages │ série│  │  ← cadre papier à cheval sur le fond
  *    │  └────────────────────────────┘  │
+ *    │  ┌ Lire à plusieurs ──── (◉◉) ┐  │  ← la bannière pour inviter
  *    │  Mes livres lus                  │
- *    │  [▮] [▮] [▮] [▮] →               │  ← couvertures seules, défilent
+ *    │  [▮] [▮] [┄] [┄] →               │  ← couvertures seules, places vides cousues
+ *    │  ═════════════════════           │     sur l'étagère de la bibliothèque
  *    └──────────────────────────────────┘
  *
  * Tous les réglages (rappel, sons, déconnexion, suppression…) vivent dans le
@@ -25,22 +27,28 @@ import { Image } from 'expo-image';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { BookOpenIcon, PencilIcon, SettingsIcon } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Button3D from '../../components/Button3D';
 import PageTransition from '../../components/PageTransition';
+import { LinearGradient } from 'expo-linear-gradient';
+import Svg, { Defs, LinearGradient as SvgGradient, Path, Stop } from 'react-native-svg';
+import { POP_EYES_HEIGHT, POP_EYES_PATH, POP_EYES_WIDTH } from '../../components/brand/popEyesPath';
+import AccentWord from '../../components/ui/AccentWord';
 import BookCover, { COVER_RATIO } from '../../components/ui/BookCover';
-import DriftingBackdrop from '../../components/ui/DriftingBackdrop';
+import { SHELF_BAR_H, SHELF_OVERLAP, ShelfBar } from '../../components/ui/BookLibrary';
+import PatchworkBackdrop from '../../components/ui/PatchworkBackdrop';
+import PressableScale from '../../components/ui/PressableScale';
 import GlassButton from '../../components/ui/GlassButton';
 import GlassSection from '../../components/ui/GlassSection';
 import { useTabBarInset } from '../../components/ui/GlassTabBar';
-import { StitchLine } from '../../components/ui/Stitch';
+import { StitchBorder, StitchLine } from '../../components/ui/Stitch';
 import { STREAK_FLAME } from '../../components/ui/StreakPill';
 import { myCoverUrl } from '../../services/myEdition';
 import { getMyReadingDays } from '../../services/supabase/database';
 import { useAuthStore } from '../../stores/authStore';
 import { useProjectStore } from '../../stores/projectStore';
-import { borderRadius, colors, creamAlpha, fonts, fontSize, spacing } from '../../utils/constants';
+import { borderRadius, colors, creamAlpha, fonts, fontSize, inkGradient, lowki, paperFrameGradient, spacing } from '../../utils/constants';
 import { readingOf } from '../../utils/library';
 import { resolvePhotoSource } from '../../utils/profilePhoto';
 import { longestStreak } from '../../utils/streak';
@@ -51,9 +59,14 @@ const RIBBON_DONE = require('../../assets/images/ribbons/ribbon-done.png');
 const PHOTO = 112;
 /** Le cadre des chiffres remonte sur le fond de cette hauteur */
 const STATS_OVERLAP = 44;
-const SHELF_COVER = 84;
-/** Le sable de l'en-tête : tons neutres, aucun livre précis ici */
-const HERO_PAPER = '#e5d6c3';
+/** Couvertures de l'étagère : la taille de la bibliothèque */
+const COVER_H = 110;
+const COVER_W = Math.round(COVER_H * COVER_RATIO);
+const SHELF_GAP = spacing.xl;
+const SIDE = spacing.lg;
+/** La bannière : taille du titre, et les yeux qui débordent à droite */
+const BANNER_TITLE = 22;
+const BANNER_EYES_W = 150;
 
 export default function ProfileScreen() {
   const router = useRouter();
@@ -108,9 +121,9 @@ export default function ProfileScreen() {
         contentInsetAdjustmentBehavior="never"
         showsVerticalScrollIndicator={false}
       >
-        {/* ═══════════ EN-TÊTE : moi, sur un fond papier vivant ═══════════ */}
+        {/* ═══════════ EN-TÊTE : moi, sur le patchwork de la charte ═══════════ */}
         <View style={[styles.hero, { paddingTop: insets.top + spacing['3xl'] }]}>
-          <DriftingBackdrop paper={HERO_PAPER} />
+          <PatchworkBackdrop />
           <GlassButton
             icon={SettingsIcon}
             onPress={() => router.push('/settings')}
@@ -150,28 +163,22 @@ export default function ProfileScreen() {
           </View>
         </GlassSection>
 
-        {/* ═══════════ MES LIVRES LUS : les couvertures seules ═══════════ */}
-        {finished.length > 0 && (
-          <View style={styles.shelfSection}>
-            <Text style={styles.sectionTitle}>Mes livres lus</Text>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.shelf}
-            >
-              {finished.map((book) => (
-                <View
-                  key={book.id}
-                  style={styles.shelfCover}
-                  accessible
-                  accessibilityLabel={book.book_title}
-                >
-                  <BookCover coverUrl={myCoverUrl(book, myProgress[book.id])} outlined />
-                </View>
-              ))}
-            </ScrollView>
-          </View>
-        )}
+        {/* ═══════════ INVITER ═══════════ */}
+        <InviteBanner onPress={() => router.push('/invite')} />
+
+        {/* ═══════════ MES LIVRES LUS : les couvertures seules, sur l'étagère ═══════════ */}
+        <View style={styles.shelfSection}>
+          <Text style={styles.sectionTitle} accessibilityRole="header">
+            Mes livres lus
+          </Text>
+          <ReadShelf
+            covers={finished.map((book) => ({
+              id: book.id,
+              title: book.book_title,
+              uri: myCoverUrl(book, myProgress[book.id]),
+            }))}
+          />
+        </View>
       </ScrollView>
     </PageTransition>
   );
@@ -180,6 +187,77 @@ export default function ProfileScreen() {
 /** 2140 → « 2 140 » (espace insécable ; Hermes ignore toLocaleString) */
 function formatNumber(value: number): string {
   return String(value).replace(/\B(?=(\d{3})+(?!\d))/g, '\u00A0');
+}
+
+// ─── La bannière pour inviter ────────────────────────────────────────────────
+
+function InviteBanner({ onPress }: { onPress: () => void }) {
+  return (
+    <PressableScale
+      style={styles.banner}
+      pressedScale={0.97}
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel="Inviter quelqu'un à lire avec toi"
+    >
+      <LinearGradient colors={inkGradient} style={[StyleSheet.absoluteFill, styles.bannerFill]} />
+      {/* Les yeux de bbb, en beurre, qui débordent du bord droit */}
+      <View style={styles.bannerEyes} pointerEvents="none">
+        <Svg width={BANNER_EYES_W} height={(BANNER_EYES_W * POP_EYES_HEIGHT) / POP_EYES_WIDTH} viewBox={`0 0 ${POP_EYES_WIDTH} ${POP_EYES_HEIGHT}`}>
+          <Defs>
+            <SvgGradient id="banner-eyes" x1="0" y1="0" x2="0" y2="1">
+              <Stop offset="0" stopColor={lowki.butter.light} />
+              <Stop offset="1" stopColor={lowki.butter.dark} />
+            </SvgGradient>
+          </Defs>
+          <Path d={POP_EYES_PATH} fill="url(#banner-eyes)" />
+        </Svg>
+      </View>
+      <StitchBorder radius={borderRadius.xl} color={creamAlpha(0.35)} />
+      <View style={styles.bannerContent}>
+        <Text style={styles.bannerTitle}>
+          <AccentWord text="Lire à plusieurs" accent="plusieurs" size={BANNER_TITLE} />
+        </Text>
+        <View style={styles.bannerPill}>
+          <LinearGradient colors={paperFrameGradient} style={[StyleSheet.absoluteFill, styles.bannerPillFill]} />
+          <Text style={styles.bannerPillText}>Inviter</Text>
+        </View>
+      </View>
+    </PressableScale>
+  );
+}
+
+// ─── L'étagère des livres lus ────────────────────────────────────────────────
+
+/**
+ * Les couvertures sur la barre en verre de la bibliothèque. La rangée est
+ * toujours pleine jusqu'au bord de l'écran : après les livres (ou à leur place,
+ * s'il n'y en a aucun), des places vides cousues attendent les prochains.
+ */
+function ReadShelf({ covers }: { covers: { id: string; title: string; uri: string | null }[] }) {
+  const { width } = useWindowDimensions();
+  // Assez de places pour remplir l'écran, la dernière coupée par le bord
+  const slots = Math.ceil((width - SIDE) / (COVER_W + SHELF_GAP));
+  const empty = Math.max(slots - covers.length, 0);
+
+  return (
+    <View style={styles.shelf}>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.shelfRow}>
+        {covers.map((cover) => (
+          <View key={cover.id} style={styles.shelfCover} accessible accessibilityLabel={cover.title}>
+            <BookCover coverUrl={cover.uri} outlined />
+          </View>
+        ))}
+        {Array.from({ length: empty }, (_, i) => (
+          <View key={`empty-${i}`} style={styles.shelfCover} accessible={false}>
+            <LinearGradient colors={paperFrameGradient} style={[StyleSheet.absoluteFill, styles.emptyCover]} />
+            <StitchBorder radius={4} inset={5} />
+          </View>
+        ))}
+      </ScrollView>
+      <ShelfBar />
+    </View>
+  );
 }
 
 // ─── Un chiffre ──────────────────────────────────────────────────────────────
@@ -201,7 +279,7 @@ function Stat({
       <Text style={styles.statValue} numberOfLines={1} adjustsFontSizeToFit>
         {value === null ? '–' : `${formatNumber(value)}${unit}`}
       </Text>
-      <Text style={styles.statLabel} numberOfLines={2}>
+      <Text style={styles.statLabel} numberOfLines={1} adjustsFontSizeToFit>
         {label}
       </Text>
     </View>
@@ -260,9 +338,9 @@ const styles = StyleSheet.create({
   },
   stat: {
     flex: 1,
-    alignItems: 'center',
+    alignItems: 'flex-start',
     gap: spacing.xs,
-    paddingHorizontal: spacing.xs,
+    paddingHorizontal: spacing.md,
   },
   statIcon: {
     height: 28,
@@ -283,7 +361,52 @@ const styles = StyleSheet.create({
     fontSize: fontSize.xs,
     lineHeight: 16,
     color: colors.textTertiary,
-    textAlign: 'center',
+  },
+
+  // ─── Bannière ───────────────────────────────────────────────────────────────
+  banner: {
+    marginTop: spacing['2xl'],
+    marginHorizontal: SIDE,
+    borderRadius: borderRadius.xl,
+    overflow: 'hidden',
+    minHeight: 112,
+    justifyContent: 'center',
+  },
+  bannerFill: {
+    borderRadius: borderRadius.xl,
+  },
+  bannerEyes: {
+    position: 'absolute',
+    right: -28,
+    bottom: -18,
+    transform: [{ rotate: '-8deg' }],
+  },
+  bannerContent: {
+    padding: spacing.xl,
+    gap: spacing.md,
+    alignItems: 'flex-start',
+  },
+  bannerTitle: {
+    fontFamily: fonts.display,
+    fontSize: BANNER_TITLE,
+    lineHeight: 28,
+    color: colors.bgLight,
+    maxWidth: '62%',
+  },
+  bannerPill: {
+    height: 36,
+    paddingHorizontal: spacing.lg,
+    borderRadius: 18,
+    overflow: 'hidden',
+    justifyContent: 'center',
+  },
+  bannerPillFill: {
+    borderRadius: 18,
+  },
+  bannerPillText: {
+    fontFamily: fonts.bodyBold,
+    fontSize: fontSize.sm,
+    color: colors.textPrimary,
   },
 
   // ─── Mes livres lus ──────────────────────────────────────────────────────────
@@ -292,19 +415,28 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   sectionTitle: {
-    paddingHorizontal: spacing.lg,
+    paddingHorizontal: SIDE,
     fontFamily: fonts.display,
     fontSize: fontSize.lg,
     lineHeight: 24,
     color: colors.textPrimary,
   },
+  // paddingBottom : la partie de la barre qui dépasse sous les couvertures
   shelf: {
-    paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.md,
-    gap: spacing.md,
+    marginHorizontal: SIDE,
+    paddingBottom: SHELF_BAR_H - SHELF_OVERLAP,
+  },
+  shelfRow: {
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.xs,
+    gap: SHELF_GAP,
   },
   shelfCover: {
-    width: SHELF_COVER,
-    height: SHELF_COVER / COVER_RATIO,
+    width: COVER_W,
+    height: COVER_H,
+  },
+  emptyCover: {
+    borderRadius: 4,
+    opacity: 0.8,
   },
 });
