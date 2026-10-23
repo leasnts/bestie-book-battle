@@ -8,7 +8,7 @@
  *    │          [ Modifier ]            │
  *    ╰◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡╯  ← bas coupé en festons
  *    │  ┌────────────────────────────┐  │
- *    │  │ livres finis │ pages │ série│  │  ← cadre papier sous la découpe
+ *    │  │ livres finis │ pages │ série│  │  ← cadre en verre, comme ceux de l’accueil
  *    │  └────────────────────────────┘  │
  *    │  ┌ Lire à plusieurs ──── (◉◉) ┐  │  ← la bannière pour inviter
  *    │  Mes livres lus                  │
@@ -149,7 +149,7 @@ export default function ProfileScreen() {
         </View>
 
         {/* ═══════════ MES CHIFFRES ═══════════ */}
-        <GlassSection paper style={styles.stats}>
+        <GlassSection style={styles.stats}>
           <View style={styles.statsRow}>
             <Stat icon={<Image source={RIBBON_DONE} style={styles.ribbon} contentFit="contain" />} value={finished.length} label="livres finis" />
             <StitchLine vertical />
