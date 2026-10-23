@@ -146,6 +146,23 @@ export const dangerGradient = ['#d4453f', '#a92f2a'] as const;
 /** L'encre en surface (boutons d'action) : chocolat Lowki, clair en haut → foncé en bas ; crème dessus : 9,1:1 */
 export const inkGradient = [lowki.chocolate.light, lowki.chocolate.dark] as const;
 
+/**
+ * Le bouton marron en relief (Button3D primaire, RoundButton `dark`), d'après la
+ * maquette « Accept » de Lea (2026-10-23), traduite en chocolat Lowki :
+ * - `fill` : le fond, un cran plus sombre en haut — c'est le liseré qui éclaire ;
+ * - `stroke` : liseré intérieur de 1,5 pt, clair en haut → fondu au fond en bas ;
+ * - `ring` : cerne extérieur de 1,5 pt, chocolat presque noir ;
+ * - ombre portée douce `0 2px 4px` à 10 %.
+ * À l'appui, le liseré s'inverse : la lumière passe en bas, le bouton s'enfonce.
+ */
+export const inkBevel = {
+  fill: [lowki.chocolate.dark, lowki.chocolate.light],
+  stroke: ['#7c5649', '#5e3a30'],
+  ring: '#1e110d',
+  strokeWidth: 1.5,
+  ringWidth: 1.5,
+} as const;
+
 /** Le papier beige des cadres posés dans un sheet (GlassSection `paper`) */
 export const paperFrameGradient = ['#f1ebe2', '#e7dfd2'] as const;
 

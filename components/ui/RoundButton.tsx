@@ -2,7 +2,7 @@
  * RoundButton — LE bouton rond plein de l'app, pour les actions dans le contenu
  * (à distinguer de `GlassButton`, le rond en verre des en-têtes et de la barre).
  *
- * - `dark` : l'action principale, encre chocolat en dégradé (✓ enregistrer,
+ * - `dark` : l'action principale, chocolat en relief (`InkBevel`, comme Button3D) (✓ enregistrer,
  *   ✓ ajouter la note, 🎙 enregistrer, ✎ ☺ de « Ma page ») ;
  * - `light` : sur une surface foncée (■ arrêter, sur la gélule rouge).
  *
@@ -13,19 +13,17 @@
  * Désactivé, il se grise (`PressableScale`).
  */
 
-import { LinearGradient } from 'expo-linear-gradient';
 import type { LucideIcon } from 'lucide-react-native';
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import {
   colors,
   creamAlpha,
-  inkGradient,
   ROUND_BUTTON_ICON,
   ROUND_BUTTON_ICON_FILLED,
   ROUND_BUTTON_SIZE,
-  shadowAlpha,
 } from '../../utils/constants';
+import InkBevel from './InkBevel';
 import PressableScale from './PressableScale';
 
 interface RoundButtonProps {
@@ -66,10 +64,8 @@ export default function RoundButton({
       accessibilityLabel={label}
       accessibilityHint={hint}
     >
-      {/* Jamais d'aplat : l'encre chocolat, plus claire en haut */}
-      {variant === 'dark' && (
-        <LinearGradient colors={inkGradient} style={[StyleSheet.absoluteFill, styles.round]} />
-      )}
+      {/* Le même chocolat en relief que Button3D primaire */}
+      {variant === 'dark' && <InkBevel radius={ROUND_BUTTON_SIZE / 2} />}
       <Icon size={filled ? ROUND_BUTTON_ICON_FILLED : ROUND_BUTTON_ICON} color={color} fill={filled ? color : 'none'} strokeWidth={2.2} />
       {badge && <View style={styles.badge} />}
     </PressableScale>
@@ -84,15 +80,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  round: {
-    borderRadius: ROUND_BUTTON_SIZE / 2,
-  },
   dark: {
-    backgroundColor: colors.dark900,
-    shadowColor: shadowAlpha(0.25),
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 1,
-    shadowRadius: 6,
+    backgroundColor: colors.dark950,
+    shadowColor: colors.black,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
   },
   // Cerclé de crème : il se détache sur l'encre comme sur le verre
   badge: {

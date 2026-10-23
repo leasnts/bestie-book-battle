@@ -2,18 +2,19 @@
  * Composant Button3D - Boutons avec effet 3D pixel-perfect
  * 
  * Deux variants sémantiques :
- * - **primary** (bouton principal / "nir") : fond chocolat foncé (colors.dark900), pour l'action principale
+ * - **primary** (bouton principal) : chocolat en relief (InkBevel : cerne, liseré, fond en dégradé), pour l'action principale
  * - **secondary** (bouton secondaire) : fond crème (colors.bgLight), pour actions secondaires ou retour
  * 
  * Le bouton back est un Button3D variant="secondary" en mode icon-only.
  * Il peut aussi contenir du texte comme le primary (ex: "Retour", "Annuler").
  * 
- * Effet 3D : gradients concentrés aux bords, inversés au press.
+ * Effet 3D : secondaire en gradients aux bords, primaire en liseré ; inversés au press.
  */
 
 import { feel } from '../utils/feel';
 import { colors, creamAlpha, fonts, inkAlpha, shadowAlpha } from '../utils/constants';
 import { LinearGradient } from 'expo-linear-gradient';
+import InkBevel from './ui/InkBevel';
 import {
   CheckIcon,
   ChevronLeftIcon,
@@ -161,66 +162,9 @@ export default function Button3D({
 
           {/* ====== INNER SHADOWS simulées via LinearGradient ====== */}
 
-          {isPrimary && !pressed && (
-            <>
-              {/* DEFAULT : reflet crème en HAUT (bord dur, transition rapide) */}
-              <LinearGradient
-                colors={[
-                  creamAlpha(0.22),
-                  creamAlpha(0.06),
-                  creamAlpha(0),
-                  creamAlpha(0),
-                ]}
-                locations={[0, 0.1, 0.2, 1]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 0, y: 1 }}
-                style={styles.gradientOverlay}
-              />
-              {/* DEFAULT : ombre marron en BAS (bord dur, transition rapide) */}
-              <LinearGradient
-                colors={[
-                  shadowAlpha(0),
-                  shadowAlpha(0),
-                  shadowAlpha(0.25),
-                  shadowAlpha(0.55),
-                ]}
-                locations={[0, 0.8, 0.9, 1]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 0, y: 1 }}
-                style={styles.gradientOverlay}
-              />
-            </>
-          )}
-
-          {isPrimary && pressed && (
-            <>
-              {/* PRESSED : ombre marron en HAUT (inversé, bord dur) */}
-              <LinearGradient
-                colors={[
-                  shadowAlpha(0.55),
-                  shadowAlpha(0.25),
-                  shadowAlpha(0),
-                  shadowAlpha(0),
-                ]}
-                locations={[0, 0.1, 0.2, 1]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 0, y: 1 }}
-                style={styles.gradientOverlay}
-              />
-              {/* PRESSED : reflet crème en BAS (inversé, bord dur) */}
-              <LinearGradient
-                colors={[
-                  creamAlpha(0),
-                  creamAlpha(0),
-                  creamAlpha(0.08),
-                  creamAlpha(0.22),
-                ]}
-                locations={[0, 0.8, 0.9, 1]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 0, y: 1 }}
-                style={styles.gradientOverlay}
-              />
-            </>
+          {/* Primaire : cerne, liseré et fond en dégradé chocolat (InkBevel) */}
+          {isPrimary && (
+            <InkBevel radius={isCompact ? 12 : 24} pressed={pressed} />
           )}
 
           {/* Secondary button inner shadows */}
@@ -254,12 +198,12 @@ export default function Button3D({
             />
           )}
 
-          {/* ====== STROKE : bordure gradient ====== */}
-          <View style={[
+          {/* ====== STROKE : bordure du secondaire (le primaire a la sienne dans InkBevel) ====== */}
+          {!isPrimary && <View style={[
             styles.strokeBorder,
             isCompact && styles.strokeBorderCompact,
-            isPrimary ? styles.primaryStroke : styles.secondaryStroke,
-          ]} />
+            styles.secondaryStroke,
+          ]} />}
 
           {/* ====== CONTENU ====== */}
           <View style={[styles.content, isCompact && styles.contentCompact]}>
@@ -314,12 +258,13 @@ const styles = StyleSheet.create({
   shadowContainerCompact: {
     borderRadius: 12,
   },
+  // Ombre douce de la maquette : 0 2px 4px à 10 % (blur Figma 4 = rayon iOS 2)
   primaryShadow: {
     shadowColor: colors.black,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 6,
-    elevation: 6,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
   },
   secondaryShadow: {
     shadowColor: colors.black,
@@ -338,7 +283,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   primaryFill: {
-    backgroundColor: colors.dark900,
+    backgroundColor: colors.dark950,
   },
   secondaryFill: {
     backgroundColor: colors.bgLight,
@@ -357,9 +302,6 @@ const styles = StyleSheet.create({
   },
   strokeBorderCompact: {
     borderRadius: 12,
-  },
-  primaryStroke: {
-    borderColor: creamAlpha(0.2),
   },
   secondaryStroke: {
     borderColor: inkAlpha(0.08),
