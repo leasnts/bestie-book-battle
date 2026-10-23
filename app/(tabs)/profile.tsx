@@ -219,7 +219,7 @@ function InviteBanner({ onPress }: { onPress: () => void }) {
         <Text style={styles.bannerTitle}>
           <AccentWord text="Lire à plusieurs" accent="plusieurs" size={BANNER_TITLE} />
         </Text>
-        <Button3D variant="secondary" onPress={onPress} style={styles.bannerButton}>
+        <Button3D variant="secondary" size="small" onPress={onPress} style={styles.bannerButton}>
           Inviter
         </Button3D>
       </View>
