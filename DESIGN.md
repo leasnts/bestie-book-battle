@@ -493,8 +493,8 @@ poids typographique, jamais par des ombres décoratives.
 
 | Ombre | Valeur | Porte |
 |---|---|---|
-| `button` | `0 4px 6px rgba(46,27,22,0.25)` | Boutons primaires. Franc, assumé. |
-| `buttonLight` | `0 0 6px rgba(46,27,22,0.1)` | Boutons secondaires. |
+| `button` | `0 2px 4px rgba(46,27,22,0.1)` | Boutons primaires : le relief vient du cerne et du liseré. |
+| `buttonLight` | `0 2px 4px rgba(46,27,22,0.1)` | Boutons secondaires (même ombre que le primaire). |
 | `cardSelected` | `0 4px 20px rgba(46,27,22,0.09)` | Carte active parmi plusieurs. |
 | `xs` | `0 1px 2px rgba(46,27,22,0.05)` | Champs de saisie. |
 
@@ -549,9 +549,19 @@ le cliché à éviter (voir Direction artistique).
 
 ### Boutons — `Button3D`
 
-Deux variantes. **Primaire** : encre pleine, bordure blanc chaud à 30%, rayon 24,
-padding 24h/20v, ombre franche. **Secondaire** : `paper`, bordure encre à 10%,
-ombre légère. Version `compact` en rayon 12 pour les boutons icône.
+Deux variantes, une même matière en relief (`Bevel`, jeton `bevel`, d'après les
+maquettes « Accept » et « Reject » de Lea, 2026-10-23) : cerne extérieur de
+1,5 pt, liseré intérieur de 1,5 pt clair en haut → fondu en bas, fond en
+dégradé, ombre douce `0 2px 4px` à 10 %, rayon 24, padding 24h/20v. À l'appui, le
+liseré s'inverse.
+
+- **Primaire** (`ink`) : cerne presque noir, liseré chocolat éclairci, fond
+  `#482B24` → `#633D32` (le seul dégradé plus sombre en haut : c'est le liseré
+  qui éclaire). `RoundButton` `dark` porte exactement la même matière.
+- **Secondaire** (`paper`) : cerne chocolat à 16 %, liseré crème → transparent,
+  fond papier `#F1ECE4` → `#E8E1D6`.
+
+Version `compact` en rayon 12 pour les boutons icône.
 
 L'appui enfonce le bouton — pas une simple opacité.
 

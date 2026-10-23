@@ -146,6 +146,31 @@ export const dangerGradient = ['#d4453f', '#a92f2a'] as const;
 /** L'encre en surface (boutons d'action) : chocolat Lowki, clair en haut → foncé en bas ; crème dessus : 9,1:1 */
 export const inkGradient = [lowki.chocolate.light, lowki.chocolate.dark] as const;
 
+/**
+ * Les boutons en relief (`Bevel`), d'après les maquettes « Accept » et « Reject »
+ * de Lea (2026-10-23), traduites dans la charte :
+ * - `ink` : Button3D primaire et RoundButton `dark`, le chocolat Lowki ;
+ * - `paper` : Button3D secondaire, le papier.
+ * Chaque matière a un `fill` (fond), un `stroke` (liseré intérieur, clair en haut
+ * → fondu en bas) et un `ring` (cerne extérieur). Le fond de l'encre est un cran
+ * plus sombre en haut : c'est le liseré qui éclaire. Ombre portée commune douce,
+ * `0 2px 4px` à 10 %. À l'appui, le liseré s'inverse : le bouton s'enfonce.
+ */
+export const bevel = {
+  ink: {
+    fill: [lowki.chocolate.dark, lowki.chocolate.light],
+    stroke: ['#7c5649', '#5e3a30'],
+    ring: '#1e110d',
+  },
+  paper: {
+    fill: ['#f1ece4', '#e8e1d6'],
+    stroke: [creamAlpha(1), creamAlpha(0)],
+    ring: shadowAlpha(0.16),
+  },
+  strokeWidth: 1.5,
+  ringWidth: 1.5,
+} as const;
+
 /** Le papier beige des cadres posés dans un sheet (GlassSection `paper`) */
 export const paperFrameGradient = ['#f1ebe2', '#e7dfd2'] as const;
 
