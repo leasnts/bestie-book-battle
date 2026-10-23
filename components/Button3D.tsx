@@ -70,7 +70,12 @@ interface Button3DProps {
   iconComponent?: React.ReactNode;
   iconPosition?: 'left' | 'right';
   iconOnly?: boolean;
-  size?: 'default' | 'compact';
+  /**
+   * `default` : 56 pt, pleine largeur ; `compact` : carré de 40 pt pour une icône
+   * seule ; `small` : 36 pt, à la taille de son texte, pour une action discrète
+   * posée dans un cadre (« Inviter » de la bannière du profil).
+   */
+  size?: 'default' | 'compact' | 'small';
   style?: ViewStyle;
   textStyle?: TextStyle;
   /**
@@ -103,10 +108,11 @@ export default function Button3D({
 }: Button3DProps) {
   const isPrimary = variant === 'primary';
   const isCompact = size === 'compact';
+  const isSmall = size === 'small';
   const showText = !iconOnly && (children !== undefined && children !== null && children !== '');
   const Icon = icon;
   const leadingIcon = iconComponent ?? (Icon ? (
-    <Icon size={isCompact ? 20 : 24} color={isPrimary ? colors.white : colors.textTertiary} />
+    <Icon size={isSmall ? 16 : isCompact ? 20 : 24} color={isPrimary ? colors.white : colors.textTertiary} />
   ) : null);
   const [pressed, setPressed] = useState(false);
 
@@ -138,7 +144,7 @@ export default function Button3D({
         décalerait toutes les maquettes — et on étend la zone tactile de 2 pt
         tout autour. Le bouton se voit pareil et s'attrape mieux.
       */
-      hitSlop={isCompact ? 2 : undefined}
+      hitSlop={isCompact ? 2 : isSmall ? 4 : undefined}
       style={[
         (disabled || loading) && styles.buttonDisabled,
         isCompact && styles.compactWrapper,
@@ -148,7 +154,7 @@ export default function Button3D({
       {/* Shadow container - porte le drop shadow iOS */}
       <View style={[
         styles.shadowContainer,
-        isCompact && styles.shadowContainerCompact,
+        (isCompact || isSmall) && styles.shadowContainerCompact,
         isPrimary ? styles.primaryShadow : styles.secondaryShadow,
       ]}>
         
@@ -156,14 +162,15 @@ export default function Button3D({
         <View style={[
           styles.button,
           isCompact && styles.buttonCompact,
+          isSmall && styles.buttonSmall,
           isPrimary ? styles.primaryFill : styles.secondaryFill,
         ]}>
 
           {/* Cerne, liseré et fond en dégradé : chocolat ou papier (Bevel) */}
-          <Bevel tone={isPrimary ? 'ink' : 'paper'} radius={isCompact ? 12 : 24} pressed={pressed} />
+          <Bevel tone={isPrimary ? 'ink' : 'paper'} radius={isCompact || isSmall ? 12 : 24} pressed={pressed} />
 
           {/* ====== CONTENU ====== */}
-          <View style={[styles.content, isCompact && styles.contentCompact]}>
+          <View style={[styles.content, isCompact && styles.contentCompact, isSmall && styles.contentSmall]}>
             {loading ? (
               <ActivityIndicator color={isPrimary ? colors.white : colors.textTertiary} size="small" />
             ) : iconOnly && leadingIcon ? (
@@ -177,6 +184,7 @@ export default function Button3D({
                   <Text style={[
                     styles.text,
                     isPrimary ? styles.primaryText : styles.secondaryText,
+                    isSmall && styles.textSmall,
                     textStyle,
                   ]}>
                     {children}
@@ -205,6 +213,11 @@ const styles = StyleSheet.create({
   },
   buttonCompact: {
     height: 40,
+    borderRadius: 12,
+  },
+  // Petit bouton à texte : 36 pt (zone tactile portée à 44 par hitSlop)
+  buttonSmall: {
+    height: 36,
     borderRadius: 12,
   },
   
@@ -256,6 +269,13 @@ const styles = StyleSheet.create({
   },
   contentCompact: {
     paddingHorizontal: 0,
+  },
+  contentSmall: {
+    paddingHorizontal: 16,
+  },
+  textSmall: {
+    fontSize: 14,
+    lineHeight: 20,
   },
   text: {
     fontFamily: fonts.bodyBold,

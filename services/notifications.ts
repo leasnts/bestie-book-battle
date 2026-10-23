@@ -175,6 +175,18 @@ export async function cancelDailyReminder(): Promise<void> {
   await cancelNotificationById(NOTIFICATION_IDS.DAILY_REMINDER);
 }
 
+/** L'heure du rappel du soir, affichée dans les Réglages */
+export const EVENING_REMINDER_TIME = { hour: 20, minute: 0 };
+
+/**
+ * Planifie le rappel du soir : le rappel quotidien de l'app, à 20 h.
+ * Appelé au lancement (app/_layout.tsx) et quand on le rallume dans les Réglages.
+ */
+export function scheduleEveningReminder(): Promise<string> {
+  const { hour, minute } = EVENING_REMINDER_TIME;
+  return scheduleDailyReminder(hour, minute, 'cc', 'n\'oublie pas d\'ajouter tes pages stp');
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // NOTIFICATIONS IMMÉDIATES (événements temps réel)
 // ═══════════════════════════════════════════════════════════════════════════════
