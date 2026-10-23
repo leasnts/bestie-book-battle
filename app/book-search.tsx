@@ -25,7 +25,7 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { CircleXIcon, SearchIcon } from 'lucide-react-native';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Keyboard, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Keyboard, Pressable, StyleSheet, Text, TextInput, View, type TextInputInstance } from 'react-native';
 import Button3D from '../components/Button3D';
 import BookResultRow, { BookResultSkeleton } from '../components/ui/BookResultRow';
 import SheetPage from '../components/ui/SheetPage';
@@ -39,7 +39,7 @@ export default function BookSearchRoute() {
   const router = useRouter();
   const { q } = useLocalSearchParams<{ q?: string }>();
   const { query, setQuery, results, isSearching, error, clearResults } = useBookSearch();
-  const inputRef = useRef<TextInput>(null);
+  const inputRef = useRef<TextInputInstance>(null);
 
   // Étape 2 : le livre touché et ses éditions (null = en cours)
   const [picked, setPicked] = useState<BookSearchResult | null>(null);

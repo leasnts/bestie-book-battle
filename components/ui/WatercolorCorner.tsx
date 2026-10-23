@@ -77,7 +77,7 @@ const styles = StyleSheet.create({
     height: HEIGHT,
   },
   layer: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     mixBlendMode: 'multiply',
   },
 });

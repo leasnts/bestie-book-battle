@@ -32,7 +32,7 @@
  * réserver sa place en bas avec `useTabBarInset()`.
  */
 
-import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
+import type { BottomTabBarProps } from 'expo-router/tabs';
 import React, { useEffect } from 'react';
 import { PlusIcon, type LucideIcon } from 'lucide-react-native';
 import { StyleSheet, View } from 'react-native';
@@ -132,7 +132,7 @@ interface GlassTabBarProps extends BottomTabBarProps {
   onAddPress: () => void;
 }
 
-export default function GlassTabBar({ state, descriptors, navigation, onAddPress }: GlassTabBarProps) {
+export default function GlassTabBar({ state, descriptors, emitter, navigateToTab, onAddPress }: GlassTabBarProps) {
   const insets = useSafeAreaInsets();
 
   const items = state.routes.map((route, index) => {
@@ -140,14 +140,14 @@ export default function GlassTabBar({ state, descriptors, navigation, onAddPress
     const focused = state.index === index;
 
     const onPress = () => {
-      const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
+      const event = emitter.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
       if (!focused && !event.defaultPrevented) {
-        navigation.navigate(route.name, route.params);
+        navigateToTab(route.key);
       }
     };
 
     const onLongPress = () => {
-      navigation.emit({ type: 'tabLongPress', target: route.key });
+      emitter.emit({ type: 'tabLongPress', target: route.key });
     };
 
     return (
@@ -239,7 +239,7 @@ const styles = StyleSheet.create({
     height: ICON_SIZE,
   },
   iconLayer: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     alignItems: 'center',
     justifyContent: 'center',
   },

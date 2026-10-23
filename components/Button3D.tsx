@@ -346,12 +346,12 @@ const styles = StyleSheet.create({
 
   // Gradients overlay (absoluteFill)
   gradientOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
   },
   
   // Stroke border (1px inside, gradient simulé avec borderColor)
   strokeBorder: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     borderRadius: 24,
     borderWidth: 1,
   },

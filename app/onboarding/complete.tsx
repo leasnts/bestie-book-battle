@@ -385,7 +385,7 @@ const styles = StyleSheet.create({
         flexGrow: 1,
     },
     backgroundTexture: {
-        ...StyleSheet.absoluteFillObject,
+        ...StyleSheet.absoluteFill,
         opacity: 0.05,
     },
     loadingContainer: {
@@ -442,7 +442,7 @@ const styles = StyleSheet.create({
         elevation: 2,
     },
     cardTexture: {
-        ...StyleSheet.absoluteFillObject,
+        ...StyleSheet.absoluteFill,
         opacity: 0.05,
     },
     mascotOverlay: {

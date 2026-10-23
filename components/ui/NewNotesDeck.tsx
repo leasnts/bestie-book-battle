@@ -491,7 +491,7 @@ const styles = StyleSheet.create({
   },
   // Chaque carte centrée dans la place de la pile, à sa taille
   slot: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -506,7 +506,7 @@ const styles = StyleSheet.create({
   },
 
   allRead: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     alignItems: 'center',
     justifyContent: 'center',
     gap: spacing.md,

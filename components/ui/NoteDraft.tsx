@@ -16,7 +16,7 @@
 
 import { MicIcon, QuoteIcon, XIcon } from 'lucide-react-native';
 import React, { forwardRef, useEffect, useState } from 'react';
-import { StyleSheet, Text, TextInput, View, type LayoutChangeEvent } from 'react-native';
+import { StyleSheet, Text, TextInput, View, type LayoutChangeEvent, type TextInputInstance } from 'react-native';
 import Animated, {
   Easing,
   runOnJS,
@@ -79,7 +79,7 @@ const CORNER_GAP = 26;
 const GROW = { duration: motion.duration.slow, easing: Easing.bezier(...motion.easing.easeOutQuart) };
 const SHRINK = { duration: motion.duration.standard, easing: Easing.bezier(...motion.easing.easeInQuart) };
 
-const NoteDraft = forwardRef<TextInput, NoteDraftProps>(function NoteDraft(
+const NoteDraft = forwardRef<TextInputInstance, NoteDraftProps>(function NoteDraft(
   {
     color,
     label,

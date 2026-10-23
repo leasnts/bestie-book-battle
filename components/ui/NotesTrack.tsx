@@ -221,7 +221,7 @@ const styles = StyleSheet.create({
   },
   // Le même liseré que les épingles : blanc, et un filet d'encre autour
   dropShape: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     borderTopLeftRadius: DROP / 2,
     borderTopRightRadius: DROP / 2,
     borderBottomLeftRadius: DROP / 2,

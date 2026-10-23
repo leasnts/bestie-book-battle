@@ -33,7 +33,7 @@
  * VoiceOver : réglable (glisser vers le haut / bas = page suivante / précédente).
  */
 
-import MaskedView from '@react-native-masked-view/masked-view';
+import MaskedView from './MaskedView';
 import { feel } from '../../utils/feel';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -323,13 +323,17 @@ export default function PageRuler({ currentPage, totalPages, onPageChange, fontS
               getItemLayout={(_, index) => ({ length: DECADE, offset: pad + DECADE * index, index })}
               ListHeaderComponent={<View style={{ width: pad }} />}
               ListFooterComponent={<View style={{ width: tail }} />}
-              // La liste dessine d'abord les dizaines autour de ma page, puis on se cale pile dessus
-              initialScrollIndex={Math.max(0, Math.floor(currentPage / 10) - 1)}
+              // La liste part directement de ma page, puis on se cale pile dessus. Plus
+              // d'initialScrollIndex : depuis React Native 0.88 il se dispute la position
+              // avec ce calage (la règle oscillait entre la page 1 et la mienne)
+              contentOffset={{ x: currentPage * STEP, y: 0 }}
               showsHorizontalScrollIndicator={false}
               decelerationRate={0.994}
               onScroll={onScroll}
               scrollEventThrottle={16}
-              initialNumToRender={6}
+              // Toutes les dizaines d'emblée : partie de ma page, la liste n'a pas
+              // défilé pour dessiner celles autour (une dizaine = 10 petits traits)
+              initialNumToRender={decades.length}
               windowSize={9}
             />
           </MaskedView>
@@ -738,14 +742,14 @@ const styles = StyleSheet.create({
   },
   // Le contenu remis droit dans la goutte
   pinUpright: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     transform: [{ rotate: '-45deg' }, { scale: 1.12 }],
   },
   pinPhoto: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
   },
   pinRim: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     borderTopLeftRadius: PIN / 2,
     borderTopRightRadius: PIN / 2,
     borderBottomLeftRadius: PIN / 2,
@@ -795,7 +799,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.55)',
   },
   rim: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     borderRadius: LENS_R,
     borderWidth: 1.5,
     borderColor: 'rgba(255,255,255,0.9)',

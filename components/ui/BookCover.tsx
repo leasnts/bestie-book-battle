@@ -166,7 +166,7 @@ const styles = StyleSheet.create({
   },
   // Posé PAR-DESSUS l'image : une bordure sur le conteneur rognerait la couverture
   outline: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     borderRadius: 2,
     borderWidth: 1,
     borderColor: inkAlpha(0.15),
@@ -192,7 +192,7 @@ const styles = StyleSheet.create({
   // React Native n'a pas de `box-shadow: inset` : on simule les ombres internes
   // avec des bordures semi-transparentes (reflet en haut/gauche, ombre en bas/droite)
   doneInnerShadow: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     borderRadius: 2,
     borderTopWidth: 2,
     borderLeftWidth: 2,

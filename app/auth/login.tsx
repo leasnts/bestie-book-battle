@@ -156,7 +156,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.bgLight,
   },
   backgroundImage: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
   },
   bottomSection: {
     position: 'absolute',

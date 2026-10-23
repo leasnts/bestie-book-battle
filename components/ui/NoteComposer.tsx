@@ -39,6 +39,7 @@ import {
   StyleSheet,
   Text,
   TextInput,
+  type TextInputInstance,
   useWindowDimensions,
   View,
 } from 'react-native';
@@ -133,8 +134,8 @@ export default function NoteComposer({
   const [posting, setPosting] = useState(false);
   const [pageText, setPageText] = useState(String(page));
   const [photo, setPhoto] = useState<PagePhoto | null>(null);
-  const input = useRef<TextInput>(null);
-  const pageInput = useRef<TextInput>(null);
+  const input = useRef<TextInputInstance>(null);
+  const pageInput = useRef<TextInputInstance>(null);
   const { height: windowHeight } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const keyboard = useAnimatedKeyboard();

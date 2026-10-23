@@ -390,7 +390,7 @@ const styles = StyleSheet.create({
   /** Posée en bas de la tuile, comme les cases du code à côté */
   /** Le calque des autocollants : il épouse la tuile et coupe ce qui dépasse */
   decor: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     borderRadius: borderRadius.lg,
     overflow: 'hidden',
   },
