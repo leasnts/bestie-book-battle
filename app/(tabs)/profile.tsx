@@ -219,10 +219,9 @@ function InviteBanner({ onPress }: { onPress: () => void }) {
         <Text style={styles.bannerTitle}>
           <AccentWord text="Lire à plusieurs" accent="plusieurs" size={BANNER_TITLE} />
         </Text>
-        <View style={styles.bannerPill}>
-          <LinearGradient colors={paperFrameGradient} style={[StyleSheet.absoluteFill, styles.bannerPillFill]} />
-          <Text style={styles.bannerPillText}>Inviter</Text>
-        </View>
+        <Button3D variant="secondary" onPress={onPress} style={styles.bannerButton}>
+          Inviter
+        </Button3D>
       </View>
     </PressableScale>
   );
@@ -395,20 +394,8 @@ const styles = StyleSheet.create({
     color: lowki.butter.light,
     maxWidth: '62%',
   },
-  bannerPill: {
-    height: 36,
-    paddingHorizontal: spacing.lg,
-    borderRadius: 18,
-    overflow: 'hidden',
-    justifyContent: 'center',
-  },
-  bannerPillFill: {
-    borderRadius: 18,
-  },
-  bannerPillText: {
-    fontFamily: fonts.bodyBold,
-    fontSize: fontSize.sm,
-    color: colors.textPrimary,
+  bannerButton: {
+    alignSelf: 'flex-start',
   },
 
   // ─── Mes livres lus ──────────────────────────────────────────────────────────
