@@ -48,7 +48,7 @@ import { myCoverUrl } from '../../services/myEdition';
 import { getMyReadingDays } from '../../services/supabase/database';
 import { useAuthStore } from '../../stores/authStore';
 import { useProjectStore } from '../../stores/projectStore';
-import { borderRadius, colors, creamAlpha, fonts, fontSize, inkGradient, lowki, paperFrameGradient, spacing } from '../../utils/constants';
+import { accentGradient, borderRadius, colors, creamAlpha, fonts, fontSize, lowki, paperFrameGradient, spacing } from '../../utils/constants';
 import { readingOf } from '../../utils/library';
 import { resolvePhotoSource } from '../../utils/profilePhoto';
 import { longestStreak } from '../../utils/streak';
@@ -200,16 +200,17 @@ function InviteBanner({ onPress }: { onPress: () => void }) {
       accessibilityRole="button"
       accessibilityLabel="Inviter quelqu'un à lire avec toi"
     >
-      <LinearGradient colors={inkGradient} style={[StyleSheet.absoluteFill, styles.bannerFill]} />
-      {/* Les yeux de bbb, en beurre, qui débordent du bord droit */}
+      <LinearGradient colors={accentGradient} style={[StyleSheet.absoluteFill, styles.bannerFill]} />
+      {/* Les yeux de bbb en ton sur ton (rouge foncé → profond), gravés d'un liseré clair, qui débordent à droite */}
       <View style={styles.bannerEyes} pointerEvents="none">
         <Svg width={BANNER_EYES_W} height={(BANNER_EYES_W * POP_EYES_HEIGHT) / POP_EYES_WIDTH} viewBox={`0 0 ${POP_EYES_WIDTH} ${POP_EYES_HEIGHT}`}>
           <Defs>
             <SvgGradient id="banner-eyes" x1="0" y1="0" x2="0" y2="1">
-              <Stop offset="0" stopColor={lowki.butter.light} />
-              <Stop offset="1" stopColor={lowki.butter.dark} />
+              <Stop offset="0" stopColor={lowki.red.dark} />
+              <Stop offset="1" stopColor={lowki.red.deep} />
             </SvgGradient>
           </Defs>
+          <Path d={POP_EYES_PATH} fill={creamAlpha(0.16)} translateY={16} />
           <Path d={POP_EYES_PATH} fill="url(#banner-eyes)" />
         </Svg>
       </View>
@@ -390,7 +391,8 @@ const styles = StyleSheet.create({
     fontFamily: fonts.display,
     fontSize: BANNER_TITLE,
     lineHeight: 28,
-    color: colors.bgLight,
+    // Sur le rouge, le texte passe en beurre clair (charte : ≥ 5,3:1)
+    color: lowki.butter.light,
     maxWidth: '62%',
   },
   bannerPill: {
