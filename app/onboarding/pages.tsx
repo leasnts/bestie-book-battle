@@ -190,7 +190,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: spacing.xl,
     },
     backgroundTexture: {
-        ...StyleSheet.absoluteFillObject,
+        ...StyleSheet.absoluteFill,
         opacity: 0.05,
     },
     mainContent: {

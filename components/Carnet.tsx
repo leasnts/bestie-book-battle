@@ -46,7 +46,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import MaskedView from '@react-native-masked-view/masked-view';
+import MaskedView from './ui/MaskedView';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
@@ -58,8 +58,8 @@ import {
   View,
   type NativeScrollEvent,
   type NativeSyntheticEvent,
-  type CellRendererProps,
 } from 'react-native';
+import type { CellRendererProps } from '@react-native/virtualized-lists';
 import DriftingBackdrop from './ui/DriftingBackdrop';
 import NewNotesDeck from './ui/NewNotesDeck';
 import NoteCard, { LockedNoteCard } from './ui/NoteCard';
@@ -716,7 +716,7 @@ const styles = StyleSheet.create({
     minHeight: SHEET_TOP_INSET + 36 + spacing.md,
   },
   deckLayer: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     justifyContent: 'center',
     paddingHorizontal: spacing.lg,
   },

@@ -237,7 +237,7 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     backgroundTexture: {
-        ...StyleSheet.absoluteFillObject,
+        ...StyleSheet.absoluteFill,
         opacity: 0.05,
     },
     header: {

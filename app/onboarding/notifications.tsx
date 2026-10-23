@@ -204,7 +204,7 @@ const styles = StyleSheet.create({
         flexGrow: 1,
     },
     backgroundTexture: {
-        ...StyleSheet.absoluteFillObject,
+        ...StyleSheet.absoluteFill,
         opacity: 0.05,
     },
     header: {

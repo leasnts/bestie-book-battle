@@ -29,7 +29,7 @@
 
 import { ChevronLeftIcon } from 'lucide-react-native';
 import React, { forwardRef, useCallback } from 'react';
-import { ScrollView, StyleSheet, Text, View, type ScrollViewProps } from 'react-native';
+import { ScrollView, StyleSheet, Text, View, type ScrollViewInstance, type ScrollViewProps } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFitSheet } from '../../hooks/useFitSheet';
 import { colors, fonts, spacing } from '../../utils/constants';
@@ -58,7 +58,7 @@ interface SheetPageProps
   children: React.ReactNode;
 }
 
-const SheetPage = forwardRef<ScrollView, SheetPageProps>(function SheetPage(
+const SheetPage = forwardRef<ScrollViewInstance, SheetPageProps>(function SheetPage(
   {
     title,
     accent,

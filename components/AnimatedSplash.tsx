@@ -295,7 +295,7 @@ const styles = StyleSheet.create({
     top: -SPLASH_LOGO_SIZE / 2,
   },
   eye: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
   },
   word: {
     position: 'absolute',

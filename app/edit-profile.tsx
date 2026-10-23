@@ -138,7 +138,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   photoOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: shadowAlpha(0.35),
     justifyContent: 'center',
     alignItems: 'center',

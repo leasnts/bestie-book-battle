@@ -77,7 +77,7 @@ export default function DriftingBackdrop() {
 
 const styles = StyleSheet.create({
   paper: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: colors.bgLight,
     overflow: 'hidden',
   },

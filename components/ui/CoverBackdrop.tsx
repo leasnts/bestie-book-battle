@@ -85,7 +85,7 @@ export default function CoverBackdrop({ palette }: { palette?: CoverPalette | nu
 
 const styles = StyleSheet.create({
   paper: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: colors.bgLight,
   },
 });

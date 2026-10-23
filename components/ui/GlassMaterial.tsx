@@ -171,7 +171,7 @@ function GlassRim({ radius }: { radius: number }) {
 
 const styles = StyleSheet.create({
   fill: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     overflow: 'hidden',
   },
 });

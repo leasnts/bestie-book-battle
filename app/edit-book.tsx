@@ -25,6 +25,7 @@ import {
   StyleSheet,
   Text,
   TextInput,
+  type TextInputInstance,
   View,
 } from 'react-native';
 import Button3D from '../components/Button3D';
@@ -60,8 +61,8 @@ export default function EditBookRoute() {
   const editionOnly = !isAdmin;
   const currentCover = activeChallenge ? myCoverUrl(activeChallenge, mine) : null;
 
-  const authorRef = useRef<TextInput>(null);
-  const pagesRef = useRef<TextInput>(null);
+  const authorRef = useRef<TextInputInstance>(null);
+  const pagesRef = useRef<TextInputInstance>(null);
 
   const [title, setTitle] = useState(activeChallenge?.book_title ?? '');
   const [author, setAuthor] = useState(activeChallenge?.book_author ?? '');
@@ -258,7 +259,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.bgSecondary,
   },
   coverOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: shadowAlpha(0.5),
     justifyContent: 'center',
     alignItems: 'center',

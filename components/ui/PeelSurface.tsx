@@ -7,7 +7,7 @@
  * reste à chacun ; ici, seulement le dessin piloté par les valeurs partagées.
  */
 
-import MaskedView from '@react-native-masked-view/masked-view';
+import MaskedView from './MaskedView';
 import React from 'react';
 import { StyleSheet, type LayoutChangeEvent } from 'react-native';
 import Animated, { useAnimatedProps, type SharedValue } from 'react-native-reanimated';

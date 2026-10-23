@@ -33,7 +33,7 @@
  * VoiceOver : réglable (glisser vers le haut / bas = page suivante / précédente).
  */
 
-import MaskedView from '@react-native-masked-view/masked-view';
+import MaskedView from './MaskedView';
 import { feel } from '../../utils/feel';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -738,14 +738,14 @@ const styles = StyleSheet.create({
   },
   // Le contenu remis droit dans la goutte
   pinUpright: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     transform: [{ rotate: '-45deg' }, { scale: 1.12 }],
   },
   pinPhoto: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
   },
   pinRim: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     borderTopLeftRadius: PIN / 2,
     borderTopRightRadius: PIN / 2,
     borderBottomLeftRadius: PIN / 2,
@@ -795,7 +795,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.55)',
   },
   rim: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     borderRadius: LENS_R,
     borderWidth: 1.5,
     borderColor: 'rgba(255,255,255,0.9)',

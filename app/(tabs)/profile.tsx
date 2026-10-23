@@ -435,7 +435,7 @@ function EditButton({ onPress }: { onPress: () => void }) {
           locations={[0, 0.3, 0.7, 1]}
           start={{ x: 0, y: 0 }}
           end={{ x: 0, y: 1 }}
-          style={StyleSheet.absoluteFillObject}
+          style={StyleSheet.absoluteFill}
         />
         <View style={styles.editButtonStroke} />
         <PencilIcon size={15} color={colors.textPrimary} strokeWidth={2.2} />
@@ -532,7 +532,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   editButtonStroke: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     borderRadius: 12,
     borderWidth: 1,
     borderColor: inkAlpha(0.08),
@@ -601,7 +601,7 @@ const styles = StyleSheet.create({
 
   // ─── Overlay déconnexion ─────────────────────────────────────────────────────
   logoutOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: creamAlpha(0.75),
     justifyContent: 'center',
     alignItems: 'center',

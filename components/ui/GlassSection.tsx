@@ -23,7 +23,7 @@
  * espacements, pas avec un fond ou un cadre de plus.
  */
 
-import MaskedView from '@react-native-masked-view/masked-view';
+import MaskedView from './MaskedView';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useState } from 'react';
 import { StyleSheet, View, type LayoutChangeEvent, type StyleProp, type ViewStyle } from 'react-native';
@@ -188,7 +188,7 @@ const styles = StyleSheet.create({
   },
   // Le bord, sans le haut : il s'efface avec le verre
   edgeOpenTop: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     borderWidth: 1,
     borderTopWidth: 0,
     borderColor: EDGE,
