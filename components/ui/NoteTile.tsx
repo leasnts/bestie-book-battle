@@ -77,6 +77,11 @@ interface NoteTileProps {
    * largeur et garde la hauteur qu'il aurait eue à côté de lui.
    */
   wide?: boolean;
+  /**
+   * Prend toute la hauteur qu'on lui donne au lieu d'être carré (la page de
+   * droite du livre ouvert, iPhone Duo déplié).
+   */
+  fill?: boolean;
   onPress: () => void;
 }
 
@@ -109,13 +114,14 @@ export default function NoteTile({
   aheadCount,
   myTotalPages,
   wide = false,
+  fill = false,
   onPress,
 }: NoteTileProps) {
   const [size, setSize] = useState<TileSize | null>(null);
   const onLayout = (e: LayoutChangeEvent) => {
-    const { width } = e.nativeEvent.layout;
+    const { width, height: given } = e.nativeEvent.layout;
     // En large : la hauteur d'un des deux carrés du bento
-    const height = wide ? (width - spacing.md) / 2 : width;
+    const height = fill ? given : wide ? (width - spacing.md) / 2 : width;
     setSize((prev) => (prev && prev.w === width && prev.h === height ? prev : { w: width, h: height }));
   };
 
@@ -163,7 +169,7 @@ export default function NoteTile({
   return (
     <>
     <PressableScale
-      style={wide ? (size ? { height: size.h } : styles.tileWide) : styles.tile}
+      style={fill ? styles.tileFill : wide ? (size ? { height: size.h } : styles.tileWide) : styles.tile}
       onLayout={onLayout}
       onPress={untouched ? write.open : onPress}
       accessibilityRole="button"
@@ -609,6 +615,9 @@ const styles = StyleSheet.create({
   // Avant la mesure : à peu près la hauteur d'un carré du bento
   tileWide: {
     aspectRatio: 2,
+  },
+  tileFill: {
+    flex: 1,
   },
   content: {
     flex: 1,

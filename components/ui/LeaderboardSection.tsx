@@ -60,6 +60,11 @@ interface LeaderboardSectionProps {
   compact?: boolean;
   /** Un carré du bento de l'accueil, à côté du carnet : lignes resserrées */
   square?: boolean;
+  /**
+   * Avec `square` : prend toute la hauteur qu'on lui donne au lieu d'être carré
+   * (la page de droite du livre ouvert, iPhone Duo déplié).
+   */
+  fill?: boolean;
 }
 
 const DEFAULT_AVATAR = require('../../assets/images/profile_picture_default.png');
@@ -235,6 +240,7 @@ export default function LeaderboardSection({
   onPress,
   compact = false,
   square = false,
+  fill = false,
 }: LeaderboardSectionProps) {
   const reducedMotion = useReducedMotion();
   const animate = !reducedMotion;
@@ -253,7 +259,7 @@ export default function LeaderboardSection({
       onPress={onPress}
       accessibilityLabel={a11y}
       accessibilityHint="Ouvre la progression complète"
-      style={square && styles.square}
+      style={square && (fill ? styles.fill : styles.square)}
     >
       <View style={styles.head}>
         {/* Plus de nombre de membres à côté du titre (Lea, 2026-10-01) : il ne menait nulle part */}
@@ -325,6 +331,9 @@ const styles = StyleSheet.create({
   // En carré : les lignes se posent en bas du cadre, plus serrées
   square: {
     aspectRatio: 1,
+  },
+  fill: {
+    flex: 1,
   },
   rowsSquare: {
     flex: 1,

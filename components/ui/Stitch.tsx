@@ -5,7 +5,8 @@
  * d'une zone « ajouter une couverture », une pastille en suspens) est une
  * couture : des points ronds au point des autocollants (`STITCH`), jamais des
  * tirets. Deux formes :
- * - `StitchLine` : une ligne horizontale cousue, sur toute la largeur ;
+ * - `StitchLine` : une ligne cousue, sur toute la largeur (ou toute la hauteur
+ *   en `vertical` : le pli du livre ouvert sur l'iPhone Duo déplié) ;
  * - `StitchBorder` : une couture tout le tour d'une vue, posée par-dessus
  *   (absolue, ne touche pas la mise en page), à la place d'un `borderStyle`.
  */
@@ -27,21 +28,28 @@ function useSize() {
 interface StitchLineProps {
   /** Teinte du fil ; par défaut l'encre pâle des coutures */
   color?: string;
+  /** Une couture de haut en bas, sur toute la hauteur */
+  vertical?: boolean;
   style?: StyleProp<ViewStyle>;
 }
 
-export function StitchLine({ color = stitchColor(true), style }: StitchLineProps) {
-  const [{ width }, onLayout] = useSize();
+export function StitchLine({ color = stitchColor(true), vertical = false, style }: StitchLineProps) {
+  const [{ width, height }, onLayout] = useSize();
+  const length = vertical ? height : width;
   const y = STITCH.width / 2;
   return (
-    <View style={[{ height: STITCH.width }, style]} onLayout={onLayout} pointerEvents="none">
-      {width > 0 && (
-        <Svg width={width} height={STITCH.width}>
+    <View
+      style={[vertical ? { width: STITCH.width } : { height: STITCH.width }, style]}
+      onLayout={onLayout}
+      pointerEvents="none"
+    >
+      {length > 0 && (
+        <Svg width={vertical ? STITCH.width : length} height={vertical ? length : STITCH.width}>
           <Line
             x1={y}
             y1={y}
-            x2={width - y}
-            y2={y}
+            x2={vertical ? y : length - y}
+            y2={vertical ? length - y : y}
             stroke={color}
             strokeWidth={STITCH.width}
             strokeDasharray={STITCH.dash}
