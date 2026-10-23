@@ -10,7 +10,7 @@ Ce qui fait aquarelle :
 - les couleurs se fondent en grandes taches (même placement que la maquette) ;
 - la densité du pigment varie lentement, avec des auréoles plus claires là où
   l'eau a repoussé le pigment ;
-- un grain fin de papier, plus sombre dans les creux.
+- pas de grain ni de granulation : essayés, jugés pas beaux (Lea, 2026-10-23).
 
 Usage : python3 scripts/generate-profile-wash.py
 Dépendances : numpy, Pillow.
@@ -89,17 +89,6 @@ def main():
     edge = np.abs(np.gradient(Image.fromarray((bloom * 255).astype(np.uint8)).filter(ImageFilter.GaussianBlur(3)), axis=0))
     edge = np.clip(np.asarray(edge, np.float32) / 6.0, 0, 1)
     color *= (1 - 0.10 * edge)[..., None]
-
-    # Granulation : le pigment se dépose en petits amas dans le grain
-    granules = fractal(rng, 10, octaves=2)
-    color *= (0.95 + 0.08 * granules)[..., None]
-
-    # Grain du papier : fin, plus sombre dans les creux
-    grain = np.asarray(
-        Image.fromarray((rng.random((H, W)) * 255).astype(np.uint8)).filter(ImageFilter.GaussianBlur(0.8)),
-        np.float32,
-    ) / 255.0
-    color *= (0.90 + 0.14 * grain)[..., None]
 
     OUT.parent.mkdir(parents=True, exist_ok=True)
     Image.fromarray(np.clip(color, 0, 255).astype(np.uint8)).save(OUT, optimize=True)

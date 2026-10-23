@@ -6,8 +6,9 @@
  *    │            [ photo ]             │
  *    │              Lea                 │
  *    │          [ Modifier ]            │
+ *    ╰◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡╯  ← bas coupé en festons
  *    │  ┌────────────────────────────┐  │
- *    │  │ livres finis │ pages │ série│  │  ← cadre papier à cheval sur le fond
+ *    │  │ livres finis │ pages │ série│  │  ← cadre papier sous la découpe
  *    │  └────────────────────────────┘  │
  *    │  ┌ Lire à plusieurs ──── (◉◉) ┐  │  ← la bannière pour inviter
  *    │  Mes livres lus                  │
@@ -57,8 +58,8 @@ import { longestStreak } from '../../utils/streak';
 const RIBBON_DONE = require('../../assets/images/ribbons/ribbon-done.png');
 
 const PHOTO = 112;
-/** Le cadre des chiffres remonte sur le fond de cette hauteur */
-const STATS_OVERLAP = 44;
+/** Sous l'en-tête : la place des festons, pour qu'ils se voient sur toute la largeur */
+const HERO_BOTTOM = spacing['3xl'] + 14;
 /** Couvertures de l'étagère : la taille de la bibliothèque */
 const COVER_H = 110;
 const COVER_W = Math.round(COVER_H * COVER_RATIO);
@@ -301,7 +302,7 @@ const styles = StyleSheet.create({
   hero: {
     alignItems: 'center',
     paddingHorizontal: spacing.lg,
-    paddingBottom: STATS_OVERLAP + spacing['2xl'],
+    paddingBottom: HERO_BOTTOM,
     overflow: 'hidden',
   },
   settingsButton: {
@@ -332,7 +333,7 @@ const styles = StyleSheet.create({
 
   // ─── Chiffres ────────────────────────────────────────────────────────────────
   stats: {
-    marginTop: -STATS_OVERLAP,
+    marginTop: spacing.xl,
     marginHorizontal: spacing.lg,
   },
   statsRow: {
