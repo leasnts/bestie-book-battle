@@ -47,6 +47,7 @@ import StreakPill from '../../components/ui/StreakPill';
 import NoteTile from '../../components/ui/NoteTile';
 import NoteTabs, { NOTE_TABS_HEIGHT } from '../../components/ui/NoteTabs';
 import PageSection from '../../components/ui/PageSection';
+import { StitchLine } from '../../components/ui/Stitch';
 import LeaderboardSection from '../../components/ui/LeaderboardSection';
 import { getAllUserPages } from '../../services/supabase/database';
 import { myCoverUrl } from '../../services/myEdition';
@@ -59,7 +60,7 @@ import { useGoalStore } from '../../stores/goalStore';
 import { useProgressStore } from '../../stores/progressStore';
 import { useAnnotationStore } from '../../stores/annotationStore';
 import { useProjectStore } from '../../stores/projectStore';
-import { colors, fonts, shadowAlpha, spacing } from '../../utils/constants';
+import { colors, fonts, shadowAlpha, spacing, SPREAD_MIN_WIDTH } from '../../utils/constants';
 import { feel, type FeelName } from '../../utils/feel';
 import { dayString } from '../../utils/streak';
 import { useMyStreak } from '../../hooks/useMyStreak';
@@ -81,15 +82,20 @@ export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   // Place réservée sous le contenu pour la barre d'onglets flottante
   const tabBarInset = useTabBarInset();
-  const { height: windowHeight } = useWindowDimensions();
+  const { width: windowWidth, height: windowHeight } = useWindowDimensions();
+  // iPhone Duo déplié : l'écran presque carré devient un livre ouvert. Page de
+  // gauche le livre et « Ma page », page de droite le classement et le carnet
+  // (étirés : en carrés, ils mangeaient tout l'écran)
+  const spread = windowWidth >= SPREAD_MIN_WIDTH;
   // Petits écrans : l'accueil doit tenir sans défiler (règle de Lea)
   // - sous 830 pt (SE, mini) : chiffre de page plus petit ;
   // - sous 700 pt (SE) : classement réduit au 1er et à moi.
-  const compactPage = windowHeight < 830;
+  // Le Duo déplié est bas (669 pt) mais chaque page a toute la hauteur
+  const compactPage = !spread && windowHeight < 830;
   // Taille du chiffre de page : petite sur SE/mini, plus grosse sur les grands
   // écrans où il reste de la place (17 Pro, Pro Max)
-  const pickerFontSize = windowHeight < 830 ? 60 : windowHeight < 900 ? 100 : 108;
-  const compactLeaderboard = windowHeight < 700;
+  const pickerFontSize = spread ? 100 : windowHeight < 830 ? 60 : windowHeight < 900 ? 100 : 108;
+  const compactLeaderboard = !spread && windowHeight < 700;
   // SE : marges resserrées aussi (entre les cadres et dans les cadres)
   const compactSpacing = compactLeaderboard;
   // Espace entre les cadres : serré sur SE, plus aéré sur les grands écrans
@@ -460,7 +466,8 @@ export default function HomeScreen() {
 
   return (
     <PageTransition>
-    <View style={styles.container}>
+    {/* La pastille de l'heure du Duo déplié prend le bord droit (insets.right) */}
+    <View style={[styles.container, { paddingLeft: insets.left, paddingRight: insets.right }]}>
       {/* ═══════════ HEADER ═══════════ */}
       <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
         {/* Bibliothèque — toutes mes lectures, sur des étagères. Le même rond en
@@ -498,10 +505,13 @@ export default function HomeScreen() {
       <View
         style={[
           styles.frames,
+          spread && styles.framesSpread,
           // De l'air au-dessus de la barre d'onglets, sauf sur SE où chaque point compte
           { paddingBottom: tabBarInset + (compactSpacing ? spacing.md : spacing['4xl']) },
         ]}
       >
+      {/* Livre ouvert : la page de gauche. Sinon elle s'efface (display contents) */}
+      <View style={spread ? styles.spreadPage : styles.noPage}>
       {/* ═══════════ CADRE 1 : LE LIVRE ═══════════ */}
       {activeChallenge && (
         <View style={[styles.bookSection, frameGap]}>
@@ -583,15 +593,24 @@ export default function HomeScreen() {
         </View>
       )}
 
+      </View>
+
+      {/* Le pli du livre ouvert, cousu */}
+      {spread && activeChallenge && <StitchLine vertical style={styles.fold} />}
+
       {/* ═══════════ CADRE 3 : LE BENTO — CLASSEMENT ET CARNET ═══════════
         Deux carrés côte à côte : où je me situe dans le club, et la note à la une.
-        Seul dans le livre, pas de classement : le carnet en une bande pleine largeur. */}
+        Seul dans le livre, pas de classement : le carnet en une bande pleine largeur.
+        Livre ouvert : la page de droite, l'un sous l'autre sur toute la hauteur. */}
       {activeChallenge && (
         <View
           style={[
             styles.bento,
+            spread && styles.bentoSpread,
             // De quoi laisser dépasser les intercalaires du carnet
-            { paddingTop: (compactSpacing ? spacing.xs : spacing.md) + NOTE_TABS_HEIGHT },
+            spread
+              ? { paddingTop: spacing.md }
+              : { paddingTop: (compactSpacing ? spacing.xs : spacing.md) + NOTE_TABS_HEIGHT },
           ]}
         >
           {!alone && (
@@ -602,10 +621,11 @@ export default function HomeScreen() {
                 onPress={() => router.push('/leaderboard')}
                 compact={compactLeaderboard}
                 square
+                fill={spread}
               />
             </View>
           )}
-          <View style={styles.bentoCell}>
+          <View style={[styles.bentoCell, spread && { paddingTop: NOTE_TABS_HEIGHT }]}>
             {/* Avant la note : le bas des intercalaires glisse dessous */}
             <NoteTabs />
             <NoteTile
@@ -614,7 +634,8 @@ export default function HomeScreen() {
               freshCount={revealedNotes.length}
               aheadCount={notesMatchChallenge ? notesAhead.length : 0}
               myTotalPages={totalPages}
-              wide={alone}
+              wide={alone && !spread}
+              fill={spread}
               onPress={() => router.push('/carnet')}
             />
           </View>
@@ -669,6 +690,25 @@ const styles = StyleSheet.create({
   frames: {
     flex: 1,
   },
+  // Livre ouvert : deux pages côte à côte
+  framesSpread: {
+    flexDirection: 'row',
+  },
+  // minWidth 0 : sans lui, une page ne descend pas sous la largeur de son contenu
+  // et les deux pages n'ont pas la même largeur
+  spreadPage: {
+    flex: 1,
+    minWidth: 0,
+  },
+  // Hors livre ouvert, la page de gauche n'existe pas : ses cadres restent
+  // dans la colonne
+  noPage: {
+    display: 'contents',
+  },
+  // La couture du pli, entre les deux pages
+  fold: {
+    marginTop: spacing.lg,
+  },
 
   // ===== CADRE 1 : LE LIVRE =====
   // Les trois cadres sont espacés de 12 pt, comme sur la maquette : l'accueil
@@ -697,6 +737,12 @@ const styles = StyleSheet.create({
     gap: spacing.md,
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.md,
+  },
+  // Livre ouvert : la page de droite, classement au-dessus du carnet
+  bentoSpread: {
+    flex: 1,
+    minWidth: 0,
+    flexDirection: 'column',
   },
   bentoCell: {
     flex: 1,

@@ -207,6 +207,13 @@ export const stickerMaterial = {
 };
 
 // Espacements alignés avec Figma (tokens spacing-*)
+/**
+ * Largeur (pt) à partir de laquelle un écran s'ouvre en livre : deux pages côte
+ * à côte. Seul l'iPhone Duo déplié (951 pt) la dépasse ; le plus large des
+ * iPhone (Pro Max, 440 pt) en est loin.
+ */
+export const SPREAD_MIN_WIDTH = 700;
+
 export const spacing = {
   xs: 4,
   sm: 8,
