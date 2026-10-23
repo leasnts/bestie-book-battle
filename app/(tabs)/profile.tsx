@@ -138,6 +138,7 @@ export default function ProfileScreen() {
           </Text>
           <Button3D
             variant="secondary"
+            size="small"
             icon={PencilIcon}
             onPress={() => router.push('/edit-profile')}
             style={styles.editButton}
