@@ -4,12 +4,11 @@
  *    ┌──────────────────────────────────┐
  *    │ ░░ papier aquarelle ░░░░░░ (⚙) │  ← la roue dentée ouvre les Réglages
  *    │            [ photo ]             │
- *    │              Lea                 │
- *    │          [ Modifier ]            │
- *    ╰◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡╯  ← bas coupé en festons
+ *    │              Lea ✎               │  ← prénom centré, le crayon à sa droite
  *    │  ┌────────────────────────────┐  │
- *    │  │ livres finis │ pages │ série│  │  ← cadre en verre, comme ceux de l’accueil
+ *    │  │ livres finis │ pages │ série│  │  ← cadre en verre posé sur l’aquarelle
  *    │  └────────────────────────────┘  │
+ *    ╰◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡╯  ← bas coupé en festons
  *    │  ┌ Lire à plusieurs ──── (◉◉) ┐  │  ← la bannière pour inviter
  *    │  Mes livres lus                  │
  *    │  [▮] [▮] [┄] [┄] →               │  ← couvertures seules, places vides cousues
@@ -60,6 +59,8 @@ const RIBBON_DONE = require('../../assets/images/ribbons/ribbon-done.png');
 const PHOTO = 112;
 /** Sous l'en-tête : la place des festons, pour qu'ils se voient sur toute la largeur */
 const HERO_BOTTOM = spacing['3xl'] + 14;
+/** Le crayon à droite du prénom (et sa place vide à gauche, pour garder le prénom centré) */
+const EDIT_ICON = 18;
 /** Couvertures de l'étagère : la taille de la bibliothèque */
 const COVER_H = 110;
 const COVER_W = Math.round(COVER_H * COVER_RATIO);
@@ -134,36 +135,40 @@ export default function ProfileScreen() {
           <View style={styles.photo}>
             <Image source={photoSource} style={StyleSheet.absoluteFill} contentFit="cover" />
           </View>
-          <Text style={styles.name} numberOfLines={1}>
-            {user?.first_name || 'Lecteur'}
-          </Text>
-          <Button3D
-            variant="secondary"
-            size="small"
-            icon={PencilIcon}
-            onPress={() => router.push('/edit-profile')}
-            style={styles.editButton}
-          >
-            Modifier
-          </Button3D>
-        </View>
-
-        {/* ═══════════ MES CHIFFRES ═══════════ */}
-        <GlassSection style={styles.stats}>
-          <View style={styles.statsRow}>
-            <Stat icon={<Image source={RIBBON_DONE} style={styles.ribbon} contentFit="contain" />} value={finished.length} label="livres finis" />
-            <StitchLine vertical />
-            {/* En attendant l'icône maison des pages */}
-            <Stat icon={<BookOpenIcon size={22} color={colors.textSecondary} />} value={pagesRead} label="pages lues" />
-            <StitchLine vertical />
-            <Stat
-              icon={<Image source={STREAK_FLAME} style={styles.flame} contentFit="contain" />}
-              value={bestStreak}
-              unit=" j"
-              label="meilleure série"
-            />
+          {/* Le prénom reste centré : une place vide à gauche équilibre le crayon */}
+          <View style={styles.nameRow}>
+            <View style={styles.editSlot} />
+            <Text style={styles.name} numberOfLines={1}>
+              {user?.first_name || 'Lecteur'}
+            </Text>
+            <PressableScale
+              onPress={() => router.push('/edit-profile')}
+              hitSlop={12}
+              accessibilityRole="button"
+              accessibilityLabel="Modifier mon profil"
+              style={styles.editSlot}
+            >
+              <PencilIcon size={EDIT_ICON} color={colors.white} strokeWidth={2.2} />
+            </PressableScale>
           </View>
-        </GlassSection>
+
+          {/* ═══════════ MES CHIFFRES, sur l'aquarelle ═══════════ */}
+          <GlassSection style={styles.stats}>
+            <View style={styles.statsRow}>
+              <Stat icon={<Image source={RIBBON_DONE} style={styles.ribbon} contentFit="contain" />} value={finished.length} label="livres finis" />
+              <StitchLine vertical />
+              {/* En attendant l'icône maison des pages */}
+              <Stat icon={<BookOpenIcon size={22} color={colors.textSecondary} />} value={pagesRead} label="pages lues" />
+              <StitchLine vertical />
+              <Stat
+                icon={<Image source={STREAK_FLAME} style={styles.flame} contentFit="contain" />}
+                value={bestStreak}
+                unit=" j"
+                label="meilleure série"
+              />
+            </View>
+          </GlassSection>
+        </View>
 
         {/* ═══════════ INVITER ═══════════ */}
         <InviteBanner onPress={() => router.push('/invite')} />
@@ -318,23 +323,30 @@ const styles = StyleSheet.create({
     borderColor: creamAlpha(0.9),
     backgroundColor: colors.bgLight,
   },
-  name: {
+  nameRow: {
     marginTop: spacing.lg,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    maxWidth: '80%',
+  },
+  editSlot: {
+    width: EDIT_ICON,
+    alignItems: 'center',
+  },
+  name: {
+    flexShrink: 1,
     fontFamily: fonts.display,
     fontSize: 28,
     lineHeight: 34,
     // Blanc sur l'aquarelle colorée (Lea, 2026-10-23)
     color: colors.white,
   },
-  editButton: {
-    marginTop: spacing.md,
-    alignSelf: 'center',
-  },
 
   // ─── Chiffres ────────────────────────────────────────────────────────────────
   stats: {
     marginTop: spacing.xl,
-    marginHorizontal: spacing.lg,
+    alignSelf: 'stretch',
   },
   statsRow: {
     flexDirection: 'row',
