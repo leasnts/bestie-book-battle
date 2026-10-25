@@ -91,6 +91,11 @@ interface GlassSectionProps {
    * blanc s'y perd. Même couture, même rayon.
    */
   paper?: boolean;
+  /**
+   * Flou dépoli au lieu du verre d'iOS 26 : posé à cheval sur un fond chargé
+   * (l'aquarelle du profil), le verre nu laisse voir les festons nets au travers.
+   */
+  frosted?: boolean;
 }
 
 export default function GlassSection({
@@ -102,6 +107,7 @@ export default function GlassSection({
   compact = false,
   fadeTop = 0,
   paper = false,
+  frosted = false,
 }: GlassSectionProps) {
   const [size, setSize] = useState({ width: 0, height: 0 });
   const onLayout = (e: LayoutChangeEvent) => {
@@ -133,7 +139,7 @@ export default function GlassSection({
           {paper ? (
             <LinearGradient colors={paperFrameGradient} style={[StyleSheet.absoluteFill, styles.paper]} />
           ) : (
-            <GlassMaterial radius={RADIUS} veil={glassVeil} edgeColor={EDGE} />
+            <GlassMaterial radius={RADIUS} veil={glassVeil} edgeColor={EDGE} frosted={frosted} />
           )}
           <Stitch {...size} openTop={false} />
         </>

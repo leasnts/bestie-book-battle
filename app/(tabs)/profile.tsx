@@ -6,9 +6,8 @@
  *    │            [ photo ]             │
  *    │              Lea ✎               │  ← prénom centré, le crayon à sa droite
  *    │  ┌────────────────────────────┐  │
- *    │  │ livres finis │ pages │ série│  │  ← cadre en verre posé sur l’aquarelle
- *    │  └────────────────────────────┘  │
- *    ╰◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡╯  ← bas coupé en festons
+ *    ╰◡◡│ livres finis │ pages │ série│◡◡╯  ← bas coupé en festons
+ *    │  └────────────────────────────┘  │  ← verre dépoli, moitié sur l’aquarelle, moitié dehors
  *    │  ┌ Lire à plusieurs ──── (◉◉) ┐  │  ← la bannière pour inviter
  *    │  Mes livres lus                  │
  *    │  [▮] [▮] [┄] [┄] →               │  ← couvertures seules, places vides cousues
@@ -61,6 +60,8 @@ const PHOTO = 112;
 const HERO_BOTTOM = spacing['3xl'] + 14;
 /** Le crayon à droite du prénom (et sa place vide à gauche, pour garder le prénom centré) */
 const EDIT_ICON = 18;
+/** Le cadre des chiffres remonte de la moitié de sa hauteur sur l'aquarelle */
+const STATS_OVERLAP = 58;
 /** Couvertures de l'étagère : la taille de la bibliothèque */
 const COVER_H = 110;
 const COVER_W = Math.round(COVER_H * COVER_RATIO);
@@ -151,24 +152,24 @@ export default function ProfileScreen() {
               <PencilIcon size={EDIT_ICON} color={colors.white} strokeWidth={2.2} />
             </PressableScale>
           </View>
-
-          {/* ═══════════ MES CHIFFRES, sur l'aquarelle ═══════════ */}
-          <GlassSection style={styles.stats}>
-            <View style={styles.statsRow}>
-              <Stat icon={<Image source={RIBBON_DONE} style={styles.ribbon} contentFit="contain" />} value={finished.length} label="livres finis" />
-              <StitchLine vertical />
-              {/* En attendant l'icône maison des pages */}
-              <Stat icon={<BookOpenIcon size={22} color={colors.textSecondary} />} value={pagesRead} label="pages lues" />
-              <StitchLine vertical />
-              <Stat
-                icon={<Image source={STREAK_FLAME} style={styles.flame} contentFit="contain" />}
-                value={bestStreak}
-                unit=" j"
-                label="meilleure série"
-              />
-            </View>
-          </GlassSection>
         </View>
+
+        {/* ═══════════ MES CHIFFRES, à cheval sur l'aquarelle ═══════════ */}
+        <GlassSection frosted style={styles.stats}>
+          <View style={styles.statsRow}>
+            <Stat icon={<Image source={RIBBON_DONE} style={styles.ribbon} contentFit="contain" />} value={finished.length} label="livres finis" />
+            <StitchLine vertical />
+            {/* En attendant l'icône maison des pages */}
+            <Stat icon={<BookOpenIcon size={22} color={colors.textSecondary} />} value={pagesRead} label="pages lues" />
+            <StitchLine vertical />
+            <Stat
+              icon={<Image source={STREAK_FLAME} style={styles.flame} contentFit="contain" />}
+              value={bestStreak}
+              unit=" j"
+              label="meilleure série"
+            />
+          </View>
+        </GlassSection>
 
         {/* ═══════════ INVITER ═══════════ */}
         <InviteBanner onPress={() => router.push('/invite')} />
@@ -307,7 +308,7 @@ const styles = StyleSheet.create({
   hero: {
     alignItems: 'center',
     paddingHorizontal: spacing.lg,
-    paddingBottom: HERO_BOTTOM,
+    paddingBottom: HERO_BOTTOM + STATS_OVERLAP,
     overflow: 'hidden',
   },
   settingsButton: {
@@ -345,8 +346,8 @@ const styles = StyleSheet.create({
 
   // ─── Chiffres ────────────────────────────────────────────────────────────────
   stats: {
-    marginTop: spacing.xl,
-    alignSelf: 'stretch',
+    marginTop: -STATS_OVERLAP,
+    marginHorizontal: spacing.lg,
   },
   statsRow: {
     flexDirection: 'row',
