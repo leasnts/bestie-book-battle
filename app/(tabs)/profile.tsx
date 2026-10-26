@@ -26,7 +26,7 @@ import { Image } from 'expo-image';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { PencilIcon, SettingsIcon } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View, useWindowDimensions, type ImageStyle, type StyleProp } from 'react-native';
+import { ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Button3D from '../../components/Button3D';
 import PageTransition from '../../components/PageTransition';
@@ -39,6 +39,7 @@ import { SHELF_BAR_H, SHELF_OVERLAP, ShelfBar } from '../../components/ui/BookLi
 import PaperWashBackdrop from '../../components/ui/PaperWashBackdrop';
 import PressableScale from '../../components/ui/PressableScale';
 import GlassButton from '../../components/ui/GlassButton';
+import GlassMaterial from '../../components/ui/GlassMaterial';
 import GlassSection from '../../components/ui/GlassSection';
 import { useTabBarInset } from '../../components/ui/GlassTabBar';
 import { StitchBorder, StitchLine } from '../../components/ui/Stitch';
@@ -46,15 +47,11 @@ import { myCoverUrl } from '../../services/myEdition';
 import { getMyReadingDays } from '../../services/supabase/database';
 import { useAuthStore } from '../../stores/authStore';
 import { useProjectStore } from '../../stores/projectStore';
-import { accentGradient, borderRadius, colors, creamAlpha, fonts, fontSize, lowki, paperFrameGradient, spacing } from '../../utils/constants';
+import { accentGradient, borderRadius, colors, creamAlpha, fonts, fontSize, glassVeil, lowki, spacing } from '../../utils/constants';
 import { readingOf } from '../../utils/library';
 import { resolvePhotoSource } from '../../utils/profilePhoto';
 import { longestStreak } from '../../utils/streak';
 
-/** Les icônes à l'aquarelle chocolat des chiffres, dessinées par Lea */
-const ICON_FINISHED = require('../../assets/images/profile/finished.png');
-const ICON_PAGES = require('../../assets/images/profile/pages.png');
-const ICON_STREAK = require('../../assets/images/profile/streak.png');
 
 const PHOTO = 112;
 /** Sous l'en-tête : la place des festons, pour qu'ils se voient sur toute la largeur */
@@ -63,14 +60,13 @@ const HERO_BOTTOM = spacing['3xl'] + 14;
 const EDIT_ICON = 18;
 /** Le cadre des chiffres remonte de la moitié de sa hauteur sur l'aquarelle */
 const STATS_OVERLAP = 44;
-/** Les dessins en filigrane des chiffres : leur hauteur, et ce qui passe sous le bord du cadre */
-const MARK_H = 56;
-const MARK_DROP = 18;
 /** Couvertures de l'étagère : la taille de la bibliothèque */
 const COVER_H = 110;
 const COVER_W = Math.round(COVER_H * COVER_RATIO);
 const SHELF_GAP = spacing.xl;
 const SIDE = spacing.lg;
+/** Une place vide : le verre des cadres de l'accueil, aux coins d'une couverture */
+const EMPTY_RADIUS = 4;
 /** La bannière : taille du titre, et les yeux qui débordent à droite */
 const BANNER_TITLE = 22;
 const BANNER_EYES_W = 150;
@@ -161,11 +157,11 @@ export default function ProfileScreen() {
         {/* ═══════════ MES CHIFFRES, à cheval sur l'aquarelle ═══════════ */}
         <GlassSection frosted style={styles.stats}>
           <View style={styles.statsRow}>
-            <Stat mark={ICON_FINISHED} markStyle={styles.markFinished} value={finished.length} label="livres finis" />
+            <Stat value={finished.length} label="livres finis" />
             <StitchLine vertical />
-            <Stat mark={ICON_PAGES} markStyle={styles.markPages} value={pagesRead} label="pages lues" />
+            <Stat value={pagesRead} label="pages lues" />
             <StitchLine vertical />
-            <Stat mark={ICON_STREAK} markStyle={styles.markStreak} value={bestStreak} unit=" j" label="meilleure série" />
+            <Stat value={bestStreak} unit=" j" label="meilleure série" />
           </View>
         </GlassSection>
 
@@ -256,8 +252,8 @@ function ReadShelf({ covers }: { covers: { id: string; title: string; uri: strin
         ))}
         {Array.from({ length: empty }, (_, i) => (
           <View key={`empty-${i}`} style={styles.shelfCover} accessible={false}>
-            <LinearGradient colors={paperFrameGradient} style={[StyleSheet.absoluteFill, styles.emptyCover]} />
-            <StitchBorder radius={4} inset={5} />
+            <GlassMaterial radius={EMPTY_RADIUS} veil={glassVeil} edgeColor={creamAlpha(0.9)} />
+            <StitchBorder radius={EMPTY_RADIUS} inset={5} />
           </View>
         ))}
       </ScrollView>
@@ -268,28 +264,17 @@ function ReadShelf({ covers }: { covers: { id: string; title: string; uri: strin
 
 // ─── Un chiffre ──────────────────────────────────────────────────────────────
 
-/**
- * Le dessin en filigrane, comme le nom de la catégorie sur une note
- * (`NoteSticker`) : en grand, très pâle, ferré à droite et coupé par le bas du
- * cadre. Il fait partie du fond ; le chiffre et son nom passent par-dessus.
- */
 function Stat({
-  mark,
-  markStyle,
   value,
   unit = '',
   label,
 }: {
-  /** Un dessin `require()`é */
-  mark: number;
-  markStyle: StyleProp<ImageStyle>;
   value: number | null;
   unit?: string;
   label: string;
 }) {
   return (
     <View style={styles.stat}>
-      <Image source={mark} style={[styles.mark, markStyle]} contentFit="contain" accessible={false} />
       <Text style={styles.statValue} numberOfLines={1} adjustsFontSizeToFit>
         {value === null ? '–' : `${formatNumber(value)}${unit}`}
       </Text>
@@ -358,28 +343,13 @@ const styles = StyleSheet.create({
   statsRow: {
     flexDirection: 'row',
   },
-  // Chaque chiffre occupe toute la hauteur du cadre (il reprend la marge du
-  // verre) : son filigrane est coupé par le bord du cadre et reste dans sa colonne
   stat: {
     flex: 1,
     alignItems: 'flex-start',
     gap: spacing.xs,
     paddingHorizontal: spacing.md,
-    marginVertical: -spacing.lg,
-    paddingVertical: spacing.lg + spacing.xs,
-    overflow: 'hidden',
+    paddingVertical: spacing.xs,
   },
-  // Ton sur ton léger : le chocolat des dessins, à peine posé sur le verre
-  mark: {
-    position: 'absolute',
-    right: -spacing.xs,
-    bottom: -MARK_DROP,
-    opacity: 0.14,
-  },
-  // Proportions des dessins rognés, à la même hauteur
-  markFinished: { width: 64, height: MARK_H },
-  markPages: { width: 87, height: MARK_H },
-  markStreak: { width: 39, height: MARK_H },
   statValue: {
     fontFamily: fonts.display,
     fontSize: fontSize['2xl'],
@@ -453,9 +423,5 @@ const styles = StyleSheet.create({
   shelfCover: {
     width: COVER_W,
     height: COVER_H,
-  },
-  emptyCover: {
-    borderRadius: 4,
-    opacity: 0.8,
   },
 });
