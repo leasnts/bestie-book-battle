@@ -23,10 +23,14 @@ import { STITCH } from './NoteSticker';
 
 const WASH = require('../../assets/images/watercolor/profile-wash.png');
 
-/** Rayon visé d'un feston ; ajusté pour qu'un nombre entier tombe pile sur la largeur */
-const SCALLOP = 14;
+/**
+ * Rayon visé d'un feston ; ajusté pour qu'un nombre entier tombe pile sur la largeur.
+ * Petit : sur le profil, le cadre des chiffres cache le milieu, et deux festons
+ * doivent encore se voir dans la marge de 16 pt de chaque côté.
+ */
+const SCALLOP = 4;
 /** Écart entre la couture et le bord découpé */
-const STITCH_GAP = 6;
+const STITCH_GAP = 4;
 
 /** Une rangée de demi-cercles vers le bas, de droite à gauche, à la hauteur `y` */
 function scallops(width: number, y: number, r: number, count: number): string {
