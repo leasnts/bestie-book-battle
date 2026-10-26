@@ -238,8 +238,8 @@ function InviteBanner({ onPress }: { onPress: () => void }) {
  */
 function ReadShelf({ covers }: { covers: { id: string; title: string; uri: string | null }[] }) {
   const { width } = useWindowDimensions();
-  // Assez de places pour remplir l'écran, la dernière coupée par le bord
-  const slots = Math.ceil((width - SIDE) / (COVER_W + SHELF_GAP));
+  // Assez de places pour remplir l'écran, la dernière coupée par le bord de l'écran
+  const slots = Math.ceil((width - SIDE - spacing.md) / (COVER_W + SHELF_GAP));
   const empty = Math.max(slots - covers.length, 0);
 
   return (
@@ -257,7 +257,7 @@ function ReadShelf({ covers }: { covers: { id: string; title: string; uri: strin
           </View>
         ))}
       </ScrollView>
-      <ShelfBar />
+      <ShelfBar style={styles.shelfBar} />
     </View>
   );
 }
@@ -410,13 +410,18 @@ const styles = StyleSheet.create({
     lineHeight: 24,
     color: colors.textPrimary,
   },
+  // Les couvertures défilent d'un bord de l'écran à l'autre, jamais coupées par
+  // la marge ; seule la barre garde la marge de la page.
   // paddingBottom : la partie de la barre qui dépasse sous les couvertures
   shelf: {
-    marginHorizontal: SIDE,
     paddingBottom: SHELF_BAR_H - SHELF_OVERLAP,
   },
+  shelfBar: {
+    left: SIDE,
+    right: SIDE,
+  },
   shelfRow: {
-    paddingHorizontal: spacing.md,
+    paddingHorizontal: SIDE + spacing.md,
     paddingTop: spacing.xs,
     gap: SHELF_GAP,
   },
