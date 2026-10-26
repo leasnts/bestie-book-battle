@@ -26,7 +26,7 @@ import { Image } from 'expo-image';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { PencilIcon, SettingsIcon } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { ScrollView, StyleSheet, Text, View, useWindowDimensions, type ImageStyle, type StyleProp } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Button3D from '../../components/Button3D';
 import PageTransition from '../../components/PageTransition';
@@ -62,7 +62,10 @@ const HERO_BOTTOM = spacing['3xl'] + 14;
 /** Le crayon à droite du prénom (et sa place vide à gauche, pour garder le prénom centré) */
 const EDIT_ICON = 18;
 /** Le cadre des chiffres remonte de la moitié de sa hauteur sur l'aquarelle */
-const STATS_OVERLAP = 58;
+const STATS_OVERLAP = 44;
+/** Les dessins en filigrane des chiffres : leur hauteur, et ce qui passe sous le bord du cadre */
+const MARK_H = 56;
+const MARK_DROP = 18;
 /** Couvertures de l'étagère : la taille de la bibliothèque */
 const COVER_H = 110;
 const COVER_W = Math.round(COVER_H * COVER_RATIO);
@@ -158,16 +161,11 @@ export default function ProfileScreen() {
         {/* ═══════════ MES CHIFFRES, à cheval sur l'aquarelle ═══════════ */}
         <GlassSection frosted style={styles.stats}>
           <View style={styles.statsRow}>
-            <Stat icon={<Image source={ICON_FINISHED} style={styles.iconFinished} contentFit="contain" />} value={finished.length} label="livres finis" />
+            <Stat mark={ICON_FINISHED} markStyle={styles.markFinished} value={finished.length} label="livres finis" />
             <StitchLine vertical />
-            <Stat icon={<Image source={ICON_PAGES} style={styles.iconPages} contentFit="contain" />} value={pagesRead} label="pages lues" />
+            <Stat mark={ICON_PAGES} markStyle={styles.markPages} value={pagesRead} label="pages lues" />
             <StitchLine vertical />
-            <Stat
-              icon={<Image source={ICON_STREAK} style={styles.iconStreak} contentFit="contain" />}
-              value={bestStreak}
-              unit=" j"
-              label="meilleure série"
-            />
+            <Stat mark={ICON_STREAK} markStyle={styles.markStreak} value={bestStreak} unit=" j" label="meilleure série" />
           </View>
         </GlassSection>
 
@@ -270,20 +268,28 @@ function ReadShelf({ covers }: { covers: { id: string; title: string; uri: strin
 
 // ─── Un chiffre ──────────────────────────────────────────────────────────────
 
+/**
+ * Le dessin en filigrane, comme le nom de la catégorie sur une note
+ * (`NoteSticker`) : en grand, très pâle, ferré à droite et coupé par le bas du
+ * cadre. Il fait partie du fond ; le chiffre et son nom passent par-dessus.
+ */
 function Stat({
-  icon,
+  mark,
+  markStyle,
   value,
   unit = '',
   label,
 }: {
-  icon: React.ReactNode;
+  /** Un dessin `require()`é */
+  mark: number;
+  markStyle: StyleProp<ImageStyle>;
   value: number | null;
   unit?: string;
   label: string;
 }) {
   return (
     <View style={styles.stat}>
-      <View style={styles.statIcon}>{icon}</View>
+      <Image source={mark} style={[styles.mark, markStyle]} contentFit="contain" accessible={false} />
       <Text style={styles.statValue} numberOfLines={1} adjustsFontSizeToFit>
         {value === null ? '–' : `${formatNumber(value)}${unit}`}
       </Text>
@@ -352,22 +358,28 @@ const styles = StyleSheet.create({
   statsRow: {
     flexDirection: 'row',
   },
+  // Chaque chiffre occupe toute la hauteur du cadre (il reprend la marge du
+  // verre) : son filigrane est coupé par le bord du cadre et reste dans sa colonne
   stat: {
     flex: 1,
     alignItems: 'flex-start',
     gap: spacing.xs,
     paddingHorizontal: spacing.md,
+    marginVertical: -spacing.lg,
+    paddingVertical: spacing.lg + spacing.xs,
+    overflow: 'hidden',
   },
-  statIcon: {
-    height: 28,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: spacing.xs,
+  // Ton sur ton léger : le chocolat des dessins, à peine posé sur le verre
+  mark: {
+    position: 'absolute',
+    right: -spacing.xs,
+    bottom: -MARK_DROP,
+    opacity: 0.14,
   },
-  // Petites, à la taille de la flamme de la série ; proportions des dessins rognés
-  iconFinished: { width: 23, height: 20 },
-  iconPages: { width: 28, height: 18 },
-  iconStreak: { width: 14, height: 20 },
+  // Proportions des dessins rognés, à la même hauteur
+  markFinished: { width: 64, height: MARK_H },
+  markPages: { width: 87, height: MARK_H },
+  markStreak: { width: 39, height: MARK_H },
   statValue: {
     fontFamily: fonts.display,
     fontSize: fontSize['2xl'],
