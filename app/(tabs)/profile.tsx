@@ -24,7 +24,7 @@
 
 import { Image } from 'expo-image';
 import { useFocusEffect, useRouter } from 'expo-router';
-import { PencilIcon, SettingsIcon } from 'lucide-react-native';
+import { ChevronRightIcon, PencilIcon, SettingsIcon } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -60,10 +60,12 @@ const HERO_BOTTOM = spacing['3xl'] + 14;
 const EDIT_ICON = 18;
 /** Le cadre des chiffres remonte de la moitié de sa hauteur sur l'aquarelle */
 const STATS_OVERLAP = 44;
-/** Couvertures de l'étagère : la taille de la bibliothèque */
-const COVER_H = 110;
-const COVER_W = Math.round(COVER_H * COVER_RATIO);
+/** Étagère : 4 places tiennent pile sur la barre, sans défiler */
+const SHELF_SLOTS = 4;
 const SHELF_GAP = spacing.xl;
+const SHELF_PAD = spacing.md;
+/** Au-delà de 4, l'étagère défile sur mes 10 derniers ; au-delà de 10, « Tout voir » */
+const SHELF_MAX = 10;
 const SIDE = spacing.lg;
 /** Une place vide : le verre des cadres de l'accueil, aux coins d'une couverture */
 const EMPTY_RADIUS = 4;
@@ -170,11 +172,25 @@ export default function ProfileScreen() {
 
         {/* ═══════════ MES LIVRES LUS : les couvertures seules, sur l'étagère ═══════════ */}
         <View style={styles.shelfSection}>
-          <Text style={styles.sectionTitle} accessibilityRole="header">
-            Mes livres lus
-          </Text>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle} accessibilityRole="header">
+              Mes livres lus
+            </Text>
+            {finished.length > SHELF_MAX && (
+              <PressableScale
+                onPress={() => router.push({ pathname: '/library', params: { filter: 'done' } })}
+                hitSlop={12}
+                accessibilityRole="button"
+                accessibilityLabel="Voir tous mes livres lus"
+                style={styles.seeAll}
+              >
+                <Text style={styles.seeAllText}>Tout voir</Text>
+                <ChevronRightIcon size={16} color={colors.textSecondary} />
+              </PressableScale>
+            )}
+          </View>
           <ReadShelf
-            covers={finished.map((book) => ({
+            covers={finished.slice(0, SHELF_MAX).map((book) => ({
               id: book.id,
               title: book.book_title,
               uri: myCoverUrl(book, myProgress[book.id]),
@@ -232,26 +248,33 @@ function InviteBanner({ onPress }: { onPress: () => void }) {
 // ─── L'étagère des livres lus ────────────────────────────────────────────────
 
 /**
- * Les couvertures sur la barre en verre de la bibliothèque. La rangée est
- * toujours pleine jusqu'au bord de l'écran : après les livres (ou à leur place,
- * s'il n'y en a aucun), des places vides cousues attendent les prochains.
+ * Les couvertures sur la barre en verre de la bibliothèque, à une taille qui
+ * fait tenir 4 places pile sur la barre :
+ * - 4 livres ou moins : les livres, puis des places vides cousues, sans défiler ;
+ * - plus : mes 10 derniers défilent d'un bord de l'écran à l'autre.
  */
 function ReadShelf({ covers }: { covers: { id: string; title: string; uri: string | null }[] }) {
   const { width } = useWindowDimensions();
-  // Assez de places pour remplir l'écran, la dernière coupée par le bord de l'écran
-  const slots = Math.ceil((width - SIDE - spacing.md) / (COVER_W + SHELF_GAP));
-  const empty = Math.max(slots - covers.length, 0);
+  const coverW = (width - 2 * SIDE - 2 * SHELF_PAD - (SHELF_SLOTS - 1) * SHELF_GAP) / SHELF_SLOTS;
+  const size = { width: coverW, height: coverW / COVER_RATIO };
+  const scrolls = covers.length > SHELF_SLOTS;
+  const empty = Math.max(SHELF_SLOTS - covers.length, 0);
 
   return (
     <View style={styles.shelf}>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.shelfRow}>
+      <ScrollView
+        horizontal
+        scrollEnabled={scrolls}
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.shelfRow}
+      >
         {covers.map((cover) => (
-          <View key={cover.id} style={styles.shelfCover} accessible accessibilityLabel={cover.title}>
+          <View key={cover.id} style={size} accessible accessibilityLabel={cover.title}>
             <BookCover coverUrl={cover.uri} outlined />
           </View>
         ))}
         {Array.from({ length: empty }, (_, i) => (
-          <View key={`empty-${i}`} style={styles.shelfCover} accessible={false}>
+          <View key={`empty-${i}`} style={size} accessible={false}>
             <GlassMaterial radius={EMPTY_RADIUS} veil={glassVeil} edgeColor={creamAlpha(0.9)} />
             <StitchBorder radius={EMPTY_RADIUS} inset={5} />
           </View>
@@ -403,8 +426,23 @@ const styles = StyleSheet.create({
     marginTop: spacing['3xl'],
     gap: spacing.md,
   },
-  sectionTitle: {
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: SIDE,
+  },
+  seeAll: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+  },
+  seeAllText: {
+    fontFamily: fonts.bodySemiBold,
+    fontSize: fontSize.sm,
+    color: colors.textSecondary,
+  },
+  sectionTitle: {
     fontFamily: fonts.display,
     fontSize: fontSize.lg,
     lineHeight: 24,
@@ -421,12 +459,8 @@ const styles = StyleSheet.create({
     right: SIDE,
   },
   shelfRow: {
-    paddingHorizontal: SIDE + spacing.md,
+    paddingHorizontal: SIDE + SHELF_PAD,
     paddingTop: spacing.xs,
     gap: SHELF_GAP,
-  },
-  shelfCover: {
-    width: COVER_W,
-    height: COVER_H,
   },
 });
