@@ -42,7 +42,6 @@ import GlassButton from '../../components/ui/GlassButton';
 import GlassSection from '../../components/ui/GlassSection';
 import { useTabBarInset } from '../../components/ui/GlassTabBar';
 import { StitchBorder, StitchLine } from '../../components/ui/Stitch';
-import { STREAK_FLAME } from '../../components/ui/StreakPill';
 import { myCoverUrl } from '../../services/myEdition';
 import { getMyReadingDays } from '../../services/supabase/database';
 import { useAuthStore } from '../../stores/authStore';
@@ -52,9 +51,10 @@ import { readingOf } from '../../utils/library';
 import { resolvePhotoSource } from '../../utils/profilePhoto';
 import { longestStreak } from '../../utils/streak';
 
-/** Les icônes à l'aquarelle des chiffres, dessinées par Lea (la flamme vient de la série) */
+/** Les icônes à l'aquarelle chocolat des chiffres, dessinées par Lea */
 const ICON_FINISHED = require('../../assets/images/profile/finished.png');
 const ICON_PAGES = require('../../assets/images/profile/pages.png');
+const ICON_STREAK = require('../../assets/images/profile/streak.png');
 
 const PHOTO = 112;
 /** Sous l'en-tête : la place des festons, pour qu'ils se voient sur toute la largeur */
@@ -163,7 +163,7 @@ export default function ProfileScreen() {
             <Stat icon={<Image source={ICON_PAGES} style={styles.iconPages} contentFit="contain" />} value={pagesRead} label="pages lues" />
             <StitchLine vertical />
             <Stat
-              icon={<Image source={STREAK_FLAME} style={styles.flame} contentFit="contain" />}
+              icon={<Image source={ICON_STREAK} style={styles.iconStreak} contentFit="contain" />}
               value={bestStreak}
               unit=" j"
               label="meilleure série"
@@ -364,10 +364,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: spacing.xs,
   },
-  // Proportions des dessins (rognés à 168 px de haut)
-  iconFinished: { width: 28, height: 24 },
-  iconPages: { width: 37, height: 24 },
-  flame: { width: 24, height: 24 },
+  // Petites, à la taille de la flamme de la série ; proportions des dessins rognés
+  iconFinished: { width: 23, height: 20 },
+  iconPages: { width: 28, height: 18 },
+  iconStreak: { width: 14, height: 20 },
   statValue: {
     fontFamily: fonts.display,
     fontSize: fontSize['2xl'],
