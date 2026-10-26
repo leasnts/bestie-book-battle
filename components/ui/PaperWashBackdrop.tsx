@@ -6,20 +6,18 @@
  *    │ beurre ░░░░░░░░░░░░░░░░ rouge │   ← grandes taches qui se mêlent,
  *    │ ░░░░░░░ auréoles ░░░░░░░░░░░░ │      auréoles plus claires
  *    │ chocolat ░░░░░░░░░ rouge foncé│
- *    ╰◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡╯   ← bas coupé en demi-cercles, couture qui suit
+ *    ╰◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡◡╯   ← bas coupé en demi-cercles
  *
  * Le papier aquarelle choisi par Lea (2026-10-23) : beurre, rouge et chocolat
  * Lowki, sans beige. L'image vient de scripts/generate-profile-wash.py (les
  * auréoles ne se dessinent pas en React Native). Tout tient dans un seul SVG :
- * l'image est rognée par la forme festonnée, et la couture en points (STITCH)
- * suit les festons un peu au-dessus du bord.
+ * l'image est rognée par la forme festonnée. Pas de couture le long des
+ * festons : trop petits, elle ne se voyait presque plus (Lea, 2026-10-26).
  */
 
 import React, { useState } from 'react';
 import { StyleSheet, View, type LayoutChangeEvent } from 'react-native';
 import Svg, { ClipPath, Defs, Image, Path } from 'react-native-svg';
-import { creamAlpha } from '../../utils/constants';
-import { STITCH } from './NoteSticker';
 
 const WASH = require('../../assets/images/watercolor/profile-wash.png');
 
@@ -29,8 +27,6 @@ const WASH = require('../../assets/images/watercolor/profile-wash.png');
  * doivent encore se voir dans la marge de 16 pt de chaque côté.
  */
 const SCALLOP = 4;
-/** Écart entre la couture et le bord découpé */
-const STITCH_GAP = 4;
 
 /** Une rangée de demi-cercles vers le bas, de droite à gauche, à la hauteur `y` */
 function scallops(width: number, y: number, r: number, count: number): string {
@@ -54,7 +50,6 @@ export default function PaperWashBackdrop() {
   const edge = height - r; // le bord droit, d'où partent les festons
 
   const shape = `M 0 0 H ${width} V ${edge}${scallops(width, edge, r, count)} Z`;
-  const seam = `M ${width} ${edge - STITCH_GAP}${scallops(width, edge - STITCH_GAP, r, count)}`;
 
   return (
     <View style={StyleSheet.absoluteFill} onLayout={onLayout} pointerEvents="none">
@@ -71,14 +66,6 @@ export default function PaperWashBackdrop() {
             height={height}
             preserveAspectRatio="xMidYMid slice"
             clipPath="url(#wash-cut)"
-          />
-          <Path
-            d={seam}
-            fill="none"
-            stroke={creamAlpha(0.6)}
-            strokeWidth={STITCH.width}
-            strokeDasharray={STITCH.dash}
-            strokeLinecap={STITCH.cap}
           />
         </Svg>
       )}
