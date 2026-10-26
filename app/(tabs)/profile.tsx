@@ -137,9 +137,9 @@ export default function ProfileScreen() {
             accessibilityLabel="Réglages"
             style={[styles.settingsButton, { top: insets.top + spacing.sm }]}
           />
-          {/* La photo ronde, dans un anneau de verre clair au liseré des boutons en verre */}
+          {/* La photo ronde, dans un anneau de verre nu (sans voile crème) au liseré des boutons en verre */}
           <View style={styles.photoRing}>
-            <GlassMaterial radius={PHOTO / 2 + PHOTO_RING} veil={0.3} rim />
+            <GlassMaterial radius={PHOTO / 2 + PHOTO_RING} rim />
             <View style={styles.photo}>
               <Image source={photoSource} style={StyleSheet.absoluteFill} contentFit="cover" />
             </View>
