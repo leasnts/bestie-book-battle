@@ -24,7 +24,7 @@
 
 import { Image } from 'expo-image';
 import { useFocusEffect, useRouter } from 'expo-router';
-import { BookOpenIcon, PencilIcon, SettingsIcon } from 'lucide-react-native';
+import { PencilIcon, SettingsIcon } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -52,8 +52,9 @@ import { readingOf } from '../../utils/library';
 import { resolvePhotoSource } from '../../utils/profilePhoto';
 import { longestStreak } from '../../utils/streak';
 
-/** Le ruban brodé des livres terminés (bibliothèque) */
-const RIBBON_DONE = require('../../assets/images/ribbons/ribbon-done.png');
+/** Les icônes à l'aquarelle des chiffres, dessinées par Lea (la flamme vient de la série) */
+const ICON_FINISHED = require('../../assets/images/profile/finished.png');
+const ICON_PAGES = require('../../assets/images/profile/pages.png');
 
 const PHOTO = 112;
 /** Sous l'en-tête : la place des festons, pour qu'ils se voient sur toute la largeur */
@@ -157,10 +158,9 @@ export default function ProfileScreen() {
         {/* ═══════════ MES CHIFFRES, à cheval sur l'aquarelle ═══════════ */}
         <GlassSection frosted style={styles.stats}>
           <View style={styles.statsRow}>
-            <Stat icon={<Image source={RIBBON_DONE} style={styles.ribbon} contentFit="contain" />} value={finished.length} label="livres finis" />
+            <Stat icon={<Image source={ICON_FINISHED} style={styles.iconFinished} contentFit="contain" />} value={finished.length} label="livres finis" />
             <StitchLine vertical />
-            {/* En attendant l'icône maison des pages */}
-            <Stat icon={<BookOpenIcon size={22} color={colors.textSecondary} />} value={pagesRead} label="pages lues" />
+            <Stat icon={<Image source={ICON_PAGES} style={styles.iconPages} contentFit="contain" />} value={pagesRead} label="pages lues" />
             <StitchLine vertical />
             <Stat
               icon={<Image source={STREAK_FLAME} style={styles.flame} contentFit="contain" />}
@@ -364,7 +364,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: spacing.xs,
   },
-  ribbon: { width: 14, height: 28 },
+  // Proportions des dessins (rognés à 168 px de haut)
+  iconFinished: { width: 28, height: 24 },
+  iconPages: { width: 37, height: 24 },
   flame: { width: 24, height: 24 },
   statValue: {
     fontFamily: fonts.display,
