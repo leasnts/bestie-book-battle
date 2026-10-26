@@ -54,6 +54,8 @@ import { longestStreak } from '../../utils/streak';
 
 
 const PHOTO = 112;
+/** L'anneau de verre autour de la photo */
+const PHOTO_RING = 5;
 /** Sous l'en-tête : la place des festons, pour qu'ils se voient sur toute la largeur */
 const HERO_BOTTOM = spacing['3xl'] + 14;
 /** Le crayon à droite du prénom (et sa place vide à gauche, pour garder le prénom centré) */
@@ -135,8 +137,12 @@ export default function ProfileScreen() {
             accessibilityLabel="Réglages"
             style={[styles.settingsButton, { top: insets.top + spacing.sm }]}
           />
-          <View style={styles.photo}>
-            <Image source={photoSource} style={StyleSheet.absoluteFill} contentFit="cover" />
+          {/* La photo ronde, dans un anneau de verre clair au liseré des boutons en verre */}
+          <View style={styles.photoRing}>
+            <GlassMaterial radius={PHOTO / 2 + PHOTO_RING} veil={0.3} rim />
+            <View style={styles.photo}>
+              <Image source={photoSource} style={StyleSheet.absoluteFill} contentFit="cover" />
+            </View>
           </View>
           {/* Le prénom reste centré : une place vide à gauche équilibre le crayon */}
           <View style={styles.nameRow}>
@@ -329,13 +335,18 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: spacing.lg,
   },
+  photoRing: {
+    width: PHOTO + 2 * PHOTO_RING,
+    height: PHOTO + 2 * PHOTO_RING,
+    borderRadius: PHOTO / 2 + PHOTO_RING,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   photo: {
     width: PHOTO,
     height: PHOTO,
-    borderRadius: borderRadius.xl,
+    borderRadius: PHOTO / 2,
     overflow: 'hidden',
-    borderWidth: 3,
-    borderColor: creamAlpha(0.9),
     backgroundColor: colors.bgLight,
   },
   nameRow: {
