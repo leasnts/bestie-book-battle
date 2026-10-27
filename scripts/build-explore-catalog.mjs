@@ -32,6 +32,23 @@ const SHELVES = [
     ],
   },
   {
+    key: 'new',
+    label: 'Nouveautés',
+    books: [
+      { title: 'Chère Debbie', author: 'Freida McFadden', search: 'Dear Debbie' },
+      { title: 'Le Fondateur', author: 'Giuliano da Empoli' },
+      { title: 'Mariposa', author: 'Azra Reed' },
+      { title: 'La Vie est une grande aventure', author: 'Laurent Gounelle' },
+      { title: 'La Boulangerie du pain d’épices', author: 'Laurie Gilmore', search: "La Boulangerie du pain d'épices" },
+      { title: 'Les Évadées', author: 'Marc Levy' },
+      { title: 'L’Éléphant', author: 'Patrick Modiano', search: "L'Éléphant" },
+      { title: 'Lever de soleil sur la moisson', author: 'Suzanne Collins', search: 'Sunrise on the Reaping' },
+      { title: 'Katabasis', author: 'R. F. Kuang' },
+      { title: 'Alchemised', author: 'SenLinYu' },
+      { title: 'La Très Catastrophique Visite du zoo', author: 'Joël Dicker' },
+    ],
+  },
+  {
     key: 'contemporary',
     label: 'Contemporain',
     books: [
@@ -263,8 +280,8 @@ async function lookup({ title, author, search }) {
 /** Plié pour comparer : sans accents, majuscules ni ponctuation */
 const fold = (text) => text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '');
 
-/** La couverture française en HD : le premier livre Apple Books du même titre et du même auteur */
-async function appleCover({ title, author }) {
+/** Le premier livre Apple Books (France) du même titre et du même auteur */
+async function appleBook({ title, author }) {
   const params = new URLSearchParams({ term: `${title} ${author}`, media: 'ebook', country: 'fr', limit: '10' });
   const response = await fetch(`https://itunes.apple.com/search?${params}`);
   if (!response.ok) return null;
@@ -273,8 +290,11 @@ async function appleCover({ title, author }) {
   const match = (await response.json()).results.find(
     (r) => fold(r.artistName).includes(lastName) && fold(r.trackName).includes(wanted),
   );
-  return match?.artworkUrl100?.replace(/\/\d+x\d+bb\./, '/600x600bb.') ?? null;
+  return match ?? null;
 }
+
+/** Sa couverture française en HD */
+const coverOf = (match) => match?.artworkUrl100?.replace(/\/\d+x\d+bb\./, '/600x600bb.') ?? null;
 
 const out = join(dirname(fileURLToPath(import.meta.url)), '..', 'constants', 'exploreCatalog.json');
 
@@ -292,8 +312,21 @@ for (const shelf of SHELVES) {
   for (const book of shelf.books) {
     const cacheKey = `${book.title}|${book.author}`;
     if (!cache.has(cacheKey)) cache.set(cacheKey, await lookup(book).catch((e) => (console.warn(e.message), null)));
+    const apple = await appleBook(book).catch(() => null);
+    // Trop récent pour Open Library (une nouveauté) : la fiche Apple Books suffit
+    if (!cache.get(cacheKey) && apple) {
+      cache.set(cacheKey, {
+        id: `apple:${apple.trackId}`,
+        title: book.title,
+        author: book.author,
+        pageCount: null,
+        coverUrl: null,
+        publisher: null,
+        publishedDate: apple.releaseDate?.slice(0, 4) ?? null,
+      });
+    }
     const found = cache.get(cacheKey);
-    const cover = await appleCover(book).catch(() => null);
+    const cover = coverOf(apple);
     if (found && cover) found.coverUrl = cover;
     else if (found) console.warn(`  (pas de couverture française pour ${book.title})`);
     if (found?.coverUrl) books.push(found);

@@ -10,23 +10,27 @@
  *    │ ░░░░░░░░░░░░░░░               │
  *    │ Genres                        │
  *    │ [Contemporain] [Thriller] [… →│
- *    │ Auteur·ices                   │
- *    │ (▐█▌) (▐█▌) (▐█▌) (▐█▌) →     │
  *    │ Populaire sur BookTok         │
  *    │ ▐██▌ ┏━━┓ ▛▀▀▜ ▐██▌ →         │
  *    │ ░░░░░░░░░░░░░░░░░░░░          │
+ *    │ Nouveautés                    │
+ *    │ ▐██▌ ┏━━┓ ▛▀▀▜ ▐██▌ →         │
+ *    │ ░░░░░░░░░░░░░░░░░░░░          │
+ *    │ Auteur·ices                   │
+ *    │ (▐█▌) (▐█▌) (▐█▌) (▐█▌) →     │
  *    └───────────────────────────────┘
  *
  * - **Recherche** : titre, auteur ou saga. Taper remplace les étagères par les
  *   résultats au fil de la frappe (Apple Books, repli Open Library ; les
  *   livres des étagères qui correspondent d'abord, sans attendre le réseau).
  * - **Mes envies** : les livres gardés pour plus tard, en première étagère.
- * - **Genres** : une rangée de petites sections colorées qui défile ; toucher un genre remplace la
+ * - **Genres** : une rangée de petites cartes aquarelle qui défile ; toucher un genre remplace la
  *   page par la liste de ses livres (bouton retour pour revenir). Rester dans
  *   l'onglet évite d'empiler un sheet sous la fiche du livre.
- * - **Auteur·ices** : les plus lu·es, photo (ou initiales) en rond ; toucher
- *   lance la recherche (constants/exploreAuthors.json).
  * - **Populaire sur BookTok** : l'étagère des livres qui tournent en ce moment.
+ * - **Nouveautés** : parus ces derniers mois et déjà bien lus.
+ * - **Auteur·ices** : en dernier ; les plus lu·es, photo (ou initiales) en
+ *   rond ; toucher lance la recherche (constants/exploreAuthors.json).
  *
  * Tous ces livres sont choisis à la main et figés dans
  * constants/exploreCatalog.json (s'affichent sans réseau ; régénérer avec
@@ -64,6 +68,8 @@ import { borderRadius, colors, fontSize, fonts, shadows, spacing } from '../../u
 const SHELVES = catalog.shelves as ExploreGenre[];
 /** L'étagère des tendances : la première du catalogue, hors grille des genres */
 const BOOKTOK = SHELVES.find((shelf) => shelf.key === 'booktok');
+/** Les livres parus ces derniers mois et déjà bien lus */
+const NEW_RELEASES = SHELVES.find((shelf) => shelf.key === 'new');
 /** L'ordre des genres : on varie dès le début, pour parler à tout le monde */
 const GENRE_ORDER = [
   'contemporary',
@@ -202,10 +208,13 @@ export default function ExploreScreen() {
               <ExploreShelf label="Mes envies" icon={HeartIcon} books={favorites} onSelect={handleOpen} />
             )}
             <ExploreGenres genres={GENRES} onSelect={setGenre} />
-            <ExploreAuthors authors={AUTHORS} onSelect={setQuery} />
             {BOOKTOK && (
               <ExploreShelf label={BOOKTOK.label} books={BOOKTOK.books} onSelect={handleOpen} />
             )}
+            {NEW_RELEASES && (
+              <ExploreShelf label={NEW_RELEASES.label} books={NEW_RELEASES.books} onSelect={handleOpen} />
+            )}
+            <ExploreAuthors authors={AUTHORS} onSelect={setQuery} />
           </ScrollView>
         )}
       </View>
