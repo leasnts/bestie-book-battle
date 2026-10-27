@@ -40,7 +40,11 @@ const FRONT = [
 /** Un aller (ou un retour) : lent, pour que ça respire */
 const DRIFT = 15000;
 
-export default function DriftingBackdrop() {
+/**
+ * @param paper - La couleur du papier sous les taches ; crème par défaut (le
+ *   carnet), sable sous l'en-tête du profil pour qu'il se détache du fond
+ */
+export default function DriftingBackdrop({ paper = colors.bgLight }: { paper?: string } = {}) {
   const reduced = useReducedMotion();
   const t = useSharedValue(0);
 
@@ -68,7 +72,7 @@ export default function DriftingBackdrop() {
   }));
 
   return (
-    <View style={styles.paper} pointerEvents="none">
+    <View style={[styles.paper, { backgroundColor: paper }]} pointerEvents="none">
       <Animated.View style={[styles.layer, { experimental_backgroundImage: BACK }, back]} />
       <Animated.View style={[styles.layer, { experimental_backgroundImage: FRONT }, front]} />
     </View>
@@ -78,7 +82,6 @@ export default function DriftingBackdrop() {
 const styles = StyleSheet.create({
   paper: {
     ...StyleSheet.absoluteFill,
-    backgroundColor: colors.bgLight,
     overflow: 'hidden',
   },
   layer: {

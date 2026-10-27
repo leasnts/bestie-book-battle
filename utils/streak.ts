@@ -116,3 +116,26 @@ function getYesterday(): Date {
   yesterday.setDate(yesterday.getDate() - 1);
   return yesterday;
 }
+
+/**
+ * La plus longue série de jours d'affilée, tous livres confondus
+ *
+ * Pour le profil (« meilleure série »). Les jours viennent de l'historique de
+ * lecture et des marque-pages posés sur les jours manqués (getMyReadingDays).
+ *
+ * @param days - Dates YYYY-MM-DD, dans n'importe quel ordre, doublons permis
+ */
+export function longestStreak(days: string[]): number {
+  const sorted = [...new Set(days)].sort();
+  let best = 0;
+  let run = 0;
+  let previous: number | null = null;
+  for (const day of sorted) {
+    // Midi UTC : un changement d'heure ne décale jamais d'un jour
+    const time = Date.parse(`${day}T12:00:00Z`);
+    run = previous !== null && Math.round((time - previous) / 86_400_000) === 1 ? run + 1 : 1;
+    best = Math.max(best, run);
+    previous = time;
+  }
+  return best;
+}

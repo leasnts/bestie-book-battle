@@ -1,452 +1,321 @@
 /**
- * 👤 Page Profil — v3
+ * 👤 Page Profil — v4 : ma vie de lectrice
  *
- * Structure (défile si le contenu dépasse, footer poussé en bas sinon) :
- * 1. HEADER   : titre "Profil" (onglet de la barre native, pas de bouton retour)
- * 2. PROFIL   : photo + prénom en `display` + bouton "Modifier"
- * 3. SETTINGS : notifications (toggle natif), inviter, signaler, déconnexion
- * 4. FOOTER   : liens légaux cliquables + version dynamique
+ *    ┌──────────────────────────────────┐
+ *    │ ░░ papier aquarelle ░░░░░░ (⚙) │  ← la roue dentée ouvre les Réglages
+ *    │            [ photo ]             │
+ *    │              Lea ✎               │  ← prénom centré, le crayon à sa droite
+ *    │  ┌────────────────────────────┐  │
+ *    ╰◡◡│ livres finis │ pages │ série│◡◡╯  ← bas coupé en festons
+ *    │  └────────────────────────────┘  │  ← verre dépoli, moitié sur l’aquarelle, moitié dehors
+ *    │  ┌ Lire à plusieurs ──── (◉◉) ┐  │  ← la bannière pour inviter
+ *    │  Mes livres lus                  │
+ *    │  [▮] [▮] [┄] [┄] →               │  ← couvertures seules, places vides cousues
+ *    │  ═════════════════════           │     sur l'étagère de la bibliothèque
+ *    └──────────────────────────────────┘
  *
- * Notifications :
- * - Au montage, on lit l'état réel des permissions iOS via expo-notifications
- * - Toggle ON  → requestPermissionsAsync (si refusé → Settings iOS)
- * - Toggle OFF → iOS ne permet pas de couper programmatiquement les notifs
- *   d'une app, on redirige vers les Settings du téléphone
- * - Compatible Expo Go + build production (App Store)
+ * Tous les réglages (rappel, sons, déconnexion, suppression…) vivent dans le
+ * sheet /settings. Ici, rien que moi et mes lectures.
+ *
+ * Les chiffres viennent du cache (projectStore.myProgress, rafraîchi à chaque
+ * visite) : livres finis et pages lues tout de suite ; la meilleure série
+ * arrive dès que l'historique est lu, sans loader (un tiret en attendant).
  */
 
-import * as Notifications from 'expo-notifications';
-// Icônes maison plutôt que lucide-react-native : même tracé, même API
-// (size / color / strokeWidth), et un jeu d'icônes de moins à maintenir.
-import Constants from 'expo-constants';
 import { Image } from 'expo-image';
-import { LinearGradient } from 'expo-linear-gradient';
-import { useRouter } from 'expo-router';
-import React, { useEffect, useState } from 'react';
-import {
-  ActivityIndicator,
-  Alert,
-  Linking,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Switch,
-  Text,
-  View,
-} from 'react-native';
-import 'react-native-reanimated';
+import { useFocusEffect, useRouter } from 'expo-router';
+import { ChevronRightIcon, PencilIcon, SettingsIcon } from 'lucide-react-native';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Button3D from '../../components/Button3D';
 import PageTransition from '../../components/PageTransition';
-import { useAuthStore } from '../../stores/authStore';
-import { useFeelStore } from '../../stores/feelStore';
-import { useProjectStore } from '../../stores/projectStore';
-import {
-  colors,
-  creamAlpha,
-  fonts,
-  inkAlpha,
-  shadowAlpha,
-  spacing,
-} from '../../utils/constants';
-import { buzz, feel } from '../../utils/feel';
+import { LinearGradient } from 'expo-linear-gradient';
+import Svg, { Defs, LinearGradient as SvgGradient, Path, Stop } from 'react-native-svg';
+import { POP_EYES_HEIGHT, POP_EYES_PATH, POP_EYES_WIDTH } from '../../components/brand/popEyesPath';
+import AccentWord from '../../components/ui/AccentWord';
+import BookCover, { COVER_RATIO } from '../../components/ui/BookCover';
+import { SHELF_BAR_H, SHELF_OVERLAP, ShelfBar } from '../../components/ui/BookLibrary';
+import PaperWashBackdrop from '../../components/ui/PaperWashBackdrop';
+import PressableScale from '../../components/ui/PressableScale';
+import GlassButton from '../../components/ui/GlassButton';
+import GlassMaterial from '../../components/ui/GlassMaterial';
+import GlassSection from '../../components/ui/GlassSection';
 import { useTabBarInset } from '../../components/ui/GlassTabBar';
+import { StitchBorder, StitchLine } from '../../components/ui/Stitch';
+import { myCoverUrl } from '../../services/myEdition';
+import { getMyReadingDays } from '../../services/supabase/database';
+import { useAuthStore } from '../../stores/authStore';
+import { useProjectStore } from '../../stores/projectStore';
+import { accentGradient, borderRadius, colors, creamAlpha, fonts, fontSize, glassVeil, lowki, spacing } from '../../utils/constants';
+import { readingOf } from '../../utils/library';
 import { resolvePhotoSource } from '../../utils/profilePhoto';
-import { BellIcon, ChevronRightIcon, InboxIcon, FlaskConicalIcon, LogOutIcon, PencilIcon, ShareIcon, Trash2Icon, TriangleAlertIcon, VibrateIcon, Volume2Icon } from 'lucide-react-native';
+import { longestStreak } from '../../utils/streak';
 
-// ─── Constantes ────────────────────────────────────────────────────────────────
 
-const APP_VERSION = Constants.expoConfig?.version ?? '1.0';
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// PAGE PRINCIPALE
-// ═══════════════════════════════════════════════════════════════════════════════
+const PHOTO = 112;
+/** L'anneau de verre autour de la photo */
+const PHOTO_RING = 5;
+/** Sous l'en-tête : la place des festons, pour qu'ils se voient sur toute la largeur */
+const HERO_BOTTOM = spacing['3xl'] + 14;
+/** Le crayon à droite du prénom (et sa place vide à gauche, pour garder le prénom centré) */
+const EDIT_ICON = 18;
+/** Le cadre des chiffres remonte de la moitié de sa hauteur sur l'aquarelle */
+const STATS_OVERLAP = 44;
+/** Étagère : 4 places tiennent pile sur la barre, sans défiler */
+const SHELF_SLOTS = 4;
+const SHELF_GAP = spacing.xl;
+const SHELF_PAD = spacing.md;
+/** Au-delà de 4, l'étagère défile sur mes 10 derniers ; au-delà de 10, « Tout voir » */
+const SHELF_MAX = 10;
+const SIDE = spacing.lg;
+/** Une place vide : le verre des cadres de l'accueil, aux coins d'une couverture */
+const EMPTY_RADIUS = 4;
+/** La bannière : taille du titre, et les yeux qui débordent à droite */
+const BANNER_TITLE = 22;
+const BANNER_EYES_W = 150;
 
 export default function ProfileScreen() {
-  const { sounds, haptics, setSounds, setHaptics } = useFeelStore();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const tabBarInset = useTabBarInset();
-  const { user, logout, deleteAccount } = useAuthStore();
-  const { challenges, loadUserChallenges } = useProjectStore();
+  const user = useAuthStore((state) => state.user);
+  const challenges = useProjectStore((state) => state.challenges);
+  const myProgress = useProjectStore((state) => state.myProgress);
+  const loadMyProgress = useProjectStore((state) => state.loadMyProgress);
+  const loadUserChallenges = useProjectStore((state) => state.loadUserChallenges);
+  const [bestStreak, setBestStreak] = useState<number | null>(null);
 
-
-  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
-  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
-
-  // ─── Init : permissions notifs + challenges ─────────────────────────────────
-
+  // Charge les livres si pas encore en mémoire (ex : arrivée directe sur le profil)
   useEffect(() => {
-    // Lit l'état réel des permissions au montage pour initialiser le toggle
-    Notifications.getPermissionsAsync().then(({ status }) => {
-      setNotificationsEnabled(status === 'granted');
-    });
-  }, []);
-
-  useEffect(() => {
-    // Charge les challenges si pas encore en mémoire (ex: arrivée directe sur profil)
-    if (user?.id && challenges.length === 0) {
-      loadUserChallenges(user.id);
-    }
+    if (user?.id && challenges.length === 0) loadUserChallenges(user.id);
   }, [user?.id]);
 
-  // ─── Toggle notifications ───────────────────────────────────────────────────
+  // À chaque visite : ma progression (le cache s'affiche d'abord) et ma meilleure série
+  useFocusEffect(
+    useCallback(() => {
+      if (!user?.id) return;
+      loadMyProgress(user.id);
+      getMyReadingDays(user.id)
+        .then((days) => setBestStreak(longestStreak(days)))
+        .catch(() => {});
+    }, [user?.id, loadMyProgress]),
+  );
 
-  /**
-   * iOS ne permet pas de désactiver les notifs programmatiquement depuis l'app.
-   * - ON  → on demande la permission (ou on informe si déjà accordée)
-   * - OFF → on renvoie l'user dans les Réglages iOS pour couper lui-même
-   */
-  const handleToggleNotifications = async (value: boolean) => {
-    if (value) {
-      // L'user veut activer
-      const { status } = await Notifications.requestPermissionsAsync();
-      if (status === 'granted') {
-        setNotificationsEnabled(true);
-      } else {
-        // Permission refusée ou non déterminée → Settings
-        Alert.alert(
-          'Notifications désactivées',
-          'Pour recevoir des rappels de lecture, active les notifications pour bestiebookbattle dans tes Réglages.',
-          [
-            { text: 'Plus tard', style: 'cancel' },
-            {
-              text: 'Ouvrir les Réglages',
-              onPress: () => Linking.openURL('app-settings:'),
-            },
-          ]
-        );
-      }
-    } else {
-      // L'user veut désactiver → redirection Réglages iOS
-      Alert.alert(
-        'Désactiver les notifications',
-        'Pour désactiver les notifications, rends-toi dans tes Réglages → bestiebookbattle → Notifications.',
-        [
-          { text: 'Annuler', style: 'cancel' },
-          {
-            text: 'Ouvrir les Réglages',
-            onPress: () => Linking.openURL('app-settings:'),
-          },
-        ]
-      );
-    }
-  };
+  // Mes livres terminés, le plus récent d'abord
+  const finished = useMemo(
+    () =>
+      challenges
+        .filter((book) => readingOf(myProgress[book.id]).state === 'done')
+        .sort((a, b) =>
+          (myProgress[b.id]?.last_updated_at ?? '').localeCompare(myProgress[a.id]?.last_updated_at ?? ''),
+        ),
+    [challenges, myProgress],
+  );
 
-  // ─── Déconnexion ────────────────────────────────────────────────────────────
-
-  const handleLogoutPress = () => {
-    Alert.alert(
-      'Se déconnecter',
-      'Tu veux te déconnecter ?',
-      [
-        { text: 'Annuler', style: 'cancel' },
-        {
-          text: 'Se déconnecter',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              setIsLoggingOut(true);
-              await logout();
-              router.replace('/auth/login');
-            } catch (error: any) {
-              Alert.alert('Erreur', error?.message || 'Impossible de te déconnecter. Réessaie.');
-            } finally {
-              setIsLoggingOut(false);
-            }
-          },
-        },
-      ]
-    );
-  };
-
-  // ─── Signalement ────────────────────────────────────────────────────────────
-
-  const handleReportIssue = async () => {
-    const subject = encodeURIComponent('[BBB] Signalement d\'un problème');
-    const body = encodeURIComponent(
-      `Décris ton problème ici :\n\n\n---\nApp version : ${APP_VERSION}\niOS : ${Platform.OS === 'ios' ? 'oui' : 'non'}`
-    );
-    const mailUrl = `mailto:support@leasantos.me?subject=${subject}&body=${body}`;
-    const canOpen = await Linking.canOpenURL(mailUrl);
-    if (canOpen) {
-      Linking.openURL(mailUrl);
-    } else {
-      Alert.alert('Aucune app Mail', 'Configure une app Mail sur ton iPhone pour envoyer un signalement.');
-    }
-  };
-
-  // ─── Suppression du compte ──────────────────────────────────────────────────
-
-  const handleDeleteAccountPress = () => {
-    Alert.alert(
-      'Supprimer mon compte',
-      'Cette action est irréversible. Toutes tes données (profil, challenges, progression) seront définitivement supprimées.',
-      [
-        { text: 'Annuler', style: 'cancel' },
-        {
-          text: 'Supprimer mon compte',
-          style: 'destructive',
-          onPress: () => {
-            Alert.alert(
-              'Tu es sûr·e ?',
-              'Dernière chance. Ton compte sera supprimé définitivement.',
-              [
-                { text: 'Annuler', style: 'cancel' },
-                {
-                  text: 'Oui, supprimer',
-                  style: 'destructive',
-                  onPress: async () => {
-                    try {
-                      setIsDeletingAccount(true);
-                      await deleteAccount();
-                      router.replace('/auth/login');
-                    } catch (error: any) {
-                      Alert.alert('Erreur', error?.message || 'Impossible de supprimer ton compte. Réessaie.');
-                    } finally {
-                      setIsDeletingAccount(false);
-                    }
-                  },
-                },
-              ]
-            );
-          },
-        },
-      ]
-    );
-  };
+  const pagesRead = useMemo(
+    () => Object.values(myProgress).reduce((sum, progress) => sum + (progress.current_page || 0), 0),
+    [myProgress],
+  );
 
   const photoSource = resolvePhotoSource(user?.profile_photo_url, user?.updated_at);
 
-  // ─── Rendu ─────────────────────────────────────────────────────────────────
-
   return (
     <PageTransition>
-    <View style={styles.container}>
-      {/*
-        Défilement : la barre d'onglets flottante prend ~70 pt en bas, le contenu
-        ne tient plus d'un bloc sur les petits écrans ni en gros corps de texte.
-        Marges manuelles : insets en haut, useTabBarInset() en bas.
-      */}
       <ScrollView
-        style={styles.scroll}
-        contentContainerStyle={styles.scrollContent}
+        style={styles.container}
+        contentContainerStyle={{ paddingBottom: tabBarInset + spacing['2xl'] }}
         contentInsetAdjustmentBehavior="never"
         showsVerticalScrollIndicator={false}
       >
-      {/* ═══════════ HEADER ═══════════ */}
-      <View style={[styles.header, { paddingTop: insets.top + spacing.lg }]}>
-        <Text style={styles.headerTitle}>Profil</Text>
-      </View>
-
-      {/* ═══════════ SECTION PROFIL ═══════════ */}
-      <View style={styles.profileSection}>
-        <View style={styles.profileRow}>
-          <View style={styles.photoWrapper}>
-            <Image source={photoSource} style={styles.photo} contentFit="cover" />
-          </View>
-          <View style={styles.profileInfo}>
-            <Text style={styles.profileName}>{user?.first_name || 'Lecteur'}</Text>
-            {user?.email && (
-              <Text style={styles.profileEmail}>{user.email}</Text>
-            )}
-            <EditButton onPress={() => router.push('/edit-profile')} />
-          </View>
-        </View>
-      </View>
-
-      {/* ═══════════ LISTE PARAMÈTRES ═══════════ */}
-      <View style={styles.settingsList}>
-
-        <View style={[styles.settingRow, styles.settingRowFirst]}>
-          <View style={styles.settingLeft}>
-            <BellIcon size={24} color={colors.textSecondary} />
-            <Text style={styles.settingLabel}>Notifications push</Text>
-          </View>
-          <Switch
-            value={notificationsEnabled}
-            onValueChange={handleToggleNotifications}
-            trackColor={{ false: colors.border, true: colors.accent }}
-            thumbColor={colors.white}
+        {/* ═══════════ EN-TÊTE : moi, sur le papier aquarelle ═══════════ */}
+        <View style={[styles.hero, { paddingTop: insets.top + spacing['3xl'] }]}>
+          <PaperWashBackdrop />
+          <GlassButton
+            icon={SettingsIcon}
+            onPress={() => router.push('/settings')}
+            accessibilityLabel="Réglages"
+            style={[styles.settingsButton, { top: insets.top + spacing.sm }]}
           />
-        </View>
-
-        {/* Sons et vibrations de l'app (#160) : réglages du téléphone, activés par défaut */}
-        <View style={styles.settingRow}>
-          <View style={styles.settingLeft}>
-            <Volume2Icon size={24} color={colors.textSecondary} />
-            <Text style={styles.settingLabel}>Sons</Text>
-          </View>
-          <Switch
-            value={sounds}
-            onValueChange={(on) => {
-              setSounds(on);
-              if (on) feel('appui');
-            }}
-            trackColor={{ false: colors.border, true: colors.accent }}
-            thumbColor={colors.white}
-          />
-        </View>
-
-        <View style={styles.settingRow}>
-          <View style={styles.settingLeft}>
-            <VibrateIcon size={24} color={colors.textSecondary} />
-            <Text style={styles.settingLabel}>Vibrations</Text>
-          </View>
-          <Switch
-            value={haptics}
-            onValueChange={(on) => {
-              setHaptics(on);
-              if (on) buzz();
-            }}
-            trackColor={{ false: colors.border, true: colors.accent }}
-            thumbColor={colors.white}
-          />
-        </View>
-
-        {/* Le fil des notifications : avant, une cloche sur l'accueil */}
-        <Pressable
-          style={({ pressed }) => [styles.settingRow, pressed && styles.settingRowPressed]}
-          onPress={() => router.push('/activity')}
-        >
-          <View style={styles.settingLeft}>
-            <InboxIcon size={24} color={colors.textSecondary} />
-            <Text style={styles.settingLabel}>Notifications</Text>
-          </View>
-          <ChevronRightIcon size={24} color={colors.textTertiary} />
-        </Pressable>
-
-        <Pressable
-          style={({ pressed }) => [styles.settingRow, pressed && styles.settingRowPressed]}
-          onPress={() => router.push('/invite')}
-        >
-          <View style={styles.settingLeft}>
-            <ShareIcon size={24} color={colors.textSecondary} />
-            <Text style={styles.settingLabel}>Inviter un ami</Text>
-          </View>
-          <ChevronRightIcon size={24} color={colors.textTertiary} />
-        </Pressable>
-
-        <Pressable
-          style={({ pressed }) => [styles.settingRow, pressed && styles.settingRowPressed]}
-          onPress={handleReportIssue}
-        >
-          <View style={styles.settingLeft}>
-            <TriangleAlertIcon size={24} color={colors.textSecondary} />
-            <Text style={styles.settingLabel}>Signaler un problème</Text>
-          </View>
-          <ChevronRightIcon size={24} color={colors.textTertiary} />
-        </Pressable>
-
-        <Pressable
-          style={({ pressed }) => [styles.settingRow, pressed && styles.settingRowPressed]}
-          onPress={handleLogoutPress}
-          disabled={isLoggingOut}
-        >
-          <View style={styles.settingLeft}>
-            <LogOutIcon size={24} color={colors.textSecondary} />
-            <Text style={styles.settingLabel}>Se déconnecter</Text>
-          </View>
-          <ChevronRightIcon size={24} color={colors.textTertiary} />
-        </Pressable>
-
-      </View>
-
-      {/* ═══════════ DEV TOOLS ═══════════ */}
-      {__DEV__ && (
-        <View style={styles.settingsList}>
-          <Pressable
-            style={({ pressed }) => [styles.settingRow, pressed && styles.settingRowPressed]}
-            onPress={() => router.push('/onboarding')}
-          >
-            <View style={styles.settingLeft}>
-              <FlaskConicalIcon size={24} color={colors.textSecondary} />
-              <Text style={styles.settingLabel}>Tester l'onboarding</Text>
+          {/* La photo ronde, dans un anneau de verre nu (sans voile crème) au liseré des boutons en verre */}
+          <View style={styles.photoRing}>
+            <GlassMaterial radius={PHOTO / 2 + PHOTO_RING} rim />
+            <View style={styles.photo}>
+              <Image source={photoSource} style={StyleSheet.absoluteFill} contentFit="cover" />
             </View>
-            <ChevronRightIcon size={24} color={colors.textTertiary} />
-          </Pressable>
-        </View>
-      )}
-
-      {/* ═══════════ ZONE DANGER ═══════════ */}
-      <View style={styles.dangerZone}>
-        <Pressable
-          style={({ pressed }) => [styles.settingRow, pressed && styles.settingRowPressed]}
-          onPress={handleDeleteAccountPress}
-          disabled={isDeletingAccount}
-        >
-          <View style={styles.settingLeft}>
-            <Trash2Icon size={24} color={colors.error} />
-            <Text style={[styles.settingLabel, styles.settingLabelDanger]}>Supprimer mon compte</Text>
           </View>
-          <ChevronRightIcon size={24} color={colors.error} />
-        </Pressable>
-      </View>
-
-      {/* Spacer — pousse le footer vers le bas quand le contenu est plus court que l'écran */}
-      <View style={{ flex: 1 }} />
-
-      {/* ═══════════ FOOTER ═══════════ */}
-      <View style={[styles.footer, { paddingBottom: tabBarInset + spacing['2xl'] }]}>
-        <View style={styles.footerLinks}>
-          <Pressable onPress={() => Linking.openURL('https://bbb.leasantos.me/terms')}>
-            <Text style={styles.footerLink}>Conditions d'utilisations</Text>
-          </Pressable>
-          <Pressable onPress={() => Linking.openURL('https://bbb.leasantos.me/privacy')}>
-            <Text style={styles.footerLink}>Politique de confidentialité</Text>
-          </Pressable>
+          {/* Le prénom reste centré : une place vide à gauche équilibre le crayon */}
+          <View style={styles.nameRow}>
+            <View style={styles.editSlot} />
+            <Text style={styles.name} numberOfLines={1}>
+              {user?.first_name || 'Lecteur'}
+            </Text>
+            <PressableScale
+              onPress={() => router.push('/edit-profile')}
+              hitSlop={12}
+              accessibilityRole="button"
+              accessibilityLabel="Modifier mon profil"
+              style={styles.editSlot}
+            >
+              <PencilIcon size={EDIT_ICON} color={colors.white} strokeWidth={2.2} />
+            </PressableScale>
+          </View>
         </View>
-        <Text style={styles.footerVersion}>bestie book battle v{APP_VERSION}</Text>
-      </View>
+
+        {/* ═══════════ MES CHIFFRES, à cheval sur l'aquarelle ═══════════ */}
+        <GlassSection frosted style={styles.stats}>
+          <View style={styles.statsRow}>
+            <Stat value={finished.length} label="livres finis" />
+            <StitchLine vertical />
+            <Stat value={pagesRead} label="pages lues" />
+            <StitchLine vertical />
+            <Stat value={bestStreak} unit=" j" label="meilleure série" />
+          </View>
+        </GlassSection>
+
+        {/* ═══════════ INVITER ═══════════ */}
+        <InviteBanner onPress={() => router.push('/invite')} />
+
+        {/* ═══════════ MES LIVRES LUS : les couvertures seules, sur l'étagère ═══════════ */}
+        <View style={styles.shelfSection}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle} accessibilityRole="header">
+              Mes livres lus
+            </Text>
+            {finished.length > SHELF_MAX && (
+              <PressableScale
+                onPress={() => router.push({ pathname: '/library', params: { filter: 'done' } })}
+                hitSlop={12}
+                accessibilityRole="button"
+                accessibilityLabel="Voir tous mes livres lus"
+                style={styles.seeAll}
+              >
+                <Text style={styles.seeAllText}>Tout voir</Text>
+                <ChevronRightIcon size={16} color={colors.textSecondary} />
+              </PressableScale>
+            )}
+          </View>
+          <ReadShelf
+            covers={finished.slice(0, SHELF_MAX).map((book) => ({
+              id: book.id,
+              title: book.book_title,
+              uri: myCoverUrl(book, myProgress[book.id]),
+            }))}
+          />
+        </View>
       </ScrollView>
-
-      {(isLoggingOut || isDeletingAccount) && (
-        <View style={styles.logoutOverlay}>
-          <ActivityIndicator size="large" color={colors.dark900} />
-        </View>
-      )}
-
-    </View>
     </PageTransition>
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// BOUTON "MODIFIER"
-// ═══════════════════════════════════════════════════════════════════════════════
+/** 2140 → « 2 140 » (espace insécable ; Hermes ignore toLocaleString) */
+function formatNumber(value: number): string {
+  return String(value).replace(/\B(?=(\d{3})+(?!\d))/g, '\u00A0');
+}
 
-function EditButton({ onPress }: { onPress: () => void }) {
-  const [pressed, setPressed] = useState(false);
+// ─── La bannière pour inviter ────────────────────────────────────────────────
+
+function InviteBanner({ onPress }: { onPress: () => void }) {
   return (
-    <Pressable
+    <PressableScale
+      style={styles.banner}
+      pressedScale={0.97}
       onPress={onPress}
-      onPressIn={() => setPressed(true)}
-      onPressOut={() => setPressed(false)}
-      style={styles.editButtonShadow}
+      accessibilityRole="button"
+      accessibilityLabel="Inviter quelqu'un à lire avec toi"
     >
-      <View style={styles.editButtonInner}>
-        <LinearGradient
-          colors={
-            pressed
-              ? [shadowAlpha(0.15), shadowAlpha(0), creamAlpha(0), creamAlpha(0.6)]
-              : [creamAlpha(0.6), creamAlpha(0), shadowAlpha(0), shadowAlpha(0.15)]
-          }
-          locations={[0, 0.3, 0.7, 1]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 0, y: 1 }}
-          style={StyleSheet.absoluteFill}
-        />
-        <View style={styles.editButtonStroke} />
-        <PencilIcon size={15} color={colors.textPrimary} strokeWidth={2.2} />
-        <Text style={styles.editButtonText}>Modifier</Text>
+      <LinearGradient colors={accentGradient} style={[StyleSheet.absoluteFill, styles.bannerFill]} />
+      {/* Les yeux de bbb en ton sur ton (rouge foncé → profond), gravés d'un liseré clair, qui débordent à droite */}
+      <View style={styles.bannerEyes} pointerEvents="none">
+        <Svg width={BANNER_EYES_W} height={(BANNER_EYES_W * POP_EYES_HEIGHT) / POP_EYES_WIDTH} viewBox={`0 0 ${POP_EYES_WIDTH} ${POP_EYES_HEIGHT}`}>
+          <Defs>
+            <SvgGradient id="banner-eyes" x1="0" y1="0" x2="0" y2="1">
+              <Stop offset="0" stopColor={lowki.red.dark} />
+              <Stop offset="1" stopColor={lowki.red.deep} />
+            </SvgGradient>
+          </Defs>
+          <Path d={POP_EYES_PATH} fill={creamAlpha(0.16)} translateY={16} />
+          <Path d={POP_EYES_PATH} fill="url(#banner-eyes)" />
+        </Svg>
       </View>
-    </Pressable>
+      <StitchBorder radius={borderRadius.xl} color={creamAlpha(0.35)} />
+      <View style={styles.bannerContent}>
+        <Text style={styles.bannerTitle}>
+          <AccentWord text="Lire à plusieurs" accent="plusieurs" size={BANNER_TITLE} />
+        </Text>
+        <Button3D variant="secondary" size="small" onPress={onPress} style={styles.bannerButton}>
+          Inviter
+        </Button3D>
+      </View>
+    </PressableScale>
+  );
+}
+
+// ─── L'étagère des livres lus ────────────────────────────────────────────────
+
+/**
+ * Les couvertures sur la barre en verre de la bibliothèque, à une taille qui
+ * fait tenir 4 places pile sur la barre :
+ * - 4 livres ou moins : les livres, puis des places vides cousues, sans défiler ;
+ * - plus : mes 10 derniers défilent d'un bord de l'écran à l'autre.
+ */
+function ReadShelf({ covers }: { covers: { id: string; title: string; uri: string | null }[] }) {
+  const { width } = useWindowDimensions();
+  const coverW = (width - 2 * SIDE - 2 * SHELF_PAD - (SHELF_SLOTS - 1) * SHELF_GAP) / SHELF_SLOTS;
+  const size = { width: coverW, height: coverW / COVER_RATIO };
+  const scrolls = covers.length > SHELF_SLOTS;
+  const empty = Math.max(SHELF_SLOTS - covers.length, 0);
+
+  return (
+    <View style={styles.shelf}>
+      <ScrollView
+        horizontal
+        scrollEnabled={scrolls}
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.shelfRow}
+      >
+        {covers.map((cover) => (
+          <View key={cover.id} style={size} accessible accessibilityLabel={cover.title}>
+            <BookCover coverUrl={cover.uri} outlined />
+          </View>
+        ))}
+        {Array.from({ length: empty }, (_, i) => (
+          <View key={`empty-${i}`} style={size} accessible={false}>
+            <GlassMaterial radius={EMPTY_RADIUS} veil={glassVeil} edgeColor={creamAlpha(0.9)} />
+            <StitchBorder radius={EMPTY_RADIUS} inset={5} />
+          </View>
+        ))}
+      </ScrollView>
+      <ShelfBar style={styles.shelfBar} />
+    </View>
+  );
+}
+
+// ─── Un chiffre ──────────────────────────────────────────────────────────────
+
+function Stat({
+  value,
+  unit = '',
+  label,
+}: {
+  value: number | null;
+  unit?: string;
+  label: string;
+}) {
+  return (
+    <View style={styles.stat}>
+      <Text style={styles.statValue} numberOfLines={1} adjustsFontSizeToFit>
+        {value === null ? '–' : `${formatNumber(value)}${unit}`}
+      </Text>
+      <Text style={styles.statLabel} numberOfLines={1} adjustsFontSizeToFit>
+        {label}
+      </Text>
+    </View>
   );
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// STYLES — PAGE
+// STYLES
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const styles = StyleSheet.create({
@@ -454,156 +323,155 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.bgApp,
   },
-  scroll: { flex: 1 },
-  scrollContent: { flexGrow: 1 },
 
-  // ─── Header ──────────────────────────────────────────────────────────────────
-  header: {
-    flexDirection: 'row',
+  // ─── En-tête ─────────────────────────────────────────────────────────────────
+  hero: {
     alignItems: 'center',
     paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.lg,
-  },
-  headerTitle: {
-    flex: 1,
-    textAlign: 'center',
-    fontFamily: fonts.display,
-    fontSize: 22,
-    lineHeight: 28,
-    color: colors.textPrimary,
-  },
-
-  // ─── Section profil ──────────────────────────────────────────────────────────
-  profileSection: {
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing['3xl'],
-  },
-  profileRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.lg,
-  },
-  photoWrapper: {
-    width: 90,
-    height: 90,
-    borderRadius: 16,
+    paddingBottom: HERO_BOTTOM + STATS_OVERLAP,
     overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: creamAlpha(0.3),
   },
-  photo: { width: 90, height: 90 },
-  profileInfo: {
-    flex: 1,
+  settingsButton: {
+    position: 'absolute',
+    right: spacing.lg,
+  },
+  photoRing: {
+    width: PHOTO + 2 * PHOTO_RING,
+    height: PHOTO + 2 * PHOTO_RING,
+    borderRadius: PHOTO / 2 + PHOTO_RING,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  photo: {
+    width: PHOTO,
+    height: PHOTO,
+    borderRadius: PHOTO / 2,
+    overflow: 'hidden',
+    backgroundColor: colors.bgLight,
+  },
+  nameRow: {
+    marginTop: spacing.lg,
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: spacing.sm,
+    maxWidth: '80%',
   },
-  profileName: {
+  editSlot: {
+    width: EDIT_ICON,
+    alignItems: 'center',
+  },
+  name: {
+    flexShrink: 1,
     fontFamily: fonts.display,
-    fontSize: 26,
-    lineHeight: 32,
+    fontSize: 28,
+    lineHeight: 34,
+    // Blanc sur l'aquarelle colorée (Lea, 2026-10-23)
+    color: colors.white,
+  },
+
+  // ─── Chiffres ────────────────────────────────────────────────────────────────
+  stats: {
+    marginTop: -STATS_OVERLAP,
+    marginHorizontal: spacing.lg,
+  },
+  statsRow: {
+    flexDirection: 'row',
+  },
+  stat: {
+    flex: 1,
+    alignItems: 'flex-start',
+    gap: spacing.xs,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+  },
+  statValue: {
+    fontFamily: fonts.display,
+    fontSize: fontSize['2xl'],
+    lineHeight: 30,
     color: colors.textPrimary,
   },
-  profileEmail: {
-    fontFamily: fonts.body,
-    fontSize: 13,
-    lineHeight: 18,
+  statLabel: {
+    fontFamily: fonts.bodyMedium,
+    fontSize: fontSize.xs,
+    lineHeight: 16,
     color: colors.textTertiary,
   },
 
-  // ─── Bouton Modifier ─────────────────────────────────────────────────────────
-  editButtonShadow: {
-    alignSelf: 'flex-start',
-    borderRadius: 12,
-    shadowColor: colors.black,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  editButtonInner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: 10,
-    backgroundColor: colors.bgLight,
-    borderRadius: 12,
+  // ─── Bannière ───────────────────────────────────────────────────────────────
+  banner: {
+    marginTop: spacing['2xl'],
+    marginHorizontal: SIDE,
+    borderRadius: borderRadius.xl,
     overflow: 'hidden',
+    minHeight: 112,
+    justifyContent: 'center',
   },
-  editButtonStroke: {
-    ...StyleSheet.absoluteFill,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: inkAlpha(0.08),
+  bannerFill: {
+    borderRadius: borderRadius.xl,
   },
-  editButtonText: {
-    fontFamily: fonts.bodySemiBold,
-    fontSize: 14,
-    color: colors.textPrimary,
+  bannerEyes: {
+    position: 'absolute',
+    right: -28,
+    bottom: -18,
+    transform: [{ rotate: '-8deg' }],
+  },
+  bannerContent: {
+    padding: spacing.xl,
+    gap: spacing.md,
+    alignItems: 'flex-start',
+  },
+  bannerTitle: {
+    fontFamily: fonts.display,
+    fontSize: BANNER_TITLE,
+    lineHeight: 28,
+    // Sur le rouge, le texte passe en beurre clair (charte : ≥ 5,3:1)
+    color: lowki.butter.light,
+    maxWidth: '62%',
+  },
+  bannerButton: {
+    alignSelf: 'flex-start',
   },
 
-  // ─── Liste paramètres ────────────────────────────────────────────────────────
-  settingsList: {
-    paddingHorizontal: spacing.lg,
-  },
-  dangerZone: {
-    paddingHorizontal: spacing.lg,
+  // ─── Mes livres lus ──────────────────────────────────────────────────────────
+  shelfSection: {
     marginTop: spacing['3xl'],
-    paddingTop: spacing.xl,
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
+    gap: spacing.md,
   },
-  settingRow: {
+  sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: spacing.xl,
+    paddingHorizontal: SIDE,
   },
-  settingRowFirst: { paddingTop: spacing['3xl'] },
-  settingRowPressed: { opacity: 0.6 },
-  settingLeft: {
+  seeAll: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.sm,
+    gap: 2,
   },
-  settingLabel: {
+  seeAllText: {
     fontFamily: fonts.bodySemiBold,
-    fontSize: 16,
-    lineHeight: 24,
+    fontSize: fontSize.sm,
     color: colors.textSecondary,
   },
-  settingLabelDanger: { color: colors.error },
-
-  // ─── Footer ──────────────────────────────────────────────────────────────────
-  footer: {
-    alignItems: 'center',
-    gap: spacing.sm,
-    paddingTop: spacing['2xl'],
+  sectionTitle: {
+    fontFamily: fonts.display,
+    fontSize: fontSize.lg,
+    lineHeight: 24,
+    color: colors.textPrimary,
   },
-  footerLinks: {
-    flexDirection: 'row',
-    gap: 30,
+  // Les couvertures défilent d'un bord de l'écran à l'autre, jamais coupées par
+  // la marge ; seule la barre garde la marge de la page.
+  // paddingBottom : la partie de la barre qui dépasse sous les couvertures
+  shelf: {
+    paddingBottom: SHELF_BAR_H - SHELF_OVERLAP,
   },
-  footerLink: {
-    fontFamily: fonts.bodyMedium,
-    fontSize: 12,
-    lineHeight: 18,
-    color: colors.textPlaceholder,
-    textDecorationLine: 'underline',
+  shelfBar: {
+    left: SIDE,
+    right: SIDE,
   },
-  footerVersion: {
-    fontFamily: fonts.bodyMedium,
-    fontSize: 12,
-    lineHeight: 18,
-    color: colors.textPlaceholder,
-  },
-
-  // ─── Overlay déconnexion ─────────────────────────────────────────────────────
-  logoutOverlay: {
-    ...StyleSheet.absoluteFill,
-    backgroundColor: creamAlpha(0.75),
-    justifyContent: 'center',
-    alignItems: 'center',
+  shelfRow: {
+    paddingHorizontal: SIDE + SHELF_PAD,
+    paddingTop: spacing.xs,
+    gap: SHELF_GAP,
   },
 });

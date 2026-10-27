@@ -21,8 +21,9 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { MD3LightTheme, PaperProvider } from 'react-native-paper';
 import 'react-native-reanimated';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { scheduleDailyReminder } from '../services/notifications';
+import { scheduleEveningReminder } from '../services/notifications';
 import { useAuthStore } from '../stores/authStore';
+import { useFeelStore } from '../stores/feelStore';
 import { useProjectStore } from '../stores/projectStore';
 import { colors } from '../utils/constants';
 import { prepareFeel } from '../utils/feel';
@@ -239,8 +240,13 @@ function RootLayoutNav() {
     const setupNotifications = async () => {
       try {
         const { status } = await Notifications.getPermissionsAsync();
-        if (!cancelled && status === 'granted') {
-          await scheduleDailyReminder(20, 0, 'cc', 'n\'oublie pas d\'ajouter tes pages stp');
+        // Éteint dans les Réglages : on ne le replanifie pas (réglage relu sur le téléphone d'abord)
+        if (!useFeelStore.persist.hasHydrated()) {
+          await new Promise<void>((done) => useFeelStore.persist.onFinishHydration(() => done()));
+        }
+        const wanted = useFeelStore.getState().eveningReminder;
+        if (!cancelled && status === 'granted' && wanted) {
+          await scheduleEveningReminder();
         }
       } catch (error) {
         console.error('Erreur lors de l\'initialisation des notifications:', error);
@@ -345,6 +351,7 @@ function RootLayoutNav() {
 
       {/* Les formulaires du profil */}
       <Stack.Screen name="edit-profile" options={sheetScreenOptions()} />
+      <Stack.Screen name="settings" options={sheetScreenOptions()} />
       <Stack.Screen name="invite" options={sheetScreenOptions()} />
 
       {/* Recherche d'un livre (onboarding) : haute d'emblée, le clavier et les résultats */}
