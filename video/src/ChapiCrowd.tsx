@@ -116,7 +116,7 @@ export const HeaderCrowd = ({theme}: {theme: keyof typeof THEMES}) => {
           </linearGradient>
         </defs>
         {[
-          {stroke: 'url(#name-bg)', fill: 'url(#name-bg)', dy: 0, width: 115},
+          {stroke: 'url(#name-bg)', fill: 'url(#name-bg)', dy: 0, width: 45},
           ...(t.light ? [{stroke: 'none', fill: t.light, dy: 14, width: 0}] : []),
           {stroke: 'none', fill: t.text, dy: 0, width: 0},
         ].map((l, i) => (
