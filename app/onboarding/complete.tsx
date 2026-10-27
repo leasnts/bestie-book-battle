@@ -195,8 +195,8 @@ export default function OnboardingCompleteScreen() {
 
         try {
             await Share.share({
-                message: `Rejoins-moi sur bestiebookbattle pour lire "${params.bookTitle}" ensemble ! 📚\n\nCode d'invitation : ${inviteCode}`,
-                title: 'Invitation BBB',
+                message: `Rejoins-moi sur Chapi pour lire "${params.bookTitle}" ensemble ! 📚\n\nCode d'invitation : ${inviteCode}`,
+                title: 'Invitation Chapi',
             });
         } catch (error) {
             console.error('Erreur partage:', error);
