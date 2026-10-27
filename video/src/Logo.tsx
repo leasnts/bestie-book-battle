@@ -31,9 +31,14 @@ type EyesProps = {
   gaze: {x: number; y: number};
   /** Ouverture de chaque œil, de 0 (fermé) à 1. */
   open: {left: number; right: number};
+  /** Teintes ton sur ton ; par défaut le rouge du splash. */
+  palette?: EyesPalette;
 };
 
-const Eye = ({side, gaze, open}: {side: 'left' | 'right'; gaze: EyesProps['gaze']; open: number}) => {
+export type EyesPalette = {shape: readonly [string, string]; light: string; lightOpacity: number};
+const SPLASH_PALETTE: EyesPalette = {shape: SHAPE_GRADIENT, light: DEBOSS_LIGHT, lightOpacity: DEBOSS_OPACITY};
+
+const Eye = ({side, gaze, open, palette}: {side: 'left' | 'right'; gaze: EyesProps['gaze']; open: number; palette: EyesPalette}) => {
   const pupil = side === 'left' ? LEFT_PUPIL : RIGHT_PUPIL;
   const hole = side === 'left' ? LEFT_HOLE : RIGHT_HOLE;
   const reach = GAZE_REACH[side];
@@ -42,11 +47,11 @@ const Eye = ({side, gaze, open}: {side: 'left' | 'right'; gaze: EyesProps['gaze'
   return (
     <g clipPath={`url(#half-${side})`}>
       <g transform={lid}>
-        <path d={RING} fill={DEBOSS_LIGHT} fillOpacity={DEBOSS_OPACITY} fillRule="evenodd" transform={`translate(0 ${DEBOSS_EYES})`} />
+        <path d={RING} fill={palette.light} fillOpacity={palette.lightOpacity} fillRule="evenodd" transform={`translate(0 ${DEBOSS_EYES})`} />
         <path d={RING} fill="url(#eyes-shape)" fillRule="evenodd" />
         <g clipPath={`url(#hole-${side})`}>
           <g transform={`translate(${gaze.x * reach} ${gaze.y * reach * 0.7})`}>
-            <path d={pupil} fill={DEBOSS_LIGHT} fillOpacity={DEBOSS_OPACITY} transform={`translate(0 ${DEBOSS_EYES})`} />
+            <path d={pupil} fill={palette.light} fillOpacity={palette.lightOpacity} transform={`translate(0 ${DEBOSS_EYES})`} />
             <path d={pupil} fill="url(#eyes-shape)" />
           </g>
         </g>
@@ -60,12 +65,12 @@ const Eye = ({side, gaze, open}: {side: 'left' | 'right'; gaze: EyesProps['gaze'
   );
 };
 
-export const Eyes = ({size, gaze, open}: EyesProps) => (
+export const Eyes = ({size, gaze, open, palette = SPLASH_PALETTE}: EyesProps) => (
   <svg width={size} height={size} viewBox="0 0 1200 1200" style={{overflow: 'visible'}}>
     <defs>
       <linearGradient id="eyes-shape" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0" stopColor={SHAPE_GRADIENT[0]} />
-        <stop offset="1" stopColor={SHAPE_GRADIENT[1]} />
+        <stop offset="0" stopColor={palette.shape[0]} />
+        <stop offset="1" stopColor={palette.shape[1]} />
       </linearGradient>
       <clipPath id="half-left">
         <path d={LOGO_EYES_CLIP.left} />
@@ -74,8 +79,8 @@ export const Eyes = ({size, gaze, open}: EyesProps) => (
         <path d={LOGO_EYES_CLIP.right} />
       </clipPath>
     </defs>
-    <Eye side="left" gaze={gaze} open={open.left} />
-    <Eye side="right" gaze={gaze} open={open.right} />
+    <Eye side="left" gaze={gaze} open={open.left} palette={palette} />
+    <Eye side="right" gaze={gaze} open={open.right} palette={palette} />
   </svg>
 );
 
