@@ -3,7 +3,8 @@
  *
  * Les genres de l'onglet Explorer, en une rangée qui défile de côté : une petite section
  * colorée par genre, dans une paire de la charte Lowki (dégradé clair → foncé,
- * jamais d'aplat), cousue comme la bannière Inviter du profil.
+ * jamais d'aplat). Sans couture : les pointillés alourdissaient ces petites
+ * cartes (Lea, 2026-10-27).
  *
  *    Genres
  *    ┌──────────┐ ┌──────────┐ ┌────
@@ -14,9 +15,11 @@
  * Ton sur ton pour l'illustration seulement, comme le mot en filigrane des
  * notes : l'aquarelle de Lea (assets/images/genres, masques préparés par
  * scripts/build-genre-illustrations.py) teintée d'encre transparente, donc la
- * couleur du cadre en plus foncé (plus clair sur le chocolat), grande et coupée par le bord. Le nom suit la charte : chocolat
- * foncé sur beurre et beige, beurre clair sur rouge et chocolat (le nom en ton
- * sur ton a été essayé et ne se lisait pas, Lea 2026-10-27).
+ * couleur du cadre en plus foncé (plus clair sur le chocolat), grande et coupée par le bord. Le nom est de la même teinte que
+ * le fond, très éloignée en clarté pour se lire (≥ 5:1 en haut de la carte,
+ * où il est posé) : rose pâle sur rouge, beige clair sur chocolat, olive
+ * foncé sur beurre, brun sur beige. Un texte d'une autre couleur faisait
+ * dépareillé, et un ton sur ton trop proche ne se lisait pas.
  *
  * Toucher un genre ouvre tous ses livres (l'écran Explorer passe en liste).
  */
@@ -28,7 +31,6 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import type { BookSearchResult } from '../../types/bookSearch';
 import { borderRadius, colors, creamAlpha, fontSize, fonts, inkAlpha, lowki, spacing } from '../../utils/constants';
 import PressableScale from './PressableScale';
-import { StitchBorder } from './Stitch';
 
 const SIDE = spacing.lg;
 const GAP = spacing.md;
@@ -79,8 +81,13 @@ const INK: Record<Pair, { tint: string; opacity: number }> = {
   chocolate: { tint: creamAlpha(1), opacity: 0.14 },
 };
 
-/** Fonds clairs : nom en chocolat */
-const LIGHT_PAIRS: Pair[] = ['butter', 'beige'];
+/** Le nom, dans la teinte du fond */
+const LABEL: Record<Pair, string> = {
+  butter: '#5A4A10',
+  beige: '#3A2817',
+  red: '#F7D9DD',
+  chocolate: '#EBD3C9',
+};
 
 interface ExploreGenresProps {
   genres: ExploreGenre[];
@@ -98,7 +105,6 @@ export default function ExploreGenres({ genres, onSelect }: ExploreGenresProps) 
         {genres.map((genre, index) => {
           const pair = PAIRS[index % PAIRS.length];
           const illustration = ILLUSTRATIONS[genre.key];
-          const onLight = LIGHT_PAIRS.includes(pair);
           return (
             <PressableScale
               key={genre.key}
@@ -119,9 +125,8 @@ export default function ExploreGenres({ genres, onSelect }: ExploreGenresProps) 
                   pointerEvents="none"
                 />
               )}
-              <StitchBorder radius={RADIUS} color={creamAlpha(onLight ? 0.55 : 0.35)} />
               <Text
-                style={[styles.label, { color: onLight ? lowki.chocolate.dark : lowki.butter.light }]}
+                style={[styles.label, { color: LABEL[pair] }]}
                 numberOfLines={2}
               >
                 {genre.label}
