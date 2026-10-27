@@ -19,7 +19,7 @@ import type { LucideIcon } from 'lucide-react-native';
 import React from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import type { BookSearchResult } from '../../types/bookSearch';
-import { colors, fonts, spacing } from '../../utils/constants';
+import { colors, fontSize, fonts, spacing } from '../../utils/constants';
 import BookCover, { COVER_RATIO } from './BookCover';
 import { SHELF_BAR_H, SHELF_OVERLAP, ShelfBar } from './BookLibrary';
 import PressableScale from './PressableScale';
@@ -110,8 +110,8 @@ const styles = StyleSheet.create({
   },
   title: {
     fontFamily: fonts.display,
-    fontSize: 19,
-    lineHeight: 24,
+    fontSize: fontSize.md,
+    lineHeight: 20,
     color: colors.textPrimary,
   },
   // paddingBottom : la partie de la barre qui dépasse sous les couvertures
