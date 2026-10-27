@@ -39,9 +39,9 @@ const SIDE = spacing.lg;
 const GAP = spacing.sm;
 /** Environ quatre cartes à l'écran : la quatrième dépasse, on devine qu'il y en a d'autres */
 const TILE_W = 92;
-const TILE_H = 104;
+const TILE_H = 64;
 const RADIUS = borderRadius.md;
-const ILLUSTRATION = 80;
+const ILLUSTRATION = 60;
 
 const WASH = require('../../assets/images/watercolor/genres-wash.jpg');
 /** La bande d'aquarelle couvre 14 cartes ; au-delà, on repart du début */
