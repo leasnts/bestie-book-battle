@@ -8,11 +8,13 @@
  *    Genres
  *    ┌──────────┐ ┌──────────┐ ┌────
  *    │Contempor.│ │Thriller  │ │Rom… →
- *    │       ☕ │ │       ◎  │ │      ← icône en ton sur ton qui déborde
+ *    │       ☕ │ │       ◎  │ │      ← illustration en ton sur ton qui déborde
  *    └──────────┘ └──────────┘ └────
  *
- * Ton sur ton pour l'icône seulement : la couleur du fond assombrie (encre
- * transparente), gravée d'un liseré clair. Le nom suit la charte : chocolat
+ * Ton sur ton pour l'illustration seulement, comme le mot en filigrane des
+ * notes : l'aquarelle de Lea (assets/images/genres, masques préparés par
+ * scripts/build-genre-illustrations.py) teintée d'encre transparente, donc la
+ * couleur du cadre en plus foncé, grande et coupée par le bord. Le nom suit la charte : chocolat
  * foncé sur beurre et beige, beurre clair sur rouge et chocolat (le nom en ton
  * sur ton a été essayé et ne se lisait pas, Lea 2026-10-27).
  *
@@ -20,23 +22,7 @@
  */
 
 import { LinearGradient } from 'expo-linear-gradient';
-import {
-  BackpackIcon,
-  CastleIcon,
-  CoffeeIcon,
-  CrownIcon,
-  FeatherIcon,
-  FingerprintIcon,
-  GhostIcon,
-  HeartIcon,
-  HourglassIcon,
-  LightbulbIcon,
-  type LucideIcon,
-  MessageCircleIcon,
-  RocketIcon,
-  SproutIcon,
-  SunIcon,
-} from 'lucide-react-native';
+import { Image } from 'expo-image';
 import React from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import type { BookSearchResult } from '../../types/bookSearch';
@@ -50,7 +36,7 @@ const GAP = spacing.md;
 const TILE_W = 156;
 const TILE_H = 88;
 const RADIUS = borderRadius.lg;
-const ICON = 64;
+const ILLUSTRATION = 96;
 
 export interface ExploreGenre {
   key: string;
@@ -63,25 +49,25 @@ type Pair = keyof typeof lowki;
 /** Les couleurs tournent dans cet ordre : deux voisins ne se ressemblent jamais */
 const PAIRS: Pair[] = ['butter', 'chocolate', 'red', 'beige'];
 
-/** L'icône de chaque genre */
-const ICONS: Record<string, LucideIcon> = {
-  contemporary: CoffeeIcon,
-  thriller: FingerprintIcon,
-  fantasy: CastleIcon,
-  'feel-good': SunIcon,
-  'science-fiction': RocketIcon,
-  romance: HeartIcon,
-  historical: HourglassIcon,
-  classics: FeatherIcon,
-  horror: GhostIcon,
-  'young-adult': BackpackIcon,
-  comics: MessageCircleIcon,
-  romantasy: CrownIcon,
-  'self-help': SproutIcon,
-  nonfiction: LightbulbIcon,
+/** L'illustration de chaque genre */
+const ILLUSTRATIONS: Record<string, number> = {
+  contemporary: require('../../assets/images/genres/contemporary.png'),
+  thriller: require('../../assets/images/genres/thriller.png'),
+  fantasy: require('../../assets/images/genres/fantasy.png'),
+  'feel-good': require('../../assets/images/genres/feel-good.png'),
+  'science-fiction': require('../../assets/images/genres/science-fiction.png'),
+  romance: require('../../assets/images/genres/romance.png'),
+  historical: require('../../assets/images/genres/historical.png'),
+  classics: require('../../assets/images/genres/classics.png'),
+  horror: require('../../assets/images/genres/horror.png'),
+  'young-adult': require('../../assets/images/genres/young-adult.png'),
+  comics: require('../../assets/images/genres/comics.png'),
+  romantasy: require('../../assets/images/genres/romantasy.png'),
+  'self-help': require('../../assets/images/genres/self-help.png'),
+  nonfiction: require('../../assets/images/genres/nonfiction.png'),
 };
 
-/** Fonds clairs : nom en chocolat, liseré et encre de l'icône plus marqués */
+/** Fonds clairs : nom en chocolat, illustration plus légère */
 const LIGHT_PAIRS: Pair[] = ['butter', 'beige'];
 
 interface ExploreGenresProps {
@@ -99,7 +85,7 @@ export default function ExploreGenres({ genres, onSelect }: ExploreGenresProps) 
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row}>
         {genres.map((genre, index) => {
           const pair = PAIRS[index % PAIRS.length];
-          const Icon = ICONS[genre.key] ?? HeartIcon;
+          const illustration = ILLUSTRATIONS[genre.key];
           const onLight = LIGHT_PAIRS.includes(pair);
           return (
             <PressableScale
@@ -112,16 +98,15 @@ export default function ExploreGenres({ genres, onSelect }: ExploreGenresProps) 
               accessibilityHint="Voir les livres de ce genre"
             >
               <LinearGradient colors={[lowki[pair].light, lowki[pair].dark]} style={StyleSheet.absoluteFill} />
-              {/* L'icône gravée : liseré clair décalé dessous, puis la couleur du fond assombrie */}
-              <View style={styles.icon} pointerEvents="none">
-                <Icon
-                  size={ICON}
-                  strokeWidth={1.6}
-                  color={creamAlpha(onLight ? 0.45 : 0.16)}
-                  style={styles.iconEdge}
+              {illustration && (
+                <Image
+                  source={illustration}
+                  style={[styles.illustration, { opacity: onLight ? 0.2 : 0.4 }]}
+                  contentFit="contain"
+                  tintColor={inkAlpha(1)}
+                  pointerEvents="none"
                 />
-                <Icon size={ICON} strokeWidth={1.6} color={inkAlpha(onLight ? 0.16 : 0.32)} style={styles.iconInk} />
-              </View>
+              )}
               <StitchBorder radius={RADIUS} color={creamAlpha(onLight ? 0.55 : 0.35)} />
               <Text
                 style={[styles.label, { color: onLight ? lowki.chocolate.dark : lowki.butter.light }]}
@@ -161,21 +146,13 @@ const styles = StyleSheet.create({
     padding: spacing.md,
   },
   // Déborde en bas à droite, penchée : la section la coupe
-  icon: {
+  illustration: {
     position: 'absolute',
-    right: -12,
-    bottom: -16,
-    width: ICON,
-    height: ICON + 1.5,
-    transform: [{ rotate: '-12deg' }],
-  },
-  iconEdge: {
-    position: 'absolute',
-    top: 1.5,
-  },
-  iconInk: {
-    position: 'absolute',
-    top: 0,
+    right: -14,
+    bottom: -22,
+    width: ILLUSTRATION,
+    height: ILLUSTRATION,
+    transform: [{ rotate: '-10deg' }],
   },
   label: {
     fontFamily: fonts.display,
