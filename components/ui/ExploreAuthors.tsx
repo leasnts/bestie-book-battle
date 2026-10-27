@@ -5,7 +5,8 @@
  * dans un rond, le nom dessous. Sans photo libre (constants/exploreAuthors.json,
  * généré par scripts/build-explore-authors.mjs), le rond montre leurs
  * initiales en crème sur l'encre brune du grand chiffre de « Ma page »
- * (`InkFigure`), avec un liseré clair à l'intérieur du bord.
+ * (`InkFigure`). Photo ou initiales, le rond porte à l'intérieur de son bord
+ * le liseré de verre de l'app (`GlassRim`, celui des boutons en verre).
  *
  *    Auteur·ices
  *    (☺)  (☺)  (CH)  (☺) →
@@ -19,13 +20,13 @@ import { LinearGradient } from 'expo-linear-gradient';
 import React from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { colors, creamAlpha, fontSize, fonts, spacing } from '../../utils/constants';
+import { GlassRim } from './GlassMaterial';
 import { INK } from './InkFigure';
 import PressableScale from './PressableScale';
 
 const SIDE = spacing.lg;
 const AVATAR = 72;
 const ITEM_W = 84;
-const RIM_INSET = 4;
 
 export interface ExploreAuthor {
   name: string;
@@ -71,10 +72,10 @@ export default function ExploreAuthors({ authors, onSelect }: ExploreAuthorsProp
                 />
               ) : (
                 <LinearGradient colors={INK} style={styles.placeholder}>
-                  <View style={styles.placeholderRim} pointerEvents="none" />
                   <Text style={styles.initials}>{initials(author.name)}</Text>
                 </LinearGradient>
               )}
+              <GlassRim radius={AVATAR / 2} />
             </View>
             <Text style={styles.name} numberOfLines={2}>
               {author.name}
@@ -112,24 +113,11 @@ const styles = StyleSheet.create({
     borderRadius: AVATAR / 2,
     overflow: 'hidden',
     backgroundColor: colors.bgLight,
-    borderWidth: 2,
-    borderColor: creamAlpha(0.9),
   },
   placeholder: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  // Le liseré, un peu en retrait du bord
-  placeholderRim: {
-    position: 'absolute',
-    top: RIM_INSET,
-    left: RIM_INSET,
-    right: RIM_INSET,
-    bottom: RIM_INSET,
-    borderRadius: AVATAR / 2,
-    borderWidth: 1,
-    borderColor: creamAlpha(0.35),
   },
   initials: {
     fontFamily: fonts.display,
