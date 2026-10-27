@@ -1,4 +1,5 @@
-import {AbsoluteFill, Easing, Img, interpolate, spring, staticFile, useVideoConfig} from 'remotion';
+import {loadFont} from '@remotion/fonts';
+import {AbsoluteFill, Easing, interpolate, spring, staticFile, useVideoConfig} from 'remotion';
 import {Eyes, EyesPalette} from './Logo';
 import {useLoop} from './loop';
 
@@ -14,10 +15,12 @@ const TONES: EyesPalette[] = [
   {shape: ['#D6C36F', '#B8A452'], light: PAPER, lightOpacity: 0.9, backing: PAPER},
 ];
 
-/** Le livre au centre : tous les regards finissent sur lui. */
-const BOOK_W = 1100;
-const BOOK_H = BOOK_W * (1064 / 1580);
-const BOOK = {x: W / 2, y: H / 2 + 60};
+// Police d'accent, hors git (licence usage personnel, #129) : à copier dans public/fonts.
+loadFont({family: 'Welcome Valentines', url: staticFile('fonts/WelcomeValentines_400Regular.ttf')});
+
+/** Le nom au centre : tous les regards finissent sur lui. */
+const BOOK = {x: W / 2, y: H / 2};
+const BG = '#F3EBDD';
 
 // Hasard reproductible : la même foule à chaque rendu.
 const rand = (i: number) => {
@@ -38,7 +41,7 @@ const CROWD = (() => {
       const i = r * cols + c;
       const x = ((c + 0.5 + (r % 2) * 0.5) / cols) * (W + 500) - 250 + (rand(i) - 0.5) * 200;
       const y = ((r + 0.5) / rows) * (H + 360) - 180 + (rand(i + 99) - 0.5) * 160;
-      const dist = Math.hypot((x - BOOK.x) / W, (y - BOOK.y) / H);
+      const dist = Math.hypot((x - CENTER.x) / W, (y - CENTER.y) / H);
       people.push({
         x,
         y,
@@ -67,8 +70,8 @@ export const HeaderCrowd = () => {
         const pop = spring({frame: frame - p.arrive, fps, config: {damping: 10, stiffness: 170, mass: 0.6}});
         const wander = {x: Math.sin(frame / 18 + i) * 0.8, y: Math.cos(frame / 23 + i * 2) * 0.4};
         const look = {
-          x: Math.max(-1, Math.min(1, (BOOK.x - p.x) / 900)),
-          y: Math.max(-1, Math.min(1, (BOOK.y - p.y) / 500)),
+          x: Math.max(-1, Math.min(1, (CENTER.x - p.x) / 900)),
+          y: Math.max(-1, Math.min(1, (CENTER.y - p.y) / 500)),
         };
         const gaze = {x: wander.x + (look.x - wander.x) * focus, y: wander.y + (look.y - wander.y) * focus};
         const lid = interpolate(frame, [p.blink, p.blink + 4, p.blink + 8], [1, 0.06, 1], clamp);
@@ -87,17 +90,24 @@ export const HeaderCrowd = () => {
           </div>
         );
       })}
-      <Img
-        src={staticFile('red_book.png')}
+      <div
         style={{
           position: 'absolute',
-          left: BOOK.x - BOOK_W / 2,
-          top: BOOK.y - BOOK_H / 2,
-          width: BOOK_W,
-          height: BOOK_H,
-          filter: 'saturate(0.8) drop-shadow(0 0 60px #F7F1E7) drop-shadow(0 0 30px #F7F1E7)',
+          left: 0,
+          right: 0,
+          top: CENTER.y,
+          transform: `translateY(-55%) scale(${interpolate(frame, [0, 10, 266, 290], [0.96, 1, 1, 0.96], clamp)})`,
+          textAlign: 'center',
+          fontFamily: 'Welcome Valentines',
+          fontSize: 760,
+          lineHeight: 1,
+          color: '#A62F43',
+          WebkitTextStroke: `90px ${BG}`,
+          paintOrder: 'stroke fill',
         }}
-      />
+      >
+        chapi
+      </div>
     </AbsoluteFill>
   );
 };
