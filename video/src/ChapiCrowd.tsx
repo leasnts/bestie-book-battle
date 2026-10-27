@@ -23,14 +23,14 @@ const CENTER = {x: W / 2, y: H / 2};
 
 /** Deux ambiances : papier multicolore, ou rouge ton sur ton comme l'icône. */
 const THEMES = {
-  papier: {bg: ['#F7F1E7', '#EADFCF'], text: '#A62F43', stroke: '#F3EBDD', tones: null},
+  papier: {bg: ['#F7F1E7', '#EADFCF'], text: '#A62F43', light: null, tones: null},
   rouge: {
     bg: ['#A62F43', '#962A3D'],
-    text: '#F1E3CC',
-    stroke: '#A12D41',
+    text: '#5E1824',
+    light: '#C24A5D',
     tones: [{shape: ['#6A1A29', '#5E1824'], light: '#C24A5D', lightOpacity: 0.55, backing: '#A62F43'}],
   },
-} as const satisfies Record<string, {bg: readonly [string, string]; text: string; stroke: string; tones: readonly EyesPalette[] | null}>;
+} as const satisfies Record<string, {bg: readonly [string, string]; text: string; light: string | null; tones: readonly EyesPalette[] | null}>;
 
 // Hasard reproductible : la même foule à chaque rendu.
 const rand = (i: number) => {
@@ -102,24 +102,40 @@ export const HeaderCrowd = ({theme}: {theme: keyof typeof THEMES}) => {
           </div>
         );
       })}
-      <div
-        style={{
-          position: 'absolute',
-          left: 0,
-          right: 0,
-          top: CENTER.y,
-          transform: `translateY(-55%) scale(${interpolate(frame, [0, 10, 266, 290], [0.96, 1, 1, 0.96], clamp)})`,
-          textAlign: 'center',
-          fontFamily: 'Welcome Valentines',
-          fontSize: 760,
-          lineHeight: 1,
-          color: t.text,
-          WebkitTextStroke: `90px ${t.stroke}`,
-          paintOrder: 'stroke fill',
-        }}
+      {/* Le contour reprend le dégradé du fond, au pixel près : il efface les yeux sans se voir. */}
+      <svg
+        width={W}
+        height={H}
+        style={{position: 'absolute', inset: 0, transform: `scale(${interpolate(frame, [0, 10, 266, 290], [0.96, 1, 1, 0.96], clamp)})`}}
       >
-        chapi
-      </div>
+        <defs>
+          <linearGradient id="name-bg" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2={H}>
+            <stop offset="0" stopColor={t.bg[0]} />
+            <stop offset="1" stopColor={t.bg[1]} />
+          </linearGradient>
+        </defs>
+        {[
+          {stroke: 'url(#name-bg)', fill: 'url(#name-bg)', dy: 0, width: 115},
+          ...(t.light ? [{stroke: 'none', fill: t.light, dy: 14, width: 0}] : []),
+          {stroke: 'none', fill: t.text, dy: 0, width: 0},
+        ].map((l, i) => (
+          <text
+            key={i}
+            x={W / 2}
+            y={CENTER.y + 230 + l.dy}
+            textAnchor="middle"
+            fontFamily="Welcome Valentines"
+            fontSize={760}
+            fill={l.fill}
+            stroke={l.stroke}
+            strokeWidth={l.width * 2}
+            strokeLinejoin="round"
+            fillOpacity={l.dy ? 0.55 : 1}
+          >
+            chapi
+          </text>
+        ))}
+      </svg>
     </AbsoluteFill>
   );
 };
