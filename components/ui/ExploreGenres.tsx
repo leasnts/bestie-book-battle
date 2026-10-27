@@ -1,35 +1,34 @@
 /**
  * Composant ExploreGenres
  *
- * Les genres de l'onglet Explorer, en une rangée qui défile de côté : une petite section
- * colorée par genre, dans une paire de la charte Lowki (dégradé clair → foncé,
- * jamais d'aplat). Sans couture : les pointillés alourdissaient ces petites
- * cartes (Lea, 2026-10-27).
+ * Les genres de l'onglet Explorer, en une rangée qui défile de côté, sur le
+ * même papier aquarelle que l'en-tête du profil (rouge, chocolat, un peu de
+ * beurre) et avec le nom en blanc, comme le prénom : le maximum de cohérence
+ * (Lea, 2026-10-27). L'aquarelle est UNE bande aussi longue que la rangée
+ * (scripts/generate-genre-wash.py) : chaque carte en montre sa tranche, la
+ * rangée se lit comme une seule peinture découpée.
  *
  *    Genres
  *    ┌──────────┐ ┌──────────┐ ┌────
  *    │Contempor.│ │Thriller  │ │Rom… →
- *    │       ☕ │ │       ◎  │ │      ← illustration en ton sur ton qui déborde
+ *    │       ☕ │ │       ◎  │ │      ← illustration blanche, légère, qui déborde
  *    └──────────┘ └──────────┘ └────
  *
- * Ton sur ton pour l'illustration seulement, comme le mot en filigrane des
- * notes : l'aquarelle de Lea (assets/images/genres, masques préparés par
- * scripts/build-genre-illustrations.py) teintée d'encre transparente, donc la
- * couleur du cadre en plus foncé (plus clair sur le chocolat), grande et coupée par le bord. Le nom est de la même teinte que
- * le fond, très éloignée en clarté pour se lire (≥ 5:1 en haut de la carte,
- * où il est posé) : rose pâle sur rouge, beige clair sur chocolat, olive
- * foncé sur beurre, brun sur beige. Un texte d'une autre couleur faisait
- * dépareillé, et un ton sur ton trop proche ne se lisait pas.
+ * L'illustration (aquarelle de Lea, assets/images/genres, masques préparés par
+ * scripts/build-genre-illustrations.py) est teintée en blanc, très légère,
+ * grande et coupée par le bord, comme le mot en filigrane des notes.
+ *
+ * Essayés et rejetés : cadres en verre, une paire Lowki par carte (texte
+ * dépareillé ou illisible en ton sur ton), couture en pointillés.
  *
  * Toucher un genre ouvre tous ses livres (l'écran Explorer passe en liste).
  */
 
-import { LinearGradient } from 'expo-linear-gradient';
 import { Image } from 'expo-image';
 import React from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import type { BookSearchResult } from '../../types/bookSearch';
-import { borderRadius, colors, creamAlpha, fontSize, fonts, inkAlpha, lowki, spacing } from '../../utils/constants';
+import { borderRadius, colors, creamAlpha, fontSize, fonts, spacing } from '../../utils/constants';
 import PressableScale from './PressableScale';
 
 const SIDE = spacing.lg;
@@ -40,16 +39,16 @@ const TILE_H = 88;
 const RADIUS = borderRadius.lg;
 const ILLUSTRATION = 96;
 
+const WASH = require('../../assets/images/watercolor/genres-wash.jpg');
+/** La bande d'aquarelle couvre 14 cartes ; au-delà, on repart du début */
+const WASH_CARDS = 14;
+const WASH_W = WASH_CARDS * TILE_W + (WASH_CARDS - 1) * GAP;
+
 export interface ExploreGenre {
   key: string;
   label: string;
   books: BookSearchResult[];
 }
-
-type Pair = keyof typeof lowki;
-
-/** Les couleurs tournent dans cet ordre : deux voisins ne se ressemblent jamais */
-const PAIRS: Pair[] = ['butter', 'chocolate', 'red', 'beige'];
 
 /** L'illustration de chaque genre */
 const ILLUSTRATIONS: Record<string, number> = {
@@ -69,26 +68,6 @@ const ILLUSTRATIONS: Record<string, number> = {
   nonfiction: require('../../assets/images/genres/nonfiction.png'),
 };
 
-/**
- * La teinte de l'illustration, par fond. Le chocolat est trop sombre pour
- * qu'une encre plus foncée s'y voie : là, le ton sur ton passe en plus clair
- * (un voile crème), comme la charte le permet.
- */
-const INK: Record<Pair, { tint: string; opacity: number }> = {
-  butter: { tint: inkAlpha(1), opacity: 0.2 },
-  beige: { tint: inkAlpha(1), opacity: 0.2 },
-  red: { tint: inkAlpha(1), opacity: 0.4 },
-  chocolate: { tint: creamAlpha(1), opacity: 0.14 },
-};
-
-/** Le nom, dans la teinte du fond */
-const LABEL: Record<Pair, string> = {
-  butter: '#5A4A10',
-  beige: '#3A2817',
-  red: '#F7D9DD',
-  chocolate: '#EBD3C9',
-};
-
 interface ExploreGenresProps {
   genres: ExploreGenre[];
   onSelect: (genre: ExploreGenre) => void;
@@ -103,7 +82,6 @@ export default function ExploreGenres({ genres, onSelect }: ExploreGenresProps) 
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row}>
         {genres.map((genre, index) => {
-          const pair = PAIRS[index % PAIRS.length];
           const illustration = ILLUSTRATIONS[genre.key];
           return (
             <PressableScale
@@ -115,20 +93,22 @@ export default function ExploreGenres({ genres, onSelect }: ExploreGenresProps) 
               accessibilityLabel={genre.label}
               accessibilityHint="Voir les livres de ce genre"
             >
-              <LinearGradient colors={[lowki[pair].light, lowki[pair].dark]} style={StyleSheet.absoluteFill} />
+              {/* Sa tranche de la bande : décalée d'autant de cartes qu'il y en a avant elle */}
+              <Image
+                source={WASH}
+                style={[styles.wash, { left: -(index % WASH_CARDS) * (TILE_W + GAP) }]}
+                contentFit="fill"
+              />
               {illustration && (
                 <Image
                   source={illustration}
-                  style={[styles.illustration, { opacity: INK[pair].opacity }]}
+                  style={styles.illustration}
                   contentFit="contain"
-                  tintColor={INK[pair].tint}
+                  tintColor={creamAlpha(1)}
                   pointerEvents="none"
                 />
               )}
-              <Text
-                style={[styles.label, { color: LABEL[pair] }]}
-                numberOfLines={2}
-              >
+              <Text style={styles.label} numberOfLines={2}>
                 {genre.label}
               </Text>
             </PressableScale>
@@ -162,6 +142,12 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     padding: spacing.md,
   },
+  wash: {
+    position: 'absolute',
+    top: 0,
+    width: WASH_W,
+    height: TILE_H,
+  },
   // Déborde en bas à droite, penchée : la section la coupe
   illustration: {
     position: 'absolute',
@@ -170,10 +156,12 @@ const styles = StyleSheet.create({
     width: ILLUSTRATION,
     height: ILLUSTRATION,
     transform: [{ rotate: '-10deg' }],
+    opacity: 0.22,
   },
   label: {
     fontFamily: fonts.display,
     fontSize: fontSize.sm,
     lineHeight: 18,
+    color: colors.white,
   },
 });
