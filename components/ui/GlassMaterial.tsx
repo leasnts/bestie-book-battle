@@ -121,7 +121,7 @@ export default function GlassMaterial({
  * - dehors, un filet d'encre à 8 % qui détache la forme d'un fond clair ;
  * - dedans, un reflet crème en diagonale, vif aux deux coins opposés.
  */
-function GlassRim({ radius }: { radius: number }) {
+export function GlassRim({ radius }: { radius: number }) {
   const [size, setSize] = useState<{ width: number; height: number } | null>(null);
   // Un identifiant de dégradé par liseré ; les « : » de useId cassent `url(#…)`
   const gradientId = `rim${useId().replace(/[^a-zA-Z0-9]/g, '')}`;

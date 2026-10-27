@@ -80,6 +80,111 @@
       ]
     },
     {
+      "key": "new",
+      "label": "Nouveautés",
+      "books": [
+        {
+          "id": "/works/OL44800712W",
+          "title": "Chère Debbie",
+          "author": "Freida McFadden",
+          "pageCount": 320,
+          "coverUrl": "https://is1-ssl.mzstatic.com/image/thumb/Publication211/v4/5e/9b/aa/5e9baac5-54ff-ba08-469b-2cd409fc153a/9782824622026-001-x.jpeg/600x600bb.jpg",
+          "publisher": null,
+          "publishedDate": "2026"
+        },
+        {
+          "id": "apple:6813071997",
+          "title": "Le Fondateur",
+          "author": "Giuliano da Empoli",
+          "pageCount": null,
+          "coverUrl": "https://is1-ssl.mzstatic.com/image/thumb/Publication221/v4/92/e3/f0/92e3f015-4529-dfb3-0de6-0ad594306574/9782073170682.jpg/600x600bb.jpg",
+          "publisher": null,
+          "publishedDate": "2026"
+        },
+        {
+          "id": "apple:6813054003",
+          "title": "Mariposa",
+          "author": "Azra Reed",
+          "pageCount": null,
+          "coverUrl": "https://is1-ssl.mzstatic.com/image/thumb/Publication221/v4/90/8f/bd/908fbd06-cc94-06e1-527f-8380098a12e5/9791042910846-001-x.jpeg/600x600bb.jpg",
+          "publisher": null,
+          "publishedDate": "2026"
+        },
+        {
+          "id": "apple:6810214516",
+          "title": "La Vie est une grande aventure",
+          "author": "Laurent Gounelle",
+          "pageCount": null,
+          "coverUrl": "https://is1-ssl.mzstatic.com/image/thumb/Publication221/v4/c7/df/12/c7df12e4-71a9-4759-c4d1-dacadd70946e/9782863748411-001-x.jpeg/600x600bb.jpg",
+          "publisher": null,
+          "publishedDate": "2026"
+        },
+        {
+          "id": "apple:6803836041",
+          "title": "La Boulangerie du pain d’épices",
+          "author": "Laurie Gilmore",
+          "pageCount": null,
+          "coverUrl": "https://is1-ssl.mzstatic.com/image/thumb/Publication211/v4/82/80/c8/8280c830-fc88-957b-07c3-a5a2d631b92c/dj.eakcrhma.jpeg/600x600bb.jpg",
+          "publisher": null,
+          "publishedDate": "2026"
+        },
+        {
+          "id": "apple:6804833197",
+          "title": "Les Évadées",
+          "author": "Marc Levy",
+          "pageCount": null,
+          "coverUrl": "https://is1-ssl.mzstatic.com/image/thumb/Publication221/v4/6c/bc/15/6cbc15c4-aeae-acae-85ee-a841ed43322f/9782361324964.jpg/600x600bb.jpg",
+          "publisher": null,
+          "publishedDate": "2026"
+        },
+        {
+          "id": "apple:6805552954",
+          "title": "L’Éléphant",
+          "author": "Patrick Modiano",
+          "pageCount": null,
+          "coverUrl": "https://is1-ssl.mzstatic.com/image/thumb/Publication221/v4/71/cd/02/71cd020d-652f-6070-0c39-003a96152862/9782073036827.jpg/600x600bb.jpg",
+          "publisher": null,
+          "publishedDate": "2026"
+        },
+        {
+          "id": "/works/OL43426400W",
+          "title": "Lever de soleil sur la moisson",
+          "author": "Suzanne Collins",
+          "pageCount": 400,
+          "coverUrl": "https://is1-ssl.mzstatic.com/image/thumb/Publication221/v4/46/42/bf/4642bf34-0e50-ec81-e3fe-9b3dd8c8280a/9782266350754.jpg/600x600bb.jpg",
+          "publisher": null,
+          "publishedDate": "2025"
+        },
+        {
+          "id": "/works/OL42397860W",
+          "title": "Katabasis",
+          "author": "R. F. Kuang",
+          "pageCount": 560,
+          "coverUrl": "https://is1-ssl.mzstatic.com/image/thumb/Publication211/v4/42/64/36/426436ba-e638-5c43-68cc-a898c0ce6bb1/9782378769192.jpg/600x600bb.jpg",
+          "publisher": null,
+          "publishedDate": "2025"
+        },
+        {
+          "id": "/works/OL42543873W",
+          "title": "Alchemised",
+          "author": "SenLinYu",
+          "pageCount": 976,
+          "coverUrl": "https://is1-ssl.mzstatic.com/image/thumb/Publication221/v4/02/6e/b7/026eb724-4296-8877-8bfc-69d5b57ae783/9782017307112-001-x.jpeg/600x600bb.jpg",
+          "publisher": null,
+          "publishedDate": "2025"
+        },
+        {
+          "id": "/works/OL42950605W",
+          "title": "La Très Catastrophique Visite du zoo",
+          "author": "Joël Dicker",
+          "pageCount": null,
+          "coverUrl": "https://is1-ssl.mzstatic.com/image/thumb/Publication221/v4/b1/3e/2c/b13e2cf1-735c-9d7e-9934-85c9fb916f33/9782889730759.jpg/600x600bb.jpg",
+          "publisher": null,
+          "publishedDate": "2025"
+        }
+      ]
+    },
+    {
       "key": "contemporary",
       "label": "Contemporain",
       "books": [
