@@ -16,8 +16,8 @@
         "opacity": 0
       },
       "translucency": {
-        "enabled": true,
-        "value": 0.4
+        "enabled": false,
+        "value": 0
       }
     }
   ],
