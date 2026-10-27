@@ -4,7 +4,8 @@
  * Les auteur·ices les plus lu·es, en rangée qui défile de côté : leur photo
  * dans un rond, le nom dessous. Sans photo libre (constants/exploreAuthors.json,
  * généré par scripts/build-explore-authors.mjs), le rond montre leurs
- * initiales en chocolat sur un dégradé beige, ton sur ton.
+ * initiales en crème sur l'encre brune du grand chiffre de « Ma page »
+ * (`InkFigure`), avec un liseré clair à l'intérieur du bord.
  *
  *    Auteur·ices
  *    (☺)  (☺)  (CH)  (☺) →
@@ -17,12 +18,14 @@ import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import React from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import { colors, creamAlpha, fontSize, fonts, lowki, spacing } from '../../utils/constants';
+import { colors, creamAlpha, fontSize, fonts, spacing } from '../../utils/constants';
+import { INK } from './InkFigure';
 import PressableScale from './PressableScale';
 
 const SIDE = spacing.lg;
 const AVATAR = 72;
 const ITEM_W = 84;
+const RIM_INSET = 4;
 
 export interface ExploreAuthor {
   name: string;
@@ -67,7 +70,8 @@ export default function ExploreAuthors({ authors, onSelect }: ExploreAuthorsProp
                   transition={200}
                 />
               ) : (
-                <LinearGradient colors={[lowki.beige.light, lowki.beige.dark]} style={styles.placeholder}>
+                <LinearGradient colors={INK} style={styles.placeholder}>
+                  <View style={styles.placeholderRim} pointerEvents="none" />
                   <Text style={styles.initials}>{initials(author.name)}</Text>
                 </LinearGradient>
               )}
@@ -116,11 +120,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  // Le liseré, un peu en retrait du bord
+  placeholderRim: {
+    position: 'absolute',
+    top: RIM_INSET,
+    left: RIM_INSET,
+    right: RIM_INSET,
+    bottom: RIM_INSET,
+    borderRadius: AVATAR / 2,
+    borderWidth: 1,
+    borderColor: creamAlpha(0.35),
+  },
   initials: {
     fontFamily: fonts.display,
     fontSize: 24,
     lineHeight: 30,
-    color: lowki.chocolate.dark,
+    color: creamAlpha(0.95),
   },
   name: {
     fontFamily: fonts.bodyMedium,
