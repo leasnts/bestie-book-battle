@@ -26,7 +26,8 @@
  * - **Genres** : une grille de cadres en verre ; toucher un genre remplace la
  *   page par la liste de ses livres (bouton retour pour revenir). Rester dans
  *   l'onglet évite d'empiler un sheet sous la fiche du livre.
- * - **Auteur·ices** : les plus lu·es, en ronds ; toucher lance la recherche.
+ * - **Auteur·ices** : les plus lu·es, photo (ou initiales) en rond ; toucher
+ *   lance la recherche (constants/exploreAuthors.json).
  * - **Populaire sur BookTok** : l'étagère des livres qui tournent en ce moment.
  *
  * Tous ces livres sont choisis à la main et figés dans
@@ -54,6 +55,7 @@ import ExploreGenres, { type ExploreGenre } from '../../components/ui/ExploreGen
 import ExploreShelf from '../../components/ui/ExploreShelf';
 import GlassButton from '../../components/ui/GlassButton';
 import { useTabBarInset } from '../../components/ui/GlassTabBar';
+import authorsCatalog from '../../constants/exploreAuthors.json';
 import catalog from '../../constants/exploreCatalog.json';
 import { useBookSearch } from '../../hooks/useBookSearch';
 import { useExploreStore } from '../../stores/exploreStore';
@@ -66,24 +68,7 @@ const SHELVES = catalog.shelves as ExploreGenre[];
 const BOOKTOK = SHELVES.find((shelf) => shelf.key === 'booktok');
 const GENRES = SHELVES.filter((shelf) => shelf !== BOOKTOK);
 
-/** Les plus lu·es, dans l'ordre d'affichage ; le rond montre leur premier livre du catalogue */
-const AUTHOR_NAMES = [
-  'Colleen Hoover',
-  'Freida McFadden',
-  'Rebecca Yarros',
-  'Sarah J. Maas',
-  'Mélissa Da Costa',
-  'Joël Dicker',
-  'Valérie Perrin',
-  'Madeline Miller',
-  'Emily Henry',
-  'Holly Black',
-];
-const AUTHORS: ExploreAuthor[] = AUTHOR_NAMES.map((name) => ({
-  name,
-  coverUrl:
-    SHELVES.flatMap((shelf) => shelf.books).find((book) => book.author === name && book.coverUrl)?.coverUrl ?? null,
-}));
+const AUTHORS = authorsCatalog.authors as ExploreAuthor[];
 
 export default function ExploreScreen() {
   const insets = useSafeAreaInsets();
