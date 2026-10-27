@@ -11,9 +11,9 @@
  *    │         ☕ │ │         ◎  │   ← grande icône en ton sur ton qui déborde
  *    └────────────┘ └────────────┘
  *
- * Ton sur ton : l'icône Lucide est la couleur du fond assombrie (encre
- * transparente), gravée d'un liseré clair dessous. Le nom suit la charte :
- * chocolat foncé sur beurre et beige, beurre clair sur rouge et chocolat.
+ * Ton sur ton, le nom compris (Lea, 2026-10-27) : le nom prend la teinte
+ * foncée de la paire, l'icône Lucide la couleur du fond assombrie (encre
+ * transparente), tous deux gravés d'un liseré clair dessous.
  *
  * Toucher un genre ouvre tous ses livres (l'écran Explorer passe en liste).
  */
@@ -63,7 +63,7 @@ const STYLE: Record<string, { pair: Pair; icon: LucideIcon }> = {
 };
 const FALLBACK = { pair: 'beige' as Pair, icon: HeartIcon };
 
-/** Charte : le texte passe en chocolat foncé sur les fonds clairs, en beurre clair sur les sombres */
+/** Fonds clairs : liseré et encre plus marqués pour que le ton sur ton se lise */
 const LIGHT_PAIRS: Pair[] = ['butter', 'beige'];
 
 interface ExploreGenresProps {
@@ -108,7 +108,10 @@ export default function ExploreGenres({ genres, onSelect }: ExploreGenresProps) 
               </View>
               <StitchBorder radius={RADIUS} color={creamAlpha(onLight ? 0.55 : 0.35)} />
               <Text
-                style={[styles.label, { color: onLight ? lowki.chocolate.dark : lowki.butter.light }]}
+                style={[
+                  styles.label,
+                  { color: lowki[pair].dark, textShadowColor: creamAlpha(onLight ? 0.6 : 0.22) },
+                ]}
                 numberOfLines={1}
                 adjustsFontSizeToFit
                 minimumFontScale={0.8}
@@ -166,5 +169,8 @@ const styles = StyleSheet.create({
     fontFamily: fonts.display,
     fontSize: 16,
     lineHeight: 20,
+    // Gravé : un liseré clair juste dessous
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 0,
   },
 });
