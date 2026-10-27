@@ -8,6 +8,7 @@ import {
   LOGO_WORD_RATIO,
   LOGO_WORD_VIEWBOX,
 } from '../../components/brand/logoEyesPath';
+import {useId} from 'react';
 import {DEBOSS_LIGHT, DEBOSS_OPACITY, SHAPE_GRADIENT, SHAPE_WORD} from './theme';
 
 /**
@@ -38,26 +39,26 @@ type EyesProps = {
 export type EyesPalette = {shape: readonly [string, string]; light: string; lightOpacity: number};
 const SPLASH_PALETTE: EyesPalette = {shape: SHAPE_GRADIENT, light: DEBOSS_LIGHT, lightOpacity: DEBOSS_OPACITY};
 
-const Eye = ({side, gaze, open, palette}: {side: 'left' | 'right'; gaze: EyesProps['gaze']; open: number; palette: EyesPalette}) => {
+const Eye = ({side, gaze, open, palette, uid}: {side: 'left' | 'right'; gaze: EyesProps['gaze']; open: number; palette: EyesPalette; uid: string}) => {
   const pupil = side === 'left' ? LEFT_PUPIL : RIGHT_PUPIL;
   const hole = side === 'left' ? LEFT_HOLE : RIGHT_HOLE;
   const reach = GAZE_REACH[side];
   const pivot = LID_PIVOT[side];
   const lid = `translate(0 ${pivot * (1 - open)}) scale(1 ${open})`;
   return (
-    <g clipPath={`url(#half-${side})`}>
+    <g clipPath={`url(#${uid}-half-${side})`}>
       <g transform={lid}>
         <path d={RING} fill={palette.light} fillOpacity={palette.lightOpacity} fillRule="evenodd" transform={`translate(0 ${DEBOSS_EYES})`} />
-        <path d={RING} fill="url(#eyes-shape)" fillRule="evenodd" />
-        <g clipPath={`url(#hole-${side})`}>
+        <path d={RING} fill={`url(#${uid}-shape)`} fillRule="evenodd" />
+        <g clipPath={`url(#${uid}-hole-${side})`}>
           <g transform={`translate(${gaze.x * reach} ${gaze.y * reach * 0.7})`}>
             <path d={pupil} fill={palette.light} fillOpacity={palette.lightOpacity} transform={`translate(0 ${DEBOSS_EYES})`} />
-            <path d={pupil} fill="url(#eyes-shape)" />
+            <path d={pupil} fill={`url(#${uid}-shape)`} />
           </g>
         </g>
       </g>
       <defs>
-        <clipPath id={`hole-${side}`}>
+        <clipPath id={`${uid}-hole-${side}`}>
           <path d={hole} />
         </clipPath>
       </defs>
@@ -65,24 +66,28 @@ const Eye = ({side, gaze, open, palette}: {side: 'left' | 'right'; gaze: EyesPro
   );
 };
 
-export const Eyes = ({size, gaze, open, palette = SPLASH_PALETTE}: EyesProps) => (
+export const Eyes = ({size, gaze, open, palette = SPLASH_PALETTE}: EyesProps) => {
+  // Un id par instance : plusieurs paires d'yeux de couleurs différentes à l'écran.
+  const uid = useId().replace(/:/g, '');
+  return (
   <svg width={size} height={size} viewBox="0 0 1200 1200" style={{overflow: 'visible'}}>
     <defs>
-      <linearGradient id="eyes-shape" x1="0" y1="0" x2="0" y2="1">
+      <linearGradient id={`${uid}-shape`} x1="0" y1="0" x2="0" y2="1">
         <stop offset="0" stopColor={palette.shape[0]} />
         <stop offset="1" stopColor={palette.shape[1]} />
       </linearGradient>
-      <clipPath id="half-left">
+      <clipPath id={`${uid}-half-left`}>
         <path d={LOGO_EYES_CLIP.left} />
       </clipPath>
-      <clipPath id="half-right">
+      <clipPath id={`${uid}-half-right`}>
         <path d={LOGO_EYES_CLIP.right} />
       </clipPath>
     </defs>
-    <Eye side="left" gaze={gaze} open={open.left} palette={palette} />
-    <Eye side="right" gaze={gaze} open={open.right} palette={palette} />
+    <Eye side="left" gaze={gaze} open={open.left} palette={palette} uid={uid} />
+    <Eye side="right" gaze={gaze} open={open.right} palette={palette} uid={uid} />
   </svg>
-);
+  );
+};
 
 const Debossed = ({d, viewBox, offset, width, height}: {d: string; viewBox: string; offset: number; width: number; height: number}) => (
   <svg width={width} height={height} viewBox={viewBox} style={{overflow: 'visible'}}>
