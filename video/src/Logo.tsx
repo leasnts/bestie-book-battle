@@ -36,7 +36,13 @@ type EyesProps = {
   palette?: EyesPalette;
 };
 
-export type EyesPalette = {shape: readonly [string, string]; light: string; lightOpacity: number};
+export type EyesPalette = {
+  shape: readonly [string, string];
+  light: string;
+  lightOpacity: number;
+  /** Fond plein sous la silhouette, pour empiler les yeux comme des autocollants. */
+  backing?: string;
+};
 const SPLASH_PALETTE: EyesPalette = {shape: SHAPE_GRADIENT, light: DEBOSS_LIGHT, lightOpacity: DEBOSS_OPACITY};
 
 const Eye = ({side, gaze, open, palette, uid}: {side: 'left' | 'right'; gaze: EyesProps['gaze']; open: number; palette: EyesPalette; uid: string}) => {
@@ -48,6 +54,7 @@ const Eye = ({side, gaze, open, palette, uid}: {side: 'left' | 'right'; gaze: Ey
   return (
     <g clipPath={`url(#${uid}-half-${side})`}>
       <g transform={lid}>
+        {palette.backing && <path d={OUTLINE} fill={palette.backing} />}
         <path d={RING} fill={palette.light} fillOpacity={palette.lightOpacity} fillRule="evenodd" transform={`translate(0 ${DEBOSS_EYES})`} />
         <path d={RING} fill={`url(#${uid}-shape)`} fillRule="evenodd" />
         <g clipPath={`url(#${uid}-hole-${side})`}>
