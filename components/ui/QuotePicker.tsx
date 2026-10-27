@@ -198,7 +198,7 @@ function Sweep({ height }: { height: number }) {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: '#120c09',
+    backgroundColor: '#1c110e',
     gap: spacing.md,
   },
   head: {

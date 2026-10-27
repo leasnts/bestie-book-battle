@@ -7,7 +7,6 @@
  */
 
 import * as Clipboard from 'expo-clipboard';
-import { Image } from 'expo-image';
 import { BookOpenIcon, CopyIcon, ShareIcon } from 'lucide-react-native';
 import React, { useRef, useState } from 'react';
 import { Animated, Pressable, ScrollView, Share, StyleSheet, Text, View } from 'react-native';
@@ -15,6 +14,7 @@ import Button3D from '../components/Button3D';
 import SheetPage, { SheetFooter } from '../components/ui/SheetPage';
 import { useProjectStore } from '../stores/projectStore';
 import { borderRadius, colors, fonts, fontSize, shadows, spacing } from '../utils/constants';
+import { CoverImage } from '../components/ui/BookCover';
 
 export default function InviteRoute() {
   const challenges = useProjectStore((s) => s.challenges);
@@ -36,7 +36,7 @@ export default function InviteRoute() {
     if (!selected) return;
     const code = selected.invite_code;
     const deepLink = selected.invite_url || `bestiebookbattle://join/${code}`;
-    const message = `Rejoins-moi pour lire "${selected.book_title}" sur bestiebookbattle ! 📚\n\nCode : ${code}\n${deepLink}`;
+    const message = `Rejoins-moi pour lire "${selected.book_title}" sur chapi ! 📚\n\nCode : ${code}\n${deepLink}`;
     try {
       await Share.share({ message, url: deepLink });
     } catch {
@@ -71,7 +71,7 @@ export default function InviteRoute() {
                     accessibilityState={{ selected: isSelected }}
                   >
                     {c.cover_url ? (
-                      <Image source={{ uri: c.cover_url }} style={styles.bookCardCover} contentFit="cover" />
+                      <CoverImage uri={c.cover_url} style={styles.bookCardCover} />
                     ) : (
                       <View style={[styles.bookCardCover, styles.noCover]}>
                         <BookOpenIcon size={24} color={colors.textTertiary} />
@@ -84,7 +84,7 @@ export default function InviteRoute() {
           ) : (
             <View style={styles.singleBook}>
               {selected.cover_url ? (
-                <Image source={{ uri: selected.cover_url }} style={styles.singleBookCover} contentFit="cover" />
+                <CoverImage uri={selected.cover_url} style={styles.singleBookCover} />
               ) : (
                 <View style={[styles.singleBookCover, styles.noCover]}>
                   <BookOpenIcon size={28} color={colors.textTertiary} />

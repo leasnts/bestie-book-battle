@@ -23,6 +23,7 @@ import {
     StyleSheet,
     Text,
     TextInput,
+    type TextInputInstance,
     View,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -45,8 +46,8 @@ export default function OnboardingBookFormScreen() {
     const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
 
     // Refs pour naviguer entre les champs via la touche "Suivant" du clavier
-    const titleRef = useRef<TextInput>(null);
-    const authorRef = useRef<TextInput>(null);
+    const titleRef = useRef<TextInputInstance>(null);
+    const authorRef = useRef<TextInputInstance>(null);
 
     /** Quand un livre est sélectionné depuis la recherche API */
     const handleSelectBook = (book: BookSearchResult) => {
@@ -140,7 +141,7 @@ export default function OnboardingBookFormScreen() {
                     Même structure que mainContent de index.tsx */}
                 <View style={styles.mainContent}>
                     <Text style={styles.title}>
-                        {addChallenge ? 'Décris ce nouveau bbb' : 'Décris ton premier bbb !'}
+                        {addChallenge ? 'Décris cette nouvelle lecture' : 'Décris ta première lecture !'}
                     </Text>
 
                     <View style={styles.formContainer}>
@@ -219,7 +220,7 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     backgroundTexture: {
-        ...StyleSheet.absoluteFillObject,
+        ...StyleSheet.absoluteFill,
         opacity: 0.05,
     },
     header: {

@@ -25,6 +25,7 @@ import {
   StyleSheet,
   Text,
   TextInput,
+  type TextInputInstance,
   View,
 } from 'react-native';
 import Button3D from '../components/Button3D';
@@ -37,6 +38,8 @@ import { useProgressStore } from '../stores/progressStore';
 import { useProjectStore } from '../stores/projectStore';
 import { borderRadius, colors, fonts, fontSize, shadowAlpha, shadows, spacing } from '../utils/constants';
 import { extractCoverPalette, type CoverPalette } from '../utils/coverPalette';
+import { CoverImage } from '../components/ui/BookCover';
+import { StitchBorder } from '../components/ui/Stitch';
 
 // Retire la barre « OK » native au-dessus du clavier numérique d'iOS
 const ACCESSORY_ID = 'editbook-pages-empty';
@@ -58,8 +61,8 @@ export default function EditBookRoute() {
   const editionOnly = !isAdmin;
   const currentCover = activeChallenge ? myCoverUrl(activeChallenge, mine) : null;
 
-  const authorRef = useRef<TextInput>(null);
-  const pagesRef = useRef<TextInput>(null);
+  const authorRef = useRef<TextInputInstance>(null);
+  const pagesRef = useRef<TextInputInstance>(null);
 
   const [title, setTitle] = useState(activeChallenge?.book_title ?? '');
   const [author, setAuthor] = useState(activeChallenge?.book_author ?? '');
@@ -170,7 +173,7 @@ export default function EditBookRoute() {
       >
         {displayCoverUrl ? (
           <View style={styles.cover}>
-            <Image source={{ uri: displayCoverUrl }} style={StyleSheet.absoluteFill} contentFit="cover" />
+            <CoverImage uri={displayCoverUrl} style={StyleSheet.absoluteFill} />
             <View style={styles.coverOverlay}>
               <CameraIcon size={20} color={colors.white} />
               <Text style={styles.coverOverlayText}>Modifier</Text>
@@ -178,6 +181,7 @@ export default function EditBookRoute() {
           </View>
         ) : (
           <View style={[styles.cover, styles.coverPlaceholder]}>
+            <StitchBorder radius={borderRadius.sm} />
             <CloudUploadIcon size={32} color={colors.textTertiary} />
             <Text style={styles.coverPlaceholderText}>Ajouter une couverture</Text>
           </View>
@@ -255,7 +259,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.bgSecondary,
   },
   coverOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: shadowAlpha(0.5),
     justifyContent: 'center',
     alignItems: 'center',
@@ -267,10 +271,8 @@ const styles = StyleSheet.create({
     color: colors.white,
     letterSpacing: 0.3,
   },
+  /** Pas encore de couverture : une zone cousue (#112), pas des tirets */
   coverPlaceholder: {
-    borderWidth: 2,
-    borderColor: colors.border,
-    borderStyle: 'dashed',
     justifyContent: 'center',
     alignItems: 'center',
     gap: 8,

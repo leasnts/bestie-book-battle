@@ -5,7 +5,7 @@
  *
  *    [█ Tout █]  [ En cours ]  [ Non lus ]  [ Lus ]
  *
- * Carrés arrondis, pas des pilules. Sélectionnée : lie de vin en dégradé, la
+ * Carrés arrondis, pas des pilules. Sélectionnée : rouge en dégradé, la
  * couleur d'accent (la même que les signets), texte crème. Sinon : contour encre
  * sur fond blanc, pour rester lisible par-dessus l'aquarelle du coin.
  */

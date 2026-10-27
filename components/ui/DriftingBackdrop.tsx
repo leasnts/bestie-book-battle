@@ -2,7 +2,7 @@
  * DriftingBackdrop — un fond vivant : des taches douces qui dérivent lentement.
  *
  * Derrière la pile des nouvelles du carnet. Les trois tons de l'app, adoucis
- * (sable, chocolat clair, un souffle de lie de vin), en deux couches qui
+ * (sable, chocolat clair, un souffle de rouge Lowki), en deux couches qui
  * glissent en sens contraire sur une quinzaine de secondes : ça respire sans
  * attirer l'œil loin de la note.
  *
@@ -31,16 +31,20 @@ const BACK = [
   'radial-gradient(55% 35% at 85% 70%, rgba(168,143,123,0.32) 0%, rgba(168,143,123,0) 70%)',
 ].join(', ');
 
-/** Un souffle de lie de vin et de sable clair, qui passe devant */
+/** Un souffle de rouge Lowki et de sable clair, qui passe devant */
 const FRONT = [
-  'radial-gradient(45% 30% at 80% 25%, rgba(140,59,76,0.13) 0%, rgba(140,59,76,0) 70%)',
+  'radial-gradient(45% 30% at 80% 25%, rgba(166,47,67,0.13) 0%, rgba(166,47,67,0) 70%)',
   'radial-gradient(50% 32% at 25% 80%, rgba(226,212,196,0.6) 0%, rgba(226,212,196,0) 70%)',
 ].join(', ');
 
 /** Un aller (ou un retour) : lent, pour que ça respire */
 const DRIFT = 15000;
 
-export default function DriftingBackdrop() {
+/**
+ * @param paper - La couleur du papier sous les taches ; crème par défaut (le
+ *   carnet), sable sous l'en-tête du profil pour qu'il se détache du fond
+ */
+export default function DriftingBackdrop({ paper = colors.bgLight }: { paper?: string } = {}) {
   const reduced = useReducedMotion();
   const t = useSharedValue(0);
 
@@ -68,7 +72,7 @@ export default function DriftingBackdrop() {
   }));
 
   return (
-    <View style={styles.paper} pointerEvents="none">
+    <View style={[styles.paper, { backgroundColor: paper }]} pointerEvents="none">
       <Animated.View style={[styles.layer, { experimental_backgroundImage: BACK }, back]} />
       <Animated.View style={[styles.layer, { experimental_backgroundImage: FRONT }, front]} />
     </View>
@@ -77,8 +81,7 @@ export default function DriftingBackdrop() {
 
 const styles = StyleSheet.create({
   paper: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: colors.bgLight,
+    ...StyleSheet.absoluteFill,
     overflow: 'hidden',
   },
   layer: {

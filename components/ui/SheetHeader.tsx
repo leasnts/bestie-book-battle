@@ -9,9 +9,9 @@
  * Règle non négociable : **le titre d'un sheet n'est jamais centré.**
  */
 
-import type { NativeStackNavigationOptions } from '@react-navigation/native-stack';
+import type { NativeStackNavigationOptions } from 'expo-router';
 import React, { useCallback, useState } from 'react';
-import MaskedView from '@react-native-masked-view/masked-view';
+import MaskedView from './MaskedView';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import {

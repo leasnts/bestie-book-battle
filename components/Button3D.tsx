@@ -2,17 +2,18 @@
  * Composant Button3D - Boutons avec effet 3D pixel-perfect
  * 
  * Deux variants sémantiques :
- * - **primary** (bouton principal / "nir") : fond noyer foncé (colors.dark900), pour l'action principale
- * - **secondary** (bouton secondaire) : fond crème (colors.bgLight), pour actions secondaires ou retour
+ * - **primary** (bouton principal) : chocolat en relief (Bevel `ink` : cerne, liseré, fond en dégradé), pour l'action principale
+ * - **secondary** (bouton secondaire) : papier en relief (Bevel `paper`), pour actions secondaires ou retour
  * 
  * Le bouton back est un Button3D variant="secondary" en mode icon-only.
  * Il peut aussi contenir du texte comme le primary (ex: "Retour", "Annuler").
  * 
- * Effet 3D : gradients concentrés aux bords, inversés au press.
+ * Effet 3D : liseré clair en haut, inversé au press.
  */
 
-import { colors, creamAlpha, fonts, inkAlpha, shadowAlpha } from '../utils/constants';
-import { LinearGradient } from 'expo-linear-gradient';
+import { feel } from '../utils/feel';
+import { colors, fonts } from '../utils/constants';
+import Bevel from './ui/Bevel';
 import {
   CheckIcon,
   ChevronLeftIcon,
@@ -69,7 +70,12 @@ interface Button3DProps {
   iconComponent?: React.ReactNode;
   iconPosition?: 'left' | 'right';
   iconOnly?: boolean;
-  size?: 'default' | 'compact';
+  /**
+   * `default` : 56 pt, pleine largeur ; `compact` : carré de 40 pt pour une icône
+   * seule ; `small` : 36 pt, à la taille de son texte, pour une action discrète
+   * posée dans un cadre (« Inviter » de la bannière du profil).
+   */
+  size?: 'default' | 'compact' | 'small';
   style?: ViewStyle;
   textStyle?: TextStyle;
   /**
@@ -102,10 +108,11 @@ export default function Button3D({
 }: Button3DProps) {
   const isPrimary = variant === 'primary';
   const isCompact = size === 'compact';
+  const isSmall = size === 'small';
   const showText = !iconOnly && (children !== undefined && children !== null && children !== '');
   const Icon = icon;
   const leadingIcon = iconComponent ?? (Icon ? (
-    <Icon size={isCompact ? 20 : 24} color={isPrimary ? colors.white : colors.textTertiary} />
+    <Icon size={isSmall ? 16 : isCompact ? 20 : 24} color={isPrimary ? colors.white : colors.textTertiary} />
   ) : null);
   const [pressed, setPressed] = useState(false);
 
@@ -118,7 +125,10 @@ export default function Button3D({
 
   return (
     <Pressable
-      onPress={onPress}
+      onPress={() => {
+        feel('appui');
+        onPress();
+      }}
       onPressIn={() => setPressed(true)}
       onPressOut={() => setPressed(false)}
       disabled={disabled || loading}
@@ -134,7 +144,7 @@ export default function Button3D({
         décalerait toutes les maquettes — et on étend la zone tactile de 2 pt
         tout autour. Le bouton se voit pareil et s'attrape mieux.
       */
-      hitSlop={isCompact ? 2 : undefined}
+      hitSlop={isCompact ? 2 : isSmall ? 4 : undefined}
       style={[
         (disabled || loading) && styles.buttonDisabled,
         isCompact && styles.compactWrapper,
@@ -144,121 +154,23 @@ export default function Button3D({
       {/* Shadow container - porte le drop shadow iOS */}
       <View style={[
         styles.shadowContainer,
-        isCompact && styles.shadowContainerCompact,
+        (isCompact || isSmall) && styles.shadowContainerCompact,
         isPrimary ? styles.primaryShadow : styles.secondaryShadow,
       ]}>
         
-        {/* Bouton avec overflow hidden pour clipper les gradients */}
+        {/* Bouton avec overflow hidden pour clipper le relief */}
         <View style={[
           styles.button,
           isCompact && styles.buttonCompact,
+          isSmall && styles.buttonSmall,
           isPrimary ? styles.primaryFill : styles.secondaryFill,
         ]}>
 
-          {/* ====== INNER SHADOWS simulées via LinearGradient ====== */}
-
-          {isPrimary && !pressed && (
-            <>
-              {/* DEFAULT : reflet crème en HAUT (bord dur, transition rapide) */}
-              <LinearGradient
-                colors={[
-                  creamAlpha(0.22),
-                  creamAlpha(0.06),
-                  creamAlpha(0),
-                  creamAlpha(0),
-                ]}
-                locations={[0, 0.1, 0.2, 1]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 0, y: 1 }}
-                style={styles.gradientOverlay}
-              />
-              {/* DEFAULT : ombre marron en BAS (bord dur, transition rapide) */}
-              <LinearGradient
-                colors={[
-                  shadowAlpha(0),
-                  shadowAlpha(0),
-                  shadowAlpha(0.25),
-                  shadowAlpha(0.55),
-                ]}
-                locations={[0, 0.8, 0.9, 1]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 0, y: 1 }}
-                style={styles.gradientOverlay}
-              />
-            </>
-          )}
-
-          {isPrimary && pressed && (
-            <>
-              {/* PRESSED : ombre marron en HAUT (inversé, bord dur) */}
-              <LinearGradient
-                colors={[
-                  shadowAlpha(0.55),
-                  shadowAlpha(0.25),
-                  shadowAlpha(0),
-                  shadowAlpha(0),
-                ]}
-                locations={[0, 0.1, 0.2, 1]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 0, y: 1 }}
-                style={styles.gradientOverlay}
-              />
-              {/* PRESSED : reflet crème en BAS (inversé, bord dur) */}
-              <LinearGradient
-                colors={[
-                  creamAlpha(0),
-                  creamAlpha(0),
-                  creamAlpha(0.08),
-                  creamAlpha(0.22),
-                ]}
-                locations={[0, 0.8, 0.9, 1]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 0, y: 1 }}
-                style={styles.gradientOverlay}
-              />
-            </>
-          )}
-
-          {/* Secondary button inner shadows */}
-          {!isPrimary && !pressed && (
-            <LinearGradient
-              colors={[
-                creamAlpha(0.6),
-                creamAlpha(0),
-                shadowAlpha(0),
-                shadowAlpha(0.15),
-              ]}
-              locations={[0, 0.3, 0.7, 1]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 0, y: 1 }}
-              style={styles.gradientOverlay}
-            />
-          )}
-
-          {!isPrimary && pressed && (
-            <LinearGradient
-              colors={[
-                shadowAlpha(0.15),
-                shadowAlpha(0),
-                creamAlpha(0),
-                creamAlpha(0.6),
-              ]}
-              locations={[0, 0.3, 0.7, 1]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 0, y: 1 }}
-              style={styles.gradientOverlay}
-            />
-          )}
-
-          {/* ====== STROKE : bordure gradient ====== */}
-          <View style={[
-            styles.strokeBorder,
-            isCompact && styles.strokeBorderCompact,
-            isPrimary ? styles.primaryStroke : styles.secondaryStroke,
-          ]} />
+          {/* Cerne, liseré et fond en dégradé : chocolat ou papier (Bevel) */}
+          <Bevel tone={isPrimary ? 'ink' : 'paper'} radius={isCompact || isSmall ? 12 : 24} pressed={pressed} />
 
           {/* ====== CONTENU ====== */}
-          <View style={[styles.content, isCompact && styles.contentCompact]}>
+          <View style={[styles.content, isCompact && styles.contentCompact, isSmall && styles.contentSmall]}>
             {loading ? (
               <ActivityIndicator color={isPrimary ? colors.white : colors.textTertiary} size="small" />
             ) : iconOnly && leadingIcon ? (
@@ -272,6 +184,7 @@ export default function Button3D({
                   <Text style={[
                     styles.text,
                     isPrimary ? styles.primaryText : styles.secondaryText,
+                    isSmall && styles.textSmall,
                     textStyle,
                   ]}>
                     {children}
@@ -302,6 +215,11 @@ const styles = StyleSheet.create({
     height: 40,
     borderRadius: 12,
   },
+  // Petit bouton à texte : 36 pt (zone tactile portée à 44 par hitSlop)
+  buttonSmall: {
+    height: 36,
+    borderRadius: 12,
+  },
   
   // Container qui porte le drop shadow (x=0, y=4, blur=6, ombre marron 25%)
   shadowContainer: {
@@ -310,18 +228,19 @@ const styles = StyleSheet.create({
   shadowContainerCompact: {
     borderRadius: 12,
   },
+  // Ombre douce de la maquette : 0 2px 4px à 10 % (blur Figma 4 = rayon iOS 2)
   primaryShadow: {
     shadowColor: colors.black,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 6,
-    elevation: 6,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
   },
   secondaryShadow: {
     shadowColor: colors.black,
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
     elevation: 2,
   },
 
@@ -334,33 +253,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   primaryFill: {
-    backgroundColor: colors.dark900,
+    backgroundColor: colors.dark950,
   },
   secondaryFill: {
     backgroundColor: colors.bgLight,
   },
 
-  // Gradients overlay (absoluteFill)
-  gradientOverlay: {
-    ...StyleSheet.absoluteFillObject,
-  },
-  
-  // Stroke border (1px inside, gradient simulé avec borderColor)
-  strokeBorder: {
-    ...StyleSheet.absoluteFillObject,
-    borderRadius: 24,
-    borderWidth: 1,
-  },
-  strokeBorderCompact: {
-    borderRadius: 12,
-  },
-  primaryStroke: {
-    borderColor: creamAlpha(0.2),
-  },
-  secondaryStroke: {
-    borderColor: inkAlpha(0.08),
-  },
-  
   // Contenu
   content: {
     flexDirection: 'row',
@@ -371,6 +269,13 @@ const styles = StyleSheet.create({
   },
   contentCompact: {
     paddingHorizontal: 0,
+  },
+  contentSmall: {
+    paddingHorizontal: 16,
+  },
+  textSmall: {
+    fontSize: 14,
+    lineHeight: 20,
   },
   text: {
     fontFamily: fonts.bodyBold,

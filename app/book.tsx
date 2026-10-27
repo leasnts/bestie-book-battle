@@ -66,6 +66,7 @@ import {
   median,
   type TrackCap,
 } from '../utils/track';
+import { AccentUnits } from '../components/ui/AccentWord';
 
 export default function BookRoute() {
   const router = useRouter();
@@ -167,7 +168,7 @@ export default function BookRoute() {
     if (!activeChallenge?.invite_code) return;
     try {
       await Share.share({
-        message: `Rejoins-moi pour lire « ${activeChallenge.book_title} » sur bestiebookbattle !\n\nCode d'invitation : ${activeChallenge.invite_code.split('').join(' ')}`,
+        message: `Rejoins-moi pour lire « ${activeChallenge.book_title} » sur chapi !\n\nCode d'invitation : ${activeChallenge.invite_code.split('').join(' ')}`,
       });
     } catch {
       // partage annulé
@@ -445,7 +446,7 @@ function Row({
         )}
       </View>
       <Text style={[styles.rowLabel, dimmed && styles.rowLabelDimmed]} numberOfLines={1}>
-        {label}
+        <AccentUnits text={label} size={styles.rowLabel.fontSize} color={styles.rowLabel.color} />
       </Text>
       {tag && (
         <View style={styles.tag}>

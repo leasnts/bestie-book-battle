@@ -9,7 +9,7 @@
  * seul dessin du total fantôme : `GhostTotal` sert aux deux.
  */
 
-import MaskedView from '@react-native-masked-view/masked-view';
+import MaskedView from './MaskedView';
 import { LinearGradient } from 'expo-linear-gradient';
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
@@ -17,7 +17,7 @@ import Svg, { Defs, FeGaussianBlur, Filter, Text as SvgText } from 'react-native
 import { colors, fonts } from '../../utils/constants';
 
 /** L'encre du chiffre : plus claire en haut */
-export const INK = ['#6b5546', colors.dark950] as const;
+export const INK = [colors.textTertiary, colors.dark950] as const;
 
 /*
   Mesures de Martian Grotesk Wide Bold (`fonts.displayHero`), en fraction de

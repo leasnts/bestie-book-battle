@@ -28,28 +28,20 @@
 
 import { useRouter } from 'expo-router';
 import { BookOpenIcon, CirclePlusIcon, HeartIcon, SearchIcon, ShareIcon } from 'lucide-react-native';
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Pressable, Share, StyleSheet, Text, View } from 'react-native';
 import Button3D from '../components/Button3D';
 import BookCover, { COVER_RATIO } from '../components/ui/BookCover';
 import SheetPage, { SheetFooter } from '../components/ui/SheetPage';
+import { fetchEditions } from '../services/bookApi';
 import { useAuthStore } from '../stores/authStore';
 import { useExploreStore } from '../stores/exploreStore';
 import { useOnboardingStore } from '../stores/onboardingStore';
 import { useProjectStore } from '../stores/projectStore';
 import { borderRadius, colors, fonts, inkAlpha, spacing } from '../utils/constants';
+import { compactText } from '../utils/normalizeText';
 
 const COVER_H = 140;
-
-/** « Le Prince cruel » et « le prince  cruel » désignent le même livre */
-function normalizeTitle(title: string): string {
-  return title
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, ' ')
-    .trim();
-}
 
 export default function ExploreBookRoute() {
   const router = useRouter();
@@ -63,11 +55,26 @@ export default function ExploreBookRoute() {
   const setActiveChallenge = useProjectStore((state) => state.setActiveChallenge);
   const firstName = useAuthStore((state) => state.user?.first_name);
 
+  // Les résultats de recherche n'ont pas de pages : celles de l'édition la plus récente
+  const [editionPages, setEditionPages] = useState<number | null>(null);
+  useEffect(() => {
+    setEditionPages(null);
+    if (!book || book.pageCount) return;
+    let cancelled = false;
+    fetchEditions(book).then((editions) => {
+      if (!cancelled) setEditionPages(editions[0]?.pageCount ?? null);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [book]);
+  const pageCount = book?.pageCount ?? editionPages;
+
   // Déjà dans ma bibliothèque ? Alors on l'ouvre au lieu d'en relancer un
   const inLibrary = useMemo(() => {
     if (!book) return null;
-    const title = normalizeTitle(book.title);
-    return challenges.find((c) => normalizeTitle(c.book_title) === title) ?? null;
+    const title = compactText(book.title);
+    return challenges.find((c) => compactText(c.book_title) === title) ?? null;
   }, [book, challenges]);
 
   const handleStart = useCallback(() => {
@@ -81,7 +88,7 @@ export default function ExploreBookRoute() {
     // Pages et couverture pré-remplies, comme après une recherche dans le parcours
     const onboarding = useOnboardingStore.getState();
     onboarding.reset();
-    onboarding.setApiPageCount(book.pageCount);
+    onboarding.setApiPageCount(pageCount);
     onboarding.setApiCoverUrl(book.coverUrl);
     // Fermer d'abord le sheet, sinon l'écran poussé s'ouvrirait À L'INTÉRIEUR
     router.back();
@@ -94,7 +101,7 @@ export default function ExploreBookRoute() {
         addChallenge: 'true',
       },
     });
-  }, [book, inLibrary, setActiveChallenge, router, firstName]);
+  }, [book, pageCount, inLibrary, setActiveChallenge, router, firstName]);
 
   const handleShare = useCallback(async () => {
     if (!book) return;
@@ -115,7 +122,7 @@ export default function ExploreBookRoute() {
 
   if (!book) return null;
 
-  const details = [book.pageCount ? `${book.pageCount} p.` : null, book.publishedDate?.slice(0, 4)]
+  const details = [pageCount ? `${pageCount} p.` : null, book.publishedDate?.slice(0, 4)]
     .filter(Boolean)
     .join(' · ');
 

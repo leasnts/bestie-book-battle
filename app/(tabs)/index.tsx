@@ -11,8 +11,7 @@
  * 2. SÉLECTEUR DE PAGE : scroll pour choisir sa page + boutons annuler/valider
  * 3. TOP 3 : le podium du challenge, plus ta ligne si tu n'y es pas
  * 
- * Le fond utilise une texture "noise" semi-transparente (comme l'onboarding),
- * remplaçant les anciennes lignes de cahier.
+ * Le fond est le papier uni (colors.bgApp), sans texture ni dégradé.
  * 
  * Données : tout vient de Supabase via les stores Zustand (authStore, projectStore, progressStore).
  */
@@ -22,6 +21,7 @@ import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
     ActivityIndicator,
+    Alert,
     AppState,
     StyleSheet,
     Text,
@@ -37,15 +37,17 @@ import Animated, {
     withTiming,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import Button3D from '../../components/Button3D';
 import PageTransition from '../../components/PageTransition';
 import PopEyes from '../../components/PopEyes';
 import BookSection from '../../components/ui/BookSection';
-import CoverBackdrop from '../../components/ui/CoverBackdrop';
 import GlassButton from '../../components/ui/GlassButton';
+import StreakPill from '../../components/ui/StreakPill';
 import NoteTile from '../../components/ui/NoteTile';
 import NoteTabs, { NOTE_TABS_HEIGHT } from '../../components/ui/NoteTabs';
 import PageSection from '../../components/ui/PageSection';
+import { StitchLine } from '../../components/ui/Stitch';
 import LeaderboardSection from '../../components/ui/LeaderboardSection';
 import { getAllUserPages } from '../../services/supabase/database';
 import { myCoverUrl } from '../../services/myEdition';
@@ -58,13 +60,13 @@ import { useGoalStore } from '../../stores/goalStore';
 import { useProgressStore } from '../../stores/progressStore';
 import { useAnnotationStore } from '../../stores/annotationStore';
 import { useProjectStore } from '../../stores/projectStore';
-import { colors, fonts, shadowAlpha, spacing } from '../../utils/constants';
-import { getActiveStreak } from '../../utils/streak';
+import { colors, fonts, shadowAlpha, spacing, SPREAD_MIN_WIDTH } from '../../utils/constants';
+import { feel, type FeelName } from '../../utils/feel';
+import { dayString } from '../../utils/streak';
+import { useMyStreak } from '../../hooks/useMyStreak';
 import { useTabBarInset } from '../../components/ui/GlassTabBar';
 import { BookOpenIcon, CirclePlusIcon, LibraryBigIcon } from 'lucide-react-native';
 
-// Texture de fond "noise" réutilisée depuis l'onboarding
-const TEXTURE_IMAGE = require('../../assets/images/61ea1e0c638b5b9c8100383a37a5b488848db623.png');
 
 /**
  * Résout la source d'un avatar utilisateur.
@@ -80,15 +82,20 @@ export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   // Place réservée sous le contenu pour la barre d'onglets flottante
   const tabBarInset = useTabBarInset();
-  const { height: windowHeight } = useWindowDimensions();
+  const { width: windowWidth, height: windowHeight } = useWindowDimensions();
+  // iPhone Duo déplié : l'écran presque carré devient un livre ouvert. Page de
+  // gauche le livre et « Ma page », page de droite le classement et le carnet
+  // (étirés : en carrés, ils mangeaient tout l'écran)
+  const spread = windowWidth >= SPREAD_MIN_WIDTH;
   // Petits écrans : l'accueil doit tenir sans défiler (règle de Lea)
   // - sous 830 pt (SE, mini) : chiffre de page plus petit ;
   // - sous 700 pt (SE) : classement réduit au 1er et à moi.
-  const compactPage = windowHeight < 830;
+  // Le Duo déplié est bas (669 pt) mais chaque page a toute la hauteur
+  const compactPage = !spread && windowHeight < 830;
   // Taille du chiffre de page : petite sur SE/mini, plus grosse sur les grands
   // écrans où il reste de la place (17 Pro, Pro Max)
-  const pickerFontSize = windowHeight < 830 ? 60 : windowHeight < 900 ? 100 : 108;
-  const compactLeaderboard = windowHeight < 700;
+  const pickerFontSize = spread ? 100 : windowHeight < 830 ? 60 : windowHeight < 900 ? 100 : 108;
+  const compactLeaderboard = !spread && windowHeight < 700;
   // SE : marges resserrées aussi (entre les cadres et dans les cadres)
   const compactSpacing = compactLeaderboard;
   // Espace entre les cadres : serré sur SE, plus aéré sur les grands écrans
@@ -254,11 +261,24 @@ export default function HomeScreen() {
   // Savoir si l'utilisateur a bougé le scroll
   const hasChanged = currentPageInput !== lastSavedPage;
 
-  // Ma série en jours, affichée dans le cadre « Ma page »
-  const myStreak = getActiveStreak(
-    myProgress?.streak_count ?? 0,
-    myProgress?.last_streak_date ?? null,
-  );
+  // Ma série : la gélule en haut à droite
+  const myStreakInfo = useMyStreak();
+
+  // Des jours manqués et assez de marque-pages en poche : on les propose, une fois par jour
+  // et par livre, avant que la lecture du jour ne relance la série à 1.
+  useEffect(() => {
+    const { state, challengeId } = myStreakInfo;
+    if (state !== 'missed' || !challengeId) return;
+    const key = `streakSaveShown:${challengeId}`;
+    const today = dayString(0);
+    AsyncStorage.getItem(key)
+      .then((shown) => {
+        if (shown === today) return;
+        AsyncStorage.setItem(key, today).catch(() => {});
+        router.push('/streak-save');
+      })
+      .catch(() => {});
+  }, [myStreakInfo.state, myStreakInfo.challengeId]);
 
   // Progression moyenne du groupe (basée sur les pourcentages individuels)
   const averagePercentage = participantsMatchChallenge
@@ -282,10 +302,17 @@ export default function HomeScreen() {
     // Capture le delta AVANT la sauvegarde (après, lastSavedPage va changer)
     const previousPage = lastSavedPage;
     const delta = currentPageInput - previousPage;
+    // Mon rang et mon % avant : pour savoir si je passe devant quelqu'un ou un cap
+    const meBefore = participants.find((p) => p.progress.user_id === user.id);
 
     try {
       await updateProgress(activeChallenge.id, user.id, currentPageInput);
       setLastProgressChallengeId(activeChallenge.id);
+
+      const meAfter = useProgressStore
+        .getState()
+        .participants.find((p) => p.progress.user_id === user.id);
+      feel(saveMoment(meBefore, meAfter, previousPage));
 
       // Ma progression a bougé : le serveur ouvre les notes que je viens de
       // dépasser. Elles arrivent en post-it pendant que la feuille tombe.
@@ -333,7 +360,29 @@ export default function HomeScreen() {
       }
     } catch (error) {
       console.error('Erreur lors de la sauvegarde:', error);
+      feel('erreur');
+      Alert.alert('Page non enregistrée', 'Réessaie dans un instant.');
     }
+  };
+
+  /**
+   * Le moment à faire sentir après l'enregistrement : le plus fort l'emporte,
+   * un seul son. Livre fini > passer devant quelqu'un > cap atteint > page posée.
+   */
+  const saveMoment = (
+    before: { rank: number; percentage: number } | undefined,
+    after: { rank: number; percentage: number } | undefined,
+    previousPage: number,
+  ): FeelName => {
+    if (previousPage < totalPages && currentPageInput >= totalPages) return 'fini';
+    if (before && after && participants.length > 1 && after.rank < before.rank) return 'depasser';
+    if (
+      before &&
+      after &&
+      caps.some((c) => c.state === 'current' && before.percentage < c.percent && after.percentage >= c.percent)
+    )
+      return 'objectif';
+    return 'valider';
   };
 
   // ===== Annuler le changement (bouton undo ↩) =====
@@ -417,32 +466,34 @@ export default function HomeScreen() {
 
   return (
     <PageTransition>
-    <View style={styles.container}>
-      {/* Fond neutre en taches dégradées : plus les couleurs de la couverture */}
-      <CoverBackdrop />
-
-      {/* Texture de fond "noise" semi-transparente */}
-      <Image
-        source={TEXTURE_IMAGE}
-        style={styles.backgroundTexture}
-        contentFit="cover"
-      />
-
+    {/* La pastille de l'heure du Duo déplié prend le bord droit (insets.right) */}
+    <View style={[styles.container, { paddingLeft: insets.left, paddingRight: insets.right }]}>
       {/* ═══════════ HEADER ═══════════ */}
       <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
         {/* Bibliothèque — toutes mes lectures, sur des étagères. Le même rond en
             verre que le « + » de la barre d'onglets */}
-        <GlassButton
-          icon={LibraryBigIcon}
-          onPress={() => router.push('/library')}
-          accessibilityLabel="Mes lectures"
-        />
+        <View style={styles.headerSide}>
+          <GlassButton
+            icon={LibraryBigIcon}
+            onPress={() => router.push('/library')}
+            accessibilityLabel="Mes lectures"
+          />
+        </View>
 
         {/* PopEyes mascotte — décoratif */}
-        <PopEyes size="small" />
+        <PopEyes size="small" vector />
 
-        {/* Cale de la largeur du bouton bibliothèque : garde PopEyes au centre */}
-        <View style={styles.headerSpacer} />
+        {/* Ma série, en miroir de la bibliothèque. Les deux côtés partagent la
+            largeur : PopEyes reste au centre, quelle que soit la gélule */}
+        <View style={[styles.headerSide, styles.headerSideEnd]}>
+          {myStreakInfo.loaded && (
+            <StreakPill
+              days={myStreakInfo.days}
+              state={myStreakInfo.state}
+              onPress={() => router.push('/streak')}
+            />
+          )}
+        </View>
       </View>
 
       {/*
@@ -454,10 +505,13 @@ export default function HomeScreen() {
       <View
         style={[
           styles.frames,
+          spread && styles.framesSpread,
           // De l'air au-dessus de la barre d'onglets, sauf sur SE où chaque point compte
           { paddingBottom: tabBarInset + (compactSpacing ? spacing.md : spacing['4xl']) },
         ]}
       >
+      {/* Livre ouvert : la page de gauche. Sinon elle s'efface (display contents) */}
+      <View style={spread ? styles.spreadPage : styles.noPage}>
       {/* ═══════════ CADRE 1 : LE LIVRE ═══════════ */}
       {activeChallenge && (
         <View style={[styles.bookSection, frameGap]}>
@@ -466,7 +520,6 @@ export default function HomeScreen() {
             coverUrl={myCoverUrl(activeChallenge, myProgress ?? cachedMyProgress)}
             myPercent={myPercent}
             caps={caps}
-            streakDays={myStreak}
             compact={compactSpacing}
             onPress={() => router.push('/book')}
           />
@@ -540,15 +593,24 @@ export default function HomeScreen() {
         </View>
       )}
 
+      </View>
+
+      {/* Le pli du livre ouvert, cousu */}
+      {spread && activeChallenge && <StitchLine vertical style={styles.fold} />}
+
       {/* ═══════════ CADRE 3 : LE BENTO — CLASSEMENT ET CARNET ═══════════
         Deux carrés côte à côte : où je me situe dans le club, et la note à la une.
-        Seul dans le livre, pas de classement : le carnet en une bande pleine largeur. */}
+        Seul dans le livre, pas de classement : le carnet en une bande pleine largeur.
+        Livre ouvert : la page de droite, l'un sous l'autre sur toute la hauteur. */}
       {activeChallenge && (
         <View
           style={[
             styles.bento,
+            spread && styles.bentoSpread,
             // De quoi laisser dépasser les intercalaires du carnet
-            { paddingTop: (compactSpacing ? spacing.xs : spacing.md) + NOTE_TABS_HEIGHT },
+            spread
+              ? { paddingTop: spacing.md }
+              : { paddingTop: (compactSpacing ? spacing.xs : spacing.md) + NOTE_TABS_HEIGHT },
           ]}
         >
           {!alone && (
@@ -559,10 +621,11 @@ export default function HomeScreen() {
                 onPress={() => router.push('/leaderboard')}
                 compact={compactLeaderboard}
                 square
+                fill={spread}
               />
             </View>
           )}
-          <View style={styles.bentoCell}>
+          <View style={[styles.bentoCell, spread && { paddingTop: NOTE_TABS_HEIGHT }]}>
             {/* Avant la note : le bas des intercalaires glisse dessous */}
             <NoteTabs />
             <NoteTile
@@ -571,7 +634,8 @@ export default function HomeScreen() {
               freshCount={revealedNotes.length}
               aheadCount={notesMatchChallenge ? notesAhead.length : 0}
               myTotalPages={totalPages}
-              wide={alone}
+              wide={alone && !spread}
+              fill={spread}
               onPress={() => router.push('/carnet')}
             />
           </View>
@@ -601,14 +665,10 @@ const styles = StyleSheet.create({
   // ===== CONTAINER PRINCIPAL =====
   container: {
     flex: 1,
-    backgroundColor: colors.bgLight,
+    backgroundColor: colors.bgApp,
   },
 
   // Texture de fond semi-transparente
-  backgroundTexture: {
-    ...StyleSheet.absoluteFillObject,
-    opacity: 0.025,
-  },
 
   // ===== HEADER =====
   // En-tête resserré (72 → 56 pt) pour que les trois cadres tiennent sans défiler
@@ -619,12 +679,35 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingBottom: spacing.sm,
   },
-  headerSpacer: {
-    width: 44,
+  headerSide: {
+    flex: 1,
+    flexDirection: 'row',
+  },
+  headerSideEnd: {
+    justifyContent: 'flex-end',
   },
   // La zone qui porte les trois cadres : la hauteur de l'écran, jamais plus
   frames: {
     flex: 1,
+  },
+  // Livre ouvert : deux pages côte à côte
+  framesSpread: {
+    flexDirection: 'row',
+  },
+  // minWidth 0 : sans lui, une page ne descend pas sous la largeur de son contenu
+  // et les deux pages n'ont pas la même largeur
+  spreadPage: {
+    flex: 1,
+    minWidth: 0,
+  },
+  // Hors livre ouvert, la page de gauche n'existe pas : ses cadres restent
+  // dans la colonne
+  noPage: {
+    display: 'contents',
+  },
+  // La couture du pli, entre les deux pages
+  fold: {
+    marginTop: spacing.lg,
   },
 
   // ===== CADRE 1 : LE LIVRE =====
@@ -654,6 +737,12 @@ const styles = StyleSheet.create({
     gap: spacing.md,
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.md,
+  },
+  // Livre ouvert : la page de droite, classement au-dessus du carnet
+  bentoSpread: {
+    flex: 1,
+    minWidth: 0,
+    flexDirection: 'column',
   },
   bentoCell: {
     flex: 1,

@@ -28,6 +28,7 @@
  */
 
 import * as Haptics from 'expo-haptics';
+import { buzz } from '../../utils/feel';
 import { LinearGradient } from 'expo-linear-gradient';
 import { LockIcon, MicIcon, PenLineIcon } from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
@@ -51,11 +52,12 @@ import {
   formatVoiceDuration,
   isEmojiOnly,
 } from '../../utils/annotations';
-import { colors, fonts, inkAlpha, inkGradient, motion, postIt, spacing } from '../../utils/constants';
+import { colors, fonts, inkAlpha, inkGradient, motion, postIt, postItDeepOf, spacing } from '../../utils/constants';
 import NoteSticker, { STICKER_BASE_LARGE } from './NoteSticker';
 import PeelSurface, { peelAmount, pullSpeed } from './PeelSurface';
 import PressableScale from './PressableScale';
 import { useWriteNote } from './WriteNoteButton';
+import { AccentUnit, AccentUnits } from './AccentWord';
 
 interface NoteTileProps {
   /**
@@ -75,6 +77,11 @@ interface NoteTileProps {
    * largeur et garde la hauteur qu'il aurait eue à côté de lui.
    */
   wide?: boolean;
+  /**
+   * Prend toute la hauteur qu'on lui donne au lieu d'être carré (la page de
+   * droite du livre ouvert, iPhone Duo déplié).
+   */
+  fill?: boolean;
   onPress: () => void;
 }
 
@@ -91,6 +98,15 @@ const FLICK_VELOCITY = 500;
 
 const easeOut = Easing.bezier(...motion.easing.easeOutQuart);
 
+/** Les autocollants qui dépassent dessous, de travers : [angle, décalage] (le bloc neuf, la pile des nouvelles) */
+const PAD_TILT = [
+  [-9, -6],
+  [6, 5],
+] as const;
+
+/** La pastille des nouvelles : blanc des cadres, jamais d'aplat */
+const freshGradient = ['#fefdfb', '#f3efe9'] as const;
+
 export default function NoteTile({
   notes,
   myUserId,
@@ -98,13 +114,14 @@ export default function NoteTile({
   aheadCount,
   myTotalPages,
   wide = false,
+  fill = false,
   onPress,
 }: NoteTileProps) {
   const [size, setSize] = useState<TileSize | null>(null);
   const onLayout = (e: LayoutChangeEvent) => {
-    const { width } = e.nativeEvent.layout;
+    const { width, height: given } = e.nativeEvent.layout;
     // En large : la hauteur d'un des deux carrés du bento
-    const height = wide ? (width - spacing.md) / 2 : width;
+    const height = fill ? given : wide ? (width - spacing.md) / 2 : width;
     setSize((prev) => (prev && prev.w === width && prev.h === height ? prev : { w: width, h: height }));
   };
 
@@ -122,6 +139,9 @@ export default function NoteTile({
   /** Sa place dans les nouvelles (1, 2…), tant qu'on est dedans */
   const freshPlace = (i: number) => (i < freshCount ? i + 1 : 0);
   const peelOff = () => setTurn((t) => t + 1);
+  /** Des nouvelles encore derrière celle du dessus : elles dépassent en pile, de travers */
+  const pile = at < freshCount ? notes.slice(at + 1, Math.min(freshCount, at + 1 + PAD_TILT.length)) : [];
+  const lean = size ? size.h / size.w : 1;
   /** Rien du tout, ni lisible ni plus loin : on invite à la première note */
   const untouched = !note && aheadCount === 0;
   const write = useWriteNote();
@@ -149,7 +169,7 @@ export default function NoteTile({
   return (
     <>
     <PressableScale
-      style={wide ? (size ? { height: size.h } : styles.tileWide) : styles.tile}
+      style={fill ? styles.tileFill : wide ? (size ? { height: size.h } : styles.tileWide) : styles.tile}
       onLayout={onLayout}
       onPress={untouched ? write.open : onPress}
       accessibilityRole="button"
@@ -162,6 +182,25 @@ export default function NoteTile({
       {size &&
         (note ? (
           <>
+            {pile.map((n, i) => (
+              <View
+                key={n.id}
+                style={[
+                  StyleSheet.absoluteFill,
+                  { transform: [{ translateX: PAD_TILT[i][1] }, { rotate: `${PAD_TILT[i][0] * lean}deg` }, { scale: 0.97 }] },
+                ]}
+                pointerEvents="none"
+              >
+                <NoteSticker
+                  id={`note-tile-pile-${n.id}`}
+                  color={ANNOTATION_CATEGORIES[n.category].color}
+                  width={size.w}
+                  height={size.h}
+                  maxBase={STICKER_BASE_LARGE}
+                  corner="none"
+                />
+              </View>
+            ))}
             {/* La clé suit le tour : celui du dessous devient celui du dessus sans être redessiné */}
             {next && (
               <View key={turn + 1} style={StyleSheet.absoluteFill} pointerEvents="none">
@@ -250,17 +289,12 @@ function FirstNote({ tile, page }: { tile: TileSize; page: number }) {
   return (
     <View style={box}>
       {/* Le bloc : deux autocollants de couleur dessous, qui dépassent de travers */}
-      {(
-        [
-          [postIt.sauge, -9, -6],
-          [postIt.jaune, 6, 5],
-        ] as const
-      ).map(([color, angle, shift]) => (
+      {([postIt.sauge, postIt.jaune] as const).map((color, i) => (
         <View
           key={color}
           style={[
             StyleSheet.absoluteFill,
-            { transform: [{ translateX: shift }, { rotate: `${angle * lean}deg` }, { scale: 0.97 }] },
+            { transform: [{ translateX: PAD_TILT[i][1] }, { rotate: `${PAD_TILT[i][0] * lean}deg` }, { scale: 0.97 }] },
           ]}
           pointerEvents="none"
         >
@@ -276,7 +310,7 @@ function FirstNote({ tile, page }: { tile: TileSize; page: number }) {
             </View>
             <View style={styles.content}>
               <View style={styles.head}>
-                <Text style={styles.page} maxFontSizeMultiplier={1.3}>p. {page}</Text>
+                <Text style={styles.page} maxFontSizeMultiplier={1.3}><AccentUnit size={styles.page.fontSize} color={styles.page.color}>p.</AccentUnit> {page}</Text>
               </View>
               <View style={styles.lines}>
                 {Array.from({ length: BLANK_LINES }, (_, i) => (
@@ -379,7 +413,6 @@ function PeelCard({
     setSize((prev) => (prev && prev.w === lw && prev.h === lh ? prev : { w: lw, h: lh }));
   };
 
-  const buzz = (style: Haptics.ImpactFeedbackStyle) => Haptics.impactAsync(style).catch(() => {});
 
   /** Le doigt lâche : le coin se recolle, ou l'autocollant s'envole */
   const release = () => {
@@ -447,7 +480,7 @@ function PeelCard({
       ax.value = Math.abs(tx) > Math.abs(ty) * 0.4 ? (tx > 0 ? 0 : w.value) : startX.value < w.value / 2 ? 0 : w.value;
       ay.value = Math.abs(ty) > Math.abs(tx) * 0.4 ? (ty > 0 ? 0 : h.value) : startY.value < h.value / 2 ? 0 : h.value;
       live.value = 1;
-      runOnJS(buzz)(Haptics.ImpactFeedbackStyle.Light);
+      runOnJS(buzz)(Haptics.ImpactFeedbackStyle.Medium);
     })
     .onUpdate((e) => {
       if (!live.value) return;
@@ -457,7 +490,7 @@ function PeelCard({
       const nowArmed = peelAmount(values) >= PEEL_OFF ? 1 : 0;
       if (nowArmed !== armed.value) {
         armed.value = nowArmed;
-        runOnJS(buzz)(nowArmed ? Haptics.ImpactFeedbackStyle.Medium : Haptics.ImpactFeedbackStyle.Light);
+        runOnJS(buzz)(nowArmed ? Haptics.ImpactFeedbackStyle.Heavy : Haptics.ImpactFeedbackStyle.Medium);
       }
     })
     .onEnd((e) => {
@@ -505,6 +538,8 @@ function NoteContent({
   myTotalPages: number;
 }) {
   const page = formatNotePage(note.position, note.edition_total_pages, myTotalPages);
+  // Le numéro de page, ton sur ton dans le foncé de la catégorie
+  const pageTone = postItDeepOf(ANNOTATION_CATEGORIES[note.category].color)?.page ?? colors.textPrimary;
   const author = isMine ? 'Moi' : note.author?.first_name || 'Participant';
   // Une note, c'est un emoji seul OU un texte : l'emoji d'une ancienne note passe en tête
   const text = note.body ? (note.emoji ? `${note.emoji} ${note.body}` : note.body) : null;
@@ -512,7 +547,17 @@ function NoteContent({
   return (
     <View style={styles.content}>
       <View style={styles.head}>
-        <Text style={styles.page} maxFontSizeMultiplier={1.3}>{page}</Text>
+        {/* Des nouvelles à lire : combien il en reste, sur une pastille papier */}
+        {freshAt > 0 && (
+          <LinearGradient colors={freshGradient} style={styles.fresh}>
+            <Text style={styles.freshText} maxFontSizeMultiplier={1.3}>
+              {freshCount - freshAt + 1}
+            </Text>
+          </LinearGradient>
+        )}
+        <Text style={[styles.page, { color: pageTone }]} maxFontSizeMultiplier={1.3}>
+          <AccentUnits text={page} size={styles.page.fontSize} color={pageTone} />
+        </Text>
       </View>
 
       <View style={styles.body}>
@@ -537,12 +582,6 @@ function NoteContent({
         <Text style={styles.author} numberOfLines={1}>
           {author}
         </Text>
-        {freshAt > 0 && (
-          <Text style={styles.fresh}>
-            {freshAt}{' '}/{' '}
-            {freshCount}
-          </Text>
-        )}
       </View>
     </View>
   );
@@ -556,9 +595,9 @@ function VoiceBadge({ seconds, levels }: { seconds: number; levels: number[] | n
   });
   return (
     <View style={styles.voice}>
-      <View style={styles.voiceIcon}>
+      <LinearGradient colors={inkGradient} style={styles.voiceIcon}>
         <MicIcon size={13} color={colors.white} strokeWidth={2.4} />
-      </View>
+      </LinearGradient>
       <View style={styles.wave}>
         {bars.map((height, index) => (
           <View key={index} style={[styles.waveBar, { height }]} />
@@ -577,6 +616,9 @@ const styles = StyleSheet.create({
   tileWide: {
     aspectRatio: 2,
   },
+  tileFill: {
+    flex: 1,
+  },
   content: {
     flex: 1,
     paddingTop: spacing.md + 2,
@@ -587,7 +629,7 @@ const styles = StyleSheet.create({
   },
   head: {
     flexDirection: 'row',
-    alignItems: 'baseline',
+    alignItems: 'center',
     gap: spacing.sm,
   },
   page: {
@@ -632,11 +674,19 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: inkAlpha(0.66),
   },
+  // Le papier blanc des cadres, posé sur l'autocollant
   fresh: {
-    marginLeft: 'auto',
+    minWidth: 24,
+    height: 24,
+    paddingHorizontal: 6,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  freshText: {
     fontFamily: fonts.bodyExtraBold,
-    fontSize: 12,
-    color: colors.accent,
+    fontSize: 13,
+    color: colors.textPrimary,
     fontVariant: ['tabular-nums'],
   },
 
@@ -652,7 +702,6 @@ const styles = StyleSheet.create({
     borderRadius: 13,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.dark900,
   },
   wave: {
     flex: 1,

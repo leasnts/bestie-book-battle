@@ -8,58 +8,101 @@
  *    │ ♥ Mes envies                  │
  *    │ ▐██▌ ┏━━┓ ▛▀▀▜ →              │
  *    │ ░░░░░░░░░░░░░░░               │
- *    │ En ce moment                  │
+ *    │ Genres                        │
+ *    │ [Contemporain] [Thriller] [… →│
+ *    │ Populaire sur BookTok         │
  *    │ ▐██▌ ┏━━┓ ▛▀▀▜ ▐██▌ →         │
  *    │ ░░░░░░░░░░░░░░░░░░░░          │
- *    │ Contemporain, Thriller…       │
+ *    │ Nouveautés                    │
+ *    │ ▐██▌ ┏━━┓ ▛▀▀▜ ▐██▌ →         │
+ *    │ ░░░░░░░░░░░░░░░░░░░░          │
+ *    │ Auteur·ices                   │
+ *    │ (▐█▌) (▐█▌) (▐█▌) (▐█▌) →     │
  *    └───────────────────────────────┘
  *
  * - **Recherche** : titre, auteur ou saga. Taper remplace les étagères par les
- *   résultats (Google Books, repli Open Library).
+ *   résultats au fil de la frappe (Apple Books, repli Open Library ; les
+ *   livres des étagères qui correspondent d'abord, sans attendre le réseau).
  * - **Mes envies** : les livres gardés pour plus tard, en première étagère.
- * - **Étagères par genre** : les livres les plus lus en ce moment, choisis à la
- *   main et figés dans constants/exploreCatalog.json (s'affichent sans réseau ;
- *   régénérer avec scripts/build-explore-catalog.mjs).
+ * - **Genres** : une rangée de petites cartes aquarelle qui défile ; toucher un genre remplace la
+ *   page par la liste de ses livres (bouton retour pour revenir). Rester dans
+ *   l'onglet évite d'empiler un sheet sous la fiche du livre.
+ * - **Populaire sur BookTok** : l'étagère des livres qui tournent en ce moment.
+ * - **Nouveautés** : parus ces derniers mois et déjà bien lus.
+ * - **Auteur·ices** : en dernier ; les plus lu·es, photo (ou initiales) en
+ *   rond ; toucher lance la recherche (constants/exploreAuthors.json).
+ *
+ * Tous ces livres sont choisis à la main et figés dans
+ * constants/exploreCatalog.json (s'affichent sans réseau ; régénérer avec
+ * scripts/build-explore-catalog.mjs).
  *
  * Toucher un livre ouvre sa fiche (route /explore-book, sheet natif) : lancer
  * une lecture, le garder en envie, le partager.
  *
- * Fond papier uni + texture, SANS les taches de l'accueil : les étagères
+ * Fond papier uni, SANS le dégradé de l'accueil : les étagères
  * s'effacent aux bords en fondu couleur papier, qui ferait une bande claire
  * sur les taches. Titre ferré à gauche, comme tous les titres de l'app.
  */
 
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
-import { CircleXIcon, HeartIcon, SearchIcon } from 'lucide-react-native';
-import React, { useCallback, useEffect } from 'react';
+import { ChevronLeftIcon, CircleXIcon, HeartIcon, SearchIcon } from 'lucide-react-native';
+import React, { useCallback, useEffect, useState } from 'react';
 import { FlatList, Keyboard, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import PageTransition from '../../components/PageTransition';
 import BookResultRow, { BookResultSkeleton } from '../../components/ui/BookResultRow';
+import ExploreAuthors, { type ExploreAuthor } from '../../components/ui/ExploreAuthors';
+import ExploreGenres, { type ExploreGenre } from '../../components/ui/ExploreGenres';
 import ExploreShelf from '../../components/ui/ExploreShelf';
+import GlassButton from '../../components/ui/GlassButton';
 import { useTabBarInset } from '../../components/ui/GlassTabBar';
+import authorsCatalog from '../../constants/exploreAuthors.json';
 import catalog from '../../constants/exploreCatalog.json';
 import { useBookSearch } from '../../hooks/useBookSearch';
 import { useExploreStore } from '../../stores/exploreStore';
 import type { BookSearchResult } from '../../types/bookSearch';
-import { borderRadius, colors, fonts, shadows, spacing } from '../../utils/constants';
+import { borderRadius, colors, fontSize, fonts, shadows, spacing } from '../../utils/constants';
 
-const TEXTURE_IMAGE = require('../../assets/images/61ea1e0c638b5b9c8100383a37a5b488848db623.png');
 
-const SHELVES = catalog.shelves as { key: string; label: string; books: BookSearchResult[] }[];
+const SHELVES = catalog.shelves as ExploreGenre[];
+/** L'étagère des tendances : la première du catalogue, hors grille des genres */
+const BOOKTOK = SHELVES.find((shelf) => shelf.key === 'booktok');
+/** Les livres parus ces derniers mois et déjà bien lus */
+const NEW_RELEASES = SHELVES.find((shelf) => shelf.key === 'new');
+/** L'ordre des genres : on varie dès le début, pour parler à tout le monde */
+const GENRE_ORDER = [
+  'contemporary',
+  'thriller',
+  'fantasy',
+  'feel-good',
+  'science-fiction',
+  'romance',
+  'historical',
+  'classics',
+  'horror',
+  'young-adult',
+  'comics',
+  'romantasy',
+  'self-help',
+  'nonfiction',
+];
+const GENRES = GENRE_ORDER.map((key) => SHELVES.find((shelf) => shelf.key === key)).filter(
+  (shelf): shelf is ExploreGenre => !!shelf,
+);
+
+const AUTHORS = authorsCatalog.authors as ExploreAuthor[];
 
 export default function ExploreScreen() {
   const insets = useSafeAreaInsets();
   const tabBarInset = useTabBarInset();
   const router = useRouter();
-  const { query, setQuery, results, isSearching, error, clearResults } = useBookSearch({
-    withTrending: false,
-  });
+  const { query, setQuery, results, isSearching, error, clearResults } = useBookSearch();
   const favorites = useExploreStore((state) => state.favorites);
   const openBook = useExploreStore((state) => state.openBook);
   const pendingQuery = useExploreStore((state) => state.pendingQuery);
   const clearPendingQuery = useExploreStore((state) => state.clearPendingQuery);
+  const [genre, setGenre] = useState<ExploreGenre | null>(null);
 
   // Recherche demandée depuis une fiche (toucher l'autrice)
   useEffect(() => {
@@ -83,8 +126,6 @@ export default function ExploreScreen() {
   return (
     <PageTransition>
       <View style={styles.container}>
-        <Image source={TEXTURE_IMAGE} style={styles.backgroundTexture} contentFit="cover" />
-
         <View style={[styles.header, { paddingTop: insets.top + spacing.lg }]}>
           <Text style={styles.headerTitle} accessibilityRole="header">
             Explorer
@@ -118,7 +159,7 @@ export default function ExploreScreen() {
 
         {searching ? (
           <FlatList
-            data={isSearching ? [] : results}
+            data={results}
             keyExtractor={(item) => item.id}
             renderItem={({ item }) => <BookResultRow book={item} onPress={() => handleOpen(item)} />}
             ListEmptyComponent={
@@ -138,6 +179,24 @@ export default function ExploreScreen() {
             showsVerticalScrollIndicator={false}
             contentContainerStyle={[styles.results, { paddingBottom: bottomSpace }]}
           />
+        ) : genre ? (
+          <FlatList
+            data={genre.books}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item }) => <BookResultRow book={item} onPress={() => handleOpen(item)} />}
+            ListHeaderComponent={
+              <View style={styles.genreHeader}>
+                <GlassButton icon={ChevronLeftIcon} onPress={() => setGenre(null)} accessibilityLabel="Retour" />
+                <Text style={styles.genreTitle} accessibilityRole="header" numberOfLines={1}>
+                  {genre.label}
+                </Text>
+              </View>
+            }
+            keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="on-drag"
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={[styles.results, { paddingBottom: bottomSpace }]}
+          />
         ) : (
           <ScrollView
             keyboardShouldPersistTaps="handled"
@@ -148,9 +207,14 @@ export default function ExploreScreen() {
             {favorites.length > 0 && (
               <ExploreShelf label="Mes envies" icon={HeartIcon} books={favorites} onSelect={handleOpen} />
             )}
-            {SHELVES.map((shelf) => (
-              <ExploreShelf key={shelf.key} label={shelf.label} books={shelf.books} onSelect={handleOpen} />
-            ))}
+            <ExploreGenres genres={GENRES} onSelect={setGenre} />
+            {BOOKTOK && (
+              <ExploreShelf label={BOOKTOK.label} books={BOOKTOK.books} onSelect={handleOpen} />
+            )}
+            {NEW_RELEASES && (
+              <ExploreShelf label={NEW_RELEASES.label} books={NEW_RELEASES.books} onSelect={handleOpen} />
+            )}
+            <ExploreAuthors authors={AUTHORS} onSelect={setQuery} />
           </ScrollView>
         )}
       </View>
@@ -161,11 +225,7 @@ export default function ExploreScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.bgLight,
-  },
-  backgroundTexture: {
-    ...StyleSheet.absoluteFillObject,
-    opacity: 0.05,
+    backgroundColor: colors.bgApp,
   },
   header: {
     paddingHorizontal: spacing.lg,
@@ -195,7 +255,7 @@ const styles = StyleSheet.create({
     flex: 1,
     height: '100%',
     fontFamily: fonts.body,
-    fontSize: 16,
+    fontSize: fontSize.sm,
     color: colors.textPrimary,
   },
   shelves: {
@@ -204,6 +264,19 @@ const styles = StyleSheet.create({
   },
   results: {
     paddingHorizontal: spacing.lg,
+  },
+  genreHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    paddingBottom: spacing.sm,
+  },
+  genreTitle: {
+    flex: 1,
+    fontFamily: fonts.display,
+    fontSize: fontSize.md,
+    lineHeight: 20,
+    color: colors.textPrimary,
   },
   emptyText: {
     paddingTop: spacing['2xl'],

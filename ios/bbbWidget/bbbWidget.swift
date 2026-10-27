@@ -242,7 +242,7 @@ struct DashedProgressGauge: View {
                 .stroke(
                     style: StrokeStyle(lineWidth: 5, lineCap: .butt, dash: [5.5, 2.5])
                 )
-                .foregroundColor(Color(hex: "33231A"))
+                .foregroundColor(Color(hex: "482B24"))
                 .rotationEffect(.degrees(startRotation))
         }
     }
@@ -260,13 +260,13 @@ struct ParticipantRow: View {
         HStack(spacing: 6) {
             Text(name)
                 .font(.system(size: 13))
-                .foregroundColor(Color(hex: "6B5546"))
+                .foregroundColor(Color(hex: "775046"))
                 .lineLimit(1)
                 .frame(width: 70, alignment: .trailing)
 
             Text("\(page)")
                 .font(.system(size: 22, weight: .bold))
-                .foregroundColor(Color(hex: "33231A"))
+                .foregroundColor(Color(hex: "482B24"))
                 .frame(alignment: .leading)
         }
     }
@@ -287,7 +287,7 @@ struct bbbWidget: Widget {
             bbbWidgetEntryView(entry: entry)
                 .containerBackground(Color(hex: "FDFCFA"), for: .widget)
         }
-        .configurationDisplayName("Bestie Book Battle")
+        .configurationDisplayName("chapi")
         .description("Le classement de ton challenge lecture")
         .supportedFamilies([.systemSmall])
         .contentMarginsDisabled()

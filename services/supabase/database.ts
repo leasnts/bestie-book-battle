@@ -226,6 +226,31 @@ export async function getMyBookProgress(userId: string): Promise<MyBookProgress[
 }
 
 /**
+ * Tous mes jours de lecture, tous livres confondus (YYYY-MM-DD)
+ *
+ * Les jours où j'ai enregistré des pages, plus ceux couverts par un
+ * marque-page : de quoi calculer ma meilleure série (utils/streak.ts).
+ *
+ * @param userId - L'ID de l'utilisateur
+ */
+export async function getMyReadingDays(userId: string): Promise<string[]> {
+  const [history, bonuses] = await withTimeout(
+    Promise.all([
+      supabase.from('progress_history').select('created_date').eq('user_id', userId),
+      supabase.from('user_progress').select('streak_bonus_dates').eq('user_id', userId),
+    ]),
+    10_000
+  );
+
+  if (history.error) throw history.error;
+  if (bonuses.error) throw bonuses.error;
+  return [
+    ...(history.data || []).map((row) => row.created_date),
+    ...(bonuses.data || []).flatMap((row) => row.streak_bonus_dates || []),
+  ];
+}
+
+/**
  * Mettre à jour un challenge
  * 
  * Seul l'admin du challenge peut le mettre à jour (vérifié par RLS)
@@ -410,6 +435,7 @@ export async function getChallengeParticipants(
         publisher: item.publisher ?? null,
         streak_count: item.streak_count,
         last_streak_date: item.last_streak_date,
+        streak_bonus_dates: item.streak_bonus_dates ?? [],
         last_updated_at: item.last_updated_at,
         created_at: item.created_at,
       },
@@ -690,6 +716,37 @@ export async function getUserHistoryByDateRange(
     console.error('Erreur lors de la récupération de l\'historique par période:', error);
     throw error;
   }
+}
+
+/**
+ * Les jours où j'ai lu ce livre depuis `sinceDay` (YYYY-MM-DD, UTC) : ceux où
+ * ma page a avancé. Pour la semaine de ma série.
+ */
+export async function getReadingDays(
+  challengeId: string,
+  userId: string,
+  sinceDay: string
+): Promise<string[]> {
+  const { data, error } = await supabase
+    .from('progress_history')
+    .select('recorded_at')
+    .eq('challenge_id', challengeId)
+    .eq('user_id', userId)
+    .gt('pages_read', 0)
+    .gte('recorded_at', `${sinceDay}T00:00:00Z`);
+
+  if (error) throw error;
+  return [...new Set((data ?? []).map((row) => new Date(row.recorded_at).toISOString().split('T')[0]))];
+}
+
+/**
+ * Poser un marque-page sur hier pour garder ma série (3 par livre).
+ * Retourne false si ce n'est plus possible (déjà lu, plus de marque-page…).
+ */
+export async function spendStreakBonus(challengeId: string): Promise<boolean> {
+  const { data, error } = await supabase.rpc('use_streak_bonus', { p_challenge_id: challengeId });
+  if (error) throw error;
+  return Array.isArray(data) && data.length > 0;
 }
 
 // =====================================================

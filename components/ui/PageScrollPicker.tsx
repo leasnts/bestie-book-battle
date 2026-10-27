@@ -4,7 +4,7 @@
  * Sélecteur de page horizontal avec scroll fluide :
  * - Largeur fixe par item pour un scroll fiable + snap
  * - Quand le scroll s'arrête, le numéro le plus proche se centre dans la zone
- * - Numéro central en encre noyer, adjacents plus petits et transparents
+ * - Numéro central en encre chocolat, adjacents plus petits et transparents
  * - Zone et tailles réglables (`width`, `itemWidth`, `fontSize`) : l'accueil le
  *   pose dans un cadre plus étroit que l'écran (PageSection)
  * - adjustsFontSizeToFit adapte la taille aux gros numéros (3-4 chiffres)
@@ -251,7 +251,7 @@ const styles = StyleSheet.create({
     textAlignVertical: 'center',
     includeFontPadding: false,
   },
-  // Nombre central (sélectionné/en cours) — gros, encre noyer, avec ombre portée.
+  // Nombre central (sélectionné/en cours) — gros, encre chocolat, avec ombre portée.
   // 108px et non 128px : Fraunces a des chiffres plus hauts et plus larges que
   // Rokkitt, 108px garde la même présence. adjustsFontSizeToFit réduit encore
   // la taille pour les nombres à 4 chiffres (1000+).

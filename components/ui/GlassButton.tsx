@@ -31,7 +31,7 @@ interface GlassButtonProps {
   accessibilityLabel: string;
   /** Prend toute la largeur libre : une gélule, à parts égales avec ses voisins */
   stretch?: boolean;
-  /** Un point lie de vin dans le coin : quelque chose attend (un brouillon) */
+  /** Un point rouge dans le coin : quelque chose attend (un brouillon) */
   badge?: boolean;
   /** Marges et placement dans le parent */
   style?: StyleProp<ViewStyle>;

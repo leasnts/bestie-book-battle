@@ -11,6 +11,7 @@
 
 import { randomUUID } from 'expo-crypto';
 import { create } from 'zustand';
+import { feel } from '../utils/feel';
 import {
   addReaction,
   createAnnotation,
@@ -184,11 +185,14 @@ export const useAnnotationStore = create<AnnotationStore>((set, get) => ({
           ? { audio_path: path, audio_seconds: voice.seconds, audio_levels: voice.levels }
           : {}),
       });
+      // Posée : on le sent tout de suite, avant le rechargement
+      feel('poster');
       // On recharge pour récupérer l'autrice et les réactions du même coup
       await get().loadAnnotations(note.challenge_id, note.user_id);
       return created;
     } catch (error) {
       // Pas de vocal orphelin dans le bucket
+      feel('erreur');
       if (path) await deleteVoice(path);
       throw error;
     }
@@ -233,6 +237,8 @@ export const useAnnotationStore = create<AnnotationStore>((set, get) => ({
   toggleReaction: async (annotationId, userId, emoji) => {
     const note = get().notes.find((n) => n.id === annotationId);
     const mine = note?.reactions.find((r) => r.user_id === userId && r.emoji === emoji);
+    // Seulement quand on en ajoute une : retirer reste silencieux
+    if (!mine) feel('reagir');
 
     // La réaction bouge tout de suite à l'écran, le serveur suit
     set((state) => ({

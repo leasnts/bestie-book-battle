@@ -36,6 +36,8 @@ import ImageCropModal, { PendingImage } from '../../components/ui/ImageCropModal
 import { useOnboardingStore } from '../../stores/onboardingStore';
 import type { BookSearchResult } from '../../types/bookSearch';
 import { borderRadius, colors, fonts, spacing } from '../../utils/constants';
+import { CoverImage } from '../../components/ui/BookCover';
+import { StitchBorder } from '../../components/ui/Stitch';
 
 // Asset : texture de fond
 const TEXTURE_IMAGE = require('../../assets/images/61ea1e0c638b5b9c8100383a37a5b488848db623.png');
@@ -183,8 +185,9 @@ export default function OnboardingEditionScreen() {
 
                     {/* Couverture : toucher = chercher son édition ou la photographier */}
                     <View style={styles.coverZone}>
+                        {!cover && <StitchBorder radius={borderRadius.xs} />}
                         {cover ? (
-                            <Image source={{ uri: cover }} style={styles.coverImage} contentFit="cover" />
+                            <CoverImage uri={cover} style={styles.coverImage} />
                         ) : (
                             <BookOpenIcon size={40} color={colors.textPlaceholder} />
                         )}
@@ -254,7 +257,7 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     backgroundTexture: {
-        ...StyleSheet.absoluteFillObject,
+        ...StyleSheet.absoluteFill,
         opacity: 0.05,
     },
     header: {
@@ -287,16 +290,13 @@ const styles = StyleSheet.create({
         alignSelf: 'center',
         width: 150,
         height: 210,
-        borderWidth: 2,
-        borderStyle: 'dashed',
-        borderColor: colors.borderLight,
         borderRadius: borderRadius.xs,
         justifyContent: 'center',
         alignItems: 'center',
         overflow: 'hidden',
     },
     coverImage: {
-        ...StyleSheet.absoluteFillObject,
+        ...StyleSheet.absoluteFill,
     },
     changeCoverButton: {
         position: 'absolute',

@@ -32,6 +32,8 @@ import { useProjectStore } from '../../stores/projectStore';
 import { useProgressStore } from '../../stores/progressStore';
 import { createOrUpdateUserProfile } from '../../services/supabase/auth';
 import { BookOpenIcon, ChevronLeftIcon, XIcon } from 'lucide-react-native';
+import { CoverImage } from '../../components/ui/BookCover';
+import { StitchBorder } from '../../components/ui/Stitch';
 
 // Assets
 const TEXTURE_IMAGE = require('../../assets/images/61ea1e0c638b5b9c8100383a37a5b488848db623.png');
@@ -167,7 +169,7 @@ export default function OnboardingWelcomeScreen() {
                     <View style={styles.mainContent}>
                         <Text style={styles.title}>Bienvenue !</Text>
                         <Text style={styles.description}>
-                            {params.adminFirstName} est ravi.e que tu participes à ce bbb
+                            {params.adminFirstName} est ravi.e que tu participes à cette lecture
                         </Text>
                         
                         {/* Carte du livre avec PopEyes */}
@@ -184,8 +186,8 @@ export default function OnboardingWelcomeScreen() {
                                 <View style={styles.bookCardContent}>
                                     {/* Cover image — hauteur = bloc texte, ratio conservé */}
                                     {coverUrl ? (
-                                        <Image
-                                            source={{ uri: coverUrl }}
+                                        <CoverImage
+                                            uri={coverUrl}
                                             style={[
                                                 styles.coverImage,
                                                 {
@@ -193,7 +195,6 @@ export default function OnboardingWelcomeScreen() {
                                                     width: bookInfoHeight * COVER_ASPECT_RATIO,
                                                 },
                                             ]}
-                                            contentFit="cover"
                                         />
                                     ) : (
                                         <View
@@ -205,6 +206,7 @@ export default function OnboardingWelcomeScreen() {
                                                 },
                                             ]}
                                         >
+                                            <StitchBorder radius={borderRadius.xs} color={colors.alphaWhite30} />
                                             <BookOpenIcon size={40} color={colors.alphaWhite30} />
                                         </View>
                                     )}
@@ -267,7 +269,7 @@ const styles = StyleSheet.create({
         flexGrow: 1,
     },
     backgroundTexture: {
-        ...StyleSheet.absoluteFillObject,
+        ...StyleSheet.absoluteFill,
         opacity: 0.05,
     },
     header: {
@@ -311,7 +313,7 @@ const styles = StyleSheet.create({
         overflow: 'hidden',
     },
     cardTexture: {
-        ...StyleSheet.absoluteFillObject,
+        ...StyleSheet.absoluteFill,
         opacity: 0.05,
     },
     mascotOverlay: {
@@ -332,9 +334,6 @@ const styles = StyleSheet.create({
     },
     coverPlaceholder: {
         borderRadius: borderRadius.xs,
-        borderWidth: 1,
-        borderStyle: 'dashed',
-        borderColor: colors.alphaWhite10,
         backgroundColor: colors.alphaWhite10,
         justifyContent: 'center',
         alignItems: 'center',

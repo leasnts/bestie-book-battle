@@ -28,8 +28,10 @@ import {
   rankParticipants,
   RankedParticipant,
 } from '../../utils/leaderboard';
-import { borderRadius, colors, fonts, inkAlpha, motion, spacing } from '../../utils/constants';
-import { ChevronDownIcon, ChevronUpIcon, FlameIcon } from 'lucide-react-native';
+import { borderRadius, colors, fonts, inkAlpha, lowki, motion, spacing } from '../../utils/constants';
+import { ChevronDownIcon, ChevronUpIcon } from 'lucide-react-native';
+import { AccentUnit } from './AccentWord';
+import { STREAK_FLAME } from './StreakPill';
 
 // ─── Props ─────────────────────────────────────────────────────────
 
@@ -97,7 +99,9 @@ function LeaderboardRow({
         accessibilityHint={onPress ? 'Ouvre son journal de lecture' : undefined}
       >
       {/* ── Rang ── */}
-      <Text style={[styles.rank, isMe && styles.rankMe]}>{rank}</Text>
+      <Text style={[styles.rank, isMe && styles.rankMe]}>
+        <AccentUnit size={styles.rank.fontSize}>{String(rank)}</AccentUnit>
+      </Text>
 
       {/* ── Avatar (+ couronne pour le leader) ── */}
       <View style={styles.avatarWrapper}>
@@ -122,16 +126,17 @@ function LeaderboardRow({
 
           {participant.streak > 0 && (
             <View
-              style={[styles.streakBadge, participant.streakAtRisk && styles.streakBadgeAtRisk]}
+              style={[styles.streak, participant.streakAtRisk && styles.streakAtRisk]}
+              accessibilityLabel={`Série de ${participant.streak} jour${participant.streak > 1 ? 's' : ''}`}
             >
-              <FlameIcon size={11} color={colors.textTertiary} fill={colors.textTertiary} />
-              <Text style={styles.streakText}>{participant.streak}</Text>
+              <Image source={STREAK_FLAME} style={styles.streakFlame} />
+              <Text style={styles.streakText} maxFontSizeMultiplier={1.3}>{participant.streak}</Text>
             </View>
           )}
 
           <View style={styles.spacer} />
 
-          <Text style={styles.score}>{score}%</Text>
+          <Text style={styles.score}>{score}<AccentUnit size={styles.score.fontSize} color={styles.score.color}>%</AccentUnit></Text>
         </View>
 
         <View style={styles.progressTrack}>
@@ -383,26 +388,25 @@ const styles = StyleSheet.create({
     backgroundColor: colors.accent,
   },
 
-  // ═══ BADGE STREAK ═══
-  streakBadge: {
+  // ═══ SÉRIE ═══
+  // Pas de badge : la flamme Lowki et le nombre en rouge, comme la gélule de
+  // l'accueil (StreakPill). En danger : atténués ensemble, même opacité.
+  streak: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 2,
-    backgroundColor: colors.alphaBlack10,
-    borderWidth: 1,
-    borderColor: colors.alphaBlack10,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: borderRadius.sm,
   },
-  streakBadgeAtRisk: {
-    opacity: 0.6,
-    borderStyle: 'dashed',
-    borderColor: inkAlpha(0.3),
+  streakAtRisk: {
+    opacity: 0.45,
+  },
+  streakFlame: {
+    width: 14,
+    height: 14,
   },
   streakText: {
-    fontFamily: fonts.bodySemiBold,
-    fontSize: 11,
-    color: colors.textTertiary,
+    fontFamily: fonts.bodyBold,
+    fontSize: 13,
+    color: lowki.red.light,
+    fontVariant: ['tabular-nums'],
   },
 });

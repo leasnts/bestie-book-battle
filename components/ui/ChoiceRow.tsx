@@ -4,7 +4,7 @@
  *    (photo)  Emma                     (✓)
  *
  * À gauche, ce qui la fait reconnaître (une photo, la couleur d'un thème, une
- * icône) ; à droite, la coche : un rond lie de vin en dégradé quand elle est
+ * icône) ; à droite, la coche : un rond rouge en dégradé quand elle est
  * choisie, un simple cercle sinon. Toute la ligne se touche.
  */
 

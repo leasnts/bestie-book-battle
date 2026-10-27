@@ -46,7 +46,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import MaskedView from '@react-native-masked-view/masked-view';
+import MaskedView from './ui/MaskedView';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
@@ -58,8 +58,8 @@ import {
   View,
   type NativeScrollEvent,
   type NativeSyntheticEvent,
-  type CellRendererProps,
 } from 'react-native';
+import type { CellRendererProps } from '@react-native/virtualized-lists';
 import DriftingBackdrop from './ui/DriftingBackdrop';
 import NewNotesDeck from './ui/NewNotesDeck';
 import NoteCard, { LockedNoteCard } from './ui/NoteCard';
@@ -67,7 +67,7 @@ import InkFigure, { INK } from './ui/InkFigure';
 import NotesTrack, { type TrackDot } from './ui/NotesTrack';
 import PressableScale from './ui/PressableScale';
 import GlassButton from './ui/GlassButton';
-import WriteNoteButton from './ui/WriteNoteButton';
+import WriteNoteButton, { useEditNote } from './ui/WriteNoteButton';
 import { SheetPageHeader } from './ui/SheetPage';
 import { SHEET_TOP_INSET, SheetBlur, useSheetScrolled } from './ui/SheetHeader';
 import type { AnnotationWithAuthor } from '../services/supabase/annotations';
@@ -126,6 +126,8 @@ const dissolve = () => {
 
 export default function Carnet({ mode }: { mode: CarnetMode }) {
   const router = useRouter();
+  // Toucher ma note : la feuille d'écriture s'ouvre, remplie
+  const { edit, sheet: editSheet } = useEditNote();
   const insets = useSafeAreaInsets();
   /** Page entière, depuis l'accueil : les nouvelles d'abord, en pile */
   const isPage = mode === 'page';
@@ -526,7 +528,7 @@ export default function Carnet({ mode }: { mode: CarnetMode }) {
                 inSheet
                   ? undefined
                   : item.user_id === user?.id
-                    ? () => router.push(`/note/${item.id}${from}`)
+                    ? () => edit(item)
                     : () => user?.id && markRead(item.id, user.id)
               }
               myUserId={user?.id}
@@ -552,7 +554,14 @@ export default function Carnet({ mode }: { mode: CarnetMode }) {
     />
   );
 
-  if (!isPage) return list;
+  if (!isPage) {
+    return (
+      <>
+        {list}
+        {editSheet}
+      </>
+    );
+  }
 
   // Page entière : l'en-tête reste en haut, la pile puis la liste passent dessous
   return (
@@ -616,6 +625,7 @@ export default function Carnet({ mode }: { mode: CarnetMode }) {
           </Animated.View>
         )}
       </View>
+      {editSheet}
     </View>
   );
 }
@@ -643,7 +653,7 @@ function Pill({
   icon?: LucideIcon;
   /** Ouvre un choix (le tri en cours) : un chevron après le mot */
   chevron?: boolean;
-  /** Combien de choix sont actifs (les filtres) : une pastille lie de vin */
+  /** Combien de choix sont actifs (les filtres) : une pastille rouge */
   count?: number;
   hint?: string;
   /** Les deux boutons du haut se partagent la largeur, à parts égales */
@@ -706,7 +716,7 @@ const styles = StyleSheet.create({
     minHeight: SHEET_TOP_INSET + 36 + spacing.md,
   },
   deckLayer: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     justifyContent: 'center',
     paddingHorizontal: spacing.lg,
   },

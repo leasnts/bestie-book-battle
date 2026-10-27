@@ -26,6 +26,8 @@ import Button3D from '../../components/Button3D';
 import ImageCropModal, { PendingImage } from '../../components/ui/ImageCropModal';
 import { borderRadius, colors, fonts, spacing } from '../../utils/constants';
 import { CameraIcon, ChevronLeftIcon, ImageIcon, RotateCcwIcon, XIcon } from 'lucide-react-native';
+import { CoverImage } from '../../components/ui/BookCover';
+import { StitchBorder } from '../../components/ui/Stitch';
 
 // Asset : texture de fond
 const TEXTURE_IMAGE = require('../../assets/images/61ea1e0c638b5b9c8100383a37a5b488848db623.png');
@@ -234,16 +236,13 @@ export default function OnboardingCoverScreen() {
                 <View style={styles.mainContent}>
                     <Text style={styles.title}>Importe sa couverture</Text>
                     
-                    {/* Zone pointillée pour la couverture */}
+                    {/* Zone cousue pour la couverture (#112) */}
                     <View style={styles.coverZoneWrapper}>
                         <View style={styles.coverZone}>
+                            {!coverUri && <StitchBorder radius={borderRadius.xs} />}
                             {coverUri ? (
                                 // Afficher l'image sélectionnée
-                                <Image
-                                    source={{ uri: coverUri }}
-                                    style={styles.coverImage}
-                                    contentFit="cover"
-                                />
+                                <CoverImage uri={coverUri} style={styles.coverImage} />
                             ) : null}
 
                             {/* Boutons d'import — visibles seulement si pas encore de cover */}
@@ -331,7 +330,7 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     backgroundTexture: {
-        ...StyleSheet.absoluteFillObject,
+        ...StyleSheet.absoluteFill,
         opacity: 0.05,
     },
     header: {
@@ -364,9 +363,6 @@ const styles = StyleSheet.create({
     coverZone: {
         width: 214,
         height: 300,
-        borderWidth: 2,
-        borderStyle: 'dashed',
-        borderColor: colors.borderLight,
         borderRadius: borderRadius.xs,
         justifyContent: 'center',
         alignItems: 'center',
@@ -380,7 +376,7 @@ const styles = StyleSheet.create({
         zIndex: 10,
     },
     coverImage: {
-        ...StyleSheet.absoluteFillObject,
+        ...StyleSheet.absoluteFill,
         width: '100%',
         height: '100%',
     },
@@ -402,7 +398,7 @@ const styles = StyleSheet.create({
         overflow: 'hidden',
     },
     uploadButtonInnerShadow: {
-        ...StyleSheet.absoluteFillObject,
+        ...StyleSheet.absoluteFill,
         borderRadius: borderRadius.md,
         shadowColor: colors.black,
         shadowOffset: { width: 0, height: -4 },

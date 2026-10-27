@@ -2,35 +2,33 @@
  * RoundButton — LE bouton rond plein de l'app, pour les actions dans le contenu
  * (à distinguer de `GlassButton`, le rond en verre des en-têtes et de la barre).
  *
- * - `dark` : l'action principale, encre chocolat en dégradé (✓ enregistrer,
+ * - `dark` : l'action principale, chocolat en relief (`Bevel`, comme Button3D) (✓ enregistrer,
  *   ✓ ajouter la note, 🎙 enregistrer, ✎ ☺ de « Ma page ») ;
- * - `ghost` : les autres, `inkAlpha(0.07)` (↺ annuler, ↺ refaire, 🗑) ;
- * - `light` : sur une surface foncée (■ arrêter, sur la gélule lie de vin).
+ * - `light` : sur une surface foncée (■ arrêter, sur la gélule rouge).
+ *
+ * Les autres actions (↺ refaire, 🗑, − / + de la page…) passent par `GlassButton`.
  *
  * Même taille partout (`ROUND_BUTTON_SIZE`, aussi celle de `GlassButton`), même
  * place : seule l'icône change (DESIGN.md › Boutons-icônes).
  * Désactivé, il se grise (`PressableScale`).
  */
 
-import { LinearGradient } from 'expo-linear-gradient';
 import type { LucideIcon } from 'lucide-react-native';
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import {
   colors,
   creamAlpha,
-  inkAlpha,
-  inkGradient,
   ROUND_BUTTON_ICON,
   ROUND_BUTTON_ICON_FILLED,
   ROUND_BUTTON_SIZE,
-  shadowAlpha,
 } from '../../utils/constants';
+import Bevel from './Bevel';
 import PressableScale from './PressableScale';
 
 interface RoundButtonProps {
   icon: LucideIcon;
-  variant: 'dark' | 'ghost' | 'light';
+  variant: 'dark' | 'light';
   /** Ce que VoiceOver annonce */
   label: string;
   hint?: string;
@@ -38,7 +36,7 @@ interface RoundButtonProps {
   disabled?: boolean;
   /** Icône pleine (■ arrêter) */
   filled?: boolean;
-  /** Un point lie de vin dans le coin : quelque chose attend (un brouillon) */
+  /** Un point rouge dans le coin : quelque chose attend (un brouillon) */
   badge?: boolean;
 }
 
@@ -66,10 +64,8 @@ export default function RoundButton({
       accessibilityLabel={label}
       accessibilityHint={hint}
     >
-      {/* Jamais d'aplat : l'encre chocolat, plus claire en haut */}
-      {variant === 'dark' && (
-        <LinearGradient colors={inkGradient} style={[StyleSheet.absoluteFill, styles.round]} />
-      )}
+      {/* Le même chocolat en relief que Button3D primaire */}
+      {variant === 'dark' && <Bevel tone="ink" radius={ROUND_BUTTON_SIZE / 2} />}
       <Icon size={filled ? ROUND_BUTTON_ICON_FILLED : ROUND_BUTTON_ICON} color={color} fill={filled ? color : 'none'} strokeWidth={2.2} />
       {badge && <View style={styles.badge} />}
     </PressableScale>
@@ -84,15 +80,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  round: {
-    borderRadius: ROUND_BUTTON_SIZE / 2,
-  },
   dark: {
-    backgroundColor: colors.dark900,
-    shadowColor: shadowAlpha(0.25),
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 1,
-    shadowRadius: 6,
+    backgroundColor: colors.dark950,
+    shadowColor: colors.black,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
   },
   // Cerclé de crème : il se détache sur l'encre comme sur le verre
   badge: {
@@ -105,9 +98,6 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: colors.white,
     backgroundColor: colors.accent,
-  },
-  ghost: {
-    backgroundColor: inkAlpha(0.07),
   },
   light: {
     backgroundColor: creamAlpha(0.95),

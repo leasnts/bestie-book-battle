@@ -23,12 +23,12 @@
  * espacements, pas avec un fond ou un cadre de plus.
  */
 
-import MaskedView from '@react-native-masked-view/masked-view';
+import MaskedView from './MaskedView';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useState } from 'react';
 import { StyleSheet, View, type LayoutChangeEvent, type StyleProp, type ViewStyle } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
-import { borderRadius, creamAlpha, glassVeil, spacing } from '../../utils/constants';
+import { borderRadius, creamAlpha, glassVeil, paperFrameGradient, spacing } from '../../utils/constants';
 import GlassMaterial from './GlassMaterial';
 import { STICKER_BASE_LARGE, STITCH, stitchColor, stitchInset } from './NoteSticker';
 import PressableScale from './PressableScale';
@@ -86,6 +86,16 @@ interface GlassSectionProps {
    * son bord.
    */
   fadeTop?: number;
+  /**
+   * Papier beige au lieu du verre : posé sur un fond clair (un sheet), le verre
+   * blanc s'y perd. Même couture, même rayon.
+   */
+  paper?: boolean;
+  /**
+   * Flou dépoli au lieu du verre d'iOS 26 : posé à cheval sur un fond chargé
+   * (l'aquarelle du profil), le verre nu laisse voir les festons nets au travers.
+   */
+  frosted?: boolean;
 }
 
 export default function GlassSection({
@@ -96,6 +106,8 @@ export default function GlassSection({
   style,
   compact = false,
   fadeTop = 0,
+  paper = false,
+  frosted = false,
 }: GlassSectionProps) {
   const [size, setSize] = useState({ width: 0, height: 0 });
   const onLayout = (e: LayoutChangeEvent) => {
@@ -124,7 +136,11 @@ export default function GlassSection({
         </MaskedView>
       ) : (
         <>
-          <GlassMaterial radius={RADIUS} veil={glassVeil} edgeColor={EDGE} />
+          {paper ? (
+            <LinearGradient colors={paperFrameGradient} style={[StyleSheet.absoluteFill, styles.paper]} />
+          ) : (
+            <GlassMaterial radius={RADIUS} veil={glassVeil} edgeColor={EDGE} frosted={frosted} />
+          )}
           <Stitch {...size} openTop={false} />
         </>
       )}
@@ -164,6 +180,9 @@ const styles = StyleSheet.create({
   contentCompact: {
     padding: spacing.md,
   },
+  paper: {
+    borderRadius: RADIUS,
+  },
   maskColumn: {
     flex: 1,
   },
@@ -175,7 +194,7 @@ const styles = StyleSheet.create({
   },
   // Le bord, sans le haut : il s'efface avec le verre
   edgeOpenTop: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     borderWidth: 1,
     borderTopWidth: 0,
     borderColor: EDGE,

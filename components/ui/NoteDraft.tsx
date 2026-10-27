@@ -8,15 +8,15 @@
  *   ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐
  *   ┆ ▌« le passage cité »    ┆   la citation, modifiable
  *   ┆ Une pensée, un avis…    ┆   le texte
- *   ┆ (🎙 ─────────── 0:00)   ┆   le vocal : le même `VoiceRecorder` que partout
+ *   ┆              (🎙) (❝)  ┆   🎙 s'étire en gélule : le même `VoiceRecorder` que partout
  *   └┄note┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄◢┘   la catégorie en filigrane, coupée par les bords
  *
- * Un seul composant pour l'éditeur de note et la feuille rapide de « Ma page ».
+ * La note de la feuille d'écriture (`NoteComposer`), pour écrire comme pour modifier.
  */
 
 import { MicIcon, QuoteIcon, XIcon } from 'lucide-react-native';
-import React, { forwardRef, useState } from 'react';
-import { StyleSheet, Text, TextInput, View, type LayoutChangeEvent } from 'react-native';
+import React, { forwardRef, useEffect, useState } from 'react';
+import { StyleSheet, Text, TextInput, View, type LayoutChangeEvent, type TextInputInstance } from 'react-native';
 import Animated, {
   Easing,
   runOnJS,
@@ -60,13 +60,6 @@ interface NoteDraftProps {
   autoFocus?: boolean;
   /** Le coin décollé ; `none` quand des intercalaires sortent de la note */
   corner?: 'bottom-right' | 'none';
-  /**
-   * Les outils repliés (la feuille rapide) : 🎙 et ❝ en verre, en bas à droite de la note
-   * (le thème en filigrane est en bas à gauche).
-   * L'enregistreur ne s'ouvre que si on touche 🎙. Sans eux, l'enregistreur est
-   * toujours là (l'éditeur de note).
-   */
-  tools?: boolean;
   /** La couture qui s'ouvre vers l'intercalaire choisi, selon la largeur de la note */
   stitchNotch?: (width: number) => { left: number; right: number };
   /** ❝ : ajouter une citation (photo de la page) ; absent, pas de bouton */
@@ -86,7 +79,7 @@ const CORNER_GAP = 26;
 const GROW = { duration: motion.duration.slow, easing: Easing.bezier(...motion.easing.easeOutQuart) };
 const SHRINK = { duration: motion.duration.standard, easing: Easing.bezier(...motion.easing.easeInQuart) };
 
-const NoteDraft = forwardRef<TextInput, NoteDraftProps>(function NoteDraft(
+const NoteDraft = forwardRef<TextInputInstance, NoteDraftProps>(function NoteDraft(
   {
     color,
     label,
@@ -103,7 +96,6 @@ const NoteDraft = forwardRef<TextInput, NoteDraftProps>(function NoteDraft(
     large = false,
     autoFocus = false,
     corner = 'bottom-right',
-    tools = false,
     onCite,
     stitchNotch,
     id,
@@ -129,6 +121,13 @@ const NoteDraft = forwardRef<TextInput, NoteDraftProps>(function NoteDraft(
       if (done) runOnJS(setVoiceOpen)(false);
     });
   };
+  // Un vocal arrivé après coup (la note à modifier se remplit à l'ouverture) : la gélule est là, ouverte
+  useEffect(() => {
+    if (!voice || voiceOpen) return;
+    setVoiceOpen(true);
+    open.value = 1;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [voice]);
   const toolsStyle = useAnimatedStyle(() => ({ opacity: 1 - open.value }));
   const barStyle = useAnimatedStyle(() => ({
     width: TOOL + (barWidth - TOOL) * open.value,
@@ -141,7 +140,7 @@ const NoteDraft = forwardRef<TextInput, NoteDraftProps>(function NoteDraft(
   };
 
   return (
-    <View style={[styles.note, tools && styles.noteTools, fill && styles.fill]} onLayout={onLayout}>
+    <View style={[styles.note, fill && styles.fill]} onLayout={onLayout}>
       {size && (
         <View style={StyleSheet.absoluteFill} pointerEvents="none">
           <NoteSticker
@@ -176,7 +175,7 @@ const NoteDraft = forwardRef<TextInput, NoteDraftProps>(function NoteDraft(
       <TextInput
         ref={ref}
         // Replié : la note grandit avec le texte jusqu'à un plafond, puis défile
-        style={[styles.input, large && styles.inputLarge, fill && styles.inputFill, tools && !fill && styles.inputGrow]}
+        style={[styles.input, large && styles.inputLarge, fill ? styles.inputFill : styles.inputGrow]}
         value={body}
         onChangeText={onBodyChange}
         placeholder={placeholder}
@@ -187,39 +186,31 @@ const NoteDraft = forwardRef<TextInput, NoteDraftProps>(function NoteDraft(
         accessibilityLabel="Texte de la note"
       />
 
-      {tools ? (
-        // 🎙 et ❝ en bas à droite ; 🎙 s'étire en gélule, à la même hauteur
-        <View style={styles.dock} onLayout={(e) => setDockWidth(e.nativeEvent.layout.width)}>
-          <Animated.View style={[styles.tools, toolsStyle]} pointerEvents={voiceOpen ? 'none' : 'auto'}>
-            <GlassButton icon={MicIcon} onPress={openVoice} accessibilityLabel="Ajouter un vocal" />
-            {onCite && (
-              <GlassButton
-                icon={QuoteIcon}
-                onPress={onCite}
-                accessibilityLabel="Citer un passage : photographier la page"
-              />
-            )}
-          </Animated.View>
-          {voiceOpen && dockWidth > 0 && (
-            <Animated.View style={[styles.bar, corner !== 'none' && styles.barCorner, barStyle]}>
-              {/* Le contenu garde sa largeur finale : la gélule le dévoile sans l'écraser */}
-              <View style={[styles.voiceRow, styles.barContent, { width: barWidth }]}>
-                <View style={styles.grow}>
-                  <VoiceRecorder clip={voice} onChange={onVoiceChange} onRecordingChange={onRecordingChange} autoStart compact />
-                </View>
-                <GlassButton icon={XIcon} onPress={closeVoice} accessibilityLabel="Retirer le vocal" />
-              </View>
-            </Animated.View>
+      {/* 🎙 et ❝ en bas à droite (le thème en filigrane est en bas à gauche) ; 🎙 s'étire en gélule, à la même hauteur */}
+      <View style={styles.dock} onLayout={(e) => setDockWidth(e.nativeEvent.layout.width)}>
+        <Animated.View style={[styles.tools, toolsStyle]} pointerEvents={voiceOpen ? 'none' : 'auto'}>
+          <GlassButton icon={MicIcon} onPress={openVoice} accessibilityLabel="Ajouter un vocal" />
+          {onCite && (
+            <GlassButton
+              icon={QuoteIcon}
+              onPress={onCite}
+              accessibilityLabel="Citer un passage : photographier la page"
+            />
           )}
-        </View>
-      ) : (
-        // Le vocal vit dans la note, comme le texte ; il s'arrête avant le coin corné
-        <View style={[styles.voiceRow, corner !== 'none' && styles.voice]}>
-          <View style={styles.grow}>
-            <VoiceRecorder clip={voice} onChange={onVoiceChange} onRecordingChange={onRecordingChange} />
-          </View>
-        </View>
-      )}
+        </Animated.View>
+        {voiceOpen && dockWidth > 0 && (
+          <Animated.View style={[styles.bar, corner !== 'none' && styles.barCorner, barStyle]}>
+            {/* Le contenu garde sa largeur finale : la gélule le dévoile sans l'écraser */}
+            <View style={[styles.voiceRow, styles.barContent, { width: barWidth }]}>
+              <View style={styles.grow}>
+                {/* Ouverte par 🎙 : on enregistre tout de suite ; ouverte sur un vocal déjà là : on l'écoute */}
+                <VoiceRecorder clip={voice} onChange={onVoiceChange} onRecordingChange={onRecordingChange} autoStart={!voice} compact />
+              </View>
+              <GlassButton icon={XIcon} onPress={closeVoice} accessibilityLabel="Retirer le vocal" />
+            </View>
+          </Animated.View>
+        )}
+      </View>
     </View>
   );
 });
@@ -231,12 +222,11 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
     paddingBottom: spacing.md,
     gap: spacing.sm,
-    minHeight: 180,
   },
   fill: {
     flex: 1,
   },
-  // Le passage cité : un filet lie de vin à gauche, comme sur la note publiée
+  // Le passage cité : un filet rouge à gauche, comme sur la note publiée
   quote: {
     paddingLeft: spacing.md,
     paddingVertical: 0,
@@ -275,9 +265,6 @@ const styles = StyleSheet.create({
     minHeight: 24 * 4,
     maxHeight: 24 * 7,
   },
-  noteTools: {
-    minHeight: 0,
-  },
   dock: {
     height: TOOL,
   },
@@ -293,9 +280,6 @@ const styles = StyleSheet.create({
   },
   grow: {
     flex: 1,
-  },
-  voice: {
-    marginRight: CORNER_GAP,
   },
   // Ancrée à droite, là où est 🎙 : elle grandit vers la gauche
   bar: {

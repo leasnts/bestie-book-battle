@@ -32,6 +32,8 @@ import { useProjectStore } from '../../stores/projectStore';
 import { borderRadius, colors, fonts, fontSize, spacing } from '../../utils/constants';
 import { extractCoverPalette } from '../../utils/coverPalette';
 import { BookOpenIcon, ChevronLeftIcon, CopyIcon, ShareIcon, XIcon } from 'lucide-react-native';
+import { CoverImage } from '../../components/ui/BookCover';
+import { StitchBorder } from '../../components/ui/Stitch';
 
 // Assets
 const TEXTURE_IMAGE = require('../../assets/images/61ea1e0c638b5b9c8100383a37a5b488848db623.png');
@@ -193,8 +195,8 @@ export default function OnboardingCompleteScreen() {
 
         try {
             await Share.share({
-                message: `Rejoins-moi sur bestiebookbattle pour lire "${params.bookTitle}" ensemble ! 📚\n\nCode d'invitation : ${inviteCode}`,
-                title: 'Invitation BBB',
+                message: `Rejoins-moi sur chapi pour lire "${params.bookTitle}" ensemble ! 📚\n\nCode d'invitation : ${inviteCode}`,
+                title: 'Invitation chapi',
             });
         } catch (error) {
             console.error('Erreur partage:', error);
@@ -214,7 +216,7 @@ export default function OnboardingCompleteScreen() {
             <SafeAreaView style={styles.container} edges={['top']}>
                 <View style={styles.loadingContainer}>
                     <ActivityIndicator size="large" color={colors.dark900} />
-                    <Text style={styles.loadingText}>Création de ton bbb...</Text>
+                    <Text style={styles.loadingText}>Création de ta lecture...</Text>
                 </View>
             </SafeAreaView>
         );
@@ -257,8 +259,8 @@ export default function OnboardingCompleteScreen() {
                     <Text style={styles.title}>C'est terminé !</Text>
                     <Text style={styles.description}>
                         {isAddChallenge
-                            ? 'Ton nouveau bbb est prêt, invite un.e ami.e pour cette lecture commune'
-                            : 'Ton premier bbb est prêt, tu n\'as plus qu\'à inviter un.e ami.e pour cette lecture commune'}
+                            ? 'Ta nouvelle lecture est prête, invite un.e ami.e à la partager'
+                            : 'Ta première lecture est prête, tu n\'as plus qu\'à inviter un.e ami.e à la partager'}
                     </Text>
                     
                     {/* Carte du livre + code — bookCard (zIndex 2) au premier plan pour radius bas visibles */}
@@ -275,8 +277,8 @@ export default function OnboardingCompleteScreen() {
                             <View style={styles.bookCardContent}>
                                 {/* Cover image — hauteur = bloc texte, ratio conservé (gauche) */}
                                 {coverUri ? (
-                                    <Image
-                                        source={{ uri: coverUri }}
+                                    <CoverImage
+                                        uri={coverUri}
                                         style={[
                                             styles.coverImage,
                                             {
@@ -284,7 +286,6 @@ export default function OnboardingCompleteScreen() {
                                                 width: bookInfoHeight * COVER_ASPECT_RATIO,
                                             },
                                         ]}
-                                        contentFit="cover"
                                     />
                                 ) : (
                                     <View
@@ -296,6 +297,7 @@ export default function OnboardingCompleteScreen() {
                                             },
                                         ]}
                                     >
+                                        <StitchBorder radius={borderRadius.xs} color={colors.alphaWhite30} />
                                         <BookOpenIcon size={40} color={colors.alphaWhite30} />
                                     </View>
                                 )}
@@ -383,7 +385,7 @@ const styles = StyleSheet.create({
         flexGrow: 1,
     },
     backgroundTexture: {
-        ...StyleSheet.absoluteFillObject,
+        ...StyleSheet.absoluteFill,
         opacity: 0.05,
     },
     loadingContainer: {
@@ -440,7 +442,7 @@ const styles = StyleSheet.create({
         elevation: 2,
     },
     cardTexture: {
-        ...StyleSheet.absoluteFillObject,
+        ...StyleSheet.absoluteFill,
         opacity: 0.05,
     },
     mascotOverlay: {
@@ -463,9 +465,6 @@ const styles = StyleSheet.create({
     },
     coverPlaceholder: {
         borderRadius: borderRadius.xs,
-        borderWidth: 1,
-        borderStyle: 'dashed',
-        borderColor: colors.alphaWhite10,
         backgroundColor: colors.alphaWhite10,
         justifyContent: 'center',
         alignItems: 'center',

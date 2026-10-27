@@ -61,6 +61,52 @@ export function isStreakAtRisk(lastStreakDate: Date | string | undefined | null)
   return lastRead === yesterday && lastRead !== today;
 }
 
+/** Marque-pages par livre : de quoi garder sa série malgré un jour manqué */
+export const STREAK_BONUS_PER_BOOK = 3;
+
+/**
+ * Les quatre états de ma série, ce que dit la gélule de l'accueil :
+ * - `active` : lu aujourd'hui, la flamme brûle ;
+ * - `atRisk` : lu hier, pas encore aujourd'hui, elle s'éteint à minuit ;
+ * - `missed` : un ou plusieurs jours manqués, mais il reste assez de
+ *   marque-pages pour les garder tous (un par jour) ;
+ * - `inactive` : pas de série.
+ *
+ * Les jours sont ceux du serveur (UTC), comme le trigger update_streak.
+ */
+export type StreakState = 'active' | 'atRisk' | 'missed' | 'inactive';
+
+export function getStreakState(
+  streakCount: number,
+  lastStreakDate: string | null | undefined,
+  bonusDates: string[] = [],
+): { state: StreakState; days: number; missedDays: string[] } {
+  if (!streakCount || !lastStreakDate) return { state: 'inactive', days: 0, missedDays: [] };
+  const lastRead = lastStreakDate.split('T')[0];
+  if (lastRead === dayString(0)) return { state: 'active', days: streakCount, missedDays: [] };
+  if (lastRead === dayString(1)) return { state: 'atRisk', days: streakCount, missedDays: [] };
+  // Les jours manqués, du lendemain de la dernière lecture jusqu'à hier :
+  // un marque-page chacun, il faut de quoi tous les couvrir
+  const missedDays: string[] = [];
+  for (let n = 1; dayString(n) > lastRead && n <= STREAK_BONUS_PER_BOOK + 1; n++) missedDays.unshift(dayString(n));
+  if (missedDays.length > 0 && missedDays.length <= bonusesLeft(bonusDates)) {
+    return { state: 'missed', days: streakCount, missedDays };
+  }
+  return { state: 'inactive', days: 0, missedDays: [] };
+}
+
+/** Marque-pages qu'il me reste sur ce livre */
+export function bonusesLeft(bonusDates: string[] = []): number {
+  return Math.max(0, STREAK_BONUS_PER_BOOK - bonusDates.length);
+}
+
+/** Le jour d'il y a `daysAgo` jours, en YYYY-MM-DD (UTC, comme le serveur) */
+export function dayString(daysAgo: number): string {
+  const d = new Date();
+  d.setUTCDate(d.getUTCDate() - daysAgo);
+  return getDateString(d);
+}
+
 function getDateString(date: Date): string {
   return date.toISOString().split('T')[0];
 }
@@ -69,4 +115,27 @@ function getYesterday(): Date {
   const yesterday = new Date();
   yesterday.setDate(yesterday.getDate() - 1);
   return yesterday;
+}
+
+/**
+ * La plus longue série de jours d'affilée, tous livres confondus
+ *
+ * Pour le profil (« meilleure série »). Les jours viennent de l'historique de
+ * lecture et des marque-pages posés sur les jours manqués (getMyReadingDays).
+ *
+ * @param days - Dates YYYY-MM-DD, dans n'importe quel ordre, doublons permis
+ */
+export function longestStreak(days: string[]): number {
+  const sorted = [...new Set(days)].sort();
+  let best = 0;
+  let run = 0;
+  let previous: number | null = null;
+  for (const day of sorted) {
+    // Midi UTC : un changement d'heure ne décale jamais d'un jour
+    const time = Date.parse(`${day}T12:00:00Z`);
+    run = previous !== null && Math.round((time - previous) / 86_400_000) === 1 ? run + 1 : 1;
+    best = Math.max(best, run);
+    previous = time;
+  }
+  return best;
 }

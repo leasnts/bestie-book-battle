@@ -231,7 +231,7 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
     },
     backgroundTexture: {
-        ...StyleSheet.absoluteFillObject,
+        ...StyleSheet.absoluteFill,
         opacity: 0.05,
     },
     mainContent: {

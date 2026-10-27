@@ -166,6 +166,7 @@ export interface Database {
           progress_percentage: number; // Decimal(5,2)
           streak_count: number;
           last_streak_date: string | null; // Date only (YYYY-MM-DD)
+          streak_bonus_dates: string[]; // Jours couverts par un marque-page (YYYY-MM-DD)
           total_pages: number | null; // Nombre de pages de l'édition du participant
           cover_url: string | null; // Couverture de son édition, null = celle du bbb
           publisher: string | null; // Éditeur de son édition, si la recherche l'a donné
@@ -183,6 +184,7 @@ export interface Database {
           publisher?: string | null;
           streak_count?: number;
           last_streak_date?: string | null;
+          streak_bonus_dates?: string[];
           last_updated_at?: string;
           created_at?: string;
         };
@@ -197,6 +199,7 @@ export interface Database {
           publisher?: string | null;
           streak_count?: number;
           last_streak_date?: string | null;
+          streak_bonus_dates?: string[];
           last_updated_at?: string;
           created_at?: string;
         };
@@ -359,6 +362,11 @@ export interface Database {
       [_ in never]: never;
     };
     Functions: {
+      /** Poser un marque-page sur hier pour garder ma série (3 par livre) */
+      use_streak_bonus: {
+        Args: { p_challenge_id: string };
+        Returns: Database['public']['Tables']['user_progress']['Row'][];
+      };
       /** Les notes posées plus loin que ma progression : qui et à quelle page, jamais le contenu */
       annotations_ahead: {
         Args: { p_challenge_id: string };
