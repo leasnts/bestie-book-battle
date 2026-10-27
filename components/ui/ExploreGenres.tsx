@@ -11,9 +11,10 @@
  *    │       ☕ │ │       ◎  │ │      ← icône en ton sur ton qui déborde
  *    └──────────┘ └──────────┘ └────
  *
- * Ton sur ton, le nom compris (Lea, 2026-10-27) : le nom prend la nuance la
- * plus foncée de la paire (`deep`), sans ombre ni liseré ; l'icône Lucide est
- * la couleur du fond assombrie (encre transparente), gravée d'un liseré clair.
+ * Ton sur ton pour l'icône seulement : la couleur du fond assombrie (encre
+ * transparente), gravée d'un liseré clair. Le nom suit la charte : chocolat
+ * foncé sur beurre et beige, beurre clair sur rouge et chocolat (le nom en ton
+ * sur ton a été essayé et ne se lisait pas, Lea 2026-10-27).
  *
  * Toucher un genre ouvre tous ses livres (l'écran Explorer passe en liste).
  */
@@ -80,7 +81,7 @@ const ICONS: Record<string, LucideIcon> = {
   nonfiction: LightbulbIcon,
 };
 
-/** Fonds clairs : liseré et encre plus marqués pour que le ton sur ton se lise */
+/** Fonds clairs : nom en chocolat, liseré et encre de l'icône plus marqués */
 const LIGHT_PAIRS: Pair[] = ['butter', 'beige'];
 
 interface ExploreGenresProps {
@@ -123,7 +124,7 @@ export default function ExploreGenres({ genres, onSelect }: ExploreGenresProps) 
               </View>
               <StitchBorder radius={RADIUS} color={creamAlpha(onLight ? 0.55 : 0.35)} />
               <Text
-                style={[styles.label, { color: lowki[pair].deep }]}
+                style={[styles.label, { color: onLight ? lowki.chocolate.dark : lowki.butter.light }]}
                 numberOfLines={2}
               >
                 {genre.label}
