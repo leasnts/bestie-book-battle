@@ -18,8 +18,8 @@ import { fileURLToPath } from 'node:url';
 /** title = titre affiché (français) ; search = titre à chercher s'il diffère */
 const SHELVES = [
   {
-    key: 'now',
-    label: 'En ce moment',
+    key: 'booktok',
+    label: 'Populaire sur BookTok',
     books: [
       { title: 'Fourth Wing', author: 'Rebecca Yarros' },
       { title: 'La Femme de ménage', author: 'Freida McFadden', search: 'The Housemaid' },
