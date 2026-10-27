@@ -4,7 +4,7 @@
  * Les auteur·ices les plus lu·es, en rangée qui défile de côté : leur photo
  * dans un rond, le nom dessous. Sans photo libre (constants/exploreAuthors.json,
  * généré par scripts/build-explore-authors.mjs), le rond montre leurs
- * initiales en crème sur l'encre brune du grand chiffre de « Ma page »
+ * initiales en crème, en Welcome Valentines (la police d'accent), sur l'encre brune du grand chiffre de « Ma page »
  * (`InkFigure`). Photo ou initiales, le rond porte à l'intérieur de son bord
  * le liseré de verre de l'app (`GlassRim`, celui des boutons en verre).
  *
@@ -20,6 +20,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import React from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { colors, creamAlpha, fontSize, fonts, spacing } from '../../utils/constants';
+import { ACCENT_SCALE } from './AccentWord';
 import { GlassRim } from './GlassMaterial';
 import { INK } from './InkFigure';
 import PressableScale from './PressableScale';
@@ -119,10 +120,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  // Police d'accent : un œil plus petit, agrandie comme un mot d'accent
   initials: {
-    fontFamily: fonts.display,
-    fontSize: 24,
-    lineHeight: 30,
+    fontFamily: fonts.accent,
+    fontSize: 24 * ACCENT_SCALE,
+    lineHeight: 38,
     color: creamAlpha(0.95),
   },
   name: {
