@@ -1,10 +1,9 @@
+import {useMemo} from 'react';
 import {loadFont} from '@remotion/fonts';
 import {AbsoluteFill, Easing, interpolate, spring, staticFile, useVideoConfig} from 'remotion';
 import {Eyes, EyesPalette} from './Logo';
 import {useLoop} from './loop';
 
-const W = 3840;
-const H = 1646;
 const clamp = {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'} as const;
 
 const PAPER = '#FBF6EC';
@@ -19,7 +18,6 @@ const TONES: EyesPalette[] = [
 loadFont({family: 'Welcome Valentines', url: staticFile('fonts/WelcomeValentines_400Regular.ttf')});
 
 /** Le nom au centre : tous les regards finissent sur lui. */
-const CENTER = {x: W / 2, y: H / 2};
 
 /** Deux ambiances : papier multicolore, ou rouge ton sur ton comme l'icône. */
 const THEMES = {
@@ -42,9 +40,10 @@ const rand = (i: number) => {
  * La foule : une grille brouillée qui déborde largement du cadre. Chacun arrive
  * selon sa distance au centre, la salle se remplit du milieu vers les bords.
  */
-const CROWD = (() => {
+const makeCrowd = (W: number, H: number) => {
+  const CENTER = {x: W / 2, y: H / 2};
   const cols = 15;
-  const rows = 7;
+  const rows = Math.round((7 * H) / 1646);
   const people = [];
   for (let r = 0; r < rows; r++) {
     for (let c = 0; c < cols; c++) {
@@ -65,13 +64,15 @@ const CROWD = (() => {
     }
   }
   return people.sort((a, b) => a.z - b.z);
-})();
+};
 
 export const HeaderCrowd = ({theme}: {theme: keyof typeof THEMES}) => {
   const t = THEMES[theme];
   const tones = t.tones ?? TONES;
   const {frame} = useLoop();
-  const {fps} = useVideoConfig();
+  const {fps, width: W, height: H} = useVideoConfig();
+  const CENTER = {x: W / 2, y: H / 2};
+  const CROWD = useMemo(() => makeCrowd(W, H), [W, H]);
   const leave = interpolate(frame, [266, 290], [1, 0], {...clamp, easing: Easing.in(Easing.back(1.4))});
   // D'abord chacun regarde autour de lui, puis tout le monde fixe le nom.
   const focus = interpolate(frame, [150, 178], [0, 1], {...clamp, easing: Easing.inOut(Easing.cubic)});

@@ -11,6 +11,8 @@ export const RemotionRoot = () => (
   <>
   <Composition id="ChapiFoule" component={HeaderCrowd} defaultProps={{theme: 'papier' as const}} {...header} />
   <Composition id="ChapiFouleRouge" component={HeaderCrowd} defaultProps={{theme: 'rouge' as const}} {...header} />
+  {/* Résultats de recherche de l'App Store : 3:2. */}
+  <Composition id="ChapiFouleRougeRecherche" component={HeaderCrowd} defaultProps={{theme: 'rouge' as const}} {...header} height={2560} />
   <Composition id="ChapiEnsemble" component={HeaderTogether} {...header} />
   <Composition id="ChapiGeantRouge" component={HeaderGiant} defaultProps={{tone: 'rouge' as const}} {...header} />
   <Composition id="ChapiFilRouge" component={HeaderThread} defaultProps={{tone: 'rouge' as const}} {...header} />
