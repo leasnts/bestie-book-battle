@@ -64,7 +64,26 @@ import { borderRadius, colors, fonts, shadows, spacing } from '../../utils/const
 const SHELVES = catalog.shelves as ExploreGenre[];
 /** L'étagère des tendances : la première du catalogue, hors grille des genres */
 const BOOKTOK = SHELVES.find((shelf) => shelf.key === 'booktok');
-const GENRES = SHELVES.filter((shelf) => shelf !== BOOKTOK);
+/** L'ordre des genres : on varie dès le début, pour parler à tout le monde */
+const GENRE_ORDER = [
+  'contemporary',
+  'thriller',
+  'fantasy',
+  'feel-good',
+  'science-fiction',
+  'romance',
+  'historical',
+  'classics',
+  'horror',
+  'young-adult',
+  'comics',
+  'romantasy',
+  'self-help',
+  'nonfiction',
+];
+const GENRES = GENRE_ORDER.map((key) => SHELVES.find((shelf) => shelf.key === key)).filter(
+  (shelf): shelf is ExploreGenre => !!shelf,
+);
 
 const AUTHORS = authorsCatalog.authors as ExploreAuthor[];
 

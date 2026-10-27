@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-13",
+  "generatedAt": "2026-10-27",
   "shelves": [
     {
       "key": "booktok",
@@ -499,6 +499,540 @@
           "coverUrl": "https://is1-ssl.mzstatic.com/image/thumb/Publication211/v4/54/2a/e4/542ae442-aa9a-837a-aa56-c4bdd8f92c52/9782073141453.jpg/600x600bb.jpg",
           "publisher": null,
           "publishedDate": "2023"
+        }
+      ]
+    },
+    {
+      "key": "feel-good",
+      "label": "Feel-good",
+      "books": [
+        {
+          "id": "/works/OL20832477W",
+          "title": "Tant que le café est encore chaud",
+          "author": "Toshikazu Kawaguchi",
+          "pageCount": null,
+          "coverUrl": "https://is1-ssl.mzstatic.com/image/thumb/Publication125/v4/be/bf/39/bebf39fd-cffc-3f0e-f237-8ac9525ff26b/9782226469151.jpg/600x600bb.jpg",
+          "publisher": null,
+          "publishedDate": null
+        },
+        {
+          "id": "/works/OL20965973W",
+          "title": "La Bibliothèque de minuit",
+          "author": "Matt Haig",
+          "pageCount": 304,
+          "coverUrl": "https://covers.openlibrary.org/b/id/10313767-L.jpg",
+          "publisher": null,
+          "publishedDate": "2020"
+        },
+        {
+          "id": "/works/OL30820699W",
+          "title": "Les Délices de Tokyo",
+          "author": "Durian Sukegawa",
+          "pageCount": 224,
+          "coverUrl": "https://is1-ssl.mzstatic.com/image/thumb/Publication49/v4/d0/53/22/d0532251-db95-ca36-4238-15daadfacee6/9782226389091-001-X.jpeg/600x600bb.jpg",
+          "publisher": null,
+          "publishedDate": "2017"
+        },
+        {
+          "id": "/works/OL28601791W",
+          "title": "Les gens heureux lisent et boivent du café",
+          "author": "Agnès Martin-Lugand",
+          "pageCount": 192,
+          "coverUrl": "https://covers.openlibrary.org/b/id/15125886-L.jpg",
+          "publisher": null,
+          "publishedDate": "2014"
+        },
+        {
+          "id": "/works/OL24339877W",
+          "title": "Et que ne durent que les moments doux",
+          "author": "Virginie Grimaldi",
+          "pageCount": 360,
+          "coverUrl": "https://covers.openlibrary.org/b/id/10862556-L.jpg",
+          "publisher": null,
+          "publishedDate": "2020"
+        },
+        {
+          "id": "/works/OL11773660W",
+          "title": "Ensemble, c’est tout",
+          "author": "Anna Gavalda",
+          "pageCount": 603,
+          "coverUrl": "https://covers.openlibrary.org/b/id/6992110-L.jpg",
+          "publisher": null,
+          "publishedDate": "2004"
+        }
+      ]
+    },
+    {
+      "key": "science-fiction",
+      "label": "Science-fiction",
+      "books": [
+        {
+          "id": "/works/OL893414W",
+          "title": "Dune",
+          "author": "Frank Herbert",
+          "pageCount": 608,
+          "coverUrl": "https://covers.openlibrary.org/b/id/11481354-L.jpg",
+          "publisher": null,
+          "publishedDate": "1965"
+        },
+        {
+          "id": "/works/OL16314245W",
+          "title": "Le Problème à trois corps",
+          "author": "Liu Cixin",
+          "pageCount": 562,
+          "coverUrl": "https://is1-ssl.mzstatic.com/image/thumb/Publication221/v4/30/2b/a1/302ba156-ad04-ea54-8c30-397093599ef7/9782330071035.jpg/600x600bb.jpg",
+          "publisher": null,
+          "publishedDate": "2008"
+        },
+        {
+          "id": "/works/OL21745884W",
+          "title": "Projet Dernière Chance",
+          "author": "Andy Weir",
+          "pageCount": 496,
+          "coverUrl": "https://is1-ssl.mzstatic.com/image/thumb/Publication211/v4/e7/a9/69/e7a969e8-e800-ddfa-a559-3b2d3db71529/9791028117955-001-x.jpeg/600x600bb.jpg",
+          "publisher": null,
+          "publishedDate": "2021"
+        },
+        {
+          "id": "/works/OL17091839W",
+          "title": "Seul sur Mars",
+          "author": "Andy Weir",
+          "pageCount": 407,
+          "coverUrl": "https://covers.openlibrary.org/b/id/11447888-L.jpg",
+          "publisher": null,
+          "publishedDate": "2011"
+        },
+        {
+          "id": "/works/OL11326416W",
+          "title": "1984",
+          "author": "George Orwell",
+          "pageCount": 72,
+          "coverUrl": "https://covers.openlibrary.org/b/id/8745958-L.jpg",
+          "publisher": null,
+          "publishedDate": "2003"
+        },
+        {
+          "id": "/works/OL103123W",
+          "title": "Fahrenheit 451",
+          "author": "Ray Bradbury",
+          "pageCount": 190,
+          "coverUrl": "https://is1-ssl.mzstatic.com/image/thumb/Publication123/v4/98/88/f0/9888f03c-b8d2-268b-4f46-0e3347675cc4/9782207170809.jpg/600x600bb.jpg",
+          "publisher": null,
+          "publishedDate": "1953"
+        },
+        {
+          "id": "/works/OL675783W",
+          "title": "La Servante écarlate",
+          "author": "Margaret Atwood",
+          "pageCount": 352,
+          "coverUrl": "https://is1-ssl.mzstatic.com/image/thumb/Publication114/v4/2c/3a/07/2c3a0772-e539-5a8c-29e6-301691b8b729/9782221253441.jpg/600x600bb.jpg",
+          "publisher": null,
+          "publishedDate": "1985"
+        },
+        {
+          "id": "/works/OL20883297W",
+          "title": "Klara et le Soleil",
+          "author": "Kazuo Ishiguro",
+          "pageCount": 334,
+          "coverUrl": "https://is1-ssl.mzstatic.com/image/thumb/Publication211/v4/c9/9f/d5/c99fd543-0b02-9110-b758-c91f60c7a8f6/9782073002327.jpg/600x600bb.jpg",
+          "publisher": null,
+          "publishedDate": "2019"
+        }
+      ]
+    },
+    {
+      "key": "historical",
+      "label": "Historique",
+      "books": [
+        {
+          "id": "/works/OL24323516W",
+          "title": "Le Pays des autres",
+          "author": "Leïla Slimani",
+          "pageCount": 368,
+          "coverUrl": "https://is1-ssl.mzstatic.com/image/thumb/Publication221/v4/45/84/11/4584110f-4cc4-fc59-71de-89287085d446/9782072923487.jpg/600x600bb.jpg",
+          "publisher": null,
+          "publishedDate": "2020"
+        },
+        {
+          "id": "/works/OL19304700W",
+          "title": "Au revoir là-haut",
+          "author": "Pierre Lemaitre",
+          "pageCount": 464,
+          "coverUrl": "https://is1-ssl.mzstatic.com/image/thumb/Publication211/v4/50/64/6c/50646cf8-daa5-a2fd-b73a-030e13a054da/9782226292933.jpg/600x600bb.jpg",
+          "publisher": null,
+          "publishedDate": "2013"
+        },
+        {
+          "id": "/works/OL24316073W",
+          "title": "Le Bal des folles",
+          "author": "Victoria Mas",
+          "pageCount": 194,
+          "coverUrl": "https://is1-ssl.mzstatic.com/image/thumb/Publication113/v4/a8/14/94/a8149420-dc30-36af-6cbe-a73c6e94f1c7/9782226445087-001-x.jpeg/600x600bb.jpg",
+          "publisher": null,
+          "publishedDate": "2019"
+        },
+        {
+          "id": "/works/OL17116910W",
+          "title": "Le Rossignol",
+          "author": "Kristin Hannah",
+          "pageCount": 560,
+          "coverUrl": "https://covers.openlibrary.org/b/id/8314147-L.jpg",
+          "publisher": null,
+          "publishedDate": "2000"
+        },
+        {
+          "id": "/works/OL1914022W",
+          "title": "Les Piliers de la terre",
+          "author": "Ken Follett",
+          "pageCount": 1040,
+          "coverUrl": "https://is1-ssl.mzstatic.com/image/thumb/Publication128/v4/55/29/f0/5529f011-fb1d-1325-4da1-da02a130e9f0/9782221190777.jpg/600x600bb.jpg",
+          "publisher": null,
+          "publishedDate": "1989"
+        },
+        {
+          "id": "/works/OL19661009W",
+          "title": "Le Tatoueur d’Auschwitz",
+          "author": "Heather Morris",
+          "pageCount": 308,
+          "coverUrl": "https://is1-ssl.mzstatic.com/image/thumb/Publication221/v4/0f/34/68/0f346863-fc15-4d90-587a-b7c13c94a19f/9782824646886-001-x.jpeg/600x600bb.jpg",
+          "publisher": null,
+          "publishedDate": "2018"
+        },
+        {
+          "id": "/works/OL34947113W",
+          "title": "L’Amie prodigieuse",
+          "author": "Elena Ferrante",
+          "pageCount": 256,
+          "coverUrl": "https://is1-ssl.mzstatic.com/image/thumb/Publication211/v4/ca/1d/6c/ca1d6cb5-c78c-17b5-a22f-e9e181822f29/9782072622861.png/600x600bb.jpg",
+          "publisher": null,
+          "publishedDate": "2023"
+        }
+      ]
+    },
+    {
+      "key": "classics",
+      "label": "Classiques",
+      "books": [
+        {
+          "id": "/works/OL66554W",
+          "title": "Orgueil et Préjugés",
+          "author": "Jane Austen",
+          "pageCount": 351,
+          "coverUrl": "https://is1-ssl.mzstatic.com/image/thumb/Publication221/v4/b3/61/ed/b361edda-acda-739a-5909-44dbb243e402/aee8c5dd-090c-4eb5-80fc-0c4260fa030d_cover_image.png/600x600bb.jpg",
+          "publisher": null,
+          "publishedDate": "1813"
+        },
+        {
+          "id": "/works/OL1095427W",
+          "title": "Jane Eyre",
+          "author": "Charlotte Brontë",
+          "pageCount": 480,
+          "coverUrl": "https://covers.openlibrary.org/b/id/8235363-L.jpg",
+          "publisher": null,
+          "publishedDate": "1847"
+        },
+        {
+          "id": "/works/OL21177W",
+          "title": "Les Hauts de Hurlevent",
+          "author": "Emily Brontë",
+          "pageCount": 318,
+          "coverUrl": "https://covers.openlibrary.org/b/id/12818862-L.jpg",
+          "publisher": null,
+          "publishedDate": "1846"
+        },
+        {
+          "id": "/works/OL36287W",
+          "title": "Le Comte de Monte-Cristo",
+          "author": "Alexandre Dumas",
+          "pageCount": 599,
+          "coverUrl": "https://covers.openlibrary.org/b/id/14565097-L.jpg",
+          "publisher": null,
+          "publishedDate": "1830"
+        },
+        {
+          "id": "/works/OL1230613W",
+          "title": "L’Étranger",
+          "author": "Albert Camus",
+          "pageCount": 143,
+          "coverUrl": "https://covers.openlibrary.org/b/id/13151269-L.jpg",
+          "publisher": null,
+          "publishedDate": "1942"
+        },
+        {
+          "id": "/works/OL1063588W",
+          "title": "Les Misérables",
+          "author": "Victor Hugo",
+          "pageCount": 520,
+          "coverUrl": "https://is1-ssl.mzstatic.com/image/thumb/Publication7/v4/c3/ea/2e/c3ea2e71-e8a6-7b2e-38b2-9133445afef2/coverArt.2311cd.jpg/600x600bb.jpg",
+          "publisher": null,
+          "publishedDate": "1862"
+        },
+        {
+          "id": "/works/OL8193416W",
+          "title": "Le Portrait de Dorian Gray",
+          "author": "Oscar Wilde",
+          "pageCount": 246,
+          "coverUrl": "https://covers.openlibrary.org/b/id/14314858-L.jpg",
+          "publisher": null,
+          "publishedDate": "1890"
+        },
+        {
+          "id": "/works/OL10263W",
+          "title": "Le Petit Prince",
+          "author": "Antoine de Saint-Exupéry",
+          "pageCount": 96,
+          "coverUrl": "https://covers.openlibrary.org/b/id/10708272-L.jpg",
+          "publisher": null,
+          "publishedDate": "1943"
+        }
+      ]
+    },
+    {
+      "key": "horror",
+      "label": "Horreur",
+      "books": [
+        {
+          "id": "/works/OL81613W",
+          "title": "Ça",
+          "author": "Stephen King",
+          "pageCount": 1168,
+          "coverUrl": "https://covers.openlibrary.org/b/id/8569284-L.jpg",
+          "publisher": null,
+          "publishedDate": "1986"
+        },
+        {
+          "id": "/works/OL81633W",
+          "title": "Shining",
+          "author": "Stephen King",
+          "pageCount": 506,
+          "coverUrl": "https://covers.openlibrary.org/b/id/12376585-L.jpg",
+          "publisher": null,
+          "publishedDate": "1977"
+        },
+        {
+          "id": "/works/OL81631W",
+          "title": "Simetierre",
+          "author": "Stephen King",
+          "pageCount": 423,
+          "coverUrl": "https://covers.openlibrary.org/b/id/12015500-L.jpg",
+          "publisher": null,
+          "publishedDate": "1983"
+        },
+        {
+          "id": "/works/OL20759125W",
+          "title": "Mexican Gothic",
+          "author": "Silvia Moreno-Garcia",
+          "pageCount": 352,
+          "coverUrl": "https://covers.openlibrary.org/b/id/10239163-L.jpg",
+          "publisher": null,
+          "publishedDate": "2020"
+        },
+        {
+          "id": "/works/OL85892W",
+          "title": "Dracula",
+          "author": "Bram Stoker",
+          "pageCount": 384,
+          "coverUrl": "https://covers.openlibrary.org/b/id/12216503-L.jpg",
+          "publisher": null,
+          "publishedDate": "1897"
+        },
+        {
+          "id": "/works/OL450063W",
+          "title": "Frankenstein",
+          "author": "Mary Shelley",
+          "pageCount": 240,
+          "coverUrl": "https://covers.openlibrary.org/b/id/12356249-L.jpg",
+          "publisher": null,
+          "publishedDate": "1818"
+        },
+        {
+          "id": "/works/OL32195W",
+          "title": "La Maison des feuilles",
+          "author": "Mark Z. Danielewski",
+          "pageCount": 736,
+          "coverUrl": "https://covers.openlibrary.org/b/id/6450442-L.jpg",
+          "publisher": null,
+          "publishedDate": "1998"
+        }
+      ]
+    },
+    {
+      "key": "comics",
+      "label": "BD & manga",
+      "books": [
+        {
+          "id": "/works/OL8215661W",
+          "title": "One Piece",
+          "author": "Eiichiro Oda",
+          "pageCount": 208,
+          "coverUrl": "https://covers.openlibrary.org/b/id/1020563-L.jpg",
+          "publisher": null,
+          "publishedDate": "1997"
+        },
+        {
+          "id": "/works/OL22983333W",
+          "title": "L’Arabe du futur",
+          "author": "Riad Sattouf",
+          "pageCount": 176,
+          "coverUrl": "https://covers.openlibrary.org/b/id/10504773-L.jpg",
+          "publisher": null,
+          "publishedDate": "2020"
+        },
+        {
+          "id": "/works/OL5735175W",
+          "title": "Persepolis",
+          "author": "Marjane Satrapi",
+          "pageCount": 352,
+          "coverUrl": "https://covers.openlibrary.org/b/id/12648921-L.jpg",
+          "publisher": null,
+          "publishedDate": "2000"
+        },
+        {
+          "id": "/works/OL28774007W",
+          "title": "Spy x Family",
+          "author": "Tatsuya Endo",
+          "pageCount": 200,
+          "coverUrl": "https://covers.openlibrary.org/b/id/13206180-L.jpg",
+          "publisher": null,
+          "publishedDate": "2020"
+        },
+        {
+          "id": "/works/OL35032855W",
+          "title": "Blue Period",
+          "author": "Tsubasa Yamaguchi",
+          "pageCount": null,
+          "coverUrl": "https://covers.openlibrary.org/b/id/13999716-L.jpg",
+          "publisher": null,
+          "publishedDate": "2020"
+        },
+        {
+          "id": "/works/OL267622W",
+          "title": "Astérix le Gaulois",
+          "author": "René Goscinny",
+          "pageCount": 48,
+          "coverUrl": "https://covers.openlibrary.org/b/id/962725-L.jpg",
+          "publisher": null,
+          "publishedDate": "1961"
+        }
+      ]
+    },
+    {
+      "key": "self-help",
+      "label": "Développement perso",
+      "books": [
+        {
+          "id": "/works/OL17930368W",
+          "title": "Atomic Habits",
+          "author": "James Clear",
+          "pageCount": 322,
+          "coverUrl": "https://covers.openlibrary.org/b/id/12539702-L.jpg",
+          "publisher": null,
+          "publishedDate": "2016"
+        },
+        {
+          "id": "/works/OL27203W",
+          "title": "Les Quatre Accords toltèques",
+          "author": "Miguel Ruiz",
+          "pageCount": 152,
+          "coverUrl": "https://covers.openlibrary.org/b/id/924521-L.jpg",
+          "publisher": null,
+          "publishedDate": "1997"
+        },
+        {
+          "id": "/works/OL17590212W",
+          "title": "L’Art subtil de s’en foutre",
+          "author": "Mark Manson",
+          "pageCount": 224,
+          "coverUrl": "https://covers.openlibrary.org/b/id/8231990-L.jpg",
+          "publisher": null,
+          "publishedDate": "2016"
+        },
+        {
+          "id": "/works/OL5727686W",
+          "title": "Le Pouvoir du moment présent",
+          "author": "Eckhart Tolle",
+          "pageCount": 224,
+          "coverUrl": "https://covers.openlibrary.org/b/id/551262-L.jpg",
+          "publisher": null,
+          "publishedDate": "1997"
+        },
+        {
+          "id": "/works/OL19714233W",
+          "title": "Ikigai",
+          "author": "Héctor García",
+          "pageCount": 208,
+          "coverUrl": "https://covers.openlibrary.org/b/id/11300391-L.jpg",
+          "publisher": null,
+          "publishedDate": "2016"
+        },
+        {
+          "id": "/works/OL24793569W",
+          "title": "L’Alchimiste",
+          "author": "Paulo Coelho",
+          "pageCount": null,
+          "coverUrl": "https://covers.openlibrary.org/b/id/11556106-L.jpg",
+          "publisher": null,
+          "publishedDate": "2010"
+        }
+      ]
+    },
+    {
+      "key": "nonfiction",
+      "label": "Récits & essais",
+      "books": [
+        {
+          "id": "/works/OL17075811W",
+          "title": "Sapiens",
+          "author": "Yuval Noah Harari",
+          "pageCount": 456,
+          "coverUrl": "https://covers.openlibrary.org/b/id/8634250-L.jpg",
+          "publisher": null,
+          "publishedDate": "2011"
+        },
+        {
+          "id": "/works/OL17930367W",
+          "title": "Devenir",
+          "author": "Michelle Obama",
+          "pageCount": 464,
+          "coverUrl": "https://covers.openlibrary.org/b/id/8824664-L.jpg",
+          "publisher": null,
+          "publishedDate": "2018"
+        },
+        {
+          "id": "/works/OL18139176W",
+          "title": "Une éducation",
+          "author": "Tara Westover",
+          "pageCount": 384,
+          "coverUrl": "https://covers.openlibrary.org/b/id/8314077-L.jpg",
+          "publisher": null,
+          "publishedDate": "2018"
+        },
+        {
+          "id": "/works/OL102387W",
+          "title": "L’Événement",
+          "author": "Annie Ernaux",
+          "pageCount": 103,
+          "coverUrl": "https://covers.openlibrary.org/b/id/13136023-L.jpg",
+          "publisher": null,
+          "publishedDate": "2000"
+        },
+        {
+          "id": "/works/OL24212304W",
+          "title": "Le Consentement",
+          "author": "Vanessa Springora",
+          "pageCount": 216,
+          "coverUrl": "https://covers.openlibrary.org/b/id/10839208-L.jpg",
+          "publisher": null,
+          "publishedDate": "2020"
+        },
+        {
+          "id": "/works/OL39379W",
+          "title": "Une chambre à soi",
+          "author": "Virginia Woolf",
+          "pageCount": 143,
+          "coverUrl": "https://covers.openlibrary.org/b/id/6559057-L.jpg",
+          "publisher": null,
+          "publishedDate": "1929"
         }
       ]
     }

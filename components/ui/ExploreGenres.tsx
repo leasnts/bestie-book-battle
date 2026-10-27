@@ -24,20 +24,28 @@ import {
   CastleIcon,
   CoffeeIcon,
   CrownIcon,
+  FeatherIcon,
   FingerprintIcon,
+  GhostIcon,
   HeartIcon,
+  HourglassIcon,
+  LightbulbIcon,
   type LucideIcon,
+  MessageCircleIcon,
+  RocketIcon,
+  SproutIcon,
+  SunIcon,
 } from 'lucide-react-native';
 import React from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import type { BookSearchResult } from '../../types/bookSearch';
-import { borderRadius, colors, creamAlpha, fonts, inkAlpha, lowki, spacing } from '../../utils/constants';
+import { borderRadius, colors, creamAlpha, fontSize, fonts, inkAlpha, lowki, spacing } from '../../utils/constants';
 import PressableScale from './PressableScale';
 import { StitchBorder } from './Stitch';
 
 const SIDE = spacing.lg;
 const GAP = spacing.md;
-const TILE_W = 136;
+const TILE_MIN_W = 120;
 const TILE_H = 84;
 const RADIUS = borderRadius.lg;
 const ICON = 64;
@@ -50,19 +58,26 @@ export interface ExploreGenre {
 
 type Pair = keyof typeof lowki;
 
-/**
- * Couleur et icône de chaque genre. Les couleurs alternent pour que deux
- * voisins ne se ressemblent jamais.
- */
-const STYLE: Record<string, { pair: Pair; icon: LucideIcon }> = {
-  contemporary: { pair: 'butter', icon: CoffeeIcon },
-  thriller: { pair: 'chocolate', icon: FingerprintIcon },
-  romance: { pair: 'red', icon: HeartIcon },
-  'young-adult': { pair: 'beige', icon: BackpackIcon },
-  fantasy: { pair: 'chocolate', icon: CastleIcon },
-  romantasy: { pair: 'red', icon: CrownIcon },
+/** Les couleurs tournent dans cet ordre : deux voisins ne se ressemblent jamais */
+const PAIRS: Pair[] = ['butter', 'chocolate', 'red', 'beige'];
+
+/** L'icône de chaque genre */
+const ICONS: Record<string, LucideIcon> = {
+  contemporary: CoffeeIcon,
+  thriller: FingerprintIcon,
+  fantasy: CastleIcon,
+  'feel-good': SunIcon,
+  'science-fiction': RocketIcon,
+  romance: HeartIcon,
+  historical: HourglassIcon,
+  classics: FeatherIcon,
+  horror: GhostIcon,
+  'young-adult': BackpackIcon,
+  comics: MessageCircleIcon,
+  romantasy: CrownIcon,
+  'self-help': SproutIcon,
+  nonfiction: LightbulbIcon,
 };
-const FALLBACK = { pair: 'beige' as Pair, icon: HeartIcon };
 
 /** Fonds clairs : liseré et encre plus marqués pour que le ton sur ton se lise */
 const LIGHT_PAIRS: Pair[] = ['butter', 'beige'];
@@ -80,8 +95,9 @@ export default function ExploreGenres({ genres, onSelect }: ExploreGenresProps) 
       </Text>
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row}>
-        {genres.map((genre) => {
-          const { pair, icon: Icon } = STYLE[genre.key] ?? FALLBACK;
+        {genres.map((genre, index) => {
+          const pair = PAIRS[index % PAIRS.length];
+          const Icon = ICONS[genre.key] ?? HeartIcon;
           const onLight = LIGHT_PAIRS.includes(pair);
           return (
             <PressableScale
@@ -108,8 +124,6 @@ export default function ExploreGenres({ genres, onSelect }: ExploreGenresProps) 
               <Text
                 style={[styles.label, { color: lowki[pair].deep }]}
                 numberOfLines={1}
-                adjustsFontSizeToFit
-                minimumFontScale={0.8}
               >
                 {genre.label}
               </Text>
@@ -136,12 +150,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: SIDE,
     gap: GAP,
   },
+  // Largeur au nom : la taille du texte ne change jamais d'un genre à l'autre
   tile: {
-    width: TILE_W,
+    minWidth: TILE_MIN_W,
     height: TILE_H,
     borderRadius: RADIUS,
     overflow: 'hidden',
     padding: spacing.md,
+    // Place pour l'icône qui déborde à droite du nom
+    paddingRight: spacing['2xl'],
   },
   // Déborde en bas à droite, penchée : la section la coupe
   icon: {
@@ -162,7 +179,7 @@ const styles = StyleSheet.create({
   },
   label: {
     fontFamily: fonts.display,
-    fontSize: 15,
-    lineHeight: 19,
+    fontSize: fontSize.md,
+    lineHeight: 20,
   },
 });
