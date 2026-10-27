@@ -169,7 +169,7 @@ export default function OnboardingWelcomeScreen() {
                     <View style={styles.mainContent}>
                         <Text style={styles.title}>Bienvenue !</Text>
                         <Text style={styles.description}>
-                            {params.adminFirstName} est ravi.e que tu participes à ce bbb
+                            {params.adminFirstName} est ravi.e que tu participes à cette lecture
                         </Text>
                         
                         {/* Carte du livre avec PopEyes */}

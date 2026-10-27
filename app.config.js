@@ -2,7 +2,7 @@ const IS_DEV = process.env.APP_VARIANT === "development";
 
 export default {
   expo: {
-    name: IS_DEV ? "Chapi (Dev)" : "Chapi",
+    name: IS_DEV ? "chapi (Dev)" : "chapi",
     slug: "bestie-book-battle",
     version: "1.1.0",
     orientation: "portrait",
@@ -57,9 +57,9 @@ export default {
         "expo-image-picker",
         {
           photosPermission:
-            "Chapi a besoin d'accéder à tes photos pour ta photo de profil et les couvertures de livres.",
+            "chapi a besoin d'accéder à tes photos pour ta photo de profil et les couvertures de livres.",
           cameraPermission:
-            "Chapi a besoin d'accéder à ton appareil photo pour photographier les couvertures de livres et les passages que tu veux citer.",
+            "chapi a besoin d'accéder à ton appareil photo pour photographier les couvertures de livres et les passages que tu veux citer.",
         },
       ],
       "@react-native-community/datetimepicker",
@@ -68,7 +68,7 @@ export default {
         "expo-audio",
         {
           microphonePermission:
-            "Chapi a besoin du micro pour enregistrer tes notes vocales.",
+            "chapi a besoin du micro pour enregistrer tes notes vocales.",
         },
       ],
     ],

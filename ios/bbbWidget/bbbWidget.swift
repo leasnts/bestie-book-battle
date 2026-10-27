@@ -287,7 +287,7 @@ struct bbbWidget: Widget {
             bbbWidgetEntryView(entry: entry)
                 .containerBackground(Color(hex: "FDFCFA"), for: .widget)
         }
-        .configurationDisplayName("Chapi")
+        .configurationDisplayName("chapi")
         .description("Le classement de ton challenge lecture")
         .supportedFamilies([.systemSmall])
         .contentMarginsDisabled()

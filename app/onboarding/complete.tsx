@@ -195,8 +195,8 @@ export default function OnboardingCompleteScreen() {
 
         try {
             await Share.share({
-                message: `Rejoins-moi sur Chapi pour lire "${params.bookTitle}" ensemble ! 📚\n\nCode d'invitation : ${inviteCode}`,
-                title: 'Invitation Chapi',
+                message: `Rejoins-moi sur chapi pour lire "${params.bookTitle}" ensemble ! 📚\n\nCode d'invitation : ${inviteCode}`,
+                title: 'Invitation chapi',
             });
         } catch (error) {
             console.error('Erreur partage:', error);
@@ -216,7 +216,7 @@ export default function OnboardingCompleteScreen() {
             <SafeAreaView style={styles.container} edges={['top']}>
                 <View style={styles.loadingContainer}>
                     <ActivityIndicator size="large" color={colors.dark900} />
-                    <Text style={styles.loadingText}>Création de ton bbb...</Text>
+                    <Text style={styles.loadingText}>Création de ta lecture...</Text>
                 </View>
             </SafeAreaView>
         );
@@ -259,8 +259,8 @@ export default function OnboardingCompleteScreen() {
                     <Text style={styles.title}>C'est terminé !</Text>
                     <Text style={styles.description}>
                         {isAddChallenge
-                            ? 'Ton nouveau bbb est prêt, invite un.e ami.e pour cette lecture commune'
-                            : 'Ton premier bbb est prêt, tu n\'as plus qu\'à inviter un.e ami.e pour cette lecture commune'}
+                            ? 'Ta nouvelle lecture est prête, invite un.e ami.e à la partager'
+                            : 'Ta première lecture est prête, tu n\'as plus qu\'à inviter un.e ami.e à la partager'}
                     </Text>
                     
                     {/* Carte du livre + code — bookCard (zIndex 2) au premier plan pour radius bas visibles */}

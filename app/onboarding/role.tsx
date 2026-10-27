@@ -167,7 +167,7 @@ export default function OnboardingRoleScreen() {
                                         styles.cardTitle,
                                         selectedRole !== 'create' && styles.cardTitleInactive,
                                     ]}>
-                                        Créer un bbb
+                                        Créer une lecture
                                     </Text>
                                     <Text style={[
                                         styles.cardDescription,
@@ -199,7 +199,7 @@ export default function OnboardingRoleScreen() {
                                         styles.cardTitle,
                                         selectedRole !== 'join' && styles.cardTitleInactive,
                                     ]}>
-                                        Rejoindre un bbb
+                                        Rejoindre une lecture
                                     </Text>
                                     <Text style={[
                                         styles.cardDescription,
