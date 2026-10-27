@@ -36,7 +36,7 @@ export default function InviteRoute() {
     if (!selected) return;
     const code = selected.invite_code;
     const deepLink = selected.invite_url || `bestiebookbattle://join/${code}`;
-    const message = `Rejoins-moi pour lire "${selected.book_title}" sur bestiebookbattle ! 📚\n\nCode : ${code}\n${deepLink}`;
+    const message = `Rejoins-moi pour lire "${selected.book_title}" sur chapi ! 📚\n\nCode : ${code}\n${deepLink}`;
     try {
       await Share.share({ message, url: deepLink });
     } catch {

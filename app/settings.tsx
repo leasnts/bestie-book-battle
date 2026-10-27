@@ -72,7 +72,7 @@ export default function SettingsRoute() {
     const { status } = await Notifications.requestPermissionsAsync();
     if (status !== 'granted') {
       // Refusé une fois, iOS ne redemande plus : seuls ses Réglages peuvent rouvrir
-      Alert.alert('Notifications coupées', 'Active-les pour bestie book battle dans les Réglages de ton iPhone.', [
+      Alert.alert('Notifications coupées', 'Active-les pour chapi dans les Réglages de ton iPhone.', [
         { text: 'Plus tard', style: 'cancel' },
         { text: 'Ouvrir les Réglages', onPress: () => Linking.openURL('app-settings:') },
       ]);
@@ -90,7 +90,7 @@ export default function SettingsRoute() {
   };
 
   const handleReport = async () => {
-    const subject = encodeURIComponent("[BBB] Signalement d'un problème");
+    const subject = encodeURIComponent("[chapi] Signalement d'un problème");
     const body = encodeURIComponent(`Décris ton problème ici :\n\n\n---\nApp version : ${APP_VERSION}`);
     const mailUrl = `mailto:support@leasantos.me?subject=${subject}&body=${body}`;
     if (await Linking.canOpenURL(mailUrl)) {
@@ -230,7 +230,7 @@ export default function SettingsRoute() {
             <Text style={styles.footerLink}>Confidentialité</Text>
           </Pressable>
         </View>
-        <Text style={styles.footerText}>bestie book battle v{APP_VERSION}</Text>
+        <Text style={styles.footerText}>chapi v{APP_VERSION}</Text>
       </View>
     </SheetPage>
   );

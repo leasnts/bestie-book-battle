@@ -141,7 +141,7 @@ export default function OnboardingBookFormScreen() {
                     Même structure que mainContent de index.tsx */}
                 <View style={styles.mainContent}>
                     <Text style={styles.title}>
-                        {addChallenge ? 'Décris ce nouveau bbb' : 'Décris ton premier bbb !'}
+                        {addChallenge ? 'Décris cette nouvelle lecture' : 'Décris ta première lecture !'}
                     </Text>
 
                     <View style={styles.formContainer}>

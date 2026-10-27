@@ -168,7 +168,7 @@ export default function BookRoute() {
     if (!activeChallenge?.invite_code) return;
     try {
       await Share.share({
-        message: `Rejoins-moi pour lire « ${activeChallenge.book_title} » sur bestiebookbattle !\n\nCode d'invitation : ${activeChallenge.invite_code.split('').join(' ')}`,
+        message: `Rejoins-moi pour lire « ${activeChallenge.book_title} » sur chapi !\n\nCode d'invitation : ${activeChallenge.invite_code.split('').join(' ')}`,
       });
     } catch {
       // partage annulé
