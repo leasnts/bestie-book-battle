@@ -45,8 +45,9 @@ import { StitchBorder } from './Stitch';
 
 const SIDE = spacing.lg;
 const GAP = spacing.md;
-const TILE_MIN_W = 120;
-const TILE_H = 84;
+/** Tous les genres ont la même taille ; « Développement » tient juste sur une ligne */
+const TILE_W = 156;
+const TILE_H = 88;
 const RADIUS = borderRadius.lg;
 const ICON = 64;
 
@@ -123,7 +124,7 @@ export default function ExploreGenres({ genres, onSelect }: ExploreGenresProps) 
               <StitchBorder radius={RADIUS} color={creamAlpha(onLight ? 0.55 : 0.35)} />
               <Text
                 style={[styles.label, { color: lowki[pair].deep }]}
-                numberOfLines={1}
+                numberOfLines={2}
               >
                 {genre.label}
               </Text>
@@ -150,15 +151,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: SIDE,
     gap: GAP,
   },
-  // Largeur au nom : la taille du texte ne change jamais d'un genre à l'autre
+  // Même taille pour tous : un nom trop long passe sur deux lignes, jamais en plus petit
   tile: {
-    minWidth: TILE_MIN_W,
+    width: TILE_W,
     height: TILE_H,
     borderRadius: RADIUS,
     overflow: 'hidden',
     padding: spacing.md,
-    // Place pour l'icône qui déborde à droite du nom
-    paddingRight: spacing['2xl'],
   },
   // Déborde en bas à droite, penchée : la section la coupe
   icon: {
