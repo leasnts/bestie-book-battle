@@ -9,9 +9,7 @@
  *    │ ▐██▌ ┏━━┓ ▛▀▀▜ →              │
  *    │ ░░░░░░░░░░░░░░░               │
  *    │ Genres                        │
- *    │ ┌───────────┐ ┌───────────┐   │
- *    │ │Romantasy ▞│ │Thriller  ▞│   │
- *    │ └───────────┘ └───────────┘   │
+ *    │ [Contemporain] [Thriller] [… →│
  *    │ Auteur·ices                   │
  *    │ (▐█▌) (▐█▌) (▐█▌) (▐█▌) →     │
  *    │ Populaire sur BookTok         │
@@ -23,7 +21,7 @@
  *   résultats au fil de la frappe (Apple Books, repli Open Library ; les
  *   livres des étagères qui correspondent d'abord, sans attendre le réseau).
  * - **Mes envies** : les livres gardés pour plus tard, en première étagère.
- * - **Genres** : une grille de cadres en verre ; toucher un genre remplace la
+ * - **Genres** : une rangée de petites sections colorées qui défile ; toucher un genre remplace la
  *   page par la liste de ses livres (bouton retour pour revenir). Rester dans
  *   l'onglet évite d'empiler un sheet sous la fiche du livre.
  * - **Auteur·ices** : les plus lu·es, photo (ou initiales) en rond ; toucher
