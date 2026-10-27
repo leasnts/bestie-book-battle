@@ -11,7 +11,7 @@
  * du progressStore, à jour dès que j'enregistre des pages.
  */
 
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { PlusIcon } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import BookLibrary from '../components/ui/BookLibrary';
@@ -35,7 +35,9 @@ export default function LibraryRoute() {
   const userId = useAuthStore((state) => state.user?.id);
   const firstName = useAuthStore((state) => state.user?.first_name);
   // Filtre Tout / En cours / Non lus / Lus : pas retenu, chaque ouverture montre tout
-  const [filter, setFilter] = useState<LibraryFilter>('all');
+  // (sauf `?filter=done`, le « Tout voir » de mes livres lus sur le profil)
+  const params = useLocalSearchParams<{ filter?: LibraryFilter }>();
+  const [filter, setFilter] = useState<LibraryFilter>(params.filter ?? 'all');
 
   // Rafraîchit ma progression en arrière-plan ; le cache s'affiche tout de suite
   useEffect(() => {

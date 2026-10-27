@@ -68,7 +68,9 @@ export const ROUND_BUTTON_ICON_FILLED = 15;
 export const lowki = {
   butter: { light: '#F5E6A8', dark: '#D6C36F' },
   beige: { light: '#C5A47E', dark: '#9F7C59' },
-  red: { light: '#A62F43', dark: '#7C2031' },
+  // `deep` : un cran sous le foncé, pour le ton sur ton sur un fond rouge déjà
+  // en dégradé (bannière Inviter du profil, Lea 2026-10-23)
+  red: { light: '#A62F43', dark: '#7C2031', deep: '#5E1824' },
   chocolate: { light: '#633D32', dark: '#482B24' },
 } as const;
 

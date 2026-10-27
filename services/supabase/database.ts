@@ -226,6 +226,31 @@ export async function getMyBookProgress(userId: string): Promise<MyBookProgress[
 }
 
 /**
+ * Tous mes jours de lecture, tous livres confondus (YYYY-MM-DD)
+ *
+ * Les jours où j'ai enregistré des pages, plus ceux couverts par un
+ * marque-page : de quoi calculer ma meilleure série (utils/streak.ts).
+ *
+ * @param userId - L'ID de l'utilisateur
+ */
+export async function getMyReadingDays(userId: string): Promise<string[]> {
+  const [history, bonuses] = await withTimeout(
+    Promise.all([
+      supabase.from('progress_history').select('created_date').eq('user_id', userId),
+      supabase.from('user_progress').select('streak_bonus_dates').eq('user_id', userId),
+    ]),
+    10_000
+  );
+
+  if (history.error) throw history.error;
+  if (bonuses.error) throw bonuses.error;
+  return [
+    ...(history.data || []).map((row) => row.created_date),
+    ...(bonuses.data || []).flatMap((row) => row.streak_bonus_dates || []),
+  ];
+}
+
+/**
  * Mettre à jour un challenge
  * 
  * Seul l'admin du challenge peut le mettre à jour (vérifié par RLS)
