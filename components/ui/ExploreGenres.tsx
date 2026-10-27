@@ -11,9 +11,9 @@
  *    │       ☕ │ │       ◎  │ │      ← icône en ton sur ton qui déborde
  *    └──────────┘ └──────────┘ └────
  *
- * Ton sur ton, le nom compris (Lea, 2026-10-27) : le nom prend la teinte
- * foncée de la paire, l'icône Lucide la couleur du fond assombrie (encre
- * transparente), tous deux gravés d'un liseré clair dessous.
+ * Ton sur ton, le nom compris (Lea, 2026-10-27) : le nom prend la nuance la
+ * plus foncée de la paire (`deep`), sans ombre ni liseré ; l'icône Lucide est
+ * la couleur du fond assombrie (encre transparente), gravée d'un liseré clair.
  *
  * Toucher un genre ouvre tous ses livres (l'écran Explorer passe en liste).
  */
@@ -106,10 +106,7 @@ export default function ExploreGenres({ genres, onSelect }: ExploreGenresProps) 
               </View>
               <StitchBorder radius={RADIUS} color={creamAlpha(onLight ? 0.55 : 0.35)} />
               <Text
-                style={[
-                  styles.label,
-                  { color: lowki[pair].dark, textShadowColor: creamAlpha(onLight ? 0.6 : 0.22) },
-                ]}
+                style={[styles.label, { color: lowki[pair].deep }]}
                 numberOfLines={1}
                 adjustsFontSizeToFit
                 minimumFontScale={0.8}
@@ -167,8 +164,5 @@ const styles = StyleSheet.create({
     fontFamily: fonts.display,
     fontSize: 15,
     lineHeight: 19,
-    // Gravé : un liseré clair juste dessous
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 0,
   },
 });

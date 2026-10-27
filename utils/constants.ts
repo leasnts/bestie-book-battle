@@ -66,10 +66,12 @@ export const ROUND_BUTTON_ICON_FILLED = 15;
  * le chocolat, l'accent (`colors.accent`, `accentGradient`) le rouge.
  */
 export const lowki = {
-  butter: { light: '#F5E6A8', dark: '#D6C36F' },
-  beige: { light: '#C5A47E', dark: '#9F7C59' },
-  red: { light: '#A62F43', dark: '#7C2031' },
-  chocolate: { light: '#633D32', dark: '#482B24' },
+  // `deep` : un cran sous le foncé, pour le ton sur ton (texte ou forme) sur un
+  // fond déjà en dégradé de la même paire (Lea 2026-10-23, genres de l'Explorer 2026-10-27)
+  butter: { light: '#F5E6A8', dark: '#D6C36F', deep: '#8F7E33' },
+  beige: { light: '#C5A47E', dark: '#9F7C59', deep: '#6B4F35' },
+  red: { light: '#A62F43', dark: '#7C2031', deep: '#5E1824' },
+  chocolate: { light: '#633D32', dark: '#482B24', deep: '#22130F' },
 } as const;
 
 export const colors = {
