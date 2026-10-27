@@ -14,7 +14,7 @@
  * Ton sur ton pour l'illustration seulement, comme le mot en filigrane des
  * notes : l'aquarelle de Lea (assets/images/genres, masques préparés par
  * scripts/build-genre-illustrations.py) teintée d'encre transparente, donc la
- * couleur du cadre en plus foncé, grande et coupée par le bord. Le nom suit la charte : chocolat
+ * couleur du cadre en plus foncé (plus clair sur le chocolat), grande et coupée par le bord. Le nom suit la charte : chocolat
  * foncé sur beurre et beige, beurre clair sur rouge et chocolat (le nom en ton
  * sur ton a été essayé et ne se lisait pas, Lea 2026-10-27).
  *
@@ -67,7 +67,19 @@ const ILLUSTRATIONS: Record<string, number> = {
   nonfiction: require('../../assets/images/genres/nonfiction.png'),
 };
 
-/** Fonds clairs : nom en chocolat, illustration plus légère */
+/**
+ * La teinte de l'illustration, par fond. Le chocolat est trop sombre pour
+ * qu'une encre plus foncée s'y voie : là, le ton sur ton passe en plus clair
+ * (un voile crème), comme la charte le permet.
+ */
+const INK: Record<Pair, { tint: string; opacity: number }> = {
+  butter: { tint: inkAlpha(1), opacity: 0.2 },
+  beige: { tint: inkAlpha(1), opacity: 0.2 },
+  red: { tint: inkAlpha(1), opacity: 0.4 },
+  chocolate: { tint: creamAlpha(1), opacity: 0.14 },
+};
+
+/** Fonds clairs : nom en chocolat */
 const LIGHT_PAIRS: Pair[] = ['butter', 'beige'];
 
 interface ExploreGenresProps {
@@ -101,9 +113,9 @@ export default function ExploreGenres({ genres, onSelect }: ExploreGenresProps) 
               {illustration && (
                 <Image
                   source={illustration}
-                  style={[styles.illustration, { opacity: onLight ? 0.2 : 0.4 }]}
+                  style={[styles.illustration, { opacity: INK[pair].opacity }]}
                   contentFit="contain"
-                  tintColor={inkAlpha(1)}
+                  tintColor={INK[pair].tint}
                   pointerEvents="none"
                 />
               )}
