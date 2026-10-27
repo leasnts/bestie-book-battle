@@ -9,7 +9,8 @@ const header = {width: 3840, height: 1646, fps: 30, durationInFrames: 300} as co
 
 export const RemotionRoot = () => (
   <>
-  <Composition id="ChapiFoule" component={HeaderCrowd} {...header} />
+  <Composition id="ChapiFoule" component={HeaderCrowd} defaultProps={{theme: 'papier' as const}} {...header} />
+  <Composition id="ChapiFouleRouge" component={HeaderCrowd} defaultProps={{theme: 'rouge' as const}} {...header} />
   <Composition id="ChapiEnsemble" component={HeaderTogether} {...header} />
   <Composition id="ChapiGeantRouge" component={HeaderGiant} defaultProps={{tone: 'rouge' as const}} {...header} />
   <Composition id="ChapiFilRouge" component={HeaderThread} defaultProps={{tone: 'rouge' as const}} {...header} />

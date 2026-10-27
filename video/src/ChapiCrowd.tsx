@@ -20,7 +20,17 @@ loadFont({family: 'Welcome Valentines', url: staticFile('fonts/WelcomeValentines
 
 /** Le nom au centre : tous les regards finissent sur lui. */
 const CENTER = {x: W / 2, y: H / 2};
-const BG = '#F3EBDD';
+
+/** Deux ambiances : papier multicolore, ou rouge ton sur ton comme l'icône. */
+const THEMES = {
+  papier: {bg: ['#F7F1E7', '#EADFCF'], text: '#A62F43', stroke: '#F3EBDD', tones: null},
+  rouge: {
+    bg: ['#A62F43', '#962A3D'],
+    text: '#F1E3CC',
+    stroke: '#A12D41',
+    tones: [{shape: ['#6A1A29', '#5E1824'], light: '#C24A5D', lightOpacity: 0.55, backing: '#A62F43'}],
+  },
+} as const satisfies Record<string, {bg: readonly [string, string]; text: string; stroke: string; tones: readonly EyesPalette[] | null}>;
 
 // Hasard reproductible : la même foule à chaque rendu.
 const rand = (i: number) => {
@@ -47,7 +57,7 @@ const CROWD = (() => {
         y,
         size: 330 + rand(i + 7) * 200,
         tilt: (rand(i + 3) - 0.5) * 30,
-        tone: TONES[Math.floor(rand(i + 5) * TONES.length)],
+        pick: rand(i + 5),
         arrive: 6 + dist * 95 + rand(i + 11) * 10,
         z: rand(i + 13),
         blink: 120 + Math.floor(rand(i + 17) * 120),
@@ -57,15 +67,17 @@ const CROWD = (() => {
   return people.sort((a, b) => a.z - b.z);
 })();
 
-export const HeaderCrowd = () => {
+export const HeaderCrowd = ({theme}: {theme: keyof typeof THEMES}) => {
+  const t = THEMES[theme];
+  const tones = t.tones ?? TONES;
   const {frame} = useLoop();
   const {fps} = useVideoConfig();
   const leave = interpolate(frame, [266, 290], [1, 0], {...clamp, easing: Easing.in(Easing.back(1.4))});
-  // D'abord chacun regarde autour de lui, puis tout le monde fixe le livre.
+  // D'abord chacun regarde autour de lui, puis tout le monde fixe le nom.
   const focus = interpolate(frame, [150, 178], [0, 1], {...clamp, easing: Easing.inOut(Easing.cubic)});
 
   return (
-    <AbsoluteFill style={{overflow: 'hidden', background: 'linear-gradient(180deg, #F7F1E7 0%, #EADFCF 100%)'}}>
+    <AbsoluteFill style={{overflow: 'hidden', background: `linear-gradient(180deg, ${t.bg[0]} 0%, ${t.bg[1]} 100%)`}}>
       {CROWD.map((p, i) => {
         const pop = spring({frame: frame - p.arrive, fps, config: {damping: 10, stiffness: 170, mass: 0.6}});
         const wander = {x: Math.sin(frame / 18 + i) * 0.8, y: Math.cos(frame / 23 + i * 2) * 0.4};
@@ -86,7 +98,7 @@ export const HeaderCrowd = () => {
               filter: 'drop-shadow(0 6px 10px rgba(72, 43, 36, 0.12))',
             }}
           >
-            <Eyes size={p.size} gaze={gaze} open={{left: lid, right: lid}} palette={p.tone} />
+            <Eyes size={p.size} gaze={gaze} open={{left: lid, right: lid}} palette={tones[Math.floor(p.pick * tones.length)]} />
           </div>
         );
       })}
@@ -101,8 +113,8 @@ export const HeaderCrowd = () => {
           fontFamily: 'Welcome Valentines',
           fontSize: 760,
           lineHeight: 1,
-          color: '#A62F43',
-          WebkitTextStroke: `90px ${BG}`,
+          color: t.text,
+          WebkitTextStroke: `90px ${t.stroke}`,
           paintOrder: 'stroke fill',
         }}
       >
