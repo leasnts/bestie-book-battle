@@ -142,8 +142,8 @@ const styles = StyleSheet.create({
   title: {
     paddingHorizontal: SIDE,
     fontFamily: fonts.display,
-    fontSize: 19,
-    lineHeight: 24,
+    fontSize: fontSize.md,
+    lineHeight: 20,
     color: colors.textPrimary,
   },
   row: {
@@ -179,7 +179,7 @@ const styles = StyleSheet.create({
   },
   label: {
     fontFamily: fonts.display,
-    fontSize: fontSize.md,
-    lineHeight: 20,
+    fontSize: fontSize.sm,
+    lineHeight: 18,
   },
 });

@@ -58,7 +58,7 @@ import catalog from '../../constants/exploreCatalog.json';
 import { useBookSearch } from '../../hooks/useBookSearch';
 import { useExploreStore } from '../../stores/exploreStore';
 import type { BookSearchResult } from '../../types/bookSearch';
-import { borderRadius, colors, fonts, shadows, spacing } from '../../utils/constants';
+import { borderRadius, colors, fontSize, fonts, shadows, spacing } from '../../utils/constants';
 
 
 const SHELVES = catalog.shelves as ExploreGenre[];
@@ -246,7 +246,7 @@ const styles = StyleSheet.create({
     flex: 1,
     height: '100%',
     fontFamily: fonts.body,
-    fontSize: 16,
+    fontSize: fontSize.sm,
     color: colors.textPrimary,
   },
   shelves: {
@@ -265,8 +265,8 @@ const styles = StyleSheet.create({
   genreTitle: {
     flex: 1,
     fontFamily: fonts.display,
-    fontSize: 19,
-    lineHeight: 24,
+    fontSize: fontSize.md,
+    lineHeight: 20,
     color: colors.textPrimary,
   },
   emptyText: {

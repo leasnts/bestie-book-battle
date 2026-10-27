@@ -17,7 +17,7 @@ import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import React from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import { colors, creamAlpha, fonts, lowki, spacing } from '../../utils/constants';
+import { colors, creamAlpha, fontSize, fonts, lowki, spacing } from '../../utils/constants';
 import PressableScale from './PressableScale';
 
 const SIDE = spacing.lg;
@@ -88,8 +88,8 @@ const styles = StyleSheet.create({
   },
   title: {
     fontFamily: fonts.display,
-    fontSize: 19,
-    lineHeight: 24,
+    fontSize: fontSize.md,
+    lineHeight: 20,
     color: colors.textPrimary,
     paddingHorizontal: SIDE,
   },
