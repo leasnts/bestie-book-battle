@@ -1,31 +1,31 @@
 {
-  "fill" : {
-    "linear-gradient" : [
+  "fill": {
+    "linear-gradient": [
       "srgb:0.65098,0.18431,0.26275,1.00000",
       "srgb:0.48627,0.12549,0.19216,1.00000"
     ]
   },
-  "groups" : [
+  "groups": [
     {
-      "layers" : [
+      "layers": [
         {
-          "glass" : true,
-          "image-name" : "eyes.png",
-          "name" : "eyes"
+          "glass": true,
+          "image-name": "eyes.png",
+          "name": "eyes"
         }
       ],
-      "shadow" : {
-        "kind" : "layer-color",
-        "opacity" : 0.5
+      "shadow": {
+        "kind": "none",
+        "opacity": 0
       },
-      "translucency" : {
-        "enabled" : true,
-        "value" : 0.4
+      "translucency": {
+        "enabled": true,
+        "value": 0.4
       }
     }
   ],
-  "supported-platforms" : {
-    "squares" : [
+  "supported-platforms": {
+    "squares": [
       "iOS"
     ]
   }
