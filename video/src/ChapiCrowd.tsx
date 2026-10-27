@@ -19,7 +19,7 @@ const TONES: EyesPalette[] = [
 loadFont({family: 'Welcome Valentines', url: staticFile('fonts/WelcomeValentines_400Regular.ttf')});
 
 /** Le nom au centre : tous les regards finissent sur lui. */
-const BOOK = {x: W / 2, y: H / 2};
+const CENTER = {x: W / 2, y: H / 2};
 const BG = '#F3EBDD';
 
 // Hasard reproductible : la même foule à chaque rendu.
