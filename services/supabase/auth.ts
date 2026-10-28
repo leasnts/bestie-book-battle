@@ -3,6 +3,7 @@
  * 
  * Gère toutes les opérations d'authentification :
  * - Apple Sign In
+ * - Email : un code à 6 chiffres reçu par mail, sans mot de passe
  * - Gestion de session
  * - Création/mise à jour du profil utilisateur
  * - Déconnexion
@@ -24,7 +25,7 @@ import { withTimeout } from '../../utils/withTimeout';
  * - isNewUser : true si aucun profil n'existe dans notre table users
  * - user : le profil complet si l'utilisateur existe, null sinon
  * - authId : l'ID Supabase Auth (toujours présent après authentification)
- * - appleUserId : l'ID Apple unique de l'utilisateur
+ * - appleUserId : l'ID Apple unique de l'utilisateur (null pour une connexion par email)
  * - email : l'email (attention : Apple ne le donne qu'au PREMIER sign-in !)
  * - firstName / lastName : idem, uniquement au premier sign-in
  */
@@ -32,7 +33,7 @@ export interface AppleSignInResult {
   isNewUser: boolean;
   user: User | null;
   authId: string;
-  appleUserId: string;
+  appleUserId: string | null;
   email: string;
   firstName: string | null;
   lastName: string | null;
@@ -134,6 +135,70 @@ export async function signInWithApple(): Promise<AppleSignInResult> {
     console.error('Erreur lors du sign in avec Apple:', error);
     throw error;
   }
+}
+
+/**
+ * Connexion par email, étape 1 : Supabase envoie un code à 6 chiffres.
+ * Le même appel sert à l'inscription : le compte est créé s'il n'existe pas.
+ * (Modèle du mail et longueur du code : réglages Auth du projet Supabase.)
+ */
+export async function sendEmailCode(email: string): Promise<void> {
+  const { error } = await supabase.auth.signInWithOtp({
+    email,
+    options: { shouldCreateUser: true },
+  });
+  if (error) throw error;
+}
+
+/**
+ * Connexion par email, étape 2 : vérifier le code. Comme pour Apple, on dit
+ * ensuite si un profil existe déjà dans notre table users (isNewUser).
+ */
+export async function verifyEmailCode(email: string, code: string): Promise<AppleSignInResult> {
+  const { data, error } = await supabase.auth.verifyOtp({ email, token: code, type: 'email' });
+  if (error || !data.user) {
+    throw error || new Error('Échec de la vérification du code');
+  }
+
+  const { data: existingProfile, error: profileQueryError } = await supabase
+    .from('users')
+    .select('*')
+    .eq('id', data.user.id)
+    .maybeSingle();
+
+  if (profileQueryError) {
+    throw new Error(`Impossible de vérifier le profil utilisateur : ${profileQueryError.message}`);
+  }
+
+  if (existingProfile) {
+    const { data: updatedUser } = await supabase
+      .from('users')
+      .update({ last_login_at: new Date().toISOString() })
+      .eq('id', data.user.id)
+      .select()
+      .single();
+
+    return {
+      isNewUser: false,
+      user: updatedUser || existingProfile,
+      authId: data.user.id,
+      appleUserId: null,
+      email,
+      firstName: null,
+      lastName: null,
+    };
+  }
+
+  // Nouveau compte : le prénom est demandé juste après le code
+  return {
+    isNewUser: true,
+    user: null,
+    authId: data.user.id,
+    appleUserId: null,
+    email,
+    firstName: null,
+    lastName: null,
+  };
 }
 
 /**

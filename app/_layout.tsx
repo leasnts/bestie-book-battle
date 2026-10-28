@@ -16,7 +16,7 @@ import * as Notifications from 'expo-notifications';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
-import { Platform, View, Linking } from 'react-native';
+import { Platform, StyleSheet, View, Linking } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { MD3LightTheme, PaperProvider } from 'react-native-paper';
 import 'react-native-reanimated';
@@ -29,6 +29,7 @@ import { colors } from '../utils/constants';
 import { prepareFeel } from '../utils/feel';
 import { supabase } from '../supabaseConfig';
 import AnimatedSplash from '../components/AnimatedSplash';
+import { useSplashStore } from '../stores/splashStore';
 import { sheetScreenOptions } from '../components/ui/SheetHeader';
 import { useFonts } from 'expo-font';
 
@@ -263,21 +264,18 @@ function RootLayoutNav() {
   // Callback quand le splash screen se termine
   const handleSplashFinish = () => {
     setShowSplash(false);
+    useSplashStore.getState().setSplashGone();
   };
 
-  // Afficher le splash screen pendant l'animation
-  // On attend aussi isInitialized pour éviter le flash "nouvel utilisateur"
-  // (photo par défaut, pas de prénom, empty state) quand checkSession est lent
-  if (showSplash) {
-    return (
-      <AnimatedSplash
-        onFinish={handleSplashFinish}
-        waitFor={isInitialized && fontsLoaded}
-      />
-    );
-  }
+  // L'app se monte SOUS le splash, dès que l'auth et les polices sont prêtes :
+  // le splash s'efface sur un écran déjà en place. On attend isInitialized pour
+  // éviter le flash "nouvel utilisateur" (photo par défaut, pas de prénom,
+  // empty state) quand checkSession est lent.
+  const appReady = isInitialized && fontsLoaded;
 
   return (
+    <View style={styles.root}>
+      {(appReady || !showSplash) && (
     <Stack screenOptions={{ headerShown: false }}>
       {/* Onglets : lecture en cours, explorer, profil (barre native iOS 26) */}
       <Stack.Screen
@@ -373,5 +371,18 @@ function RootLayoutNav() {
       />
 
     </Stack>
+      )}
+      {showSplash && (
+        <View style={StyleSheet.absoluteFill}>
+          {/* Personne de connecté : relais sans fondu vers l'écran de connexion */}
+          <AnimatedSplash onFinish={handleSplashFinish} waitFor={appReady} handoff={!user && !pendingUserData} />
+        </View>
+      )}
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  root: { flex: 1 },
+});
+

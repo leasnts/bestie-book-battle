@@ -7,9 +7,10 @@
  * 2. Les deux yeux, seuls et centrés, arrivent chacun de son bord, comme deux
  *    potes qui se croisent dans la rue, ralentissent et se collent.
  * 3. Le petit œil fait un clin d'œil.
- * 4. Les yeux remontent pour faire place à « Lowki » (Welcome Valentines), qui
- *    monte en fondu, puis au sous-titre « book club » (Martian Grotesk).
- * 5. Fade out global → l'app.
+ * 4. Les yeux remontent pour faire place à « chapi » (Welcome Valentines), qui
+ *    monte en fondu, puis à la tagline (Martian Grotesk).
+ * 5. Fade out global → l'app ; ou, si personne n'est connecté, relais sans
+ *    fondu vers l'écran de connexion, qui reprend la même image (`handoff`).
  *
  * Choisi par Lea le 2026-10-05 (labo HTML, puis retouches sur le simulateur).
  */
@@ -25,41 +26,13 @@ import Animated, {
   withSequence,
   withTiming,
 } from 'react-native-reanimated';
-import Svg, { ClipPath, Defs, G, LinearGradient as SvgGradient, Path, Stop } from 'react-native-svg';
-import {
-  LOGO_EYES_CLIP,
-  LOGO_EYES_PATH,
-  LOGO_EYES_VIEWBOX,
-  LOGO_SUBTITLE_PATH,
-  LOGO_SUBTITLE_RATIO,
-  LOGO_SUBTITLE_VIEWBOX,
-  LOGO_WORD_PATH,
-  LOGO_WORD_RATIO,
-  LOGO_WORD_VIEWBOX,
-} from './brand/logoEyesPath';
-
-/** Côté du carré du logo, en points. */
-const SPLASH_LOGO_SIZE = 220;
-
-/**
- * Ton sur ton, comme les visuels officiels de Lea (« lowki_red ») : fond rouge,
- * logo d'un rouge plus profond, et un liseré clair d'1 pt sous chaque forme pour
- * l'effet gravé dans le papier. Dégradés partout (jamais d'aplat), sauf le texte.
- */
-const SPLASH_BG = ['#a62f43', '#92293b'] as const;
-const SHAPE_GRADIENT = ['#6e1f2c', '#581924'] as const;
-const SHAPE_WORD = '#611b27';
-const DEBOSS_LIGHT = '#c35164';
-const DEBOSS_OPACITY = 0.55;
-/** Décalage du liseré, 1 pt, dans le repère 1200 des yeux et celui de la police. */
-const DEBOSS_EYES = 5.5;
-const DEBOSS_WORD = 32;
-/** Pour le sous-titre, plus petit : liseré de 0,75 pt. */
-const DEBOSS_SUBTITLE = 47;
+import { BRAND_BG, BrandTagline, BrandWord, Eye, LOCKUP, LOGO_SIZE } from './brand/BrandLockup';
+import { LOGO_EYES_VIEWBOX } from './brand/logoEyesPath';
+import { useSplashStore } from '../stores/splashStore';
 
 // Les yeux arrivent en 900 ms en ralentissant, se posent, puis le clin d'œil
-// (fini vers 1440 ms). Ensuite le titre : les yeux remontent, « Lowki » monte en
-// fondu, puis « book club ».
+// (fini vers 1440 ms). Ensuite le titre : les yeux remontent, « chapi » monte en
+// fondu, puis la tagline.
 const T_MEET = 900;
 const T_WINK = T_MEET + 180;
 const T_REVEAL = 1500;
@@ -74,57 +47,24 @@ const T_ENTRY_DONE = T_SUBTITLE + TEXT_FADE + 500;
 const MEET_EASING = Easing.out(Easing.poly(5));
 const REVEAL_EASING = Easing.inOut(Easing.cubic);
 /** Le clin d'œil se ferme de haut en bas, comme une paupière : vers le bas du petit œil (y = 920 sur 1200). */
-const WINK_PIVOT_Y = (920 / LOGO_EYES_VIEWBOX) * SPLASH_LOGO_SIZE;
-
-/**
- * « Lowki » et « book club » sous les yeux, en tracés (pas en <Text> : les polices
- * ne sont pas encore chargées). Positions par rapport au centre de l'écran, pour
- * que l'ensemble final (yeux 150 pt, 16 pt, mot 51,5 pt, 10 pt, sous-titre 13,8 pt)
- * soit centré : les yeux finissent 44 pt plus haut qu'à leur arrivée.
- */
-const WORD_HEIGHT = 51.5;
-// Les cadres descendent un peu pour laisser la place au liseré (2 pt et 1 pt)
-const WORD = { width: WORD_HEIGHT * LOGO_WORD_RATIO, height: WORD_HEIGHT + 2 };
-const WORD_VIEWBOX = LOGO_WORD_VIEWBOX.replace(/ 1643$/, ' 1707');
-const SUBTITLE_HEIGHT = 13.8;
-const SUBTITLE = { width: SUBTITLE_HEIGHT * LOGO_SUBTITLE_RATIO, height: SUBTITLE_HEIGHT + 1 };
-const SUBTITLE_VIEWBOX = LOGO_SUBTITLE_VIEWBOX.replace(/ 865$/, ' 928');
-const EYES_FINAL_Y = -44;
-const WORD_TOP = 46.25;
-const SUBTITLE_TOP = WORD_TOP + WORD_HEIGHT + 10;
+const WINK_PIVOT_Y = (920 / LOGO_EYES_VIEWBOX) * LOGO_SIZE;
 
 interface AnimatedSplashProps {
   onFinish: () => void;
+  /**
+   * Personne n'est connecté : l'écran de connexion reprend le splash tel quel
+   * (même fond, mêmes yeux, même texte). Pas de fondu, qui ferait passer par le
+   * fond crème : le splash attend que l'écran de connexion soit monté dessous,
+   * puis disparaît d'un coup, sans que rien ne bouge.
+   */
+  handoff?: boolean;
   /** Si fourni, le splash reste visible jusqu'à ce que cette condition soit true.
    * Utile pour attendre l'init auth et éviter le flash "nouvel utilisateur"
    * (photo par défaut, pas de prénom, empty state) au démarrage. */
   waitFor?: boolean;
 }
 
-type Side = 'left' | 'right';
-
-/** Un œil seul, dans le carré complet du logo (pour garder sa place exacte). */
-function Eye({ side }: { side: Side }) {
-  return (
-    <Svg width={SPLASH_LOGO_SIZE} height={SPLASH_LOGO_SIZE} viewBox={`0 0 ${LOGO_EYES_VIEWBOX} ${LOGO_EYES_VIEWBOX}`}>
-      <Defs>
-        <SvgGradient id="eyes" gradientUnits="userSpaceOnUse" x1="0" y1="200" x2="0" y2="1010">
-          <Stop offset="0" stopColor={SHAPE_GRADIENT[0]} />
-          <Stop offset="1" stopColor={SHAPE_GRADIENT[1]} />
-        </SvgGradient>
-        <ClipPath id="cut">
-          <Path d={LOGO_EYES_CLIP[side]} />
-        </ClipPath>
-      </Defs>
-      <G transform={`translate(0 ${DEBOSS_EYES})`}>
-        <Path d={LOGO_EYES_PATH} fill={DEBOSS_LIGHT} fillOpacity={DEBOSS_OPACITY} clipPath="url(#cut)" />
-      </G>
-      <Path d={LOGO_EYES_PATH} fill="url(#eyes)" clipPath="url(#cut)" />
-    </Svg>
-  );
-}
-
-export default function AnimatedSplash({ onFinish, waitFor }: AnimatedSplashProps) {
+export default function AnimatedSplash({ onFinish, waitFor, handoff }: AnimatedSplashProps) {
   // Au départ, chaque œil est poussé d'une largeur d'écran : hors champ.
   const { width: screenWidth } = useWindowDimensions();
   const leftX = useSharedValue(-screenWidth);
@@ -142,6 +82,7 @@ export default function AnimatedSplash({ onFinish, waitFor }: AnimatedSplashProp
   const [entryDone, setEntryDone] = useState(false);
   const [fadeOutDone, setFadeOutDone] = useState(false);
   const [forceExit, setForceExit] = useState(false);
+  const loginMounted = useSplashStore((state) => state.loginMounted);
 
   // Phase 1 — Animation d'entrée. Pas de fade-out ici.
   // useLayoutEffect : l'animation part dans la même image que le premier affichage.
@@ -160,7 +101,7 @@ export default function AnimatedSplash({ onFinish, waitFor }: AnimatedSplashProp
     );
 
     // Le titre : les yeux remontent, le texte monte en fondu dans l'espace libéré
-    eyesY.value = withDelay(T_REVEAL, withTiming(EYES_FINAL_Y, { duration: REVEAL_DURATION, easing: REVEAL_EASING }));
+    eyesY.value = withDelay(T_REVEAL, withTiming(LOCKUP.eyesY, { duration: REVEAL_DURATION, easing: REVEAL_EASING }));
     const reveal = { duration: TEXT_FADE, easing: Easing.out(Easing.cubic) };
     wordReveal.value = withDelay(T_WORD, withTiming(1, reveal));
     subtitleReveal.value = withDelay(T_SUBTITLE, withTiming(1, reveal));
@@ -195,10 +136,18 @@ export default function AnimatedSplash({ onFinish, waitFor }: AnimatedSplashProp
     const canProceed = (entryDone && waitForReady) || forceExit;
     if (!canProceed) return;
 
+    if (handoff && !forceExit) {
+      // Relais vers l'écran de connexion : on part dès qu'il est en place dessous
+      if (!loginMounted) return;
+      hasStartedFadeOut.current = true;
+      setFadeOutDone(true);
+      return;
+    }
+
     hasStartedFadeOut.current = true;
     screenOpacity.value = withTiming(0, { duration: 300 });
     fadeOutTimer.current = setTimeout(() => setFadeOutDone(true), 300);
-  }, [entryDone, waitFor, forceExit]);
+  }, [entryDone, waitFor, forceExit, handoff, loginMounted]);
 
   useEffect(() => () => {
     if (fadeOutTimer.current) clearTimeout(fadeOutTimer.current);
@@ -221,7 +170,7 @@ export default function AnimatedSplash({ onFinish, waitFor }: AnimatedSplashProp
   const rightStyle = useAnimatedStyle(() => ({
     transform: [
       { translateX: rightX.value },
-      { translateY: (WINK_PIVOT_Y - SPLASH_LOGO_SIZE / 2) * (1 - winkY.value) },
+      { translateY: (WINK_PIVOT_Y - LOGO_SIZE / 2) * (1 - winkY.value) },
       { scaleY: winkY.value },
     ],
   }));
@@ -245,7 +194,7 @@ export default function AnimatedSplash({ onFinish, waitFor }: AnimatedSplashProp
 
   return (
     <Animated.View style={[styles.container, screenAnimatedStyle]}>
-      <LinearGradient colors={SPLASH_BG} style={StyleSheet.absoluteFill} />
+      <LinearGradient colors={BRAND_BG} style={StyleSheet.absoluteFill} />
       {/* Point d'ancrage au centre de l'écran : tout se place par rapport à lui */}
       <View style={styles.center}>
         <Animated.View style={[styles.logo, eyesStyle]}>
@@ -256,22 +205,8 @@ export default function AnimatedSplash({ onFinish, waitFor }: AnimatedSplashProp
             <Eye side="right" />
           </Animated.View>
         </Animated.View>
-        <Animated.View style={[styles.word, wordStyle]}>
-          <Svg width="100%" height="100%" viewBox={WORD_VIEWBOX}>
-            <G transform={`translate(0 ${DEBOSS_WORD})`}>
-              <Path d={LOGO_WORD_PATH} fill={DEBOSS_LIGHT} fillOpacity={DEBOSS_OPACITY} />
-            </G>
-            <Path d={LOGO_WORD_PATH} fill={SHAPE_WORD} />
-          </Svg>
-        </Animated.View>
-        <Animated.View style={[styles.subtitle, subtitleStyle]}>
-          <Svg width="100%" height="100%" viewBox={SUBTITLE_VIEWBOX}>
-            <G transform={`translate(0 ${DEBOSS_SUBTITLE})`}>
-              <Path d={LOGO_SUBTITLE_PATH} fill={DEBOSS_LIGHT} fillOpacity={DEBOSS_OPACITY} />
-            </G>
-            <Path d={LOGO_SUBTITLE_PATH} fill={SHAPE_WORD} />
-          </Svg>
-        </Animated.View>
+        <BrandWord style={wordStyle} />
+        <BrandTagline style={subtitleStyle} />
       </View>
     </Animated.View>
   );
@@ -289,24 +224,12 @@ const styles = StyleSheet.create({
   },
   logo: {
     position: 'absolute',
-    width: SPLASH_LOGO_SIZE,
-    height: SPLASH_LOGO_SIZE,
-    left: -SPLASH_LOGO_SIZE / 2,
-    top: -SPLASH_LOGO_SIZE / 2,
+    width: LOGO_SIZE,
+    height: LOGO_SIZE,
+    left: -LOGO_SIZE / 2,
+    top: -LOGO_SIZE / 2,
   },
   eye: {
     ...StyleSheet.absoluteFill,
-  },
-  word: {
-    position: 'absolute',
-    ...WORD,
-    left: -WORD.width / 2,
-    top: WORD_TOP,
-  },
-  subtitle: {
-    position: 'absolute',
-    ...SUBTITLE,
-    left: -SUBTITLE.width / 2,
-    top: SUBTITLE_TOP,
   },
 });
