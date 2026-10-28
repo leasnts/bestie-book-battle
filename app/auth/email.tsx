@@ -12,7 +12,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View, type TextInputInstance } from 'react-native';
 import Button3D from '../../components/Button3D';
-import SheetPage, { SheetFooter } from '../../components/ui/SheetPage';
+import SheetPage, { SheetFooter, SheetSubtitle } from '../../components/ui/SheetPage';
 import { useAfterLogin } from '../../hooks/useAfterLogin';
 import { sendEmailCode, type AppleSignInResult } from '../../services/supabase/auth';
 import { useAuthStore } from '../../stores/authStore';
@@ -144,7 +144,15 @@ export default function EmailLoginSheet() {
 
   if (step === 'code') {
     return (
-      <SheetPage title="Ton code" subtitle={email.trim()} onBack={() => setStep('email')}>
+      <SheetPage
+        title="Ton code"
+        subtitle={
+          <SheetSubtitle>
+            Code envoyé à <Text style={styles.strong}>{email.trim()}</Text>
+          </SheetSubtitle>
+        }
+        onBack={() => setStep('email')}
+      >
         <CodeBoxes value={code} onChange={onCodeChange} editable={!busy} />
         {error && <Text style={styles.error}>{error}</Text>}
         <SheetFooter>
@@ -254,6 +262,9 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFill,
     color: 'transparent',
     opacity: 0.02,
+  },
+  strong: {
+    fontFamily: fonts.bodyBold,
   },
   error: {
     fontFamily: fonts.body,

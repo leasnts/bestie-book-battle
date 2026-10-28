@@ -23,7 +23,7 @@ import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { MailIcon } from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
-import { Alert, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { Alert, Linking, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import Animated, {
   Easing,
   type SharedValue,
@@ -44,7 +44,7 @@ import { useAfterLogin } from '../../hooks/useAfterLogin';
 import { isAppleAuthAvailable } from '../../services/supabase/auth';
 import { useAuthStore } from '../../stores/authStore';
 import { useSplashStore } from '../../stores/splashStore';
-import { colors, spacing } from '../../utils/constants';
+import { colors, fonts, spacing } from '../../utils/constants';
 
 /** Les bandes de couvertures (scripts/generate-login-covers.py), une par colonne. */
 const COVER_STRIPS = [
@@ -63,6 +63,9 @@ const WALL_OPACITY = 0.6;
 const DRIFT_DURATION = 40000;
 
 const ENTRANCE = Easing.inOut(Easing.cubic);
+/** Les mêmes pages que les Réglages */
+const TERMS_URL = 'https://bbb.leasantos.me/terms';
+const PRIVACY_URL = 'https://bbb.leasantos.me/privacy';
 /** Le fond à hauteur du nom (milieu du dégradé BRAND_BG) : la clairière s'y fond. */
 const CLEARING = '#9c2c3f';
 
@@ -350,6 +353,18 @@ export default function WelcomeScreen() {
         >
           Continuer avec un email
         </Button3D>
+        {/* Créer un compte vaut acceptation : pas de case à cocher, les liens suffisent */}
+        <Text style={styles.legal}>
+          En continuant, tu acceptes les{' '}
+          <Text style={styles.legalLink} onPress={() => Linking.openURL(TERMS_URL)} accessibilityRole="link">
+            conditions
+          </Text>{' '}
+          et la{' '}
+          <Text style={styles.legalLink} onPress={() => Linking.openURL(PRIVACY_URL)} accessibilityRole="link">
+            politique de confidentialité
+          </Text>
+          .
+        </Text>
       </Animated.View>
     </View>
   );
@@ -401,6 +416,19 @@ const styles = StyleSheet.create({
     height: LOGO_SIZE,
     left: -LOGO_SIZE / 2,
     top: -LOGO_SIZE / 2,
+  },
+  legal: {
+    fontFamily: fonts.body,
+    fontSize: 12,
+    lineHeight: 17,
+    color: 'rgba(255, 251, 244, 0.8)',
+    textAlign: 'center',
+    paddingHorizontal: spacing.xl,
+  },
+  legalLink: {
+    fontFamily: fonts.bodySemiBold,
+    color: '#FFFBF4',
+    textDecorationLine: 'underline',
   },
   buttons: {
     position: 'absolute',
