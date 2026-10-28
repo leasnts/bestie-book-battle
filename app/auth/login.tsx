@@ -85,17 +85,23 @@ function CoverColumn({ index, x, drift }: { index: number; x: number; drift: Sha
 }
 
 /**
- * Les copains : quelques petites paires d'yeux autour du logo, pour dire qu'on
- * lit à plusieurs. Elles apparaissent une à une, sans rebond, regardent les
- * boutons avec le grand et clignent chacune à son rythme.
- * Position (x, y) par rapport au centre du bloc de marque, en points.
+ * Les copains : de petites paires d'yeux autour du logo, pour dire qu'on lit à
+ * plusieurs. Discrètes (à moitié transparentes), elles apparaissent, regardent
+ * les boutons avec le grand, clignent, puis s'effacent, chacune à son rythme :
+ * il y en a toujours deux ou trois, jamais les mêmes.
+ * Position (x, y) par rapport au centre du bloc de marque, en points ; temps en ms.
  */
 const FRIENDS = [
-  { x: -128, y: -150, scale: 0.26, tilt: -12, delay: 1300, blink: 2900 },
-  { x: 132, y: -168, scale: 0.21, tilt: 9, delay: 1550, blink: 3700 },
-  { x: -158, y: 18, scale: 0.2, tilt: 7, delay: 1800, blink: 3300 },
-  { x: 156, y: 6, scale: 0.24, tilt: -6, delay: 2050, blink: 4100 },
+  { x: -128, y: -150, scale: 0.26, tilt: -12, delay: 1300, hold: 3200, rest: 2600 },
+  { x: 132, y: -168, scale: 0.21, tilt: 9, delay: 2300, hold: 2800, rest: 3400 },
+  { x: -158, y: 18, scale: 0.2, tilt: 7, delay: 3600, hold: 3000, rest: 3000 },
+  { x: 156, y: 6, scale: 0.24, tilt: -6, delay: 1800, hold: 3600, rest: 2400 },
+  { x: -60, y: -200, scale: 0.18, tilt: 4, delay: 5200, hold: 2600, rest: 3800 },
+  { x: 92, y: 168, scale: 0.19, tilt: -9, delay: 4400, hold: 2800, rest: 3600 },
 ];
+/** Le plus visible qu'elles deviennent : discrètes à côté du logo. */
+const FRIEND_OPACITY = 0.45;
+const FRIEND_FADE = 700;
 
 function Friend({
   friend,
@@ -113,21 +119,40 @@ function Friend({
 
   useEffect(() => {
     if (!start) return;
-    appear.value = withDelay(friend.delay, withTiming(1, { duration: 500, easing: Easing.out(Easing.cubic) }));
-    const blink = withSequence(
-      withTiming(0.08, { duration: 90, easing: Easing.in(Easing.quad) }),
-      withTiming(1, { duration: 160, easing: Easing.out(Easing.cubic) }),
+    const fade = { duration: FRIEND_FADE, easing: Easing.inOut(Easing.cubic) };
+    appear.value = withDelay(
+      friend.delay,
+      withRepeat(
+        withSequence(
+          withTiming(1, fade),
+          withDelay(friend.hold, withTiming(0, fade)),
+          withDelay(friend.rest, withTiming(0, { duration: 0 })),
+        ),
+        -1,
+      ),
     );
-    lid.value = withDelay(friend.delay + 600, withRepeat(withSequence(blink, withDelay(friend.blink, withTiming(1, { duration: 0 }))), -1));
+    // Un clignement au milieu de chaque apparition
+    const cycle = 2 * FRIEND_FADE + friend.hold + friend.rest;
+    lid.value = withDelay(
+      friend.delay + FRIEND_FADE + friend.hold / 2,
+      withRepeat(
+        withSequence(
+          withTiming(0.08, { duration: 90, easing: Easing.in(Easing.quad) }),
+          withTiming(1, { duration: 160, easing: Easing.out(Easing.cubic) }),
+          withDelay(cycle - 250, withTiming(1, { duration: 0 })),
+        ),
+        -1,
+      ),
+    );
   }, [start]);
 
   const style = useAnimatedStyle(() => ({
-    opacity: appear.value,
+    opacity: appear.value * FRIEND_OPACITY,
     transform: [
       { translateX: friend.x },
-      { translateY: friend.y },
+      { translateY: friend.y + 6 * (1 - appear.value) },
       { rotate: `${friend.tilt}deg` },
-      { scale: friend.scale * (0.6 + 0.4 * appear.value) },
+      { scale: friend.scale * (0.85 + 0.15 * appear.value) },
     ],
   }));
 
