@@ -115,6 +115,27 @@ const LID_PIVOT = { left: 975, right: 920 };
 /** Jusqu'où va la pupille dans son creux, en points (regard à 1). */
 const GAZE_REACH = { left: (62 / LOGO_EYES_VIEWBOX) * LOGO_SIZE, right: (46 / LOGO_EYES_VIEWBOX) * LOGO_SIZE };
 
+/**
+ * En clair, la pupille et le contour sont du même crème : la pupille du logo,
+ * presque aussi grande que son creux et posée en bas à droite, s'y collerait.
+ * On la réduit et on la centre dans son creux (centres relevés sur le tracé,
+ * repère 1200) : le rouge du fond l'entoure.
+ */
+const LIGHT_PUPIL_SCALE = 0.78;
+const PUPIL_CENTER = { left: [368, 637], right: [906, 659] } as const;
+const HOLE_CENTER = { left: [385, 610], right: [896, 631] } as const;
+const toPt = (v: number) => (v / LOGO_EYES_VIEWBOX) * LOGO_SIZE;
+function lightPupilFit(side: Side) {
+  const half = LOGO_SIZE / 2;
+  const [px, py] = PUPIL_CENTER[side].map(toPt);
+  const [hx, hy] = HOLE_CENTER[side].map(toPt);
+  return [
+    { translateX: hx - half - LIGHT_PUPIL_SCALE * (px - half) },
+    { translateY: hy - half - LIGHT_PUPIL_SCALE * (py - half) },
+    { scale: LIGHT_PUPIL_SCALE },
+  ];
+}
+
 function EyeGradient({ light }: { light?: boolean }) {
   const pair = light ? LIGHT_GRADIENT : SHAPE_GRADIENT;
   return (
@@ -154,7 +175,8 @@ export function Eye({ side }: { side: Side }) {
 /**
  * Un œil vivant : la pupille suit `gaze` (de -1 à 1 sur chaque axe) et la
  * paupière se ferme quand `lid` descend vers 0. Au repos (regard 0, lid 1),
- * il est identique à <Eye />. `light` : en crème, sans liseré.
+ * il est identique à <Eye />. `light` : en crème, sans liseré, la pupille
+ * réduite et centrée dans son creux.
  */
 export function LivingEye({
   side,
@@ -185,7 +207,9 @@ export function LivingEye({
   return (
     <Animated.View style={[StyleSheet.absoluteFill, lidStyle]}>
       <Animated.View style={[StyleSheet.absoluteFill, pupilStyle]}>
-        <EyeLayer side={side} d={PUPIL[side]} light={light} />
+        <View style={[StyleSheet.absoluteFill, light && { transform: lightPupilFit(side) }]}>
+          <EyeLayer side={side} d={PUPIL[side]} light={light} />
+        </View>
       </Animated.View>
       <View style={StyleSheet.absoluteFill}>
         <EyeLayer side={side} d={RING} evenOdd light={light} />

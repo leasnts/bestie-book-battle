@@ -82,7 +82,7 @@ const EYES_INK_LEFT = 14;
 const EYES_INK_BOTTOM = 184;
 /** La question, en grand titre à gauche */
 const QUESTION = 42;
-const QUESTION_LINE = 48;
+const QUESTION_LINE = 52;
 /** Le fond à hauteur du nom (milieu du dégradé BRAND_BG) : la clairière s'y fond. */
 const CLEARING = '#9c2c3f';
 
@@ -170,8 +170,8 @@ export default function WelcomeScreen() {
     lift.value = withDelay(250, withTiming(1, { duration: 850, easing: ENTRANCE }));
     buttons.value = withDelay(450, withTiming(1, { duration: 550, easing: Easing.out(Easing.cubic) }));
 
-    // Le regard descend vers les boutons, puis va de l'un à l'autre, doucement
-    gazeY.value = withDelay(800, withTiming(0.95, { duration: 450, easing: ENTRANCE }));
+    // Le regard baisse vers la question, puis va de gauche à droite, doucement
+    gazeY.value = withDelay(800, withTiming(0.6, { duration: 450, easing: ENTRANCE }));
     gazeX.value = withDelay(
       2600,
       withRepeat(
@@ -199,7 +199,7 @@ export default function WelcomeScreen() {
   const taglineStyle = useAnimatedStyle(() => ({ opacity: 1 - wall.value }));
   // Les yeux rétrécissent autour du centre de l'écran, puis se posent au-dessus
   // de la question, alignés sur elle à gauche, et passent du rouge gravé au crème
-  const eyesTop = questionTop - spacing.md - EYES_SCALE * EYES_INK_BOTTOM;
+  const eyesTop = questionTop - spacing.xl - EYES_SCALE * EYES_INK_BOTTOM;
   const eyesLeft = spacing.xl - EYES_SCALE * EYES_INK_LEFT;
   const eyesX = eyesLeft - screenWidth / 2 + EYES_SCALE * (LOGO_SIZE / 2);
   const eyesY = eyesTop - screenHeight / 2 - EYES_SCALE * (LOCKUP.eyesY - LOGO_SIZE / 2);
@@ -318,7 +318,7 @@ export default function WelcomeScreen() {
       {/* La question, en grand titre à gauche, juste au-dessus des boutons */}
       <Animated.Text
         onLayout={(e) => setQuestionTop(e.nativeEvent.layout.y)}
-        style={[styles.question, { bottom: buttonsHeight + spacing.xl }, questionStyle]}
+        style={[styles.question, { bottom: buttonsHeight + spacing['4xl'] }, questionStyle]}
         accessibilityRole="header"
       >
         On lit{'\n'}
