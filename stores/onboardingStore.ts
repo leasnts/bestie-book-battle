@@ -6,13 +6,11 @@
  * - toi, en général (moments, formats habituels) → le profil ;
  * - ce livre-là (livre, format, position, rythme) → sa lecture.
  *
- * Seul `introSeen` est gardé d'un lancement à l'autre : l'ouverture ne se
- * montre qu'une fois. Le reste vit le temps du parcours.
+ * Rien n'est gardé d'un lancement à l'autre : le brouillon vit le temps du
+ * parcours.
  */
 
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
-import { createJSONStorage, persist } from 'zustand/middleware';
 import type { BookSearchResult } from '../types/bookSearch';
 import type { BookFormat, ReadingMoment } from '../types/supabase';
 import type { OnboardingFlow } from '../utils/onboardingFlow';
@@ -45,8 +43,6 @@ export interface InvitationDraft {
 }
 
 interface OnboardingStore {
-  /** L'ouverture a été vue : on n'y revient plus */
-  introSeen: boolean;
   /** Le parcours en cours (voir utils/onboardingFlow) */
   flow: OnboardingFlow;
 
@@ -75,10 +71,9 @@ interface OnboardingStore {
    */
   bookPick: { book: BookSearchResult; target: BookPickTarget } | null;
 
-  setIntroSeen: () => void;
   /** Commence un parcours, brouillon vierge */
   begin: (flow: OnboardingFlow) => void;
-  patch: (values: Partial<Omit<OnboardingStore, 'introSeen' | 'setIntroSeen' | 'begin' | 'patch' | 'setBookPick' | 'reset'>>) => void;
+  patch: (values: Partial<Omit<OnboardingStore, 'begin' | 'patch' | 'setBookPick' | 'reset'>>) => void;
   setBookPick: (pick: { book: BookSearchResult; target: BookPickTarget } | null) => void;
   /** Vide le brouillon (après la carte de lecture, ou à l'abandon) */
   reset: () => void;
@@ -97,26 +92,15 @@ const EMPTY = {
   bookPick: null,
 };
 
-export const useOnboardingStore = create<OnboardingStore>()(
-  persist(
-    (set) => ({
-      introSeen: false,
-      flow: 'create',
-      ...EMPTY,
+export const useOnboardingStore = create<OnboardingStore>()((set) => ({
+  flow: 'create',
+  ...EMPTY,
 
-      setIntroSeen: () => set({ introSeen: true }),
-      begin: (flow) => set({ ...EMPTY, flow }),
-      patch: (values) => set(values),
-      setBookPick: (pick) => set({ bookPick: pick }),
-      reset: () => set({ ...EMPTY, flow: 'create' }),
-    }),
-    {
-      name: 'onboarding',
-      storage: createJSONStorage(() => AsyncStorage),
-      partialize: (state) => ({ introSeen: state.introSeen }),
-    },
-  ),
-);
+  begin: (flow) => set({ ...EMPTY, flow }),
+  patch: (values) => set(values),
+  setBookPick: (pick) => set({ bookPick: pick }),
+  reset: () => set({ ...EMPTY, flow: 'create' }),
+}));
 
 /** Le format de ce livre : choisi, sinon déduit des habitudes (papier d'abord) */
 export function bookFormat(state: Pick<OnboardingStore, 'format' | 'usualFormats'>): BookFormat {

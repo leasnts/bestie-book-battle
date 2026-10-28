@@ -5,11 +5,14 @@
  * « chapi » et même tagline, au point près (BrandLockup). Le splash disparaît
  * d'un coup sur cette image identique (voir AnimatedSplash, `handoff`), puis :
  * 1. le mur de couvertures, ton sur ton, apparaît et défile lentement ;
- * 2. la tagline s'efface, les boutons montent depuis le bas ; les yeux et
- *    « chapi » ne bougent pas, à leur place du splash ;
+ * 2. la tagline s'efface pour la question « On lit ensemble ? », les boutons
+ *    montent depuis le bas ; les yeux et « chapi » ne bougent pas, à leur place
+ *    du splash ;
  * 3. les yeux baissent le regard vers les boutons, clignent, et restent vivants.
  *
  * Deux façons d'entrer : Apple, ou un code reçu par email (feuille auth/email).
+ * « J'ai un lien ou un code » : rejoindre une lecture, la connexion vient après.
+ * Rejoué depuis le profil (déjà connecté·e), les boutons passent aux questions.
  *
  * Flow :
  * - Nouveaux utilisateurs → onboarding (écran rôle)
@@ -23,7 +26,7 @@ import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { MailIcon } from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
-import { Alert, Linking, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { Alert, Linking, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import Animated, {
   Easing,
   type SharedValue,
@@ -38,13 +41,18 @@ import Animated, {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Defs, RadialGradient, Rect, Stop } from 'react-native-svg';
 import Button3D from '../../components/Button3D';
+import { ONBOARDING_TITLE } from '../../components/onboarding/OnboardingScreen';
+import AccentWord from '../../components/ui/AccentWord';
 import AppleLogo from '../../components/brand/AppleLogo';
 import { BRAND_BG, BrandTagline, BrandWord, LivingEye, LOCKUP, LOGO_SIZE } from '../../components/brand/BrandLockup';
 import { useAfterLogin } from '../../hooks/useAfterLogin';
 import { isAppleAuthAvailable } from '../../services/supabase/auth';
 import { useAuthStore } from '../../stores/authStore';
+import { useOnboardingStore } from '../../stores/onboardingStore';
 import { useSplashStore } from '../../stores/splashStore';
 import { colors, fonts, spacing } from '../../utils/constants';
+import { feel } from '../../utils/feel';
+import { firstStep } from '../../utils/onboardingFlow';
 
 /** Les bandes de couvertures (scripts/generate-login-covers.py), une par colonne. */
 const COVER_STRIPS = [
@@ -66,6 +74,10 @@ const ENTRANCE = Easing.inOut(Easing.cubic);
 /** Les mêmes pages que les Réglages */
 const TERMS_URL = 'https://bbb.leasantos.me/terms';
 const PRIVACY_URL = 'https://bbb.leasantos.me/privacy';
+/** Le crème des textes sur le rouge */
+const CREAM = '#FFFBF4';
+/** La question, en gros sous « chapi » */
+const QUESTION = ONBOARDING_TITLE;
 /** Le fond à hauteur du nom (milieu du dégradé BRAND_BG) : la clairière s'y fond. */
 const CLEARING = '#9c2c3f';
 
@@ -254,12 +266,31 @@ export default function WelcomeScreen() {
   const wallStyle = useAnimatedStyle(() => ({ opacity: wall.value * WALL_OPACITY }));
   const veilStyle = useAnimatedStyle(() => ({ opacity: wall.value }));
   const taglineStyle = useAnimatedStyle(() => ({ opacity: 1 - wall.value }));
+  const questionStyle = useAnimatedStyle(() => ({
+    opacity: wall.value,
+    transform: [{ translateY: 8 * (1 - wall.value) }],
+  }));
   const buttonsStyle = useAnimatedStyle(() => ({
     opacity: buttons.value,
     transform: [{ translateY: 24 * (1 - buttons.value) }],
   }));
 
+  /** Rejoué depuis le profil : déjà connecté·e, on passe aux questions */
+  const replaying = () => {
+    if (!useAuthStore.getState().user) return false;
+    useOnboardingStore.getState().begin('create');
+    router.push(firstStep('create'));
+    return true;
+  };
+
+  const haveCode = () => {
+    feel('tic');
+    useOnboardingStore.getState().begin(useAuthStore.getState().user ? 'addJoin' : 'join');
+    router.push('/onboarding/code');
+  };
+
   const handleAppleLogin = async () => {
+    if (replaying()) return;
     try {
       setIsLoading(true);
 
@@ -325,6 +356,12 @@ export default function WelcomeScreen() {
           <BrandWord />
           {/* Reprise du splash, puis effacée : l'écran ne garde que le nom */}
           <BrandTagline style={taglineStyle} />
+          <Animated.Text
+            style={[styles.question, { width: screenWidth, left: -screenWidth / 2 }, questionStyle]}
+            accessibilityRole="header"
+          >
+            <AccentWord text="On lit ensemble ?" accent="ensemble" size={QUESTION} />
+          </Animated.Text>
           {FRIENDS.map((friend, i) => (
             <Friend key={i} friend={friend} start={splashGone} gazeX={gazeX} gazeY={gazeY} />
           ))}
@@ -345,7 +382,7 @@ export default function WelcomeScreen() {
           Continuer avec Apple
         </Button3D>
         <Button3D
-          onPress={() => router.push('/auth/email')}
+          onPress={() => replaying() || router.push('/auth/email')}
           variant="secondary"
           iconComponent={<MailIcon size={22} color={colors.textPrimary} />}
           iconPosition="left"
@@ -353,6 +390,9 @@ export default function WelcomeScreen() {
         >
           Continuer avec un email
         </Button3D>
+        <Pressable onPress={haveCode} hitSlop={8} accessibilityRole="button" style={styles.code}>
+          <Text style={styles.codeText}>J'ai un lien ou un code</Text>
+        </Pressable>
         {/* Créer un compte vaut acceptation : pas de case à cocher, les liens suffisent */}
         <Text style={styles.legal}>
           En continuant, tu acceptes les{' '}
@@ -417,6 +457,27 @@ const styles = StyleSheet.create({
     left: -LOGO_SIZE / 2,
     top: -LOGO_SIZE / 2,
   },
+  question: {
+    position: 'absolute',
+    top: LOCKUP.subtitleTop - spacing.xs,
+    paddingHorizontal: spacing.xl,
+    fontFamily: fonts.display,
+    fontSize: QUESTION,
+    lineHeight: QUESTION * 1.2,
+    letterSpacing: -0.3,
+    textAlign: 'center',
+    color: CREAM,
+  },
+  code: {
+    minHeight: 44,
+    justifyContent: 'center',
+  },
+  codeText: {
+    fontFamily: fonts.bodySemiBold,
+    fontSize: 15,
+    color: CREAM,
+    textDecorationLine: 'underline',
+  },
   legal: {
     fontFamily: fonts.body,
     fontSize: 12,
@@ -427,7 +488,7 @@ const styles = StyleSheet.create({
   },
   legalLink: {
     fontFamily: fonts.bodySemiBold,
-    color: '#FFFBF4',
+    color: CREAM,
     textDecorationLine: 'underline',
   },
   buttons: {

@@ -809,12 +809,11 @@ Prototype validé le 2026-10-28 (artefact « Onboarding chapi »). Deux temps :
 **toi, en général** (moments, formats habituels) puis **ce livre-là** (format,
 édition, position, rythme). Ordre des écrans : `utils/onboardingFlow.ts`.
 
-- **Ouverture** (`intro`, ouverture et promesse fusionnées le 2026-10-28) :
-  trois volets qui défilent seuls, fonds Lowki en dégradé (rouge → chocolat →
-  beige), yeux ton sur ton. Chacun : un problème de lectrice, puis la
-  fonctionnalité qui y répond sur une carte de papier (ta page / sa page, une
-  note en marge, la série). Pied fixe : Commencer, J'ai un lien ou un code.
-  Une seule fois (`introSeen`), rejouable par ▶ du profil.
+- **Entrée** : l'écran de connexion, tel quel (mur de couvertures, yeux,
+  « chapi »), sans volets d'ouverture (jugés trop chargés le 2026-10-28). La
+  tagline du splash s'y efface pour une question en gros, « On lit
+  *ensemble* ? », et « J'ai un lien ou un code » s'ajoute sous les boutons.
+  Rejouable par ▶ du profil.
 - **Questions** : `OnboardingScreen` (papier grené, retour en verre, fil de
   progression = la couture `Seam`, titre 30/36 avec un mot d'accent, pied sous
   un `StitchLine`, colonne de téléphone sur grand écran).

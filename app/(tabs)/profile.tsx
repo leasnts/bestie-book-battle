@@ -137,10 +137,10 @@ export default function ProfileScreen() {
             accessibilityLabel="Réglages"
             style={[styles.settingsButton, { top: insets.top + spacing.sm }]}
           />
-          {/* Rejouer l'onboarding depuis l'ouverture, pour le tester (#189) */}
+          {/* Rejouer l'onboarding depuis l'écran d'entrée, pour le tester (#189) */}
           <GlassButton
             icon={PlayIcon}
-            onPress={() => router.push('/onboarding/intro')}
+            onPress={() => router.push('/auth/login')}
             accessibilityLabel="Rejouer l’onboarding"
             style={[styles.replayButton, { top: insets.top + spacing.sm }]}
           />

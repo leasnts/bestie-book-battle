@@ -30,7 +30,6 @@ import { prepareFeel } from '../utils/feel';
 import { supabase } from '../supabaseConfig';
 import AnimatedSplash from '../components/AnimatedSplash';
 import { useSplashStore } from '../stores/splashStore';
-import { useOnboardingStore } from '../stores/onboardingStore';
 import { firstStep } from '../utils/onboardingFlow';
 import { sheetScreenOptions } from '../components/ui/SheetHeader';
 import { useFonts } from 'expo-font';
@@ -98,10 +97,6 @@ export default function RootLayout() {
  */
 function RootLayoutNav() {
   const { user, isInitialized, initialize: initAuth, pendingUserData } = useAuthStore();
-  // L'ouverture ne se montre qu'une fois : relu sur le téléphone avant d'aiguiller
-  const introSeen = useOnboardingStore((state) => state.introSeen);
-  const [introHydrated, setIntroHydrated] = useState(() => useOnboardingStore.persist.hasHydrated());
-  useEffect(() => useOnboardingStore.persist.onFinishHydration(() => setIntroHydrated(true)), []);
   const { challenges, loadUserChallenges, _hasHydrated } = useProjectStore();
   const router = useRouter();
   const segments = useSegments();
@@ -224,14 +219,11 @@ function RootLayoutNav() {
         // Onboarding interrompu (ex: app tuée en plein milieu) : pendingUserData a
         // été restauré depuis AsyncStorage, on reprend après la connexion
         router.replace(firstStep('create'));
-      } else if (!introHydrated) {
-        return;
       } else {
-        // Première fois : l'ouverture, puis la connexion
-        router.replace(introSeen ? '/auth/login' : '/onboarding/intro');
+        router.replace('/auth/login');
       }
     }
-  }, [user, isInitialized, challenges, segments, isMounted, router, pendingUserData, introSeen, introHydrated]);
+  }, [user, isInitialized, challenges, segments, isMounted, router, pendingUserData]);
 
   // Initialise les notifications pour les utilisateurs DÉJÀ connectés (hors onboarding)
   // IMPORTANT: On ne demande JAMAIS les permissions ici — c'est l'écran onboarding/notifications
@@ -382,7 +374,7 @@ function RootLayoutNav() {
       {showSplash && (
         <View style={StyleSheet.absoluteFill}>
           {/* Personne de connecté : relais sans fondu vers l'écran de connexion */}
-          <AnimatedSplash onFinish={handleSplashFinish} waitFor={appReady} handoff={!user && !pendingUserData && introSeen} />
+          <AnimatedSplash onFinish={handleSplashFinish} waitFor={appReady} handoff={!user && !pendingUserData} />
         </View>
       )}
     </View>

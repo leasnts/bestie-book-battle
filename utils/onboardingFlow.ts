@@ -7,7 +7,7 @@
  * - add     : déjà inscrit·e, j'ajoute un livre (le « + »)
  * - addJoin : déjà inscrit·e, je rejoins avec un code
  *
- * La connexion (auth/login) se glisse entre l'ouverture (ou l'invitation) et
+ * La connexion (auth/login) se glisse avant tout (ou après l'invitation) et
  * « Ton rythme » : elle n'est pas dans les listes, useAfterLogin y renvoie.
  */
 
@@ -16,7 +16,6 @@ import { useOnboardingStore } from '../stores/onboardingStore';
 export type OnboardingFlow = 'create' | 'join' | 'add' | 'addJoin';
 
 export type OnboardingStep =
-  | 'intro'
   | 'code'
   | 'invitation'
   | 'rythme'

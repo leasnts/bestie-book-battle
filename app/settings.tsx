@@ -199,7 +199,7 @@ export default function SettingsRoute() {
         {__DEV__ && (
           <>
             <StitchLine />
-            <LinkRow icon={FlaskConicalIcon} label="Tester l’onboarding" onPress={() => openScreen('/onboarding/intro')} />
+            <LinkRow icon={FlaskConicalIcon} label="Tester l’onboarding" onPress={() => openScreen('/auth/login')} />
           </>
         )}
       </Group>

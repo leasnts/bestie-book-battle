@@ -20,7 +20,6 @@ export default function JoinLink() {
 
   useEffect(() => {
     const store = useOnboardingStore.getState();
-    store.setIntroSeen();
     store.begin(useAuthStore.getState().user ? 'addJoin' : 'join');
     fetchInvitation(code ?? '').then((invitation) => {
       if (!invitation) {
