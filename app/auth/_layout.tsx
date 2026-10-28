@@ -8,9 +8,6 @@
 import { Stack } from 'expo-router';
 import { sheetScreenOptions } from '../../components/ui/SheetHeader';
 
-// La feuille email s'ouvre toujours sur l'écran de connexion, même par lien direct
-export const unstable_settings = { anchor: 'login' };
-
 export default function AuthLayout() {
   return (
     <Stack
