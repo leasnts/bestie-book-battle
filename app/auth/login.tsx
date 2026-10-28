@@ -4,7 +4,8 @@
  * Il prolonge le splash sans couture : même fond rouge, mêmes yeux, même
  * « chapi » et même tagline, au point près (BrandLockup). Le splash disparaît
  * d'un coup sur cette image identique (voir AnimatedSplash, `handoff`), puis :
- * 1. le mur de couvertures, ton sur ton, apparaît et défile lentement ;
+ * 1. le rouge du splash passe au chocolat (dégradé Lowki), le mur de
+ *    couvertures, chocolat ton sur ton, apparaît et défile lentement ;
  * 2. « chapi » et la tagline s'effacent ; les yeux descendent en petit et en
  *    crème au-dessus de la question « On lit ensemble ? », un grand titre à
  *    gauche juste au-dessus des boutons, qui montent depuis le bas ;
@@ -49,7 +50,7 @@ import { isAppleAuthAvailable } from '../../services/supabase/auth';
 import { useAuthStore } from '../../stores/authStore';
 import { useOnboardingStore } from '../../stores/onboardingStore';
 import { useSplashStore } from '../../stores/splashStore';
-import { colors, fonts, spacing } from '../../utils/constants';
+import { colors, fonts, inkGradient, lowki, spacing } from '../../utils/constants';
 import { feel } from '../../utils/feel';
 import { firstStep } from '../../utils/onboardingFlow';
 
@@ -83,8 +84,8 @@ const EYES_INK_BOTTOM = 184;
 /** La question, en grand titre à gauche */
 const QUESTION = 42;
 const QUESTION_LINE = 52;
-/** Le fond à hauteur du nom (milieu du dégradé BRAND_BG) : la clairière s'y fond. */
-const CLEARING = '#9c2c3f';
+/** Le milieu du dégradé chocolat : la clairière s'y fond. */
+const CLEARING = '#563429';
 
 /** Une colonne de couvertures, posée deux fois pour boucler sans couture. */
 function CoverColumn({ index, x, drift }: { index: number; x: number; drift: SharedValue<number> }) {
@@ -267,6 +268,10 @@ export default function WelcomeScreen() {
     <View style={styles.container}>
       <StatusBar style="light" />
       <LinearGradient colors={BRAND_BG} style={StyleSheet.absoluteFill} />
+      {/* Le rouge du splash passe au chocolat, en même temps que le mur arrive */}
+      <Animated.View style={[StyleSheet.absoluteFill, veilStyle]} pointerEvents="none">
+        <LinearGradient colors={inkGradient} style={StyleSheet.absoluteFill} />
+      </Animated.View>
 
       <Animated.View style={[StyleSheet.absoluteFill, styles.wallFrame, wallStyle]} pointerEvents="none">
         <CoverWall drift={drift} />
@@ -286,7 +291,7 @@ export default function WelcomeScreen() {
         <Rect width="100%" height="100%" fill="url(#clearing)" />
       </Svg>
       <LinearGradient
-        colors={['rgba(146, 41, 59, 0)', BRAND_BG[1]]}
+        colors={['rgba(72, 43, 36, 0)', lowki.chocolate.dark]}
         locations={[0, 0.45]}
         style={[styles.bottomFade, { height: 300 + insets.bottom }]}
       />
