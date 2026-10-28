@@ -252,9 +252,9 @@ export default function WelcomeScreen() {
       >
         <Button3D
           onPress={handleAppleLogin}
-          variant="primary"
+          variant="secondary"
           loading={isLoading}
-          iconComponent={<AppleLogo size={22} color={colors.white} />}
+          iconComponent={<AppleLogo size={22} color={colors.textPrimary} />}
           iconPosition="left"
           style={{ width: buttonWidth }}
         >
@@ -262,8 +262,8 @@ export default function WelcomeScreen() {
         </Button3D>
         <Button3D
           onPress={() => router.push('/auth/email')}
-          variant="primary"
-          iconComponent={<MailIcon size={22} color={colors.white} />}
+          variant="secondary"
+          iconComponent={<MailIcon size={22} color={colors.textPrimary} />}
           iconPosition="left"
           style={{ width: buttonWidth }}
         >
