@@ -227,7 +227,7 @@ function RootLayoutNav() {
       } else if (!introHydrated) {
         return;
       } else {
-        // Première fois : l'ouverture et la promesse, puis la connexion
+        // Première fois : l'ouverture, puis la connexion
         router.replace(introSeen ? '/auth/login' : '/onboarding/intro');
       }
     }

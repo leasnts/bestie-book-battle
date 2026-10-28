@@ -809,11 +809,12 @@ Prototype validé le 2026-10-28 (artefact « Onboarding chapi »). Deux temps :
 **toi, en général** (moments, formats habituels) puis **ce livre-là** (format,
 édition, position, rythme). Ordre des écrans : `utils/onboardingFlow.ts`.
 
-- **Ouverture** (`intro`) : trois problèmes de lectrice en plein écran, fonds
-  Lowki en dégradé (rouge → chocolat → beige), pile de tranches ton sur ton
-  (`Spine`). Une seule fois (`introSeen`).
-- **Promesse** : les yeux, « Lire *ensemble* », un tampon d'encre « à deux »
-  (`InkStamp`), trois vignettes qui se relaient.
+- **Ouverture** (`intro`, ouverture et promesse fusionnées le 2026-10-28) :
+  trois volets qui défilent seuls, fonds Lowki en dégradé (rouge → chocolat →
+  beige), yeux ton sur ton. Chacun : un problème de lectrice, puis la
+  fonctionnalité qui y répond sur une carte de papier (ta page / sa page, une
+  note en marge, la série). Pied fixe : Commencer, J'ai un lien ou un code.
+  Une seule fois (`introSeen`), rejouable par ▶ du profil.
 - **Questions** : `OnboardingScreen` (papier grené, retour en verre, fil de
   progression = la couture `Seam`, titre 30/36 avec un mot d'accent, pied sous
   un `StitchLine`, colonne de téléphone sur grand écran).

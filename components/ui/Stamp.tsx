@@ -6,7 +6,7 @@
  * - `useStamp` : le mouvement seul, pour tout ce qui se tamponne (l'emoji d'une
  *   réaction dans NoteCard, le tampon d'encre ci-dessous).
  * - `InkStamp` : un tampon d'encre rouge, cadre et mot en capitales, posé de
- *   travers (« à deux » sur la promesse, la date sur la carte de lecture).
+ *   travers (la date sur la carte de lecture).
  *
  * « Réduire les animations » : rien ne bouge, le tampon est déjà posé.
  */

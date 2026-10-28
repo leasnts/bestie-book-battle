@@ -1,6 +1,6 @@
 /**
  * StickerText — un autocollant brodé (NoteSticker) qui porte une phrase courte,
- * posé un peu de travers : la note de Chloé sur la promesse, la phrase qui
+ * posé un peu de travers : la note de Chloé dans l'ouverture, la phrase qui
  * réagit au rythme choisi (« Le bon rythme. »).
  *
  * `pop` : à chaque changement de `popKey`, il se repose (glisse et se tourne).
