@@ -16,6 +16,16 @@ import { Project } from '../types';
 const APP_SCHEME = 'bestie-book-battle';
 const WEB_URL = 'https://bestie-book-battle.app'; // URL fictive pour le moment
 
+/** Le lien qui ouvre une lecture dans l'app (app/join/[code].tsx) */
+export function inviteLink(code: string): string {
+  return `${APP_SCHEME}://join/${code}`;
+}
+
+/** Le message d'invitation : le livre, le lien, et le code en secours */
+export function inviteMessage(bookTitle: string, code: string): string {
+  return `Lis « ${bookTitle} » avec moi sur chapi 📚\n${inviteLink(code)}\n\nCode : ${code}`;
+}
+
 /**
  * Génère un lien d'invitation pour un projet
  * 

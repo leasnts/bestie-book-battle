@@ -16,7 +16,7 @@ import { POP_EYES_HEIGHT, POP_EYES_PATH, POP_EYES_WIDTH } from './brand/popEyesP
 
 interface PopEyesProps {
   variant?: 'together' | 'left' | 'right';
-  size?: 'small' | 'medium' | 'large';
+  size?: 'small' | 'medium' | 'large' | 'hero';
   /** Le tracé vectoriel (eyes.svg) en chocolat Lowki plutôt que l'image, yeux ensemble seulement. */
   vector?: boolean;
   style?: ViewStyle;
@@ -45,6 +45,8 @@ const SIZES = {
   small: { width: 40, height: 40 },
   medium: { width: 60, height: 60 },
   large: { width: 80, height: 80 },
+  /** En grand, seul sur l'écran (la promesse de l'onboarding) */
+  hero: { width: 136, height: 136 },
 };
 
 export default function PopEyes({ 

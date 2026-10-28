@@ -15,6 +15,7 @@ import SheetPage, { SheetFooter } from '../components/ui/SheetPage';
 import { useProjectStore } from '../stores/projectStore';
 import { borderRadius, colors, fonts, fontSize, shadows, spacing } from '../utils/constants';
 import { CoverImage } from '../components/ui/BookCover';
+import { inviteMessage } from '../utils/share';
 
 export default function InviteRoute() {
   const challenges = useProjectStore((s) => s.challenges);
@@ -35,10 +36,8 @@ export default function InviteRoute() {
   const handleShare = async () => {
     if (!selected) return;
     const code = selected.invite_code;
-    const deepLink = selected.invite_url || `bestiebookbattle://join/${code}`;
-    const message = `Rejoins-moi pour lire "${selected.book_title}" sur chapi ! 📚\n\nCode : ${code}\n${deepLink}`;
     try {
-      await Share.share({ message, url: deepLink });
+      await Share.share({ message: inviteMessage(selected.book_title, code) });
     } catch {
       // Annulé
     }

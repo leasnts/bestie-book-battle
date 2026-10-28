@@ -18,19 +18,15 @@ import { Tabs, useRouter } from 'expo-router';
 import { BookOpenIcon, CircleUserIcon, SearchIcon } from 'lucide-react-native';
 import React, { useCallback } from 'react';
 import GlassTabBar, { TabIcon } from '../../components/ui/GlassTabBar';
-import { useAuthStore } from '../../stores/authStore';
 import { colors } from '../../utils/constants';
+import { startAdding } from '../../utils/onboardingFlow';
 
 export default function TabLayout() {
   const router = useRouter();
-  const firstName = useAuthStore((state) => state.user?.first_name);
 
   const handleAddChallenge = useCallback(() => {
-    router.push({
-      pathname: '/onboarding/role',
-      params: { firstName: firstName || 'Lecteur', addChallenge: 'true' },
-    });
-  }, [router, firstName]);
+    router.push(startAdding());
+  }, [router]);
 
   return (
     <Tabs

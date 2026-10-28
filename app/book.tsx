@@ -67,6 +67,7 @@ import {
   type TrackCap,
 } from '../utils/track';
 import { AccentUnits } from '../components/ui/AccentWord';
+import { startAdding } from '../utils/onboardingFlow';
 
 export default function BookRoute() {
   const router = useRouter();
@@ -191,10 +192,7 @@ export default function BookRoute() {
               await leaveActiveChallenge(user.id);
               router.back();
               if (remainingBooks.length === 0) {
-                router.push({
-                  pathname: '/onboarding/role',
-                  params: { firstName: user.first_name || 'Lecteur', addChallenge: 'true' },
-                });
+                router.push(startAdding());
               }
             } catch (error) {
               console.error('Erreur en quittant le livre:', error);

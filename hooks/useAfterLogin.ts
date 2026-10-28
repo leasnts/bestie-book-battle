@@ -1,26 +1,29 @@
 import { useRouter } from 'expo-router';
 import { Alert } from 'react-native';
 import type { AppleSignInResult } from '../services/supabase/auth';
+import { useOnboardingStore } from '../stores/onboardingStore';
 import { useProjectStore } from '../stores/projectStore';
+import { firstStep } from '../utils/onboardingFlow';
 
 /**
  * Où aller une fois connecté, par Apple ou par email :
- * - nouveau compte → onboarding (écran rôle), avec le prénom déjà connu ;
+ * - une invitation en cours (lien ou code) → la suite pour la rejoindre ;
+ * - nouveau compte → « Ton rythme », la suite de l'onboarding ;
  * - compte avec des lectures → l'accueil ;
- * - compte sans lecture → onboarding, écran rôle, en mode ajout.
+ * - compte sans lecture → ajouter un livre (« Quel livre ? »).
  */
 export function useAfterLogin() {
   const router = useRouter();
   const loadUserChallenges = useProjectStore((state) => state.loadUserChallenges);
 
-  return async (result: AppleSignInResult, firstName?: string) => {
+  return async (result: AppleSignInResult) => {
+    const onboarding = useOnboardingStore.getState();
+    const invited = !!onboarding.invitation;
+
     if (result.isNewUser) {
-      // Apple fournit firstName au premier sign-in — on l'utilise directement
-      // sans demander à l'utilisateur de le re-saisir (exigence App Store 4.0)
-      router.replace({
-        pathname: '/onboarding/role',
-        params: { firstName: firstName ?? result.firstName ?? '' },
-      });
+      // Le prénom vient d'Apple, ou de la feuille email : rien à redemander
+      if (!invited && onboarding.flow !== 'create') onboarding.begin('create');
+      router.replace(firstStep(invited ? 'join' : 'create'));
       return;
     }
 
@@ -31,21 +34,21 @@ export function useAfterLogin() {
 
     // Si le chargement a échoué (réseau, Supabase…), on ne redirige PAS vers
     // l'onboarding : l'utilisateur a un compte existant. On affiche une erreur
-    // pour qu'il réessaie plutôt que de lui faire re-créer un projet.
+    // pour qu'il réessaie plutôt que de lui faire re-créer une lecture.
     if (challengesError) {
       Alert.alert('Erreur de connexion', 'Impossible de charger tes lectures. Vérifie ta connexion et réessaie.');
       return;
     }
 
-    if (challenges && challenges.length > 0) {
+    if (invited) {
+      onboarding.patch({ flow: 'addJoin' });
+      router.replace(firstStep('addJoin'));
+    } else if (challenges && challenges.length > 0) {
+      onboarding.reset();
       router.replace('/(tabs)');
     } else {
-      // On skip "Comment tu t'appelles ?" car il a déjà un profil, et on passe
-      // le prénom depuis son profil pour l'écran rôle.
-      router.replace({
-        pathname: '/onboarding/role',
-        params: { firstName: result.user?.first_name || 'Toi', addChallenge: 'true' },
-      });
+      onboarding.begin('add');
+      router.replace(firstStep('add'));
     }
   };
 }

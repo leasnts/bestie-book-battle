@@ -47,6 +47,8 @@ export interface Database {
           profile_photo_url: string | null;
           notification_token: string | null;
           notification_preferences: NotificationPreferences;
+          reading_moments: ReadingMoment[]; // Quand je lis, en général : fixe l'heure du rappel
+          usual_formats: BookFormat[]; // Mes formats habituels, en général (plusieurs possibles)
           created_at: string; // ISO timestamp
           last_login_at: string | null; // ISO timestamp
           updated_at: string; // ISO timestamp
@@ -60,6 +62,8 @@ export interface Database {
           profile_photo_url?: string | null;
           notification_token?: string | null;
           notification_preferences?: NotificationPreferences;
+          reading_moments?: ReadingMoment[];
+          usual_formats?: BookFormat[];
           created_at?: string;
           last_login_at?: string | null;
           updated_at?: string;
@@ -73,6 +77,8 @@ export interface Database {
           profile_photo_url?: string | null;
           notification_token?: string | null;
           notification_preferences?: NotificationPreferences;
+          reading_moments?: ReadingMoment[];
+          usual_formats?: BookFormat[];
           created_at?: string;
           last_login_at?: string | null;
           updated_at?: string;
@@ -170,6 +176,9 @@ export interface Database {
           total_pages: number | null; // Nombre de pages de l'édition du participant
           cover_url: string | null; // Couverture de son édition, null = celle du bbb
           publisher: string | null; // Éditeur de son édition, si la recherche l'a donné
+          format: BookFormat; // Format de CE livre : papier = pages, liseuse/audio = % (total_pages 100)
+          pages_per_day: number | null; // Mon rythme visé pour ce livre (pages, ou % en liseuse/audio)
+          target_end_date: string | null; // Ma date de fin, calculée depuis le rythme (YYYY-MM-DD)
           last_updated_at: string; // ISO timestamp
           created_at: string; // ISO timestamp
         };
@@ -182,6 +191,9 @@ export interface Database {
           total_pages?: number | null;
           cover_url?: string | null;
           publisher?: string | null;
+          format?: BookFormat;
+          pages_per_day?: number | null;
+          target_end_date?: string | null;
           streak_count?: number;
           last_streak_date?: string | null;
           streak_bonus_dates?: string[];
@@ -197,6 +209,9 @@ export interface Database {
           total_pages?: number | null;
           cover_url?: string | null;
           publisher?: string | null;
+          format?: BookFormat;
+          pages_per_day?: number | null;
+          target_end_date?: string | null;
           streak_count?: number;
           last_streak_date?: string | null;
           streak_bonus_dates?: string[];
@@ -411,6 +426,11 @@ export type AnnotationVisibility = 'club' | 'private';
  */
 
 // Type pour une Row (lecture)
+/** Format d'un livre : un livre se lit dans un seul format */
+export type BookFormat = 'papier' | 'liseuse' | 'audio';
+/** Moments de lecture habituels */
+export type ReadingMoment = 'matin' | 'trajets' | 'pause' | 'soir' | 'lit';
+
 export type User = Database['public']['Tables']['users']['Row'];
 export type Challenge = Database['public']['Tables']['challenges']['Row'];
 export type ChallengeParticipant = Database['public']['Tables']['challenge_participants']['Row'];
@@ -418,7 +438,7 @@ export type UserProgress = Database['public']['Tables']['user_progress']['Row'];
 /** Ma progression sur un livre, réduite à ce dont la bibliothèque a besoin (état et tri) */
 export type MyBookProgress = Pick<
   UserProgress,
-  'challenge_id' | 'current_page' | 'progress_percentage' | 'last_updated_at' | 'created_at' | 'cover_url'
+  'challenge_id' | 'current_page' | 'progress_percentage' | 'last_updated_at' | 'created_at' | 'cover_url' | 'format'
 >;
 export type ProgressHistory = Database['public']['Tables']['progress_history']['Row'];
 export type ChallengeGoal = Database['public']['Tables']['challenge_goals']['Row'];

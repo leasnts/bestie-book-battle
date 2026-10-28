@@ -10,65 +10,18 @@
  */
 
 import React, { useEffect, useRef, useState } from 'react';
-import { Pressable, StyleSheet, Text, TextInput, View, type TextInputInstance } from 'react-native';
+import { StyleSheet, Text, TextInput } from 'react-native';
 import Button3D from '../../components/Button3D';
+import CodeBoxes, { CODE_LENGTH } from '../../components/ui/CodeBoxes';
 import SheetPage, { SheetFooter, SheetSubtitle } from '../../components/ui/SheetPage';
 import { useAfterLogin } from '../../hooks/useAfterLogin';
 import { sendEmailCode, type AppleSignInResult } from '../../services/supabase/auth';
 import { useAuthStore } from '../../stores/authStore';
 import { borderRadius, colors, fonts, fontSize, shadows, spacing } from '../../utils/constants';
 
-const CODE_LENGTH = 6;
 /** Supabase refuse un nouveau code pour la même adresse avant 60 s (smtp_max_frequency). */
 const RESEND_DELAY = 60;
 const isEmail = (value: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
-
-/**
- * Six cases, une par chiffre. Elles ne font que montrer : la saisie passe par
- * un seul champ invisible posé dessus, qui garde le collage et l'autoremplissage.
- */
-function CodeBoxes({
-  value,
-  onChange,
-  editable,
-}: {
-  value: string;
-  onChange: (value: string) => void;
-  editable: boolean;
-}) {
-  const input = useRef<TextInputInstance>(null);
-  const [focused, setFocused] = useState(true);
-  return (
-    <Pressable onPress={() => input.current?.focus()} accessible={false}>
-      <View style={styles.boxes}>
-        {Array.from({ length: CODE_LENGTH }, (_, i) => {
-          const active = focused && editable && i === Math.min(value.length, CODE_LENGTH - 1);
-          return (
-            <View key={i} style={[styles.box, active && styles.boxActive]}>
-              <Text style={styles.digit}>{value[i] ?? ''}</Text>
-            </View>
-          );
-        })}
-      </View>
-      <TextInput
-        ref={input}
-        style={styles.hiddenInput}
-        value={value}
-        onChangeText={onChange}
-        onFocus={() => setFocused(true)}
-        onBlur={() => setFocused(false)}
-        keyboardType="number-pad"
-        textContentType="oneTimeCode"
-        autoComplete="one-time-code"
-        maxLength={CODE_LENGTH}
-        editable={editable}
-        caretHidden
-        autoFocus
-        accessibilityLabel="Code reçu par email"
-      />
-    </Pressable>
-  );
-}
 
 type Step = 'email' | 'code' | 'name';
 
@@ -139,7 +92,7 @@ export default function EmailLoginSheet() {
     const name = firstName.trim();
     const pending = useAuthStore.getState().pendingUserData;
     if (pending) setPendingUserData({ ...pending, firstName: name });
-    await afterLogin(res, name);
+    await afterLogin(res);
   };
 
   if (step === 'code') {
@@ -153,7 +106,7 @@ export default function EmailLoginSheet() {
         }
         onBack={() => setStep('email')}
       >
-        <CodeBoxes value={code} onChange={onCodeChange} editable={!busy} />
+        <CodeBoxes value={code} onChange={onCodeChange} editable={!busy} accessibilityLabel="Code reçu par email" oneTimeCode />
         {error && <Text style={styles.error}>{error}</Text>}
         <SheetFooter>
           <Button3D onPress={sendCode} variant="primary" disabled={busy || wait > 0}>
@@ -233,35 +186,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.lg,
     ...shadows.xs,
-  },
-  boxes: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-  },
-  box: {
-    flex: 1,
-    height: 60,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.white,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: borderRadius.lg,
-    ...shadows.xs,
-  },
-  boxActive: {
-    borderColor: colors.textSecondary,
-    borderWidth: 1.5,
-  },
-  digit: {
-    fontFamily: fonts.body,
-    fontSize: 26,
-    color: colors.textPrimary,
-  },
-  hiddenInput: {
-    ...StyleSheet.absoluteFill,
-    color: 'transparent',
-    opacity: 0.02,
   },
   strong: {
     fontFamily: fonts.bodyBold,

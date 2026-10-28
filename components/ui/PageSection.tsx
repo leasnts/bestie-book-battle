@@ -42,6 +42,8 @@ interface PageSectionProps {
   pickerFontSize?: number;
   /** Les autres membres du club, épinglés sur la règle */
   club?: ClubPin[];
+  /** Liseuse ou audio : la règle avance en % */
+  unit?: 'pages' | 'percent';
 }
 
 export default function PageSection({
@@ -54,6 +56,7 @@ export default function PageSection({
   compact = false,
   pickerFontSize = 88,
   club,
+  unit,
 }: PageSectionProps) {
   const delta = currentPage - savedPage;
   const hasChanged = delta !== 0;
@@ -68,6 +71,7 @@ export default function PageSection({
           onPageChange={onPageChange}
           fontSize={pickerFontSize}
           club={club}
+          unit={unit}
         />
       </View>
 

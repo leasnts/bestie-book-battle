@@ -80,7 +80,7 @@ export default function SettingsRoute() {
     }
     setAllowed(true);
     setEveningReminder(true);
-    await scheduleEveningReminder();
+    await scheduleEveningReminder(useAuthStore.getState().user?.notification_preferences?.daily_reminder_time);
   };
 
   // Ferme le sheet, puis ouvre l'écran (sinon il s'ouvre dans le sheet)
@@ -199,7 +199,7 @@ export default function SettingsRoute() {
         {__DEV__ && (
           <>
             <StitchLine />
-            <LinkRow icon={FlaskConicalIcon} label="Tester l’onboarding" onPress={() => openScreen('/onboarding')} />
+            <LinkRow icon={FlaskConicalIcon} label="Tester l’onboarding" onPress={() => openScreen('/onboarding/intro')} />
           </>
         )}
       </Group>

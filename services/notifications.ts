@@ -179,12 +179,25 @@ export async function cancelDailyReminder(): Promise<void> {
 export const EVENING_REMINDER_TIME = { hour: 20, minute: 0 };
 
 /**
- * Planifie le rappel du soir : le rappel quotidien de l'app, à 20 h.
- * Appelé au lancement (app/_layout.tsx) et quand on le rallume dans les Réglages.
+ * Planifie le rappel quotidien de l'app, à l'heure où la personne lit
+ * (`daily_reminder_time`, déduite de ses moments à l'onboarding), sinon à 20 h.
+ * Appelé au lancement (app/_layout.tsx), quand on le rallume dans les Réglages,
+ * et à la fin de l'onboarding.
  */
-export function scheduleEveningReminder(): Promise<string> {
-  const { hour, minute } = EVENING_REMINDER_TIME;
-  return scheduleDailyReminder(hour, minute, 'cc', 'n\'oublie pas d\'ajouter tes pages stp');
+export function scheduleEveningReminder(time?: string | null): Promise<string> {
+  const [hour, minute] = time?.match(/^\d{1,2}:\d{2}$/)
+    ? time.split(':').map(Number)
+    : [EVENING_REMINDER_TIME.hour, EVENING_REMINDER_TIME.minute];
+  return scheduleDailyReminder(hour, minute, 'Ton moment lecture', 'Tu en es où ?');
+}
+
+/**
+ * Demande la permission des notifications (la fenêtre d'iOS ne s'affiche
+ * qu'une fois : ne l'appeler qu'après avoir montré ce qu'on y gagne).
+ */
+export async function requestNotificationPermission(): Promise<boolean> {
+  const { status } = await Notifications.requestPermissionsAsync();
+  return status === 'granted';
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════

@@ -32,6 +32,8 @@ export type FeelName =
   | 'serie' // la série sauvée par un marque-page
   | 'depasser' // passer devant quelqu'un au classement
   | 'fini' // le livre fini
+  | 'inviter' // le lien d'invitation envoyé (onboarding)
+  | 'bienvenue' // la carte de lecture tamponnée, fin de l'onboarding
   | 'erreur'; // quelque chose n'a pas marché
 
 const SOUNDS: Record<FeelName, number> = {
@@ -46,6 +48,9 @@ const SOUNDS: Record<FeelName, number> = {
   serie: require('../assets/sounds/serie.wav'),
   depasser: require('../assets/sounds/depasser.wav'),
   fini: require('../assets/sounds/fini.wav'),
+  // Provisoires (#189) : leurs propres sons restent à fabriquer
+  inviter: require('../assets/sounds/reagir.wav'),
+  bienvenue: require('../assets/sounds/objectif.wav'),
   erreur: require('../assets/sounds/erreur.wav'),
 };
 
@@ -70,6 +75,8 @@ const HAPTICS: Record<FeelName, [number, Tap][]> = {
   serie: [[0, Medium], [50, Heavy], [250, 'success']],
   depasser: [[0, Medium], [55, Heavy], [110, Heavy]],
   fini: [[0, Heavy], [220, Medium], [290, Medium], [360, Heavy], [430, 'success']],
+  inviter: [[0, Medium], [60, Rigid]],
+  bienvenue: [[0, Heavy], [90, 'success']],
   erreur: [[0, 'error'], [110, Heavy]],
 };
 

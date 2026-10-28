@@ -9,6 +9,7 @@ import { Challenge } from '../../types/supabase';
 import { colors, fonts } from '../../utils/constants';
 import { ArrowRightIcon, CopyIcon, ShareIcon } from 'lucide-react-native';
 import { CoverImage } from '../../components/ui/BookCover';
+import { inviteMessage } from '../../utils/share';
 
 export default function InviteScreen() {
     const router = useRouter();
@@ -46,12 +47,7 @@ export default function InviteScreen() {
     const shareProject = async () => {
         if (!challenge) return;
         try {
-            const deepLink = challenge.invite_url || `bestiebookbattle://join/${code}`;
-            const message = `Rejoins-moi pour lire ${challenge.book_title} ! Code : ${code}\n\n${deepLink}`;
-            await Share.share({
-                message,
-                url: deepLink,
-            });
+            await Share.share({ message: inviteMessage(challenge.book_title, challenge.invite_code) });
         } catch (error) {
             Alert.alert('Erreur', 'Impossible de partager le challenge');
         }

@@ -31,13 +31,14 @@ import BookResultRow, { BookResultSkeleton } from '../components/ui/BookResultRo
 import SheetPage from '../components/ui/SheetPage';
 import { useBookSearch } from '../hooks/useBookSearch';
 import { fetchEditions, TRENDING_BOOKS } from '../services/bookApi';
-import { useOnboardingStore } from '../stores/onboardingStore';
+import { useOnboardingStore, type BookPickTarget } from '../stores/onboardingStore';
 import type { BookSearchResult } from '../types/bookSearch';
 import { borderRadius, colors, fonts, fontSize, shadows, spacing } from '../utils/constants';
 
 export default function BookSearchRoute() {
   const router = useRouter();
-  const { q } = useLocalSearchParams<{ q?: string }>();
+  // `for` : l'écran qui attend le livre (le livre lui-même, ou une autre édition)
+  const { q, for: target = 'livre' } = useLocalSearchParams<{ q?: string; for?: BookPickTarget }>();
   const { query, setQuery, results, isSearching, error, clearResults } = useBookSearch();
   const inputRef = useRef<TextInputInstance>(null);
 
@@ -56,10 +57,10 @@ export default function BookSearchRoute() {
 
   const finish = useCallback(
     (book: BookSearchResult) => {
-      useOnboardingStore.getState().setBookPick(book);
+      useOnboardingStore.getState().setBookPick({ book, target });
       router.back();
     },
-    [router],
+    [router, target],
   );
 
   const handlePick = useCallback(

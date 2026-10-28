@@ -23,6 +23,7 @@ import { useProjectStore } from '../stores/projectStore';
 import { myCoverUrl } from '../services/myEdition';
 import { Challenge } from '../types/supabase';
 import { BookReading, LibraryFilter, newBookId, readingOf, sortBooks } from '../utils/library';
+import { startAdding } from '../utils/onboardingFlow';
 
 export default function LibraryRoute() {
   const router = useRouter();
@@ -33,7 +34,6 @@ export default function LibraryRoute() {
   const loadMyProgress = useProjectStore((state) => state.loadMyProgress);
   const liveProgress = useProgressStore((state) => state.currentUserProgress);
   const userId = useAuthStore((state) => state.user?.id);
-  const firstName = useAuthStore((state) => state.user?.first_name);
   // Filtre Tout / En cours / Non lus / Lus : pas retenu, chaque ouverture montre tout
   // (sauf `?filter=done`, le « Tout voir » de mes livres lus sur le profil)
   const params = useLocalSearchParams<{ filter?: LibraryFilter }>();
@@ -83,11 +83,8 @@ export default function LibraryRoute() {
   // ferme d'abord le sheet, sinon l'écran poussé s'ouvrirait À L'INTÉRIEUR du sheet.
   const handleAdd = useCallback(() => {
     router.back();
-    router.push({
-      pathname: '/onboarding/role',
-      params: { firstName: firstName || 'Lecteur', addChallenge: 'true' },
-    });
-  }, [router, firstName]);
+    router.push(startAdding());
+  }, [router]);
 
   return (
     <BookLibrary

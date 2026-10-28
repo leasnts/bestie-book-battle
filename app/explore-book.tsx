@@ -34,12 +34,12 @@ import Button3D from '../components/Button3D';
 import BookCover, { COVER_RATIO } from '../components/ui/BookCover';
 import SheetPage, { SheetFooter } from '../components/ui/SheetPage';
 import { fetchEditions } from '../services/bookApi';
-import { useAuthStore } from '../stores/authStore';
 import { useExploreStore } from '../stores/exploreStore';
 import { useOnboardingStore } from '../stores/onboardingStore';
 import { useProjectStore } from '../stores/projectStore';
 import { borderRadius, colors, fonts, inkAlpha, spacing } from '../utils/constants';
 import { compactText } from '../utils/normalizeText';
+import { startAdding } from '../utils/onboardingFlow';
 
 const COVER_H = 140;
 
@@ -53,7 +53,6 @@ export default function ExploreBookRoute() {
   const searchFor = useExploreStore((state) => state.searchFor);
   const challenges = useProjectStore((state) => state.challenges);
   const setActiveChallenge = useProjectStore((state) => state.setActiveChallenge);
-  const firstName = useAuthStore((state) => state.user?.first_name);
 
   // Les résultats de recherche n'ont pas de pages : celles de l'édition la plus récente
   const [editionPages, setEditionPages] = useState<number | null>(null);
@@ -85,23 +84,15 @@ export default function ExploreBookRoute() {
       router.navigate('/(tabs)');
       return;
     }
-    // Pages et couverture pré-remplies, comme après une recherche dans le parcours
-    const onboarding = useOnboardingStore.getState();
-    onboarding.reset();
-    onboarding.setApiPageCount(pageCount);
-    onboarding.setApiCoverUrl(book.coverUrl);
+    // Le livre déjà choisi : on passe « Quel livre ? », direct à « Tu en es où ? »
+    const next = startAdding();
+    useOnboardingStore.getState().patch({
+      book: { title: book.title, author: book.author, pages: pageCount ?? 0, cover: book.coverUrl, publisher: book.publisher },
+    });
     // Fermer d'abord le sheet, sinon l'écran poussé s'ouvrirait À L'INTÉRIEUR
     router.back();
-    router.push({
-      pathname: '/onboarding/pages',
-      params: {
-        firstName: firstName || 'Lecteur',
-        bookTitle: book.title,
-        author: book.author,
-        addChallenge: 'true',
-      },
-    });
-  }, [book, pageCount, inLibrary, setActiveChallenge, router, firstName]);
+    router.push(pageCount ? '/onboarding/page' : next);
+  }, [book, pageCount, inLibrary, setActiveChallenge, router]);
 
   const handleShare = useCallback(async () => {
     if (!book) return;

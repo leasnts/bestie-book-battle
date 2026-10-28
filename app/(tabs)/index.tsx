@@ -66,6 +66,7 @@ import { dayString } from '../../utils/streak';
 import { useMyStreak } from '../../hooks/useMyStreak';
 import { useTabBarInset } from '../../components/ui/GlassTabBar';
 import { BookOpenIcon, CirclePlusIcon, LibraryBigIcon } from 'lucide-react-native';
+import { startAdding } from '../../utils/onboardingFlow';
 
 
 /**
@@ -242,6 +243,8 @@ export default function HomeScreen() {
 
   // totalPages du user = son édition personnelle (pour le picker et l'affichage)
   const totalPages = myProgress?.total_pages ?? challengeTotalPages;
+  // Liseuse ou audio : j'avance en %, mon édition fait 100
+  const inPercent = ((myProgress ?? cachedMyProgress)?.format ?? 'papier') !== 'papier';
 
   // Quand on a les bonnes données, on met en cache la page par challenge
   if (myProgress && activeChallenge?.id) {
@@ -540,6 +543,7 @@ export default function HomeScreen() {
             compact={compactSpacing}
             pickerFontSize={pickerFontSize}
             club={clubPins}
+            unit={inPercent ? 'percent' : 'pages'}
           />
         </View>
       ) : !_hasHydrated || (challenges.length === 0 && challengesLoading) ? (
@@ -561,13 +565,7 @@ export default function HomeScreen() {
 
           <View style={styles.emptyStateButtons}>
             <Button3D
-              onPress={() => router.push({
-                pathname: '/onboarding/role',
-                params: {
-                  firstName: user?.first_name || 'Lecteur',
-                  addChallenge: 'true',
-                },
-              })}
+              onPress={() => router.push(startAdding())}
               variant="primary"
               icon={CirclePlusIcon}
               iconPosition="left"
@@ -577,13 +575,7 @@ export default function HomeScreen() {
             </Button3D>
 
             <Button3D
-              onPress={() => router.push({
-                pathname: '/onboarding/join',
-                params: {
-                  firstName: user?.first_name || 'Lecteur',
-                  addChallenge: 'true',
-                },
-              })}
+              onPress={() => router.push(startAdding(true))}
               variant="secondary"
               style={{ width: '100%' }}
             >

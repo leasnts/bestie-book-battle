@@ -6,7 +6,7 @@
  * peut avoir la sienne dans `user_progress`. Couverture absente = celle du bbb.
  */
 
-import type { Challenge, UserProgress } from '../types/supabase';
+import type { BookFormat, Challenge, UserProgress } from '../types/supabase';
 import { updateMyEdition } from './supabase/database';
 import { uploadBookCover } from './supabase/storage';
 
@@ -15,6 +15,12 @@ export interface MyEditionInput {
   /** Photo locale (file://…) à envoyer, ou URL d'une couverture trouvée par la recherche */
   cover?: string | null;
   publisher?: string | null;
+  /** Le format de ce livre : liseuse et audio avancent en % (totalPages 100) */
+  format?: BookFormat;
+  /** Mon rythme visé, dans l'unité du format ; null = libre */
+  perDay?: number | null;
+  /** Ma date de fin, YYYY-MM-DD */
+  targetEndDate?: string | null;
 }
 
 /**
@@ -24,7 +30,7 @@ export interface MyEditionInput {
 export async function saveMyEdition(
   challengeId: string,
   userId: string,
-  { totalPages, cover, publisher }: MyEditionInput
+  { totalPages, cover, publisher, format, perDay, targetEndDate }: MyEditionInput
 ): Promise<UserProgress> {
   let coverUrl = cover;
   if (cover && !/^https?:\/\//.test(cover)) {
@@ -35,6 +41,9 @@ export async function saveMyEdition(
     ...(totalPages !== undefined && { total_pages: totalPages }),
     ...(coverUrl !== undefined && { cover_url: coverUrl }),
     ...(publisher !== undefined && { publisher }),
+    ...(format !== undefined && { format }),
+    ...(perDay !== undefined && { pages_per_day: perDay }),
+    ...(targetEndDate !== undefined && { target_end_date: targetEndDate }),
   });
 }
 

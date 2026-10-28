@@ -26,9 +26,6 @@ import Animated, {
   useAnimatedStyle,
   useReducedMotion,
   useSharedValue,
-  withDelay,
-  withSequence,
-  withSpring,
   withTiming,
 } from 'react-native-reanimated';
 import type { AnnotationWithAuthor } from '../../services/supabase/annotations';
@@ -40,6 +37,7 @@ import NoteSticker, { STICKER_BASE_LARGE } from './NoteSticker';
 import PressableScale from './PressableScale';
 import VoicePlayer from './VoicePlayer';
 import { AccentUnits } from './AccentWord';
+import { useStamp } from './Stamp';
 
 const DEFAULT_AVATAR = require('../../assets/images/profile_picture_default.png');
 
@@ -456,6 +454,9 @@ export function NoteReactions({
   );
 }
 
+/** Le sheet du sélecteur se range avant que l'emoji tombe */
+const STAMP_AFTER_SHEET = 320;
+
 /**
  * Le tampon d'une réaction (#168, idée reprise de bencho.dev, traduite en
  * encre) : l'emoji que je pose s'écrase sur le papier puis rebondit.
@@ -465,10 +466,6 @@ export function NoteReactions({
  * - Sinon, toucher l'emoji le tamponne sur place, sans voyage.
  * - Retirer ma réaction reste immobile ; « Réduire les animations » : rien ne bouge.
  */
-const STAMP_FALL = 180;
-/** Le sheet du sélecteur se range avant que l'emoji tombe */
-const STAMP_AFTER_SHEET = 320;
-
 function StampedEmoji({
   emoji,
   mine,
@@ -480,55 +477,18 @@ function StampedEmoji({
   landed: boolean;
   style: StyleProp<TextStyle>;
 }) {
-  const reducedMotion = useReducedMotion();
-  /** 0 = en l'air, 1 = posé */
-  const fall = useSharedValue(landed && !reducedMotion ? 0 : 1);
-  /** 1 = écrasé à plat, 0 = au repos */
-  const squash = useSharedValue(0);
-  const wasMine = useRef(mine);
-
-  const press = (delay: number) => {
-    squash.value = withDelay(
-      delay,
-      withSequence(
-        withTiming(1, { duration: 50, easing: Easing.out(Easing.quad) }),
-        withSpring(0, { damping: 14, stiffness: 700 }),
-      ),
-    );
-  };
-
   // Né avec ma réaction : il tombe, puis s'écrase
-  useEffect(() => {
-    if (!landed || reducedMotion) return;
-    fall.value = withDelay(
-      STAMP_AFTER_SHEET,
-      withTiming(1, { duration: STAMP_FALL, easing: Easing.in(Easing.quad) }),
-    );
-    press(STAMP_AFTER_SHEET + STAMP_FALL);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const stamp = useStamp(landed ? { fallAfter: STAMP_AFTER_SHEET } : {});
+  const wasMine = useRef(mine);
 
   // Touché sur place : il s'écrase tout de suite
   useEffect(() => {
-    if (mine && !wasMine.current && !reducedMotion) press(0);
+    if (mine && !wasMine.current) stamp.press();
     wasMine.current = mine;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mine]);
 
-  const animatedStyle = useAnimatedStyle(() => {
-    const air = 1 - fall.value;
-    return {
-      opacity: Math.min(1, fall.value * 4),
-      transform: [
-        { translateY: -26 * air },
-        { scale: 1 + 0.7 * air },
-        { scaleX: 1 + 0.32 * squash.value },
-        { scaleY: 1 - 0.3 * squash.value },
-      ],
-    };
-  });
-
-  return <Animated.Text style={[style, styles.stamp, animatedStyle]}>{emoji}</Animated.Text>;
+  return <Animated.Text style={[style, styles.stamp, stamp.style]}>{emoji}</Animated.Text>;
 }
 
 /** Le compte d'une réaction : le nouveau chiffre monte (ou descend) à sa place */

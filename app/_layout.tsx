@@ -30,6 +30,8 @@ import { prepareFeel } from '../utils/feel';
 import { supabase } from '../supabaseConfig';
 import AnimatedSplash from '../components/AnimatedSplash';
 import { useSplashStore } from '../stores/splashStore';
+import { useOnboardingStore } from '../stores/onboardingStore';
+import { firstStep } from '../utils/onboardingFlow';
 import { sheetScreenOptions } from '../components/ui/SheetHeader';
 import { useFonts } from 'expo-font';
 
@@ -96,6 +98,10 @@ export default function RootLayout() {
  */
 function RootLayoutNav() {
   const { user, isInitialized, initialize: initAuth, pendingUserData } = useAuthStore();
+  // L'ouverture ne se montre qu'une fois : relu sur le téléphone avant d'aiguiller
+  const introSeen = useOnboardingStore((state) => state.introSeen);
+  const [introHydrated, setIntroHydrated] = useState(() => useOnboardingStore.persist.hasHydrated());
+  useEffect(() => useOnboardingStore.persist.onFinishHydration(() => setIntroHydrated(true)), []);
   const { challenges, loadUserChallenges, _hasHydrated } = useProjectStore();
   const router = useRouter();
   const segments = useSegments();
@@ -209,22 +215,23 @@ function RootLayoutNav() {
 
     const inAuthGroup = segments[0] === 'auth';
     const inOnboarding = segments[0] === 'onboarding';
-    
+    // Un lien d'invitation s'ouvre aussi sans compte (app/join/[code].tsx)
+    const inJoinLink = segments[0] === 'join';
+
     // Si pas d'utilisateur connecté et pas déjà sur les pages d'auth → rediriger
-    if (!user && !inAuthGroup && !inOnboarding) {
+    if (!user && !inAuthGroup && !inOnboarding && !inJoinLink) {
       if (pendingUserData) {
-        // Onboarding interrompu (ex: app tuée en plein milieu) :
-        // pendingUserData a été restauré depuis AsyncStorage — on reprend l'onboarding
-        // avec le prénom Apple qu'on avait capturé, sans redemander à l'utilisateur
-        router.replace({
-          pathname: '/onboarding/role',
-          params: { firstName: pendingUserData.firstName || '' },
-        });
+        // Onboarding interrompu (ex: app tuée en plein milieu) : pendingUserData a
+        // été restauré depuis AsyncStorage, on reprend après la connexion
+        router.replace(firstStep('create'));
+      } else if (!introHydrated) {
+        return;
       } else {
-        router.replace('/auth/login');
+        // Première fois : l'ouverture et la promesse, puis la connexion
+        router.replace(introSeen ? '/auth/login' : '/onboarding/intro');
       }
     }
-  }, [user, isInitialized, challenges, segments, isMounted, router, pendingUserData]);
+  }, [user, isInitialized, challenges, segments, isMounted, router, pendingUserData, introSeen, introHydrated]);
 
   // Initialise les notifications pour les utilisateurs DÉJÀ connectés (hors onboarding)
   // IMPORTANT: On ne demande JAMAIS les permissions ici — c'est l'écran onboarding/notifications
@@ -247,7 +254,7 @@ function RootLayoutNav() {
         }
         const wanted = useFeelStore.getState().eveningReminder;
         if (!cancelled && status === 'granted' && wanted) {
-          await scheduleEveningReminder();
+          await scheduleEveningReminder(user.notification_preferences?.daily_reminder_time);
         }
       } catch (error) {
         console.error('Erreur lors de l\'initialisation des notifications:', error);
@@ -375,7 +382,7 @@ function RootLayoutNav() {
       {showSplash && (
         <View style={StyleSheet.absoluteFill}>
           {/* Personne de connecté : relais sans fondu vers l'écran de connexion */}
-          <AnimatedSplash onFinish={handleSplashFinish} waitFor={appReady} handoff={!user && !pendingUserData} />
+          <AnimatedSplash onFinish={handleSplashFinish} waitFor={appReady} handoff={!user && !pendingUserData && introSeen} />
         </View>
       )}
     </View>
