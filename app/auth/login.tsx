@@ -5,8 +5,8 @@
  * « chapi » et même tagline, au point près (BrandLockup). Le splash disparaît
  * d'un coup sur cette image identique (voir AnimatedSplash, `handoff`), puis :
  * 1. le mur de couvertures, ton sur ton, apparaît et défile lentement ;
- * 2. la tagline s'efface, le bloc de marque remonte un peu, les boutons
- *    montent depuis le bas ;
+ * 2. la tagline s'efface, les boutons montent depuis le bas ; les yeux et
+ *    « chapi » ne bougent pas, à leur place du splash ;
  * 3. les yeux baissent le regard vers les boutons, clignent, et restent vivants.
  *
  * Deux façons d'entrer : Apple, ou un code reçu par email (feuille auth/email).
@@ -63,8 +63,8 @@ const WALL_OPACITY = 0.6;
 const DRIFT_DURATION = 40000;
 
 const ENTRANCE = Easing.inOut(Easing.cubic);
-/** Le fond à hauteur du nom (38 % du dégradé BRAND_BG) : la clairière s'y fond. */
-const CLEARING = '#9e2d40';
+/** Le fond à hauteur du nom (milieu du dégradé BRAND_BG) : la clairière s'y fond. */
+const CLEARING = '#9c2c3f';
 
 /** Une colonne de couvertures, posée deux fois pour boucler sans couture. */
 function CoverColumn({ index, x, drift }: { index: number; x: number; drift: SharedValue<number> }) {
@@ -188,7 +188,7 @@ function CoverWall({ drift }: { drift: SharedValue<number> }) {
 
 export default function WelcomeScreen() {
   const insets = useSafeAreaInsets();
-  const { width: screenWidth, height: screenHeight } = useWindowDimensions();
+  const { width: screenWidth } = useWindowDimensions();
   const router = useRouter();
   const reduceMotion = useReducedMotion();
 
@@ -199,12 +199,9 @@ export default function WelcomeScreen() {
   const splashGone = useSplashStore((state) => state.splashGone);
   const setLoginMounted = useSplashStore((state) => state.setLoginMounted);
 
-  // Le bloc de marque remonte juste assez pour laisser la place aux boutons
-  const lift = -Math.min(72, screenHeight * 0.08);
 
   const wall = useSharedValue(0);
   const drift = useSharedValue(0);
-  const lockupY = useSharedValue(0);
   const buttons = useSharedValue(0);
   const gazeX = useSharedValue(0);
   const gazeY = useSharedValue(0);
@@ -225,7 +222,6 @@ export default function WelcomeScreen() {
     if (!reduceMotion) {
       drift.value = withRepeat(withTiming(1, { duration: DRIFT_DURATION, easing: Easing.linear }), -1, false);
     }
-    lockupY.value = withDelay(150, withTiming(lift, { duration: 700, easing: ENTRANCE }));
     buttons.value = withDelay(450, withTiming(1, { duration: 550, easing: Easing.out(Easing.cubic) }));
 
     // Le regard descend vers les boutons, puis va de l'un à l'autre, doucement
@@ -255,7 +251,6 @@ export default function WelcomeScreen() {
   const wallStyle = useAnimatedStyle(() => ({ opacity: wall.value * WALL_OPACITY }));
   const veilStyle = useAnimatedStyle(() => ({ opacity: wall.value }));
   const taglineStyle = useAnimatedStyle(() => ({ opacity: 1 - wall.value }));
-  const lockupStyle = useAnimatedStyle(() => ({ transform: [{ translateY: lockupY.value }] }));
   const buttonsStyle = useAnimatedStyle(() => ({
     opacity: buttons.value,
     transform: [{ translateY: 24 * (1 - buttons.value) }],
@@ -302,7 +297,7 @@ export default function WelcomeScreen() {
       <Animated.View style={[StyleSheet.absoluteFill, veilStyle]} pointerEvents="none">
       <Svg width="100%" height="100%">
         <Defs>
-          <RadialGradient id="clearing" cx="50%" cy="42%" rx="70%" ry="30%">
+          <RadialGradient id="clearing" cx="50%" cy="48%" rx="70%" ry="30%">
             <Stop offset="0" stopColor={CLEARING} stopOpacity={1} />
             <Stop offset="0.6" stopColor={CLEARING} stopOpacity={0.9} />
             <Stop offset="1" stopColor={CLEARING} stopOpacity={0} />
@@ -319,7 +314,7 @@ export default function WelcomeScreen() {
 
       {/* Point d'ancrage au centre de l'écran, comme au splash */}
       <View style={styles.center}>
-        <Animated.View style={lockupStyle}>
+        <View>
           <View style={[styles.logo, { transform: [{ translateY: LOCKUP.eyesY }] }]}>
             <LivingEye side="left" gazeX={gazeX} gazeY={gazeY} lid={lid} />
             <LivingEye side="right" gazeX={gazeX} gazeY={gazeY} lid={lid} />
@@ -330,7 +325,7 @@ export default function WelcomeScreen() {
           {FRIENDS.map((friend, i) => (
             <Friend key={i} friend={friend} start={splashGone} gazeX={gazeX} gazeY={gazeY} />
           ))}
-        </Animated.View>
+        </View>
       </View>
 
       <Animated.View
