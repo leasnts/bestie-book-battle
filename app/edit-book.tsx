@@ -194,7 +194,7 @@ export default function EditBookRoute() {
             <TextInput
               style={styles.input}
               placeholder="Titre du livre"
-              placeholderTextColor={colors.textPlaceholder}
+              placeholderTextColor={colors.placeholder}
               value={title}
               onChangeText={setTitle}
               autoCapitalize="words"
@@ -205,7 +205,7 @@ export default function EditBookRoute() {
               ref={authorRef}
               style={styles.input}
               placeholder="Auteur du livre"
-              placeholderTextColor={colors.textPlaceholder}
+              placeholderTextColor={colors.placeholder}
               value={author}
               onChangeText={setAuthor}
               autoCapitalize="words"
@@ -218,7 +218,7 @@ export default function EditBookRoute() {
           ref={pagesRef}
           style={styles.input}
           placeholder="Nombre de pages"
-          placeholderTextColor={colors.textPlaceholder}
+          placeholderTextColor={colors.placeholder}
           value={totalPages}
           onChangeText={setTotalPages}
           keyboardType="number-pad"

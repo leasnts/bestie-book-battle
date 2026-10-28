@@ -153,7 +153,7 @@ export default function OnboardingBookFormScreen() {
                                 router.push('/book-search');
                             }}
                         >
-                            <SearchIcon size={18} color={colors.textPlaceholder} />
+                            <SearchIcon size={18} color={colors.placeholder} />
                             <Text style={styles.searchButtonText}>Rechercher un livre...</Text>
                         </Pressable>
 
@@ -162,7 +162,7 @@ export default function OnboardingBookFormScreen() {
                                 ref={titleRef}
                                 style={styles.input}
                                 placeholder="Titre du livre"
-                                placeholderTextColor={colors.textPlaceholder}
+                                placeholderTextColor={colors.placeholder}
                                 value={bookTitle}
                                 onChangeText={setBookTitle}
                                 autoCapitalize="words"
@@ -177,7 +177,7 @@ export default function OnboardingBookFormScreen() {
                                 ref={authorRef}
                                 style={styles.input}
                                 placeholder="Auteur du livre"
-                                placeholderTextColor={colors.textPlaceholder}
+                                placeholderTextColor={colors.placeholder}
                                 value={author}
                                 onChangeText={setAuthor}
                                 autoCapitalize="words"

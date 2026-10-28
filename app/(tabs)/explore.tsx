@@ -132,11 +132,11 @@ export default function ExploreScreen() {
           </Text>
 
           <View style={styles.searchField}>
-            <SearchIcon size={18} color={colors.textPlaceholder} />
+            <SearchIcon size={18} color={colors.placeholder} />
             <TextInput
               style={styles.searchInput}
               placeholder="Titre, auteur, saga"
-              placeholderTextColor={colors.textPlaceholder}
+              placeholderTextColor={colors.placeholder}
               value={query}
               onChangeText={setQuery}
               autoCorrect={false}
@@ -151,7 +151,7 @@ export default function ExploreScreen() {
                 accessibilityRole="button"
                 accessibilityLabel="Effacer la recherche"
               >
-                <CircleXIcon size={18} color={colors.textPlaceholder} />
+                <CircleXIcon size={18} color={colors.placeholder} />
               </Pressable>
             )}
           </View>

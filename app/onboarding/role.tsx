@@ -29,6 +29,7 @@ import Animated, {
 import { borderRadius, colors, fonts, fontSize, shadows, spacing } from '../../utils/constants';
 import Button3D from '../../components/Button3D';
 import { ChevronLeftIcon, XIcon } from 'lucide-react-native';
+import { useAuthStore } from '../../stores/authStore';
 
 // Asset : texture de fond
 const TEXTURE_IMAGE = require('../../assets/images/61ea1e0c638b5b9c8100383a37a5b488848db623.png');
@@ -52,6 +53,22 @@ export default function OnboardingRoleScreen() {
     const router = useRouter();
     const { firstName, addChallenge } = useLocalSearchParams<{ firstName: string; addChallenge?: string }>();
     
+    const logout = useAuthStore((state) => state.logout);
+
+    // Le premier écran de l'onboarding n'a rien derrière lui (on y arrive par
+    // un replace après la connexion) : router.back() ne faisait rien. Retour =
+    // on abandonne l'inscription, déconnexion et retour à l'écran de connexion.
+    const handleBack = async () => {
+        if (router.canGoBack()) {
+            router.back();
+        } else if (addChallenge === 'true') {
+            router.navigate('/(tabs)');
+        } else {
+            await logout().catch(() => {});
+            router.replace('/auth/login');
+        }
+    };
+
     // Rôle sélectionné (par défaut "create")
     const [selectedRole, setSelectedRole] = useState<RoleType>('create');
 
@@ -122,7 +139,7 @@ export default function OnboardingRoleScreen() {
                         icon={ChevronLeftIcon}
                         iconOnly
                         size="compact"
-                        onPress={() => router.back()}
+                        onPress={handleBack}
                     />
                     {addChallenge === 'true' && (
                         <Button3D
