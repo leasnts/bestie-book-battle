@@ -84,6 +84,61 @@ function CoverColumn({ index, x, drift }: { index: number; x: number; drift: Sha
   );
 }
 
+/**
+ * Les copains : quelques petites paires d'yeux autour du logo, pour dire qu'on
+ * lit à plusieurs. Elles apparaissent une à une, sans rebond, regardent les
+ * boutons avec le grand et clignent chacune à son rythme.
+ * Position (x, y) par rapport au centre du bloc de marque, en points.
+ */
+const FRIENDS = [
+  { x: -128, y: -150, scale: 0.26, tilt: -12, delay: 1300, blink: 2900 },
+  { x: 132, y: -168, scale: 0.21, tilt: 9, delay: 1550, blink: 3700 },
+  { x: -158, y: 18, scale: 0.2, tilt: 7, delay: 1800, blink: 3300 },
+  { x: 156, y: 6, scale: 0.24, tilt: -6, delay: 2050, blink: 4100 },
+];
+
+function Friend({
+  friend,
+  start,
+  gazeX,
+  gazeY,
+}: {
+  friend: (typeof FRIENDS)[number];
+  start: boolean;
+  gazeX: SharedValue<number>;
+  gazeY: SharedValue<number>;
+}) {
+  const appear = useSharedValue(0);
+  const lid = useSharedValue(1);
+
+  useEffect(() => {
+    if (!start) return;
+    appear.value = withDelay(friend.delay, withTiming(1, { duration: 500, easing: Easing.out(Easing.cubic) }));
+    const blink = withSequence(
+      withTiming(0.08, { duration: 90, easing: Easing.in(Easing.quad) }),
+      withTiming(1, { duration: 160, easing: Easing.out(Easing.cubic) }),
+    );
+    lid.value = withDelay(friend.delay + 600, withRepeat(withSequence(blink, withDelay(friend.blink, withTiming(1, { duration: 0 }))), -1));
+  }, [start]);
+
+  const style = useAnimatedStyle(() => ({
+    opacity: appear.value,
+    transform: [
+      { translateX: friend.x },
+      { translateY: friend.y },
+      { rotate: `${friend.tilt}deg` },
+      { scale: friend.scale * (0.6 + 0.4 * appear.value) },
+    ],
+  }));
+
+  return (
+    <Animated.View style={[styles.friend, style]} pointerEvents="none">
+      <LivingEye side="left" gazeX={gazeX} gazeY={gazeY} lid={lid} />
+      <LivingEye side="right" gazeX={gazeX} gazeY={gazeY} lid={lid} />
+    </Animated.View>
+  );
+}
+
 /** Le mur de couvertures, penché, qui déborde de l'écran de tous les côtés. */
 function CoverWall({ drift }: { drift: SharedValue<number> }) {
   const { width, height } = useWindowDimensions();
@@ -244,6 +299,9 @@ export default function WelcomeScreen() {
           </View>
           <BrandWord />
           <BrandTagline />
+          {FRIENDS.map((friend, i) => (
+            <Friend key={i} friend={friend} start={splashGone} gazeX={gazeX} gazeY={gazeY} />
+          ))}
         </Animated.View>
       </View>
 
@@ -306,6 +364,13 @@ const styles = StyleSheet.create({
   center: {
     width: 0,
     height: 0,
+  },
+  friend: {
+    position: 'absolute',
+    width: LOGO_SIZE,
+    height: LOGO_SIZE,
+    left: -LOGO_SIZE / 2,
+    top: -LOGO_SIZE / 2,
   },
   logo: {
     position: 'absolute',
