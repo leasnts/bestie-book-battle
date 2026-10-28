@@ -815,10 +815,10 @@ Prototype validé le 2026-10-28 (artefact « Onboarding chapi »). Deux temps :
   s'effacent, les yeux se posent en petit et en crème (`LivingEye light`)
   au-dessus de la question, un grand titre à gauche juste au-dessus des
   boutons : « On lit » / « *ensemble* ? ».
-- **Choix** (comme la V1), dans le bas de l'entrée, avant la connexion :
-  Commencer une lecture, Rejoindre avec un code, ou « J'ai déjà un compte ».
-  Commencer et déjà un compte font place aux boutons Apple / email (« Retour »
-  pour revenir) ; rejoindre passe par le code et l'invitation d'abord.
+- **Choix** (comme la V1) : l'entrée ne montre que Apple / email ; une fois
+  connecté·e (nouveau compte, ou compte sans lecture), le sheet « Ta lecture »
+  (`auth/choix`) : Commencer une lecture, ou Rejoindre avec un code. Les liens
+  d'invitation l'évitent.
 - **Questions** : `OnboardingScreen` (papier grené, retour en verre, fil de
   progression = la couture `Seam`, titre 30/36 avec un mot d'accent, pied sous
   un `StitchLine`, colonne de téléphone sur grand écran).

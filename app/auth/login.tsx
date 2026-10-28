@@ -12,12 +12,10 @@
  *    gauche juste au-dessus des boutons, qui montent depuis le bas ;
  * 3. les yeux baissent le regard vers les boutons, clignent, et restent vivants.
  *
- * En bas, on choisit d'abord son chemin (comme le choix de la V1) :
- * - Commencer une lecture → les boutons de connexion, puis les questions ;
- * - Rejoindre avec un code → le code, l'invitation, puis la connexion ;
- * - J'ai déjà un compte → les boutons de connexion.
  * Deux façons d'entrer : Apple, ou un code reçu par email (feuille auth/email).
- * Rejoué depuis le profil (déjà connecté·e), les boutons passent aux questions.
+ * Ensuite, pour un nouveau compte : le sheet « Ta lecture » (auth/choix),
+ * commencer ou rejoindre. Rejoué depuis le profil (déjà connecté·e), les
+ * boutons ouvrent directement ce sheet.
  *
  * Flow :
  * - Nouveaux utilisateurs → onboarding (écran rôle)
@@ -29,11 +27,10 @@ import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { BookPlusIcon, MailIcon, MailOpenIcon } from 'lucide-react-native';
+import { MailIcon } from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
-import { Alert, Linking, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { Alert, Linking, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import Animated, {
-  FadeIn,
   type SharedValue,
   Easing,
   useAnimatedStyle,
@@ -55,8 +52,6 @@ import { useAuthStore } from '../../stores/authStore';
 import { useOnboardingStore } from '../../stores/onboardingStore';
 import { useSplashStore } from '../../stores/splashStore';
 import { colors, fonts, inkGradient, lowki, spacing } from '../../utils/constants';
-import { feel } from '../../utils/feel';
-import { firstStep } from '../../utils/onboardingFlow';
 
 /** Les bandes de couvertures (scripts/generate-login-covers.py gris), une par colonne. */
 const COVER_STRIPS = [
@@ -78,8 +73,6 @@ const DRIFT_DURATION = 40000;
 
 
 const ENTRANCE = Easing.inOut(Easing.cubic);
-/** Le bas change de contenu : un fondu court */
-const STEP_IN = FadeIn.duration(250);
 /** Les mêmes pages que les Réglages */
 const TERMS_URL = 'https://bbb.leasantos.me/terms';
 const PRIVACY_URL = 'https://bbb.leasantos.me/privacy';
@@ -228,33 +221,12 @@ export default function WelcomeScreen() {
     transform: [{ translateY: 24 * (1 - buttons.value) }],
   }));
 
-  /** Rejoué depuis le profil : déjà connecté·e, on passe aux questions */
+  /** Rejoué depuis le profil : déjà connecté·e, on passe au choix */
   const replaying = () => {
     if (!useAuthStore.getState().user) return false;
     useOnboardingStore.getState().begin('create');
-    router.push(firstStep('create'));
+    router.push('/auth/choix');
     return true;
-  };
-
-  // Le choix d'abord ; de retour d'une invitation, directement la connexion
-  const [step, setStep] = useState<'choose' | 'auth'>(() => (useOnboardingStore.getState().invitation ? 'auth' : 'choose'));
-
-  const startReading = () => {
-    feel('tic');
-    if (replaying()) return;
-    useOnboardingStore.getState().begin('create');
-    setStep('auth');
-  };
-
-  const haveCode = () => {
-    feel('tic');
-    useOnboardingStore.getState().begin(useAuthStore.getState().user ? 'addJoin' : 'join');
-    router.push('/onboarding/code');
-  };
-
-  const toStep = (next: 'choose' | 'auth') => {
-    feel('tic');
-    setStep(next);
   };
 
   const handleAppleLogin = async () => {
@@ -334,56 +306,25 @@ export default function WelcomeScreen() {
         onLayout={(e) => setButtonsHeight(e.nativeEvent.layout.height)}
         style={[styles.buttons, { paddingBottom: Math.max(insets.bottom, 16) + 16 }, buttonsStyle]}
       >
-        {step === 'choose' ? (
-          <Animated.View key="choose" entering={STEP_IN} style={styles.step}>
-            <Button3D
-              onPress={startReading}
-              variant="secondary"
-              iconComponent={<BookPlusIcon size={22} color={colors.textPrimary} />}
-              iconPosition="left"
-              style={{ width: buttonWidth }}
-            >
-              Commencer une lecture
-            </Button3D>
-            <Button3D
-              onPress={haveCode}
-              variant="secondary"
-              iconComponent={<MailOpenIcon size={22} color={colors.textPrimary} />}
-              iconPosition="left"
-              style={{ width: buttonWidth }}
-            >
-              Rejoindre avec un code
-            </Button3D>
-            <Pressable onPress={() => toStep('auth')} hitSlop={8} accessibilityRole="button" style={styles.code}>
-              <Text style={styles.codeText}>J'ai déjà un compte</Text>
-            </Pressable>
-          </Animated.View>
-        ) : (
-          <Animated.View key="auth" entering={STEP_IN} style={styles.step}>
-            <Button3D
-              onPress={handleAppleLogin}
-              variant="secondary"
-              loading={isLoading}
-              iconComponent={<AppleLogo size={22} color={colors.textPrimary} />}
-              iconPosition="left"
-              style={{ width: buttonWidth }}
-            >
-              Continuer avec Apple
-            </Button3D>
-            <Button3D
-              onPress={() => replaying() || router.push('/auth/email')}
-              variant="secondary"
-              iconComponent={<MailIcon size={22} color={colors.textPrimary} />}
-              iconPosition="left"
-              style={{ width: buttonWidth }}
-            >
-              Continuer avec un email
-            </Button3D>
-            <Pressable onPress={() => toStep('choose')} hitSlop={8} accessibilityRole="button" style={styles.code}>
-              <Text style={styles.codeText}>Retour</Text>
-            </Pressable>
-          </Animated.View>
-        )}
+        <Button3D
+          onPress={handleAppleLogin}
+          variant="secondary"
+          loading={isLoading}
+          iconComponent={<AppleLogo size={22} color={colors.textPrimary} />}
+          iconPosition="left"
+          style={{ width: buttonWidth }}
+        >
+          Continuer avec Apple
+        </Button3D>
+        <Button3D
+          onPress={() => replaying() || router.push('/auth/email')}
+          variant="secondary"
+          iconComponent={<MailIcon size={22} color={colors.textPrimary} />}
+          iconPosition="left"
+          style={{ width: buttonWidth }}
+        >
+          Continuer avec un email
+        </Button3D>
         {/* Créer un compte vaut acceptation : pas de case à cocher, les liens suffisent */}
         <Text style={styles.legal}>
           En continuant, tu acceptes les{' '}
@@ -444,20 +385,6 @@ const styles = StyleSheet.create({
     lineHeight: QUESTION_LINE,
     letterSpacing: -0.4,
     color: CREAM,
-  },
-  step: {
-    alignItems: 'center',
-    gap: spacing.md,
-  },
-  code: {
-    minHeight: 44,
-    justifyContent: 'center',
-  },
-  codeText: {
-    fontFamily: fonts.bodySemiBold,
-    fontSize: 15,
-    color: CREAM,
-    textDecorationLine: 'underline',
   },
   legal: {
     fontFamily: fonts.body,

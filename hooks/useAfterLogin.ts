@@ -8,13 +8,19 @@ import { firstStep } from '../utils/onboardingFlow';
 /**
  * Où aller une fois connecté, par Apple ou par email :
  * - une invitation en cours (lien ou code) → la suite pour la rejoindre ;
- * - nouveau compte → « Ton rythme », la suite de l'onboarding ;
+ * - nouveau compte → le sheet « Ta lecture » : commencer ou rejoindre ;
  * - compte avec des lectures → l'accueil ;
- * - compte sans lecture → ajouter un livre (« Quel livre ? »).
+ * - compte sans lecture → le même sheet, pour ajouter un livre.
  */
 export function useAfterLogin() {
   const router = useRouter();
   const loadUserChallenges = useProjectStore((state) => state.loadUserChallenges);
+
+  /** Le sheet du choix, sur l'écran de connexion (fermer d'abord la feuille email) */
+  const openChoice = () => {
+    if (router.canDismiss()) router.dismiss();
+    router.push('/auth/choix');
+  };
 
   return async (result: AppleSignInResult) => {
     const onboarding = useOnboardingStore.getState();
@@ -22,8 +28,12 @@ export function useAfterLogin() {
 
     if (result.isNewUser) {
       // Le prénom vient d'Apple, ou de la feuille email : rien à redemander
-      if (!invited && onboarding.flow !== 'create') onboarding.begin('create');
-      router.replace(firstStep(invited ? 'join' : 'create'));
+      if (invited) {
+        router.replace(firstStep('join'));
+      } else {
+        onboarding.begin('create');
+        openChoice();
+      }
       return;
     }
 
@@ -48,7 +58,7 @@ export function useAfterLogin() {
       router.replace('/(tabs)');
     } else {
       onboarding.begin('add');
-      router.replace(firstStep('add'));
+      openChoice();
     }
   };
 }
