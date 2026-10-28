@@ -40,11 +40,11 @@ const DEBOSS_EYES = 5.5;
 /**
  * « chapi » et la tagline sont des tracés (pas des <Text> : au splash, les
  * polices ne sont pas encore chargées). Échelle en points par unité de police :
- * celle de l'ancien « Lowki » pour le mot, un peu plus petite pour la tagline,
- * plus longue que « book club ».
+ * « chapi » 30 % plus grand que l'ancien « Lowki », la tagline plus petite
+ * que « book club » et sur deux lignes (Lea, 2026-10-28).
  */
-const WORD_SCALE = 51.5 / 1643;
-const SUBTITLE_SCALE = (13.8 / 865) * 0.85;
+const WORD_SCALE = (51.5 / 1643) * 1.3;
+const SUBTITLE_SCALE = (13.8 / 865) * 0.72;
 /** Le liseré : 1 pt sous le mot, 0,75 pt sous la tagline (en unités de police). */
 const DEBOSS_WORD = 1 / WORD_SCALE;
 const DEBOSS_SUBTITLE = 0.75 / SUBTITLE_SCALE;
@@ -58,14 +58,14 @@ const WORD = frame(LOGO_WORD_VIEWBOX, WORD_SCALE, DEBOSS_WORD);
 const SUBTITLE = frame(LOGO_SUBTITLE_VIEWBOX, SUBTITLE_SCALE, DEBOSS_SUBTITLE);
 
 /**
- * Positions finales, par rapport au centre de l'écran : l'ensemble (yeux, 16 pt,
- * mot, 8 pt, tagline) est centré. Au splash, les yeux arrivent centrés puis
+ * Positions finales, par rapport au centre de l'écran : l'ensemble (yeux, mot,
+ * 6 pt, tagline) est centré. Au splash, les yeux arrivent centrés puis
  * remontent de EYES_Y.
  */
 export const LOCKUP = {
-  eyesY: -50,
-  wordTop: 40,
-  subtitleTop: 40 + WORD.height + 8,
+  eyesY: -68,
+  wordTop: 22,
+  subtitleTop: 22 + WORD.height + 6,
 };
 
 /** Un tracé gravé : le liseré clair décalé dessous, la forme pleine dessus. */
