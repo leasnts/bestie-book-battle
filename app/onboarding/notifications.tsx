@@ -1,250 +1,153 @@
 /**
- * Écran 5 de l'onboarding (partagé entre les deux flows)
- * 
- * Demande d'autorisation pour les notifications push.
- * Illustration d'iPhone + texte explicatif + 2 boutons :
- * - "Autoriser les notifications" (bouton principal)
- * - "Pas maintenant" (bouton secondaire)
- * 
- * Le paramètre `flow` détermine la navigation suivante :
- * - "create" → complete.tsx (écran "C'est terminé !")
- * - "join" → welcome.tsx (écran "Bienvenue !")
+ * On te prévient ? Montrer la notification avant de la demander.
+ *
+ * Les deux notifications qu'elle recevra descendent du haut, comme les vraies :
+ * son moment lecture, à SON heure (déduite de ses moments), et l'autre qui
+ * avance. La fenêtre d'iOS ne s'affiche qu'après « Me prévenir » : elle ne
+ * s'affiche qu'une fois, on ne la gaspille pas.
  */
 
 import { Image } from 'expo-image';
-import * as Notifications from 'expo-notifications';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import {
-    Alert,
-    ScrollView,
-    StyleSheet,
-    Text,
-    View,
-} from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { StyleSheet, Text, View } from 'react-native';
+import Animated, { Easing, FadeInDown } from 'react-native-reanimated';
 import Button3D from '../../components/Button3D';
-import { colors, fonts, fontSize, spacing } from '../../utils/constants';
-import { ChevronLeftIcon } from 'lucide-react-native';
+import OnboardingScreen from '../../components/onboarding/OnboardingScreen';
+import { requestNotificationPermission } from '../../services/notifications';
+import { reminderTime } from '../../services/onboarding';
+import { bookFormat, useOnboardingStore } from '../../stores/onboardingStore';
+import { colors, fonts, inkAlpha, motion, shadowAlpha, spacing } from '../../utils/constants';
+import { nextStep } from '../../utils/onboardingFlow';
 
-// Assets
-const TEXTURE_IMAGE = require('../../assets/images/61ea1e0c638b5b9c8100383a37a5b488848db623.png');
-const NOTIFICATION_ILLUSTRATION = require('../../assets/images/notification-illustration.png');
+const APP_ICON = require('../../assets/images/app_icon.png');
 
-type OnboardingFlow = 'create' | 'join';
+/** Une notification qui descend du haut, après `delay` ms */
+const drop = (delay: number) =>
+  FadeInDown.duration(500).delay(delay).easing(Easing.bezier(...motion.easing.easeOutQuart));
 
-export default function OnboardingNotificationsScreen() {
-    const insets = useSafeAreaInsets();
-    const router = useRouter();
-    const params = useLocalSearchParams<{
-        firstName: string;
-        flow: OnboardingFlow;
-        // Params pour la branche "create"
-        bookTitle?: string;
-        author?: string;
-        totalPages?: string;
-        deadline?: string;
-        coverUri?: string;
-        // Params pour la branche "join"
-        challengeId?: string;
-        adminFirstName?: string;
-        coverUrl?: string;
-    }>();
-    
-    const [isLoading, setIsLoading] = useState(false);
+export default function NotificationsScreen() {
+  const router = useRouter();
+  const store = useOnboardingStore();
+  const { flow, moments, start, perDay, book, invitation } = store;
+  const [asking, setAsking] = useState(false);
 
-    /**
-     * Demander l'autorisation pour les notifications
-     */
-    const handleAllowNotifications = async () => {
-        setIsLoading(true);
-        try {
-            const { status } = await Notifications.requestPermissionsAsync();
-            
-            if (status !== 'granted') {
-                Alert.alert(
-                    'Permission refusée',
-                    'Tu peux toujours activer les notifications plus tard dans les paramètres de l\'app.'
-                );
-            }
-            // La planification du rappel quotidien est gérée par _layout.tsx
-            // dès que l'utilisateur quitte l'onboarding pour éviter un double appel.
+  const percent = bookFormat(store) !== 'papier';
+  const step = perDay ?? (percent ? 4 : 20);
+  const goal = percent
+    ? `${start} % → ${Math.min(100, start + step)} % ?`
+    : `Page ${start} → ${Math.min(book?.pages ?? start + step, start + step)} ?`;
+  const other = invitation
+    ? { title: `${invitation.adminFirstName} vient d’annoter`, body: invitation.title }
+    : { title: 'Quelqu’un a rejoint ta lecture', body: book?.title ?? '' };
 
-            navigateToNextScreen();
-        } catch (error: any) {
-            console.error('Erreur demande notifications:', error);
-            Alert.alert('Erreur', 'Impossible de demander les notifications');
-        } finally {
-            setIsLoading(false);
-        }
-    };
+  const next = () => router.push(nextStep(flow, 'notifications'));
 
-    /**
-     * Continuer sans activer les notifications
-     */
-    const handleSkipNotifications = () => {
-        navigateToNextScreen();
-    };
+  const ask = async () => {
+    setAsking(true);
+    try {
+      await requestNotificationPermission();
+    } finally {
+      setAsking(false);
+      next();
+    }
+  };
 
-    /**
-     * Navigation vers l'écran suivant selon le flow
-     */
-    const navigateToNextScreen = () => {
-        if (params.flow === 'create') {
-            router.push({
-                pathname: '/onboarding/complete',
-                params: {
-                    firstName: params.firstName,
-                    bookTitle: params.bookTitle || '',
-                    author: params.author || '',
-                    totalPages: params.totalPages || '',
-                    deadline: params.deadline || '',
-                    // coverUri : lu depuis onboardingStore (évite troncature params URL)
-                },
-            });
-        } else {
-            router.push({
-                pathname: '/onboarding/welcome',
-                params: {
-                    firstName: params.firstName,
-                    challengeId: params.challengeId || '',
-                    bookTitle: params.bookTitle || '',
-                    author: params.author || '',
-                    totalPages: params.totalPages || '',
-                    coverUrl: params.coverUrl || '',
-                    adminFirstName: params.adminFirstName || '',
-                },
-            });
-        }
-    };
+  return (
+    <OnboardingScreen
+      step="notifications"
+      title="On te prévient ?"
+      accent="prévient"
+      footer={
+        <>
+          <Button3D variant="primary" loading={asking} onPress={ask} style={styles.wide}>
+            Me prévenir
+          </Button3D>
+          <Button3D variant="secondary" disabled={asking} onPress={next} style={styles.wide}>
+            Plus tard
+          </Button3D>
+        </>
+      }
+    >
+      <View style={styles.stack}>
+        <Animated.View entering={drop(250)}>
+          <Notification time={reminderTime(moments)} title="Ton moment lecture" body={goal} />
+        </Animated.View>
+        <Animated.View entering={drop(700)}>
+          <Notification time="maintenant" title={other.title} body={other.body} />
+        </Animated.View>
+      </View>
+    </OnboardingScreen>
+  );
+}
 
-    return (
-        <SafeAreaView style={styles.container} edges={['top']}>
-            <View style={styles.content}>
-                {/* Background texture */}
-                <Image
-                    source={TEXTURE_IMAGE}
-                    style={styles.backgroundTexture}
-                    contentFit="cover"
-                />
-
-                {/* Contenu scrollable : header + image + texte */}
-                <ScrollView
-                    style={styles.scrollView}
-                    contentContainerStyle={styles.scrollContent}
-                    showsVerticalScrollIndicator={false}
-                    bounces={false}
-                >
-                    <View style={styles.header}>
-                        <Button3D
-                            variant="secondary"
-                            icon={ChevronLeftIcon}
-                            iconOnly
-                            size="compact"
-                            onPress={() => router.back()}
-                        />
-                    </View>
-
-                    <View style={styles.illustrationContainer}>
-                        <Image
-                            source={NOTIFICATION_ILLUSTRATION}
-                            style={styles.illustration}
-                            contentFit="contain"
-                        />
-                    </View>
-
-                    <View style={styles.textContainer}>
-                        <Text style={styles.mainText}>
-                            Autorise les notifications !
-                        </Text>
-                        <Text style={styles.subText}>
-                            On va pas te spamer, promis :)
-                        </Text>
-                    </View>
-                </ScrollView>
-
-                {/* Footer ferret en bas - toujours visible avec safe area */}
-                <View style={[styles.footer, { paddingBottom: insets.bottom + 16 }]}>
-                    <Button3D
-                        onPress={handleAllowNotifications}
-                        variant="primary"
-                        loading={isLoading}
-                        style={{ width: '100%' }}
-                    >
-                        Autoriser
-                    </Button3D>
-
-                    <Button3D
-                        onPress={handleSkipNotifications}
-                        variant="secondary"
-                        disabled={isLoading}
-                        style={{ width: '100%' }}
-                    >
-                        Pas maintenant
-                    </Button3D>
-                </View>
-            </View>
-        </SafeAreaView>
-    );
+/** Une notification de l'écran verrouillé, en papier */
+function Notification({ time, title, body }: { time: string; title: string; body: string }) {
+  return (
+    <View style={styles.card} accessible accessibilityLabel={`${title}. ${body}`}>
+      <Image source={APP_ICON} style={styles.icon} />
+      <View style={styles.text}>
+        <View style={styles.head}>
+          <Text style={styles.app}>chapi</Text>
+          <Text style={styles.app}>{time}</Text>
+        </View>
+        <Text style={styles.title} numberOfLines={1}>{title}</Text>
+        <Text style={styles.body} numberOfLines={1}>{body}</Text>
+      </View>
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: colors.white,
-    },
-    content: {
-        flex: 1,
-        flexDirection: 'column',
-    },
-    scrollView: {
-        flex: 1,
-    },
-    scrollContent: {
-        flexGrow: 1,
-    },
-    backgroundTexture: {
-        ...StyleSheet.absoluteFill,
-        opacity: 0.05,
-    },
-    header: {
-        paddingTop: spacing.lg,
-        paddingBottom: spacing.md,
-        paddingHorizontal: spacing.lg,
-    },
-    illustrationContainer: {
-        paddingHorizontal: spacing.md,
-        width: '100%',
-        alignItems: 'center',
-    },
-    illustration: {
-        width: '100%',
-        aspectRatio: 300 / 280,
-    },
-    textContainer: {
-        alignItems: 'center',
-        gap: spacing.sm,
-        paddingHorizontal: spacing.lg,
-        paddingTop: spacing['2xl'],
-    },
-    mainText: {
-        fontFamily: fonts.display,
-        fontSize: 30,
-        color: colors.textPrimary,
-        textAlign: 'center',
-        lineHeight: 36,
-    },
-    subText: {
-        fontFamily: fonts.body,
-        fontSize: fontSize.sm, // 14px
-        color: colors.textTertiary,
-        textAlign: 'center',
-        lineHeight: 20,
-    },
-    footer: {
-        paddingHorizontal: spacing.lg,
-        paddingTop: spacing.xl,
-        gap: spacing.md, // 12px entre les deux boutons
-        // paddingBottom appliqué dynamiquement avec useSafeAreaInsets (comme login)
-    },
+  wide: {
+    width: '100%',
+  },
+  stack: {
+    gap: spacing.md,
+    marginTop: spacing.sm,
+  },
+  card: {
+    flexDirection: 'row',
+    gap: spacing.md,
+    padding: spacing.md + 2,
+    borderRadius: 22,
+    backgroundColor: colors.white,
+    borderWidth: 1,
+    borderColor: inkAlpha(0.08),
+    shadowColor: shadowAlpha(1),
+    shadowOpacity: 0.12,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 8 },
+  },
+  icon: {
+    width: 38,
+    height: 38,
+    borderRadius: 9,
+  },
+  text: {
+    flex: 1,
+    gap: 2,
+  },
+  head: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  app: {
+    fontFamily: fonts.bodySemiBold,
+    fontSize: 12,
+    lineHeight: 16,
+    color: colors.textTertiary,
+  },
+  title: {
+    fontFamily: fonts.bodySemiBold,
+    fontSize: 15,
+    lineHeight: 20,
+    color: colors.textPrimary,
+  },
+  body: {
+    fontFamily: fonts.body,
+    fontSize: 14,
+    lineHeight: 19,
+    color: colors.textSecondary,
+  },
 });

@@ -4,12 +4,16 @@
  * Il prolonge le splash sans couture : même fond rouge, mêmes yeux, même
  * « chapi » et même tagline, au point près (BrandLockup). Le splash disparaît
  * d'un coup sur cette image identique (voir AnimatedSplash, `handoff`), puis :
- * 1. le mur de couvertures, ton sur ton, apparaît et défile lentement ;
- * 2. la tagline s'efface, les boutons montent depuis le bas ; les yeux et
- *    « chapi » ne bougent pas, à leur place du splash ;
+ * 1. le rouge du splash se fond dans une aquarelle surtout rouge et chocolat
+ *    (le papier du profil, en plus sombre) ; dessus, un mur de couvertures
+ *    grises, presque transparent, défile lentement ;
+ * 2. « chapi » et la tagline s'effacent ; les yeux descendent en petit et en
+ *    crème au-dessus de la question « On lit ensemble ? », un grand titre à
+ *    gauche juste au-dessus des boutons, qui montent depuis le bas ;
  * 3. les yeux baissent le regard vers les boutons, clignent, et restent vivants.
  *
  * Deux façons d'entrer : Apple, ou un code reçu par email (feuille auth/email).
+ * Rejoué depuis le profil (déjà connecté·e), les boutons passent aux questions.
  *
  * Flow :
  * - Nouveaux utilisateurs → onboarding (écran rôle)
@@ -25,8 +29,8 @@ import { MailIcon } from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
 import { Alert, Linking, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import Animated, {
-  Easing,
   type SharedValue,
+  Easing,
   useAnimatedStyle,
   useReducedMotion,
   useSharedValue,
@@ -36,17 +40,19 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Svg, { Defs, RadialGradient, Rect, Stop } from 'react-native-svg';
 import Button3D from '../../components/Button3D';
+import AccentWord from '../../components/ui/AccentWord';
 import AppleLogo from '../../components/brand/AppleLogo';
 import { BRAND_BG, BrandTagline, BrandWord, LivingEye, LOCKUP, LOGO_SIZE } from '../../components/brand/BrandLockup';
 import { useAfterLogin } from '../../hooks/useAfterLogin';
 import { isAppleAuthAvailable } from '../../services/supabase/auth';
 import { useAuthStore } from '../../stores/authStore';
+import { useOnboardingStore } from '../../stores/onboardingStore';
 import { useSplashStore } from '../../stores/splashStore';
-import { colors, fonts, spacing } from '../../utils/constants';
+import { colors, fonts, inkGradient, lowki, spacing } from '../../utils/constants';
+import { firstStep } from '../../utils/onboardingFlow';
 
-/** Les bandes de couvertures (scripts/generate-login-covers.py), une par colonne. */
+/** Les bandes de couvertures (scripts/generate-login-covers.py gris), une par colonne. */
 const COVER_STRIPS = [
   require('../../assets/images/login/covers-1.png'),
   require('../../assets/images/login/covers-2.png'),
@@ -54,20 +60,31 @@ const COVER_STRIPS = [
   require('../../assets/images/login/covers-4.png'),
 ];
 /** Une bande : 4 couvertures de 112 × 168 pt, 14 pt entre elles. */
+/** L'aquarelle du fond (scripts/generate-profile-wash.py login) */
+const WASH = require('../../assets/images/watercolor/login-wash.png');
 const COVER_W = 112;
 const STRIP_H = 4 * (168 + 14);
 const COLUMN_GAP = 14;
-/** Les couvertures restent discrètes : on devine les livres sans les lire. */
-const WALL_OPACITY = 0.6;
+/** Grises et à peine là : on devine des livres, l'aquarelle reste le fond. */
+const WALL_OPACITY = 0.1;
 /** Une bande défile sur toute sa hauteur en 40 s : à peine un mouvement. */
 const DRIFT_DURATION = 40000;
+
 
 const ENTRANCE = Easing.inOut(Easing.cubic);
 /** Les mêmes pages que les Réglages */
 const TERMS_URL = 'https://bbb.leasantos.me/terms';
 const PRIVACY_URL = 'https://bbb.leasantos.me/privacy';
-/** Le fond à hauteur du nom (milieu du dégradé BRAND_BG) : la clairière s'y fond. */
-const CLEARING = '#9c2c3f';
+/** Le crème des textes sur le rouge */
+const CREAM = '#FFFBF4';
+/** Les yeux, une fois posés au-dessus de la question : leur taille */
+const EYES_SCALE = 0.4;
+/** Le tracé dans le carré du logo : bord gauche et bas visibles, en points */
+const EYES_INK_LEFT = 14;
+const EYES_INK_BOTTOM = 184;
+/** La question, en grand titre à gauche */
+const QUESTION = 42;
+const QUESTION_LINE = 52;
 
 /** Une colonne de couvertures, posée deux fois pour boucler sans couture. */
 function CoverColumn({ index, x, drift }: { index: number; x: number; drift: SharedValue<number> }) {
@@ -84,86 +101,6 @@ function CoverColumn({ index, x, drift }: { index: number; x: number; drift: Sha
       <Image source={source} style={styles.strip} contentFit="fill" />
       <Image source={source} style={styles.strip} contentFit="fill" />
       <Image source={source} style={styles.strip} contentFit="fill" />
-    </Animated.View>
-  );
-}
-
-/**
- * Les copains : de petites paires d'yeux autour du logo, pour dire qu'on lit à
- * plusieurs. Discrètes (à moitié transparentes), elles apparaissent, regardent
- * les boutons avec le grand, clignent, puis s'effacent, chacune à son rythme :
- * il y en a toujours deux ou trois, jamais les mêmes.
- * Position (x, y) par rapport au centre du bloc de marque, en points ; temps en ms.
- */
-const FRIENDS = [
-  { x: -128, y: -150, scale: 0.26, tilt: -12, delay: 1300, hold: 3200, rest: 2600 },
-  { x: 132, y: -168, scale: 0.21, tilt: 9, delay: 2300, hold: 2800, rest: 3400 },
-  { x: -158, y: 18, scale: 0.2, tilt: 7, delay: 3600, hold: 3000, rest: 3000 },
-  { x: 156, y: 6, scale: 0.24, tilt: -6, delay: 1800, hold: 3600, rest: 2400 },
-  { x: -60, y: -200, scale: 0.18, tilt: 4, delay: 5200, hold: 2600, rest: 3800 },
-  { x: 92, y: 168, scale: 0.19, tilt: -9, delay: 4400, hold: 2800, rest: 3600 },
-];
-/** Le plus visible qu'elles deviennent : discrètes à côté du logo. */
-const FRIEND_OPACITY = 0.45;
-const FRIEND_FADE = 700;
-
-function Friend({
-  friend,
-  start,
-  gazeX,
-  gazeY,
-}: {
-  friend: (typeof FRIENDS)[number];
-  start: boolean;
-  gazeX: SharedValue<number>;
-  gazeY: SharedValue<number>;
-}) {
-  const appear = useSharedValue(0);
-  const lid = useSharedValue(1);
-
-  useEffect(() => {
-    if (!start) return;
-    const fade = { duration: FRIEND_FADE, easing: Easing.inOut(Easing.cubic) };
-    appear.value = withDelay(
-      friend.delay,
-      withRepeat(
-        withSequence(
-          withTiming(1, fade),
-          withDelay(friend.hold, withTiming(0, fade)),
-          withDelay(friend.rest, withTiming(0, { duration: 0 })),
-        ),
-        -1,
-      ),
-    );
-    // Un clignement au milieu de chaque apparition
-    const cycle = 2 * FRIEND_FADE + friend.hold + friend.rest;
-    lid.value = withDelay(
-      friend.delay + FRIEND_FADE + friend.hold / 2,
-      withRepeat(
-        withSequence(
-          withTiming(0.08, { duration: 90, easing: Easing.in(Easing.quad) }),
-          withTiming(1, { duration: 160, easing: Easing.out(Easing.cubic) }),
-          withDelay(cycle - 250, withTiming(1, { duration: 0 })),
-        ),
-        -1,
-      ),
-    );
-  }, [start]);
-
-  const style = useAnimatedStyle(() => ({
-    opacity: appear.value * FRIEND_OPACITY,
-    transform: [
-      { translateX: friend.x },
-      { translateY: friend.y + 6 * (1 - appear.value) },
-      { rotate: `${friend.tilt}deg` },
-      { scale: friend.scale * (0.85 + 0.15 * appear.value) },
-    ],
-  }));
-
-  return (
-    <Animated.View style={[styles.friend, style]} pointerEvents="none">
-      <LivingEye side="left" gazeX={gazeX} gazeY={gazeY} lid={lid} />
-      <LivingEye side="right" gazeX={gazeX} gazeY={gazeY} lid={lid} />
     </Animated.View>
   );
 }
@@ -191,7 +128,7 @@ function CoverWall({ drift }: { drift: SharedValue<number> }) {
 
 export default function WelcomeScreen() {
   const insets = useSafeAreaInsets();
-  const { width: screenWidth } = useWindowDimensions();
+  const { width: screenWidth, height: screenHeight } = useWindowDimensions();
   const router = useRouter();
   const reduceMotion = useReducedMotion();
 
@@ -203,9 +140,13 @@ export default function WelcomeScreen() {
   const setLoginMounted = useSplashStore((state) => state.setLoginMounted);
 
 
-  const wall = useSharedValue(0);
+  const wash = useSharedValue(0);
   const drift = useSharedValue(0);
   const buttons = useSharedValue(0);
+  const lift = useSharedValue(0);
+  const [buttonsHeight, setButtonsHeight] = useState(0);
+  /** Le haut de la question : les yeux se posent juste au-dessus */
+  const [questionTop, setQuestionTop] = useState(0);
   const gazeX = useSharedValue(0);
   const gazeY = useSharedValue(0);
   const lid = useSharedValue(1);
@@ -221,10 +162,11 @@ export default function WelcomeScreen() {
   useEffect(() => {
     if (!splashGone) return;
 
-    wall.value = withTiming(1, { duration: 900, easing: Easing.out(Easing.cubic) });
+    wash.value = withTiming(1, { duration: 900, easing: Easing.out(Easing.cubic) });
     if (!reduceMotion) {
       drift.value = withRepeat(withTiming(1, { duration: DRIFT_DURATION, easing: Easing.linear }), -1, false);
     }
+    lift.value = withDelay(250, withTiming(1, { duration: 850, easing: ENTRANCE }));
     buttons.value = withDelay(450, withTiming(1, { duration: 550, easing: Easing.out(Easing.cubic) }));
 
     // Le regard descend vers les boutons, puis va de l'un à l'autre, doucement
@@ -251,15 +193,43 @@ export default function WelcomeScreen() {
     lid.value = withDelay(1350, withSequence(blink(), withRepeat(withSequence(withDelay(3400, blink()), withDelay(2600, blink())), -1)));
   }, [splashGone]);
 
-  const wallStyle = useAnimatedStyle(() => ({ opacity: wall.value * WALL_OPACITY }));
-  const veilStyle = useAnimatedStyle(() => ({ opacity: wall.value }));
-  const taglineStyle = useAnimatedStyle(() => ({ opacity: 1 - wall.value }));
+  const washStyle = useAnimatedStyle(() => ({ opacity: wash.value }));
+  const wallStyle = useAnimatedStyle(() => ({ opacity: wash.value * WALL_OPACITY }));
+  const taglineStyle = useAnimatedStyle(() => ({ opacity: 1 - wash.value }));
+  // Les yeux rétrécissent autour du centre de l'écran, puis se posent au-dessus
+  // de la question, alignés sur elle à gauche, et passent du rouge gravé au crème
+  const eyesTop = questionTop - spacing.xl - EYES_SCALE * EYES_INK_BOTTOM;
+  const eyesLeft = spacing.xl - EYES_SCALE * EYES_INK_LEFT;
+  const eyesX = eyesLeft - screenWidth / 2 + EYES_SCALE * (LOGO_SIZE / 2);
+  const eyesY = eyesTop - screenHeight / 2 - EYES_SCALE * (LOCKUP.eyesY - LOGO_SIZE / 2);
+  const eyesStyle = useAnimatedStyle(() => ({
+    transform: [
+      { translateX: eyesX * lift.value },
+      { translateY: eyesY * lift.value },
+      { scale: 1 + (EYES_SCALE - 1) * lift.value },
+    ],
+  }));
+  const darkStyle = useAnimatedStyle(() => ({ opacity: 1 - lift.value }));
+  const lightStyle = useAnimatedStyle(() => ({ opacity: lift.value }));
+  const questionStyle = useAnimatedStyle(() => ({
+    opacity: lift.value,
+    transform: [{ translateY: 16 * (1 - lift.value) }],
+  }));
   const buttonsStyle = useAnimatedStyle(() => ({
     opacity: buttons.value,
     transform: [{ translateY: 24 * (1 - buttons.value) }],
   }));
 
+  /** Rejoué depuis le profil : déjà connecté·e, on passe aux questions */
+  const replaying = () => {
+    if (!useAuthStore.getState().user) return false;
+    useOnboardingStore.getState().begin('create');
+    router.push(firstStep('create'));
+    return true;
+  };
+
   const handleAppleLogin = async () => {
+    if (replaying()) return;
     try {
       setIsLoading(true);
 
@@ -290,48 +260,49 @@ export default function WelcomeScreen() {
     <View style={styles.container}>
       <StatusBar style="light" />
       <LinearGradient colors={BRAND_BG} style={StyleSheet.absoluteFill} />
-
+      {/* Le rouge du splash se fond dans l'aquarelle, rouge et chocolat */}
+      <Animated.View style={[StyleSheet.absoluteFill, washStyle]} pointerEvents="none">
+        <Image source={WASH} style={StyleSheet.absoluteFill} contentFit="cover" />
+      </Animated.View>
       <Animated.View style={[StyleSheet.absoluteFill, styles.wallFrame, wallStyle]} pointerEvents="none">
         <CoverWall drift={drift} />
-      </Animated.View>
-
-      {/* Une clairière derrière le nom, un fondu sous les boutons : les couvertures
-          ne passent jamais sous le texte. */}
-      <Animated.View style={[StyleSheet.absoluteFill, veilStyle]} pointerEvents="none">
-      <Svg width="100%" height="100%">
-        <Defs>
-          <RadialGradient id="clearing" cx="50%" cy="48%" rx="70%" ry="30%">
-            <Stop offset="0" stopColor={CLEARING} stopOpacity={1} />
-            <Stop offset="0.6" stopColor={CLEARING} stopOpacity={0.9} />
-            <Stop offset="1" stopColor={CLEARING} stopOpacity={0} />
-          </RadialGradient>
-        </Defs>
-        <Rect width="100%" height="100%" fill="url(#clearing)" />
-      </Svg>
-      <LinearGradient
-        colors={['rgba(146, 41, 59, 0)', BRAND_BG[1]]}
-        locations={[0, 0.45]}
-        style={[styles.bottomFade, { height: 300 + insets.bottom }]}
-      />
       </Animated.View>
 
       {/* Point d'ancrage au centre de l'écran, comme au splash */}
       <View style={styles.center}>
         <View>
-          <View style={[styles.logo, { transform: [{ translateY: LOCKUP.eyesY }] }]}>
-            <LivingEye side="left" gazeX={gazeX} gazeY={gazeY} lid={lid} />
-            <LivingEye side="right" gazeX={gazeX} gazeY={gazeY} lid={lid} />
-          </View>
-          <BrandWord />
-          {/* Reprise du splash, puis effacée : l'écran ne garde que le nom */}
+          <Animated.View style={eyesStyle}>
+            <Animated.View style={darkStyle}>
+              <View style={[styles.logo, { transform: [{ translateY: LOCKUP.eyesY }] }]}>
+                <LivingEye side="left" gazeX={gazeX} gazeY={gazeY} lid={lid} />
+                <LivingEye side="right" gazeX={gazeX} gazeY={gazeY} lid={lid} />
+              </View>
+            </Animated.View>
+            <Animated.View style={lightStyle}>
+              <View style={[styles.logo, { transform: [{ translateY: LOCKUP.eyesY }] }]}>
+                <LivingEye side="left" gazeX={gazeX} gazeY={gazeY} lid={lid} light />
+                <LivingEye side="right" gazeX={gazeX} gazeY={gazeY} lid={lid} light />
+              </View>
+            </Animated.View>
+          </Animated.View>
+          {/* Reprise du splash, puis effacés : les yeux restent seuls */}
+          <BrandWord style={taglineStyle} />
           <BrandTagline style={taglineStyle} />
-          {FRIENDS.map((friend, i) => (
-            <Friend key={i} friend={friend} start={splashGone} gazeX={gazeX} gazeY={gazeY} />
-          ))}
         </View>
       </View>
 
+      {/* La question, en grand titre à gauche, juste au-dessus des boutons */}
+      <Animated.Text
+        onLayout={(e) => setQuestionTop(e.nativeEvent.layout.y)}
+        style={[styles.question, { bottom: buttonsHeight + spacing['4xl'] }, questionStyle]}
+        accessibilityRole="header"
+      >
+        On lit{'\n'}
+        <AccentWord text="ensemble ?" accent="ensemble" size={QUESTION} />
+      </Animated.Text>
+
       <Animated.View
+        onLayout={(e) => setButtonsHeight(e.nativeEvent.layout.height)}
         style={[styles.buttons, { paddingBottom: Math.max(insets.bottom, 16) + 16 }, buttonsStyle]}
       >
         <Button3D
@@ -345,7 +316,7 @@ export default function WelcomeScreen() {
           Continuer avec Apple
         </Button3D>
         <Button3D
-          onPress={() => router.push('/auth/email')}
+          onPress={() => replaying() || router.push('/auth/email')}
           variant="secondary"
           iconComponent={<MailIcon size={22} color={colors.textPrimary} />}
           iconPosition="left"
@@ -393,22 +364,9 @@ const styles = StyleSheet.create({
     width: COVER_W,
     height: STRIP_H,
   },
-  bottomFade: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
-  },
   center: {
     width: 0,
     height: 0,
-  },
-  friend: {
-    position: 'absolute',
-    width: LOGO_SIZE,
-    height: LOGO_SIZE,
-    left: -LOGO_SIZE / 2,
-    top: -LOGO_SIZE / 2,
   },
   logo: {
     position: 'absolute',
@@ -416,6 +374,16 @@ const styles = StyleSheet.create({
     height: LOGO_SIZE,
     left: -LOGO_SIZE / 2,
     top: -LOGO_SIZE / 2,
+  },
+  question: {
+    position: 'absolute',
+    left: spacing.xl,
+    right: spacing.xl,
+    fontFamily: fonts.display,
+    fontSize: QUESTION,
+    lineHeight: QUESTION_LINE,
+    letterSpacing: -0.4,
+    color: CREAM,
   },
   legal: {
     fontFamily: fonts.body,
@@ -427,7 +395,7 @@ const styles = StyleSheet.create({
   },
   legalLink: {
     fontFamily: fonts.bodySemiBold,
-    color: '#FFFBF4',
+    color: CREAM,
     textDecorationLine: 'underline',
   },
   buttons: {

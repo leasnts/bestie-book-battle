@@ -216,7 +216,7 @@ export async function getMyBookProgress(userId: string): Promise<MyBookProgress[
   const { data, error } = await withTimeout(
     supabase
       .from('user_progress')
-      .select('challenge_id, current_page, progress_percentage, last_updated_at, created_at, cover_url')
+      .select('challenge_id, current_page, progress_percentage, last_updated_at, created_at, cover_url, format')
       .eq('user_id', userId),
     10_000
   );
@@ -433,6 +433,9 @@ export async function getChallengeParticipants(
         total_pages: item.total_pages,
         cover_url: item.cover_url ?? null,
         publisher: item.publisher ?? null,
+        format: item.format ?? 'papier',
+        pages_per_day: item.pages_per_day ?? null,
+        target_end_date: item.target_end_date ?? null,
         streak_count: item.streak_count,
         last_streak_date: item.last_streak_date,
         streak_bonus_dates: item.streak_bonus_dates ?? [],
@@ -522,7 +525,7 @@ export async function updateUserProgress(
 export async function updateMyEdition(
   challengeId: string,
   userId: string,
-  edition: Pick<UserProgressUpdate, 'total_pages' | 'cover_url' | 'publisher'>
+  edition: Pick<UserProgressUpdate, 'total_pages' | 'cover_url' | 'publisher' | 'format' | 'pages_per_day' | 'target_end_date'>
 ): Promise<UserProgress> {
   const { data, error } = await supabase
     .from('user_progress')

@@ -31,6 +31,8 @@ const SHAPE_GRADIENT = ['#6e1f2c', '#581924'] as const;
 const SHAPE_WORD = '#611b27';
 const DEBOSS_LIGHT = '#c35164';
 const DEBOSS_OPACITY = 0.55;
+/** En clair (`light`) : les yeux crème, sans liseré, au-dessus de la question de la connexion */
+const LIGHT_GRADIENT = ['#FFFBF4', '#F1E6D6'] as const;
 
 /** Côté du carré du logo, en points. */
 export const LOGO_SIZE = 220;
@@ -113,29 +115,32 @@ const LID_PIVOT = { left: 975, right: 920 };
 /** Jusqu'où va la pupille dans son creux, en points (regard à 1). */
 const GAZE_REACH = { left: (62 / LOGO_EYES_VIEWBOX) * LOGO_SIZE, right: (46 / LOGO_EYES_VIEWBOX) * LOGO_SIZE };
 
-function EyeGradient() {
+function EyeGradient({ light }: { light?: boolean }) {
+  const pair = light ? LIGHT_GRADIENT : SHAPE_GRADIENT;
   return (
     <SvgGradient id="eyes" gradientUnits="userSpaceOnUse" x1="0" y1="200" x2="0" y2="1010">
-      <Stop offset="0" stopColor={SHAPE_GRADIENT[0]} />
-      <Stop offset="1" stopColor={SHAPE_GRADIENT[1]} />
+      <Stop offset="0" stopColor={pair[0]} />
+      <Stop offset="1" stopColor={pair[1]} />
     </SvgGradient>
   );
 }
 
 /** Une forme des yeux, coupée à un seul œil, dans le carré complet du logo. */
-function EyeLayer({ side, d, evenOdd }: { side: Side; d: string; evenOdd?: boolean }) {
+function EyeLayer({ side, d, evenOdd, light }: { side: Side; d: string; evenOdd?: boolean; light?: boolean }) {
   const rule = evenOdd ? 'evenodd' : 'nonzero';
   return (
     <Svg width={LOGO_SIZE} height={LOGO_SIZE} viewBox={`0 0 ${LOGO_EYES_VIEWBOX} ${LOGO_EYES_VIEWBOX}`}>
       <Defs>
-        <EyeGradient />
+        <EyeGradient light={light} />
         <ClipPath id="cut">
           <Path d={LOGO_EYES_CLIP[side]} />
         </ClipPath>
       </Defs>
-      <G transform={`translate(0 ${DEBOSS_EYES})`}>
-        <Path d={d} fill={DEBOSS_LIGHT} fillOpacity={DEBOSS_OPACITY} fillRule={rule} clipPath="url(#cut)" />
-      </G>
+      {!light && (
+        <G transform={`translate(0 ${DEBOSS_EYES})`}>
+          <Path d={d} fill={DEBOSS_LIGHT} fillOpacity={DEBOSS_OPACITY} fillRule={rule} clipPath="url(#cut)" />
+        </G>
+      )}
       <Path d={d} fill="url(#eyes)" fillRule={rule} clipPath="url(#cut)" />
     </Svg>
   );
@@ -149,18 +154,20 @@ export function Eye({ side }: { side: Side }) {
 /**
  * Un œil vivant : la pupille suit `gaze` (de -1 à 1 sur chaque axe) et la
  * paupière se ferme quand `lid` descend vers 0. Au repos (regard 0, lid 1),
- * il est identique à <Eye />.
+ * il est identique à <Eye />. `light` : en crème, sans liseré.
  */
 export function LivingEye({
   side,
   gazeX,
   gazeY,
   lid,
+  light,
 }: {
   side: Side;
   gazeX: SharedValue<number>;
   gazeY: SharedValue<number>;
   lid: SharedValue<number>;
+  light?: boolean;
 }) {
   const reach = GAZE_REACH[side];
   const pivot = (LID_PIVOT[side] / LOGO_EYES_VIEWBOX) * LOGO_SIZE;
@@ -178,10 +185,10 @@ export function LivingEye({
   return (
     <Animated.View style={[StyleSheet.absoluteFill, lidStyle]}>
       <Animated.View style={[StyleSheet.absoluteFill, pupilStyle]}>
-        <EyeLayer side={side} d={PUPIL[side]} />
+        <EyeLayer side={side} d={PUPIL[side]} light={light} />
       </Animated.View>
       <View style={StyleSheet.absoluteFill}>
-        <EyeLayer side={side} d={RING} evenOdd />
+        <EyeLayer side={side} d={RING} evenOdd light={light} />
       </View>
     </Animated.View>
   );

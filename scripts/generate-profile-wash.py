@@ -12,23 +12,33 @@ Ce qui fait aquarelle :
   l'eau a repoussé le pigment ;
 - pas de grain ni de granulation : essayés, jugés pas beaux (Lea, 2026-10-23).
 
-Usage : python3 scripts/generate-profile-wash.py
+Variante « login » (2026-10-28) : le fond plein écran de la connexion, en
+surtout rouge et chocolat, avec une touche de beurre et de beige pour avoir
+toute la palette ; jamais sous le titre ni les boutons (contraste du crème) →
+assets/images/watercolor/login-wash.png.
+
+Usage : python3 scripts/generate-profile-wash.py [login]
 Dépendances : numpy, Pillow.
 """
 
+import sys
 from pathlib import Path
 
 import numpy as np
 from PIL import Image, ImageFilter
 
-OUT = Path(__file__).resolve().parent.parent / "assets" / "images" / "watercolor" / "profile-wash.png"
-# 390 × 400 pt en @3x : la largeur d'un iPhone, la hauteur de l'en-tête
-W, H = 1170, 1200
+LOGIN = len(sys.argv) > 1 and sys.argv[1] == "login"
+OUT = Path(__file__).resolve().parent.parent / "assets" / "images" / "watercolor" / ("login-wash.png" if LOGIN else "profile-wash.png")
+# 390 × 400 pt en @3x : la largeur d'un iPhone, la hauteur de l'en-tête ;
+# la connexion : un écran entier (402 × 874 pt), en @2x, l'aquarelle est floue
+W, H = (804, 1748) if LOGIN else (1170, 1200)
 SEED = 11
 
 BUTTER = (np.array([0xF5, 0xE6, 0xA8]), np.array([0xD6, 0xC3, 0x6F]))
 RED = (np.array([0xA6, 0x2F, 0x43]), np.array([0x7C, 0x20, 0x31]))
 CHOCOLATE_LIGHT = np.array([0x63, 0x3D, 0x32])
+CHOCOLATE_DARK = np.array([0x48, 0x2B, 0x24])
+BEIGE = np.array([0xC5, 0xA4, 0x7E])
 
 
 def value_noise(rng, cell):
@@ -64,17 +74,32 @@ def main():
     wx, wy = (fractal(rng, 260) - 0.5) * 0.18, (fractal(rng, 260) - 0.5) * 0.18
     nx, ny = nx + wx, ny + wy
 
-    # Fond : beurre foncé en haut → rouge en bas
-    base = BUTTER[1] * (1 - ny[..., None]) + RED[0] * ny[..., None]
+    if LOGIN:
+        # Fond : chocolat en haut → rouge foncé en bas ; taches rouges et brunes
+        base = CHOCOLATE_LIGHT * (1 - ny[..., None]) + RED[1] * ny[..., None]
+        blobs = (
+            (RED[0], blob(nx, ny, 0.95, 0.10, 0.85, 0.40, 1.0)),
+            (CHOCOLATE_LIGHT, blob(nx, ny, 0.05, 0.25, 0.80, 0.35, 1.0)),
+            (RED[0], blob(nx, ny, 0.15, 0.62, 0.80, 0.32, 1.0)),
+            (CHOCOLATE_LIGHT, blob(nx, ny, 0.95, 0.72, 0.75, 0.32, 1.0)),
+            (RED[1], blob(nx, ny, 0.40, 1.00, 0.90, 0.30, 1.0)),
+            # Les touches claires, légères : en haut, loin du texte
+            (BUTTER[1], 0.75 * blob(nx, ny, 0.30, 0.04, 0.45, 0.14, 1.0)),
+            (BEIGE, 0.7 * blob(nx, ny, 1.00, 0.36, 0.40, 0.14, 1.0)),
+        )
+    else:
+        # Fond : beurre foncé en haut → rouge en bas
+        base = BUTTER[1] * (1 - ny[..., None]) + RED[0] * ny[..., None]
+        # Les taches, posées par-dessus dans l'ordre de la maquette
+        blobs = (
+            (BUTTER[0], blob(nx, ny, 0.12, 0.10, 0.60, 0.55, 1.0)),
+            (RED[0], blob(nx, ny, 0.92, 0.08, 0.55, 0.55, 1.0)),
+            (CHOCOLATE_LIGHT, blob(nx, ny, 0.08, 0.95, 0.60, 0.55, 1.0)),
+            (RED[1], blob(nx, ny, 0.95, 0.92, 0.60, 0.55, 1.0)),
+        )
     color = np.clip(base, 0, 255)
 
-    # Les taches, posées par-dessus dans l'ordre de la maquette
-    for tint, weight in (
-        (BUTTER[0], blob(nx, ny, 0.12, 0.10, 0.60, 0.55, 1.0)),
-        (RED[0], blob(nx, ny, 0.92, 0.08, 0.55, 0.55, 1.0)),
-        (CHOCOLATE_LIGHT, blob(nx, ny, 0.08, 0.95, 0.60, 0.55, 1.0)),
-        (RED[1], blob(nx, ny, 0.95, 0.92, 0.60, 0.55, 1.0)),
-    ):
+    for tint, weight in blobs:
         color = color * (1 - weight[..., None]) + tint * weight[..., None]
 
     # Densité du pigment : plus chargé par endroits
@@ -83,7 +108,9 @@ def main():
 
     # Auréoles : l'eau repousse le pigment, le papier blanchit doucement
     bloom = np.clip((fractal(rng, 320) - 0.45) * 2.2, 0, 1) ** 1.6
-    color = color * (1 - 0.22 * bloom[..., None]) + 255 * 0.22 * bloom[..., None]
+    # Sur la connexion, plus discrètes : sur un fond sombre elles grisaillent
+    halo = 0.10 if LOGIN else 0.22
+    color = color * (1 - halo * bloom[..., None]) + 255 * halo * bloom[..., None]
 
     # Filet de pigment séché au bord des auréoles
     edge = np.abs(np.gradient(Image.fromarray((bloom * 255).astype(np.uint8)).filter(ImageFilter.GaussianBlur(3)), axis=0))

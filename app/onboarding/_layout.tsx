@@ -1,49 +1,19 @@
 /**
- * Layout pour le flow d'onboarding
+ * Les écrans de l'onboarding (issue #189, prototype validé le 2026-10-28).
+ * L'ordre de chaque parcours vit dans utils/onboardingFlow.ts.
  *
- * Gère la navigation entre les 9 écrans de l'onboarding redesigné :
- *
- * Flow partagé :
- * 1. index.tsx - Saisie prénom
- * 2. role.tsx - Choix Créer/Rejoindre
- *
- * Branche "Créer un bbb" :
- * 3a. create.tsx - Formulaire livre (titre, auteur, pages)
- * 4a. cover.tsx - Import couverture
- * 5a. notifications.tsx - Permission notifications (partagé)
- * 6a. complete.tsx - Carte livre + code invite + boutons
- *
- * Branche "Rejoindre un bbb" :
- * 3b. join.tsx - Saisie code d'accès
- * 4b. edition.tsx - Mon édition (couverture, pages)
- * 5b. notifications.tsx - Permission notifications (partagé)
- * 6b. welcome.tsx - Carte challenge + bouton Rejoindre
- *
- * Animations : toutes les transitions utilisent slide_from_right + 350ms
- * pour une expérience fluide et cohérente sur tout le flow.
+ * - choix : tu lances ou tu rejoins ? (avant le livre)
+ * - code, invitation : rejoindre une lecture (lien ou code)
+ * - rythme → carte : les questions, la préparation, la carte de lecture
  */
 
 import { Stack } from 'expo-router';
 
-// Config d'animation partagée pour tout l'onboarding
-const SCREEN_OPTIONS = {
-  headerShown: false,
-  animation: 'slide_from_right' as const,
-  animationDuration: 350,
-};
-
 export default function OnboardingLayout() {
   return (
-    <Stack screenOptions={SCREEN_OPTIONS}>
-      <Stack.Screen name="index" options={{ gestureEnabled: false }} />
-      <Stack.Screen name="role" />
-      <Stack.Screen name="create" />
-      <Stack.Screen name="cover" />
-      <Stack.Screen name="join" />
-      <Stack.Screen name="edition" />
-      <Stack.Screen name="notifications" />
-      <Stack.Screen name="complete" />
-      <Stack.Screen name="welcome" />
+    <Stack screenOptions={{ headerShown: false, animation: 'slide_from_right', animationDuration: 350 }}>
+      <Stack.Screen name="prepa" options={{ gestureEnabled: false, animation: 'fade' }} />
+      <Stack.Screen name="carte" options={{ gestureEnabled: false, animation: 'fade' }} />
     </Stack>
   );
 }

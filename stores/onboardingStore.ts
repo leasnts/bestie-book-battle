@@ -1,57 +1,110 @@
 /**
- * Store temporaire pour l'onboarding (flows "Créer un bbb" et "Rejoindre")
+ * Le brouillon de l'onboarding : ce que la personne a répondu, écran après
+ * écran, jusqu'à la préparation (prepa.tsx) qui enregistre tout.
  *
- * Pourquoi ce store ?
- * Le coverUri (chemin fichier local, ex: file:///var/mobile/.../ImagePicker/xxx.jpg)
- * peut faire 100+ caractères. En le passant via les params de route (Expo Router),
- * on risque une troncature ou une perte de données (limites des URLs).
+ * Deux temps :
+ * - toi, en général (moments, formats habituels) → le profil ;
+ * - ce livre-là (livre, format, position, rythme) → sa lecture.
  *
- * Solution : on stocke le coverUri ici pendant le flow, et on le lit dans complete.tsx.
- * Le store est réinitialisé après la création du projet.
+ * Rien n'est gardé d'un lancement à l'autre : le brouillon vit le temps du
+ * parcours.
  */
 
 import { create } from 'zustand';
 import type { BookSearchResult } from '../types/bookSearch';
+import type { BookFormat, ReadingMoment } from '../types/supabase';
+import type { OnboardingFlow } from '../utils/onboardingFlow';
 
-export interface MyEditionDraft {
-  /** Photo locale (file://…) ou URL trouvée par la recherche */
+/** L'écran qui attend un livre de la recherche */
+export type BookPickTarget = 'livre' | 'edition';
+
+/** Le livre choisi (recherche ou à la main), dans SON édition */
+export interface BookDraft {
+  title: string;
+  author: string;
+  /** Pages de l'édition papier */
+  pages: number;
+  /** URL trouvée par la recherche, ou photo locale (file://…) */
   cover: string | null;
-  totalPages: number;
   publisher: string | null;
 }
 
-interface OnboardingStore {
-  /** URI locale de la cover importée (cover.tsx → complete.tsx) */
-  coverUri: string | null;
-  /** Nombre de pages récupéré via l'API Google Books (create.tsx → pages.tsx) */
-  apiPageCount: number | null;
-  /** URL de la cover récupérée via l'API Google Books (create.tsx → cover.tsx) */
-  apiCoverUrl: string | null;
-  /** Rejoindre : mon édition, choisie sur edition.tsx, enregistrée par welcome.tsx */
-  myEdition: MyEditionDraft | null;
-  /** Le livre choisi dans le sheet de recherche (/book-search), repris par l'écran d'en dessous */
-  bookPick: BookSearchResult | null;
+/** La lecture rejointe par un lien ou un code */
+export interface InvitationDraft {
+  challengeId: string;
+  code: string;
+  title: string;
+  author: string;
+  pages: number;
+  cover: string | null;
+  adminFirstName: string;
+  /** Où en est le groupe, en % */
+  groupPercent: number;
+}
 
-  setCoverUri: (uri: string | null) => void;
-  setApiPageCount: (count: number | null) => void;
-  setApiCoverUrl: (url: string | null) => void;
-  setMyEdition: (edition: MyEditionDraft | null) => void;
-  setBookPick: (book: BookSearchResult | null) => void;
-  /** Réinitialiser après la création du projet (complete.tsx) */
+interface OnboardingStore {
+  /** Le parcours en cours (voir utils/onboardingFlow) */
+  flow: OnboardingFlow;
+
+  // Toi, en général
+  moments: ReadingMoment[];
+  usualFormats: BookFormat[];
+
+  // Ce livre-là
+  book: BookDraft | null;
+  invitation: InvitationDraft | null;
+  /** null = pas encore choisi : prérempli d'après les formats habituels */
+  format: BookFormat | null;
+  /** Ma position de départ : en pages (papier) ou en % (liseuse, audio) */
+  start: number;
+  /** Mon rythme visé, dans la même unité ; null = libre */
+  perDay: number | null;
+  /** La lecture créée à l'écran « Avec qui ? » (parcours créer) */
+  createdChallengeId: string | null;
+  /** Le lien d'invitation a été envoyé */
+  invited: boolean;
+
+  /**
+   * Le livre choisi dans le sheet de recherche (/book-search), repris par
+   * l'écran qui l'attend : « Quel livre ? » ou l'édition de « Tu en es où ? »
+   * (les deux sont montés dans la pile, chacun ne prend que le sien).
+   */
+  bookPick: { book: BookSearchResult; target: BookPickTarget } | null;
+
+  /** Commence un parcours, brouillon vierge */
+  begin: (flow: OnboardingFlow) => void;
+  patch: (values: Partial<Omit<OnboardingStore, 'begin' | 'patch' | 'setBookPick' | 'reset'>>) => void;
+  setBookPick: (pick: { book: BookSearchResult; target: BookPickTarget } | null) => void;
+  /** Vide le brouillon (après la carte de lecture, ou à l'abandon) */
   reset: () => void;
 }
 
-export const useOnboardingStore = create<OnboardingStore>((set) => ({
-  coverUri: null,
-  apiPageCount: null,
-  apiCoverUrl: null,
-  myEdition: null,
+const EMPTY = {
+  moments: [] as ReadingMoment[],
+  usualFormats: ['papier'] as BookFormat[],
+  book: null,
+  invitation: null,
+  format: null,
+  start: 0,
+  perDay: 20,
+  createdChallengeId: null,
+  invited: false,
   bookPick: null,
+};
 
-  setCoverUri: (uri) => set({ coverUri: uri }),
-  setApiPageCount: (count) => set({ apiPageCount: count }),
-  setApiCoverUrl: (url) => set({ apiCoverUrl: url }),
-  setMyEdition: (edition) => set({ myEdition: edition }),
-  setBookPick: (book) => set({ bookPick: book }),
-  reset: () => set({ coverUri: null, apiPageCount: null, apiCoverUrl: null, myEdition: null, bookPick: null }),
+export const useOnboardingStore = create<OnboardingStore>()((set) => ({
+  flow: 'create',
+  ...EMPTY,
+
+  begin: (flow) => set({ ...EMPTY, flow }),
+  patch: (values) => set(values),
+  setBookPick: (pick) => set({ bookPick: pick }),
+  reset: () => set({ ...EMPTY, flow: 'create' }),
 }));
+
+/** Le format de ce livre : choisi, sinon déduit des habitudes (papier d'abord) */
+export function bookFormat(state: Pick<OnboardingStore, 'format' | 'usualFormats'>): BookFormat {
+  if (state.format) return state.format;
+  const usual = state.usualFormats;
+  return usual.length === 0 || usual.includes('papier') ? 'papier' : usual[0];
+}

@@ -94,15 +94,18 @@ export function GhostTotal({
   left,
   baseline,
   drop = 0.12,
+  label: text,
 }: {
   total: number;
+  /** Ce qui s'écrit à la place de « /624 » (« % » pour une progression en %) */
+  label?: string;
   size: number;
   left: number;
   baseline: number;
   /** De combien sa ligne de base descend sous celle du chiffre, en fraction de sa taille */
   drop?: number;
 }) {
-  const label = `/${total}`;
+  const label = text ?? `/${total}`;
   const blur = 3;
   const margin = blur * 4;
   const width = figureWidth(label, size) + margin * 2;

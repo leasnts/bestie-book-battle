@@ -3,7 +3,7 @@ Le mur de couvertures de l'écran de connexion : des livres du catalogue
 Explorer, passés en rouge ton sur ton (bichromie entre deux rouges proches du
 fond), empilés en 4 colonnes qui défilent à l'écran.
 
-    python3 scripts/generate-login-covers.py [rouge|creme|couleur] [dossier]
+    python3 scripts/generate-login-covers.py [rouge|gris|creme|couleur] [dossier]
 
 Sortie : assets/images/login/covers-1.png … covers-4.png, une bande verticale
 par colonne. Chaque bande se raccorde à elle-même : posée deux fois l'une sous
@@ -40,6 +40,10 @@ RADIUS = 18
 # #A62F43 → #92293B. L'écart reste faible : on devine les livres, sans plus.
 DARK = np.array([0x6E, 0x1F, 0x2C])
 LIGHT = np.array([0xC2, 0x4A, 0x5D])
+# Variante « gris » (l'écran de connexion sur l'aquarelle, 2026-10-28) : sans
+# aucune saturation, posée en transparence : elle prend la couleur du fond
+GREY_DARK = np.array([0x60, 0x60, 0x60])
+GREY_LIGHT = np.array([0xC0, 0xC0, 0xC0])
 # Variante « crème » : les livres en papier clair, posés sur l'aquarelle
 CREAM_DARK = np.array([0xC9, 0xB8, 0xA0])
 CREAM_LIGHT = np.array([0xFF, 0xFB, 0xF4])
@@ -73,7 +77,7 @@ def tone(url, mode):
         out = img.convert("RGBA")
     else:
         lum = np.asarray(img.convert("L"), dtype=np.float32)[..., None] / 255
-        dark, light = (DARK, LIGHT) if mode == "rouge" else (CREAM_DARK, CREAM_LIGHT)
+        dark, light = {"rouge": (DARK, LIGHT), "gris": (GREY_DARK, GREY_LIGHT)}.get(mode, (CREAM_DARK, CREAM_LIGHT))
         out = Image.fromarray((dark + (light - dark) * lum).astype(np.uint8)).convert("RGBA")
     mask = Image.new("L", out.size, 0)
     ImageDraw.Draw(mask).rounded_rectangle((0, 0, COVER_W - 1, COVER_H - 1), RADIUS, fill=255)

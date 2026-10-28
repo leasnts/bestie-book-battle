@@ -19,11 +19,13 @@ interface PopEyesProps {
   size?: 'small' | 'medium' | 'large';
   /** Le tracé vectoriel (eyes.svg) en chocolat Lowki plutôt que l'image, yeux ensemble seulement. */
   vector?: boolean;
+  /** Le dégradé du tracé vectoriel (ton sur ton sur un fond coloré) ; chocolat par défaut */
+  tint?: readonly [string, string];
   style?: ViewStyle;
 }
 
 /** Une seule forme en chocolat Lowki ; les traits évidés laissent voir le fond. */
-function VectorEyes({ width }: { width: number }) {
+function VectorEyes({ width, tint = [lowki.chocolate.light, lowki.chocolate.dark] }: { width: number; tint?: readonly [string, string] }) {
   return (
     <Svg
       width={width}
@@ -32,8 +34,8 @@ function VectorEyes({ width }: { width: number }) {
     >
       <Defs>
         <LinearGradient id="eyes" x1="0" y1="0" x2="0" y2="1">
-          <Stop offset="0" stopColor={lowki.chocolate.light} />
-          <Stop offset="1" stopColor={lowki.chocolate.dark} />
+          <Stop offset="0" stopColor={tint[0]} />
+          <Stop offset="1" stopColor={tint[1]} />
         </LinearGradient>
       </Defs>
       <Path d={POP_EYES_PATH} fill="url(#eyes)" />
@@ -51,6 +53,7 @@ export default function PopEyes({
   variant = 'together', 
   size = 'medium', 
   vector = false,
+  tint,
   style 
 }: PopEyesProps) {
   const dimensions = SIZES[size];
@@ -58,7 +61,7 @@ export default function PopEyes({
   if (vector && variant === 'together') {
     return (
       <View style={[styles.container, dimensions, style]}>
-        <VectorEyes width={dimensions.width} />
+        <VectorEyes width={dimensions.width} tint={tint} />
       </View>
     );
   }

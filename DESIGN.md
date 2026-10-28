@@ -803,6 +803,36 @@ la rangée (`😭 🫶 😂 🔥 😱 👀`), puis `…` le sélecteur complet e
 et ✕ referme. Pastilles de 30 pt de haut au minimum. Pas de réactions sur une
 note privée.
 
+### Onboarding (#189)
+
+Prototype validé le 2026-10-28 (artefact « Onboarding chapi »). Deux temps :
+**toi, en général** (moments, formats habituels) puis **ce livre-là** (format,
+édition, position, rythme). Ordre des écrans : `utils/onboardingFlow.ts`.
+
+- **Entrée** : l'écran de connexion, sans volets d'ouverture (jugés trop
+  chargés le 2026-10-28 ; variantes comparées en artefact, la « Titre à
+  gauche » retenue). Il part identique au splash (rouge), qui se fond dans une aquarelle surtout rouge et chocolat, avec une touche de beurre et de beige loin du texte (`generate-profile-wash.py login`, le papier du profil en plus sombre). Dessus, le mur de couvertures en gris (net, sans flou) à 10 % (`generate-login-covers.py gris`), diffus. Puis « chapi » et la tagline
+  s'effacent, les yeux se posent en petit et en crème (`LivingEye light`)
+  au-dessus de la question, un grand titre à gauche juste au-dessus des
+  boutons : « On lit » / « *ensemble* ? ».
+- **Tu lances ou tu rejoins ?** (`choix`) : un écran à lui seul, entre « Ton
+  rythme » et « Quel livre ? » (et au « + »), deux grandes pastilles : « Je
+  lance une lecture » → « Quel livre ? », « J'ai un code » → « Ton code » puis
+  l'invitation. Les liens d'invitation l'évitent.
+- **Questions** : `OnboardingScreen` (papier grené, retour en verre, fil de
+  progression = la couture `Seam`, titre 30/36 avec un mot d'accent, pied sous
+  un `StitchLine`, colonne de téléphone sur grand écran).
+- **Un livre = un seul format.** Papier → pages de mon édition (demandée
+  seulement là) ; liseuse ou audio → % (`total_pages` 100, `PageRuler unit="percent"`).
+  Les formats habituels, eux, sont multiples (`ToggleChips`).
+- **Combien par jour ?** : un rythme, la date se calcule ; le bloc de pages
+  (`PageBlock`) s'épaissit avec un léger rebond ; un autocollant réagit (`StickerText`).
+- **Préparation** : trois tranches tombent et s'empilent pendant le vrai
+  enregistrement (≈ 2 s, pas un spinner).
+- **Carte de lecture** : le récap en carte de bibliothèque, tamponnée du jour
+  (`feel('bienvenue')`). En rejoignant, les deux yeux se retrouvent.
+- Position de départ posée sans historique ni série (`set_start_position`).
+
 ### Icônes
 
 **Une seule banque : [Lucide](https://lucide.dev/icons/)** (`lucide-react-native`),
