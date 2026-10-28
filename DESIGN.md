@@ -809,10 +809,11 @@ Prototype validé le 2026-10-28 (artefact « Onboarding chapi »). Deux temps :
 **toi, en général** (moments, formats habituels) puis **ce livre-là** (format,
 édition, position, rythme). Ordre des écrans : `utils/onboardingFlow.ts`.
 
-- **Entrée** : l'écran de connexion, tel quel (mur de couvertures, yeux,
-  « chapi »), sans volets d'ouverture (jugés trop chargés le 2026-10-28). La
-  tagline du splash s'y efface pour une question en gros, « On lit
-  *ensemble* ? », et « J'ai un lien ou un code » s'ajoute sous les boutons.
+- **Entrée** : l'écran de connexion, sans volets d'ouverture (jugés trop
+  chargés le 2026-10-28). Il part identique au splash, puis le logo monte en
+  petit et en crème en haut (`light` de BrandLockup), et la question prend le
+  centre en très grand : « On lit » / « *ensemble* » sur deux lignes, le « ? »
+  de la hauteur des deux. « J'ai un lien ou un code » sous les boutons.
   Rejouable par ▶ du profil.
 - **Questions** : `OnboardingScreen` (papier grené, retour en verre, fil de
   progression = la couture `Seam`, titre 30/36 avec un mot d'accent, pied sous
