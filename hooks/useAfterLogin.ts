@@ -8,9 +8,9 @@ import { firstStep } from '../utils/onboardingFlow';
 /**
  * Où aller une fois connecté, par Apple ou par email :
  * - une invitation en cours (lien ou code) → la suite pour la rejoindre ;
- * - nouveau compte → commencer ou rejoindre une lecture (choix) ;
+ * - nouveau compte → « Ton rythme », la suite de l'onboarding ;
  * - compte avec des lectures → l'accueil ;
- * - compte sans lecture → commencer ou rejoindre (choix).
+ * - compte sans lecture → ajouter un livre (« Quel livre ? »).
  */
 export function useAfterLogin() {
   const router = useRouter();
@@ -22,12 +22,8 @@ export function useAfterLogin() {
 
     if (result.isNewUser) {
       // Le prénom vient d'Apple, ou de la feuille email : rien à redemander
-      if (invited) {
-        router.replace(firstStep('join'));
-      } else {
-        onboarding.begin('create');
-        router.replace('/onboarding/choix');
-      }
+      if (!invited && onboarding.flow !== 'create') onboarding.begin('create');
+      router.replace(firstStep(invited ? 'join' : 'create'));
       return;
     }
 
@@ -52,7 +48,7 @@ export function useAfterLogin() {
       router.replace('/(tabs)');
     } else {
       onboarding.begin('add');
-      router.replace('/onboarding/choix');
+      router.replace(firstStep('add'));
     }
   };
 }

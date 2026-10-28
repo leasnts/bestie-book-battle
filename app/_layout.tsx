@@ -30,6 +30,7 @@ import { prepareFeel } from '../utils/feel';
 import { supabase } from '../supabaseConfig';
 import AnimatedSplash from '../components/AnimatedSplash';
 import { useSplashStore } from '../stores/splashStore';
+import { firstStep } from '../utils/onboardingFlow';
 import { sheetScreenOptions } from '../components/ui/SheetHeader';
 import { useFonts } from 'expo-font';
 
@@ -217,7 +218,7 @@ function RootLayoutNav() {
       if (pendingUserData) {
         // Onboarding interrompu (ex: app tuée en plein milieu) : pendingUserData a
         // été restauré depuis AsyncStorage, on reprend après la connexion
-        router.replace('/onboarding/choix');
+        router.replace(firstStep('create'));
       } else {
         router.replace('/auth/login');
       }
