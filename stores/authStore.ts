@@ -16,6 +16,7 @@ import { createJSONStorage, persist } from 'zustand/middleware';
 import { User as SupabaseUser } from '../types/supabase';
 import {
   signInWithApple,
+  verifyEmailCode,
   signOut,
   subscribeToAuthChanges,
   updateUserProfile,
@@ -39,7 +40,8 @@ import { useProgressStore } from './progressStore';
  */
 interface PendingUserData {
   authId: string;
-  appleUserId: string;
+  /** null pour une connexion par email */
+  appleUserId: string | null;
   email: string;
   firstName: string | null;
   lastName: string | null;
@@ -58,6 +60,8 @@ interface AuthStore {
 
   // Actions
   login: () => Promise<AppleSignInResult>;
+  /** Connexion par email : vérifie le code reçu, puis comme login(). */
+  loginWithEmail: (email: string, code: string) => Promise<AppleSignInResult>;
   logout: () => Promise<void>;
   deleteAccount: () => Promise<void>;
   setUser: (user: SupabaseUser | null) => void;
@@ -143,6 +147,39 @@ export const useAuthStore = create<AuthStore>()(
       console.error('Login error:', error);
       const errorMessage = error.message || 'Erreur lors de la connexion';
       set({ error: errorMessage, isLoading: false });
+      throw error;
+    }
+  },
+
+  // ===== Action : Connexion par email =====
+  /**
+   * Même suite que login() une fois le code vérifié : profil existant → store,
+   * nouveau compte → pendingUserData pour l'onboarding. Un code faux ou expiré
+   * lève une erreur (l'écran la montre sous le champ).
+   */
+  loginWithEmail: async (email, code) => {
+    set({ isLoading: true, error: null });
+    try {
+      const result = await verifyEmailCode(email, code);
+      if (result.isNewUser) {
+        set({
+          user: null,
+          pendingUserData: {
+            authId: result.authId,
+            appleUserId: null,
+            email: result.email,
+            firstName: null,
+            lastName: null,
+          },
+          isLoading: false,
+          isInitialized: true,
+        });
+      } else {
+        set({ user: result.user, isLoading: false, isInitialized: true });
+      }
+      return result;
+    } catch (error: any) {
+      set({ isLoading: false });
       throw error;
     }
   },
