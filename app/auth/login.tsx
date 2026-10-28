@@ -5,9 +5,9 @@
  * « chapi » et même tagline, au point près (BrandLockup). Le splash disparaît
  * d'un coup sur cette image identique (voir AnimatedSplash, `handoff`), puis :
  * 1. le mur de couvertures, ton sur ton, apparaît et défile lentement ;
- * 2. la tagline s'efface, le logo monte en petit et en crème en haut de
- *    l'écran, la question « On lit ensemble ? » prend le centre, en grand ; les
- *    boutons montent depuis le bas ;
+ * 2. « chapi » et la tagline s'effacent ; les yeux descendent en petit et en
+ *    crème au-dessus de la question « On lit ensemble ? », un grand titre à
+ *    gauche juste au-dessus des boutons, qui montent depuis le bas ;
  * 3. les yeux baissent le regard vers les boutons, clignent, et restent vivants.
  *
  * Deux façons d'entrer : Apple, ou un code reçu par email (feuille auth/email).
@@ -41,7 +41,7 @@ import Animated, {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Defs, RadialGradient, Rect, Stop } from 'react-native-svg';
 import Button3D from '../../components/Button3D';
-import { ACCENT_SCALE } from '../../components/ui/AccentWord';
+import AccentWord from '../../components/ui/AccentWord';
 import AppleLogo from '../../components/brand/AppleLogo';
 import { BRAND_BG, BrandTagline, BrandWord, LivingEye, LOCKUP, LOGO_SIZE } from '../../components/brand/BrandLockup';
 import { useAfterLogin } from '../../hooks/useAfterLogin';
@@ -75,14 +75,14 @@ const TERMS_URL = 'https://bbb.leasantos.me/terms';
 const PRIVACY_URL = 'https://bbb.leasantos.me/privacy';
 /** Le crème des textes sur le rouge */
 const CREAM = '#FFFBF4';
-/** Le logo, une fois monté en haut : sa taille, et l'écart au bord sûr */
-const LOGO_UP_SCALE = 0.3;
-const LOGO_UP_GAP = 6;
-/** Le haut visible des yeux, par rapport au centre (le carré du tracé déborde) */
-const LOGO_TOP = LOCKUP.eyesY - LOGO_SIZE * 0.35;
-/** La question, en très grand au centre ; le « ? » prend la hauteur des deux lignes */
-const QUESTION = 58;
-const QUESTION_LINE = 64;
+/** Les yeux, une fois posés au-dessus de la question : leur taille */
+const EYES_SCALE = 0.4;
+/** Le tracé dans le carré du logo : bord gauche et bas visibles, en points */
+const EYES_INK_LEFT = 14;
+const EYES_INK_BOTTOM = 184;
+/** La question, en grand titre à gauche */
+const QUESTION = 42;
+const QUESTION_LINE = 48;
 /** Le fond à hauteur du nom (milieu du dégradé BRAND_BG) : la clairière s'y fond. */
 const CLEARING = '#9c2c3f';
 
@@ -101,86 +101,6 @@ function CoverColumn({ index, x, drift }: { index: number; x: number; drift: Sha
       <Image source={source} style={styles.strip} contentFit="fill" />
       <Image source={source} style={styles.strip} contentFit="fill" />
       <Image source={source} style={styles.strip} contentFit="fill" />
-    </Animated.View>
-  );
-}
-
-/**
- * Les copains : de petites paires d'yeux autour du logo, pour dire qu'on lit à
- * plusieurs. Discrètes (à moitié transparentes), elles apparaissent, regardent
- * les boutons avec le grand, clignent, puis s'effacent, chacune à son rythme :
- * il y en a toujours deux ou trois, jamais les mêmes.
- * Position (x, y) par rapport au centre du bloc de marque, en points ; temps en ms.
- */
-const FRIENDS = [
-  { x: -128, y: -150, scale: 0.26, tilt: -12, delay: 1300, hold: 3200, rest: 2600 },
-  { x: 132, y: -168, scale: 0.21, tilt: 9, delay: 2300, hold: 2800, rest: 3400 },
-  { x: -158, y: 18, scale: 0.2, tilt: 7, delay: 3600, hold: 3000, rest: 3000 },
-  { x: 156, y: 6, scale: 0.24, tilt: -6, delay: 1800, hold: 3600, rest: 2400 },
-  { x: -60, y: -200, scale: 0.18, tilt: 4, delay: 5200, hold: 2600, rest: 3800 },
-  { x: 92, y: 168, scale: 0.19, tilt: -9, delay: 4400, hold: 2800, rest: 3600 },
-];
-/** Le plus visible qu'elles deviennent : discrètes à côté du logo. */
-const FRIEND_OPACITY = 0.45;
-const FRIEND_FADE = 700;
-
-function Friend({
-  friend,
-  start,
-  gazeX,
-  gazeY,
-}: {
-  friend: (typeof FRIENDS)[number];
-  start: boolean;
-  gazeX: SharedValue<number>;
-  gazeY: SharedValue<number>;
-}) {
-  const appear = useSharedValue(0);
-  const lid = useSharedValue(1);
-
-  useEffect(() => {
-    if (!start) return;
-    const fade = { duration: FRIEND_FADE, easing: Easing.inOut(Easing.cubic) };
-    appear.value = withDelay(
-      friend.delay,
-      withRepeat(
-        withSequence(
-          withTiming(1, fade),
-          withDelay(friend.hold, withTiming(0, fade)),
-          withDelay(friend.rest, withTiming(0, { duration: 0 })),
-        ),
-        -1,
-      ),
-    );
-    // Un clignement au milieu de chaque apparition
-    const cycle = 2 * FRIEND_FADE + friend.hold + friend.rest;
-    lid.value = withDelay(
-      friend.delay + FRIEND_FADE + friend.hold / 2,
-      withRepeat(
-        withSequence(
-          withTiming(0.08, { duration: 90, easing: Easing.in(Easing.quad) }),
-          withTiming(1, { duration: 160, easing: Easing.out(Easing.cubic) }),
-          withDelay(cycle - 250, withTiming(1, { duration: 0 })),
-        ),
-        -1,
-      ),
-    );
-  }, [start]);
-
-  const style = useAnimatedStyle(() => ({
-    opacity: appear.value * FRIEND_OPACITY,
-    transform: [
-      { translateX: friend.x },
-      { translateY: friend.y + 6 * (1 - appear.value) },
-      { rotate: `${friend.tilt}deg` },
-      { scale: friend.scale * (0.85 + 0.15 * appear.value) },
-    ],
-  }));
-
-  return (
-    <Animated.View style={[styles.friend, style]} pointerEvents="none">
-      <LivingEye side="left" gazeX={gazeX} gazeY={gazeY} lid={lid} />
-      <LivingEye side="right" gazeX={gazeX} gazeY={gazeY} lid={lid} />
     </Animated.View>
   );
 }
@@ -226,6 +146,8 @@ export default function WelcomeScreen() {
   const lift = useSharedValue(0);
   const { height: screenHeight } = useWindowDimensions();
   const [buttonsHeight, setButtonsHeight] = useState(0);
+  /** Le haut de la question : les yeux se posent juste au-dessus */
+  const [questionTop, setQuestionTop] = useState(0);
   const gazeX = useSharedValue(0);
   const gazeY = useSharedValue(0);
   const lid = useSharedValue(1);
@@ -275,10 +197,18 @@ export default function WelcomeScreen() {
   const wallStyle = useAnimatedStyle(() => ({ opacity: wall.value * WALL_OPACITY }));
   const veilStyle = useAnimatedStyle(() => ({ opacity: wall.value }));
   const taglineStyle = useAnimatedStyle(() => ({ opacity: 1 - wall.value }));
-  // Le logo monte en haut, en petit, et passe du rouge gravé au crème
-  const logoUpY = insets.top + LOGO_UP_GAP - screenHeight / 2 - LOGO_UP_SCALE * LOGO_TOP;
-  const brandStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: logoUpY * lift.value }, { scale: 1 + (LOGO_UP_SCALE - 1) * lift.value }],
+  // Les yeux rétrécissent autour du centre de l'écran, puis se posent au-dessus
+  // de la question, alignés sur elle à gauche, et passent du rouge gravé au crème
+  const eyesTop = questionTop - spacing.md - EYES_SCALE * EYES_INK_BOTTOM;
+  const eyesLeft = spacing.xl - EYES_SCALE * EYES_INK_LEFT;
+  const eyesX = eyesLeft - screenWidth / 2 + EYES_SCALE * (LOGO_SIZE / 2);
+  const eyesY = eyesTop - screenHeight / 2 - EYES_SCALE * (LOCKUP.eyesY - LOGO_SIZE / 2);
+  const eyesStyle = useAnimatedStyle(() => ({
+    transform: [
+      { translateX: eyesX * lift.value },
+      { translateY: eyesY * lift.value },
+      { scale: 1 + (EYES_SCALE - 1) * lift.value },
+    ],
   }));
   const darkStyle = useAnimatedStyle(() => ({ opacity: 1 - lift.value }));
   const lightStyle = useAnimatedStyle(() => ({ opacity: lift.value }));
@@ -286,7 +216,6 @@ export default function WelcomeScreen() {
     opacity: lift.value,
     transform: [{ translateY: 16 * (1 - lift.value) }],
   }));
-  const logoUpBottom = insets.top + LOGO_UP_GAP + LOGO_UP_SCALE * (LOCKUP.wordBottom - LOGO_TOP);
   const buttonsStyle = useAnimatedStyle(() => ({
     opacity: buttons.value,
     transform: [{ translateY: 24 * (1 - buttons.value) }],
@@ -366,43 +295,35 @@ export default function WelcomeScreen() {
       {/* Point d'ancrage au centre de l'écran, comme au splash */}
       <View style={styles.center}>
         <View>
-          <Animated.View style={brandStyle}>
+          <Animated.View style={eyesStyle}>
             <Animated.View style={darkStyle}>
               <View style={[styles.logo, { transform: [{ translateY: LOCKUP.eyesY }] }]}>
                 <LivingEye side="left" gazeX={gazeX} gazeY={gazeY} lid={lid} />
                 <LivingEye side="right" gazeX={gazeX} gazeY={gazeY} lid={lid} />
               </View>
-              <BrandWord />
             </Animated.View>
             <Animated.View style={lightStyle}>
               <View style={[styles.logo, { transform: [{ translateY: LOCKUP.eyesY }] }]}>
                 <LivingEye side="left" gazeX={gazeX} gazeY={gazeY} lid={lid} light />
                 <LivingEye side="right" gazeX={gazeX} gazeY={gazeY} lid={lid} light />
               </View>
-              <BrandWord light />
             </Animated.View>
           </Animated.View>
-          {/* Reprise du splash, puis effacée */}
+          {/* Reprise du splash, puis effacés : les yeux restent seuls */}
+          <BrandWord style={taglineStyle} />
           <BrandTagline style={taglineStyle} />
-          {FRIENDS.map((friend, i) => (
-            <Friend key={i} friend={friend} start={splashGone} gazeX={gazeX} gazeY={gazeY} />
-          ))}
         </View>
       </View>
 
-      {/* La question, au centre de la place entre le logo et les boutons */}
-      <Animated.View
-        style={[styles.questionZone, { top: logoUpBottom, bottom: buttonsHeight }, questionStyle]}
-        pointerEvents="none"
+      {/* La question, en grand titre à gauche, juste au-dessus des boutons */}
+      <Animated.Text
+        onLayout={(e) => setQuestionTop(e.nativeEvent.layout.y)}
+        style={[styles.question, { bottom: buttonsHeight + spacing.xl }, questionStyle]}
+        accessibilityRole="header"
       >
-        <View style={styles.questionRow} accessible accessibilityRole="header" accessibilityLabel="On lit ensemble ?">
-          <View>
-            <Text style={styles.questionLine}>On lit</Text>
-            <Text style={styles.questionAccent}>ensemble</Text>
-          </View>
-          <Text style={styles.questionMark}>?</Text>
-        </View>
-      </Animated.View>
+        On lit{'\n'}
+        <AccentWord text="ensemble ?" accent="ensemble" size={QUESTION} />
+      </Animated.Text>
 
       <Animated.View
         onLayout={(e) => setButtonsHeight(e.nativeEvent.layout.height)}
@@ -480,13 +401,6 @@ const styles = StyleSheet.create({
     width: 0,
     height: 0,
   },
-  friend: {
-    position: 'absolute',
-    width: LOGO_SIZE,
-    height: LOGO_SIZE,
-    left: -LOGO_SIZE / 2,
-    top: -LOGO_SIZE / 2,
-  },
   logo: {
     position: 'absolute',
     width: LOGO_SIZE,
@@ -494,36 +408,14 @@ const styles = StyleSheet.create({
     left: -LOGO_SIZE / 2,
     top: -LOGO_SIZE / 2,
   },
-  questionZone: {
+  question: {
     position: 'absolute',
-    left: 0,
-    right: 0,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  questionRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  questionLine: {
+    left: spacing.xl,
+    right: spacing.xl,
     fontFamily: fonts.display,
     fontSize: QUESTION,
     lineHeight: QUESTION_LINE,
-    letterSpacing: -0.5,
-    color: CREAM,
-  },
-  questionAccent: {
-    fontFamily: fonts.accent,
-    fontSize: QUESTION * ACCENT_SCALE,
-    lineHeight: QUESTION_LINE,
-    color: CREAM,
-  },
-  questionMark: {
-    fontFamily: fonts.display,
-    fontSize: QUESTION_LINE * 2,
-    lineHeight: QUESTION_LINE * 2,
-    // Le « ? » a une large marge à gauche dans la police : on le rapproche
-    marginLeft: -spacing.xs,
+    letterSpacing: -0.4,
     color: CREAM,
   },
   code: {

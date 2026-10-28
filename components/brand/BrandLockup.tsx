@@ -31,9 +31,8 @@ const SHAPE_GRADIENT = ['#6e1f2c', '#581924'] as const;
 const SHAPE_WORD = '#611b27';
 const DEBOSS_LIGHT = '#c35164';
 const DEBOSS_OPACITY = 0.55;
-/** En clair (`light`) : le logo crème, sans liseré, pour l'en-tête de la connexion */
+/** En clair (`light`) : les yeux crème, sans liseré, au-dessus de la question de la connexion */
 const LIGHT_GRADIENT = ['#FFFBF4', '#F1E6D6'] as const;
-const LIGHT_WORD = '#FFFBF4';
 
 /** Côté du carré du logo, en points. */
 export const LOGO_SIZE = 220;
@@ -69,28 +68,25 @@ export const LOCKUP = {
   eyesY: -68,
   wordTop: 22,
   subtitleTop: 22 + WORD.height + 6,
-  wordBottom: 22 + WORD.height,
 };
 
 /** Un tracé gravé : le liseré clair décalé dessous, la forme pleine dessus. */
-function Debossed({ d, viewBox, deboss, light }: { d: string; viewBox: string; deboss: number; light?: boolean }) {
+function Debossed({ d, viewBox, deboss }: { d: string; viewBox: string; deboss: number }) {
   return (
     <Svg width="100%" height="100%" viewBox={viewBox}>
-      {!light && (
-        <G transform={`translate(0 ${deboss})`}>
-          <Path d={d} fill={DEBOSS_LIGHT} fillOpacity={DEBOSS_OPACITY} />
-        </G>
-      )}
-      <Path d={d} fill={light ? LIGHT_WORD : SHAPE_WORD} />
+      <G transform={`translate(0 ${deboss})`}>
+        <Path d={d} fill={DEBOSS_LIGHT} fillOpacity={DEBOSS_OPACITY} />
+      </G>
+      <Path d={d} fill={SHAPE_WORD} />
     </Svg>
   );
 }
 
 /** « chapi », à sa place sous les yeux (à poser dans le point d'ancrage central). */
-export function BrandWord({ style, light }: { style?: object; light?: boolean }) {
+export function BrandWord({ style }: { style?: object }) {
   return (
     <Animated.View style={[styles.word, style]}>
-      <Debossed d={LOGO_WORD_PATH} viewBox={WORD.viewBox} deboss={DEBOSS_WORD} light={light} />
+      <Debossed d={LOGO_WORD_PATH} viewBox={WORD.viewBox} deboss={DEBOSS_WORD} />
     </Animated.View>
   );
 }
