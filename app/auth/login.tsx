@@ -1,8 +1,8 @@
 /**
- * Écran de connexion - "bestie book battle"
+ * Écran de connexion - "chapi"
  *
  * Design Figma : fond gris texturé, graphique BB avec couvertures de livres,
- * logo avec b en gras, slogan "que le meilleur lise !", bouton Apple Sign In.
+ * nom de l'app, slogan "que le meilleur lise !", bouton Apple Sign In.
  *
  * Flow :
  * - Nouveaux utilisateurs → onboarding (saisie prénom "Comment tu t'appelles ?")
@@ -127,11 +127,7 @@ export default function WelcomeScreen() {
       <View style={[styles.bottomSection, { paddingBottom: Math.max(insets.bottom, 16) + 16 }]}>
         {/* Logo + slogan au-dessus du bouton - même largeur que le bouton */}
         <View style={[styles.textBlock, { width: screenWidth - 48 }]}>
-          <Text style={styles.logo}>
-            <Text style={styles.logoBold}>b</Text>estie{' '}
-            <Text style={styles.logoBold}>b</Text>ook{' '}
-            <Text style={styles.logoBold}>b</Text>attle
-          </Text>
+          <Text style={styles.logo}>chapi</Text>
         </View>
 
         {/* Bouton Apple Sign In */}
@@ -172,14 +168,10 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
   },
   logo: {
-    fontFamily: fonts.displayRegular,
+    fontFamily: fonts.displayBold,
     fontSize: 32,
     color: colors.textPrimary,
     letterSpacing: 2,
     textAlign: 'center',
-  },
-  logoBold: {
-    fontFamily: fonts.displayBold,
-    color: colors.textPrimary, // gris foncé/noir pour les "b"
   },
 });
