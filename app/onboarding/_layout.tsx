@@ -2,6 +2,7 @@
  * Les écrans de l'onboarding (issue #189, prototype validé le 2026-10-28).
  * L'ordre de chaque parcours vit dans utils/onboardingFlow.ts.
  *
+ * - choix : tu lances ou tu rejoins ? (avant le livre)
  * - code, invitation : rejoindre une lecture (lien ou code)
  * - rythme → carte : les questions, la préparation, la carte de lecture
  */

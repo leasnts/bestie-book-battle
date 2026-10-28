@@ -16,6 +16,7 @@ import { useOnboardingStore } from '../stores/onboardingStore';
 export type OnboardingFlow = 'create' | 'join' | 'add' | 'addJoin';
 
 export type OnboardingStep =
+  | 'choix'
   | 'code'
   | 'invitation'
   | 'rythme'
@@ -28,14 +29,14 @@ export type OnboardingStep =
   | 'carte';
 
 const FLOWS: Record<OnboardingFlow, OnboardingStep[]> = {
-  create: ['rythme', 'livre', 'page', 'objectif', 'inviter', 'notifications', 'prepa', 'carte'],
+  create: ['rythme', 'choix', 'livre', 'page', 'objectif', 'inviter', 'notifications', 'prepa', 'carte'],
   join: ['rythme', 'page', 'notifications', 'prepa', 'carte'],
-  add: ['livre', 'page', 'objectif', 'inviter', 'prepa', 'carte'],
+  add: ['choix', 'livre', 'page', 'objectif', 'inviter', 'prepa', 'carte'],
   addJoin: ['page', 'prepa', 'carte'],
 };
 
 /** Les écrans à questions, ceux qui portent le fil de progression */
-const ASKING: OnboardingStep[] = ['rythme', 'livre', 'page', 'objectif', 'inviter', 'notifications'];
+const ASKING: OnboardingStep[] = ['rythme', 'choix', 'livre', 'page', 'objectif', 'inviter', 'notifications'];
 
 /** L'écran qui suit, dans ce parcours */
 export function nextStep(flow: OnboardingFlow, step: OnboardingStep): `/onboarding/${OnboardingStep}` {
@@ -63,7 +64,7 @@ export function isAddFlow(flow: OnboardingFlow) {
 
 /**
  * Ajouter un livre depuis l'app (le « + », la bibliothèque, l'accueil vide…) :
- * brouillon vierge, puis « Tu lances ou tu rejoins ? » — ou le code, pour rejoindre.
+ * brouillon vierge, puis « Tu lances ou tu rejoins ? » — ou le code directement.
  */
 export function startAdding(join = false): `/onboarding/${OnboardingStep}` {
   useOnboardingStore.getState().begin(join ? 'addJoin' : 'add');

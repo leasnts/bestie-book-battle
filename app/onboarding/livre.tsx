@@ -3,10 +3,6 @@
  * édition dans le sheet de recherche (/book-search, le même que partout).
  * Couverture, pages et éditeur arrivent avec lui. La saisie à la main reste
  * possible ; une couverture absente ne bloque plus rien.
- *
- * Commencer ou rejoindre se décide ici, au moment où ça compte (le titre le
- * demande) : « Je choisis le livre » (la recherche) ou « J'ai un code » (les six cases). Le code trouvé,
- * le parcours passe à rejoindre et l'invitation s'ouvre.
  */
 
 import { LinearGradient } from 'expo-linear-gradient';
@@ -16,23 +12,15 @@ import React, { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import Button3D from '../../components/Button3D';
-import InvitationCode from '../../components/onboarding/InvitationCode';
 import OnboardingScreen, { rise } from '../../components/onboarding/OnboardingScreen';
 import { COVER_RATIO, CoverImage } from '../../components/ui/BookCover';
-import FilterChips from '../../components/ui/FilterChips';
 import { useStamp } from '../../components/ui/Stamp';
-import { useOnboardingStore, type BookDraft, type InvitationDraft } from '../../stores/onboardingStore';
+import { useOnboardingStore, type BookDraft } from '../../stores/onboardingStore';
 import { borderRadius, colors, fonts, fontSize, inkAlpha, paperFrameGradient, shadows, spacing } from '../../utils/constants';
 import { feel } from '../../utils/feel';
-import { isAddFlow, nextStep } from '../../utils/onboardingFlow';
+import { nextStep } from '../../utils/onboardingFlow';
 
 const COVER_W = 112;
-
-type Way = 'choisir' | 'code';
-const WAYS: { key: Way; label: string }[] = [
-  { key: 'choisir', label: 'Je choisis le livre' },
-  { key: 'code', label: "J'ai un code" },
-];
 
 export default function LivreScreen() {
   const router = useRouter();
@@ -41,9 +29,6 @@ export default function LivreScreen() {
   const bookPick = useOnboardingStore((s) => s.bookPick);
   const patch = useOnboardingStore((s) => s.patch);
   const [manual, setManual] = useState(false);
-  const [way, setWay] = useState<Way>('choisir');
-  // Revenu·e de l'invitation : le parcours redevient « commencer »
-  const own = isAddFlow(flow) ? 'add' : 'create';
 
   // Le livre choisi dans le sheet de recherche : on le reprend, puis on vide le dépôt
   useEffect(() => {
@@ -66,53 +51,33 @@ export default function LivreScreen() {
   }, [bookPick, patch]);
 
   const search = () => router.push('/book-search');
-
-  const confirm = () => {
-    patch({ flow: own, invitation: null });
-    router.push(nextStep(own, 'livre'));
-  };
-
-  const join = (invitation: InvitationDraft) => {
-    patch({ invitation, flow: own === 'add' ? 'addJoin' : 'join' });
-    router.push('/onboarding/invitation');
-  };
   const ready = !!book && book.title.trim().length > 0 && book.pages > 0;
 
   return (
     <OnboardingScreen
       step="livre"
-      title="Tu lances ou tu rejoins ?"
-      accent="rejoins"
+      title="Quel livre ?"
+      accent="livre"
       scroll
       footer={
-        way === 'choisir' ? (
-          <>
-            <Button3D variant="primary" disabled={!ready} onPress={confirm} style={styles.wide}>
-              C'est celui-là
-            </Button3D>
-            {!book && !manual && (
-              <Pressable onPress={() => setManual(true)} hitSlop={8} accessibilityRole="button" style={styles.link}>
-                <Text style={styles.linkText}>Ajouter à la main</Text>
-              </Pressable>
-            )}
-          </>
-        ) : undefined
+        <>
+          <Button3D variant="primary" disabled={!ready} onPress={() => router.push(nextStep(flow, 'livre'))} style={styles.wide}>
+            C'est celui-là
+          </Button3D>
+          {!book && !manual && (
+            <Pressable onPress={() => setManual(true)} hitSlop={8} accessibilityRole="button" style={styles.link}>
+              <Text style={styles.linkText}>Ajouter à la main</Text>
+            </Pressable>
+          )}
+        </>
       }
     >
-      <Animated.View entering={rise(1)} style={styles.ways}>
-        <FilterChips large options={WAYS} value={way} onChange={setWay} />
-      </Animated.View>
-
-      {way === 'code' ? (
-        <Animated.View entering={FadeIn.duration(250)}>
-          <InvitationCode onFound={join} />
-        </Animated.View>
-      ) : book && !manual ? (
+      {book && !manual ? (
         <PickedBook book={book} onChange={search} onPages={(pages) => patch({ book: { ...book, pages } })} />
       ) : manual ? (
         <ManualBook onChange={(draft) => patch({ book: draft, format: null, start: 0 })} />
       ) : (
-        <Animated.View entering={rise(2)}>
+        <Animated.View entering={rise(1)}>
           <Pressable style={styles.search} onPress={search} accessibilityRole="search" accessibilityLabel="Chercher un livre">
             <SearchIcon size={20} color={colors.placeholder} />
             <Text style={styles.searchText}>Titre, auteur·ice, saga</Text>
@@ -177,9 +142,6 @@ function ManualBook({ onChange }: { onChange: (book: BookDraft) => void }) {
 }
 
 const styles = StyleSheet.create({
-  ways: {
-    marginBottom: spacing.lg,
-  },
   wide: {
     width: '100%',
   },
