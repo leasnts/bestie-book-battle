@@ -57,7 +57,7 @@ const COVER_W = 112;
 const STRIP_H = 4 * (168 + 14);
 const COLUMN_GAP = 14;
 /** Les couvertures restent discrètes : on devine les livres sans les lire. */
-const WALL_OPACITY = 0.5;
+const WALL_OPACITY = 0.6;
 /** Une bande défile sur toute sa hauteur en 40 s : à peine un mouvement. */
 const DRIFT_DURATION = 40000;
 
@@ -252,9 +252,9 @@ export default function WelcomeScreen() {
       >
         <Button3D
           onPress={handleAppleLogin}
-          variant="secondary"
+          variant="primary"
           loading={isLoading}
-          iconComponent={<AppleLogo size={22} color={colors.textPrimary} />}
+          iconComponent={<AppleLogo size={22} color={colors.white} />}
           iconPosition="left"
           style={{ width: buttonWidth }}
         >
@@ -262,8 +262,8 @@ export default function WelcomeScreen() {
         </Button3D>
         <Button3D
           onPress={() => router.push('/auth/email')}
-          variant="secondary"
-          iconComponent={<MailIcon size={22} color={colors.textPrimary} />}
+          variant="primary"
+          iconComponent={<MailIcon size={22} color={colors.white} />}
           iconPosition="left"
           style={{ width: buttonWidth }}
         >

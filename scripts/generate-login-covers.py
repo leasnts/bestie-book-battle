@@ -3,7 +3,7 @@ Le mur de couvertures de l'écran de connexion : des livres du catalogue
 Explorer, passés en rouge ton sur ton (bichromie entre deux rouges proches du
 fond), empilés en 4 colonnes qui défilent à l'écran.
 
-    python3 scripts/generate-login-covers.py
+    python3 scripts/generate-login-covers.py [rouge|creme|couleur] [dossier]
 
 Sortie : assets/images/login/covers-1.png … covers-4.png, une bande verticale
 par colonne. Chaque bande se raccorde à elle-même : posée deux fois l'une sous
@@ -12,6 +12,7 @@ l'autre, elle défile en boucle sans couture.
 
 import io
 import json
+import sys
 import urllib.request
 from pathlib import Path
 
@@ -39,6 +40,9 @@ RADIUS = 18
 # #A62F43 → #92293B. L'écart reste faible : on devine les livres, sans plus.
 DARK = np.array([0x6E, 0x1F, 0x2C])
 LIGHT = np.array([0xC2, 0x4A, 0x5D])
+# Variante « crème » : les livres en papier clair, posés sur l'aquarelle
+CREAM_DARK = np.array([0xC9, 0xB8, 0xA0])
+CREAM_LIGHT = np.array([0xFF, 0xFB, 0xF4])
 
 
 def covers():
@@ -60,14 +64,17 @@ def covers():
     return [found[t] for t in TITLES if t in found]
 
 
-def tone(url):
+def tone(url, mode):
     # Les vignettes Apple Books acceptent n'importe quelle taille dans l'URL
     url = url.rsplit("/", 1)[0] + f"/{COVER_W * 2}x{COVER_H * 2}bb.jpg"
-    img = Image.open(io.BytesIO(urllib.request.urlopen(url).read())).convert("L")
+    img = Image.open(io.BytesIO(urllib.request.urlopen(url).read())).convert("RGB")
     img = img.resize((COVER_W, COVER_H), Image.LANCZOS)
-    lum = np.asarray(img, dtype=np.float32)[..., None] / 255
-    rgb = (DARK + (LIGHT - DARK) * lum).astype(np.uint8)
-    out = Image.fromarray(rgb).convert("RGBA")
+    if mode == "couleur":
+        out = img.convert("RGBA")
+    else:
+        lum = np.asarray(img.convert("L"), dtype=np.float32)[..., None] / 255
+        dark, light = (DARK, LIGHT) if mode == "rouge" else (CREAM_DARK, CREAM_LIGHT)
+        out = Image.fromarray((dark + (light - dark) * lum).astype(np.uint8)).convert("RGBA")
     mask = Image.new("L", out.size, 0)
     ImageDraw.Draw(mask).rounded_rectangle((0, 0, COVER_W - 1, COVER_H - 1), RADIUS, fill=255)
     out.putalpha(mask)
@@ -75,9 +82,11 @@ def tone(url):
 
 
 def main():
+    mode = sys.argv[1] if len(sys.argv) > 1 else "rouge"
+    out_dir = Path(sys.argv[2]) if len(sys.argv) > 2 else OUT
     urls = covers()
-    tiles = [tone(u) for u in urls]
-    OUT.mkdir(parents=True, exist_ok=True)
+    tiles = [tone(u, mode) for u in urls]
+    out_dir.mkdir(parents=True, exist_ok=True)
     per = len(tiles) // COLUMNS
     for c in range(COLUMNS):
         col = tiles[c::COLUMNS][:per]
@@ -85,7 +94,7 @@ def main():
         for i, t in enumerate(col):
             strip.paste(t, (0, i * (COVER_H + GAP)), t)
         # Bichromie : 128 teintes suffisent, le fichier pèse trois fois moins
-        strip.quantize(128, method=Image.Quantize.FASTOCTREE).save(OUT / f"covers-{c + 1}.png", optimize=True)
+        strip.quantize(128, method=Image.Quantize.FASTOCTREE).save(out_dir / f"covers-{c + 1}.png", optimize=True)
     print(f"{len(tiles)} couvertures, {COLUMNS} colonnes de {per}")
 
 
