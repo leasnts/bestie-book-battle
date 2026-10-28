@@ -3,13 +3,14 @@
  *
  * Sheet natif (`SheetPage`) ouvert depuis l'écran de connexion, en trois temps :
  * 1. l'adresse → Supabase envoie un code à 6 chiffres ;
- * 2. le code (iOS le propose au-dessus du clavier dès que le mail arrive),
- *    vérifié tout seul au 6ᵉ chiffre ;
+ * 2. le code, une case par chiffre (un seul champ caché dessous : le coller ou
+ *    la suggestion d'iOS remplit tout d'un coup), vérifié tout seul au 6ᵉ
+ *    chiffre ; « Renvoyer » attend 60 s, compte à rebours affiché ;
  * 3. nouveau compte seulement : le prénom (Apple le donne, l'email non).
  */
 
-import React, { useRef, useState } from 'react';
-import { StyleSheet, Text, TextInput } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { Pressable, StyleSheet, Text, TextInput, View, type TextInputInstance } from 'react-native';
 import Button3D from '../../components/Button3D';
 import SheetPage, { SheetFooter } from '../../components/ui/SheetPage';
 import { useAfterLogin } from '../../hooks/useAfterLogin';
@@ -18,7 +19,56 @@ import { useAuthStore } from '../../stores/authStore';
 import { borderRadius, colors, fonts, fontSize, shadows, spacing } from '../../utils/constants';
 
 const CODE_LENGTH = 6;
+/** Supabase refuse un nouveau code pour la même adresse avant 60 s (smtp_max_frequency). */
+const RESEND_DELAY = 60;
 const isEmail = (value: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
+
+/**
+ * Six cases, une par chiffre. Elles ne font que montrer : la saisie passe par
+ * un seul champ invisible posé dessus, qui garde le collage et l'autoremplissage.
+ */
+function CodeBoxes({
+  value,
+  onChange,
+  editable,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  editable: boolean;
+}) {
+  const input = useRef<TextInputInstance>(null);
+  const [focused, setFocused] = useState(true);
+  return (
+    <Pressable onPress={() => input.current?.focus()} accessible={false}>
+      <View style={styles.boxes}>
+        {Array.from({ length: CODE_LENGTH }, (_, i) => {
+          const active = focused && editable && i === Math.min(value.length, CODE_LENGTH - 1);
+          return (
+            <View key={i} style={[styles.box, active && styles.boxActive]}>
+              <Text style={styles.digit}>{value[i] ?? ''}</Text>
+            </View>
+          );
+        })}
+      </View>
+      <TextInput
+        ref={input}
+        style={styles.hiddenInput}
+        value={value}
+        onChangeText={onChange}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
+        keyboardType="number-pad"
+        textContentType="oneTimeCode"
+        autoComplete="one-time-code"
+        maxLength={CODE_LENGTH}
+        editable={editable}
+        caretHidden
+        autoFocus
+        accessibilityLabel="Code reçu par email"
+      />
+    </Pressable>
+  );
+}
 
 type Step = 'email' | 'code' | 'name';
 
@@ -33,6 +83,14 @@ export default function EmailLoginSheet() {
   const [firstName, setFirstName] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  /** Secondes avant de pouvoir redemander un code */
+  const [wait, setWait] = useState(0);
+
+  useEffect(() => {
+    if (wait <= 0) return;
+    const timer = setTimeout(() => setWait((w) => w - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [wait]);
   const result = useRef<AppleSignInResult | null>(null);
 
   const sendCode = async () => {
@@ -42,6 +100,7 @@ export default function EmailLoginSheet() {
       await sendEmailCode(email.trim().toLowerCase());
       setCode('');
       setStep('code');
+      setWait(RESEND_DELAY);
     } catch (e: any) {
       setError(e?.status === 429 ? 'Trop d’essais, réessaie dans quelques minutes' : 'Envoi impossible, vérifie ton adresse');
     } finally {
@@ -86,25 +145,11 @@ export default function EmailLoginSheet() {
   if (step === 'code') {
     return (
       <SheetPage title="Ton code" subtitle={email.trim()} onBack={() => setStep('email')}>
-        <TextInput
-          key="code"
-          style={[styles.input, styles.code]}
-          value={code}
-          onChangeText={onCodeChange}
-          keyboardType="number-pad"
-          textContentType="oneTimeCode"
-          autoComplete="one-time-code"
-          maxLength={CODE_LENGTH}
-          placeholder="000000"
-          placeholderTextColor={colors.placeholder}
-          editable={!busy}
-          autoFocus
-          accessibilityLabel="Code reçu par email"
-        />
+        <CodeBoxes value={code} onChange={onCodeChange} editable={!busy} />
         {error && <Text style={styles.error}>{error}</Text>}
         <SheetFooter>
-          <Button3D onPress={sendCode} variant="secondary" disabled={busy}>
-            Renvoyer le code
+          <Button3D onPress={sendCode} variant="primary" disabled={busy || wait > 0}>
+            {wait > 0 ? `Renvoyer dans ${wait} s` : 'Renvoyer le code'}
           </Button3D>
         </SheetFooter>
       </SheetPage>
@@ -179,14 +224,36 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.lg,
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.lg,
-    // Remis à zéro : iOS recycle le champ du code, qui garderait son espacement
-    letterSpacing: 0,
     ...shadows.xs,
   },
-  code: {
-    fontSize: 28,
-    letterSpacing: 12,
-    textAlign: 'center',
+  boxes: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+  },
+  box: {
+    flex: 1,
+    height: 60,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.white,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: borderRadius.lg,
+    ...shadows.xs,
+  },
+  boxActive: {
+    borderColor: colors.textSecondary,
+    borderWidth: 1.5,
+  },
+  digit: {
+    fontFamily: fonts.body,
+    fontSize: 26,
+    color: colors.textPrimary,
+  },
+  hiddenInput: {
+    ...StyleSheet.absoluteFill,
+    color: 'transparent',
+    opacity: 0.02,
   },
   error: {
     fontFamily: fonts.body,
