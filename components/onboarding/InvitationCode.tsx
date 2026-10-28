@@ -1,7 +1,7 @@
 /**
  * Le code d'une lecture : six cases, vérifiées toutes seules au sixième
  * chiffre. Trouvé → `onFound` avec l'invitation ; sinon, on vide et on le dit.
- * Sur l'écran du code et dans « Quel livre ? » (J'ai un code).
+ * Sur l'écran du code et dans « Tu lances ou tu rejoins ? » (J'ai un code).
  */
 
 import React, { useState } from 'react';

@@ -815,8 +815,9 @@ Prototype validé le 2026-10-28 (artefact « Onboarding chapi »). Deux temps :
   s'effacent, les yeux se posent en petit et en crème (`LivingEye light`)
   au-dessus de la question, un grand titre à gauche juste au-dessus des
   boutons : « On lit » / « *ensemble* ? ».
-- **Commencer ou rejoindre** se décide à « Quel livre ? », le moment où ça
-  compte : deux pastilles, « Je le choisis » (la recherche) ou « J'ai un code »
+- **Commencer ou rejoindre** se décide à l'écran du livre, « Tu lances ou
+  tu rejoins ? », le moment où ça compte : deux pastilles, « Je choisis le
+  livre » (la recherche) ou « J'ai un code »
   (les six cases, `InvitationCode`). Le code trouvé → l'invitation, puis « Tu
   en es où ? ». Les liens d'invitation, eux, passent directement à l'invitation.
 - **Questions** : `OnboardingScreen` (papier grené, retour en verre, fil de

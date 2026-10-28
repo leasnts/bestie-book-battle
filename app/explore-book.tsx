@@ -84,7 +84,7 @@ export default function ExploreBookRoute() {
       router.navigate('/(tabs)');
       return;
     }
-    // Le livre déjà choisi : on passe « Quel livre ? », direct à « Tu en es où ? »
+    // Le livre déjà choisi : on passe « Tu lances ou tu rejoins ? », direct à « Tu en es où ? »
     const next = startAdding();
     useOnboardingStore.getState().patch({
       book: { title: book.title, author: book.author, pages: pageCount ?? 0, cover: book.coverUrl, publisher: book.publisher },

@@ -4,8 +4,8 @@
  * Couverture, pages et éditeur arrivent avec lui. La saisie à la main reste
  * possible ; une couverture absente ne bloque plus rien.
  *
- * Commencer ou rejoindre se décide ici, au moment où ça compte : « Je le
- * choisis » (la recherche) ou « J'ai un code » (les six cases). Le code trouvé,
+ * Commencer ou rejoindre se décide ici, au moment où ça compte (le titre le
+ * demande) : « Je choisis le livre » (la recherche) ou « J'ai un code » (les six cases). Le code trouvé,
  * le parcours passe à rejoindre et l'invitation s'ouvre.
  */
 
@@ -30,7 +30,7 @@ const COVER_W = 112;
 
 type Way = 'choisir' | 'code';
 const WAYS: { key: Way; label: string }[] = [
-  { key: 'choisir', label: 'Je le choisis' },
+  { key: 'choisir', label: 'Je choisis le livre' },
   { key: 'code', label: "J'ai un code" },
 ];
 
@@ -81,8 +81,8 @@ export default function LivreScreen() {
   return (
     <OnboardingScreen
       step="livre"
-      title="Quel livre ?"
-      accent="livre"
+      title="Tu lances ou tu rejoins ?"
+      accent="rejoins"
       scroll
       footer={
         way === 'choisir' ? (
