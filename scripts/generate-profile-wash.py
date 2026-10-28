@@ -13,7 +13,8 @@ Ce qui fait aquarelle :
 - pas de grain ni de granulation : essayés, jugés pas beaux (Lea, 2026-10-23).
 
 Variante « login » (2026-10-28) : le fond plein écran de la connexion, en
-rouge et chocolat seulement (plus de brun, plus de rouge, sans beurre) →
+surtout rouge et chocolat, avec une touche de beurre et de beige pour avoir
+toute la palette ; jamais sous le titre ni les boutons (contraste du crème) →
 assets/images/watercolor/login-wash.png.
 
 Usage : python3 scripts/generate-profile-wash.py [login]
@@ -37,6 +38,7 @@ BUTTER = (np.array([0xF5, 0xE6, 0xA8]), np.array([0xD6, 0xC3, 0x6F]))
 RED = (np.array([0xA6, 0x2F, 0x43]), np.array([0x7C, 0x20, 0x31]))
 CHOCOLATE_LIGHT = np.array([0x63, 0x3D, 0x32])
 CHOCOLATE_DARK = np.array([0x48, 0x2B, 0x24])
+BEIGE = np.array([0xC5, 0xA4, 0x7E])
 
 
 def value_noise(rng, cell):
@@ -81,6 +83,9 @@ def main():
             (RED[0], blob(nx, ny, 0.15, 0.62, 0.80, 0.32, 1.0)),
             (CHOCOLATE_LIGHT, blob(nx, ny, 0.95, 0.72, 0.75, 0.32, 1.0)),
             (RED[1], blob(nx, ny, 0.40, 1.00, 0.90, 0.30, 1.0)),
+            # Les touches claires, légères : en haut, loin du texte
+            (BUTTER[1], 0.75 * blob(nx, ny, 0.30, 0.04, 0.45, 0.14, 1.0)),
+            (BEIGE, 0.7 * blob(nx, ny, 1.00, 0.36, 0.40, 0.14, 1.0)),
         )
     else:
         # Fond : beurre foncé en haut → rouge en bas
