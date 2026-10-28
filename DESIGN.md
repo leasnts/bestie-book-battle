@@ -811,7 +811,7 @@ Prototype validé le 2026-10-28 (artefact « Onboarding chapi »). Deux temps :
 
 - **Entrée** : l'écran de connexion, sans volets d'ouverture (jugés trop
   chargés le 2026-10-28 ; variantes comparées en artefact, la « Titre à
-  gauche » retenue). Il part identique au splash (rouge), passe au chocolat en dégradé avec le mur de couvertures chocolat ton sur ton (`generate-login-covers.py chocolat`), puis « chapi » et la tagline
+  gauche » retenue). Il part identique au splash (rouge), qui se fond dans une aquarelle rouge et chocolat (`generate-profile-wash.py login`, le papier du profil en plus sombre ; le mur de couvertures est retiré), puis « chapi » et la tagline
   s'effacent, les yeux se posent en petit et en crème (`LivingEye light`)
   au-dessus de la question, un grand titre à gauche juste au-dessus des
   boutons : « On lit » / « *ensemble* ? ». « J'ai un lien ou un code » sous les

@@ -4,8 +4,8 @@
  * Il prolonge le splash sans couture : même fond rouge, mêmes yeux, même
  * « chapi » et même tagline, au point près (BrandLockup). Le splash disparaît
  * d'un coup sur cette image identique (voir AnimatedSplash, `handoff`), puis :
- * 1. le rouge du splash passe au chocolat (dégradé Lowki), le mur de
- *    couvertures, chocolat ton sur ton, apparaît et défile lentement ;
+ * 1. le rouge du splash se fond dans une aquarelle rouge et chocolat (le
+ *    papier du profil, en plus sombre) ;
  * 2. « chapi » et la tagline s'effacent ; les yeux descendent en petit et en
  *    crème au-dessus de la question « On lit ensemble ? », un grand titre à
  *    gauche juste au-dessus des boutons, qui montent depuis le bas ;
@@ -30,9 +30,7 @@ import React, { useEffect, useState } from 'react';
 import { Alert, Linking, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import Animated, {
   Easing,
-  type SharedValue,
   useAnimatedStyle,
-  useReducedMotion,
   useSharedValue,
   withDelay,
   withRepeat,
@@ -40,7 +38,6 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Svg, { Defs, RadialGradient, Rect, Stop } from 'react-native-svg';
 import Button3D from '../../components/Button3D';
 import AccentWord from '../../components/ui/AccentWord';
 import AppleLogo from '../../components/brand/AppleLogo';
@@ -54,21 +51,8 @@ import { colors, fonts, inkGradient, lowki, spacing } from '../../utils/constant
 import { feel } from '../../utils/feel';
 import { firstStep } from '../../utils/onboardingFlow';
 
-/** Les bandes de couvertures (scripts/generate-login-covers.py), une par colonne. */
-const COVER_STRIPS = [
-  require('../../assets/images/login/covers-1.png'),
-  require('../../assets/images/login/covers-2.png'),
-  require('../../assets/images/login/covers-3.png'),
-  require('../../assets/images/login/covers-4.png'),
-];
-/** Une bande : 4 couvertures de 112 × 168 pt, 14 pt entre elles. */
-const COVER_W = 112;
-const STRIP_H = 4 * (168 + 14);
-const COLUMN_GAP = 14;
-/** Les couvertures restent discrètes : on devine les livres sans les lire. */
-const WALL_OPACITY = 0.6;
-/** Une bande défile sur toute sa hauteur en 40 s : à peine un mouvement. */
-const DRIFT_DURATION = 40000;
+/** L'aquarelle du fond (scripts/generate-profile-wash.py login) */
+const WASH = require('../../assets/images/watercolor/login-wash.png');
 
 const ENTRANCE = Easing.inOut(Easing.cubic);
 /** Les mêmes pages que les Réglages */
@@ -84,54 +68,11 @@ const EYES_INK_BOTTOM = 184;
 /** La question, en grand titre à gauche */
 const QUESTION = 42;
 const QUESTION_LINE = 52;
-/** Le milieu du dégradé chocolat : la clairière s'y fond. */
-const CLEARING = '#563429';
-
-/** Une colonne de couvertures, posée deux fois pour boucler sans couture. */
-function CoverColumn({ index, x, drift }: { index: number; x: number; drift: SharedValue<number> }) {
-  // Une colonne sur deux monte, l'autre descend, chacune décalée en hauteur
-  const up = index % 2 === 0;
-  const offset = ((index * 0.37) % 1) * STRIP_H;
-  const style = useAnimatedStyle(() => {
-    const travel = ((drift.value * STRIP_H + offset) % STRIP_H) * (up ? -1 : 1);
-    return { transform: [{ translateY: (up ? 0 : -STRIP_H) + travel }] };
-  });
-  const source = COVER_STRIPS[index % COVER_STRIPS.length];
-  return (
-    <Animated.View style={[styles.column, { left: x }, style]}>
-      <Image source={source} style={styles.strip} contentFit="fill" />
-      <Image source={source} style={styles.strip} contentFit="fill" />
-      <Image source={source} style={styles.strip} contentFit="fill" />
-    </Animated.View>
-  );
-}
-
-/** Le mur de couvertures, penché, qui déborde de l'écran de tous les côtés. */
-function CoverWall({ drift }: { drift: SharedValue<number> }) {
-  const { width, height } = useWindowDimensions();
-  // Assez de colonnes pour couvrir l'écran une fois penché
-  const span = Math.hypot(width, height);
-  const count = Math.ceil(span / (COVER_W + COLUMN_GAP)) + 1;
-  const wallW = count * (COVER_W + COLUMN_GAP);
-  return (
-    <View
-      style={[
-        styles.wall,
-        { width: wallW, height: span, left: (width - wallW) / 2, top: (height - span) / 2 },
-      ]}
-    >
-      {Array.from({ length: count }, (_, i) => (
-        <CoverColumn key={i} index={i} x={i * (COVER_W + COLUMN_GAP)} drift={drift} />
-      ))}
-    </View>
-  );
-}
 
 export default function WelcomeScreen() {
   const insets = useSafeAreaInsets();
-  const { width: screenWidth } = useWindowDimensions();
+  const { width: screenWidth, height: screenHeight } = useWindowDimensions();
   const router = useRouter();
-  const reduceMotion = useReducedMotion();
 
   const [isLoading, setIsLoading] = useState(false);
   const login = useAuthStore((state) => state.login);
@@ -141,11 +82,9 @@ export default function WelcomeScreen() {
   const setLoginMounted = useSplashStore((state) => state.setLoginMounted);
 
 
-  const wall = useSharedValue(0);
-  const drift = useSharedValue(0);
+  const wash = useSharedValue(0);
   const buttons = useSharedValue(0);
   const lift = useSharedValue(0);
-  const { height: screenHeight } = useWindowDimensions();
   const [buttonsHeight, setButtonsHeight] = useState(0);
   /** Le haut de la question : les yeux se posent juste au-dessus */
   const [questionTop, setQuestionTop] = useState(0);
@@ -164,10 +103,7 @@ export default function WelcomeScreen() {
   useEffect(() => {
     if (!splashGone) return;
 
-    wall.value = withTiming(1, { duration: 900, easing: Easing.out(Easing.cubic) });
-    if (!reduceMotion) {
-      drift.value = withRepeat(withTiming(1, { duration: DRIFT_DURATION, easing: Easing.linear }), -1, false);
-    }
+    wash.value = withTiming(1, { duration: 900, easing: Easing.out(Easing.cubic) });
     lift.value = withDelay(250, withTiming(1, { duration: 850, easing: ENTRANCE }));
     buttons.value = withDelay(450, withTiming(1, { duration: 550, easing: Easing.out(Easing.cubic) }));
 
@@ -195,9 +131,8 @@ export default function WelcomeScreen() {
     lid.value = withDelay(1350, withSequence(blink(), withRepeat(withSequence(withDelay(3400, blink()), withDelay(2600, blink())), -1)));
   }, [splashGone]);
 
-  const wallStyle = useAnimatedStyle(() => ({ opacity: wall.value * WALL_OPACITY }));
-  const veilStyle = useAnimatedStyle(() => ({ opacity: wall.value }));
-  const taglineStyle = useAnimatedStyle(() => ({ opacity: 1 - wall.value }));
+  const washStyle = useAnimatedStyle(() => ({ opacity: wash.value }));
+  const taglineStyle = useAnimatedStyle(() => ({ opacity: 1 - wash.value }));
   // Les yeux rétrécissent autour du centre de l'écran, puis se posent au-dessus
   // de la question, alignés sur elle à gauche, et passent du rouge gravé au crème
   const eyesTop = questionTop - spacing.xl - EYES_SCALE * EYES_INK_BOTTOM;
@@ -268,33 +203,9 @@ export default function WelcomeScreen() {
     <View style={styles.container}>
       <StatusBar style="light" />
       <LinearGradient colors={BRAND_BG} style={StyleSheet.absoluteFill} />
-      {/* Le rouge du splash passe au chocolat, en même temps que le mur arrive */}
-      <Animated.View style={[StyleSheet.absoluteFill, veilStyle]} pointerEvents="none">
-        <LinearGradient colors={inkGradient} style={StyleSheet.absoluteFill} />
-      </Animated.View>
-
-      <Animated.View style={[StyleSheet.absoluteFill, styles.wallFrame, wallStyle]} pointerEvents="none">
-        <CoverWall drift={drift} />
-      </Animated.View>
-
-      {/* Une clairière derrière le nom, un fondu sous les boutons : les couvertures
-          ne passent jamais sous le texte. */}
-      <Animated.View style={[StyleSheet.absoluteFill, veilStyle]} pointerEvents="none">
-      <Svg width="100%" height="100%">
-        <Defs>
-          <RadialGradient id="clearing" cx="50%" cy="48%" rx="70%" ry="30%">
-            <Stop offset="0" stopColor={CLEARING} stopOpacity={1} />
-            <Stop offset="0.6" stopColor={CLEARING} stopOpacity={0.9} />
-            <Stop offset="1" stopColor={CLEARING} stopOpacity={0} />
-          </RadialGradient>
-        </Defs>
-        <Rect width="100%" height="100%" fill="url(#clearing)" />
-      </Svg>
-      <LinearGradient
-        colors={['rgba(72, 43, 36, 0)', lowki.chocolate.dark]}
-        locations={[0, 0.45]}
-        style={[styles.bottomFade, { height: 300 + insets.bottom }]}
-      />
+      {/* Le rouge du splash se fond dans l'aquarelle, rouge et chocolat */}
+      <Animated.View style={[StyleSheet.absoluteFill, washStyle]} pointerEvents="none">
+        <Image source={WASH} style={StyleSheet.absoluteFill} contentFit="cover" />
       </Animated.View>
 
       {/* Point d'ancrage au centre de l'écran, comme au splash */}
@@ -379,28 +290,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: BRAND_BG[1],
-  },
-  wallFrame: {
-    overflow: 'hidden',
-  },
-  wall: {
-    position: 'absolute',
-    transform: [{ rotate: '-10deg' }],
-  },
-  column: {
-    position: 'absolute',
-    top: 0,
-    width: COVER_W,
-  },
-  strip: {
-    width: COVER_W,
-    height: STRIP_H,
-  },
-  bottomFade: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
   },
   center: {
     width: 0,
