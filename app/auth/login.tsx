@@ -5,7 +5,8 @@
  * « chapi » et même tagline, au point près (BrandLockup). Le splash disparaît
  * d'un coup sur cette image identique (voir AnimatedSplash, `handoff`), puis :
  * 1. le mur de couvertures, ton sur ton, apparaît et défile lentement ;
- * 2. le bloc de marque remonte un peu, les boutons montent depuis le bas ;
+ * 2. la tagline s'efface, le bloc de marque remonte un peu, les boutons
+ *    montent depuis le bas ;
  * 3. les yeux baissent le regard vers les boutons, clignent, et restent vivants.
  *
  * Deux façons d'entrer : Apple, ou un code reçu par email (feuille auth/email).
@@ -253,6 +254,7 @@ export default function WelcomeScreen() {
 
   const wallStyle = useAnimatedStyle(() => ({ opacity: wall.value * WALL_OPACITY }));
   const veilStyle = useAnimatedStyle(() => ({ opacity: wall.value }));
+  const taglineStyle = useAnimatedStyle(() => ({ opacity: 1 - wall.value }));
   const lockupStyle = useAnimatedStyle(() => ({ transform: [{ translateY: lockupY.value }] }));
   const buttonsStyle = useAnimatedStyle(() => ({
     opacity: buttons.value,
@@ -323,7 +325,8 @@ export default function WelcomeScreen() {
             <LivingEye side="right" gazeX={gazeX} gazeY={gazeY} lid={lid} />
           </View>
           <BrandWord />
-          <BrandTagline />
+          {/* Reprise du splash, puis effacée : l'écran ne garde que le nom */}
+          <BrandTagline style={taglineStyle} />
           {FRIENDS.map((friend, i) => (
             <Friend key={i} friend={friend} start={splashGone} gazeX={gazeX} gazeY={gazeY} />
           ))}
