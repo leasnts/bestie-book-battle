@@ -19,8 +19,6 @@ export default function AuthLayout() {
       <Stack.Screen name="login" />
       {/* Connexion par email : adresse, code, prénom */}
       <Stack.Screen name="email" options={sheetScreenOptions()} />
-      {/* Après la connexion : commencer ou rejoindre une lecture */}
-      <Stack.Screen name="choix" options={sheetScreenOptions()} />
     </Stack>
   );
 }

@@ -13,9 +13,7 @@
  * 3. les yeux baissent le regard vers les boutons, clignent, et restent vivants.
  *
  * Deux façons d'entrer : Apple, ou un code reçu par email (feuille auth/email).
- * Ensuite, pour un nouveau compte : le sheet « Ta lecture » (auth/choix),
- * commencer ou rejoindre. Rejoué depuis le profil (déjà connecté·e), les
- * boutons ouvrent directement ce sheet.
+ * Rejoué depuis le profil (déjà connecté·e), les boutons passent aux questions.
  *
  * Flow :
  * - Nouveaux utilisateurs → onboarding (écran rôle)
@@ -52,6 +50,7 @@ import { useAuthStore } from '../../stores/authStore';
 import { useOnboardingStore } from '../../stores/onboardingStore';
 import { useSplashStore } from '../../stores/splashStore';
 import { colors, fonts, inkGradient, lowki, spacing } from '../../utils/constants';
+import { firstStep } from '../../utils/onboardingFlow';
 
 /** Les bandes de couvertures (scripts/generate-login-covers.py gris), une par colonne. */
 const COVER_STRIPS = [
@@ -221,11 +220,11 @@ export default function WelcomeScreen() {
     transform: [{ translateY: 24 * (1 - buttons.value) }],
   }));
 
-  /** Rejoué depuis le profil : déjà connecté·e, on passe au choix */
+  /** Rejoué depuis le profil : déjà connecté·e, on passe aux questions */
   const replaying = () => {
     if (!useAuthStore.getState().user) return false;
     useOnboardingStore.getState().begin('create');
-    router.push('/auth/choix');
+    router.push(firstStep('create'));
     return true;
   };
 
