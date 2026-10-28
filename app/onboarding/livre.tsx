@@ -3,6 +3,7 @@
  * édition dans le sheet de recherche (/book-search, le même que partout).
  * Couverture, pages et éditeur arrivent avec lui. La saisie à la main reste
  * possible ; une couverture absente ne bloque plus rien.
+ * « J'ai un code » : rejoindre la lecture de quelqu'un plutôt qu'en créer une.
  */
 
 import { LinearGradient } from 'expo-linear-gradient';
@@ -67,6 +68,11 @@ export default function LivreScreen() {
           {!book && !manual && (
             <Pressable onPress={() => setManual(true)} hitSlop={8} accessibilityRole="button" style={styles.link}>
               <Text style={styles.linkText}>Ajouter à la main</Text>
+            </Pressable>
+          )}
+          {!book && !manual && (
+            <Pressable onPress={() => router.push('/onboarding/code')} hitSlop={8} accessibilityRole="button" style={styles.link}>
+              <Text style={styles.linkText}>J'ai un code</Text>
             </Pressable>
           )}
         </>

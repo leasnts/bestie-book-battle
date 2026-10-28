@@ -13,7 +13,6 @@
  * 3. les yeux baissent le regard vers les boutons, clignent, et restent vivants.
  *
  * Deux façons d'entrer : Apple, ou un code reçu par email (feuille auth/email).
- * « J'ai un lien ou un code » : rejoindre une lecture, la connexion vient après.
  * Rejoué depuis le profil (déjà connecté·e), les boutons passent aux questions.
  *
  * Flow :
@@ -28,7 +27,7 @@ import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { MailIcon } from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
-import { Alert, Linking, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { Alert, Linking, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import Animated, {
   type SharedValue,
   Easing,
@@ -51,7 +50,6 @@ import { useAuthStore } from '../../stores/authStore';
 import { useOnboardingStore } from '../../stores/onboardingStore';
 import { useSplashStore } from '../../stores/splashStore';
 import { colors, fonts, inkGradient, lowki, spacing } from '../../utils/constants';
-import { feel } from '../../utils/feel';
 import { firstStep } from '../../utils/onboardingFlow';
 
 /** Les bandes de couvertures (scripts/generate-login-covers.py gris), une par colonne. */
@@ -230,12 +228,6 @@ export default function WelcomeScreen() {
     return true;
   };
 
-  const haveCode = () => {
-    feel('tic');
-    useOnboardingStore.getState().begin(useAuthStore.getState().user ? 'addJoin' : 'join');
-    router.push('/onboarding/code');
-  };
-
   const handleAppleLogin = async () => {
     if (replaying()) return;
     try {
@@ -332,9 +324,6 @@ export default function WelcomeScreen() {
         >
           Continuer avec un email
         </Button3D>
-        <Pressable onPress={haveCode} hitSlop={8} accessibilityRole="button" style={styles.code}>
-          <Text style={styles.codeText}>J'ai un lien ou un code</Text>
-        </Pressable>
         {/* Créer un compte vaut acceptation : pas de case à cocher, les liens suffisent */}
         <Text style={styles.legal}>
           En continuant, tu acceptes les{' '}
@@ -395,16 +384,6 @@ const styles = StyleSheet.create({
     lineHeight: QUESTION_LINE,
     letterSpacing: -0.4,
     color: CREAM,
-  },
-  code: {
-    minHeight: 44,
-    justifyContent: 'center',
-  },
-  codeText: {
-    fontFamily: fonts.bodySemiBold,
-    fontSize: 15,
-    color: CREAM,
-    textDecorationLine: 'underline',
   },
   legal: {
     fontFamily: fonts.body,

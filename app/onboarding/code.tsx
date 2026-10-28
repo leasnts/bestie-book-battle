@@ -1,6 +1,7 @@
 /**
  * Rejoindre avec un code, quand on n'a pas le lien : six cases, vérifiées
- * toutes seules au sixième chiffre. Trouvé → l'invitation.
+ * toutes seules au sixième chiffre. Trouvé → l'invitation. Venu de « Quel
+ * livre ? », le parcours passe de créer à rejoindre.
  */
 
 import { useRouter } from 'expo-router';
@@ -33,7 +34,8 @@ export default function CodeScreen() {
       setCode('');
       return;
     }
-    useOnboardingStore.getState().patch({ invitation });
+    const { flow, patch } = useOnboardingStore.getState();
+    patch({ invitation, flow: flow === 'create' ? 'join' : flow === 'add' ? 'addJoin' : flow });
     router.push('/onboarding/invitation');
   };
 

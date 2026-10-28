@@ -19,7 +19,7 @@ import { COVER_RATIO, CoverImage } from '../../components/ui/BookCover';
 import { useAuthStore } from '../../stores/authStore';
 import { useOnboardingStore } from '../../stores/onboardingStore';
 import { colors, fonts, inkAlpha, paperFrameGradient, spacing } from '../../utils/constants';
-import { firstStep } from '../../utils/onboardingFlow';
+import { firstStep, nextStep } from '../../utils/onboardingFlow';
 
 const COVER_W = 150;
 
@@ -33,7 +33,8 @@ export default function InvitationScreen() {
   const name = invitation.adminFirstName;
 
   const join = () => {
-    if (signedIn) router.push(firstStep(flow));
+    // Déjà connecté·e et venu·e de « Quel livre ? » : le rythme est déjà dit
+    if (signedIn) router.push(flow === 'join' ? nextStep('join', 'rythme') : firstStep(flow));
     else router.push('/auth/login');
   };
 
