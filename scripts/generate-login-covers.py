@@ -17,7 +17,7 @@ import urllib.request
 from pathlib import Path
 
 import numpy as np
-from PIL import Image, ImageDraw, ImageFilter
+from PIL import Image, ImageDraw
 
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "assets/images/login"
@@ -41,7 +41,7 @@ RADIUS = 18
 DARK = np.array([0x6E, 0x1F, 0x2C])
 LIGHT = np.array([0xC2, 0x4A, 0x5D])
 # Variante « gris » (l'écran de connexion sur l'aquarelle, 2026-10-28) : sans
-# aucune saturation, floutée, posée en transparence : elle prend la couleur du fond
+# aucune saturation, posée en transparence : elle prend la couleur du fond
 GREY_DARK = np.array([0x60, 0x60, 0x60])
 GREY_LIGHT = np.array([0xC0, 0xC0, 0xC0])
 # Variante « crème » : les livres en papier clair, posés sur l'aquarelle
@@ -79,9 +79,6 @@ def tone(url, mode):
         lum = np.asarray(img.convert("L"), dtype=np.float32)[..., None] / 255
         dark, light = {"rouge": (DARK, LIGHT), "gris": (GREY_DARK, GREY_LIGHT)}.get(mode, (CREAM_DARK, CREAM_LIGHT))
         out = Image.fromarray((dark + (light - dark) * lum).astype(np.uint8)).convert("RGBA")
-        if mode == "gris":
-            # Diffus : les livres se devinent, aucun titre ne se lit
-            out = out.filter(ImageFilter.GaussianBlur(4))
     mask = Image.new("L", out.size, 0)
     ImageDraw.Draw(mask).rounded_rectangle((0, 0, COVER_W - 1, COVER_H - 1), RADIUS, fill=255)
     out.putalpha(mask)
