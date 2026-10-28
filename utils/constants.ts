@@ -91,7 +91,9 @@ export const colors = {
   textPrimary: '#482b24',      // Texte principal (900) — chocolat Lowki foncé — 11,5 / 12,0 / 12,4
   textSecondary: '#633d32',    // Texte secondaire (700) — chocolat Lowki clair — 8,4 / 8,8 / 9,1
   textTertiary: '#775046',     // Texte tertiaire (600) — 6,3 / 6,6 / 6,8
-  textPlaceholder: '#8a5d51',  // Placeholders (500) — 5,0 / 5,3 / 5,4
+  textPlaceholder: '#8a5d51',  // Texte discret (500) — 5,0 / 5,3 / 5,4
+  // Le texte d'exemple des champs : brun grisé, pas rouge (Lea, 2026-10-28) — 3,4:1
+  placeholder: '#968880',
   textSubtle: '#e5e0d9',       // Texte subtle (300) — lisible uniquement sur fond sombre (11,1 sur dark800)
 
   // Accent rouge Lowki, pour les traits (cf. accentGradient pour les surfaces) — 6,1 / 6,4 / 6,6

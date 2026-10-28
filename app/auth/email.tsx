@@ -96,7 +96,7 @@ export default function EmailLoginSheet() {
           autoComplete="one-time-code"
           maxLength={CODE_LENGTH}
           placeholder="000000"
-          placeholderTextColor={colors.textPlaceholder}
+          placeholderTextColor={colors.placeholder}
           editable={!busy}
           autoFocus
           accessibilityLabel="Code reçu par email"
@@ -125,7 +125,7 @@ export default function EmailLoginSheet() {
           returnKeyType="done"
           onSubmitEditing={() => firstName.trim() && finish()}
           placeholder="Prénom"
-          placeholderTextColor={colors.textPlaceholder}
+          placeholderTextColor={colors.placeholder}
           autoFocus
         />
         <SheetFooter>
@@ -155,7 +155,7 @@ export default function EmailLoginSheet() {
         returnKeyType="send"
         onSubmitEditing={() => isEmail(email) && sendCode()}
         placeholder="toi@exemple.fr"
-        placeholderTextColor={colors.textPlaceholder}
+        placeholderTextColor={colors.placeholder}
         autoFocus
       />
       {error && <Text style={styles.error}>{error}</Text>}

@@ -109,7 +109,7 @@ export default function EditProfileRoute() {
         value={firstName}
         onChangeText={setFirstName}
         placeholder="Ton prénom"
-        placeholderTextColor={colors.textPlaceholder}
+        placeholderTextColor={colors.placeholder}
         returnKeyType="done"
         onSubmitEditing={handleSave}
         inputAccessoryViewID={ACCESSORY_ID}

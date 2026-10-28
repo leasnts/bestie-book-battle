@@ -119,12 +119,12 @@ export default function BookSearchRoute() {
   return (
     <SheetPage title="Rechercher" fit={false} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag">
       <View style={styles.searchBox}>
-        <SearchIcon size={18} color={colors.textPlaceholder} />
+        <SearchIcon size={18} color={colors.placeholder} />
         <TextInput
           ref={inputRef}
           style={styles.searchInput}
           placeholder="Titre, auteur, saga"
-          placeholderTextColor={colors.textPlaceholder}
+          placeholderTextColor={colors.placeholder}
           value={query}
           onChangeText={setQuery}
           autoCapitalize="words"
@@ -139,7 +139,7 @@ export default function BookSearchRoute() {
             accessibilityRole="button"
             accessibilityLabel="Effacer la recherche"
           >
-            <CircleXIcon size={18} color={colors.textPlaceholder} />
+            <CircleXIcon size={18} color={colors.placeholder} />
           </Pressable>
         )}
       </View>

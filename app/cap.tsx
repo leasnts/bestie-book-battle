@@ -170,7 +170,7 @@ export default function CapRoute() {
         <TextInput
           style={styles.input}
           placeholder={`Ex : ${Math.min(totalPages, 100)}`}
-          placeholderTextColor={colors.textPlaceholder}
+          placeholderTextColor={colors.placeholder}
           value={targetPage}
           onChangeText={setTargetPage}
           keyboardType="number-pad"
