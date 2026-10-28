@@ -814,8 +814,10 @@ Prototype validé le 2026-10-28 (artefact « Onboarding chapi »). Deux temps :
   gauche » retenue). Il part identique au splash (rouge), qui se fond dans une aquarelle surtout rouge et chocolat, avec une touche de beurre et de beige loin du texte (`generate-profile-wash.py login`, le papier du profil en plus sombre). Dessus, le mur de couvertures en gris (net, sans flou) à 10 % (`generate-login-covers.py gris`), diffus. Puis « chapi » et la tagline
   s'effacent, les yeux se posent en petit et en crème (`LivingEye light`)
   au-dessus de la question, un grand titre à gauche juste au-dessus des
-  boutons : « On lit » / « *ensemble* ? ». Rejoindre avec un code : « J'ai un
-  code » sous « Quel livre ? » (les liens d'invitation, eux, s'ouvrent seuls). Rejouable par ▶ du profil.
+  boutons : « On lit » / « *ensemble* ? ».
+- **Choix** (`choix`, comme la V1) : juste après la connexion, et au « + »
+  pour ajouter un livre, deux cartes de papier : Commencer une lecture, ou
+  Rejoindre une lecture (le code). Les liens d'invitation l'évitent. Rejouable par ▶ du profil.
 - **Questions** : `OnboardingScreen` (papier grené, retour en verre, fil de
   progression = la couture `Seam`, titre 30/36 avec un mot d'accent, pied sous
   un `StitchLine`, colonne de téléphone sur grand écran).

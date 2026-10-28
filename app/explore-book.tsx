@@ -39,7 +39,7 @@ import { useOnboardingStore } from '../stores/onboardingStore';
 import { useProjectStore } from '../stores/projectStore';
 import { borderRadius, colors, fonts, inkAlpha, spacing } from '../utils/constants';
 import { compactText } from '../utils/normalizeText';
-import { startAdding } from '../utils/onboardingFlow';
+import { firstStep, startAdding } from '../utils/onboardingFlow';
 
 const COVER_H = 140;
 
@@ -85,13 +85,13 @@ export default function ExploreBookRoute() {
       return;
     }
     // Le livre déjà choisi : on passe « Quel livre ? », direct à « Tu en es où ? »
-    const next = startAdding();
+    startAdding();
     useOnboardingStore.getState().patch({
       book: { title: book.title, author: book.author, pages: pageCount ?? 0, cover: book.coverUrl, publisher: book.publisher },
     });
     // Fermer d'abord le sheet, sinon l'écran poussé s'ouvrirait À L'INTÉRIEUR
     router.back();
-    router.push(pageCount ? '/onboarding/page' : next);
+    router.push(pageCount ? '/onboarding/page' : firstStep('add'));
   }, [book, pageCount, inLibrary, setActiveChallenge, router]);
 
   const handleShare = useCallback(async () => {

@@ -16,6 +16,7 @@ import { useOnboardingStore } from '../stores/onboardingStore';
 export type OnboardingFlow = 'create' | 'join' | 'add' | 'addJoin';
 
 export type OnboardingStep =
+  | 'choix'
   | 'code'
   | 'invitation'
   | 'rythme'
@@ -67,5 +68,5 @@ export function isAddFlow(flow: OnboardingFlow) {
  */
 export function startAdding(join = false): `/onboarding/${OnboardingStep}` {
   useOnboardingStore.getState().begin(join ? 'addJoin' : 'add');
-  return join ? '/onboarding/code' : firstStep('add');
+  return join ? '/onboarding/code' : '/onboarding/choix';
 }

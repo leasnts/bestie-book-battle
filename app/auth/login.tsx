@@ -50,7 +50,6 @@ import { useAuthStore } from '../../stores/authStore';
 import { useOnboardingStore } from '../../stores/onboardingStore';
 import { useSplashStore } from '../../stores/splashStore';
 import { colors, fonts, inkGradient, lowki, spacing } from '../../utils/constants';
-import { firstStep } from '../../utils/onboardingFlow';
 
 /** Les bandes de couvertures (scripts/generate-login-covers.py gris), une par colonne. */
 const COVER_STRIPS = [
@@ -224,7 +223,7 @@ export default function WelcomeScreen() {
   const replaying = () => {
     if (!useAuthStore.getState().user) return false;
     useOnboardingStore.getState().begin('create');
-    router.push(firstStep('create'));
+    router.push('/onboarding/choix');
     return true;
   };
 
