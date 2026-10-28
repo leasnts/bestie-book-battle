@@ -24,7 +24,7 @@
 
 import { Image } from 'expo-image';
 import { useFocusEffect, useRouter } from 'expo-router';
-import { ChevronRightIcon, PencilIcon, SettingsIcon } from 'lucide-react-native';
+import { ChevronRightIcon, PencilIcon, PlayIcon, SettingsIcon } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -136,6 +136,13 @@ export default function ProfileScreen() {
             onPress={() => router.push('/settings')}
             accessibilityLabel="Réglages"
             style={[styles.settingsButton, { top: insets.top + spacing.sm }]}
+          />
+          {/* Rejouer l'onboarding depuis l'ouverture, pour le tester (#189) */}
+          <GlassButton
+            icon={PlayIcon}
+            onPress={() => router.push('/onboarding/intro')}
+            accessibilityLabel="Rejouer l’onboarding"
+            style={[styles.replayButton, { top: insets.top + spacing.sm }]}
           />
           {/* La photo ronde, dans un anneau de verre nu (sans voile crème) au liseré des boutons en verre */}
           <View style={styles.photoRing}>
@@ -334,6 +341,10 @@ const styles = StyleSheet.create({
   settingsButton: {
     position: 'absolute',
     right: spacing.lg,
+  },
+  replayButton: {
+    position: 'absolute',
+    left: spacing.lg,
   },
   photoRing: {
     width: PHOTO + 2 * PHOTO_RING,

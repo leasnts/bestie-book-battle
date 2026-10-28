@@ -23,7 +23,9 @@ import StickerText from '../../components/onboarding/StickerText';
 import AccentWord from '../../components/ui/AccentWord';
 import { InkStamp } from '../../components/ui/Stamp';
 import StreakPill from '../../components/ui/StreakPill';
+import { useAuthStore } from '../../stores/authStore';
 import { useOnboardingStore } from '../../stores/onboardingStore';
+import { firstStep } from '../../utils/onboardingFlow';
 import { borderRadius, colors, fonts, inkAlpha, postIt, spacing } from '../../utils/constants';
 
 /** Une vignette reste le temps d'être vue */
@@ -45,7 +47,9 @@ export default function PromesseScreen() {
     const store = useOnboardingStore.getState();
     store.setIntroSeen();
     store.begin('create');
-    router.push('/auth/login');
+    // Déjà connecté·e (onboarding rejoué depuis le profil) : pas de connexion
+    if (useAuthStore.getState().user) router.push(firstStep('create'));
+    else router.push('/auth/login');
   };
 
   const haveCode = () => {
