@@ -4,7 +4,7 @@
  *
  * - choix : tu lances ou tu rejoins ? (avant le livre)
  * - code, invitation : rejoindre une lecture (lien ou code)
- * - rythme, formats → carte : les questions, la préparation, la carte de lecture
+ * - bienvenue (après la connexion, passe tout seul), puis rythme, formats → carte : les questions, la préparation, la carte de lecture
  */
 
 import { Stack } from 'expo-router';
@@ -12,6 +12,8 @@ import { Stack } from 'expo-router';
 export default function OnboardingLayout() {
   return (
     <Stack screenOptions={{ headerShown: false, animation: 'slide_from_right', animationDuration: 350 }}>
+      {/* Juste après la connexion : l'aquarelle continue, en fondu, sans retour */}
+      <Stack.Screen name="bienvenue" options={{ gestureEnabled: false, animation: 'fade' }} />
       <Stack.Screen name="prepa" options={{ gestureEnabled: false, animation: 'fade' }} />
       <Stack.Screen name="carte" options={{ gestureEnabled: false, animation: 'fade' }} />
     </Stack>

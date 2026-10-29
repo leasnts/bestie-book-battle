@@ -8,7 +8,7 @@
  * - addJoin : déjà inscrit·e, je rejoins avec un code
  *
  * La connexion (auth/login) se glisse avant tout (ou après l'invitation) et
- * « Tu lis quand ? » : elle n'est pas dans les listes, useAfterLogin y renvoie.
+ * « Bienvenue » : elle n'est pas dans les listes, useAfterLogin y renvoie.
  */
 
 import { useOnboardingStore } from '../stores/onboardingStore';
@@ -16,6 +16,7 @@ import { useOnboardingStore } from '../stores/onboardingStore';
 export type OnboardingFlow = 'create' | 'join' | 'add' | 'addJoin';
 
 export type OnboardingStep =
+  | 'bienvenue'
   | 'choix'
   | 'code'
   | 'invitation'
@@ -30,8 +31,8 @@ export type OnboardingStep =
   | 'carte';
 
 const FLOWS: Record<OnboardingFlow, OnboardingStep[]> = {
-  create: ['rythme', 'formats', 'choix', 'livre', 'page', 'objectif', 'inviter', 'notifications', 'prepa', 'carte'],
-  join: ['rythme', 'formats', 'page', 'notifications', 'prepa', 'carte'],
+  create: ['bienvenue', 'rythme', 'formats', 'choix', 'livre', 'page', 'objectif', 'inviter', 'notifications', 'prepa', 'carte'],
+  join: ['bienvenue', 'rythme', 'formats', 'page', 'notifications', 'prepa', 'carte'],
   add: ['choix', 'livre', 'page', 'objectif', 'inviter', 'prepa', 'carte'],
   addJoin: ['page', 'prepa', 'carte'],
 };
