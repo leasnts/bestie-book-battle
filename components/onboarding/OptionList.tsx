@@ -2,15 +2,16 @@
  * OptionList — les choix de l'onboarding, une ligne pleine largeur par option :
  *
  *    ┌───────────────────────────────────────┐
- *    │ [☀]  Matin                            │   papier clair, cerne fin
+ *    │  ☀  Matin                             │   papier clair, cerne fin
  *    └───────────────────────────────────────┘
  *    ┌───────────────────────────────────────┐
- *    │ [☾]  Soir                             │   choisie : dégradé rouge, texte
- *    └───────────────────────────────────────┘   crème, pastille ton sur ton
+ *    │ ·☾··Soir······························│   choisie : soulevée, couture
+ *    └───────────────────────────────────────┘   rouge tout le tour
  *
  * Remplace les petites capsules (FilterChips) dans l'onboarding. Choisie, la
- * ligne se remplit du dégradé rouge avec un léger rebond, le texte passe en
- * crème et la pastille d'icône en rouge plus profond (ton sur ton).
+ * ligne se soulève et se brode : une couture rouge à points ronds, collée au
+ * bord, avec un léger rebond. L'icône reste neutre : elle laissera la place aux
+ * illustrations de Lea.
  *
  * - `OptionList` : un seul choix, toujours un sélectionné ; les autres lignes
  *   s'estompent (on les touche encore pour changer d'avis) ;
@@ -23,7 +24,6 @@ import React, { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, {
   interpolate,
-  interpolateColor,
   useAnimatedStyle,
   useReducedMotion,
   useSharedValue,
@@ -32,19 +32,17 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import {
-  accentGradient,
   borderRadius,
   colors,
-  creamAlpha,
   fonts,
   inkAlpha,
-  lowki,
   motion,
   shadowAlpha,
   spacing,
 } from '../../utils/constants';
 import { feel } from '../../utils/feel';
 import PressableScale from '../ui/PressableScale';
+import { StitchBorder } from '../ui/Stitch';
 
 interface Option<K extends string> {
   key: K;
@@ -65,17 +63,17 @@ interface ToggleOptionListProps<K extends string> {
 }
 
 export const OPTION_H = 60;
-const TILE = 36;
+const ICON_W = 36;
 const RADIUS = borderRadius.lg;
 
 /** Le papier d'une ligne au repos : un cran plus clair que le fond grené */
 const PAPER = ['#fdfbf7', '#f3eee6'] as const;
-/** La pastille d'icône au repos : le papier un cran plus sombre */
-const TILE_IDLE = ['#efe9df', '#e3dbcd'] as const;
-/** La pastille sur la ligne choisie : le rouge un cran plus profond (ton sur ton) */
-const TILE_ON = [lowki.red.dark, lowki.red.deep] as const;
-/** Le liseré clair en haut de la ligne choisie, qui lui donne du relief */
-const SHINE = [creamAlpha(0.22), creamAlpha(0)] as const;
+/** Le papier de la ligne choisie : un cran plus clair, elle se soulève */
+const PAPER_ON = ['#fffefb', '#f7f2eb'] as const;
+/** La couture de la ligne choisie : rouge Lowki, collée au bord */
+const STITCH_ON = colors.accent;
+const STITCH_WEIGHT = 2;
+const STITCH_INSET = 3;
 /** L'opacité d'une ligne non choisie quand un seul choix est possible */
 const DIMMED = 0.45;
 
@@ -154,15 +152,12 @@ function OptionRow<K extends string>({
   const row = useAnimatedStyle(() => ({
     opacity: interpolate(dim.value, [0, 1], [1, DIMMED]),
     transform: [{ scale: bump.value }],
-    shadowOpacity: interpolate(on.value, [0, 1], [0.05, 0.22]),
-    shadowRadius: interpolate(on.value, [0, 1], [2, 12]),
-    shadowOffset: { width: 0, height: interpolate(on.value, [0, 1], [1, 6]) },
+    shadowOpacity: interpolate(on.value, [0, 1], [0.05, 0.14]),
+    shadowRadius: interpolate(on.value, [0, 1], [2, 10]),
+    shadowOffset: { width: 0, height: interpolate(on.value, [0, 1], [1, 4]) },
   }));
   const fade = useAnimatedStyle(() => ({ opacity: on.value }));
   const idleFade = useAnimatedStyle(() => ({ opacity: 1 - on.value }));
-  const label = useAnimatedStyle(() => ({
-    color: interpolateColor(on.value, [0, 1], [colors.textPrimary, colors.white]),
-  }));
 
   const Icon = option.icon;
 
@@ -180,30 +175,23 @@ function OptionRow<K extends string>({
       <Animated.View style={[styles.row, row]}>
         <View style={[StyleSheet.absoluteFill, styles.clip]} pointerEvents="none">
           <LinearGradient colors={PAPER} style={StyleSheet.absoluteFill} />
-          <View style={[styles.ring, styles.ringIdle]} />
           <Animated.View style={[StyleSheet.absoluteFill, fade]}>
-            <LinearGradient colors={accentGradient} style={StyleSheet.absoluteFill} />
-            <LinearGradient colors={SHINE} style={styles.shine} />
-            <View style={[styles.ring, styles.ringOn]} />
+            <LinearGradient colors={PAPER_ON} style={StyleSheet.absoluteFill} />
+          </Animated.View>
+          <Animated.View style={[styles.ring, styles.ringIdle, idleFade]} />
+          <Animated.View style={[styles.ring, styles.ringOn, fade]} />
+          <Animated.View style={[StyleSheet.absoluteFill, fade]}>
+            <StitchBorder radius={RADIUS} inset={STITCH_INSET} color={STITCH_ON} weight={STITCH_WEIGHT} />
           </Animated.View>
         </View>
 
         {Icon && (
-          <View style={styles.tile}>
-            <LinearGradient colors={TILE_IDLE} style={StyleSheet.absoluteFill} />
-            <Animated.View style={[StyleSheet.absoluteFill, fade]}>
-              <LinearGradient colors={TILE_ON} style={StyleSheet.absoluteFill} />
-            </Animated.View>
-            <Animated.View style={[styles.center, idleFade]}>
-              <Icon size={19} color={colors.textSecondary} strokeWidth={2} />
-            </Animated.View>
-            <Animated.View style={[styles.center, fade]}>
-              <Icon size={19} color={colors.white} strokeWidth={2} />
-            </Animated.View>
+          <View style={styles.icon}>
+            <Icon size={20} color={colors.textSecondary} strokeWidth={2} />
           </View>
         )}
 
-        <Animated.Text style={[styles.label, label]} numberOfLines={1}>
+        <Animated.Text style={styles.label} numberOfLines={1}>
           {option.label}
         </Animated.Text>
       </Animated.View>
@@ -238,26 +226,16 @@ const styles = StyleSheet.create({
   },
   ringOn: {
     borderWidth: 1,
-    borderColor: lowki.red.deep,
+    borderColor: 'rgba(166,47,67,0.25)',
   },
-  shine: {
-    ...StyleSheet.absoluteFill,
-    bottom: '50%',
-  },
-  tile: {
-    width: TILE,
-    height: TILE,
-    borderRadius: borderRadius.md - 2,
-    overflow: 'hidden',
-  },
-  center: {
-    ...StyleSheet.absoluteFill,
+  icon: {
+    width: ICON_W,
     alignItems: 'center',
-    justifyContent: 'center',
   },
   label: {
     flex: 1,
     fontFamily: fonts.bodySemiBold,
     fontSize: 16,
+    color: colors.textPrimary,
   },
 });
