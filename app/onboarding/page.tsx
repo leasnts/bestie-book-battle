@@ -1,5 +1,5 @@
 /**
- * Tu en es où ? Ce livre-là : son format, son édition, ma position.
+ * Tu en es où, dans ce livre ? Ce livre-là : son format, son édition, ma position.
  *
  * - « Intermezzo, tu le lis en » : un seul format pour ce livre, rien de
  *   choisi d'avance ; l'édition et la règle n'apparaissent qu'ensuite.
@@ -70,8 +70,8 @@ export default function PageScreen() {
   return (
     <OnboardingScreen
       step="page"
-      title="Tu en es où ?"
-      accent="où"
+      title="Tu en es où, dans ce livre ?"
+      accent="livre"
       footer={
         <Button3D
           variant="primary"

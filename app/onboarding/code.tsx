@@ -1,7 +1,7 @@
 /**
  * Rejoindre avec un code, quand on n'a pas le lien : six cases, vérifiées
  * toutes seules au sixième chiffre. Trouvé → l'invitation. On y arrive par
- * « J'ai un code » (Tu lances ou tu rejoins ?), un lien au code inconnu, ou
+ * « J'ai un code » (Tu lances une lecture ou on t’attend ?), un lien au code inconnu, ou
  * « Rejoindre » sur l'accueil vide.
  */
 
@@ -40,7 +40,7 @@ export default function CodeScreen() {
   };
 
   return (
-    <OnboardingScreen step="code" title="Tu as un code ?" accent="code">
+    <OnboardingScreen step="code" title="Quel est ton code ?" accent="code">
       <Animated.View entering={rise(1)}>
         <CodeBoxes value={code} onChange={onChange} editable={!busy} accessibilityLabel="Code de la lecture" />
         {missed && <Text style={styles.missed} accessibilityLiveRegion="polite">Ce code ne mène à aucune lecture.</Text>}

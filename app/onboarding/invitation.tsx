@@ -3,7 +3,7 @@
  *
  * La couverture d'abord (les yeux dépassent), « Lire avec Chloé », la piste de
  * Chloé et une place libre pour moi. Rejoindre → la connexion (puis « Ton
- * rythme »), ou directement « Tu en es où ? » si je suis déjà inscrit·e.
+ * rythme »), ou directement « Tu en es où, dans ce livre ? » si je suis déjà inscrit·e.
  */
 
 import { LinearGradient } from 'expo-linear-gradient';
@@ -33,7 +33,7 @@ export default function InvitationScreen() {
   const name = invitation.adminFirstName;
 
   const join = () => {
-    // Venu·e de « Tu lances ou tu rejoins ? » (déjà connecté·e) : le rythme est déjà dit
+    // Venu·e de « Tu lances une lecture ou on t’attend ? » (déjà connecté·e) : le rythme est déjà dit
     if (signedIn) router.push(flow === 'join' ? nextStep('join', 'formats') : firstStep(flow));
     else router.push('/auth/login');
   };
@@ -41,8 +41,8 @@ export default function InvitationScreen() {
   return (
     <OnboardingScreen
       step="invitation"
-      title={`Tu lis avec ${name} ?`}
-      accent="lis"
+      title={`${name} t’attend, tu viens ?`}
+      accent="viens"
       footer={
         <Button3D variant="primary" onPress={join} style={styles.wide}>
           {`Rejoindre ${name}`}

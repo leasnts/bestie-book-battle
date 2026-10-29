@@ -1,5 +1,5 @@
 /**
- * Combien par jour ? Un rythme, pas une deadline : la date de fin se calcule.
+ * Tu veux lire combien par jour ? Un rythme, pas une deadline : la date de fin se calcule.
  *
  * - Papier : en pages (10, 20, 40), le temps en dessous dans l'autocollant.
  * - Liseuse ou audio : en temps (≈ 15 min, 30 min, 1 h), l'équivalent en %
@@ -57,8 +57,8 @@ export default function ObjectifScreen() {
   return (
     <OnboardingScreen
       step="objectif"
-      title="Combien par jour ?"
-      accent="jour"
+      title="Tu veux lire combien par jour ?"
+      accent="combien"
       footer={
         <Button3D
           variant="primary"

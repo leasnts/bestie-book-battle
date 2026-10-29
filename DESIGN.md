@@ -815,12 +815,12 @@ Prototype validé le 2026-10-28 (artefact « Onboarding chapi »). Deux temps :
   s'effacent, les yeux se posent en petit et en crème (`LivingEye light`)
   au-dessus de la question, un grand titre à gauche juste au-dessus des
   boutons : « On lit » / « *ensemble* ? ».
-- **Tu lances ou tu rejoins ?** (`choix`) : un écran à lui seul, entre « Tu lis
-  sur quoi ? » et « Quel livre ? » (et au « + »), deux grandes pastilles : « Je
-  lance une lecture » → « Quel livre ? », « J'ai un code » → « Ton code » puis
+- **Tu lances une lecture ou on t’attend ?** (`choix`) : un écran à lui seul, entre « Tu lis
+  sur quoi ? » et « Tu lis quoi en ce moment ? » (et au « + »), deux grandes pastilles : « Je
+  lance une lecture » → « Tu lis quoi en ce moment ? », « J'ai un code » → « Quel est ton code ? » puis
   l'invitation. Les liens d'invitation l'évitent.
-- **Titres = des questions**, toujours (« Tu lis quand ? », « Tu lis sur quoi ? »,
-  « Tu as un code ? »…). Un écran = une question : moments et formats habituels
+- **Titres = des questions chaleureuses**, toujours, tutoiement, un mot d'accent (« C’est quand, ton moment lecture ? », « Tu lis comment, d’habitude ? »,
+  « Quel est ton code ? »…). Un écran = une question : moments et formats habituels
   sont deux écrans.
 - **Rien n'est choisi d'avance** : la personne touche le premier choix ;
   Continuer attend ce choix quand la question en demande un.
@@ -834,7 +834,7 @@ Prototype validé le 2026-10-28 (artefact « Onboarding chapi »). Deux temps :
   option, illustration aquarelle à gauche (`assets/images/onboarding`). Au repos,
   la matière des cadres de l'accueil, sans ombre ; choisie, voile rosé et couture
   rouge collée au bord. Un seul choix possible : les autres s'estompent.
-- **Combien par jour ?** : un rythme, la date se calcule ; le bloc de pages
+- **Tu veux lire combien par jour ?** : un rythme, la date se calcule ; le bloc de pages
   (`PageBlock`) s'épaissit avec un léger rebond ; un autocollant réagit (`StickerText`).
 - **Préparation** : trois tranches tombent et s'empilent pendant le vrai
   enregistrement (≈ 2 s, pas un spinner).
