@@ -18,7 +18,7 @@ import Button3D from '../../components/Button3D';
 import OnboardingScreen, { rise } from '../../components/onboarding/OnboardingScreen';
 import PageBlock from '../../components/onboarding/PageBlock';
 import StickerText from '../../components/onboarding/StickerText';
-import FilterChips from '../../components/ui/FilterChips';
+import OptionList from '../../components/onboarding/OptionList';
 import { endDateFor } from '../../services/onboarding';
 import { bookFormat, useOnboardingStore } from '../../stores/onboardingStore';
 import { postIt, spacing } from '../../utils/constants';
@@ -69,8 +69,7 @@ export default function ObjectifScreen() {
         <PageBlock thickness={THICKNESS[pace]} faded={pace === 0} />
       </Animated.View>
       <Animated.View entering={rise(2)}>
-        <FilterChips
-          large
+        <OptionList
           options={PACES.map((p) => ({ key: String(p) as `${Pace}`, label: p === 0 ? 'Libre' : percent ? MINUTES[p] : `${p} p.` }))}
           value={String(pace) as `${Pace}`}
           onChange={(key) => choose(Number(key) as Pace)}

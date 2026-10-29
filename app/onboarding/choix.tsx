@@ -11,7 +11,7 @@ import { StyleSheet } from 'react-native';
 import Animated from 'react-native-reanimated';
 import Button3D from '../../components/Button3D';
 import OnboardingScreen, { rise } from '../../components/onboarding/OnboardingScreen';
-import FilterChips from '../../components/ui/FilterChips';
+import OptionList from '../../components/onboarding/OptionList';
 import { useOnboardingStore } from '../../stores/onboardingStore';
 import { isAddFlow, nextStep } from '../../utils/onboardingFlow';
 
@@ -50,7 +50,7 @@ export default function ChoixScreen() {
       }
     >
       <Animated.View entering={rise(1)}>
-        <FilterChips large options={WAYS} value={way} onChange={setWay} />
+        <OptionList options={WAYS} value={way} onChange={setWay} />
       </Animated.View>
     </OnboardingScreen>
   );

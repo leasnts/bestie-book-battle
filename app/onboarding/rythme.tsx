@@ -14,7 +14,7 @@ import Animated from 'react-native-reanimated';
 import Button3D from '../../components/Button3D';
 import OnboardingScreen, { QuestionLabel, rise } from '../../components/onboarding/OnboardingScreen';
 import { FORMATS, MOMENTS } from '../../components/onboarding/choices';
-import { ToggleChips } from '../../components/ui/FilterChips';
+import { ToggleOptionList } from '../../components/onboarding/OptionList';
 import { useOnboardingStore } from '../../stores/onboardingStore';
 import { spacing } from '../../utils/constants';
 import { nextStep } from '../../utils/onboardingFlow';
@@ -31,6 +31,7 @@ export default function RythmeScreen() {
       step="rythme"
       title="Ton rythme"
       accent="rythme"
+      scroll
       footer={
         <Button3D variant="primary" onPress={() => router.push(nextStep(flow, 'rythme'))} style={styles.wide}>
           Continuer
@@ -39,11 +40,11 @@ export default function RythmeScreen() {
     >
       <Animated.View entering={rise(1)} style={styles.group}>
         <QuestionLabel>Quand ?</QuestionLabel>
-        <ToggleChips large options={MOMENTS} values={moments} onChange={(values) => patch({ moments: values })} />
+        <ToggleOptionList options={MOMENTS} values={moments} onChange={(values) => patch({ moments: values })} />
       </Animated.View>
       <Animated.View entering={rise(2)} style={styles.group}>
         <QuestionLabel>En général, tu lis en</QuestionLabel>
-        <ToggleChips large options={FORMATS} values={usualFormats} onChange={(values) => patch({ usualFormats: values })} />
+        <ToggleOptionList options={FORMATS} values={usualFormats} onChange={(values) => patch({ usualFormats: values })} />
       </Animated.View>
     </OnboardingScreen>
   );

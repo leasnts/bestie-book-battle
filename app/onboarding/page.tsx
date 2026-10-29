@@ -19,7 +19,7 @@ import Button3D from '../../components/Button3D';
 import { FORMATS } from '../../components/onboarding/choices';
 import OnboardingScreen, { QuestionLabel, rise } from '../../components/onboarding/OnboardingScreen';
 import { COVER_RATIO, CoverImage } from '../../components/ui/BookCover';
-import FilterChips from '../../components/ui/FilterChips';
+import OptionList from '../../components/onboarding/OptionList';
 import GlassButton from '../../components/ui/GlassButton';
 import PageRuler from '../../components/ui/PageRuler';
 import { bookFormat, useOnboardingStore, type BookDraft } from '../../stores/onboardingStore';
@@ -80,7 +80,7 @@ export default function PageScreen() {
     >
       <Animated.View entering={rise(1)} style={styles.group}>
         <QuestionLabel>{`${book.title}, tu le lis en`}</QuestionLabel>
-        <FilterChips large options={FORMATS} value={format} onChange={setFormat} />
+        <OptionList options={FORMATS} value={format} onChange={setFormat} />
       </Animated.View>
 
       {format === 'papier' && (
