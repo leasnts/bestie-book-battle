@@ -35,9 +35,8 @@ import {
   borderRadius,
   colors,
   fonts,
-  inkAlpha,
+  creamAlpha,
   motion,
-  shadowAlpha,
   spacing,
 } from '../../utils/constants';
 import { feel } from '../../utils/feel';
@@ -65,10 +64,14 @@ interface ToggleOptionListProps<K extends string> {
 
 export const OPTION_H = 60;
 const ILLUSTRATION = 40;
-const RADIUS = borderRadius.lg;
+const RADIUS = borderRadius.xl;
 
-/** Le papier d'une ligne au repos : un cran plus clair que le fond grené */
-const PAPER = ['#fdfbf7', '#f3eee6'] as const;
+/**
+ * Une ligne au repos : comme les cadres de l'accueil (Le livre, Classement),
+ * blanc crème, bord crème et couture d'encre pâle un peu en retrait. Pas d'ombre.
+ */
+const PAPER = ['#fdfcfa', '#f7f3ed'] as const;
+const EDGE = creamAlpha(0.9);
 /** La ligne choisie : un voile rouge très léger, rosé (piste C1) */
 const PAPER_ON = ['#f9ecea', '#f1dcdb'] as const;
 /** La couture de la ligne choisie : rouge Lowki, collée au bord */
@@ -153,9 +156,6 @@ function OptionRow<K extends string>({
   const row = useAnimatedStyle(() => ({
     opacity: interpolate(dim.value, [0, 1], [1, DIMMED]),
     transform: [{ scale: bump.value }],
-    shadowOpacity: interpolate(on.value, [0, 1], [0.05, 0.14]),
-    shadowRadius: interpolate(on.value, [0, 1], [2, 10]),
-    shadowOffset: { width: 0, height: interpolate(on.value, [0, 1], [1, 4]) },
   }));
   const fade = useAnimatedStyle(() => ({ opacity: on.value }));
   const idleFade = useAnimatedStyle(() => ({ opacity: 1 - on.value }));
@@ -179,6 +179,9 @@ function OptionRow<K extends string>({
           </Animated.View>
           <Animated.View style={[styles.ring, styles.ringIdle, idleFade]} />
           <Animated.View style={[styles.ring, styles.ringOn, fade]} />
+          <Animated.View style={[StyleSheet.absoluteFill, idleFade]}>
+            <StitchBorder radius={RADIUS} />
+          </Animated.View>
           <Animated.View style={[StyleSheet.absoluteFill, fade]}>
             <StitchBorder radius={RADIUS} inset={STITCH_INSET} color={STITCH_ON} weight={STITCH_WEIGHT} />
           </Animated.View>
@@ -205,7 +208,6 @@ const styles = StyleSheet.create({
     height: OPTION_H,
     paddingHorizontal: spacing.md,
     borderRadius: RADIUS,
-    shadowColor: shadowAlpha(1),
   },
   clip: {
     borderRadius: RADIUS,
@@ -217,7 +219,7 @@ const styles = StyleSheet.create({
   },
   ringIdle: {
     borderWidth: 1,
-    borderColor: inkAlpha(0.09),
+    borderColor: EDGE,
   },
   ringOn: {
     borderWidth: 1,
