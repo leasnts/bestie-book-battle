@@ -4,7 +4,7 @@
  *
  * - choix : tu lances ou tu rejoins ? (avant le livre)
  * - code, invitation : rejoindre une lecture (lien ou code)
- * - rythme → carte : les questions, la préparation, la carte de lecture
+ * - rythme, formats → carte : les questions, la préparation, la carte de lecture
  */
 
 import { Stack } from 'expo-router';

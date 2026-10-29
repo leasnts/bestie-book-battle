@@ -34,15 +34,15 @@ export default function InvitationScreen() {
 
   const join = () => {
     // Venu·e de « Tu lances ou tu rejoins ? » (déjà connecté·e) : le rythme est déjà dit
-    if (signedIn) router.push(flow === 'join' ? nextStep('join', 'rythme') : firstStep(flow));
+    if (signedIn) router.push(flow === 'join' ? nextStep('join', 'formats') : firstStep(flow));
     else router.push('/auth/login');
   };
 
   return (
     <OnboardingScreen
       step="invitation"
-      title={`Lire avec ${name}`}
-      accent="Lire"
+      title={`Tu lis avec ${name} ?`}
+      accent="lis"
       footer={
         <Button3D variant="primary" onPress={join} style={styles.wide}>
           {`Rejoindre ${name}`}
