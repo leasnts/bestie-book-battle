@@ -5,7 +5,7 @@
  *
  *    Ton 𝓻𝔂𝓽𝓱𝓶𝓮                           titre 30/36, un mot d'accent
  *    …                                     le contenu, en cascade (60 ms)
- *    ·····································   le fil au-dessus du pied
+ *    ⌇⌇⌇⌇⌇⌇⌇⌇⌇⌇⌇⌇⌇⌇⌇⌇⌇⌇⌇⌇⌇⌇⌇⌇⌇⌇⌇⌇⌇⌇⌇⌇⌇⌇⌇⌇⌇   la feuille du pied, bord frangé, toute la largeur
  *    [        Continuer        ]
  *
  * Fond papier uni, celui de l'accueil (`colors.bgApp`). Au centre de l'en-tête,
@@ -32,7 +32,7 @@ import { isAddFlow, stepPosition, type OnboardingStep } from '../../utils/onboar
 import AccentWord from '../ui/AccentWord';
 import GlassButton from '../ui/GlassButton';
 import { KnotGradients } from '../ui/GoalTrack';
-import { StitchLine } from '../ui/Stitch';
+import TornEdge from './TornEdge';
 
 /** Sur un grand écran (iPhone Duo déplié), l'onboarding garde une largeur de téléphone */
 export const ONBOARDING_MAX_W = 520;
@@ -104,7 +104,7 @@ export default function OnboardingScreen({
 
         {footer && (
           <Animated.View entering={rise(4)} style={[styles.footer, { paddingBottom: Math.max(insets.bottom, spacing.lg) + spacing.lg }]}>
-            <StitchLine style={styles.footerSeam} />
+            <TornEdge color={FOOTER_PAPER} />
             {footer}
           </Animated.View>
         )}
@@ -144,6 +144,9 @@ function ProgressKnots({ index, total }: { index: number; total: number }) {
     </View>
   );
 }
+
+/** La feuille du pied, au bord frangé : un cran plus claire que le fond */
+const FOOTER_PAPER = '#f6f1ea';
 
 const KNOT = 4.5;
 const KNOT_CURRENT = 6;
@@ -197,13 +200,8 @@ const styles = StyleSheet.create({
   },
   footer: {
     paddingHorizontal: spacing.xl,
-    paddingTop: spacing.lg,
+    paddingTop: spacing.xl,
     gap: spacing.md,
-  },
-  footerSeam: {
-    position: 'absolute',
-    top: 0,
-    left: spacing.xl,
-    right: spacing.xl,
+    backgroundColor: FOOTER_PAPER,
   },
 });

@@ -825,8 +825,9 @@ Prototype validé le 2026-10-28 (artefact « Onboarding chapi »). Deux temps :
 - **Rien n'est choisi d'avance** : la personne touche le premier choix ;
   Continuer attend ce choix quand la question en demande un.
 - **Questions** : `OnboardingScreen` (fond de l'accueil `bgApp`, uni, retour en verre, fil de
-  progression = la couture `Seam`, titre 30/36 avec un mot d'accent, pied sous
-  un `StitchLine`, colonne de téléphone sur grand écran).
+  progression = un nœud par question au centre (ceux de `GoalTrack`), titre 30/36
+  avec un mot d'accent, pied = une feuille claire au bord frangé (`TornEdge`), toute
+  la largeur, sans ombre, colonne de téléphone sur grand écran).
 - **Un livre = un seul format.** Papier → pages de mon édition (demandée
   seulement là) ; liseuse ou audio → % (`total_pages` 100, `PageRuler unit="percent"`).
   Les formats habituels, eux, sont multiples (`ToggleOptionList`).
