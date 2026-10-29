@@ -828,6 +828,12 @@ Prototype validé le 2026-10-28 (artefact « Onboarding chapi »). Deux temps :
   progression = un nœud par question au centre (ceux de `GoalTrack`), titre 30/36
   avec un mot d'accent, pied = une feuille claire au bord frangé (`TornEdge`), toute
   la largeur, sans ombre, colonne de téléphone sur grand écran).
+- **On lit quoi ?** (`livre`) : la recherche dans la page (pas de sheet), toujours
+  en haut pour changer de livre ; le livre choisi en bandeau comme « Le livre » de
+  l'accueil, son édition proposée d'office (pages préremplies, « Changer » s'il y en
+  a plusieurs) ; « En pages ou en % ? » puis le nombre de pages à la règle de Ma
+  page (`PageRuler unit="count"`). En rejoignant, format et édition restent à
+  « Où en est ta lecture ? ».
 - **Un livre = un seul format.** Papier → pages de mon édition (demandée
   seulement là) ; liseuse ou audio → % (`total_pages` 100, `PageRuler unit="percent"`).
   Les formats habituels, eux, sont multiples (`ToggleOptionList`).

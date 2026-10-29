@@ -1,6 +1,9 @@
 /**
- * Où en est ta lecture ? Ce livre-là : son format, son édition, ma position.
+ * Où en est ta lecture ? Ma position dans ce livre-là.
  *
+ * En lançant une lecture, le livre, son édition et pages ou % se règlent à
+ * « On lit quoi ? » : ici, il ne reste que la règle. En rejoignant (pas d'écran
+ * « On lit quoi ? »), on demande aussi le format et l'édition :
  * - « En quel format ? » : un seul format pour ce livre, rien de
  *   choisi d'avance ; l'édition et la règle n'apparaissent qu'ensuite.
  * - Papier : on compte en pages de MON édition, demandée ici seulement
@@ -35,6 +38,8 @@ export default function PageScreen() {
   const { flow, invitation, book, start, bookPick, patch } = store;
   const format = bookFormat(store);
   const percent = format !== 'papier';
+  // Rejoindre : pas d'écran « On lit quoi ? », le format et l'édition se règlent ici
+  const joining = flow === 'join' || flow === 'addJoin';
 
   // Rejoindre : mon édition part de celle de la lecture
   useEffect(() => {
@@ -83,12 +88,14 @@ export default function PageScreen() {
         </Button3D>
       }
     >
-      <Animated.View entering={rise(1)} style={styles.group}>
-        <QuestionLabel>En quel format ?</QuestionLabel>
-        <OptionList options={FORMATS} value={store.format} onChange={setFormat} />
-      </Animated.View>
+      {joining && (
+        <Animated.View entering={rise(1)} style={styles.group}>
+          <QuestionLabel>En quel format ?</QuestionLabel>
+          <OptionList options={FORMATS} value={store.format} onChange={setFormat} />
+        </Animated.View>
+      )}
 
-      {store.format === 'papier' && (
+      {joining && store.format === 'papier' && (
         <Animated.View entering={rise(2)}>
           <Edition
             book={book}

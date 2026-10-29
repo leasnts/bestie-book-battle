@@ -1,57 +1,114 @@
 /**
- * On lit quoi ? La recherche d'abord : quelques lettres, puis le livre et son
- * édition dans le sheet de recherche (/book-search, le même que partout).
- * Couverture, pages et éditeur arrivent avec lui. La saisie à la main reste
- * possible ; une couverture absente ne bloque plus rien.
+ * On lit quoi ? Le livre, son édition, et comment on compte.
+ *
+ *    ( 🔍 Titre, auteur·ice, saga        )    la recherche, dans la page, toujours là
+ *    ┌───────────────────────────────────┐
+ *    │ ▐██▌  Le Prince cruel             │    le livre choisi, comme sur l'accueil
+ *    │ ▐██▌  Holly Black                 │
+ *    │       Rageot · 400 p.   Changer   │    l'édition proposée d'office
+ *    └───────────────────────────────────┘
+ *    En pages ou en % ?                       pages (papier) ou % (liseuse, audio)
+ *    [ 📖 En pages ] [ 📱 En % ]
+ *    400 p.  ···········●···········          le nombre de pages, à la règle de Ma page
+ *
+ * - La recherche ne part pas dans un sheet : on tape, les résultats s'affichent
+ *   dessous ; elle reste en haut une fois le livre choisi, pour en changer.
+ * - Un livre choisi : ses éditions papier sont cherchées, la première avec un
+ *   nombre de pages est prise d'office (pages préremplies) ; « Changer » les
+ *   déroule. On peut toujours corriger les pages à la règle.
+ * - Rien n'est choisi d'avance entre pages et % ; « C'est celui-là » attend.
+ * - Ajouter à la main : titre et auteur·ice, le reste pareil.
  */
 
-import { LinearGradient } from 'expo-linear-gradient';
-import { useRouter } from 'expo-router';
-import { SearchIcon } from 'lucide-react-native';
-import React, { useEffect, useState } from 'react';
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { CircleXIcon, SearchIcon } from 'lucide-react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { Keyboard, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import Button3D from '../../components/Button3D';
-import OnboardingScreen, { rise } from '../../components/onboarding/OnboardingScreen';
-import { COVER_RATIO, CoverImage } from '../../components/ui/BookCover';
-import { useStamp } from '../../components/ui/Stamp';
-import { useOnboardingStore, type BookDraft } from '../../stores/onboardingStore';
-import { borderRadius, colors, fonts, fontSize, inkAlpha, paperFrameGradient, shadows, spacing } from '../../utils/constants';
+import OnboardingScreen, { QuestionLabel, rise } from '../../components/onboarding/OnboardingScreen';
+import OptionList from '../../components/onboarding/OptionList';
+import BookCover, { COVER_RATIO } from '../../components/ui/BookCover';
+import BookResultRow, { BookResultSkeleton } from '../../components/ui/BookResultRow';
+import GlassSection from '../../components/ui/GlassSection';
+import PageRuler from '../../components/ui/PageRuler';
+import { useBookSearch } from '../../hooks/useBookSearch';
+import { fetchEditions, TRENDING_BOOKS } from '../../services/bookApi';
+import { useOnboardingStore } from '../../stores/onboardingStore';
+import type { BookSearchResult } from '../../types/bookSearch';
+import type { BookFormat } from '../../types/supabase';
+import { borderRadius, colors, fonts, fontSize, shadows, spacing } from '../../utils/constants';
 import { feel } from '../../utils/feel';
 import { nextStep } from '../../utils/onboardingFlow';
 
-const COVER_W = 112;
+/** Plafond de la règle du nombre de pages */
+const MAX_PAGES = 2000;
+
+type Unit = 'pages' | 'percent';
+const UNITS = [
+  { key: 'pages' as const, label: 'En pages', illustration: require('../../assets/images/onboarding/papier.png') },
+  { key: 'percent' as const, label: 'En %', illustration: require('../../assets/images/onboarding/liseuse.png') },
+];
 
 export default function LivreScreen() {
   const router = useRouter();
   const flow = useOnboardingStore((s) => s.flow);
   const book = useOnboardingStore((s) => s.book);
-  const bookPick = useOnboardingStore((s) => s.bookPick);
+  const format = useOnboardingStore((s) => s.format);
+  const usualFormats = useOnboardingStore((s) => s.usualFormats);
   const patch = useOnboardingStore((s) => s.patch);
+  const { query, setQuery, results, isSearching, error, clearResults } = useBookSearch();
   const [manual, setManual] = useState(false);
-
-  // Le livre choisi dans le sheet de recherche : on le reprend, puis on vide le dépôt
+  // Les éditions du livre choisi (null = en cours), et leur liste dépliée
+  const [editions, setEditions] = useState<BookSearchResult[] | null>(null);
+  const [showEditions, setShowEditions] = useState(false);
+  const pending = useRef<BookSearchResult | null>(null);
+  // `?q=` pré-remplit la recherche (lien profond, tests)
+  const { q } = useLocalSearchParams<{ q?: string }>();
   useEffect(() => {
-    if (bookPick?.target !== 'livre') return;
-    const picked = bookPick.book;
-    feel('tic');
+    if (q) setQuery(q);
+  }, [q, setQuery]);
+
+  const searching = query.trim().length > 0;
+  const unit: Unit | null = format === null ? null : format === 'papier' ? 'pages' : 'percent';
+
+  const setBook = (result: BookSearchResult, cover = result.coverUrl) =>
     patch({
-      book: {
-        title: picked.title,
-        author: picked.author,
-        pages: picked.pageCount ?? 0,
-        cover: picked.coverUrl,
-        publisher: picked.publisher,
-      },
-      format: null,
+      book: { title: result.title, author: result.author, pages: result.pageCount ?? 0, cover, publisher: result.publisher },
       start: 0,
     });
-    setManual(false);
-    useOnboardingStore.getState().setBookPick(null);
-  }, [bookPick, patch]);
 
-  const search = () => router.push('/book-search');
-  const ready = !!book && book.title.trim().length > 0 && book.pages > 0;
+  const pick = async (result: BookSearchResult) => {
+    Keyboard.dismiss();
+    clearResults();
+    feel('tic');
+    setManual(false);
+    setShowEditions(false);
+    setEditions(null);
+    setBook(result);
+    pending.current = result;
+    const found = await fetchEditions(result);
+    if (pending.current !== result) return;
+    setEditions(found);
+    // L'édition proposée d'office : la première qui connaît son nombre de pages
+    const first = found.find((edition) => edition.pageCount);
+    if (first) setBook(first, first.coverUrl ?? result.coverUrl);
+  };
+
+  const pickEdition = (edition: BookSearchResult) => {
+    feel('tic');
+    setShowEditions(false);
+    setBook(edition, edition.coverUrl ?? book?.cover ?? null);
+  };
+
+  /** Pages → papier ; % → liseuse, ou audio si c'est ce qu'on écoute d'habitude */
+  const chooseUnit = (next: Unit) => {
+    if (next === 'pages') return patch({ format: 'papier' });
+    const listened: BookFormat = usualFormats.includes('audio') && !usualFormats.includes('liseuse') ? 'audio' : 'liseuse';
+    patch({ format: listened });
+  };
+
+  const ready = !!book && book.title.trim().length > 0 && unit !== null && (unit === 'percent' || book.pages > 0);
 
   return (
     <OnboardingScreen
@@ -65,102 +122,162 @@ export default function LivreScreen() {
             C'est celui-là
           </Button3D>
           {!book && !manual && (
-            <Pressable onPress={() => setManual(true)} hitSlop={8} accessibilityRole="button" style={styles.link}>
-              <Text style={styles.linkText}>Ajouter à la main</Text>
-            </Pressable>
+            <Button3D variant="secondary" onPress={() => setManual(true)} style={styles.wide}>
+              Ajouter à la main
+            </Button3D>
           )}
         </>
       }
     >
-      {book && !manual ? (
-        <PickedBook book={book} onChange={search} onPages={(pages) => patch({ book: { ...book, pages } })} />
-      ) : manual ? (
-        <ManualBook onChange={(draft) => patch({ book: draft, format: null, start: 0 })} />
-      ) : (
-        <Animated.View entering={rise(1)}>
-          <Pressable style={styles.search} onPress={search} accessibilityRole="search" accessibilityLabel="Chercher un livre">
-            <SearchIcon size={20} color={colors.placeholder} />
-            <Text style={styles.searchText}>Titre, auteur·ice, saga</Text>
+      <Animated.View entering={rise(1)} style={styles.searchBox}>
+        <SearchIcon size={20} color={colors.placeholder} />
+        <TextInput
+          style={styles.searchInput}
+          placeholder={book ? 'Un autre livre' : 'Titre, auteur·ice, saga'}
+          placeholderTextColor={colors.placeholder}
+          value={query}
+          onChangeText={setQuery}
+          autoCapitalize="words"
+          autoCorrect={false}
+          returnKeyType="search"
+          accessibilityLabel="Chercher un livre"
+        />
+        {searching && (
+          <Pressable onPress={clearResults} hitSlop={8} accessibilityRole="button" accessibilityLabel="Effacer la recherche">
+            <CircleXIcon size={18} color={colors.placeholder} />
           </Pressable>
-        </Animated.View>
+        )}
+      </Animated.View>
+
+      {searching ? (
+        <View>
+          {results.map((result) => (
+            <BookResultRow key={result.id} book={result} onPress={() => pick(result)} />
+          ))}
+          {results.length === 0 &&
+            (isSearching ? (
+              <>
+                <BookResultSkeleton />
+                <BookResultSkeleton />
+                <BookResultSkeleton />
+              </>
+            ) : (
+              <Text style={styles.message}>{error ?? 'Aucun résultat'}</Text>
+            ))}
+        </View>
+      ) : manual ? (
+        <>
+          <ManualBook onChange={(title, author) => patch({ book: { title, author, pages: book?.pages ?? 0, cover: null, publisher: null }, start: 0 })} />
+          {!!book?.title && <Counting unit={unit} onUnit={chooseUnit} pages={book.pages} onPages={(pages) => patch({ book: { ...book, pages } })} />}
+        </>
+      ) : book ? (
+        <>
+          <Animated.View entering={FadeIn.duration(300)}>
+            <GlassSection>
+              <View style={styles.head}>
+                <View style={styles.cover}>
+                  <BookCover coverUrl={book.cover} />
+                </View>
+                <View style={styles.texts}>
+                  <Text style={styles.title} numberOfLines={2}>{book.title}</Text>
+                  {!!book.author && <Text style={styles.author} numberOfLines={1}>{book.author}</Text>}
+                  <View style={styles.editionRow}>
+                    <Text style={styles.edition} numberOfLines={1}>
+                      {editions === null
+                        ? 'Ton édition…'
+                        : [book.publisher, book.pages > 0 ? `${book.pages} p.` : null].filter(Boolean).join(' · ') || 'Édition inconnue'}
+                    </Text>
+                    {!!editions && editions.length > 1 && (
+                      <Pressable onPress={() => setShowEditions(!showEditions)} hitSlop={10} accessibilityRole="button">
+                        <Text style={styles.change}>{showEditions ? 'Fermer' : 'Changer'}</Text>
+                      </Pressable>
+                    )}
+                  </View>
+                </View>
+              </View>
+            </GlassSection>
+          </Animated.View>
+
+          {showEditions && editions && (
+            <Animated.View entering={FadeIn.duration(200)}>
+              <QuestionLabel>Ton édition</QuestionLabel>
+              <View style={styles.editions}>
+                {editions.map((edition) => (
+                  <BookResultRow key={edition.id} book={edition} onPress={() => pickEdition(edition)} />
+                ))}
+              </View>
+            </Animated.View>
+          )}
+
+          <Counting unit={unit} onUnit={chooseUnit} pages={book.pages} onPages={(pages) => patch({ book: { ...book, pages } })} />
+        </>
+      ) : (
+        <View>
+          <Text style={styles.section}>En ce moment</Text>
+          {TRENDING_BOOKS.map((result) => (
+            <BookResultRow key={result.id} book={result} onPress={() => pick(result)} />
+          ))}
+        </View>
       )}
     </OnboardingScreen>
   );
 }
 
-/** Le livre choisi : sa couverture se pose, sous elle titre, auteur·ice, édition */
-function PickedBook({ book, onChange, onPages }: { book: BookDraft; onChange: () => void; onPages: (pages: number) => void }) {
-  const { style: landed } = useStamp({ fallAfter: 0, height: 40, grow: 0.06 });
+/** Pages ou % ; en pages, le nombre de pages à la règle de Ma page */
+function Counting({
+  unit,
+  onUnit,
+  pages,
+  onPages,
+}: {
+  unit: Unit | null;
+  onUnit: (unit: Unit) => void;
+  pages: number;
+  onPages: (pages: number) => void;
+}) {
   return (
-    <Animated.View entering={FadeIn.duration(300)} style={styles.picked}>
-      <Animated.View style={landed}>
-        {book.cover ? (
-          <CoverImage uri={book.cover} style={styles.cover} />
-        ) : (
-          <LinearGradient colors={paperFrameGradient} style={[styles.cover, styles.noCover]} />
-        )}
-      </Animated.View>
-      <View style={styles.meta}>
-        <Text style={styles.title} numberOfLines={3}>{book.title}</Text>
-        {!!book.author && <Text style={styles.author} numberOfLines={2}>{book.author}</Text>}
-        {book.pages > 0 ? (
-          <Text style={styles.edition}>{[book.publisher, `${book.pages} p.`].filter(Boolean).join(' · ')}</Text>
-        ) : (
-          <TextInput
-            style={[styles.input, styles.pagesInput]}
-            placeholder="Nombre de pages"
-            placeholderTextColor={colors.placeholder}
-            keyboardType="number-pad"
-            onChangeText={(text) => onPages(Number(text.replace(/[^0-9]/g, '')) || 0)}
-            accessibilityLabel="Nombre de pages de mon édition"
-          />
-        )}
-        <Pressable onPress={onChange} hitSlop={8} accessibilityRole="button" style={styles.other}>
-          <Text style={styles.linkText}>Un autre livre</Text>
-        </Pressable>
+    <>
+      <View style={styles.group}>
+        <QuestionLabel>En pages ou en % ?</QuestionLabel>
+        <OptionList options={UNITS} value={unit} onChange={onUnit} />
       </View>
-    </Animated.View>
+      {unit === 'pages' && (
+        <Animated.View entering={FadeIn.duration(250)} style={styles.group}>
+          <QuestionLabel>Nombre de pages</QuestionLabel>
+          <PageRuler currentPage={pages} totalPages={MAX_PAGES} onPageChange={onPages} unit="count" fontSize={64} />
+        </Animated.View>
+      )}
+    </>
   );
 }
 
-/** Le livre à la main : titre, auteur·ice, pages */
-function ManualBook({ onChange }: { onChange: (book: BookDraft) => void }) {
-  const [draft, setDraft] = useState({ title: '', author: '', pages: '' });
+/** Le livre à la main : titre et auteur·ice */
+function ManualBook({ onChange }: { onChange: (title: string, author: string) => void }) {
+  const [draft, setDraft] = useState({ title: '', author: '' });
   const update = (field: keyof typeof draft, value: string) => {
     const next = { ...draft, [field]: value };
     setDraft(next);
-    onChange({ title: next.title.trim(), author: next.author.trim(), pages: Number(next.pages) || 0, cover: null, publisher: null });
+    onChange(next.title.trim(), next.author.trim());
   };
 
   return (
     <Animated.View entering={FadeIn.duration(300)} style={styles.form}>
       <TextInput style={styles.input} placeholder="Titre" placeholderTextColor={colors.placeholder} value={draft.title} onChangeText={(t) => update('title', t)} autoFocus autoCapitalize="sentences" accessibilityLabel="Titre du livre" />
       <TextInput style={styles.input} placeholder="Auteur·ice" placeholderTextColor={colors.placeholder} value={draft.author} onChangeText={(t) => update('author', t)} autoCapitalize="words" accessibilityLabel="Auteur·ice" />
-      <TextInput style={styles.input} placeholder="Nombre de pages" placeholderTextColor={colors.placeholder} value={draft.pages} onChangeText={(t) => update('pages', t.replace(/[^0-9]/g, ''))} keyboardType="number-pad" accessibilityLabel="Nombre de pages" />
     </Animated.View>
   );
 }
+
+const COVER_WIDTH = 54;
 
 const styles = StyleSheet.create({
   wide: {
     width: '100%',
   },
-  link: {
-    alignSelf: 'center',
-    minHeight: 44,
-    justifyContent: 'center',
-  },
-  linkText: {
-    fontFamily: fonts.bodySemiBold,
-    fontSize: 15,
-    color: colors.textSecondary,
-    textDecorationLine: 'underline',
-  },
-  search: {
+  searchBox: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.md,
-    height: 56,
     paddingHorizontal: spacing.lg,
     borderRadius: borderRadius.lg,
     backgroundColor: colors.white,
@@ -168,51 +285,75 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     ...shadows.xs,
   },
-  searchText: {
+  searchInput: {
+    flex: 1,
     fontFamily: fonts.body,
     fontSize: fontSize.md,
-    color: colors.placeholder,
+    color: colors.textPrimary,
+    paddingVertical: spacing.lg,
   },
-  picked: {
+  message: {
+    fontFamily: fonts.body,
+    fontSize: fontSize.sm,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    paddingVertical: spacing['3xl'],
+  },
+  section: {
+    fontFamily: fonts.bodyExtraBold,
+    fontSize: 12,
+    letterSpacing: 0.8,
+    textTransform: 'uppercase',
+    color: colors.textTertiary,
+    marginBottom: spacing.sm,
+  },
+  // Le bandeau du livre, comme « Le livre » de l'accueil (BookSection)
+  head: {
     flexDirection: 'row',
-    alignItems: 'flex-end',
-    gap: spacing.lg,
+    alignItems: 'center',
+    gap: spacing.md,
   },
   cover: {
-    width: COVER_W,
-    height: COVER_W / COVER_RATIO,
+    width: COVER_WIDTH,
+    aspectRatio: COVER_RATIO,
   },
-  noCover: {
-    borderRadius: 2,
-    borderWidth: 1,
-    borderColor: inkAlpha(0.12),
-  },
-  meta: {
+  texts: {
     flex: 1,
-    gap: spacing.xs,
   },
   title: {
-    fontFamily: fonts.displayBold,
-    fontSize: 21,
-    lineHeight: 26,
+    fontFamily: fonts.display,
+    fontSize: 20,
     color: colors.textPrimary,
   },
   author: {
-    fontFamily: fonts.bodyMedium,
+    fontFamily: fonts.body,
     fontSize: 14,
-    lineHeight: 20,
     color: colors.textTertiary,
+    marginTop: 1,
+  },
+  editionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    marginTop: spacing.sm,
   },
   edition: {
+    flex: 1,
     fontFamily: fonts.bodySemiBold,
     fontSize: 13,
-    lineHeight: 18,
     color: colors.textSecondary,
-    marginTop: spacing.xs,
   },
-  other: {
-    minHeight: 44,
-    justifyContent: 'center',
+  change: {
+    fontFamily: fonts.bodySemiBold,
+    fontSize: 13,
+    color: colors.textPrimary,
+    textDecorationLine: 'underline',
+  },
+  editions: {
+    marginTop: spacing.md,
+  },
+  group: {
+    gap: spacing.lg,
   },
   form: {
     gap: spacing.md,
@@ -228,9 +369,5 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.lg,
     ...shadows.xs,
-  },
-  pagesInput: {
-    paddingVertical: spacing.md,
-    marginTop: spacing.xs,
   },
 });

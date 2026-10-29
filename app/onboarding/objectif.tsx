@@ -40,12 +40,14 @@ export default function ObjectifScreen() {
   const percent = bookFormat(store) !== 'papier';
   if (!book) return null;
 
+  // En %, sans nombre de pages connu (livre ajouté à la main) : un livre moyen
+  const refPages = book.pages || 300;
   /** Le rythme choisi, ramené en pages papier pour l'afficher */
-  const pace: Pace = perDay === null ? 0 : nearestPace(percent ? (perDay / 100) * book.pages : perDay);
+  const pace: Pace = perDay === null ? 0 : nearestPace(percent ? (perDay / 100) * refPages : perDay);
 
   const choose = (value: Pace) => {
     if (value === 0) return patch({ perDay: null, paceChosen: true });
-    patch({ paceChosen: true, perDay: percent ? Math.max(1, Math.round((value / book.pages) * 100)) : value });
+    patch({ paceChosen: true, perDay: percent ? Math.max(1, Math.round((value / refPages) * 100)) : value });
   };
 
   const remaining = (percent ? 100 : book.pages) - start;

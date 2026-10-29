@@ -46,7 +46,8 @@ const CATALOG_BOOKS: BookSearchResult[] = Array.from(
 );
 
 /** Les livres du moment, proposés avant qu'on tape quoi que ce soit */
-export const TRENDING_BOOKS: BookSearchResult[] = SHELVES.find((s) => s.key === 'now')?.books ?? [];
+// L'étagère « now » n'existe plus dans le catalogue : on prend BookTok
+export const TRENDING_BOOKS: BookSearchResult[] = (SHELVES.find((s) => s.key === 'now') ?? SHELVES.find((s) => s.key === 'booktok'))?.books ?? [];
 
 /**
  * Livres du catalogue dont le titre ou l'auteur commence par ce qu'on tape
