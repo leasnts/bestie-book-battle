@@ -66,7 +66,7 @@ export function isAddFlow(flow: OnboardingFlow) {
 
 /**
  * Ajouter un livre depuis l'app (le « + », la bibliothèque, l'accueil vide…) :
- * brouillon vierge, puis « Tu lances une lecture ou on t’attend ? » — ou le code directement.
+ * brouillon vierge, puis « Par où on commence ? » — ou le code directement.
  */
 export function startAdding(join = false): `/onboarding/${OnboardingStep}` {
   useOnboardingStore.getState().begin(join ? 'addJoin' : 'add');

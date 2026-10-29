@@ -33,7 +33,7 @@ export default function InvitationScreen() {
   const name = invitation.adminFirstName;
 
   const join = () => {
-    // Venu·e de « Tu lances une lecture ou on t’attend ? » (déjà connecté·e) : le rythme est déjà dit
+    // Venu·e de « Par où on commence ? » (déjà connecté·e) : le rythme est déjà dit
     if (signedIn) router.push(flow === 'join' ? nextStep('join', 'formats') : firstStep(flow));
     else router.push('/auth/login');
   };

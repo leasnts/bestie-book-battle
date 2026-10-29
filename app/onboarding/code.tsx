@@ -1,7 +1,7 @@
 /**
  * Rejoindre avec un code, quand on n'a pas le lien : six cases, vérifiées
  * toutes seules au sixième chiffre. Trouvé → l'invitation. On y arrive par
- * « J'ai un code » (Tu lances une lecture ou on t’attend ?), un lien au code inconnu, ou
+ * « J'ai un code » (Par où on commence ?), un lien au code inconnu, ou
  * « Rejoindre » sur l'accueil vide.
  */
 

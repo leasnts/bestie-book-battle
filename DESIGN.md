@@ -815,7 +815,7 @@ Prototype validé le 2026-10-28 (artefact « Onboarding chapi »). Deux temps :
   s'effacent, les yeux se posent en petit et en crème (`LivingEye light`)
   au-dessus de la question, un grand titre à gauche juste au-dessus des
   boutons : « On lit » / « *ensemble* ? ».
-- **Tu lances une lecture ou on t’attend ?** (`choix`) : un écran à lui seul, entre « Tu lis
+- **Par où on commence ?** (`choix`) : un écran à lui seul, entre « Tu lis
   sur quoi ? » et « Tu lis quoi en ce moment ? » (et au « + »), deux grandes pastilles : « Je
   lance une lecture » → « Tu lis quoi en ce moment ? », « J'ai un code » → « Quel est ton code ? » puis
   l'invitation. Les liens d'invitation l'évitent.

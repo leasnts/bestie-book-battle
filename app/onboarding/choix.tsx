@@ -1,5 +1,5 @@
 /**
- * Tu lances une lecture ou on t’attend ? Un écran à lui seul, juste avant le livre : le
+ * Par où on commence ? Un écran à lui seul, juste avant le livre : le
  * moment où le parcours se sépare. Lancer → « Tu lis quoi en ce moment ? » ; rejoindre →
  * « Quel est ton code ? », puis l'invitation. Les liens d'invitation l'évitent.
  */
@@ -41,8 +41,8 @@ export default function ChoixScreen() {
   return (
     <OnboardingScreen
       step="choix"
-      title="Tu lances une lecture ou on t’attend ?"
-      accent="lecture"
+      title="Par où on commence ?"
+      accent="commence"
       footer={
         <Button3D variant="primary" onPress={next} disabled={!way} style={styles.wide}>
           Continuer
