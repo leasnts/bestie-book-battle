@@ -5,7 +5,6 @@
  */
 
 import { useRouter } from 'expo-router';
-import { BookPlusIcon, MailOpenIcon } from 'lucide-react-native';
 import React, { useState } from 'react';
 import { StyleSheet } from 'react-native';
 import Animated from 'react-native-reanimated';
@@ -17,8 +16,8 @@ import { isAddFlow, nextStep } from '../../utils/onboardingFlow';
 
 type Way = 'lancer' | 'rejoindre';
 const WAYS = [
-  { key: 'lancer' as const, label: 'Je lance une lecture', icon: BookPlusIcon },
-  { key: 'rejoindre' as const, label: "J'ai un code", icon: MailOpenIcon },
+  { key: 'lancer' as const, label: 'Je lance une lecture', illustration: require('../../assets/images/onboarding/lancer.png') },
+  { key: 'rejoindre' as const, label: "J'ai un code", illustration: require('../../assets/images/onboarding/code.png') },
 ];
 
 export default function ChoixScreen() {

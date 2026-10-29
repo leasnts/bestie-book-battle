@@ -10,16 +10,16 @@
  *
  * Remplace les petites capsules (FilterChips) dans l'onboarding. Choisie, la
  * ligne se prend un voile rosé et se brode : une couture rouge à points ronds, collée au
- * bord, avec un léger rebond. L'icône reste neutre : elle laissera la place aux
- * illustrations de Lea.
+ * bord, avec un léger rebond. À gauche, l'illustration du choix,
+ * qui ne change pas.
  *
  * - `OptionList` : un seul choix, toujours un sélectionné ; les autres lignes
  *   s'estompent (on les touche encore pour changer d'avis) ;
  * - `ToggleOptionList` : plusieurs choix, aucun obligatoire, rien ne s'estompe.
  */
 
+import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
-import type { LucideIcon } from 'lucide-react-native';
 import React, { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, {
@@ -47,7 +47,8 @@ import { StitchBorder } from '../ui/Stitch';
 interface Option<K extends string> {
   key: K;
   label: string;
-  icon?: LucideIcon;
+  /** L'illustration de gauche (aquarelle, assets/images/onboarding) */
+  illustration?: number;
 }
 
 interface OptionListProps<K extends string> {
@@ -63,7 +64,7 @@ interface ToggleOptionListProps<K extends string> {
 }
 
 export const OPTION_H = 60;
-const ICON_W = 36;
+const ILLUSTRATION = 40;
 const RADIUS = borderRadius.lg;
 
 /** Le papier d'une ligne au repos : un cran plus clair que le fond grené */
@@ -159,8 +160,6 @@ function OptionRow<K extends string>({
   const fade = useAnimatedStyle(() => ({ opacity: on.value }));
   const idleFade = useAnimatedStyle(() => ({ opacity: 1 - on.value }));
 
-  const Icon = option.icon;
-
   return (
     <PressableScale
       pressedScale={0.97}
@@ -185,11 +184,7 @@ function OptionRow<K extends string>({
           </Animated.View>
         </View>
 
-        {Icon && (
-          <View style={styles.icon}>
-            <Icon size={20} color={colors.textSecondary} strokeWidth={2} />
-          </View>
-        )}
+        {option.illustration && <Image source={option.illustration} style={styles.illustration} contentFit="contain" />}
 
         <Animated.Text style={styles.label} numberOfLines={1}>
           {option.label}
@@ -228,9 +223,9 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(166,47,67,0.3)',
   },
-  icon: {
-    width: ICON_W,
-    alignItems: 'center',
+  illustration: {
+    width: ILLUSTRATION,
+    height: ILLUSTRATION,
   },
   label: {
     flex: 1,
