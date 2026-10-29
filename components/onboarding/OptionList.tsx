@@ -9,7 +9,7 @@
  *    └───────────────────────────────────────┘   rouge tout le tour
  *
  * Remplace les petites capsules (FilterChips) dans l'onboarding. Choisie, la
- * ligne se soulève et se brode : une couture rouge à points ronds, collée au
+ * ligne se prend un voile rosé et se brode : une couture rouge à points ronds, collée au
  * bord, avec un léger rebond. L'icône reste neutre : elle laissera la place aux
  * illustrations de Lea.
  *
@@ -68,8 +68,8 @@ const RADIUS = borderRadius.lg;
 
 /** Le papier d'une ligne au repos : un cran plus clair que le fond grené */
 const PAPER = ['#fdfbf7', '#f3eee6'] as const;
-/** Le papier de la ligne choisie : un cran plus clair, elle se soulève */
-const PAPER_ON = ['#fffefb', '#f7f2eb'] as const;
+/** La ligne choisie : un voile rouge très léger, rosé (piste C1) */
+const PAPER_ON = ['#f9ecea', '#f1dcdb'] as const;
 /** La couture de la ligne choisie : rouge Lowki, collée au bord */
 const STITCH_ON = colors.accent;
 const STITCH_WEIGHT = 2;
@@ -226,7 +226,7 @@ const styles = StyleSheet.create({
   },
   ringOn: {
     borderWidth: 1,
-    borderColor: 'rgba(166,47,67,0.25)',
+    borderColor: 'rgba(166,47,67,0.3)',
   },
   icon: {
     width: ICON_W,
