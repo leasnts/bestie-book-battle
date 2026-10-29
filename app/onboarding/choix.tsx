@@ -23,9 +23,10 @@ const WAYS = [
 export default function ChoixScreen() {
   const router = useRouter();
   const flow = useOnboardingStore((s) => s.flow);
-  const [way, setWay] = useState<Way>('lancer');
+  const [way, setWay] = useState<Way | null>(null);
 
   const next = () => {
+    if (!way) return;
     const adding = isAddFlow(flow);
     if (way === 'lancer') {
       const own = adding ? 'add' : 'create';
@@ -43,7 +44,7 @@ export default function ChoixScreen() {
       title="Tu lances ou tu rejoins ?"
       accent="rejoins"
       footer={
-        <Button3D variant="primary" onPress={next} style={styles.wide}>
+        <Button3D variant="primary" onPress={next} disabled={!way} style={styles.wide}>
           Continuer
         </Button3D>
       }

@@ -13,7 +13,7 @@
  * bord, avec un léger rebond. À gauche, l'illustration du choix,
  * qui ne change pas.
  *
- * - `OptionList` : un seul choix, toujours un sélectionné ; les autres lignes
+ * - `OptionList` : un seul choix ; rien n'est choisi d'avance, puis les autres lignes
  *   s'estompent (on les touche encore pour changer d'avis) ;
  * - `ToggleOptionList` : plusieurs choix, aucun obligatoire, rien ne s'estompe.
  */
@@ -53,7 +53,8 @@ interface Option<K extends string> {
 
 interface OptionListProps<K extends string> {
   options: Option<K>[];
-  value: K;
+  /** null = rien de choisi : c'est à la personne de toucher le premier choix */
+  value: K | null;
   onChange: (key: K) => void;
 }
 
@@ -90,7 +91,7 @@ export default function OptionList<K extends string>({ options, value, onChange 
           key={option.key}
           option={option}
           selected={option.key === value}
-          dimmed={option.key !== value}
+          dimmed={value !== null && option.key !== value}
           single
           onPress={() => onChange(option.key)}
         />

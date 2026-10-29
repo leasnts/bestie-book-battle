@@ -59,6 +59,8 @@ interface OnboardingStore {
   start: number;
   /** Mon rythme visé, dans la même unité ; null = libre */
   perDay: number | null;
+  /** Le rythme a été choisi (rien n'est choisi d'avance) */
+  paceChosen: boolean;
   /** La lecture créée à l'écran « Avec qui ? » (parcours créer) */
   createdChallengeId: string | null;
   /** Le lien d'invitation a été envoyé */
@@ -81,12 +83,13 @@ interface OnboardingStore {
 
 const EMPTY = {
   moments: [] as ReadingMoment[],
-  usualFormats: ['papier'] as BookFormat[],
+  usualFormats: [] as BookFormat[],
   book: null,
   invitation: null,
   format: null,
   start: 0,
   perDay: 20,
+  paceChosen: false,
   createdChallengeId: null,
   invited: false,
   bookPick: null,
