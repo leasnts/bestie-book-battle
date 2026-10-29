@@ -52,11 +52,12 @@ export function firstStep(flow: OnboardingFlow): `/onboarding/${OnboardingStep}`
   return `/onboarding/${FLOWS[flow][0]}`;
 }
 
-/** Où en est le fil de progression, de 0 à 1 ; null hors des questions */
-export function stepProgress(flow: OnboardingFlow, step: OnboardingStep): number | null {
+/** La question en cours et leur nombre, dans ce parcours ; null hors des questions */
+export function stepPosition(flow: OnboardingFlow, step: OnboardingStep): { index: number; total: number } | null {
   if (!ASKING.includes(step)) return null;
   const asked = FLOWS[flow].filter((s) => ASKING.includes(s));
-  return (asked.indexOf(step) + 1) / (asked.length + 1);
+  const index = asked.indexOf(step);
+  return index < 0 ? null : { index, total: asked.length };
 }
 
 /** Le parcours ajoute un livre à un compte existant : on peut le fermer */
