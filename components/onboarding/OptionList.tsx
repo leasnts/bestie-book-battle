@@ -2,38 +2,40 @@
  * OptionList — les choix de l'onboarding, une ligne pleine largeur par option :
  *
  *    ┌───────────────────────────────────────┐
- *    │ [☀]  Matin                        ( ) │   papier, cerne fin
+ *    │ [☀]  Matin                            │   papier clair, cerne fin
  *    └───────────────────────────────────────┘
  *    ┌───────────────────────────────────────┐
- *    │ [☾]  Soir                         (●) │   choisie : cerne rouge, voile
- *    └───────────────────────────────────────┘   rouge, pastille d'icône rouge
+ *    │ [☾]  Soir                             │   choisie : dégradé rouge, texte
+ *    └───────────────────────────────────────┘   crème, pastille ton sur ton
  *
  * Remplace les petites capsules (FilterChips) dans l'onboarding. Choisie, la
- * ligne prend un voile rouge très léger et un cerne rouge, sa pastille d'icône
- * passe au dégradé rouge, et le rond de droite se remplit avec un petit rebond
- * (point crème pour un choix unique, coche pour un choix multiple).
+ * ligne se remplit du dégradé rouge avec un léger rebond, le texte passe en
+ * crème et la pastille d'icône en rouge plus profond (ton sur ton).
  *
- * - `OptionList` : un seul choix, toujours un sélectionné (radio) ;
- * - `ToggleOptionList` : plusieurs choix, aucun obligatoire (cases).
+ * - `OptionList` : un seul choix, toujours un sélectionné ; les autres lignes
+ *   s'estompent (on les touche encore pour changer d'avis) ;
+ * - `ToggleOptionList` : plusieurs choix, aucun obligatoire, rien ne s'estompe.
  */
 
 import { LinearGradient } from 'expo-linear-gradient';
-import { CheckIcon, type LucideIcon } from 'lucide-react-native';
+import type { LucideIcon } from 'lucide-react-native';
 import React, { useEffect } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import Animated, {
   interpolate,
+  interpolateColor,
   useAnimatedStyle,
   useReducedMotion,
   useSharedValue,
+  withSequence,
   withSpring,
   withTiming,
 } from 'react-native-reanimated';
 import {
   accentGradient,
-  bevel,
   borderRadius,
   colors,
+  creamAlpha,
   fonts,
   inkAlpha,
   lowki,
@@ -64,18 +66,18 @@ interface ToggleOptionListProps<K extends string> {
 
 export const OPTION_H = 60;
 const TILE = 36;
-const MARK = 24;
 const RADIUS = borderRadius.lg;
 
-/** Le voile rouge de la ligne choisie : à peine teintée, plus dense en bas */
-const SELECTED_WASH = ['rgba(166,47,67,0.05)', 'rgba(124,32,49,0.11)'] as const;
+/** Le papier d'une ligne au repos : un cran plus clair que le fond grené */
+const PAPER = ['#fdfbf7', '#f3eee6'] as const;
 /** La pastille d'icône au repos : le papier un cran plus sombre */
-const TILE_IDLE = ['#ece5da', '#e0d7c9'] as const;
-
-/** Le point crème du rond choisi */
-const DOT = ['#fdfcfa', '#efe7da'] as const;
-
-const SPRING = { damping: 13, stiffness: 240, mass: 0.8 };
+const TILE_IDLE = ['#efe9df', '#e3dbcd'] as const;
+/** La pastille sur la ligne choisie : le rouge un cran plus profond (ton sur ton) */
+const TILE_ON = [lowki.red.dark, lowki.red.deep] as const;
+/** Le liseré clair en haut de la ligne choisie, qui lui donne du relief */
+const SHINE = [creamAlpha(0.22), creamAlpha(0)] as const;
+/** L'opacité d'une ligne non choisie quand un seul choix est possible */
+const DIMMED = 0.45;
 
 export default function OptionList<K extends string>({ options, value, onChange }: OptionListProps<K>) {
   return (
@@ -85,6 +87,7 @@ export default function OptionList<K extends string>({ options, value, onChange 
           key={option.key}
           option={option}
           selected={option.key === value}
+          dimmed={option.key !== value}
           single
           onPress={() => onChange(option.key)}
         />
@@ -114,42 +117,51 @@ export function ToggleOptionList<K extends string>({ options, values, onChange }
 function OptionRow<K extends string>({
   option,
   selected,
+  dimmed = false,
   single = false,
   onPress,
 }: {
   option: Option<K>;
   selected: boolean;
+  dimmed?: boolean;
   single?: boolean;
   onPress: () => void;
 }) {
   const reduced = useReducedMotion();
   const on = useSharedValue(selected ? 1 : 0);
-  const pop = useSharedValue(selected ? 1 : 0);
+  const dim = useSharedValue(dimmed ? 1 : 0);
+  const bump = useSharedValue(1);
 
   useEffect(() => {
     const target = selected ? 1 : 0;
     if (reduced) {
       on.value = target;
-      pop.value = target;
       return;
     }
     on.value = withTiming(target, { duration: motion.duration.standard });
-    pop.value = selected ? withSpring(1, SPRING) : withTiming(0, { duration: motion.duration.instant });
-  }, [selected, reduced, on, pop]);
+    if (selected) {
+      bump.value = withSequence(
+        withTiming(1.025, { duration: motion.duration.instant }),
+        withSpring(1, { damping: 11, stiffness: 260 }),
+      );
+    }
+  }, [selected, reduced, on, bump]);
 
+  useEffect(() => {
+    dim.value = reduced ? (dimmed ? 1 : 0) : withTiming(dimmed ? 1 : 0, { duration: motion.duration.standard });
+  }, [dimmed, reduced, dim]);
+
+  const row = useAnimatedStyle(() => ({
+    opacity: interpolate(dim.value, [0, 1], [1, DIMMED]),
+    transform: [{ scale: bump.value }],
+    shadowOpacity: interpolate(on.value, [0, 1], [0.05, 0.22]),
+    shadowRadius: interpolate(on.value, [0, 1], [2, 12]),
+    shadowOffset: { width: 0, height: interpolate(on.value, [0, 1], [1, 6]) },
+  }));
   const fade = useAnimatedStyle(() => ({ opacity: on.value }));
   const idleFade = useAnimatedStyle(() => ({ opacity: 1 - on.value }));
-  const lift = useAnimatedStyle(() => ({
-    shadowOpacity: interpolate(on.value, [0, 1], [0.06, 0.16]),
-    shadowRadius: interpolate(on.value, [0, 1], [3, 10]),
-    shadowOffset: { width: 0, height: interpolate(on.value, [0, 1], [1, 4]) },
-  }));
-  const mark = useAnimatedStyle(() => ({
-    opacity: Math.min(1, pop.value * 1.5),
-    transform: [{ scale: interpolate(pop.value, [0, 1], [0.4, 1]) }],
-  }));
-  const tile = useAnimatedStyle(() => ({
-    transform: [{ scale: interpolate(pop.value, [0, 0.5, 1], [1, 1.08, 1]) }],
+  const label = useAnimatedStyle(() => ({
+    color: interpolateColor(on.value, [0, 1], [colors.textPrimary, colors.white]),
   }));
 
   const Icon = option.icon;
@@ -165,20 +177,22 @@ function OptionRow<K extends string>({
       accessibilityState={single ? { selected } : { checked: selected }}
       accessibilityLabel={option.label}
     >
-      <Animated.View style={[styles.row, lift]}>
-        <LinearGradient colors={bevel.paper.fill} style={[StyleSheet.absoluteFill, styles.round]} />
-        <Animated.View style={[StyleSheet.absoluteFill, fade]} pointerEvents="none">
-          <LinearGradient colors={SELECTED_WASH} style={[StyleSheet.absoluteFill, styles.round]} />
-        </Animated.View>
-        {/* Le cerne : fin et sombre au repos, rouge une fois choisie */}
-        <Animated.View style={[styles.ring, styles.ringIdle, idleFade]} pointerEvents="none" />
-        <Animated.View style={[styles.ring, styles.ringOn, fade]} pointerEvents="none" />
+      <Animated.View style={[styles.row, row]}>
+        <View style={[StyleSheet.absoluteFill, styles.clip]} pointerEvents="none">
+          <LinearGradient colors={PAPER} style={StyleSheet.absoluteFill} />
+          <View style={[styles.ring, styles.ringIdle]} />
+          <Animated.View style={[StyleSheet.absoluteFill, fade]}>
+            <LinearGradient colors={accentGradient} style={StyleSheet.absoluteFill} />
+            <LinearGradient colors={SHINE} style={styles.shine} />
+            <View style={[styles.ring, styles.ringOn]} />
+          </Animated.View>
+        </View>
 
         {Icon && (
-          <Animated.View style={[styles.tile, tile]}>
+          <View style={styles.tile}>
             <LinearGradient colors={TILE_IDLE} style={StyleSheet.absoluteFill} />
             <Animated.View style={[StyleSheet.absoluteFill, fade]}>
-              <LinearGradient colors={accentGradient} style={StyleSheet.absoluteFill} />
+              <LinearGradient colors={TILE_ON} style={StyleSheet.absoluteFill} />
             </Animated.View>
             <Animated.View style={[styles.center, idleFade]}>
               <Icon size={19} color={colors.textSecondary} strokeWidth={2} />
@@ -186,19 +200,12 @@ function OptionRow<K extends string>({
             <Animated.View style={[styles.center, fade]}>
               <Icon size={19} color={colors.white} strokeWidth={2} />
             </Animated.View>
-          </Animated.View>
+          </View>
         )}
 
-        <Text style={styles.label} numberOfLines={1}>
+        <Animated.Text style={[styles.label, label]} numberOfLines={1}>
           {option.label}
-        </Text>
-
-        <View style={styles.mark}>
-          <Animated.View style={[styles.markFill, mark]}>
-            <LinearGradient colors={accentGradient} style={StyleSheet.absoluteFill} />
-            {single ? <LinearGradient colors={DOT} style={styles.dot} /> : <CheckIcon size={14} color={colors.white} strokeWidth={3} />}
-          </Animated.View>
-        </View>
+        </Animated.Text>
       </Animated.View>
     </PressableScale>
   );
@@ -213,13 +220,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.md,
     height: OPTION_H,
-    paddingLeft: spacing.md,
-    paddingRight: spacing.lg,
+    paddingHorizontal: spacing.md,
     borderRadius: RADIUS,
     shadowColor: shadowAlpha(1),
   },
-  round: {
+  clip: {
     borderRadius: RADIUS,
+    overflow: 'hidden',
   },
   ring: {
     ...StyleSheet.absoluteFill,
@@ -227,11 +234,15 @@ const styles = StyleSheet.create({
   },
   ringIdle: {
     borderWidth: 1,
-    borderColor: inkAlpha(0.1),
+    borderColor: inkAlpha(0.09),
   },
   ringOn: {
-    borderWidth: 1.5,
-    borderColor: colors.accent,
+    borderWidth: 1,
+    borderColor: lowki.red.deep,
+  },
+  shine: {
+    ...StyleSheet.absoluteFill,
+    bottom: '50%',
   },
   tile: {
     width: TILE,
@@ -248,33 +259,5 @@ const styles = StyleSheet.create({
     flex: 1,
     fontFamily: fonts.bodySemiBold,
     fontSize: 16,
-    color: colors.textPrimary,
-  },
-  mark: {
-    width: MARK,
-    height: MARK,
-    borderRadius: MARK / 2,
-    borderWidth: 1.5,
-    borderColor: inkAlpha(0.22),
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  markFill: {
-    position: 'absolute',
-    top: -1.5,
-    left: -1.5,
-    width: MARK,
-    height: MARK,
-    borderRadius: MARK / 2,
-    overflow: 'hidden',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: lowki.red.dark,
-  },
-  dot: {
-    width: 9,
-    height: 9,
-    borderRadius: 4.5,
   },
 });
