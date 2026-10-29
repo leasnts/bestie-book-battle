@@ -35,6 +35,7 @@ import {
   borderRadius,
   colors,
   fonts,
+  lowki,
   creamAlpha,
   motion,
   spacing,
@@ -73,9 +74,9 @@ const RADIUS = borderRadius.xl;
 const PAPER = ['#fdfcfa', '#f7f3ed'] as const;
 const EDGE = creamAlpha(0.9);
 /** La ligne choisie : un voile rouge très léger, rosé (piste C1) */
-const PAPER_ON = ['#f9ecea', '#f1dcdb'] as const;
+const PAPER_ON = ['#f1e8e2', '#e6d8cf'] as const;
 /** La couture de la ligne choisie : rouge Lowki, collée au bord */
-const STITCH_ON = colors.accent;
+const STITCH_ON = lowki.chocolate.light;
 const STITCH_WEIGHT = 2;
 const STITCH_INSET = 3;
 /** L'opacité d'une ligne non choisie quand un seul choix est possible */
@@ -223,7 +224,7 @@ const styles = StyleSheet.create({
   },
   ringOn: {
     borderWidth: 1,
-    borderColor: 'rgba(166,47,67,0.3)',
+    borderColor: 'rgba(99,61,50,0.3)',
   },
   illustration: {
     width: ILLUSTRATION,
