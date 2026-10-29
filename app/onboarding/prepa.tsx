@@ -61,7 +61,7 @@ export default function PrepaScreen() {
     const percent = format !== 'papier';
     const end = endDateFor((percent ? 100 : book.pages) - start, perDay);
 
-    // La lecture : rejointe, ou créée (à « Tu lis avec qui ? », sinon ici)
+    // La lecture : rejointe, ou créée (à « On invite qui ? », sinon ici)
     let challengeId = invitation?.challengeId ?? store.createdChallengeId;
     if (invitation) {
       await useProjectStore.getState().joinChallenge(invitation.challengeId, userId);

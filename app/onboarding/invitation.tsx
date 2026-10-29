@@ -3,7 +3,7 @@
  *
  * La couverture d'abord (les yeux dépassent), « Lire avec Chloé », la piste de
  * Chloé et une place libre pour moi. Rejoindre → la connexion (puis « Ton
- * rythme »), ou directement « Tu en es où, dans ce livre ? » si je suis déjà inscrit·e.
+ * rythme »), ou directement « Où en est ta lecture ? » si je suis déjà inscrit·e.
  */
 
 import { LinearGradient } from 'expo-linear-gradient';
@@ -41,8 +41,8 @@ export default function InvitationScreen() {
   return (
     <OnboardingScreen
       step="invitation"
-      title={`${name} t’attend, tu viens ?`}
-      accent="viens"
+      title={`On rejoint ${name} ?`}
+      accent="rejoint"
       footer={
         <Button3D variant="primary" onPress={join} style={styles.wide}>
           {`Rejoindre ${name}`}

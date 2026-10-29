@@ -816,11 +816,11 @@ Prototype validé le 2026-10-28 (artefact « Onboarding chapi »). Deux temps :
   au-dessus de la question, un grand titre à gauche juste au-dessus des
   boutons : « On lit » / « *ensemble* ? ».
 - **Par où on commence ?** (`choix`) : un écran à lui seul, entre « Tu lis
-  sur quoi ? » et « Tu lis quoi en ce moment ? » (et au « + »), deux grandes pastilles : « Je
-  lance une lecture » → « Tu lis quoi en ce moment ? », « J'ai un code » → « Quel est ton code ? » puis
+  sur quoi ? » et « On lit quoi ? » (et au « + »), deux grandes pastilles : « Je
+  lance une lecture » → « On lit quoi ? », « J'ai un code » → « Ton code d’invitation ? » puis
   l'invitation. Les liens d'invitation l'évitent.
-- **Titres = des questions chaleureuses**, toujours, tutoiement, un mot d'accent (« C’est quand, ton moment lecture ? », « Tu lis comment, d’habitude ? »,
-  « Quel est ton code ? »…). Un écran = une question : moments et formats habituels
+- **Titres = des questions courtes et naturelles**, un mot d'accent ; pas de virgule plaquée, pas de « tu » à chaque titre (« on », ou rien) ; le mot d'accent sans lettre accentuée (Welcome Valentines n'en a pas) (« Le meilleur moment pour lire ? », « Ton support préféré ? »,
+  « Ton code d’invitation ? »…). Un écran = une question : moments et formats habituels
   sont deux écrans.
 - **Rien n'est choisi d'avance** : la personne touche le premier choix ;
   Continuer attend ce choix quand la question en demande un.
@@ -834,7 +834,7 @@ Prototype validé le 2026-10-28 (artefact « Onboarding chapi »). Deux temps :
   option, illustration aquarelle à gauche (`assets/images/onboarding`). Au repos,
   la matière des cadres de l'accueil, sans ombre ; choisie, voile rosé et couture
   rouge collée au bord. Un seul choix possible : les autres s'estompent.
-- **Tu veux lire combien par jour ?** : un rythme, la date se calcule ; le bloc de pages
+- **À quel rythme ?** : un rythme, la date se calcule ; le bloc de pages
   (`PageBlock`) s'épaissit avec un léger rebond ; un autocollant réagit (`StickerText`).
 - **Préparation** : trois tranches tombent et s'empilent pendant le vrai
   enregistrement (≈ 2 s, pas un spinner).

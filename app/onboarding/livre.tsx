@@ -1,5 +1,5 @@
 /**
- * Tu lis quoi en ce moment ? La recherche d'abord : quelques lettres, puis le livre et son
+ * On lit quoi ? La recherche d'abord : quelques lettres, puis le livre et son
  * édition dans le sheet de recherche (/book-search, le même que partout).
  * Couverture, pages et éditeur arrivent avec lui. La saisie à la main reste
  * possible ; une couverture absente ne bloque plus rien.
@@ -56,7 +56,7 @@ export default function LivreScreen() {
   return (
     <OnboardingScreen
       step="livre"
-      title="Tu lis quoi en ce moment ?"
+      title="On lit quoi ?"
       accent="quoi"
       scroll
       footer={

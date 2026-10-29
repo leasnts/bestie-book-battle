@@ -1,7 +1,7 @@
 /**
- * Tu en es où, dans ce livre ? Ce livre-là : son format, son édition, ma position.
+ * Où en est ta lecture ? Ce livre-là : son format, son édition, ma position.
  *
- * - « Intermezzo, tu le lis en » : un seul format pour ce livre, rien de
+ * - « En quel format ? » : un seul format pour ce livre, rien de
  *   choisi d'avance ; l'édition et la règle n'apparaissent qu'ensuite.
  * - Papier : on compte en pages de MON édition, demandée ici seulement
  *   (le crayon rouvre la recherche, étape des éditions).
@@ -70,8 +70,8 @@ export default function PageScreen() {
   return (
     <OnboardingScreen
       step="page"
-      title="Tu en es où, dans ce livre ?"
-      accent="livre"
+      title="Où en est ta lecture ?"
+      accent="lecture"
       footer={
         <Button3D
           variant="primary"
@@ -84,7 +84,7 @@ export default function PageScreen() {
       }
     >
       <Animated.View entering={rise(1)} style={styles.group}>
-        <QuestionLabel>{`${book.title}, tu le lis en`}</QuestionLabel>
+        <QuestionLabel>En quel format ?</QuestionLabel>
         <OptionList options={FORMATS} value={store.format} onChange={setFormat} />
       </Animated.View>
 

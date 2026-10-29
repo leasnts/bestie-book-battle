@@ -1,9 +1,9 @@
 /**
- * C’est quand, ton moment lecture ? La lectrice en général, avant de parler d'un livre.
+ * Le meilleur moment pour lire ? La lectrice en général, avant de parler d'un livre.
  *
  * Plusieurs moments possibles ; le plus tard fixe l'heure du rappel. Rien
  * d'obligatoire, rien de choisi d'avance. Les formats suivent, sur leur propre
- * écran (« Tu lis comment, d’habitude ? »).
+ * écran (« Ton support préféré ? »).
  */
 
 import { useRouter } from 'expo-router';
@@ -26,8 +26,8 @@ export default function RythmeScreen() {
   return (
     <OnboardingScreen
       step="rythme"
-      title="C’est quand, ton moment lecture ?"
-      accent="lecture"
+      title="Le meilleur moment pour lire ?"
+      accent="lire"
       footer={
         <Button3D variant="primary" onPress={() => router.push(nextStep(flow, 'rythme'))} style={styles.wide}>
           Continuer

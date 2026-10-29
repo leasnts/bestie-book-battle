@@ -1,7 +1,7 @@
 /**
  * Par où on commence ? Un écran à lui seul, juste avant le livre : le
- * moment où le parcours se sépare. Lancer → « Tu lis quoi en ce moment ? » ; rejoindre →
- * « Quel est ton code ? », puis l'invitation. Les liens d'invitation l'évitent.
+ * moment où le parcours se sépare. Lancer → « On lit quoi ? » ; rejoindre →
+ * « Ton code d’invitation ? », puis l'invitation. Les liens d'invitation l'évitent.
  */
 
 import { useRouter } from 'expo-router';

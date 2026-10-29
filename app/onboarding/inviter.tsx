@@ -1,5 +1,5 @@
 /**
- * Tu lis avec qui ? Inviter, au milieu du parcours, quand le livre est choisi.
+ * On invite qui ? Inviter, au milieu du parcours, quand le livre est choisi.
  *
  * La lecture se crée en arrivant ici (il faut son code pour le lien) ; si on
  * revient en arrière changer de livre, elle suit. Le message est un vrai lien
@@ -105,7 +105,7 @@ export default function InviterScreen() {
   return (
     <OnboardingScreen
       step="inviter"
-      title="Tu lis avec qui ?"
+      title="On invite qui ?"
       accent="qui"
       footer={
         invited ? (

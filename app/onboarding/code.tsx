@@ -40,7 +40,7 @@ export default function CodeScreen() {
   };
 
   return (
-    <OnboardingScreen step="code" title="Quel est ton code ?" accent="code">
+    <OnboardingScreen step="code" title="Ton code d’invitation ?" accent="invitation">
       <Animated.View entering={rise(1)}>
         <CodeBoxes value={code} onChange={onChange} editable={!busy} accessibilityLabel="Code de la lecture" />
         {missed && <Text style={styles.missed} accessibilityLiveRegion="polite">Ce code ne mène à aucune lecture.</Text>}

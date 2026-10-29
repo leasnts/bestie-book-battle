@@ -84,7 +84,7 @@ export default function ExploreBookRoute() {
       router.navigate('/(tabs)');
       return;
     }
-    // Le livre déjà choisi : on passe le choix et « Tu lis quoi en ce moment ? », direct à « Tu en es où, dans ce livre ? »
+    // Le livre déjà choisi : on passe le choix et « On lit quoi ? », direct à « Où en est ta lecture ? »
     const next = startAdding();
     useOnboardingStore.getState().patch({
       book: { title: book.title, author: book.author, pages: pageCount ?? 0, cover: book.coverUrl, publisher: book.publisher },
