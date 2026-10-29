@@ -18,7 +18,7 @@ import Button3D from '../../components/Button3D';
 import OnboardingScreen, { rise } from '../../components/onboarding/OnboardingScreen';
 import PageBlock from '../../components/onboarding/PageBlock';
 import StickerText from '../../components/onboarding/StickerText';
-import FilterChips from '../../components/ui/FilterChips';
+import OptionList from '../../components/onboarding/OptionList';
 import { endDateFor } from '../../services/onboarding';
 import { bookFormat, useOnboardingStore } from '../../stores/onboardingStore';
 import { postIt, spacing } from '../../utils/constants';
@@ -36,7 +36,7 @@ const THICKNESS: Record<Pace, number> = { 10: 16, 20: 38, 40: 80, 0: 30 };
 export default function ObjectifScreen() {
   const router = useRouter();
   const store = useOnboardingStore();
-  const { flow, book, start, perDay, patch } = store;
+  const { flow, book, start, perDay, paceChosen, patch } = store;
   const percent = bookFormat(store) !== 'papier';
   if (!book) return null;
 
@@ -44,8 +44,8 @@ export default function ObjectifScreen() {
   const pace: Pace = perDay === null ? 0 : nearestPace(percent ? (perDay / 100) * book.pages : perDay);
 
   const choose = (value: Pace) => {
-    if (value === 0) return patch({ perDay: null });
-    patch({ perDay: percent ? Math.max(1, Math.round((value / book.pages) * 100)) : value });
+    if (value === 0) return patch({ perDay: null, paceChosen: true });
+    patch({ paceChosen: true, perDay: percent ? Math.max(1, Math.round((value / book.pages) * 100)) : value });
   };
 
   const remaining = (percent ? 100 : book.pages) - start;
@@ -60,25 +60,31 @@ export default function ObjectifScreen() {
       title="Combien par jour ?"
       accent="jour"
       footer={
-        <Button3D variant="primary" onPress={() => router.push(nextStep(flow, 'objectif'))} style={styles.wide}>
+        <Button3D
+          variant="primary"
+          onPress={() => router.push(nextStep(flow, 'objectif'))}
+          disabled={!paceChosen}
+          style={styles.wide}
+        >
           Continuer
         </Button3D>
       }
     >
       <Animated.View entering={rise(1)}>
-        <PageBlock thickness={THICKNESS[pace]} faded={pace === 0} />
+        <PageBlock thickness={THICKNESS[pace]} faded={!paceChosen || pace === 0} />
       </Animated.View>
       <Animated.View entering={rise(2)}>
-        <FilterChips
-          large
+        <OptionList
           options={PACES.map((p) => ({ key: String(p) as `${Pace}`, label: p === 0 ? 'Libre' : percent ? MINUTES[p] : `${p} p.` }))}
-          value={String(pace) as `${Pace}`}
+          value={paceChosen ? (String(pace) as `${Pace}`) : null}
           onChange={(key) => choose(Number(key) as Pace)}
         />
       </Animated.View>
-      <Animated.View entering={rise(3)} style={styles.center}>
-        <StickerText id="objectif-say" text={SAY[pace]} caption={caption} color={postIt.jaune} popKey={pace} width={300} height={112} />
-      </Animated.View>
+      {paceChosen && (
+        <Animated.View entering={rise(3)} style={styles.center}>
+          <StickerText id="objectif-say" text={SAY[pace]} caption={caption} color={postIt.jaune} popKey={pace} width={300} height={112} />
+        </Animated.View>
+      )}
     </OnboardingScreen>
   );
 }

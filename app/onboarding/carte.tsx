@@ -149,7 +149,7 @@ export default function CarteScreen() {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: colors.bgLight,
+    backgroundColor: colors.bgApp,
     alignItems: 'center',
   },
   column: {
@@ -207,7 +207,7 @@ const styles = StyleSheet.create({
     width: 12,
     height: 12,
     borderRadius: 6,
-    backgroundColor: colors.bgLight,
+    backgroundColor: colors.bgApp,
     borderWidth: 1,
     borderColor: inkAlpha(0.12),
   },

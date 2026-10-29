@@ -8,11 +8,11 @@
  *    ·····································   le fil au-dessus du pied
  *    [        Continuer        ]
  *
- * Fond papier grené. Le fil de progression est la couture de GoalTrack
- * (`Seam`) : chocolat pour le chemin fait, sable pour le reste.
+ * Fond papier uni, celui de l'accueil (`colors.bgApp`). Le fil de progression
+ * est la couture de GoalTrack (`Seam`) : chocolat pour le chemin fait, sable
+ * pour le reste.
  */
 
-import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { ChevronLeftIcon, XIcon } from 'lucide-react-native';
 import React, { useState } from 'react';
@@ -34,8 +34,6 @@ import AccentWord from '../ui/AccentWord';
 import GlassButton from '../ui/GlassButton';
 import { Seam } from '../ui/GoalTrack';
 import { StitchLine } from '../ui/Stitch';
-
-const PAPER_TEXTURE = require('../../assets/images/61ea1e0c638b5b9c8100383a37a5b488848db623.png');
 
 /** Sur un grand écran (iPhone Duo déplié), l'onboarding garde une largeur de téléphone */
 export const ONBOARDING_MAX_W = 520;
@@ -85,7 +83,6 @@ export default function OnboardingScreen({
 
   return (
     <SafeAreaView style={styles.root} edges={['top']}>
-      <Image source={PAPER_TEXTURE} style={styles.texture} contentFit="cover" />
       <KeyboardAvoidingView style={[styles.fill, styles.column]} behavior="padding">
         <View style={styles.header}>
           <GlassButton icon={ChevronLeftIcon} onPress={onBack ?? (() => router.back())} accessibilityLabel="Retour" />
@@ -148,7 +145,7 @@ const THREAD_H = 6;
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: colors.bgLight,
+    backgroundColor: colors.bgApp,
   },
   fill: {
     flex: 1,
@@ -157,10 +154,6 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: ONBOARDING_MAX_W,
     alignSelf: 'center',
-  },
-  texture: {
-    ...StyleSheet.absoluteFill,
-    opacity: 0.05,
   },
   header: {
     flexDirection: 'row',

@@ -8,7 +8,7 @@
  * - addJoin : déjà inscrit·e, je rejoins avec un code
  *
  * La connexion (auth/login) se glisse avant tout (ou après l'invitation) et
- * « Ton rythme » : elle n'est pas dans les listes, useAfterLogin y renvoie.
+ * « Bienvenue » : elle n'est pas dans les listes, useAfterLogin y renvoie.
  */
 
 import { useOnboardingStore } from '../stores/onboardingStore';
@@ -16,10 +16,12 @@ import { useOnboardingStore } from '../stores/onboardingStore';
 export type OnboardingFlow = 'create' | 'join' | 'add' | 'addJoin';
 
 export type OnboardingStep =
+  | 'bienvenue'
   | 'choix'
   | 'code'
   | 'invitation'
   | 'rythme'
+  | 'formats'
   | 'livre'
   | 'page'
   | 'objectif'
@@ -29,14 +31,14 @@ export type OnboardingStep =
   | 'carte';
 
 const FLOWS: Record<OnboardingFlow, OnboardingStep[]> = {
-  create: ['rythme', 'choix', 'livre', 'page', 'objectif', 'inviter', 'notifications', 'prepa', 'carte'],
-  join: ['rythme', 'page', 'notifications', 'prepa', 'carte'],
+  create: ['bienvenue', 'rythme', 'formats', 'choix', 'livre', 'page', 'objectif', 'inviter', 'notifications', 'prepa', 'carte'],
+  join: ['bienvenue', 'rythme', 'formats', 'page', 'notifications', 'prepa', 'carte'],
   add: ['choix', 'livre', 'page', 'objectif', 'inviter', 'prepa', 'carte'],
   addJoin: ['page', 'prepa', 'carte'],
 };
 
 /** Les écrans à questions, ceux qui portent le fil de progression */
-const ASKING: OnboardingStep[] = ['rythme', 'choix', 'livre', 'page', 'objectif', 'inviter', 'notifications'];
+const ASKING: OnboardingStep[] = ['rythme', 'formats', 'choix', 'livre', 'page', 'objectif', 'inviter', 'notifications'];
 
 /** L'écran qui suit, dans ce parcours */
 export function nextStep(flow: OnboardingFlow, step: OnboardingStep): `/onboarding/${OnboardingStep}` {

@@ -8,7 +8,7 @@ import { firstStep } from '../utils/onboardingFlow';
 /**
  * Où aller une fois connecté, par Apple ou par email :
  * - une invitation en cours (lien ou code) → la suite pour la rejoindre ;
- * - nouveau compte → « Ton rythme », la suite de l'onboarding ;
+ * - nouveau compte → « Bienvenue », puis « Tu lis quand ? », la suite de l'onboarding ;
  * - compte avec des lectures → l'accueil ;
  * - compte sans lecture → ajouter un livre (« Quel livre ? »).
  */

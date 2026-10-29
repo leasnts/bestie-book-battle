@@ -1,8 +1,8 @@
 /**
  * Tu en es où ? Ce livre-là : son format, son édition, ma position.
  *
- * - « Intermezzo, tu le lis en » : un seul format pour ce livre, prérempli
- *   d'après mes habitudes (papier s'il en fait partie).
+ * - « Intermezzo, tu le lis en » : un seul format pour ce livre, rien de
+ *   choisi d'avance ; l'édition et la règle n'apparaissent qu'ensuite.
  * - Papier : on compte en pages de MON édition, demandée ici seulement
  *   (le crayon rouvre la recherche, étape des éditions).
  * - Liseuse ou audio : on compte en %, la règle va de 0 à 100.
@@ -19,7 +19,7 @@ import Button3D from '../../components/Button3D';
 import { FORMATS } from '../../components/onboarding/choices';
 import OnboardingScreen, { QuestionLabel, rise } from '../../components/onboarding/OnboardingScreen';
 import { COVER_RATIO, CoverImage } from '../../components/ui/BookCover';
-import FilterChips from '../../components/ui/FilterChips';
+import OptionList from '../../components/onboarding/OptionList';
 import GlassButton from '../../components/ui/GlassButton';
 import PageRuler from '../../components/ui/PageRuler';
 import { bookFormat, useOnboardingStore, type BookDraft } from '../../stores/onboardingStore';
@@ -61,7 +61,7 @@ export default function PageScreen() {
 
   /** Changer de format garde la position : pages ↔ % */
   const setFormat = (next: BookFormat) => {
-    if (next === format) return;
+    if (next === store.format) return;
     const toPercent = next !== 'papier';
     const converted = toPercent ? Math.round((start / book.pages) * 100) : Math.round((start / 100) * book.pages);
     patch({ format: next, start: percent === toPercent ? start : converted });
@@ -73,17 +73,22 @@ export default function PageScreen() {
       title="Tu en es où ?"
       accent="où"
       footer={
-        <Button3D variant="primary" onPress={() => router.push(nextStep(flow, 'page'))} style={styles.wide}>
+        <Button3D
+          variant="primary"
+          onPress={() => router.push(nextStep(flow, 'page'))}
+          disabled={!store.format}
+          style={styles.wide}
+        >
           Continuer
         </Button3D>
       }
     >
       <Animated.View entering={rise(1)} style={styles.group}>
         <QuestionLabel>{`${book.title}, tu le lis en`}</QuestionLabel>
-        <FilterChips large options={FORMATS} value={format} onChange={setFormat} />
+        <OptionList options={FORMATS} value={store.format} onChange={setFormat} />
       </Animated.View>
 
-      {format === 'papier' && (
+      {store.format === 'papier' && (
         <Animated.View entering={rise(2)}>
           <Edition
             book={book}
@@ -93,19 +98,21 @@ export default function PageScreen() {
         </Animated.View>
       )}
 
-      <Animated.View entering={rise(3)} style={styles.ruler}>
-        <PageRuler
-          key={percent ? 'percent' : 'pages'}
-          currentPage={start}
-          totalPages={percent ? 100 : book.pages}
-          onPageChange={(value) => patch({ start: value })}
-          unit={percent ? 'percent' : 'pages'}
-          fontSize={80}
-        />
-        {percent && (
-          <Text style={styles.hint}>{format === 'audio' ? 'En %, l’audio n’a pas de pages' : 'En %, comme sur ta liseuse'}</Text>
-        )}
-      </Animated.View>
+      {store.format && (
+        <Animated.View entering={rise(3)} style={styles.ruler}>
+          <PageRuler
+            key={percent ? 'percent' : 'pages'}
+            currentPage={start}
+            totalPages={percent ? 100 : book.pages}
+            onPageChange={(value) => patch({ start: value })}
+            unit={percent ? 'percent' : 'pages'}
+            fontSize={80}
+          />
+          {percent && (
+            <Text style={styles.hint}>{format === 'audio' ? 'En %, l’audio n’a pas de pages' : 'En %, comme sur ta liseuse'}</Text>
+          )}
+        </Animated.View>
+      )}
     </OnboardingScreen>
   );
 }

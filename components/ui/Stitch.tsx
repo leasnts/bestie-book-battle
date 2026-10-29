@@ -67,16 +67,20 @@ interface StitchBorderProps {
   /** Écart entre la couture et le bord ; par défaut celui des cadres de l'accueil, 0 = sur le bord */
   inset?: number;
   color?: string;
+  /** Épaisseur du point ; par défaut celle des autocollants, l'écart suit */
+  weight?: number;
 }
 
 export function StitchBorder({
   radius = 0,
   inset = stitchInset(STICKER_BASE_LARGE),
   color = stitchColor(true),
+  weight = STITCH.width,
 }: StitchBorderProps) {
   const [{ width, height }, onLayout] = useSize();
   // Le fil est centré sur son tracé : on rentre d'un demi-point pour qu'il reste entier
-  const i = inset + STITCH.width / 2;
+  const i = inset + weight / 2;
+  const dash = `0 ${(2.8 * weight) / STITCH.width}`;
   return (
     <View style={StyleSheet.absoluteFill} onLayout={onLayout} pointerEvents="none">
       {width > 0 && height > 0 && (
@@ -90,8 +94,8 @@ export function StitchBorder({
             rx={Math.max(radius - i * 0.6, 0)}
             fill="none"
             stroke={color}
-            strokeWidth={STITCH.width}
-            strokeDasharray={STITCH.dash}
+            strokeWidth={weight}
+            strokeDasharray={dash}
             strokeLinecap={STITCH.cap}
           />
         </Svg>

@@ -5,28 +5,28 @@
  */
 
 import { useRouter } from 'expo-router';
-import { BookPlusIcon, MailOpenIcon } from 'lucide-react-native';
 import React, { useState } from 'react';
 import { StyleSheet } from 'react-native';
 import Animated from 'react-native-reanimated';
 import Button3D from '../../components/Button3D';
 import OnboardingScreen, { rise } from '../../components/onboarding/OnboardingScreen';
-import FilterChips from '../../components/ui/FilterChips';
+import OptionList from '../../components/onboarding/OptionList';
 import { useOnboardingStore } from '../../stores/onboardingStore';
 import { isAddFlow, nextStep } from '../../utils/onboardingFlow';
 
 type Way = 'lancer' | 'rejoindre';
 const WAYS = [
-  { key: 'lancer' as const, label: 'Je lance une lecture', icon: BookPlusIcon },
-  { key: 'rejoindre' as const, label: "J'ai un code", icon: MailOpenIcon },
+  { key: 'lancer' as const, label: 'Je lance une lecture', illustration: require('../../assets/images/onboarding/lancer.png') },
+  { key: 'rejoindre' as const, label: "J'ai un code", illustration: require('../../assets/images/onboarding/code.png') },
 ];
 
 export default function ChoixScreen() {
   const router = useRouter();
   const flow = useOnboardingStore((s) => s.flow);
-  const [way, setWay] = useState<Way>('lancer');
+  const [way, setWay] = useState<Way | null>(null);
 
   const next = () => {
+    if (!way) return;
     const adding = isAddFlow(flow);
     if (way === 'lancer') {
       const own = adding ? 'add' : 'create';
@@ -44,13 +44,13 @@ export default function ChoixScreen() {
       title="Tu lances ou tu rejoins ?"
       accent="rejoins"
       footer={
-        <Button3D variant="primary" onPress={next} style={styles.wide}>
+        <Button3D variant="primary" onPress={next} disabled={!way} style={styles.wide}>
           Continuer
         </Button3D>
       }
     >
       <Animated.View entering={rise(1)}>
-        <FilterChips large options={WAYS} value={way} onChange={setWay} />
+        <OptionList options={WAYS} value={way} onChange={setWay} />
       </Animated.View>
     </OnboardingScreen>
   );

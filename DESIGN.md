@@ -815,16 +815,25 @@ Prototype validé le 2026-10-28 (artefact « Onboarding chapi »). Deux temps :
   s'effacent, les yeux se posent en petit et en crème (`LivingEye light`)
   au-dessus de la question, un grand titre à gauche juste au-dessus des
   boutons : « On lit » / « *ensemble* ? ».
-- **Tu lances ou tu rejoins ?** (`choix`) : un écran à lui seul, entre « Ton
-  rythme » et « Quel livre ? » (et au « + »), deux grandes pastilles : « Je
+- **Tu lances ou tu rejoins ?** (`choix`) : un écran à lui seul, entre « Tu lis
+  sur quoi ? » et « Quel livre ? » (et au « + »), deux grandes pastilles : « Je
   lance une lecture » → « Quel livre ? », « J'ai un code » → « Ton code » puis
   l'invitation. Les liens d'invitation l'évitent.
-- **Questions** : `OnboardingScreen` (papier grené, retour en verre, fil de
+- **Titres = des questions**, toujours (« Tu lis quand ? », « Tu lis sur quoi ? »,
+  « Tu as un code ? »…). Un écran = une question : moments et formats habituels
+  sont deux écrans.
+- **Rien n'est choisi d'avance** : la personne touche le premier choix ;
+  Continuer attend ce choix quand la question en demande un.
+- **Questions** : `OnboardingScreen` (fond de l'accueil `bgApp`, uni, retour en verre, fil de
   progression = la couture `Seam`, titre 30/36 avec un mot d'accent, pied sous
   un `StitchLine`, colonne de téléphone sur grand écran).
 - **Un livre = un seul format.** Papier → pages de mon édition (demandée
   seulement là) ; liseuse ou audio → % (`total_pages` 100, `PageRuler unit="percent"`).
-  Les formats habituels, eux, sont multiples (`ToggleChips`).
+  Les formats habituels, eux, sont multiples (`ToggleOptionList`).
+- **Choix** : `OptionList` / `ToggleOptionList`, une ligne pleine largeur par
+  option, illustration aquarelle à gauche (`assets/images/onboarding`). Au repos,
+  la matière des cadres de l'accueil, sans ombre ; choisie, voile rosé et couture
+  rouge collée au bord. Un seul choix possible : les autres s'estompent.
 - **Combien par jour ?** : un rythme, la date se calcule ; le bloc de pages
   (`PageBlock`) s'épaissit avec un léger rebond ; un autocollant réagit (`StickerText`).
 - **Préparation** : trois tranches tombent et s'empilent pendant le vrai
