@@ -5,6 +5,7 @@
  *    [ Non ]           chacun·e avance à son rythme
  *    [ Oui ]
  *         dim. 15 nov.             la roulette de la date
+ *    ▱ Fin dans 2 semaines ◢       l'autocollant, recollé à chaque date
  *
  * « Oui » propose 2 semaines d'emblée.
  * « Non » : un autocollant au coin corné se colle. On rejoint : pas cet écran,
@@ -80,6 +81,7 @@ export default function ObjectifScreen() {
             locale="fr-FR"
             textColor={colors.textPrimary}
           />
+          <StickerText id="objectif-when" text={`Fin dans ${inTime(days ?? FIRST_DAYS)}`} color={postIt.jaune} popKey={days ?? FIRST_DAYS} width={260} height={72} />
         </Animated.View>
       )}
       {dated === false && (
@@ -89,6 +91,12 @@ export default function ObjectifScreen() {
       )}
     </OnboardingScreen>
   );
+}
+
+/** « 2 semaines », « 10 jours » */
+function inTime(days: number) {
+  if (days % 7 === 0) return days === 7 ? '1 semaine' : `${days / 7} semaines`;
+  return days === 1 ? '1 jour' : `${days} jours`;
 }
 
 const styles = StyleSheet.create({
