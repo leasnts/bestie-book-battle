@@ -8,9 +8,9 @@ import { firstStep } from '../utils/onboardingFlow';
 /**
  * Où aller une fois connecté, par Apple ou par email :
  * - une invitation en cours (lien ou code) → la suite pour la rejoindre ;
- * - nouveau compte → « Bienvenue », puis « C’est quand, ton moment lecture ? », la suite de l'onboarding ;
+ * - nouveau compte → « Bienvenue », puis « Le meilleur moment pour lire ? », la suite de l'onboarding ;
  * - compte avec des lectures → l'accueil ;
- * - compte sans lecture → ajouter un livre (« Tu lis quoi en ce moment ? »).
+ * - compte sans lecture → ajouter un livre (« On lit quoi ? »).
  */
 export function useAfterLogin() {
   const router = useRouter();
