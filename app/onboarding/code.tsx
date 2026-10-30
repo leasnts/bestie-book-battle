@@ -48,7 +48,7 @@ export default function CodeScreen() {
     <OnboardingScreen
       step="code"
       title="Insère le code juste ici"
-      accent="ici"
+      accent="code"
       footer={
         <Button3D variant="primary" loading={busy} disabled={code.length < CODE_LENGTH} onPress={() => check(code)} style={styles.wide}>
           Continuer

@@ -27,7 +27,7 @@ export default function RythmeScreen() {
     <OnboardingScreen
       step="rythme"
       title="Le meilleur moment pour lire ?"
-      accent="lire"
+      accent="meilleur moment"
       footer={
         <Button3D variant="primary" onPress={() => router.push(nextStep(flow, 'rythme'))} style={styles.wide}>
           Continuer
