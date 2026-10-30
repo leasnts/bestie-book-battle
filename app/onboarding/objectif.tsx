@@ -2,12 +2,11 @@
  * On se donne une date de fin ? Pour tout le groupe : pas de rythme en pages,
  * qui avantagerait qui lit vite (Lea, 2026-10-30).
  *
- *    [ Oui ]
  *    [ Non, tranquille ]           chacun·e avance à son rythme
- *    ( 1 sem. [2 sem.] 3 sem. 4 sem. )    raccourcis
- *         dim. 15 nov.                    la roulette de la date
+ *    [ Oui ]
+ *         dim. 15 nov.             la roulette de la date
  *
- * « Oui » propose 2 semaines d'emblée, la roulette et les raccourcis se suivent.
+ * « Oui » propose 2 semaines d'emblée.
  * « Non » : un autocollant au coin corné se colle. On rejoint : pas cet écran,
  * la date est celle du groupe.
  */
@@ -20,20 +19,12 @@ import Animated from 'react-native-reanimated';
 import Button3D from '../../components/Button3D';
 import OnboardingScreen, { rise } from '../../components/onboarding/OnboardingScreen';
 import OptionList from '../../components/onboarding/OptionList';
-import Rail from '../../components/onboarding/Rail';
 import StickerText from '../../components/onboarding/StickerText';
 import { deadlineFrom } from '../../services/onboarding';
 import { useOnboardingStore } from '../../stores/onboardingStore';
 import { colors, postIt, spacing } from '../../utils/constants';
 import { nextStep } from '../../utils/onboardingFlow';
 
-/** Les raccourcis, en jours */
-const WEEKS = [
-  { key: '7', label: '1 sem.', a11y: 'Dans 1 semaine' },
-  { key: '14', label: '2 sem.', a11y: 'Dans 2 semaines' },
-  { key: '21', label: '3 sem.', a11y: 'Dans 3 semaines' },
-  { key: '28', label: '4 sem.', a11y: 'Dans 4 semaines' },
-];
 /** Ce que « Oui » propose d'emblée */
 const FIRST_DAYS = 14;
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -47,7 +38,6 @@ export default function ObjectifScreen() {
 
   const end = deadlineFrom(dated, days);
   const ready = dated === false || !!end;
-  const shortcut = days && WEEKS.some((w) => w.key === String(days)) ? String(days) : null;
 
   /** La roulette : des jours entiers depuis aujourd'hui */
   const onWheel = (date: Date) => {
@@ -72,8 +62,8 @@ export default function ObjectifScreen() {
       <Animated.View entering={rise(1)}>
         <OptionList
           options={[
-            { key: 'oui', label: 'Oui' },
             { key: 'non', label: 'Non, tranquille' },
+            { key: 'oui', label: 'Oui' },
           ]}
           value={dated === null ? null : dated ? 'oui' : 'non'}
           onChange={(key) => patch(key === 'oui' ? { dated: true, days: days ?? FIRST_DAYS } : { dated: false })}
@@ -81,7 +71,6 @@ export default function ObjectifScreen() {
       </Animated.View>
       {dated && end && (
         <Animated.View entering={rise(0)} style={styles.when}>
-          <Rail options={WEEKS} value={shortcut} onChange={(key) => patch({ days: Number(key) })} segment={78} />
           <DateTimePicker
             value={new Date(`${end}T12:00:00`)}
             mode="date"
