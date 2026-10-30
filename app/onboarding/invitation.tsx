@@ -1,8 +1,9 @@
 /**
  * L'invitation : ce qu'on rejoint, avant de créer un compte.
  *
- * La couverture d'abord (les yeux dépassent), « Lire avec Chloé », la piste de
- * Chloé et une place libre pour moi. Rejoindre → la connexion (puis « Ton
+ * La couverture d'abord (les yeux dépassent), « On rejoint Chloé ? », puis le
+ * cadre de la Progression : celles qui lisent déjà (photo, piste, %) et ma
+ * place, encore à 0 %. Rejoindre → la connexion (puis « Ton
  * rythme »), ou directement « Où en est ta lecture ? » si je suis déjà inscrit·e.
  */
 
@@ -16,6 +17,7 @@ import PopEyes from '../../components/PopEyes';
 import OnboardingScreen, { rise } from '../../components/onboarding/OnboardingScreen';
 import ReaderTrack from '../../components/onboarding/ReaderTrack';
 import { COVER_RATIO, CoverImage } from '../../components/ui/BookCover';
+import GlassSection from '../../components/ui/GlassSection';
 import { useAuthStore } from '../../stores/authStore';
 import { useOnboardingStore } from '../../stores/onboardingStore';
 import { colors, fonts, inkAlpha, paperFrameGradient, spacing } from '../../utils/constants';
@@ -62,9 +64,16 @@ export default function InvitationScreen() {
         {!!invitation.author && <Text style={styles.author} numberOfLines={1}>{invitation.author}</Text>}
       </Animated.View>
 
-      <Animated.View entering={rise(2)} style={styles.tracks}>
-        <ReaderTrack initial={name.charAt(0).toUpperCase()} percent={invitation.groupPercent} other />
-        <ReaderTrack percent={0} label="toi" />
+      {/* Comme la Progression de l'accueil : celles qui lisent déjà, puis ma place, encore à 0 */}
+      <Animated.View entering={rise(2)}>
+        <GlassSection>
+          <View style={styles.tracks}>
+            {(invitation.readers?.length ? invitation.readers : [{ name, photoUrl: null, percent: invitation.groupPercent }]).map((reader, i) => (
+              <ReaderTrack key={i} name={reader.name} photoUrl={reader.photoUrl} percent={reader.percent} />
+            ))}
+            <ReaderTrack percent={0} free />
+          </View>
+        </GlassSection>
       </Animated.View>
     </OnboardingScreen>
   );
@@ -108,12 +117,7 @@ const styles = StyleSheet.create({
     color: colors.textTertiary,
   },
   tracks: {
-    gap: spacing.md,
-    padding: spacing.lg,
-    borderRadius: 20,
-    backgroundColor: colors.white,
-    borderWidth: 1,
-    borderColor: inkAlpha(0.08),
+    gap: spacing.xs,
   },
   wide: {
     width: '100%',
