@@ -5,8 +5,8 @@
  *    [photo] Chloé  ●●●●●●●●●●●···················  37 %
  *
  * La photo (ou l'avatar par défaut), le prénom, la couture de GoalTrack
- * (`Seam`), le % : on se compare toujours en %. Une place libre (`free`) a un
- * carré cousu, vide, et une piste encore toute à faire.
+ * (`Seam`), le % : on se compare toujours en %. Ma place (`free`) : l'icône de
+ * chapi en guise de photo, et une piste encore toute à faire.
  */
 
 import { Image } from 'expo-image';
@@ -16,9 +16,9 @@ import Svg from 'react-native-svg';
 import { colors, creamAlpha, fonts, inkAlpha, spacing } from '../../utils/constants';
 import { AccentUnit } from '../ui/AccentWord';
 import { Seam } from '../ui/GoalTrack';
-import { StitchBorder } from '../ui/Stitch';
 
 const DEFAULT_AVATAR = require('../../assets/images/profile_picture_default.png');
+const APP_ICON = require('../../assets/images/app_icon.png');
 const AVATAR = 30;
 const AVATAR_RADIUS = 9;
 const SEAM_H = 8;
@@ -40,13 +40,12 @@ export default function ReaderTrack({ name, photoUrl, percent, free = false }: R
 
   return (
     <View style={[styles.row, free && styles.rowMe]} accessible accessibilityLabel={free ? 'Ta place, à 0 pour cent' : `${name}, ${score} pour cent`}>
-      {free ? (
-        <View style={styles.avatar}>
-          <StitchBorder radius={AVATAR_RADIUS} inset={0} />
-        </View>
-      ) : (
-        <Image source={photoUrl?.startsWith('http') ? { uri: photoUrl } : DEFAULT_AVATAR} style={[styles.avatar, styles.photo]} contentFit="cover" />
-      )}
+      {/* Ma place : pas encore de photo au début, l'icône de chapi la tient */}
+      <Image
+        source={free ? APP_ICON : photoUrl?.startsWith('http') ? { uri: photoUrl } : DEFAULT_AVATAR}
+        style={[styles.avatar, styles.photo]}
+        contentFit="cover"
+      />
       {/* Une colonne de prénom de largeur fixe : toutes les pistes partent du même point */}
       <Text style={styles.name} numberOfLines={1}>{name ?? ''}</Text>
       <View style={styles.seam} onLayout={onLayout}>
