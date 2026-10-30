@@ -849,8 +849,9 @@ Prototype validé le 2026-10-28 (artefact « Onboarding chapi »). Deux temps :
   option, illustration aquarelle à gauche (`assets/images/onboarding`). Au repos,
   la matière des cadres de l'accueil, sans ombre ; choisie, voile rosé et couture
   rouge collée au bord. Un seul choix possible : les autres s'estompent.
-- **À quel rythme ?** : un rythme, la date se calcule ; le bloc de pages
-  (`PageBlock`) s'épaissit avec un léger rebond ; un autocollant réagit (`StickerText`).
+- **À quel rythme ?** : un rythme, la date se calcule ; un autocollant au coin
+  corné (`StickerText`) se colle à chaque choix, sans rebond. Pas de livre ni de
+  bloc de pages dessiné en code (« vibe coding »).
 - **Préparation** : trois tranches tombent et s'empilent pendant le vrai
   enregistrement (≈ 2 s, pas un spinner).
 - **Carte de lecture** : le récap en carte de bibliothèque, tamponnée du jour

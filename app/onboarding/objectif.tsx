@@ -6,8 +6,8 @@
  *   dans l'autocollant ; on enregistre des % par jour.
  * - « Libre » : pas de date.
  *
- * Au-dessus, le bloc de pages s'épaissit avec le choix ; dessous, un
- * autocollant réagit et donne la date (idées reprises de Basta).
+ * Dessous, un autocollant au coin corné se colle à chaque choix et donne la
+ * date (pas de bloc de pages dessiné : Lea, 2026-10-30).
  */
 
 import { useRouter } from 'expo-router';
@@ -16,7 +16,6 @@ import { StyleSheet } from 'react-native';
 import Animated from 'react-native-reanimated';
 import Button3D from '../../components/Button3D';
 import OnboardingScreen, { rise } from '../../components/onboarding/OnboardingScreen';
-import PageBlock from '../../components/onboarding/PageBlock';
 import StickerText from '../../components/onboarding/StickerText';
 import OptionList from '../../components/onboarding/OptionList';
 import { endDateFor } from '../../services/onboarding';
@@ -30,8 +29,6 @@ type Pace = (typeof PACES)[number];
 
 const MINUTES: Record<Pace, string> = { 10: '≈ 15 min', 20: '≈ 30 min', 40: '≈ 1 h', 0: 'Libre' };
 const SAY: Record<Pace, string> = { 10: 'Tranquille, et ça tient.', 20: 'Le bon rythme.', 40: 'À fond.', 0: 'Sans date, sans pression.' };
-/** L'épaisseur du bloc de pages pour chaque rythme */
-const THICKNESS: Record<Pace, number> = { 10: 16, 20: 38, 40: 80, 0: 30 };
 
 export default function ObjectifScreen() {
   const router = useRouter();
@@ -73,9 +70,6 @@ export default function ObjectifScreen() {
       }
     >
       <Animated.View entering={rise(1)}>
-        <PageBlock thickness={THICKNESS[pace]} faded={!paceChosen || pace === 0} />
-      </Animated.View>
-      <Animated.View entering={rise(2)}>
         <OptionList
           options={PACES.map((p) => ({ key: String(p) as `${Pace}`, label: p === 0 ? 'Libre' : percent ? MINUTES[p] : `${p} p.` }))}
           value={paceChosen ? (String(pace) as `${Pace}`) : null}
@@ -83,7 +77,7 @@ export default function ObjectifScreen() {
         />
       </Animated.View>
       {paceChosen && (
-        <Animated.View entering={rise(3)} style={styles.center}>
+        <Animated.View entering={rise(2)} style={styles.center}>
           <StickerText id="objectif-say" text={SAY[pace]} caption={caption} color={postIt.jaune} popKey={pace} width={300} height={112} />
         </Animated.View>
       )}
