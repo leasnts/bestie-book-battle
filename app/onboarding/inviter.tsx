@@ -1,12 +1,12 @@
 /**
  * On invite qui ? Inviter, au milieu du parcours, quand le livre est choisi.
  *
- *    ┌──────────────────┐
- *    │  aquarelle chapi │     l'aperçu du message : la couverture sur le fond
- *    │      ▐██▌        │     rouge de chapi, « Lis … avec moi »
- *    │ Lis X avec moi   │
- *    └──────────────────┘
- *         ( Code 578006 ) (⧉)   le code, en second message, et de quoi le copier
+ *    ┌──────────────────────┐
+ *    │ ▐██▌ La Femme de …   │     le livre, la même carte qu'à « On lit quoi ? »
+ *    └──────────────────────┘
+ *    ┌──────────────────────┐
+ *    │ 578006           (⧉) │     le code, encadré, et de quoi le copier
+ *    └──────────────────────┘
  *
  * La lecture se crée en arrivant ici (il faut son code pour le lien) ; si on
  * revient en arrière changer de livre, elle suit. Le message est un vrai lien
@@ -14,27 +14,23 @@
  */
 
 import * as Clipboard from 'expo-clipboard';
-import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { CheckIcon, CopyIcon, ShareIcon } from 'lucide-react-native';
 import React, { useCallback, useEffect, useState } from 'react';
 import { Share, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
-import { BRAND_BG } from '../../components/brand/BrandLockup';
 import Button3D from '../../components/Button3D';
+import BookBanner from '../../components/onboarding/BookBanner';
 import OnboardingScreen, { rise } from '../../components/onboarding/OnboardingScreen';
-import { COVER_RATIO, CoverImage } from '../../components/ui/BookCover';
+import GlassSection from '../../components/ui/GlassSection';
 import GlassButton from '../../components/ui/GlassButton';
 import { createReading, deadlineFrom, ensureProfile, updateReadingBook } from '../../services/onboarding';
 import { useOnboardingStore } from '../../stores/onboardingStore';
 import { useProjectStore } from '../../stores/projectStore';
-import { colors, fonts, inkAlpha, spacing } from '../../utils/constants';
+import { borderRadius, colors, fonts, inkAlpha, spacing } from '../../utils/constants';
 import { feel } from '../../utils/feel';
 import { nextStep } from '../../utils/onboardingFlow';
 import { inviteMessage } from '../../utils/share';
-
-const WASH = require('../../assets/images/watercolor/login-wash.png');
-const COVER_W = 84;
 
 export default function InviterScreen() {
   const router = useRouter();
@@ -115,32 +111,32 @@ export default function InviterScreen() {
         )
       }
     >
-      <Animated.View entering={rise(1)} style={styles.bubble}>
-        <View style={styles.art}>
-          <Image source={WASH} style={StyleSheet.absoluteFill} contentFit="cover" />
-          {book.cover ? <CoverImage uri={book.cover} style={styles.cover} /> : <View style={[styles.cover, styles.noCover]} />}
-        </View>
-        <View style={styles.bubbleText}>
-          <Text style={styles.bubbleTitle} numberOfLines={2}>{`Lis ${book.title} avec moi`}</Text>
-          {failed && !code ? (
-            <Text style={styles.link} onPress={ensureReading} accessibilityRole="button">
-              Pas de réseau ? Toucher pour réessayer
-            </Text>
-          ) : (
-            <Text style={styles.link}>chapi</Text>
-          )}
-        </View>
+      <Animated.View entering={rise(1)}>
+        <BookBanner book={book} />
       </Animated.View>
 
-      {code && (
-        <Animated.View entering={FadeIn.duration(200)} style={styles.codeRow}>
-          <View style={[styles.bubble, styles.codeBubble]} accessible accessibilityLabel={`Code de la lecture : ${code.split('').join(' ')}`}>
-            <Text style={styles.link}>Code</Text>
-            <Text style={styles.codeText}>{code}</Text>
+      <Animated.View entering={rise(2)}>
+        <GlassSection>
+          <View style={styles.codeRow}>
+            {code ? (
+              <Animated.Text
+                entering={FadeIn.duration(200)}
+                style={styles.codeText}
+                accessibilityLabel={`Code de la lecture : ${code.split('').join(' ')}`}
+              >
+                {code}
+              </Animated.Text>
+            ) : failed ? (
+              <Text style={styles.retry} onPress={ensureReading} accessibilityRole="button">
+                Pas de réseau ? Toucher pour réessayer
+              </Text>
+            ) : (
+              <View style={styles.skeleton} />
+            )}
+            <GlassButton icon={copied ? CheckIcon : CopyIcon} onPress={copy} accessibilityLabel={copied ? 'Code copié' : 'Copier le code'} />
           </View>
-          <GlassButton icon={copied ? CheckIcon : CopyIcon} onPress={copy} accessibilityLabel={copied ? 'Code copié' : 'Copier le code'} />
-        </Animated.View>
-      )}
+        </GlassSection>
+      </Animated.View>
     </OnboardingScreen>
   );
 }
@@ -149,66 +145,29 @@ const styles = StyleSheet.create({
   wide: {
     width: '100%',
   },
-  bubble: {
-    alignSelf: 'flex-end',
-    width: 280,
-    borderRadius: 22,
-    borderBottomRightRadius: 6,
-    overflow: 'hidden',
-    backgroundColor: colors.white,
-    borderWidth: 1,
-    borderColor: inkAlpha(0.1),
-  },
-  // Le fond de chapi : l'aquarelle rouge de la connexion
-  art: {
+  codeRow: {
+    flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: spacing.xl,
-    backgroundColor: BRAND_BG[1],
+    gap: spacing.md,
   },
-  cover: {
-    width: COVER_W,
-    height: COVER_W / COVER_RATIO,
-    borderRadius: 3,
-  },
-  noCover: {
-    backgroundColor: colors.bgSecondary,
-  },
-  bubbleText: {
-    padding: spacing.lg,
-    gap: 2,
-  },
-  bubbleTitle: {
+  codeText: {
+    flex: 1,
     fontFamily: fonts.displayBold,
-    fontSize: 16,
-    lineHeight: 20,
+    fontSize: 28,
+    letterSpacing: 4,
     color: colors.textPrimary,
   },
-  link: {
+  retry: {
+    flex: 1,
     fontFamily: fonts.bodyMedium,
     fontSize: 13,
     lineHeight: 18,
     color: colors.textTertiary,
   },
-  // Le code, en second message, le bouton pour le copier à sa droite
-  codeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-    gap: spacing.md,
-  },
-  codeBubble: {
-    width: undefined,
-    alignSelf: 'auto',
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    gap: spacing.sm,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-  },
-  codeText: {
-    fontFamily: fonts.displayBold,
-    fontSize: 22,
-    letterSpacing: 3,
-    color: colors.textPrimary,
+  skeleton: {
+    flex: 1,
+    height: 20,
+    borderRadius: borderRadius.sm,
+    backgroundColor: inkAlpha(0.06),
   },
 });

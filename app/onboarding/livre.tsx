@@ -24,9 +24,8 @@ import { Keyboard, Pressable, StyleSheet, Text, TextInput, View } from 'react-na
 import Animated, { FadeIn } from 'react-native-reanimated';
 import Button3D from '../../components/Button3D';
 import OnboardingScreen, { rise } from '../../components/onboarding/OnboardingScreen';
-import BookCover, { COVER_RATIO } from '../../components/ui/BookCover';
+import BookBanner from '../../components/onboarding/BookBanner';
 import BookResultRow, { BookResultSkeleton } from '../../components/ui/BookResultRow';
-import GlassSection from '../../components/ui/GlassSection';
 import { useBookSearch } from '../../hooks/useBookSearch';
 import { fetchEditions, TRENDING_BOOKS } from '../../services/bookApi';
 import { useOnboardingStore } from '../../stores/onboardingStore';
@@ -148,18 +147,7 @@ export default function LivreScreen() {
       ) : book ? (
         <>
           <Animated.View entering={FadeIn.duration(180)}>
-            <GlassSection>
-              <View style={styles.head}>
-                <View style={styles.cover}>
-                  <BookCover coverUrl={book.cover} />
-                </View>
-                <View style={styles.texts}>
-                  <Text style={styles.title} numberOfLines={2}>{book.title}</Text>
-                  {!!book.author && <Text style={styles.author} numberOfLines={1}>{book.author}</Text>}
-                  {!!editionLine && <Text style={styles.edition} numberOfLines={1}>{editionLine}</Text>}
-                </View>
-              </View>
-            </GlassSection>
+            <BookBanner book={book} line={editionLine} />
           </Animated.View>
 
 
@@ -174,8 +162,6 @@ export default function LivreScreen() {
     </OnboardingScreen>
   );
 }
-
-const COVER_WIDTH = 54;
 
 const styles = StyleSheet.create({
   wide: {
@@ -205,38 +191,5 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     textAlign: 'center',
     paddingVertical: spacing['3xl'],
-  },
-  // Le bandeau du livre, comme « Le livre » de l'accueil (BookSection)
-  head: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-  },
-  cover: {
-    width: COVER_WIDTH,
-    aspectRatio: COVER_RATIO,
-  },
-  texts: {
-    flex: 1,
-    gap: spacing.xs,
-  },
-  title: {
-    fontFamily: fonts.display,
-    fontSize: 20,
-    lineHeight: 25,
-    color: colors.textPrimary,
-  },
-  author: {
-    fontFamily: fonts.body,
-    fontSize: 14,
-    lineHeight: 19,
-    color: colors.textTertiary,
-  },
-  edition: {
-    fontFamily: fonts.bodySemiBold,
-    fontSize: 13,
-    lineHeight: 18,
-    color: colors.textSecondary,
-    marginTop: spacing.xs,
   },
 });
