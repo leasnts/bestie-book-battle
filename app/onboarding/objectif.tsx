@@ -5,11 +5,11 @@
  *    [ Non ]           chacun·e avance à son rythme
  *    [ Oui ]
  *         dim. 15 nov.             la roulette de la date
- *    ▱ Le tempo parfait.         ◢  l'autocollant, toute la largeur, en bas :
+ *    ▱ Le combo parfait         ◢  l'autocollant, toute la largeur, en bas :
  *      Fin dans 3 semaines, soit ≈ 18 p. par jour     un mot, puis ce que ça fait chaque jour
  *
  * « Oui » d'office, à 3 semaines (Lea, 2026-10-30).
- * « Non » : le post-it « Lecture buissonnière. ». On rejoint : pas cet écran,
+ * « Non » : le post-it « Zéro pression ». On rejoint : pas cet écran,
  * la date est celle du groupe.
  */
 
@@ -98,8 +98,8 @@ export default function ObjectifScreen() {
           <Animated.View entering={rise(0)}>
             <StickerText
               id="objectif-say"
-              text={dated ? moodFor(days ?? FIRST_DAYS) : 'Lecture buissonnière.'}
-              caption={dated ? perDayLine : 'Pas de compte à rebours.'}
+              text={dated ? moodFor(days ?? FIRST_DAYS) : 'Zéro pression'}
+              caption={dated ? perDayLine : 'Pas de compte à rebours'}
               popKey={dated ? days ?? FIRST_DAYS : 'libre'}
               width={stickerWidth}
               height={88}
@@ -113,11 +113,11 @@ export default function ObjectifScreen() {
 
 /** Le mot du post-it, selon le temps qu'on se donne */
 function moodFor(days: number) {
-  if (days <= 7) return 'Sprint, on y croit.';
-  if (days <= 14) return 'Ça va filer.';
-  if (days <= 28) return 'Le tempo parfait.';
-  if (days <= 60) return 'Tout en douceur.';
-  return 'On savoure.';
+  if (days <= 7) return 'Mode sprint activé';
+  if (days <= 14) return 'Ça va envoyer';
+  if (days <= 28) return 'Le combo parfait';
+  if (days <= 60) return 'Chill mais régulier';
+  return 'On est large';
 }
 
 /** « 2 semaines », « 10 jours » */
