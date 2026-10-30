@@ -1,52 +1,53 @@
 /**
- * ReaderTrack — une lectrice et où elle en est, sur une ligne :
+ * ReaderTrack — une lectrice et où elle en est, sur une ligne, comme une ligne
+ * de la Progression de l'accueil (LeaderboardSection) avec sa piste en plus :
  *
- *    (C)  ●●●●●●●●●●●···················  23 %
+ *    [photo] Chloé  ●●●●●●●●●●●···················  37 %
  *
- * Le disque à l'initiale (dégradé encre, ou rouge pour l'autre), la couture de
- * GoalTrack (`Seam`), le % : on se compare toujours en %. Une place libre
- * (`initial` absent) a un disque cousu, vide.
+ * La photo (ou l'avatar par défaut), le prénom, la couture de GoalTrack
+ * (`Seam`), le % : on se compare toujours en %. Ma place (`free`) : l'icône de
+ * chapi en guise de photo, et une piste encore toute à faire.
  */
 
-import { LinearGradient } from 'expo-linear-gradient';
+import { Image } from 'expo-image';
 import React, { useState } from 'react';
 import { StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native';
 import Svg from 'react-native-svg';
-import { accentGradient, colors, fonts, inkGradient, lowki, spacing } from '../../utils/constants';
+import { colors, creamAlpha, fonts, inkAlpha, spacing } from '../../utils/constants';
+import { AccentUnit } from '../ui/AccentWord';
 import { Seam } from '../ui/GoalTrack';
-import { StitchBorder } from '../ui/Stitch';
 
-const DISC = 32;
+const DEFAULT_AVATAR = require('../../assets/images/profile_picture_default.png');
+const APP_ICON = require('../../assets/images/app_icon.png');
+const AVATAR = 30;
+const AVATAR_RADIUS = 9;
 const SEAM_H = 8;
+const NAME_W = 64;
 
 interface ReaderTrackProps {
-  /** L'initiale ; absente = une place libre */
-  initial?: string;
+  name?: string;
+  photoUrl?: string | null;
   /** De 0 à 100 */
   percent: number;
-  /** La lectrice d'en face, en rouge ; moi, en encre */
-  other?: boolean;
-  /** Le texte de droite ; par défaut « 23 % » */
-  label?: string;
+  /** Ma place, encore libre : le carré cousu, ma ligne surlignée */
+  free?: boolean;
 }
 
-export default function ReaderTrack({ initial, percent, other = false, label }: ReaderTrackProps) {
+export default function ReaderTrack({ name, photoUrl, percent, free = false }: ReaderTrackProps) {
   const [width, setWidth] = useState(0);
   const onLayout = (e: LayoutChangeEvent) => setWidth(e.nativeEvent.layout.width);
+  const score = Math.round(percent);
 
   return (
-    <View style={styles.row}>
-      {initial ? (
-        <View style={styles.disc}>
-          <LinearGradient colors={other ? accentGradient : inkGradient} style={StyleSheet.absoluteFill} />
-          <Text style={[styles.initial, other && styles.initialOther]}>{initial}</Text>
-        </View>
-      ) : (
-        <View style={styles.disc}>
-          <StitchBorder radius={DISC / 2} inset={0} />
-          <Text style={styles.empty}>?</Text>
-        </View>
-      )}
+    <View style={[styles.row, free && styles.rowMe]} accessible accessibilityLabel={free ? 'Ta place, à 0 pour cent' : `${name}, ${score} pour cent`}>
+      {/* Ma place : pas encore de photo au début, l'icône de chapi la tient */}
+      <Image
+        source={free ? APP_ICON : photoUrl?.startsWith('http') ? { uri: photoUrl } : DEFAULT_AVATAR}
+        style={[styles.avatar, styles.photo]}
+        contentFit="cover"
+      />
+      {/* Une colonne de prénom de largeur fixe : toutes les pistes partent du même point */}
+      <Text style={styles.name} numberOfLines={1}>{name ?? ''}</Text>
       <View style={styles.seam} onLayout={onLayout}>
         {width > 0 && (
           <Svg width={width} height={SEAM_H}>
@@ -54,48 +55,57 @@ export default function ReaderTrack({ initial, percent, other = false, label }: 
           </Svg>
         )}
       </View>
-      <Text style={styles.label}>{label ?? `${Math.round(percent)} %`}</Text>
+      <Text style={styles.score}>
+        {score}
+        <AccentUnit size={styles.unit.fontSize} color={styles.score.color}>%</AccentUnit>
+      </Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  // Comme une ligne de la Progression : elle déborde du padding du cadre
   row: {
+    minHeight: 36,
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.md,
+    marginHorizontal: -9,
+    paddingHorizontal: 9,
+    paddingVertical: 3,
+    borderRadius: 14,
   },
-  disc: {
-    width: DISC,
-    height: DISC,
-    borderRadius: DISC / 2,
-    overflow: 'hidden',
-    alignItems: 'center',
-    justifyContent: 'center',
+  rowMe: {
+    backgroundColor: inkAlpha(0.06),
   },
-  initial: {
-    fontFamily: fonts.displayBold,
-    fontSize: 13,
-    color: colors.white,
+  avatar: {
+    width: AVATAR,
+    height: AVATAR,
+    borderRadius: AVATAR_RADIUS,
   },
-  initialOther: {
-    color: lowki.butter.light,
+  photo: {
+    borderWidth: 1,
+    borderColor: creamAlpha(0.6),
   },
-  empty: {
-    fontFamily: fonts.displayBold,
-    fontSize: 13,
-    color: colors.textPlaceholder,
+  name: {
+    width: NAME_W,
+    fontFamily: fonts.bodySemiBold,
+    fontSize: 15,
+    color: colors.textPrimary,
   },
   seam: {
     flex: 1,
     height: SEAM_H,
   },
-  label: {
-    minWidth: 48,
+  score: {
+    minWidth: 44,
     textAlign: 'right',
-    fontFamily: fonts.displayBold,
-    fontSize: 13,
+    fontFamily: fonts.display,
+    fontSize: 18,
     fontVariant: ['tabular-nums'],
-    color: colors.textSecondary,
+    color: colors.textPrimary,
+  },
+  unit: {
+    fontSize: 12,
   },
 });

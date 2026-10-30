@@ -153,12 +153,15 @@ export function deadlineFrom(dated: boolean | null, days: number | null): string
   return date.toISOString().slice(0, 10);
 }
 
-/** La lecture derrière un code (ou un lien) : null s'il ne mène nulle part */
+/** La lecture derrière un code (ou un lien) : null s'il ne mène nulle part ; lance une erreur sans réseau */
 export async function fetchInvitation(code: string): Promise<InvitationDraft | null> {
   // RPC : la personne n'est pas encore membre, une lecture directe serait bloquée (RLS)
   const { data, error } = await supabase.rpc('get_challenge_by_invite_code', { p_code: code.trim() });
+  if (error) throw error;
   const row = Array.isArray(data) ? data[0] : null;
-  if (error || !row) return null;
+  if (!row) return null;
+  // Les lectrices déjà dedans : sans elles, l'invitation reste lisible
+  const { data: readers } = await supabase.rpc('get_invite_readers', { p_code: code.trim() });
   return {
     challengeId: row.id,
     code: row.invite_code,
@@ -168,5 +171,10 @@ export async function fetchInvitation(code: string): Promise<InvitationDraft | n
     cover: row.cover_url || null,
     adminFirstName: row.admin_first_name || 'Quelqu’un',
     groupPercent: Number(row.average_progress_percentage) || 0,
+    readers: (Array.isArray(readers) ? readers : []).map((r: { first_name: string | null; profile_photo_url: string | null; progress_percentage: number | string | null }) => ({
+      name: r.first_name || 'Quelqu’un',
+      photoUrl: r.profile_photo_url,
+      percent: Number(r.progress_percentage) || 0,
+    })),
   };
 }

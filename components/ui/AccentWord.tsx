@@ -3,7 +3,8 @@
  *
  *    Carnet de 𝓷𝓸𝓽𝓮𝓼
  *
- * Tout le titre en Martian Grotesk, un seul mot en Welcome Valentines, de la
+ * Tout le titre en Martian Grotesk, le mot qui porte l'impact (un, au plus deux :
+ * « meilleur moment ») en Welcome Valentines, de la
  * couleur du titre et un peu plus grand : l'œil glisse sur la phrase et
  * s'arrête sur lui. La police suffit, pas de couleur en plus (Lea, 2026-10-05).
  * Un seul mot d'accent par écran, jamais une phrase (DESIGN.md › Typography).
@@ -14,6 +15,7 @@
 import React from 'react';
 import { StyleSheet, Text } from 'react-native';
 import { fonts } from '../../utils/constants';
+import { keepLinesTogether } from '../../utils/lineBreaks';
 
 /** Welcome Valentines a un œil plus petit : 1,25× pour égaler le titre */
 export const ACCENT_SCALE = 1.25;
@@ -27,17 +29,28 @@ interface AccentWordProps {
   size: number;
 }
 
-export default function AccentWord({ text, accent, size }: AccentWordProps) {
-  const at = accent ? text.lastIndexOf(accent) : -1;
-  if (!accent || at < 0) return <>{text}</>;
+export default function AccentWord({ text: raw, accent, size }: AccentWordProps) {
+  // Jamais un mot seul sur sa ligne, des coupures naturelles (utils/lineBreaks)
+  const text = keepLinesTogether(raw);
+  // L'accent peut faire deux mots (« meilleur moment ») : ses espaces sont peut-être devenus insécables
+  const match = accent ? lastMatch(text, accent) : null;
+  if (!match) return <>{text}</>;
 
   return (
     <>
-      {text.slice(0, at)}
-      <Text style={[styles.accent, { fontSize: size * ACCENT_SCALE }]}>{accent}</Text>
-      {text.slice(at + accent.length)}
+      {text.slice(0, match.at)}
+      <Text style={[styles.accent, { fontSize: size * ACCENT_SCALE }]}>{match.found}</Text>
+      {text.slice(match.at + match.found.length)}
     </>
   );
+}
+
+/** La dernière occurrence de `accent` dans `text`, espaces normaux ou insécables */
+function lastMatch(text: string, accent: string) {
+  const pattern = accent.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/ /g, '[ \u00A0]');
+  const all = [...text.matchAll(new RegExp(pattern, 'g'))];
+  const last = all[all.length - 1];
+  return last?.index === undefined ? null : { at: last.index, found: last[0] };
 }
 
 /**

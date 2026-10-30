@@ -1,8 +1,9 @@
 /**
  * L'invitation : ce qu'on rejoint, avant de créer un compte.
  *
- * La couverture d'abord (les yeux dépassent), « Lire avec Chloé », la piste de
- * Chloé et une place libre pour moi. Rejoindre → la connexion (puis « Ton
+ * La couverture au milieu, « On rejoint Chloé ? », puis le
+ * cadre de la Progression : celles qui lisent déjà (photo, piste, %) et ma
+ * place, encore à 0 %. Rejoindre → la connexion (puis « Ton
  * rythme »), ou directement « Où en est ta lecture ? » si je suis déjà inscrit·e.
  */
 
@@ -12,10 +13,11 @@ import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import Button3D from '../../components/Button3D';
-import PopEyes from '../../components/PopEyes';
 import OnboardingScreen, { rise } from '../../components/onboarding/OnboardingScreen';
 import ReaderTrack from '../../components/onboarding/ReaderTrack';
+import { TORN_EDGE_H } from '../../components/onboarding/TornEdge';
 import { COVER_RATIO, CoverImage } from '../../components/ui/BookCover';
+import GlassSection from '../../components/ui/GlassSection';
 import { useAuthStore } from '../../stores/authStore';
 import { useOnboardingStore } from '../../stores/onboardingStore';
 import { colors, fonts, inkAlpha, paperFrameGradient, spacing } from '../../utils/constants';
@@ -51,7 +53,6 @@ export default function InvitationScreen() {
     >
       <Animated.View entering={rise(1)} style={styles.book}>
         <View style={styles.coverWrap}>
-          <PopEyes vector size="small" style={styles.peek} />
           {invitation.cover ? (
             <CoverImage uri={invitation.cover} style={styles.cover} />
           ) : (
@@ -62,27 +63,35 @@ export default function InvitationScreen() {
         {!!invitation.author && <Text style={styles.author} numberOfLines={1}>{invitation.author}</Text>}
       </Animated.View>
 
-      <Animated.View entering={rise(2)} style={styles.tracks}>
-        <ReaderTrack initial={name.charAt(0).toUpperCase()} percent={invitation.groupPercent} other />
-        <ReaderTrack percent={0} label="toi" />
+      {/* Comme la Progression de l'accueil : celles qui lisent déjà, puis ma place, encore à 0 */}
+      <Animated.View entering={rise(2)} style={styles.bottom}>
+        <GlassSection>
+          <View style={styles.tracks}>
+            {(invitation.readers?.length ? invitation.readers : [{ name, photoUrl: null, percent: invitation.groupPercent }]).map((reader, i) => (
+              <ReaderTrack key={i} name={reader.name} photoUrl={reader.photoUrl} percent={reader.percent} />
+            ))}
+            <ReaderTrack name="Toi" percent={0} free />
+          </View>
+        </GlassSection>
       </Animated.View>
     </OnboardingScreen>
   );
 }
 
 const styles = StyleSheet.create({
+  // Le livre au milieu de la place qui reste
   book: {
+    flex: 1,
     alignItems: 'center',
+    justifyContent: 'center',
     gap: spacing.xs,
   },
-  coverWrap: {
-    marginTop: spacing.xl,
-    marginBottom: spacing.md,
+  // Le cadre ferré en bas : 16 pt au-dessus du bord déchiré du pied
+  bottom: {
+    marginBottom: spacing.lg + TORN_EDGE_H - spacing.xl,
   },
-  peek: {
-    position: 'absolute',
-    top: -34,
-    alignSelf: 'center',
+  coverWrap: {
+    marginBottom: spacing.md,
   },
   cover: {
     width: COVER_W,
@@ -108,12 +117,7 @@ const styles = StyleSheet.create({
     color: colors.textTertiary,
   },
   tracks: {
-    gap: spacing.md,
-    padding: spacing.lg,
-    borderRadius: 20,
-    backgroundColor: colors.white,
-    borderWidth: 1,
-    borderColor: inkAlpha(0.08),
+    gap: spacing.xs,
   },
   wide: {
     width: '100%',

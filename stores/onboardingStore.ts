@@ -40,6 +40,8 @@ export interface InvitationDraft {
   adminFirstName: string;
   /** Où en est le groupe, en % */
   groupPercent: number;
+  /** Les lectrices déjà dedans, la plus avancée d'abord */
+  readers: { name: string; photoUrl: string | null; percent: number }[];
 }
 
 interface OnboardingStore {
