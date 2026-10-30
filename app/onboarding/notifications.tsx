@@ -6,8 +6,8 @@
  * iPhone 17 Pro verrouillé, en image : deux notifications de chapi (une amie
  * qui annote, le moment lecture). L'image est rendue depuis
  * store-screenshots (téléphone du moteur, écran verrouillé en HTML, police SF). Un
- * seul gros bouton, à toucher par réflexe ; « Plus tard » discret. Pas de
- * justification (Lea, 2026-10-30). La fenêtre d'iOS ne s'affiche qu'après le
+ * seul gros bouton, à toucher par réflexe ; « Plus tard » discret. Une ligne
+ * chaleureuse dit pourquoi, sans se justifier (Lea, 2026-10-30). La fenêtre d'iOS ne s'affiche qu'après le
  * bouton : elle ne s'affiche qu'une fois, on ne la gaspille pas.
  */
 
@@ -64,9 +64,12 @@ export default function NotificationsScreen() {
 
       <SafeAreaView style={styles.column} edges={['top', 'bottom']}>
         <View style={styles.content}>
-          <Text style={styles.heading} accessibilityRole="header">
-            <AccentWord text="Ne rate rien" accent="rien" size={TITLE} />
-          </Text>
+          <View style={styles.head}>
+            <Text style={styles.heading} accessibilityRole="header">
+              <AccentWord text="On te fait signe ?" accent="signe" size={TITLE} />
+            </Text>
+            <Text style={styles.sub}>Quand tes potes annotent, et pour ton moment lecture</Text>
+          </View>
           {/* Le haut d'un iPhone verrouillé, en image (assets/images/onboarding/lock-screen.png) ; il s'efface avant le bouton */}
           <Animated.View entering={drop(250)} style={styles.phone}>
             <MaskedView
@@ -113,6 +116,16 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingTop: spacing['3xl'],
     gap: spacing['2xl'],
+  },
+  head: {
+    gap: spacing.sm,
+  },
+  sub: {
+    fontFamily: fonts.bodyMedium,
+    fontSize: 16,
+    lineHeight: 22,
+    color: colors.white,
+    opacity: 0.85,
   },
   heading: {
     fontFamily: fonts.display,
