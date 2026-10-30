@@ -1,7 +1,7 @@
 /**
  * BookBanner — le livre choisi, comme « Le livre » de l'accueil (BookSection) :
  * sa couverture, son titre, son auteur·ice, et une ligne en plus (l'édition).
- * « On lit quoi ? » et « On invite qui ? » montrent la même carte.
+ * « On lit quoi ? » et « Invite tes potes » montrent la même carte.
  */
 
 import React from 'react';

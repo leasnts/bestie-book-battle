@@ -1,5 +1,6 @@
 /**
- * On invite qui ? Inviter, au milieu du parcours, quand le livre est choisi.
+ * Invite tes potes : inviter, au milieu du parcours, quand le livre est choisi.
+ * Pas une question : il n'y a rien à répondre, juste un code à donner (Lea, 2026-10-30).
  *
  *    ┌──────────────────────┐
  *    │ ▐██▌ La Femme de …   │     le livre, la même carte qu'à « On lit quoi ? »
@@ -92,8 +93,8 @@ export default function InviterScreen() {
   return (
     <OnboardingScreen
       step="inviter"
-      title="On invite qui ?"
-      accent="qui"
+      title="Invite tes potes"
+      accent="potes"
       footer={
         invited ? (
           <Button3D variant="primary" onPress={() => router.push(nextStep(flow, 'inviter'))} style={styles.wide}>
