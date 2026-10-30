@@ -9,7 +9,7 @@
  *      Fin dans 3 semaines, soit ≈ 18 p. par jour     un mot, puis ce que ça fait chaque jour
  *
  * « Oui » d'office, à 3 semaines (Lea, 2026-10-30).
- * « Non » : rien de plus. On rejoint : pas cet écran,
+ * « Non » : le post-it « Lecture buissonnière. ». On rejoint : pas cet écran,
  * la date est celle du groupe.
  */
 
@@ -94,13 +94,13 @@ export default function ObjectifScreen() {
       )}
       {/* L'autocollant, toute la largeur, ferré en bas : 16 pt au-dessus du bord déchiré */}
       <View style={styles.bottom} onLayout={(e) => setStickerWidth(e.nativeEvent.layout.width)}>
-        {dated && stickerWidth > 0 && (
+        {dated !== null && stickerWidth > 0 && (
           <Animated.View entering={rise(0)}>
             <StickerText
               id="objectif-say"
-              text={moodFor(days ?? FIRST_DAYS)}
-              caption={perDayLine}
-              popKey={days ?? FIRST_DAYS}
+              text={dated ? moodFor(days ?? FIRST_DAYS) : 'Lecture buissonnière.'}
+              caption={dated ? perDayLine : 'Pas de compte à rebours.'}
+              popKey={dated ? days ?? FIRST_DAYS : 'libre'}
               width={stickerWidth}
               height={88}
             />
