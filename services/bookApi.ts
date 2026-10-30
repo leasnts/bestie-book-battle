@@ -284,10 +284,17 @@ export function fetchEditions(book: BookSearchResult): Promise<BookSearchResult[
   return request;
 }
 
+/** Le titre sans le « tome 1 » : les éditeurs l'écrivent chacun à leur façon */
+function bareTitle(title: string) {
+  return title.replace(/\s*[-–:(,].*$/, '').trim() || title;
+}
+
+/** Les coffrets et intégrales : jamais proposés comme édition d'un livre */
+const OMNIBUS = /\b(bundle|coffret|int[ée]grale|omnibus|trilogie|\d+\s+tomes|tomes?\s+\d+\s*(à|-|et)\s*\d+)\b/i;
+
 async function loadEditions(book: BookSearchResult): Promise<BookSearchResult[]> {
   const lastName = book.author.split(',')[0].trim().split(' ').pop() ?? '';
-  // Le titre sans le « tome 1 » : les éditeurs l'écrivent chacun à leur façon
-  const title = book.title.replace(/\s*[-–:(].*$/, '').trim() || book.title;
+  const title = bareTitle(book.title);
   const params = new URLSearchParams({
     q: `intitle:${title}${lastName ? ` inauthor:${lastName}` : ''}`,
     maxResults: '20',
@@ -304,7 +311,8 @@ async function loadEditions(book: BookSearchResult): Promise<BookSearchResult[]>
   const wanted = compactText(title);
   const seen = new Set<string>();
   const editions = (data.items ?? [])
-    .filter((item) => item.volumeInfo.pageCount && compactText(item.volumeInfo.title).includes(wanted))
+    // Le même titre, pas une suite (« … voit tout ») ni un coffret (« Bundle … », « Les 3 tomes »)
+    .filter(({ volumeInfo: v }) => v.pageCount && compactText(bareTitle(v.title)) === wanted && !OMNIBUS.test(`${v.title} ${v.subtitle ?? ''}`))
     .map((item) => toEdition(item, book))
     .sort((a, b) => (b.publishedDate ?? '').localeCompare(a.publishedDate ?? ''))
     .filter((edition) => {

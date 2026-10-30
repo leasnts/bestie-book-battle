@@ -5,16 +5,16 @@
  *    ┌───────────────────────────────────┐
  *    │ ▐██▌  Le Prince cruel             │    le livre choisi, comme sur l'accueil
  *    │ ▐██▌  Holly Black                 │
- *    │       Rageot · 400 p.   Changer   │    l'édition proposée d'office
+ *    │       Rageot · 400 p.             │    l'édition proposée d'office
  *    └───────────────────────────────────┘
  *
  * - La recherche ne part pas dans un sheet : on tape, les résultats s'affichent
  *   dessous ; elle reste en haut une fois le livre choisi, pour en changer.
  * - Un livre choisi : ses éditions papier sont cherchées (d'avance pour les
  *   premiers proposés), la première avec un nombre de pages est prise d'office ;
- *   « Changer » les déroule.
+ *   la couverture reste celle du livre touché. Coffrets et suites écartés.
  * - Pages ou %, et le total de pages : à « Où en est ta lecture ? ».
- * - Ajouter à la main : titre et auteur·ice.
+ * - Pas d'ajout à la main pour l'instant (Lea, 2026-10-30).
  */
 
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -45,11 +45,7 @@ export default function LivreScreen() {
   const book = useOnboardingStore((s) => s.book);
   const patch = useOnboardingStore((s) => s.patch);
   const { query, setQuery, results, isSearching, error, clearResults } = useBookSearch();
-  const [manual, setManual] = useState(false);
   const [publishers, setPublishers] = useState<Record<string, string>>({});
-  // Les éditions du livre choisi (null = en cours), et leur liste dépliée
-  const [editions, setEditions] = useState<BookSearchResult[] | null>(null);
-  const [showEditions, setShowEditions] = useState(false);
   const pending = useRef<BookSearchResult | null>(null);
   // `?q=` pré-remplit la recherche (lien profond, tests)
   const { q } = useLocalSearchParams<{ q?: string }>();
@@ -87,37 +83,18 @@ export default function LivreScreen() {
     Keyboard.dismiss();
     clearResults();
     feel('tic');
-    setManual(false);
-    setShowEditions(false);
-    setEditions(null);
     setBook(result);
     pending.current = result;
     const found = await fetchEditions(result);
     if (pending.current !== result) return;
-    setEditions(found);
-    // L'édition proposée d'office : la première qui connaît son nombre de pages
+    // L'édition proposée d'office : la plus récente qui connaît son nombre de pages.
+    // La couverture reste celle du livre touché.
     const first = found.find((edition) => edition.pageCount);
-    if (first) setBook(first, first.coverUrl ?? result.coverUrl);
-  };
-
-  const pickEdition = (edition: BookSearchResult) => {
-    feel('tic');
-    setShowEditions(false);
-    setBook(edition, edition.coverUrl ?? book?.cover ?? null);
-  };
-
-  /** À la main, même après avoir choisi un livre : on repart d'une fiche vide */
-  const addByHand = () => {
-    Keyboard.dismiss();
-    clearResults();
-    pending.current = null;
-    setEditions(null);
-    setShowEditions(false);
-    setManual(true);
-    patch({ book: null, start: 0 });
+    if (first) setBook(first, result.coverUrl ?? first.coverUrl);
   };
 
   const ready = !!book && book.title.trim().length > 0;
+  const editionLine = book ? [book.publisher, book.pages > 0 ? `${book.pages} p.` : null].filter(Boolean).join(' · ') : '';
 
   return (
     <OnboardingScreen
@@ -126,16 +103,9 @@ export default function LivreScreen() {
       accent="quoi"
       scroll
       footer={
-        <>
-          <Button3D variant="primary" disabled={!ready} onPress={() => router.push(nextStep(flow, 'livre'))} style={styles.wide}>
-            Continuer
-          </Button3D>
-          {!manual && (
-            <Button3D variant="secondary" onPress={addByHand} style={styles.wide}>
-              Ajouter à la main
-            </Button3D>
-          )}
-        </>
+        <Button3D variant="primary" disabled={!ready} onPress={() => router.push(nextStep(flow, 'livre'))} style={styles.wide}>
+          Continuer
+        </Button3D>
       }
     >
       <Animated.View entering={rise(1)} style={styles.searchBox}>
@@ -174,8 +144,7 @@ export default function LivreScreen() {
               <Text style={styles.message}>{error ?? 'Aucun résultat'}</Text>
             ))}
         </View>
-      ) : manual ? (
-        <ManualBook onChange={(title, author) => patch({ book: { title, author, pages: book?.pages ?? 0, cover: null, publisher: null }, start: 0 })} />
+
       ) : book ? (
         <>
           <Animated.View entering={FadeIn.duration(180)}>
@@ -187,32 +156,12 @@ export default function LivreScreen() {
                 <View style={styles.texts}>
                   <Text style={styles.title} numberOfLines={2}>{book.title}</Text>
                   {!!book.author && <Text style={styles.author} numberOfLines={1}>{book.author}</Text>}
-                  <View style={styles.editionRow}>
-                    <Text style={styles.edition} numberOfLines={1}>
-                      {editions === null
-                        ? 'Ton édition…'
-                        : [book.publisher, book.pages > 0 ? `${book.pages} p.` : null].filter(Boolean).join(' · ') || 'Édition inconnue'}
-                    </Text>
-                    {!!editions && editions.length > 1 && (
-                      <Pressable onPress={() => setShowEditions(!showEditions)} hitSlop={10} accessibilityRole="button">
-                        <Text style={styles.change}>{showEditions ? 'Fermer' : 'Changer'}</Text>
-                      </Pressable>
-                    )}
-                  </View>
+                  {!!editionLine && <Text style={styles.edition} numberOfLines={1}>{editionLine}</Text>}
                 </View>
               </View>
             </GlassSection>
           </Animated.View>
 
-          {showEditions && editions && (
-            <Animated.View entering={FadeIn.duration(200)}>
-              <View style={styles.editions}>
-                {editions.map((edition) => (
-                  <BookResultRow key={edition.id} book={edition} onPress={() => pickEdition(edition)} />
-                ))}
-              </View>
-            </Animated.View>
-          )}
 
         </>
       ) : (
@@ -223,23 +172,6 @@ export default function LivreScreen() {
         </View>
       )}
     </OnboardingScreen>
-  );
-}
-
-/** Le livre à la main : titre et auteur·ice */
-function ManualBook({ onChange }: { onChange: (title: string, author: string) => void }) {
-  const [draft, setDraft] = useState({ title: '', author: '' });
-  const update = (field: keyof typeof draft, value: string) => {
-    const next = { ...draft, [field]: value };
-    setDraft(next);
-    onChange(next.title.trim(), next.author.trim());
-  };
-
-  return (
-    <Animated.View entering={FadeIn.duration(300)} style={styles.form}>
-      <TextInput style={styles.input} placeholder="Titre" placeholderTextColor={colors.placeholder} value={draft.title} onChangeText={(t) => update('title', t)} autoFocus autoCapitalize="sentences" accessibilityLabel="Titre du livre" />
-      <TextInput style={styles.input} placeholder="Auteur·ice" placeholderTextColor={colors.placeholder} value={draft.author} onChangeText={(t) => update('author', t)} autoCapitalize="words" accessibilityLabel="Auteur·ice" />
-    </Animated.View>
   );
 }
 
@@ -298,40 +230,10 @@ const styles = StyleSheet.create({
     color: colors.textTertiary,
     marginTop: 1,
   },
-  editionRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    marginTop: spacing.sm,
-  },
   edition: {
     flex: 1,
     fontFamily: fonts.bodySemiBold,
     fontSize: 13,
     color: colors.textSecondary,
-  },
-  change: {
-    fontFamily: fonts.bodySemiBold,
-    fontSize: 13,
-    color: colors.textPrimary,
-    textDecorationLine: 'underline',
-  },
-  editions: {
-    marginTop: spacing.md,
-  },
-  form: {
-    gap: spacing.md,
-  },
-  input: {
-    fontFamily: fonts.body,
-    fontSize: fontSize.md,
-    color: colors.textPrimary,
-    backgroundColor: colors.white,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: borderRadius.lg,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.lg,
-    ...shadows.xs,
   },
 });

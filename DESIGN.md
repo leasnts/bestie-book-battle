@@ -833,13 +833,14 @@ Prototype validé le 2026-10-28 (artefact « Onboarding chapi »). Deux temps :
   la largeur, sans ombre, colonne de téléphone sur grand écran).
 - **On lit quoi ?** (`livre`) : juste le livre. La recherche dans la page (pas de
   sheet), toujours en haut pour changer de livre ; le livre choisi en bandeau comme
-  « Le livre » de l'accueil, son édition proposée d'office (pages préremplies,
-  « Changer » s'il y en a plusieurs ; éditions demandées d'avance pour les premiers
-  livres proposés).
+  « Le livre » de l'accueil (couverture du livre touché), son édition proposée
+  d'office : même titre exact, ni suite ni coffret, pages préremplies ; éditions
+  demandées d'avance pour les premiers livres proposés. Pas de « Changer » ni
+  d'ajout à la main pour l'instant.
 - **Où en est ta lecture ?** (`page`) : deux boutons ronds « p. » et « % » en police
   d'accent (`UnitButtons`), puis la règle de Ma page. En pages, le crayon passe la
-  règle sur le total (« /503 »), ✓ revient ; total inconnu (livre à la main) : la
-  règle commence par lui. En rejoignant, papier : mon édition en plus.
+  règle sur le total (« /503 »), ✓ revient ; total inconnu : la règle commence
+  par lui. En rejoignant, papier : mon édition en plus.
 - **Un livre = un seul format.** Papier → pages de mon édition (demandée
   seulement là) ; liseuse ou audio → % (`total_pages` 100, `PageRuler unit="percent"`).
   Les formats habituels, eux, sont multiples (`ToggleOptionList`).
