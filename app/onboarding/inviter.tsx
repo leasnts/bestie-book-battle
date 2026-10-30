@@ -152,10 +152,10 @@ const styles = StyleSheet.create({
   },
   codeText: {
     flex: 1,
-    // Comme les chiffres du code reçu par email (CodeBoxes)
-    fontFamily: fonts.body,
-    fontSize: 26,
-    letterSpacing: 4,
+    // Dans la police d'accent, comme le chiffre de Ma page
+    fontFamily: fonts.accent,
+    fontSize: 34,
+    letterSpacing: 3,
     color: colors.textPrimary,
   },
   retry: {
