@@ -1,6 +1,6 @@
 /**
  * StickerText — un autocollant brodé (NoteSticker) qui porte une phrase courte,
- * posé un peu de travers, le coin en haut à gauche corné : la phrase qui
+ * posé un peu de travers, le coin en bas à droite corné : la phrase qui
  * réagit au rythme choisi (« Le bon rythme. »).
  *
  * À chaque changement de `popKey`, il se colle : il arrive un peu plus grand et
@@ -56,7 +56,7 @@ export default function StickerText({
   return (
     <Animated.View style={[{ width, height }, style]}>
       <View style={StyleSheet.absoluteFill} pointerEvents="none">
-        <NoteSticker id={id} color={color} width={width} height={height} corner="top-left" />
+        <NoteSticker id={id} color={color} width={width} height={height} corner="bottom-right" />
       </View>
       <View style={styles.content}>
         <Text style={styles.text} numberOfLines={3}>
