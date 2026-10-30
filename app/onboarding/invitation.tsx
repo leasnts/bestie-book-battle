@@ -70,7 +70,7 @@ export default function InvitationScreen() {
             {(invitation.readers?.length ? invitation.readers : [{ name, photoUrl: null, percent: invitation.groupPercent }]).map((reader, i) => (
               <ReaderTrack key={i} name={reader.name} photoUrl={reader.photoUrl} percent={reader.percent} />
             ))}
-            <ReaderTrack percent={0} free />
+            <ReaderTrack name="Toi" percent={0} free />
           </View>
         </GlassSection>
       </Animated.View>
