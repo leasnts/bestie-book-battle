@@ -850,8 +850,8 @@ Prototype validé le 2026-10-28 (artefact « Onboarding chapi »). Deux temps :
   la matière des cadres de l'accueil, sans ombre ; choisie, voile rosé et couture
   rouge collée au bord. Un seul choix possible : les autres s'estompent.
 - **On se donne une date de fin ?** (`objectif`) : la date vaut pour tout le
-  groupe, donc pas de rythme en pages (injuste pour qui lit moins vite). « Non,
-  tranquille » d'abord, « Oui » dessous : la roulette de date iOS, 2 semaines
+  groupe, donc pas de rythme en pages (injuste pour qui lit moins vite). « Non »
+  d'abord, « Oui » dessous : la roulette de date iOS, 2 semaines
   d'emblée, sans raccourcis. « Non » : un autocollant au coin corné en bas à droite (`StickerText`) se
   colle, sans rebond. Pas de livre ni de bloc de pages dessiné
   en code (« vibe coding »). On rejoint : pas cet écran, la date est celle du groupe.
