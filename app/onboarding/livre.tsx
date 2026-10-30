@@ -8,7 +8,7 @@
  *    │       Rageot · 400 p.   Changer   │    l'édition proposée d'office
  *    └───────────────────────────────────┘
  *    En pages ou en % ?                       pages (papier) ou % (liseuse, audio)
- *    [ 📖 En pages ] [ 📱 En % ]
+ *    ( Pages |  %  )
  *    400 p.  ···········●···········          le nombre de pages, à la règle de Ma page
  *
  * - La recherche ne part pas dans un sheet : on tape, les résultats s'affichent
@@ -27,7 +27,7 @@ import { Keyboard, Pressable, StyleSheet, Text, TextInput, View } from 'react-na
 import Animated, { FadeIn } from 'react-native-reanimated';
 import Button3D from '../../components/Button3D';
 import OnboardingScreen, { QuestionLabel, rise } from '../../components/onboarding/OnboardingScreen';
-import OptionList from '../../components/onboarding/OptionList';
+import SegmentToggle from '../../components/onboarding/SegmentToggle';
 import BookCover, { COVER_RATIO } from '../../components/ui/BookCover';
 import BookResultRow, { BookResultSkeleton } from '../../components/ui/BookResultRow';
 import GlassSection from '../../components/ui/GlassSection';
@@ -46,8 +46,8 @@ const MAX_PAGES = 2000;
 
 type Unit = 'pages' | 'percent';
 const UNITS = [
-  { key: 'pages' as const, label: 'En pages', illustration: require('../../assets/images/onboarding/papier.png') },
-  { key: 'percent' as const, label: 'En %', illustration: require('../../assets/images/onboarding/liseuse.png') },
+  { key: 'pages' as const, label: 'Pages' },
+  { key: 'percent' as const, label: '%', accessibilityLabel: 'Pourcentage' },
 ];
 
 export default function LivreScreen() {
@@ -239,7 +239,7 @@ function Counting({
     <>
       <View style={styles.group}>
         <QuestionLabel>En pages ou en % ?</QuestionLabel>
-        <OptionList options={UNITS} value={unit} onChange={onUnit} />
+        <SegmentToggle options={UNITS} value={unit} onChange={onUnit} />
       </View>
       {unit === 'pages' && (
         <Animated.View entering={FadeIn.duration(250)} style={styles.group}>

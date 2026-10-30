@@ -72,14 +72,16 @@ const RADIUS = borderRadius.xl;
  * Une ligne au repos : comme les cadres de l'accueil (Le livre, Classement),
  * blanc crème, bord crème et couture d'encre pâle un peu en retrait. Pas d'ombre.
  */
-const PAPER = ['#fdfcfa', '#f7f3ed'] as const;
-const EDGE = creamAlpha(0.9);
+export const PAPER = ['#fdfcfa', '#f7f3ed'] as const;
+export const EDGE = creamAlpha(0.9);
 /** La ligne choisie : un voile rouge très léger, rosé (piste C1) */
-const PAPER_ON = ['#f1e8e2', '#e6d8cf'] as const;
+export const PAPER_ON = ['#f1e8e2', '#e6d8cf'] as const;
 /** La couture de la ligne choisie : rouge Lowki, collée au bord */
-const STITCH_ON = lowki.chocolate.light;
-const STITCH_WEIGHT = 2;
-const STITCH_INSET = 3;
+/** Le cerne de la ligne choisie */
+export const RING_ON = 'rgba(99,61,50,0.3)';
+export const STITCH_ON = lowki.chocolate.light;
+export const STITCH_WEIGHT = 2;
+export const STITCH_INSET = 3;
 /** L'opacité d'une ligne non choisie quand un seul choix est possible */
 const DIMMED = 0.45;
 
@@ -225,7 +227,7 @@ const styles = StyleSheet.create({
   },
   ringOn: {
     borderWidth: 1,
-    borderColor: 'rgba(99,61,50,0.3)',
+    borderColor: RING_ON,
   },
   illustration: {
     width: ILLUSTRATION,
