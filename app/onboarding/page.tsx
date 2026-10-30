@@ -21,7 +21,7 @@ import { PencilIcon } from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import Animated from 'react-native-reanimated';
-import Button3D from '../../components/Button3D';
+import Button3D, { BUTTON_HEIGHT } from '../../components/Button3D';
 import OnboardingScreen, { rise } from '../../components/onboarding/OnboardingScreen';
 import { COVER_RATIO, CoverImage } from '../../components/ui/BookCover';
 import UnitButtons, { type Unit } from '../../components/onboarding/UnitButtons';
@@ -51,6 +51,7 @@ export default function PageScreen() {
   const [editingTotal, setEditingTotal] = useState(false);
   const totalUnknown = !!book && book.pages === 0;
   const onTotal = !percent && (editingTotal || totalUnknown);
+  const hasTotalButton = !percent && !totalUnknown;
 
   // En pages par défaut (Lea, 2026-10-30) : le compteur est là d'emblée
   useEffect(() => {
@@ -110,13 +111,10 @@ export default function PageScreen() {
           >
             Continuer
           </Button3D>
-          {/* En %, le bouton reste à sa place, invisible : rien ne bouge d'une unité à l'autre */}
-          {!totalUnknown && (
-            <View style={percent && styles.hidden} pointerEvents={percent ? 'none' : 'auto'} accessibilityElementsHidden={percent}>
-              <Button3D variant="secondary" onPress={() => setEditingTotal(!editingTotal)} style={styles.wide}>
-                {editingTotal ? 'Valider le total' : 'Modifier le total'}
-              </Button3D>
-            </View>
+          {hasTotalButton && (
+            <Button3D variant="secondary" onPress={() => setEditingTotal(!editingTotal)} style={styles.wide}>
+              {editingTotal ? 'Valider le total' : 'Modifier le total'}
+            </Button3D>
           )}
         </>
       }
@@ -136,7 +134,9 @@ export default function PageScreen() {
         </Animated.View>
       )}
 
-      <Animated.View entering={rise(1)} style={styles.ruler}>
+      {/* Sans « Modifier le total », le pied rapetisse : la marge reprend sa place pour que
+          le rail et le compteur ne bougent pas d'une unité à l'autre */}
+      <Animated.View entering={rise(1)} style={[styles.ruler, !hasTotalButton && styles.rulerNoTotal]}>
         <View style={styles.units}>
           <UnitButtons value={unit} onChange={setUnit} />
         </View>
@@ -224,6 +224,10 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     marginBottom: ROUND_BUTTON_SIZE + spacing.lg,
+  },
+  // Le bouton absent et l'écart du pied entre ses boutons
+  rulerNoTotal: {
+    marginBottom: ROUND_BUTTON_SIZE + spacing.lg + BUTTON_HEIGHT + spacing.md,
   },
   units: {
     alignItems: 'center',
