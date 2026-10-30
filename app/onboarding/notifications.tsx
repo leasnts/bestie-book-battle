@@ -137,6 +137,7 @@ const styles = StyleSheet.create({
   // Le téléphone passe sous le bouton et s'efface dans l'aquarelle avant lui
   phone: {
     flex: 1,
+    marginTop: spacing.xl,
     marginBottom: -UNDER_FOOTER,
     overflow: 'hidden',
   },
