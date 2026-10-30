@@ -255,7 +255,8 @@ async function searchOpenLibrary(query: string, limit: number): Promise<BookSear
 
 // ── Éditions (Google Books) ──────────────────────────────────
 
-const editionsCache = new Map<string, BookSearchResult[]>();
+/** Les éditions déjà demandées, ou en route : un appui réutilise la recherche lancée d'avance */
+const editionsCache = new Map<string, Promise<BookSearchResult[]>>();
 
 /**
  * Les éditions françaises d'un livre : éditeur, année, pages, couverture.
@@ -263,13 +264,27 @@ const editionsCache = new Map<string, BookSearchResult[]>();
  * chercher), une seule fois par éditeur et nombre de pages, les plus
  * récentes d'abord. La couverture de l'édition, sinon celle du livre.
  *
- * Liste vide si Google ne répond pas : on règle alors ses pages à la main.
+ * Liste vide si Google ne répond pas (après un second essai) : on règle alors
+ * ses pages à la main. Appelée d'avance sur les premiers résultats, pour que le
+ * livre touché arrive avec son édition.
  */
-export async function fetchEditions(book: BookSearchResult): Promise<BookSearchResult[]> {
+export function fetchEditions(book: BookSearchResult): Promise<BookSearchResult[]> {
   const cacheKey = `${compactText(book.title)}|${compactText(book.author)}`;
   const cached = editionsCache.get(cacheKey);
   if (cached) return cached;
+  const request = loadEditions(book)
+    .catch(() => loadEditions(book))
+    .catch((error) => {
+      console.warn('[bookApi] éditions indisponibles', error);
+      // Pas gardé : on retentera au prochain appui
+      editionsCache.delete(cacheKey);
+      return [] as BookSearchResult[];
+    });
+  editionsCache.set(cacheKey, request);
+  return request;
+}
 
+async function loadEditions(book: BookSearchResult): Promise<BookSearchResult[]> {
   const lastName = book.author.split(',')[0].trim().split(' ').pop() ?? '';
   // Le titre sans le « tome 1 » : les éditeurs l'écrivent chacun à leur façon
   const title = book.title.replace(/\s*[-–:(].*$/, '').trim() || book.title;
@@ -281,31 +296,25 @@ export async function fetchEditions(book: BookSearchResult): Promise<BookSearchR
   });
   if (GOOGLE_BOOKS_KEY) params.set('key', GOOGLE_BOOKS_KEY);
 
-  try {
-    const headers: Record<string, string> = IOS_BUNDLE_ID ? { 'X-Ios-Bundle-Identifier': IOS_BUNDLE_ID } : {};
-    const response = await withTimeout(fetch(`${GOOGLE_BOOKS_API}?${params}`, { headers }), 8_000);
-    if (!response.ok) throw new Error(`Google Books API error: ${response.status}`);
-    const data: GoogleBooksSearchResponse = await response.json();
+  const headers: Record<string, string> = IOS_BUNDLE_ID ? { 'X-Ios-Bundle-Identifier': IOS_BUNDLE_ID } : {};
+  const response = await withTimeout(fetch(`${GOOGLE_BOOKS_API}?${params}`, { headers }), 8_000);
+  if (!response.ok) throw new Error(`Google Books API error: ${response.status}`);
+  const data: GoogleBooksSearchResponse = await response.json();
 
-    const wanted = compactText(title);
-    const seen = new Set<string>();
-    const editions = (data.items ?? [])
-      .filter((item) => item.volumeInfo.pageCount && compactText(item.volumeInfo.title).includes(wanted))
-      .map((item) => toEdition(item, book))
-      .sort((a, b) => (b.publishedDate ?? '').localeCompare(a.publishedDate ?? ''))
-      .filter((edition) => {
-        const key = `${compactText(edition.publisher ?? '')}|${edition.pageCount}`;
-        if (seen.has(key)) return false;
-        seen.add(key);
-        return true;
-      });
+  const wanted = compactText(title);
+  const seen = new Set<string>();
+  const editions = (data.items ?? [])
+    .filter((item) => item.volumeInfo.pageCount && compactText(item.volumeInfo.title).includes(wanted))
+    .map((item) => toEdition(item, book))
+    .sort((a, b) => (b.publishedDate ?? '').localeCompare(a.publishedDate ?? ''))
+    .filter((edition) => {
+      const key = `${compactText(edition.publisher ?? '')}|${edition.pageCount}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
 
-    editionsCache.set(cacheKey, editions);
-    return editions;
-  } catch (error) {
-    console.warn('[bookApi] éditions indisponibles', error);
-    return [];
-  }
+  return editions;
 }
 
 function toEdition(item: GoogleBooksVolumeItem, book: BookSearchResult): BookSearchResult {

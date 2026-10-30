@@ -8,7 +8,7 @@
  *    │       Rageot · 400 p.   Changer   │    l'édition proposée d'office
  *    └───────────────────────────────────┘
  *    En pages ou en % ?                       pages (papier) ou % (liseuse, audio)
- *                ( p. ) ( % )
+ *    ( p. ) ( % )
  *    400 p.  ···········●···········          le nombre de pages, à la règle de Ma page
  *
  * - La recherche ne part pas dans un sheet : on tape, les résultats s'affichent
@@ -41,6 +41,9 @@ import { borderRadius, colors, fonts, fontSize, shadows, spacing } from '../../u
 import { feel } from '../../utils/feel';
 import { nextStep } from '../../utils/onboardingFlow';
 
+/** Combien de livres proposés ont leurs éditions demandées d'avance */
+const PREFETCH = 3;
+
 /** Plafond de la règle du nombre de pages */
 const MAX_PAGES = 2000;
 
@@ -63,6 +66,12 @@ export default function LivreScreen() {
   useEffect(() => {
     if (q) setQuery(q);
   }, [q, setQuery]);
+
+  // Les éditions des premiers livres proposés, demandées d'avance : touché, le
+  // livre arrive tout de suite avec son édition et ses pages
+  useEffect(() => {
+    (results.length > 0 ? results : TRENDING_BOOKS).slice(0, PREFETCH).forEach((result) => void fetchEditions(result));
+  }, [results]);
 
   const searching = query.trim().length > 0;
   const unit: Unit | null = format === null ? null : format === 'papier' ? 'pages' : 'percent';
@@ -167,7 +176,7 @@ export default function LivreScreen() {
         </>
       ) : book ? (
         <>
-          <Animated.View entering={FadeIn.duration(300)}>
+          <Animated.View entering={FadeIn.duration(180)}>
             <GlassSection>
               <View style={styles.head}>
                 <View style={styles.cover}>
@@ -234,7 +243,7 @@ function Counting({
         <UnitButtons value={unit} onChange={onUnit} />
       </View>
       {unit === 'pages' && (
-        <Animated.View entering={FadeIn.duration(250)}>
+        <Animated.View entering={FadeIn.duration(180)}>
           <PageRuler currentPage={pages} totalPages={MAX_PAGES} onPageChange={onPages} unit="count" fontSize={64} />
         </Animated.View>
       )}
@@ -336,7 +345,7 @@ const styles = StyleSheet.create({
     marginTop: spacing.md,
   },
   unitRow: {
-    alignItems: 'center',
+    alignItems: 'flex-start',
   },
   form: {
     gap: spacing.md,
