@@ -3,7 +3,7 @@
  * Basta, en version bibliothèque).
  *
  * Tout ce qu'elle vient de dire devient un objet à son prénom : le livre, le
- * format, où elle en est, ses moments, son rythme, sa date de fin, avec qui.
+ * format, où elle en est, ses moments, la date de fin, avec qui.
  * La carte glisse et se pose de travers, puis le tampon du jour s'écrase
  * (feel('bienvenue')). Les yeux dépassent derrière ; en rejoignant, les deux
  * yeux arrivent chacun de leur côté et se retrouvent, comme au splash.
@@ -21,7 +21,7 @@ import { ONBOARDING_MAX_W, ONBOARDING_TITLE } from '../../components/onboarding/
 import AccentWord from '../../components/ui/AccentWord';
 import { COVER_RATIO, CoverImage } from '../../components/ui/BookCover';
 import { InkStamp, STAMP_FALL } from '../../components/ui/Stamp';
-import { endDateFor } from '../../services/onboarding';
+import { deadlineFrom } from '../../services/onboarding';
 import { useAuthStore } from '../../stores/authStore';
 import { bookFormat, useOnboardingStore } from '../../stores/onboardingStore';
 import { colors, fonts, inkAlpha, lowki, motion, spacing } from '../../utils/constants';
@@ -50,7 +50,7 @@ export default function CarteScreen() {
   const reducedMotion = useReducedMotion();
   const store = useOnboardingStore();
   const firstName = useAuthStore((s) => s.user?.first_name ?? '');
-  const { book, invitation, start, perDay, moments, invited, flow } = store;
+  const { book, invitation, start, dated, days, moments, invited, flow } = store;
   const format = bookFormat(store);
   const percent = format !== 'papier';
 
@@ -61,7 +61,7 @@ export default function CarteScreen() {
 
   const rows = useMemo(() => {
     if (!book) return [];
-    const end = endDateFor((percent ? 100 : book.pages) - start, perDay);
+    const end = deadlineFrom(dated, days);
     const list: [string, string][] = [
       ['Livre', book.title],
       ['Format', format === 'papier' ? ['Papier', book.publisher].filter(Boolean).join(' · ') : `${format === 'liseuse' ? 'Liseuse' : 'Audio'} · en %`],
@@ -70,12 +70,11 @@ export default function CarteScreen() {
     if (flow === 'create' || flow === 'join') {
       list.push(['Quand', MOMENTS.filter((m) => moments.includes(m.key)).map((m) => m.label).join(', ') || '—']);
     }
-    if (!invitation) list.push(['Rythme', perDay ? `${perDay} ${percent ? '%' : 'p.'} par jour` : 'Libre']);
-    if (end) list.push(['Fin vers le', new Date(`${end}T12:00:00`).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })]);
+    if (!invitation) list.push(['Fin', end ? new Date(`${end}T12:00:00`).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' }) : 'Sans date']);
     if (invitation) list.push(['Avec', `${invitation.adminFirstName} · ${Math.round(invitation.groupPercent)} %`]);
     else if (invited) list.push(['Avec', 'invitation envoyée']);
     return list;
-  }, [book, invitation, start, perDay, moments, invited, flow, format, percent]);
+  }, [book, invitation, start, dated, days, moments, invited, flow, format, percent]);
 
   if (!book) return null;
 

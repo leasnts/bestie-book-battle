@@ -4,7 +4,7 @@
  *
  * Deux temps :
  * - toi, en général (moments, formats habituels) → le profil ;
- * - ce livre-là (livre, format, position, rythme) → sa lecture.
+ * - ce livre-là (livre, format, position, date de fin) → sa lecture.
  *
  * Rien n'est gardé d'un lancement à l'autre : le brouillon vit le temps du
  * parcours.
@@ -57,10 +57,10 @@ interface OnboardingStore {
   format: BookFormat | null;
   /** Ma position de départ : en pages (papier) ou en % (liseuse, audio) */
   start: number;
-  /** Mon rythme visé, dans la même unité ; null = libre */
-  perDay: number | null;
-  /** Le rythme a été choisi (rien n'est choisi d'avance) */
-  paceChosen: boolean;
+  /** Une date de fin pour le groupe ? null = pas encore répondu */
+  dated: boolean | null;
+  /** Avec une date : dans combien de jours */
+  days: number | null;
   /** La lecture créée à l'écran « Avec qui ? » (parcours créer) */
   createdChallengeId: string | null;
   /** Le lien d'invitation a été envoyé */
@@ -88,8 +88,8 @@ const EMPTY = {
   invitation: null,
   format: null,
   start: 0,
-  perDay: 20,
-  paceChosen: false,
+  dated: null,
+  days: null,
   createdChallengeId: null,
   invited: false,
   bookPick: null,

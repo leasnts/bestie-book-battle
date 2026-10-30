@@ -1,13 +1,14 @@
 /**
- * À quel rythme ? Un rythme, pas une deadline : la date de fin se calcule.
+ * On se donne une date de fin ? Pour tout le groupe : pas de rythme en pages,
+ * qui avantagerait qui lit vite (Lea, 2026-10-30).
  *
- * - Papier : en pages (10, 20, 40), le temps en dessous dans l'autocollant.
- * - Liseuse ou audio : en temps (≈ 15 min, 30 min, 1 h), l'équivalent en %
- *   dans l'autocollant ; on enregistre des % par jour.
- * - « Libre » : pas de date.
+ *    [ Oui ]                       une date, choisie juste dessous
+ *    [ Non, tranquille ]           chacun·e avance à son rythme
+ *      [ 2 semaines ] [ 1 mois ] [ 2 mois ]
  *
- * Dessous, un autocollant au coin corné se colle à chaque choix et donne la
- * date (pas de bloc de pages dessiné : Lea, 2026-10-30).
+ * Dessous, un autocollant au coin corné se colle à chaque choix et donne le
+ * jour. Rien de choisi d'avance. On rejoint : pas cet écran, la date est celle
+ * du groupe.
  */
 
 import { useRouter } from 'expo-router';
@@ -16,77 +17,74 @@ import { StyleSheet } from 'react-native';
 import Animated from 'react-native-reanimated';
 import Button3D from '../../components/Button3D';
 import OnboardingScreen, { rise } from '../../components/onboarding/OnboardingScreen';
-import StickerText from '../../components/onboarding/StickerText';
 import OptionList from '../../components/onboarding/OptionList';
-import { endDateFor } from '../../services/onboarding';
-import { bookFormat, useOnboardingStore } from '../../stores/onboardingStore';
+import StickerText from '../../components/onboarding/StickerText';
+import { deadlineFrom } from '../../services/onboarding';
+import { useOnboardingStore } from '../../stores/onboardingStore';
 import { postIt, spacing } from '../../utils/constants';
 import { nextStep } from '../../utils/onboardingFlow';
 
-/** Les rythmes proposés, en pages papier par jour ; 0 = libre */
-const PACES = [10, 20, 40, 0] as const;
-type Pace = (typeof PACES)[number];
-
-const MINUTES: Record<Pace, string> = { 10: '≈ 15 min', 20: '≈ 30 min', 40: '≈ 1 h', 0: 'Libre' };
-const SAY: Record<Pace, string> = { 10: 'Tranquille, et ça tient.', 20: 'Le bon rythme.', 40: 'À fond.', 0: 'Sans date, sans pression.' };
+const DURATIONS = [
+  { key: '14', label: '2 semaines' },
+  { key: '30', label: '1 mois' },
+  { key: '60', label: '2 mois' },
+] as const;
+type Duration = (typeof DURATIONS)[number]['key'];
 
 export default function ObjectifScreen() {
   const router = useRouter();
-  const store = useOnboardingStore();
-  const { flow, book, start, perDay, paceChosen, patch } = store;
-  const percent = bookFormat(store) !== 'papier';
-  if (!book) return null;
+  const flow = useOnboardingStore((s) => s.flow);
+  const dated = useOnboardingStore((s) => s.dated);
+  const days = useOnboardingStore((s) => s.days);
+  const patch = useOnboardingStore((s) => s.patch);
 
-  // En %, sans nombre de pages connu (livre ajouté à la main) : un livre moyen
-  const refPages = book.pages || 300;
-  /** Le rythme choisi, ramené en pages papier pour l'afficher */
-  const pace: Pace = perDay === null ? 0 : nearestPace(percent ? (perDay / 100) * refPages : perDay);
-
-  const choose = (value: Pace) => {
-    if (value === 0) return patch({ perDay: null, paceChosen: true });
-    patch({ paceChosen: true, perDay: percent ? Math.max(1, Math.round((value / refPages) * 100)) : value });
-  };
-
-  const remaining = (percent ? 100 : book.pages) - start;
-  const end = endDateFor(remaining, perDay);
-  const caption = end
-    ? `${percent ? `${perDay} % par jour` : MINUTES[pace]} · fin vers le ${formatDay(end)}`
-    : undefined;
+  const end = deadlineFrom(dated, days);
+  const ready = dated === false || !!end;
 
   return (
     <OnboardingScreen
       step="objectif"
-      title="À quel rythme ?"
-      accent="rythme"
+      title="On se donne une date de fin ?"
+      accent="date"
       footer={
-        <Button3D
-          variant="primary"
-          onPress={() => router.push(nextStep(flow, 'objectif'))}
-          disabled={!paceChosen}
-          style={styles.wide}
-        >
+        <Button3D variant="primary" onPress={() => router.push(nextStep(flow, 'objectif'))} disabled={!ready} style={styles.wide}>
           Continuer
         </Button3D>
       }
     >
       <Animated.View entering={rise(1)}>
         <OptionList
-          options={PACES.map((p) => ({ key: String(p) as `${Pace}`, label: p === 0 ? 'Libre' : percent ? MINUTES[p] : `${p} p.` }))}
-          value={paceChosen ? (String(pace) as `${Pace}`) : null}
-          onChange={(key) => choose(Number(key) as Pace)}
+          options={[
+            { key: 'oui', label: 'Oui' },
+            { key: 'non', label: 'Non, tranquille' },
+          ]}
+          value={dated === null ? null : dated ? 'oui' : 'non'}
+          onChange={(key) => patch({ dated: key === 'oui' })}
         />
       </Animated.View>
-      {paceChosen && (
-        <Animated.View entering={rise(2)} style={styles.center}>
-          <StickerText id="objectif-say" text={SAY[pace]} caption={caption} color={postIt.jaune} popKey={pace} width={300} height={112} />
+      {dated && (
+        <Animated.View entering={rise(0)}>
+          <OptionList
+            options={[...DURATIONS]}
+            value={days ? (String(days) as Duration) : null}
+            onChange={(key) => patch({ days: Number(key) })}
+          />
+        </Animated.View>
+      )}
+      {(dated === false || end) && (
+        <Animated.View entering={rise(0)} style={styles.center}>
+          <StickerText
+            id="objectif-say"
+            text={end ? `Fin le ${formatDay(end)}` : 'Sans date, sans pression.'}
+            color={postIt.jaune}
+            popKey={end ?? 'libre'}
+            width={300}
+            height={96}
+          />
         </Animated.View>
       )}
     </OnboardingScreen>
   );
-}
-
-function nearestPace(pages: number): Pace {
-  return [10, 20, 40].reduce((a, b) => (Math.abs(b - pages) < Math.abs(a - pages) ? b : a)) as Pace;
 }
 
 /** « jeudi 19 novembre » */
@@ -103,4 +101,3 @@ const styles = StyleSheet.create({
     marginTop: spacing.sm,
   },
 });
-
