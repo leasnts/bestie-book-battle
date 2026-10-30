@@ -76,8 +76,12 @@ interface PageRulerProps {
   fontSize?: number;
   /** Les autres membres du club */
   club?: ClubPin[];
-  /** Liseuse ou audio : on avance en %, `totalPages` vaut alors 100 */
-  unit?: 'pages' | 'percent';
+  /**
+   * Liseuse ou audio : on avance en %, `totalPages` vaut alors 100.
+   * `count` : on règle un nombre de pages (celui d'une édition), `totalPages`
+   * est alors le plafond de la règle ; « p. » remplace « /624 ».
+   */
+  unit?: 'pages' | 'percent' | 'count';
 }
 
 /** Un point de couture par page, tous les 11 pt */
@@ -292,13 +296,13 @@ export default function PageRuler({ currentPage, totalPages, onPageChange, fontS
       accessible
       accessibilityRole="adjustable"
       accessibilityLabel={unit === 'percent' ? 'Où j’en suis' : 'Ma page'}
-      accessibilityValue={{ text: unit === 'percent' ? `${currentPage} %` : `page ${currentPage} sur ${totalPages}` }}
+      accessibilityValue={{ text: unit === 'percent' ? `${currentPage} %` : unit === 'count' ? `${currentPage} pages` : `page ${currentPage} sur ${totalPages}` }}
       accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}
       onAccessibilityAction={(e) => step(e.nativeEvent.actionName === 'increment' ? 1 : -1)}
     >
       <GestureDetector gesture={numberPan}>
         <View style={styles.numberBlock} onLayout={onNumberLayout}>
-          <InkNumber page={currentPage} total={totalPages} fontSize={fittedSize} scrollX={scrollX} percent={unit === 'percent'} />
+          <InkNumber page={currentPage} total={totalPages} fontSize={fittedSize} scrollX={scrollX} label={unit === 'percent' ? '%' : unit === 'count' ? 'p.' : undefined} />
         </View>
       </GestureDetector>
 
@@ -360,13 +364,14 @@ function InkNumber({
   total,
   fontSize,
   scrollX,
-  percent,
+  label,
 }: {
   page: number;
   total: number;
   fontSize: number;
   scrollX: SharedValue<number>;
-  percent?: boolean;
+  /** Ce qui remplace « /624 » derrière le chiffre (« % », « p. ») */
+  label?: string;
 }) {
   const { lineHeight, frame, baseline } = figureBox(fontSize);
   // La largeur du chiffre, pour caler le « / 624 » (le nombre de chiffres change rarement)
@@ -430,7 +435,7 @@ function InkNumber({
   return (
     <View style={[frame, { width: numberWidth + 80 }]}>
       {/* Le total, nettement en contrebas de ma page */}
-      <GhostTotal total={total} label={percent ? '%' : undefined} size={Math.round(fontSize * 0.72)} left={40 + numberWidth * 0.7} baseline={baseline} drop={0.4} />
+      <GhostTotal total={total} label={label} size={Math.round(fontSize * 0.72)} left={40 + numberWidth * 0.7} baseline={baseline} drop={0.4} />
       {/* Le chiffre est le masque d'un dégradé d'encre : jamais d'aplat (DA) */}
       <MaskedView
         style={StyleSheet.absoluteFill}

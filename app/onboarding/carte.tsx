@@ -94,7 +94,7 @@ export default function CarteScreen() {
           {invitation ? (
             <AccentWord text="Vous êtes deux" accent="deux" size={ONBOARDING_TITLE} />
           ) : (
-            <AccentWord text="Tout est prêt" accent="prêt" size={ONBOARDING_TITLE} />
+            <AccentWord text="Tout est prêt" accent="Tout" size={ONBOARDING_TITLE} />
           )}
         </Text>
 

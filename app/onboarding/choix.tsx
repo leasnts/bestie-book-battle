@@ -1,7 +1,7 @@
 /**
- * Tu lances ou tu rejoins ? Un écran à lui seul, juste avant le livre : le
- * moment où le parcours se sépare. Lancer → « Quel livre ? » ; rejoindre →
- * « Ton code », puis l'invitation. Les liens d'invitation l'évitent.
+ * Par où on commence ? Un écran à lui seul, juste avant le livre : le
+ * moment où le parcours se sépare. Lancer → « On lit quoi ? » ; rejoindre →
+ * « Ton code d’invitation ? », puis l'invitation. Les liens d'invitation l'évitent.
  */
 
 import { useRouter } from 'expo-router';
@@ -41,8 +41,8 @@ export default function ChoixScreen() {
   return (
     <OnboardingScreen
       step="choix"
-      title="Tu lances ou tu rejoins ?"
-      accent="rejoins"
+      title="Par où on commence ?"
+      accent="commence"
       footer={
         <Button3D variant="primary" onPress={next} disabled={!way} style={styles.wide}>
           Continuer

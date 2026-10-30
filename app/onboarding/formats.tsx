@@ -1,7 +1,7 @@
 /**
- * Tu lis sur quoi ? Les formats habituels, en général : plusieurs possibles
+ * Ton support préféré ? Les formats habituels, en général : plusieurs possibles
  * (papier le soir, liseuse dans le métro, audio en marchant). Ils ne choisissent
- * rien à la place de la personne pour un livre : « Tu en es où ? » redemande le
+ * rien à la place de la personne pour un livre : « Où en est ta lecture ? » redemande le
  * format de ce livre-là. Rien d'obligatoire, rien de choisi d'avance.
  */
 
@@ -25,8 +25,8 @@ export default function FormatsScreen() {
   return (
     <OnboardingScreen
       step="formats"
-      title="Tu lis sur quoi ?"
-      accent="quoi"
+      title="Ton support préféré ?"
+      accent="support"
       footer={
         <Button3D variant="primary" onPress={() => router.push(nextStep(flow, 'formats'))} style={styles.wide}>
           Continuer

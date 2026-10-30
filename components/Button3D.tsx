@@ -90,6 +90,9 @@ interface Button3DProps {
   accessibilityHint?: string;
 }
 
+/** La hauteur d'un bouton normal */
+export const BUTTON_HEIGHT = 56;
+
 export default function Button3D({
   onPress,
   children,
@@ -246,7 +249,7 @@ const styles = StyleSheet.create({
 
   // Le bouton (overflow hidden pour les gradients)
   button: {
-    height: 56,
+    height: BUTTON_HEIGHT,
     borderRadius: 24,
     overflow: 'hidden',
     justifyContent: 'center',

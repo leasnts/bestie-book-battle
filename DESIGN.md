@@ -815,18 +815,33 @@ Prototype validé le 2026-10-28 (artefact « Onboarding chapi »). Deux temps :
   s'effacent, les yeux se posent en petit et en crème (`LivingEye light`)
   au-dessus de la question, un grand titre à gauche juste au-dessus des
   boutons : « On lit » / « *ensemble* ? ».
-- **Tu lances ou tu rejoins ?** (`choix`) : un écran à lui seul, entre « Tu lis
-  sur quoi ? » et « Quel livre ? » (et au « + »), deux grandes pastilles : « Je
-  lance une lecture » → « Quel livre ? », « J'ai un code » → « Ton code » puis
+- **Par où on commence ?** (`choix`) : un écran à lui seul, entre « Tu lis
+  sur quoi ? » et « On lit quoi ? » (et au « + »), deux grandes pastilles : « Je
+  lance une lecture » → « On lit quoi ? », « J'ai un code » → « Ton code d’invitation ? » puis
   l'invitation. Les liens d'invitation l'évitent.
-- **Titres = des questions**, toujours (« Tu lis quand ? », « Tu lis sur quoi ? »,
-  « Tu as un code ? »…). Un écran = une question : moments et formats habituels
+- **Titres = des questions courtes et naturelles**, un mot d'accent ; pas de virgule plaquée, pas de « tu » à chaque titre (« on », ou rien) ; le mot d'accent sans lettre accentuée (Welcome Valentines n'en a pas) (« Le meilleur moment pour lire ? », « Ton support préféré ? »,
+  « Ton code d’invitation ? »…). Un écran = une question : moments et formats habituels
   sont deux écrans.
+- **Pas de libellé qui explique un contrôle** (« En pages ou en % ? », « Nombre de
+  pages »…) : seul le titre-question parle ; un contrôle qui a besoin d'un titre
+  se redessine.
 - **Rien n'est choisi d'avance** : la personne touche le premier choix ;
   Continuer attend ce choix quand la question en demande un.
 - **Questions** : `OnboardingScreen` (fond de l'accueil `bgApp`, uni, retour en verre, fil de
-  progression = la couture `Seam`, titre 30/36 avec un mot d'accent, pied sous
-  un `StitchLine`, colonne de téléphone sur grand écran).
+  progression = un nœud par question au centre (ceux de `GoalTrack`), titre 30/36
+  avec un mot d'accent, pied = une feuille claire au bord frangé (`TornEdge`), toute
+  la largeur, sans ombre, colonne de téléphone sur grand écran).
+- **On lit quoi ?** (`livre`) : juste le livre. La recherche dans la page (pas de
+  sheet), toujours en haut pour changer de livre ; le livre choisi en bandeau comme
+  « Le livre » de l'accueil (couverture du livre touché), son édition proposée
+  d'office : même titre exact, ni suite ni coffret, pages préremplies ; éditions
+  demandées d'avance pour les premiers livres proposés. Pas de « Changer » ni
+  d'ajout à la main pour l'instant.
+- **Où en est ta lecture ?** (`page`) : un rail arrondi « p. » / « % » en police
+  d'accent, la case choisie y glisse vite (`UnitButtons`), pages par défaut, centrés juste au-dessus de la règle de
+  Ma page, au milieu de l'écran. En pages, le bouton secondaire « Modifier le total », au-dessus de « Continuer », passe la règle sur
+  le total (« /503 »), « Valider le total » revient ; total inconnu : la règle commence
+  par lui. En rejoignant, papier : mon édition en plus.
 - **Un livre = un seul format.** Papier → pages de mon édition (demandée
   seulement là) ; liseuse ou audio → % (`total_pages` 100, `PageRuler unit="percent"`).
   Les formats habituels, eux, sont multiples (`ToggleOptionList`).
@@ -834,7 +849,7 @@ Prototype validé le 2026-10-28 (artefact « Onboarding chapi »). Deux temps :
   option, illustration aquarelle à gauche (`assets/images/onboarding`). Au repos,
   la matière des cadres de l'accueil, sans ombre ; choisie, voile rosé et couture
   rouge collée au bord. Un seul choix possible : les autres s'estompent.
-- **Combien par jour ?** : un rythme, la date se calcule ; le bloc de pages
+- **À quel rythme ?** : un rythme, la date se calcule ; le bloc de pages
   (`PageBlock`) s'épaissit avec un léger rebond ; un autocollant réagit (`StickerText`).
 - **Préparation** : trois tranches tombent et s'empilent pendant le vrai
   enregistrement (≈ 2 s, pas un spinner).

@@ -1,40 +1,62 @@
 /**
- * Tu en es où ? Ce livre-là : son format, son édition, ma position.
+ * Où en est ta lecture ? Ma position dans ce livre-là.
  *
- * - « Intermezzo, tu le lis en » : un seul format pour ce livre, rien de
- *   choisi d'avance ; l'édition et la règle n'apparaissent qu'ensuite.
- * - Papier : on compte en pages de MON édition, demandée ici seulement
- *   (le crayon rouvre la recherche, étape des éditions).
- * - Liseuse ou audio : on compte en %, la règle va de 0 à 100.
- * - La règle est celle de Ma page (PageRuler) : on apprend l'app en répondant.
+ *       ( p. ) ( % )               pages (papier) ou % (liseuse, audio), centrés
+ *          112                     au milieu de l'écran, la règle de Ma page
+ *    ·······●···········
+ *    [ Modifier le total ]         le total (« /503 »), si mon édition diffère
+ *    [ Continuer ]
+ *
+ * - En pages par défaut.
+ * - En pages, le total vient de l'édition choisie à « On lit quoi ? » (ou de la
+ *   lecture qu'on rejoint) ; « Modifier le total » passe la règle sur le total. Total inconnu
+ *   (livre ajouté à la main) : la règle commence par lui.
+ * - En rejoignant, papier : mon édition, le crayon rouvre la recherche.
+ * - En %, la règle va de 0 à 100.
  */
 
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { PencilIcon } from 'lucide-react-native';
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import Animated from 'react-native-reanimated';
-import Button3D from '../../components/Button3D';
-import { FORMATS } from '../../components/onboarding/choices';
-import OnboardingScreen, { QuestionLabel, rise } from '../../components/onboarding/OnboardingScreen';
+import Button3D, { BUTTON_HEIGHT } from '../../components/Button3D';
+import OnboardingScreen, { rise } from '../../components/onboarding/OnboardingScreen';
 import { COVER_RATIO, CoverImage } from '../../components/ui/BookCover';
-import OptionList from '../../components/onboarding/OptionList';
+import UnitButtons, { type Unit } from '../../components/onboarding/UnitButtons';
 import GlassButton from '../../components/ui/GlassButton';
 import PageRuler from '../../components/ui/PageRuler';
 import { bookFormat, useOnboardingStore, type BookDraft } from '../../stores/onboardingStore';
 import type { BookFormat } from '../../types/supabase';
-import { borderRadius, colors, fonts, inkAlpha, paperFrameGradient, spacing } from '../../utils/constants';
+import { borderRadius, colors, fonts, inkAlpha, paperFrameGradient, ROUND_BUTTON_SIZE, spacing } from '../../utils/constants';
 import { nextStep } from '../../utils/onboardingFlow';
 
 const THUMB_W = 40;
+/** La hauteur du compteur et de sa règle */
+const RULER_H = 200;
+/** Plafond de la règle du total de pages */
+const MAX_PAGES = 2000;
 
 export default function PageScreen() {
   const router = useRouter();
   const store = useOnboardingStore();
-  const { flow, invitation, book, start, bookPick, patch } = store;
+  const { flow, invitation, book, start, bookPick, usualFormats, patch } = store;
   const format = bookFormat(store);
   const percent = format !== 'papier';
+  const unit: Unit = percent ? 'percent' : 'pages';
+  // Rejoindre : pas d'écran « On lit quoi ? », l'édition se règle ici
+  const joining = flow === 'join' || flow === 'addJoin';
+  // La règle sur le total de pages ; d'office quand on ne le connaît pas
+  const [editingTotal, setEditingTotal] = useState(false);
+  const totalUnknown = !!book && book.pages === 0;
+  const onTotal = !percent && (editingTotal || totalUnknown);
+  const hasTotalButton = !percent && !totalUnknown;
+
+  // En pages par défaut (Lea, 2026-10-30) : le compteur est là d'emblée
+  useEffect(() => {
+    if (useOnboardingStore.getState().format === null) patch({ format: 'papier' });
+  }, [patch]);
 
   // Rejoindre : mon édition part de celle de la lecture
   useEffect(() => {
@@ -59,37 +81,51 @@ export default function PageScreen() {
 
   if (!book) return null;
 
-  /** Changer de format garde la position : pages ↔ % */
-  const setFormat = (next: BookFormat) => {
-    if (next === store.format) return;
-    const toPercent = next !== 'papier';
-    const converted = toPercent ? Math.round((start / book.pages) * 100) : Math.round((start / 100) * book.pages);
-    patch({ format: next, start: percent === toPercent ? start : converted });
+  /** Pages → papier ; % → liseuse, ou audio si c'est ce qu'on écoute d'habitude. La position suit. */
+  const setUnit = (next: Unit) => {
+    const toPercent = next === 'percent';
+    const nextFormat: BookFormat = !toPercent
+      ? 'papier'
+      : usualFormats.includes('audio') && !usualFormats.includes('liseuse')
+        ? 'audio'
+        : 'liseuse';
+    const converted =
+      book.pages === 0 ? 0 : toPercent ? Math.round((start / book.pages) * 100) : Math.round((start / 100) * book.pages);
+    patch({ format: nextFormat, start: percent === toPercent ? start : converted });
   };
+
+  const setTotal = (pages: number) => patch({ book: { ...book, pages }, start: Math.min(start, pages) });
 
   return (
     <OnboardingScreen
       step="page"
-      title="Tu en es où ?"
-      accent="où"
+      title="Où en est ta lecture ?"
+      accent="lecture"
       footer={
-        <Button3D
-          variant="primary"
-          onPress={() => router.push(nextStep(flow, 'page'))}
-          disabled={!store.format}
-          style={styles.wide}
-        >
-          Continuer
-        </Button3D>
+        <>
+          {hasTotalButton && (
+            <Button3D variant="secondary" onPress={() => setEditingTotal(!editingTotal)} style={styles.wide}>
+              {editingTotal ? 'Valider le total' : 'Modifier le total'}
+            </Button3D>
+          )}
+          <Button3D
+            variant="primary"
+            onPress={() => router.push(nextStep(flow, 'page'))}
+            disabled={!percent && book.pages === 0}
+            style={styles.wide}
+          >
+            Continuer
+          </Button3D>
+        </>
       }
     >
-      <Animated.View entering={rise(1)} style={styles.group}>
-        <QuestionLabel>{`${book.title}, tu le lis en`}</QuestionLabel>
-        <OptionList options={FORMATS} value={store.format} onChange={setFormat} />
-      </Animated.View>
-
-      {store.format === 'papier' && (
-        <Animated.View entering={rise(2)}>
+      {joining && (
+        <Animated.View
+          entering={rise(2)}
+          style={percent && styles.hidden}
+          pointerEvents={percent ? 'none' : 'auto'}
+          accessibilityElementsHidden={percent}
+        >
           <Edition
             book={book}
             sameAs={invitation ? invitation.adminFirstName : null}
@@ -98,21 +134,27 @@ export default function PageScreen() {
         </Animated.View>
       )}
 
-      {store.format && (
-        <Animated.View entering={rise(3)} style={styles.ruler}>
-          <PageRuler
-            key={percent ? 'percent' : 'pages'}
-            currentPage={start}
-            totalPages={percent ? 100 : book.pages}
-            onPageChange={(value) => patch({ start: value })}
-            unit={percent ? 'percent' : 'pages'}
-            fontSize={80}
-          />
-          {percent && (
-            <Text style={styles.hint}>{format === 'audio' ? 'En %, l’audio n’a pas de pages' : 'En %, comme sur ta liseuse'}</Text>
+      {/* Sans « Modifier le total », le pied rapetisse : la marge reprend sa place pour que
+          le rail et le compteur ne bougent pas d'une unité à l'autre */}
+      <Animated.View entering={rise(1)} style={[styles.ruler, !hasTotalButton && styles.rulerNoTotal]}>
+        <View style={styles.units}>
+          <UnitButtons value={unit} onChange={setUnit} />
+        </View>
+        <View style={styles.rulerBox}>
+          {onTotal ? (
+            <PageRuler key="total" currentPage={book.pages} totalPages={MAX_PAGES} onPageChange={setTotal} unit="count" fontSize={80} />
+          ) : (
+            <PageRuler
+              key={percent ? 'percent' : `pages-${book.pages}`}
+              currentPage={start}
+              totalPages={percent ? 100 : book.pages}
+              onPageChange={(value) => patch({ start: value })}
+              unit={percent ? 'percent' : 'pages'}
+              fontSize={80}
+            />
           )}
-        </Animated.View>
-      )}
+        </View>
+      </Animated.View>
     </OnboardingScreen>
   );
 }
@@ -140,11 +182,11 @@ function Edition({ book, sameAs, onChange }: { book: BookDraft; sameAs: string |
 }
 
 const styles = StyleSheet.create({
+  hidden: {
+    opacity: 0,
+  },
   wide: {
     width: '100%',
-  },
-  group: {
-    gap: spacing.lg,
   },
   edition: {
     flexDirection: 'row',
@@ -177,16 +219,21 @@ const styles = StyleSheet.create({
     lineHeight: 18,
     color: colors.textTertiary,
   },
+  // Le compteur au milieu de l'écran : la marge du bas compense les boutons p. / % au-dessus
   ruler: {
     flex: 1,
-    minHeight: 220,
+    justifyContent: 'center',
+    marginBottom: ROUND_BUTTON_SIZE + spacing.lg,
   },
-  hint: {
-    textAlign: 'center',
-    fontFamily: fonts.bodyMedium,
-    fontSize: 13,
-    lineHeight: 18,
-    color: colors.textTertiary,
-    marginTop: spacing.sm,
+  // Le bouton absent et l'écart du pied entre ses boutons
+  rulerNoTotal: {
+    marginBottom: ROUND_BUTTON_SIZE + spacing.lg + BUTTON_HEIGHT + spacing.md,
+  },
+  units: {
+    alignItems: 'center',
+    marginBottom: spacing.lg,
+  },
+  rulerBox: {
+    height: RULER_H,
   },
 });

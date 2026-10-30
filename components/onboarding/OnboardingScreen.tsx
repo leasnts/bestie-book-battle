@@ -1,39 +1,38 @@
 /**
  * OnboardingScreen — la page commune des écrans à questions de l'onboarding.
  *
- *    ‹  ●●●●●●●●●●●·········   ✕          retour en verre, fil cousu, fermer (ajout)
+ *    ‹        ● ● ● ○ ○ ○ ○         ✕    retour en verre, un nœud par question, fermer (ajout)
  *
  *    Ton 𝓻𝔂𝓽𝓱𝓶𝓮                           titre 30/36, un mot d'accent
  *    …                                     le contenu, en cascade (60 ms)
- *    ·····································   le fil au-dessus du pied
+ *    ⌇⌇⌇⌇⌇⌇⌇⌇⌇⌇⌇⌇⌇⌇⌇⌇⌇⌇⌇⌇⌇⌇⌇⌇⌇⌇⌇⌇⌇⌇⌇⌇⌇⌇⌇⌇⌇   la feuille du pied, bord frangé, toute la largeur
  *    [        Continuer        ]
  *
- * Fond papier uni, celui de l'accueil (`colors.bgApp`). Le fil de progression
- * est la couture de GoalTrack (`Seam`) : chocolat pour le chemin fait, sable
- * pour le reste.
+ * Fond papier uni, celui de l'accueil (`colors.bgApp`). Au centre de l'en-tête,
+ * un nœud par question du parcours, ceux de la piste du livre (`GoalTrack`) :
+ * rouges jusqu'à la question en cours (un peu plus gros), sable ensuite.
  */
 
 import { useRouter } from 'expo-router';
 import { ChevronLeftIcon, XIcon } from 'lucide-react-native';
-import React, { useState } from 'react';
+import React from 'react';
 import {
   KeyboardAvoidingView,
   ScrollView,
   StyleSheet,
   Text,
   View,
-  type LayoutChangeEvent,
 } from 'react-native';
 import Animated, { Easing, FadeInDown } from 'react-native-reanimated';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import Svg from 'react-native-svg';
+import Svg, { Circle } from 'react-native-svg';
 import { useOnboardingStore } from '../../stores/onboardingStore';
 import { colors, fonts, motion, spacing } from '../../utils/constants';
-import { isAddFlow, stepProgress, type OnboardingStep } from '../../utils/onboardingFlow';
+import { isAddFlow, stepPosition, type OnboardingStep } from '../../utils/onboardingFlow';
 import AccentWord from '../ui/AccentWord';
 import GlassButton from '../ui/GlassButton';
-import { Seam } from '../ui/GoalTrack';
-import { StitchLine } from '../ui/Stitch';
+import { KnotGradients } from '../ui/GoalTrack';
+import TornEdge from './TornEdge';
 
 /** Sur un grand écran (iPhone Duo déplié), l'onboarding garde une largeur de téléphone */
 export const ONBOARDING_MAX_W = 520;
@@ -74,7 +73,7 @@ export default function OnboardingScreen({
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const flow = useOnboardingStore((s) => s.flow);
-  const progress = stepProgress(flow, step);
+  const position = stepPosition(flow, step);
 
   const Body = scroll ? ScrollView : View;
   const bodyProps = scroll
@@ -86,7 +85,7 @@ export default function OnboardingScreen({
       <KeyboardAvoidingView style={[styles.fill, styles.column]} behavior="padding">
         <View style={styles.header}>
           <GlassButton icon={ChevronLeftIcon} onPress={onBack ?? (() => router.back())} accessibilityLabel="Retour" />
-          {progress !== null ? <ProgressThread progress={progress} /> : <View style={styles.fill} />}
+          <View style={styles.fill}>{position && <ProgressKnots {...position} />}</View>
           {isAddFlow(flow) ? (
             <GlassButton icon={XIcon} onPress={() => router.navigate('/(tabs)')} accessibilityLabel="Fermer" />
           ) : (
@@ -105,7 +104,7 @@ export default function OnboardingScreen({
 
         {footer && (
           <Animated.View entering={rise(4)} style={[styles.footer, { paddingBottom: Math.max(insets.bottom, spacing.lg) + spacing.lg }]}>
-            <StitchLine style={styles.footerSeam} />
+            <TornEdge color={FOOTER_PAPER} />
             {footer}
           </Animated.View>
         )}
@@ -114,33 +113,39 @@ export default function OnboardingScreen({
   );
 }
 
-/** Le petit libellé au-dessus d'une question (« Quand ? ») */
-export function QuestionLabel({ children }: { children: string }) {
-  return <Text style={styles.label}>{children}</Text>;
-}
-
-/** Le fil de progression : la couture de GoalTrack, sans nœuds */
-function ProgressThread({ progress }: { progress: number }) {
-  const [width, setWidth] = useState(0);
-  const onLayout = (e: LayoutChangeEvent) => setWidth(e.nativeEvent.layout.width);
+/** Un nœud par question, centrés : rouges jusqu'à celle-ci, sable après */
+function ProgressKnots({ index, total }: { index: number; total: number }) {
+  const width = (total - 1) * KNOT_GAP + 2 * KNOT_CURRENT;
   return (
     <View
-      style={styles.thread}
-      onLayout={onLayout}
+      style={styles.knots}
       accessible
       accessibilityRole="progressbar"
-      accessibilityValue={{ min: 0, max: 100, now: Math.round(progress * 100) }}
+      accessibilityLabel={`Question ${index + 1} sur ${total}`}
+      accessibilityValue={{ min: 1, max: total, now: index + 1 }}
     >
-      {width > 0 && (
-        <Svg width={width} height={THREAD_H}>
-          <Seam width={width} readUntil={width * progress} y={THREAD_H / 2} />
-        </Svg>
-      )}
+      <Svg width={width} height={2 * KNOT_CURRENT}>
+        <KnotGradients />
+        {Array.from({ length: total }, (_, i) => (
+          <Circle
+            key={i}
+            cx={KNOT_CURRENT + i * KNOT_GAP}
+            cy={KNOT_CURRENT}
+            r={i === index ? KNOT_CURRENT : KNOT}
+            fill={i <= index ? 'url(#knotReached)' : 'url(#knotAhead)'}
+          />
+        ))}
+      </Svg>
     </View>
   );
 }
 
-const THREAD_H = 6;
+/** La feuille du pied, au bord frangé : un cran plus claire que le fond */
+const FOOTER_PAPER = '#f6f1ea';
+
+const KNOT = 4.5;
+const KNOT_CURRENT = 6;
+const KNOT_GAP = 18;
 
 const styles = StyleSheet.create({
   root: {
@@ -165,9 +170,8 @@ const styles = StyleSheet.create({
   spacer: {
     width: 44,
   },
-  thread: {
-    flex: 1,
-    height: THREAD_H,
+  knots: {
+    alignItems: 'center',
   },
   body: {
     paddingHorizontal: spacing.xl,
@@ -182,22 +186,10 @@ const styles = StyleSheet.create({
     letterSpacing: -0.3,
     color: colors.textPrimary,
   },
-  label: {
-    fontFamily: fonts.bodySemiBold,
-    fontSize: 13,
-    lineHeight: 18,
-    color: colors.textTertiary,
-    marginBottom: -spacing.sm,
-  },
   footer: {
     paddingHorizontal: spacing.xl,
-    paddingTop: spacing.lg,
+    paddingTop: spacing.xl,
     gap: spacing.md,
-  },
-  footerSeam: {
-    position: 'absolute',
-    top: 0,
-    left: spacing.xl,
-    right: spacing.xl,
+    backgroundColor: FOOTER_PAPER,
   },
 });

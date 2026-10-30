@@ -1,5 +1,5 @@
 /**
- * On te prévient ? Montrer la notification avant de la demander.
+ * Un petit rappel ? Montrer la notification avant de la demander.
  *
  * Les deux notifications qu'elle recevra descendent du haut, comme les vraies :
  * son moment lecture, à SON heure (déduite de ses moments), et l'autre qui
@@ -56,8 +56,8 @@ export default function NotificationsScreen() {
   return (
     <OnboardingScreen
       step="notifications"
-      title="On te prévient ?"
-      accent="prévient"
+      title="Un petit rappel ?"
+      accent="rappel"
       footer={
         <>
           <Button3D variant="primary" loading={asking} onPress={ask} style={styles.wide}>

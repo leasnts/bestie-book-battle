@@ -52,11 +52,14 @@ export async function ensureProfile(): Promise<string> {
   return created.id;
 }
 
+/** Livre ajouté à la main et suivi en % : on ne connaît pas ses pages, on en suppose un nombre moyen */
+const UNKNOWN_PAGES = 300;
+
 /** Crée la lecture (édition de référence = la mienne), couverture comprise */
 export async function createReading(userId: string, book: BookDraft, targetEndDate: string | null): Promise<Challenge> {
   const challenge = await useProjectStore
     .getState()
-    .createChallenge(userId, book.title, book.author || undefined, book.pages, undefined, targetEndDate ?? undefined);
+    .createChallenge(userId, book.title, book.author || undefined, book.pages || UNKNOWN_PAGES, undefined, targetEndDate ?? undefined);
   if (book.cover) await setReadingCover(challenge.id, book.cover);
   return challenge;
 }
@@ -66,7 +69,7 @@ export async function updateReadingBook(challengeId: string, book: BookDraft) {
   await updateChallenge(challengeId, {
     book_title: book.title,
     book_author: book.author || null,
-    total_pages: book.pages,
+    total_pages: book.pages || UNKNOWN_PAGES,
   });
   useProjectStore.getState().patchChallengeLocally(challengeId, {
     book_title: book.title,

@@ -1,5 +1,5 @@
 /**
- * Combien par jour ? Un rythme, pas une deadline : la date de fin se calcule.
+ * À quel rythme ? Un rythme, pas une deadline : la date de fin se calcule.
  *
  * - Papier : en pages (10, 20, 40), le temps en dessous dans l'autocollant.
  * - Liseuse ou audio : en temps (≈ 15 min, 30 min, 1 h), l'équivalent en %
@@ -40,12 +40,14 @@ export default function ObjectifScreen() {
   const percent = bookFormat(store) !== 'papier';
   if (!book) return null;
 
+  // En %, sans nombre de pages connu (livre ajouté à la main) : un livre moyen
+  const refPages = book.pages || 300;
   /** Le rythme choisi, ramené en pages papier pour l'afficher */
-  const pace: Pace = perDay === null ? 0 : nearestPace(percent ? (perDay / 100) * book.pages : perDay);
+  const pace: Pace = perDay === null ? 0 : nearestPace(percent ? (perDay / 100) * refPages : perDay);
 
   const choose = (value: Pace) => {
     if (value === 0) return patch({ perDay: null, paceChosen: true });
-    patch({ paceChosen: true, perDay: percent ? Math.max(1, Math.round((value / book.pages) * 100)) : value });
+    patch({ paceChosen: true, perDay: percent ? Math.max(1, Math.round((value / refPages) * 100)) : value });
   };
 
   const remaining = (percent ? 100 : book.pages) - start;
@@ -57,8 +59,8 @@ export default function ObjectifScreen() {
   return (
     <OnboardingScreen
       step="objectif"
-      title="Combien par jour ?"
-      accent="jour"
+      title="À quel rythme ?"
+      accent="rythme"
       footer={
         <Button3D
           variant="primary"
