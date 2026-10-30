@@ -851,9 +851,10 @@ Prototype validé le 2026-10-28 (artefact « Onboarding chapi »). Deux temps :
   rouge collée au bord. Un seul choix possible : les autres s'estompent.
 - **On se donne une date de fin ?** (`objectif`) : la date vaut pour tout le
   groupe, donc pas de rythme en pages (injuste pour qui lit moins vite). « Oui »
-  ouvre 2 semaines / 1 mois / 2 mois ; « Non, tranquille » : sans date. Un
-  autocollant au coin corné en bas à droite (`StickerText`) se colle à chaque
-  choix, sans rebond, et donne le jour. Pas de livre ni de bloc de pages dessiné
+  propose 2 semaines d'emblée : raccourcis 1 à 4 sem. dans un `Rail` (la matière
+  du rail p./%) et roulette de date iOS dessous, qui se suivent. « Non,
+  tranquille » : un autocollant au coin corné en bas à droite (`StickerText`) se
+  colle, sans rebond. Pas de livre ni de bloc de pages dessiné
   en code (« vibe coding »). On rejoint : pas cet écran, la date est celle du groupe.
 - **Préparation** : trois tranches tombent et s'empilent pendant le vrai
   enregistrement (≈ 2 s, pas un spinner).
