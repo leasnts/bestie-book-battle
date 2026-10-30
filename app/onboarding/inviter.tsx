@@ -152,8 +152,9 @@ const styles = StyleSheet.create({
   },
   codeText: {
     flex: 1,
-    fontFamily: fonts.displayBold,
-    fontSize: 28,
+    // Comme les chiffres du code reçu par email (CodeBoxes)
+    fontFamily: fonts.body,
+    fontSize: 26,
     letterSpacing: 4,
     color: colors.textPrimary,
   },
