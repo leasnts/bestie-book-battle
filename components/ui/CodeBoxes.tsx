@@ -3,7 +3,8 @@
  * email (auth/email) et le code d'une lecture (onboarding/code).
  *
  * Les cases ne font que montrer : la saisie passe par un seul champ invisible
- * posé dessus, qui garde le collage et l'autoremplissage d'iOS.
+ * posé dessus, qui garde le collage et l'autoremplissage d'iOS. Sans
+ * `onChange`, elles montrent un code à donner (onboarding/inviter).
  */
 
 import React, { useRef, useState } from 'react';
@@ -14,16 +15,28 @@ export const CODE_LENGTH = 6;
 
 interface CodeBoxesProps {
   value: string;
-  onChange: (value: string) => void;
-  editable: boolean;
+  /** Absent : le code se montre seulement */
+  onChange?: (value: string) => void;
+  editable?: boolean;
   accessibilityLabel: string;
   /** Code reçu par message : iOS le propose au-dessus du clavier */
   oneTimeCode?: boolean;
 }
 
-export default function CodeBoxes({ value, onChange, editable, accessibilityLabel, oneTimeCode = false }: CodeBoxesProps) {
+export default function CodeBoxes({ value, onChange, editable = false, accessibilityLabel, oneTimeCode = false }: CodeBoxesProps) {
   const input = useRef<TextInputInstance>(null);
   const [focused, setFocused] = useState(true);
+  if (!onChange) {
+    return (
+      <View style={styles.boxes} accessible accessibilityLabel={`${accessibilityLabel} : ${value.split('').join(' ')}`}>
+        {Array.from({ length: CODE_LENGTH }, (_, i) => (
+          <View key={i} style={styles.box}>
+            <Text style={styles.digit}>{value[i] ?? ''}</Text>
+          </View>
+        ))}
+      </View>
+    );
+  }
   return (
     <Pressable onPress={() => input.current?.focus()} accessible={false}>
       <View style={styles.boxes}>

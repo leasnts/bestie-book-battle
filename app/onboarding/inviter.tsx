@@ -1,53 +1,46 @@
 /**
  * On invite qui ? Inviter, au milieu du parcours, quand le livre est choisi.
  *
+ *    ┌──────────────────┐
+ *    │  aquarelle chapi │     l'aperçu du message : la couverture sur le fond
+ *    │      ▐██▌        │     rouge de chapi, « Lis … avec moi »
+ *    │ Lis X avec moi   │
+ *    └──────────────────┘
+ *    [A][B][C][D][E][F]       le code, comme celui reçu par email
+ *         Copier
+ *
  * La lecture se crée en arrivant ici (il faut son code pour le lien) ; si on
  * revient en arrière changer de livre, elle suit. Le message est un vrai lien
- * (bestie-book-battle://join/…) avec le code en secours. Envoyé : le fil se
- * coud entre moi et la place libre.
+ * (bestie-book-battle://join/…) avec le code en secours.
  */
 
 import * as Clipboard from 'expo-clipboard';
-import { LinearGradient } from 'expo-linear-gradient';
+import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { CheckIcon, CopyIcon, ShareIcon } from 'lucide-react-native';
 import React, { useCallback, useEffect, useState } from 'react';
-import { Share, StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native';
-import Animated, { FadeIn, useReducedMotion } from 'react-native-reanimated';
-import Svg from 'react-native-svg';
+import { Share, StyleSheet, Text, View } from 'react-native';
+import Animated, { FadeIn } from 'react-native-reanimated';
+import { BRAND_BG } from '../../components/brand/BrandLockup';
 import Button3D from '../../components/Button3D';
 import OnboardingScreen, { rise } from '../../components/onboarding/OnboardingScreen';
 import { COVER_RATIO, CoverImage } from '../../components/ui/BookCover';
-import GlassButton from '../../components/ui/GlassButton';
-import { Seam } from '../../components/ui/GoalTrack';
-import { StitchBorder } from '../../components/ui/Stitch';
+import CodeBoxes from '../../components/ui/CodeBoxes';
 import { createReading, deadlineFrom, ensureProfile, updateReadingBook } from '../../services/onboarding';
-import { useAuthStore } from '../../stores/authStore';
 import { useOnboardingStore } from '../../stores/onboardingStore';
 import { useProjectStore } from '../../stores/projectStore';
-import {
-  accentGradient,
-  borderRadius,
-  colors,
-  fonts,
-  inkAlpha,
-  inkGradient,
-  lowki,
-  paperFrameGradient,
-  spacing,
-} from '../../utils/constants';
+import { colors, fonts, inkAlpha, spacing } from '../../utils/constants';
 import { feel } from '../../utils/feel';
 import { nextStep } from '../../utils/onboardingFlow';
-import { inviteLink, inviteMessage } from '../../utils/share';
+import { inviteMessage } from '../../utils/share';
 
+const WASH = require('../../assets/images/watercolor/login-wash.png');
 const COVER_W = 84;
-const DISC = 40;
 
 export default function InviterScreen() {
   const router = useRouter();
   const store = useOnboardingStore();
   const { flow, book, createdChallengeId, invited, patch } = store;
-  const firstName = useAuthStore((s) => s.user?.first_name ?? s.pendingUserData?.firstName ?? '');
   const challenge = useProjectStore((s) => s.challenges.find((c) => c.id === createdChallengeId) ?? null);
   const [failed, setFailed] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -95,7 +88,7 @@ export default function InviterScreen() {
 
   const copy = async () => {
     if (!code) return;
-    await Clipboard.setStringAsync(inviteLink(code));
+    await Clipboard.setStringAsync(code);
     feel('tic');
     setCopied(true);
     setTimeout(() => setCopied(false), 1400);
@@ -116,121 +109,45 @@ export default function InviterScreen() {
             <Button3D variant="primary" icon={ShareIcon} iconPosition="left" disabled={!code} onPress={share} style={styles.wide}>
               Envoyer le lien
             </Button3D>
-            <View style={styles.row}>
-              <GlassButton icon={CopyIcon} onPress={copy} accessibilityLabel="Copier le lien" />
-              <View style={styles.fill}>
-                <Button3D variant="secondary" onPress={() => router.push(nextStep(flow, 'inviter'))} style={styles.wide}>
-                  Plus tard
-                </Button3D>
-              </View>
-            </View>
+            <Button3D variant="secondary" onPress={() => router.push(nextStep(flow, 'inviter'))} style={styles.wide}>
+              Plus tard
+            </Button3D>
           </>
         )
       }
     >
       <Animated.View entering={rise(1)} style={styles.bubble}>
-        <LinearGradient colors={paperFrameGradient} style={styles.art}>
-          {book.cover ? (
-            <CoverImage uri={book.cover} style={styles.cover} />
-          ) : (
-            <LinearGradient colors={[colors.white, colors.bgSecondary]} style={[styles.cover, styles.noCover]} />
-          )}
-        </LinearGradient>
+        <View style={styles.art}>
+          <Image source={WASH} style={StyleSheet.absoluteFill} contentFit="cover" />
+          {book.cover ? <CoverImage uri={book.cover} style={styles.cover} /> : <View style={[styles.cover, styles.noCover]} />}
+        </View>
         <View style={styles.bubbleText}>
           <Text style={styles.bubbleTitle} numberOfLines={2}>{`Lis ${book.title} avec moi`}</Text>
-          {code ? (
-            <Animated.Text entering={FadeIn.duration(200)} style={styles.link} numberOfLines={1}>
-              {copied ? 'Lien copié' : `chapi · code ${code}`}
-            </Animated.Text>
-          ) : failed ? (
+          {failed && !code ? (
             <Text style={styles.link} onPress={ensureReading} accessibilityRole="button">
               Pas de réseau ? Toucher pour réessayer
             </Text>
           ) : (
-            <View style={styles.skeleton} />
+            <Text style={styles.link}>chapi</Text>
           )}
         </View>
       </Animated.View>
 
-      <Animated.View entering={rise(2)}>
-        <Pair me={firstName.charAt(0).toUpperCase() || 'M'} sewn={invited} />
-      </Animated.View>
+      {code && (
+        <Animated.View entering={FadeIn.duration(200)} style={styles.code}>
+          <CodeBoxes value={code} accessibilityLabel="Code de la lecture" />
+          <Button3D variant="secondary" size="small" icon={copied ? CheckIcon : CopyIcon} iconPosition="left" onPress={copy}>
+            {copied ? 'Copié' : 'Copier'}
+          </Button3D>
+        </Animated.View>
+      )}
     </OnboardingScreen>
   );
 }
 
-/** Moi, le fil, la place libre : envoyé, le fil se coud point par point et la place se remplit */
-function Pair({ me, sewn }: { me: string; sewn: boolean }) {
-  const reducedMotion = useReducedMotion();
-  const [width, setWidth] = useState(0);
-  const [read, setRead] = useState(sewn ? 1 : 0);
-
-  useEffect(() => {
-    if (!sewn || read >= 1) return;
-    if (reducedMotion) {
-      setRead(1);
-      return;
-    }
-    let step = 0;
-    const timer = setInterval(() => {
-      step += 1;
-      setRead(step / SEW_STEPS);
-      if (step >= SEW_STEPS) clearInterval(timer);
-    }, SEW_MS / SEW_STEPS);
-    return () => clearInterval(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sewn, reducedMotion]);
-
-  return (
-    <View style={styles.pair}>
-      <View style={styles.disc}>
-        <LinearGradient colors={inkGradient} style={StyleSheet.absoluteFill} />
-        <Text style={styles.discText}>{me}</Text>
-      </View>
-      <View style={styles.fill} onLayout={(e: LayoutChangeEvent) => setWidth(e.nativeEvent.layout.width)}>
-        {width > 0 && (
-          <Svg width={width} height={8}>
-            <Seam width={width} readUntil={width * read} y={4} />
-          </Svg>
-        )}
-      </View>
-      <View style={styles.disc}>
-        {read >= 1 ? (
-          <Animated.View entering={FadeIn.duration(200)} style={StyleSheet.absoluteFill}>
-            <LinearGradient colors={accentGradient} style={[StyleSheet.absoluteFill, styles.center]}>
-              <CheckIcon size={18} color={lowki.butter.light} strokeWidth={2.5} />
-            </LinearGradient>
-          </Animated.View>
-        ) : (
-          <>
-            <StitchBorder radius={DISC / 2} inset={0} />
-            <Text style={styles.ghost}>?</Text>
-          </>
-        )}
-      </View>
-    </View>
-  );
-}
-
-/** Le fil se coud en 700 ms, en 14 points */
-const SEW_MS = 700;
-const SEW_STEPS = 14;
-
 const styles = StyleSheet.create({
   wide: {
     width: '100%',
-  },
-  fill: {
-    flex: 1,
-  },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-  },
-  center: {
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   bubble: {
     alignSelf: 'flex-end',
@@ -242,16 +159,19 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: inkAlpha(0.1),
   },
+  // Le fond de chapi : l'aquarelle rouge de la connexion
   art: {
     alignItems: 'center',
     paddingVertical: spacing.xl,
+    backgroundColor: BRAND_BG[1],
   },
   cover: {
     width: COVER_W,
     height: COVER_W / COVER_RATIO,
+    borderRadius: 3,
   },
   noCover: {
-    borderRadius: 2,
+    backgroundColor: colors.bgSecondary,
   },
   bubbleText: {
     padding: spacing.lg,
@@ -269,35 +189,8 @@ const styles = StyleSheet.create({
     lineHeight: 18,
     color: colors.textTertiary,
   },
-  skeleton: {
-    height: 12,
-    width: 140,
-    marginTop: 4,
-    borderRadius: borderRadius.sm,
-    backgroundColor: inkAlpha(0.06),
-  },
-  pair: {
-    flexDirection: 'row',
+  code: {
     alignItems: 'center',
     gap: spacing.md,
-    paddingHorizontal: spacing.sm,
-  },
-  disc: {
-    width: DISC,
-    height: DISC,
-    borderRadius: DISC / 2,
-    overflow: 'hidden',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  discText: {
-    fontFamily: fonts.displayBold,
-    fontSize: 15,
-    color: colors.white,
-  },
-  ghost: {
-    fontFamily: fonts.displayBold,
-    fontSize: 15,
-    color: colors.textPlaceholder,
   },
 });
