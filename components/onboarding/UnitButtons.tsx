@@ -1,23 +1,23 @@
 /**
- * UnitButtons — compter en pages ou en % : deux boutons ronds, le signe écrit
- * dans la police d'accent (comme le « p. » de la règle) :
+ * UnitButtons — compter en pages ou en % : un rail arrondi, la case choisie
+ * glisse dedans, le signe écrit dans la police d'accent (comme le « p. » de la règle) :
  *
- *    En pages ou en % ?            ( p. )  ( % )
+ *    ( [·p.·]   %  )
  *
- * Même matière que les lignes d'OptionList : papier crème et couture pâle au
- * repos, voile beige et couture chocolat une fois choisi. Rien n'est choisi
- * d'avance.
+ * Même matière que les lignes d'OptionList : rail en papier crème, case au voile
+ * beige et couture chocolat. Le glissement est court, pour que le choix réponde
+ * tout de suite.
  */
 
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useEffect } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withSequence, withSpring, withTiming } from 'react-native-reanimated';
-import { colors, fonts, motion, ROUND_BUTTON_SIZE, spacing } from '../../utils/constants';
+import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
+import { colors, fonts, ROUND_BUTTON_SIZE } from '../../utils/constants';
 import { feel } from '../../utils/feel';
 import PressableScale from '../ui/PressableScale';
 import { StitchBorder } from '../ui/Stitch';
-import { EDGE, PAPER, PAPER_ON, RING_ON, STITCH_INSET, STITCH_ON, STITCH_WEIGHT } from './OptionList';
+import { EDGE, PAPER, PAPER_ON, RING_ON, STITCH_ON, STITCH_WEIGHT } from './OptionList';
 
 export type Unit = 'pages' | 'percent';
 
@@ -26,102 +26,102 @@ const UNITS: { key: Unit; sign: string; label: string }[] = [
   { key: 'percent', sign: '%', label: 'En pourcentage' },
 ];
 
-const SIZE = ROUND_BUTTON_SIZE;
+const HEIGHT = ROUND_BUTTON_SIZE;
+/** La largeur d'une case */
+const SEGMENT = 60;
+/** L'écart entre la case et le bord du rail */
+const PAD = 3;
+const RADIUS = HEIGHT / 2;
+const THUMB_RADIUS = RADIUS - PAD;
+const SLIDE_MS = 160;
 
 export default function UnitButtons({ value, onChange }: { value: Unit | null; onChange: (unit: Unit) => void }) {
+  const reduced = useReducedMotion();
+  const index = UNITS.findIndex((u) => u.key === value);
+  const x = useSharedValue(Math.max(index, 0) * SEGMENT);
+
+  useEffect(() => {
+    if (index < 0) return;
+    const target = index * SEGMENT;
+    x.value = reduced ? target : withTiming(target, { duration: SLIDE_MS, easing: Easing.out(Easing.cubic) });
+  }, [index, reduced, x]);
+
+  const thumb = useAnimatedStyle(() => ({ transform: [{ translateX: x.value }] }));
+
   return (
-    <View style={styles.row} accessibilityRole="radiogroup">
-      {UNITS.map((unit) => (
-        <UnitButton key={unit.key} sign={unit.sign} label={unit.label} selected={unit.key === value} onPress={() => onChange(unit.key)} />
-      ))}
+    <View style={styles.rail} accessibilityRole="radiogroup">
+      <View style={[StyleSheet.absoluteFill, styles.clip]} pointerEvents="none">
+        <LinearGradient colors={PAPER} style={StyleSheet.absoluteFill} />
+        <View style={[StyleSheet.absoluteFill, styles.railRing]} />
+      </View>
+
+      {index >= 0 && (
+        <Animated.View style={[styles.thumb, thumb]} pointerEvents="none">
+          <LinearGradient colors={PAPER_ON} style={[StyleSheet.absoluteFill, styles.thumbClip]} />
+          <View style={[StyleSheet.absoluteFill, styles.thumbRing]} />
+          <StitchBorder radius={THUMB_RADIUS} inset={2} color={STITCH_ON} weight={STITCH_WEIGHT} />
+        </Animated.View>
+      )}
+
+      {UNITS.map((unit) => {
+        const selected = unit.key === value;
+        return (
+          <PressableScale
+            key={unit.key}
+            style={styles.segment}
+            pressedScale={0.94}
+            onPress={() => {
+              if (selected) return;
+              feel('tic');
+              onChange(unit.key);
+            }}
+            accessibilityRole="radio"
+            accessibilityState={{ selected }}
+            accessibilityLabel={unit.label}
+          >
+            <Text style={[styles.sign, !selected && styles.signIdle]}>{unit.sign}</Text>
+          </PressableScale>
+        );
+      })}
     </View>
   );
 }
 
-function UnitButton({ sign, label, selected, onPress }: { sign: string; label: string; selected: boolean; onPress: () => void }) {
-  const reduced = useReducedMotion();
-  const on = useSharedValue(selected ? 1 : 0);
-  const bump = useSharedValue(1);
-
-  useEffect(() => {
-    const target = selected ? 1 : 0;
-    if (reduced) {
-      on.value = target;
-      return;
-    }
-    on.value = withTiming(target, { duration: motion.duration.standard });
-    if (selected) {
-      bump.value = withSequence(
-        withTiming(1.08, { duration: motion.duration.instant }),
-        withSpring(1, { damping: 11, stiffness: 260 }),
-      );
-    }
-  }, [selected, reduced, on, bump]);
-
-  const scale = useAnimatedStyle(() => ({ transform: [{ scale: bump.value }] }));
-  const fade = useAnimatedStyle(() => ({ opacity: on.value }));
-  const idleFade = useAnimatedStyle(() => ({ opacity: 1 - on.value }));
-
-  return (
-    <PressableScale
-      pressedScale={0.9}
-      onPress={() => {
-        if (selected) return;
-        feel('tic');
-        onPress();
-      }}
-      accessibilityRole="radio"
-      accessibilityState={{ selected }}
-      accessibilityLabel={label}
-    >
-      <Animated.View style={[styles.button, scale]}>
-        <View style={[StyleSheet.absoluteFill, styles.clip]} pointerEvents="none">
-          <LinearGradient colors={PAPER} style={StyleSheet.absoluteFill} />
-          <Animated.View style={[StyleSheet.absoluteFill, fade]}>
-            <LinearGradient colors={PAPER_ON} style={StyleSheet.absoluteFill} />
-          </Animated.View>
-          <Animated.View style={[styles.ring, styles.ringIdle, idleFade]} />
-          <Animated.View style={[styles.ring, styles.ringOn, fade]} />
-          <Animated.View style={[StyleSheet.absoluteFill, idleFade]}>
-            <StitchBorder radius={SIZE / 2} />
-          </Animated.View>
-          <Animated.View style={[StyleSheet.absoluteFill, fade]}>
-            <StitchBorder radius={SIZE / 2} inset={STITCH_INSET} color={STITCH_ON} weight={STITCH_WEIGHT} />
-          </Animated.View>
-        </View>
-        <Text style={[styles.sign, !selected && styles.signIdle]}>{sign}</Text>
-      </Animated.View>
-    </PressableScale>
-  );
-}
-
 const styles = StyleSheet.create({
-  row: {
+  rail: {
     flexDirection: 'row',
-    gap: spacing.sm,
-  },
-  button: {
-    width: SIZE,
-    height: SIZE,
-    borderRadius: SIZE / 2,
-    alignItems: 'center',
-    justifyContent: 'center',
+    height: HEIGHT,
+    padding: PAD,
+    borderRadius: RADIUS,
   },
   clip: {
-    borderRadius: SIZE / 2,
+    borderRadius: RADIUS,
     overflow: 'hidden',
   },
-  ring: {
-    ...StyleSheet.absoluteFill,
-    borderRadius: SIZE / 2,
-  },
-  ringIdle: {
+  railRing: {
+    borderRadius: RADIUS,
     borderWidth: 1,
     borderColor: EDGE,
   },
-  ringOn: {
+  thumb: {
+    position: 'absolute',
+    top: PAD,
+    bottom: PAD,
+    left: PAD,
+    width: SEGMENT,
+  },
+  thumbClip: {
+    borderRadius: THUMB_RADIUS,
+  },
+  thumbRing: {
+    borderRadius: THUMB_RADIUS,
     borderWidth: 1,
     borderColor: RING_ON,
+  },
+  segment: {
+    width: SEGMENT,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   sign: {
     fontFamily: fonts.accent,
