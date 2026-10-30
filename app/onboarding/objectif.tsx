@@ -7,7 +7,7 @@
  *         dim. 15 nov.             la roulette de la date
  *    ▱ Fin dans 2 semaines      ◢  l'autocollant, toute la largeur, en bas
  *
- * « Oui » propose 2 semaines d'emblée.
+ * « Oui » d'office, à 3 semaines (Lea, 2026-10-30).
  * « Non » : rien de plus. On rejoint : pas cet écran,
  * la date est celle du groupe.
  */
@@ -27,8 +27,8 @@ import { useOnboardingStore } from '../../stores/onboardingStore';
 import { colors, postIt, spacing } from '../../utils/constants';
 import { nextStep } from '../../utils/onboardingFlow';
 
-/** Ce que « Oui » propose d'emblée */
-const FIRST_DAYS = 14;
+/** Ce que « Oui » propose d'emblée : 3 semaines */
+const FIRST_DAYS = 21;
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 export default function ObjectifScreen() {

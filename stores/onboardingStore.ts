@@ -57,7 +57,7 @@ interface OnboardingStore {
   format: BookFormat | null;
   /** Ma position de départ : en pages (papier) ou en % (liseuse, audio) */
   start: number;
-  /** Une date de fin pour le groupe ? null = pas encore répondu */
+  /** Une date de fin pour le groupe ? « Oui » d'office (Lea, 2026-10-30) */
   dated: boolean | null;
   /** Avec une date : dans combien de jours */
   days: number | null;
@@ -88,8 +88,8 @@ const EMPTY = {
   invitation: null,
   format: null,
   start: 0,
-  dated: null,
-  days: null,
+  dated: true,
+  days: 21,
   createdChallengeId: null,
   invited: false,
   bookPick: null,
