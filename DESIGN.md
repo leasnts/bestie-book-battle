@@ -839,7 +839,7 @@ Prototype validé le 2026-10-28 (artefact « Onboarding chapi »). Deux temps :
   d'ajout à la main pour l'instant.
 - **Où en est ta lecture ?** (`page`) : un rail arrondi « p. » / « % » en police
   d'accent, la case choisie y glisse vite (`UnitButtons`), pages par défaut, centrés juste au-dessus de la règle de
-  Ma page, au milieu de l'écran. En pages, le bouton secondaire « Modifier le total » passe la règle sur
+  Ma page, au milieu de l'écran. En pages, le bouton secondaire « Modifier le total », au-dessus de « Continuer », passe la règle sur
   le total (« /503 »), « Valider le total » revient ; total inconnu : la règle commence
   par lui. En rejoignant, papier : mon édition en plus.
 - **Un livre = un seul format.** Papier → pages de mon édition (demandée

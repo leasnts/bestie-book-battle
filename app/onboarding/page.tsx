@@ -4,8 +4,8 @@
  *       ( p. ) ( % )               pages (papier) ou % (liseuse, audio), centrés
  *          112                     au milieu de l'écran, la règle de Ma page
  *    ·······●···········
- *    [ Continuer ]
  *    [ Modifier le total ]         le total (« /503 »), si mon édition diffère
+ *    [ Continuer ]
  *
  * - En pages par défaut.
  * - En pages, le total vient de l'édition choisie à « On lit quoi ? » (ou de la
@@ -103,6 +103,11 @@ export default function PageScreen() {
       accent="lecture"
       footer={
         <>
+          {hasTotalButton && (
+            <Button3D variant="secondary" onPress={() => setEditingTotal(!editingTotal)} style={styles.wide}>
+              {editingTotal ? 'Valider le total' : 'Modifier le total'}
+            </Button3D>
+          )}
           <Button3D
             variant="primary"
             onPress={() => router.push(nextStep(flow, 'page'))}
@@ -111,11 +116,6 @@ export default function PageScreen() {
           >
             Continuer
           </Button3D>
-          {hasTotalButton && (
-            <Button3D variant="secondary" onPress={() => setEditingTotal(!editingTotal)} style={styles.wide}>
-              {editingTotal ? 'Valider le total' : 'Modifier le total'}
-            </Button3D>
-          )}
         </>
       }
     >
