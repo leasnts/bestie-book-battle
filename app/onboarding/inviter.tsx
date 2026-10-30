@@ -6,8 +6,7 @@
  *    │      ▐██▌        │     rouge de chapi, « Lis … avec moi »
  *    │ Lis X avec moi   │
  *    └──────────────────┘
- *    [A][B][C][D][E][F]       le code, comme celui reçu par email
- *         Copier
+ *         ( Code 578006 ) (⧉)   le code, en second message, et de quoi le copier
  *
  * La lecture se crée en arrivant ici (il faut son code pour le lien) ; si on
  * revient en arrière changer de livre, elle suit. Le message est un vrai lien
@@ -25,7 +24,7 @@ import { BRAND_BG } from '../../components/brand/BrandLockup';
 import Button3D from '../../components/Button3D';
 import OnboardingScreen, { rise } from '../../components/onboarding/OnboardingScreen';
 import { COVER_RATIO, CoverImage } from '../../components/ui/BookCover';
-import CodeBoxes from '../../components/ui/CodeBoxes';
+import GlassButton from '../../components/ui/GlassButton';
 import { createReading, deadlineFrom, ensureProfile, updateReadingBook } from '../../services/onboarding';
 import { useOnboardingStore } from '../../stores/onboardingStore';
 import { useProjectStore } from '../../stores/projectStore';
@@ -134,11 +133,12 @@ export default function InviterScreen() {
       </Animated.View>
 
       {code && (
-        <Animated.View entering={FadeIn.duration(200)} style={styles.code}>
-          <CodeBoxes value={code} accessibilityLabel="Code de la lecture" />
-          <Button3D variant="secondary" size="small" icon={copied ? CheckIcon : CopyIcon} iconPosition="left" onPress={copy}>
-            {copied ? 'Copié' : 'Copier'}
-          </Button3D>
+        <Animated.View entering={FadeIn.duration(200)} style={styles.codeRow}>
+          <View style={[styles.bubble, styles.codeBubble]} accessible accessibilityLabel={`Code de la lecture : ${code.split('').join(' ')}`}>
+            <Text style={styles.link}>Code</Text>
+            <Text style={styles.codeText}>{code}</Text>
+          </View>
+          <GlassButton icon={copied ? CheckIcon : CopyIcon} onPress={copy} accessibilityLabel={copied ? 'Code copié' : 'Copier le code'} />
         </Animated.View>
       )}
     </OnboardingScreen>
@@ -189,8 +189,26 @@ const styles = StyleSheet.create({
     lineHeight: 18,
     color: colors.textTertiary,
   },
-  code: {
+  // Le code, en second message, le bouton pour le copier à sa droite
+  codeRow: {
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'flex-end',
     gap: spacing.md,
+  },
+  codeBubble: {
+    width: undefined,
+    alignSelf: 'auto',
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: spacing.sm,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+  },
+  codeText: {
+    fontFamily: fonts.displayBold,
+    fontSize: 22,
+    letterSpacing: 3,
+    color: colors.textPrimary,
   },
 });
