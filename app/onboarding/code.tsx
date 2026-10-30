@@ -23,15 +23,24 @@ export default function CodeScreen() {
   const router = useRouter();
   const [code, setCode] = useState('');
   const [busy, setBusy] = useState(false);
-  const [missed, setMissed] = useState(false);
+  /** Le code n'a rien donné : inconnu, ou pas de réseau */
+  const [missed, setMissed] = useState<'unknown' | 'offline' | null>(null);
 
   const check = async (value: string) => {
     setBusy(true);
-    const invitation = await fetchInvitation(value);
+    let invitation;
+    try {
+      invitation = await fetchInvitation(value);
+    } catch {
+      setBusy(false);
+      feel('erreur');
+      setMissed('offline');
+      return;
+    }
     setBusy(false);
     if (!invitation) {
       feel('erreur');
-      setMissed(true);
+      setMissed('unknown');
       setCode('');
       return;
     }
@@ -41,7 +50,7 @@ export default function CodeScreen() {
 
   const onChange = (value: string) => {
     setCode(value);
-    setMissed(false);
+    setMissed(null);
     if (value.length === CODE_LENGTH) check(value);
   };
 
@@ -58,7 +67,11 @@ export default function CodeScreen() {
     >
       <Animated.View entering={rise(1)} style={styles.middle}>
         <CodeBoxes value={code} onChange={onChange} editable={!busy} accessibilityLabel="Code de la lecture" />
-        {missed && <Text style={styles.missed} accessibilityLiveRegion="polite">Ce code ne mène à aucune lecture.</Text>}
+        {missed && (
+          <Text style={styles.missed} accessibilityLiveRegion="polite">
+            {missed === 'offline' ? 'Pas de réseau, réessaie' : 'Ce code ne mène à aucune lecture'}
+          </Text>
+        )}
       </Animated.View>
     </OnboardingScreen>
   );

@@ -21,14 +21,16 @@ export default function JoinLink() {
   useEffect(() => {
     const store = useOnboardingStore.getState();
     store.begin(useAuthStore.getState().user ? 'addJoin' : 'join');
-    fetchInvitation(code ?? '').then((invitation) => {
-      if (!invitation) {
-        router.replace('/onboarding/code');
-        return;
-      }
-      useOnboardingStore.getState().patch({ invitation });
-      router.replace('/onboarding/invitation');
-    });
+    fetchInvitation(code ?? '')
+      .catch(() => null)
+      .then((invitation) => {
+        if (!invitation) {
+          router.replace('/onboarding/code');
+          return;
+        }
+        useOnboardingStore.getState().patch({ invitation });
+        router.replace('/onboarding/invitation');
+      });
   }, [code, router]);
 
   // Le temps de la recherche : le papier de l'onboarding, rien d'autre

@@ -153,12 +153,13 @@ export function deadlineFrom(dated: boolean | null, days: number | null): string
   return date.toISOString().slice(0, 10);
 }
 
-/** La lecture derrière un code (ou un lien) : null s'il ne mène nulle part */
+/** La lecture derrière un code (ou un lien) : null s'il ne mène nulle part ; lance une erreur sans réseau */
 export async function fetchInvitation(code: string): Promise<InvitationDraft | null> {
   // RPC : la personne n'est pas encore membre, une lecture directe serait bloquée (RLS)
   const { data, error } = await supabase.rpc('get_challenge_by_invite_code', { p_code: code.trim() });
+  if (error) throw error;
   const row = Array.isArray(data) ? data[0] : null;
-  if (error || !row) return null;
+  if (!row) return null;
   return {
     challengeId: row.id,
     code: row.invite_code,
