@@ -1,7 +1,7 @@
 /**
  * Où en est ta lecture ? Ma position dans ce livre-là.
  *
- *    ( p. ) ( % )                  pages (papier) ou % (liseuse, audio)
+ *       ( p. ) ( % )               pages (papier) ou % (liseuse, audio), centrés
  *          112                     au milieu de l'écran, la règle de Ma page
  *    ·······●···········
  *    [ Continuer ]
@@ -34,7 +34,7 @@ import { nextStep } from '../../utils/onboardingFlow';
 
 const THUMB_W = 40;
 /** La hauteur du compteur et de sa règle */
-const RULER_H = 240;
+const RULER_H = 200;
 /** Plafond de la règle du total de pages */
 const MAX_PAGES = 2000;
 
@@ -118,10 +118,6 @@ export default function PageScreen() {
         </>
       }
     >
-      <Animated.View entering={rise(1)}>
-        <UnitButtons value={unit} onChange={setUnit} />
-      </Animated.View>
-
       {joining && unit === 'pages' && (
         <Animated.View entering={rise(2)}>
           <Edition
@@ -132,7 +128,10 @@ export default function PageScreen() {
         </Animated.View>
       )}
 
-      <Animated.View entering={rise(3)} style={styles.ruler}>
+      <Animated.View entering={rise(1)} style={styles.ruler}>
+        <View style={styles.units}>
+          <UnitButtons value={unit} onChange={setUnit} />
+        </View>
         <View style={styles.rulerBox}>
           {onTotal ? (
             <PageRuler key="total" currentPage={book.pages} totalPages={MAX_PAGES} onPageChange={setTotal} unit="count" fontSize={80} />
@@ -209,11 +208,15 @@ const styles = StyleSheet.create({
     lineHeight: 18,
     color: colors.textTertiary,
   },
-  // Le compteur au milieu de l'écran : la marge du bas compense les boutons p. / %
+  // Le compteur au milieu de l'écran : la marge du bas compense les boutons p. / % au-dessus
   ruler: {
     flex: 1,
     justifyContent: 'center',
-    marginBottom: ROUND_BUTTON_SIZE,
+    marginBottom: ROUND_BUTTON_SIZE + spacing.lg,
+  },
+  units: {
+    alignItems: 'center',
+    marginBottom: spacing.lg,
   },
   rulerBox: {
     height: RULER_H,
