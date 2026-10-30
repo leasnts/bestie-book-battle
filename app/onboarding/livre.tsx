@@ -148,7 +148,7 @@ export default function LivreScreen() {
       ) : book ? (
         <>
           <Animated.View entering={FadeIn.duration(180)}>
-            <GlassSection>
+            <GlassSection style={styles.banner}>
               <View style={styles.head}>
                 <View style={styles.cover}>
                   <BookCover coverUrl={book.cover} />
@@ -175,7 +175,7 @@ export default function LivreScreen() {
   );
 }
 
-const COVER_WIDTH = 54;
+const COVER_WIDTH = 64;
 
 const styles = StyleSheet.create({
   wide: {
@@ -207,10 +207,13 @@ const styles = StyleSheet.create({
     paddingVertical: spacing['3xl'],
   },
   // Le bandeau du livre, comme « Le livre » de l'accueil (BookSection)
+  banner: {
+    padding: spacing.xl,
+  },
   head: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.md,
+    gap: spacing.lg,
   },
   cover: {
     width: COVER_WIDTH,
@@ -218,22 +221,25 @@ const styles = StyleSheet.create({
   },
   texts: {
     flex: 1,
+    gap: spacing.xs,
   },
   title: {
     fontFamily: fonts.display,
     fontSize: 20,
+    lineHeight: 25,
     color: colors.textPrimary,
   },
   author: {
     fontFamily: fonts.body,
     fontSize: 14,
+    lineHeight: 19,
     color: colors.textTertiary,
-    marginTop: 1,
   },
   edition: {
-    flex: 1,
     fontFamily: fonts.bodySemiBold,
     fontSize: 13,
+    lineHeight: 18,
     color: colors.textSecondary,
+    marginTop: spacing.sm,
   },
 });
