@@ -2,9 +2,10 @@
  * Les notifs — après la carte de lecture, sur le seuil de l'accueil : l'onboarding
  * est fini, cet écran n'est pas dans le fil de progression.
  *
- * Sur l'aquarelle rouge de la bienvenue, un titre court et le haut d'un iPhone
- * verrouillé (sa couverture floutée en fond d'écran, l'heure de son rappel), où
- * tombent les deux notifications qu'elle recevra ; il s'efface avant le bouton. Un
+ * Sur l'aquarelle rouge de la bienvenue, un titre court et le haut d'un vrai
+ * iPhone 17 Pro verrouillé, en image : deux notifications de chapi (une amie
+ * qui annote, le moment lecture). L'image est rendue depuis
+ * store-screenshots (téléphone du moteur, écran verrouillé en HTML, police SF). Un
  * seul gros bouton, à toucher par réflexe ; « Plus tard » discret. Pas de
  * justification (Lea, 2026-10-30). La fenêtre d'iOS ne s'affiche qu'après le
  * bouton : elle ne s'affiche qu'une fois, on ne la gaspille pas.
@@ -25,10 +26,10 @@ import { ONBOARDING_MAX_W } from '../../components/onboarding/OnboardingScreen';
 import AccentWord from '../../components/ui/AccentWord';
 import { requestNotificationPermission, scheduleEveningReminder } from '../../services/notifications';
 import { reminderTime } from '../../services/onboarding';
-import { bookFormat, useOnboardingStore } from '../../stores/onboardingStore';
-import { colors, fonts, inkAlpha, inkGradient, motion, shadowAlpha, spacing } from '../../utils/constants';
+import { useOnboardingStore } from '../../stores/onboardingStore';
+import { colors, fonts, motion, spacing } from '../../utils/constants';
 
-const APP_ICON = require('../../assets/images/app_icon.png');
+const LOCK_SCREEN = require('../../assets/images/onboarding/lock-screen.png');
 const WASH = require('../../assets/images/watercolor/login-wash.png');
 
 /** Une notification qui descend du haut, après `delay` ms */
@@ -37,21 +38,8 @@ const drop = (delay: number) =>
 
 export default function NotificationsScreen() {
   const router = useRouter();
-  const store = useOnboardingStore();
-  const { moments, start, book, invitation } = store;
+  const moments = useOnboardingStore((s) => s.moments);
   const [asking, setAsking] = useState(false);
-
-  const percent = bookFormat(store) !== 'papier';
-  // Une soirée de lecture, pour l'exemple
-  const step = percent ? 4 : 20;
-  const goal = percent
-    ? `${start} % → ${Math.min(100, start + step)} % ?`
-    : `Page ${start} → ${Math.min(book?.pages ?? start + step, start + step)} ?`;
-  const other = invitation
-    ? { title: `${invitation.adminFirstName} vient d’annoter`, body: invitation.title }
-    : { title: 'Quelqu’un te rejoint', body: book?.title ?? '' };
-
-  const today = new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
 
   /** L'accueil ; le brouillon de l'onboarding n'a plus lieu d'être */
   const home = () => {
@@ -79,31 +67,15 @@ export default function NotificationsScreen() {
           <Text style={styles.heading} accessibilityRole="header">
             <AccentWord text="Ne rate rien" accent="rien" size={TITLE} />
           </Text>
-          {/* Le haut d'un iPhone verrouillé : la couverture floutée en fond d'écran, l'heure du rappel */}
-          <MaskedView
-            style={styles.phone}
-            maskElement={<LinearGradient colors={['#000', '#000', 'transparent']} locations={[0, 0.5, 0.82]} style={StyleSheet.absoluteFill} />}
-          >
-            <View style={styles.screen}>
-              {book?.cover ? (
-                <Image source={{ uri: book.cover }} style={StyleSheet.absoluteFill} contentFit="cover" blurRadius={40} />
-              ) : (
-                <LinearGradient colors={inkGradient} style={StyleSheet.absoluteFill} />
-              )}
-              <View style={[StyleSheet.absoluteFill, styles.dim]} />
-              <View style={styles.island} />
-              <Text style={styles.date}>{today}</Text>
-              <Text style={styles.clock}>{reminderTime(moments)}</Text>
-              <View style={styles.stack}>
-                <Animated.View entering={drop(400)}>
-                  <Notification time="maintenant" title={other.title} body={other.body} />
-                </Animated.View>
-                <Animated.View entering={drop(850)}>
-                  <Notification time="20 min" title="Ton moment lecture" body={goal} />
-                </Animated.View>
-              </View>
-            </View>
-          </MaskedView>
+          {/* Le haut d'un iPhone verrouillé, en image (assets/images/onboarding/lock-screen.png) ; il s'efface avant le bouton */}
+          <Animated.View entering={drop(250)} style={styles.phone}>
+            <MaskedView
+              style={styles.lock}
+              maskElement={<LinearGradient colors={['#000', '#000', 'transparent']} locations={[0, 0.5, 0.95]} style={StyleSheet.absoluteFill} />}
+            >
+              <Image source={LOCK_SCREEN} style={styles.lock} contentFit="cover" contentPosition="top" accessible accessibilityLabel="Un iPhone verrouillé : Lou vient d’annoter p. 112, et ton moment lecture" />
+            </MaskedView>
+          </Animated.View>
         </View>
 
         <View style={styles.footer}>
@@ -119,28 +91,11 @@ export default function NotificationsScreen() {
   );
 }
 
-/** Une notification de l'écran verrouillé, en papier */
-function Notification({ time, title, body }: { time: string; title: string; body: string }) {
-  return (
-    <View style={styles.card} accessible accessibilityLabel={`${title}. ${body}`}>
-      <Image source={APP_ICON} style={styles.icon} />
-      <View style={styles.text}>
-        <View style={styles.head}>
-          <Text style={styles.app}>chapi</Text>
-          <Text style={styles.app}>{time}</Text>
-        </View>
-        <Text style={styles.title} numberOfLines={1}>{title}</Text>
-        <Text style={styles.body} numberOfLines={1}>{body}</Text>
-      </View>
-    </View>
-  );
-}
-
 const TITLE = 31;
-const PHONE_RADIUS = 48;
-const BEZEL = 9;
 /** Ce que le téléphone glisse sous le pied */
 const UNDER_FOOTER = 90;
+/** L'image : le haut du téléphone, 1266 × 2000 */
+const LOCK_RATIO = 1266 / 2000;
 
 const styles = StyleSheet.create({
   root: {
@@ -159,49 +114,6 @@ const styles = StyleSheet.create({
     paddingTop: spacing['3xl'],
     gap: spacing['2xl'],
   },
-  // Le téléphone passe sous le bouton et s'efface dans l'aquarelle avant lui
-  phone: {
-    flex: 1,
-    marginHorizontal: spacing.sm,
-    marginBottom: -UNDER_FOOTER,
-  },
-  screen: {
-    flex: 1,
-    alignItems: 'center',
-    paddingHorizontal: spacing.md,
-    borderTopLeftRadius: PHONE_RADIUS,
-    borderTopRightRadius: PHONE_RADIUS,
-    borderWidth: BEZEL,
-    borderBottomWidth: 0,
-    borderColor: '#1c1210',
-    overflow: 'hidden',
-    backgroundColor: '#1c1210',
-  },
-  dim: {
-    backgroundColor: 'rgba(0,0,0,0.18)',
-  },
-  island: {
-    width: 96,
-    height: 28,
-    borderRadius: 14,
-    marginTop: spacing.sm,
-    backgroundColor: '#000',
-  },
-  date: {
-    marginTop: spacing.lg,
-    fontFamily: fonts.bodySemiBold,
-    fontSize: 15,
-    color: colors.white,
-    opacity: 0.9,
-  },
-  clock: {
-    fontFamily: fonts.displayHero,
-    fontSize: 64,
-    lineHeight: 72,
-    color: colors.white,
-    marginBottom: spacing.lg,
-  },
-
   heading: {
     fontFamily: fonts.display,
     fontSize: TITLE,
@@ -209,9 +121,15 @@ const styles = StyleSheet.create({
     letterSpacing: -0.4,
     color: colors.white,
   },
-  stack: {
-    alignSelf: 'stretch',
-    gap: spacing.sm,
+  // Le téléphone passe sous le bouton et s'efface dans l'aquarelle avant lui
+  phone: {
+    flex: 1,
+    marginBottom: -UNDER_FOOTER,
+    overflow: 'hidden',
+  },
+  lock: {
+    width: '100%',
+    aspectRatio: LOCK_RATIO,
   },
   footer: {
     alignItems: 'center',
@@ -226,49 +144,5 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: colors.white,
     opacity: 0.8,
-  },
-  card: {
-    flexDirection: 'row',
-    gap: spacing.md,
-    padding: spacing.md + 2,
-    borderRadius: 22,
-    backgroundColor: 'rgba(255,255,255,0.88)',
-    borderWidth: 1,
-    borderColor: inkAlpha(0.08),
-    shadowColor: shadowAlpha(1),
-    shadowOpacity: 0.12,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: 8 },
-  },
-  icon: {
-    width: 38,
-    height: 38,
-    borderRadius: 9,
-  },
-  text: {
-    flex: 1,
-    gap: 2,
-  },
-  head: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  app: {
-    fontFamily: fonts.bodySemiBold,
-    fontSize: 12,
-    lineHeight: 16,
-    color: colors.textTertiary,
-  },
-  title: {
-    fontFamily: fonts.bodySemiBold,
-    fontSize: 15,
-    lineHeight: 20,
-    color: colors.textPrimary,
-  },
-  body: {
-    fontFamily: fonts.body,
-    fontSize: 14,
-    lineHeight: 19,
-    color: colors.textSecondary,
   },
 });
