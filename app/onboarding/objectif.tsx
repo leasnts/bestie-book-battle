@@ -2,7 +2,7 @@
  * On se donne une date de fin ? Pour tout le groupe : pas de rythme en pages,
  * qui avantagerait qui lit vite (Lea, 2026-10-30).
  *
- *    [ Non, tranquille ]           chacun·e avance à son rythme
+ *    [ Non ]           chacun·e avance à son rythme
  *    [ Oui ]
  *         dim. 15 nov.             la roulette de la date
  *
@@ -62,7 +62,7 @@ export default function ObjectifScreen() {
       <Animated.View entering={rise(1)}>
         <OptionList
           options={[
-            { key: 'non', label: 'Non, tranquille' },
+            { key: 'non', label: 'Non' },
             { key: 'oui', label: 'Oui' },
           ]}
           value={dated === null ? null : dated ? 'oui' : 'non'}
