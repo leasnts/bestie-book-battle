@@ -822,6 +822,9 @@ Prototype validé le 2026-10-28 (artefact « Onboarding chapi »). Deux temps :
 - **Titres = des questions courtes et naturelles**, un mot d'accent ; pas de virgule plaquée, pas de « tu » à chaque titre (« on », ou rien) ; le mot d'accent sans lettre accentuée (Welcome Valentines n'en a pas) (« Le meilleur moment pour lire ? », « Ton support préféré ? »,
   « Ton code d’invitation ? »…). Un écran = une question : moments et formats habituels
   sont deux écrans.
+- **Pas de libellé qui explique un contrôle** (« En pages ou en % ? », « Nombre de
+  pages »…) : seul le titre-question parle ; un contrôle qui a besoin d'un titre
+  se redessine.
 - **Rien n'est choisi d'avance** : la personne touche le premier choix ;
   Continuer attend ce choix quand la question en demande un.
 - **Questions** : `OnboardingScreen` (fond de l'accueil `bgApp`, uni, retour en verre, fil de
@@ -831,8 +834,8 @@ Prototype validé le 2026-10-28 (artefact « Onboarding chapi »). Deux temps :
 - **On lit quoi ?** (`livre`) : la recherche dans la page (pas de sheet), toujours
   en haut pour changer de livre ; le livre choisi en bandeau comme « Le livre » de
   l'accueil, son édition proposée d'office (pages préremplies, « Changer » s'il y en
-  a plusieurs) ; « En pages ou en % ? » à droite, deux boutons ronds
-  « p. » et « % » en police d'accent (`UnitButtons`) puis le nombre de pages à la règle de Ma
+  a plusieurs) ; deux boutons ronds « p. » et « % » en police d'accent
+  (`UnitButtons`), puis en pages le nombre de pages à la règle de Ma
   page (`PageRuler unit="count"`). En rejoignant, format et édition restent à
   « Où en est ta lecture ? ».
 - **Un livre = un seul format.** Papier → pages de mon édition (demandée

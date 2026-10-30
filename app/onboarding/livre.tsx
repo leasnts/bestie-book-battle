@@ -8,7 +8,7 @@
  *    │       Rageot · 400 p.   Changer   │    l'édition proposée d'office
  *    └───────────────────────────────────┘
  *    En pages ou en % ?                       pages (papier) ou % (liseuse, audio)
- *    En pages ou en % ?          ( p. ) ( % )
+ *                ( p. ) ( % )
  *    400 p.  ···········●···········          le nombre de pages, à la règle de Ma page
  *
  * - La recherche ne part pas dans un sheet : on tape, les résultats s'affichent
@@ -26,7 +26,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Keyboard, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import Button3D from '../../components/Button3D';
-import OnboardingScreen, { QuestionLabel, rise } from '../../components/onboarding/OnboardingScreen';
+import OnboardingScreen, { rise } from '../../components/onboarding/OnboardingScreen';
 import UnitButtons, { type Unit } from '../../components/onboarding/UnitButtons';
 import BookCover, { COVER_RATIO } from '../../components/ui/BookCover';
 import BookResultRow, { BookResultSkeleton } from '../../components/ui/BookResultRow';
@@ -195,7 +195,6 @@ export default function LivreScreen() {
 
           {showEditions && editions && (
             <Animated.View entering={FadeIn.duration(200)}>
-              <QuestionLabel>Ton édition</QuestionLabel>
               <View style={styles.editions}>
                 {editions.map((edition) => (
                   <BookResultRow key={edition.id} book={edition} onPress={() => pickEdition(edition)} />
@@ -208,7 +207,6 @@ export default function LivreScreen() {
         </>
       ) : (
         <View>
-          <Text style={styles.section}>En ce moment</Text>
           {TRENDING_BOOKS.map((result) => (
             <BookResultRow key={result.id} book={result} onPress={() => pick(result)} />
           ))}
@@ -233,12 +231,10 @@ function Counting({
   return (
     <>
       <View style={styles.unitRow}>
-        <Text style={styles.unitQuestion}>En pages ou en % ?</Text>
         <UnitButtons value={unit} onChange={onUnit} />
       </View>
       {unit === 'pages' && (
-        <Animated.View entering={FadeIn.duration(250)} style={styles.group}>
-          <QuestionLabel>Nombre de pages</QuestionLabel>
+        <Animated.View entering={FadeIn.duration(250)}>
           <PageRuler currentPage={pages} totalPages={MAX_PAGES} onPageChange={onPages} unit="count" fontSize={64} />
         </Animated.View>
       )}
@@ -294,14 +290,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     paddingVertical: spacing['3xl'],
   },
-  section: {
-    fontFamily: fonts.bodyExtraBold,
-    fontSize: 12,
-    letterSpacing: 0.8,
-    textTransform: 'uppercase',
-    color: colors.textTertiary,
-    marginBottom: spacing.sm,
-  },
   // Le bandeau du livre, comme « Le livre » de l'accueil (BookSection)
   head: {
     flexDirection: 'row',
@@ -347,18 +335,8 @@ const styles = StyleSheet.create({
   editions: {
     marginTop: spacing.md,
   },
-  group: {
-    gap: spacing.lg,
-  },
   unitRow: {
-    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  unitQuestion: {
-    fontFamily: fonts.bodySemiBold,
-    fontSize: 15,
-    color: colors.textPrimary,
   },
   form: {
     gap: spacing.md,

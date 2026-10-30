@@ -20,7 +20,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import Button3D from '../../components/Button3D';
 import { FORMATS } from '../../components/onboarding/choices';
-import OnboardingScreen, { QuestionLabel, rise } from '../../components/onboarding/OnboardingScreen';
+import OnboardingScreen, { rise } from '../../components/onboarding/OnboardingScreen';
 import { COVER_RATIO, CoverImage } from '../../components/ui/BookCover';
 import OptionList from '../../components/onboarding/OptionList';
 import GlassButton from '../../components/ui/GlassButton';
@@ -90,7 +90,6 @@ export default function PageScreen() {
     >
       {joining && (
         <Animated.View entering={rise(1)} style={styles.group}>
-          <QuestionLabel>En quel format ?</QuestionLabel>
           <OptionList options={FORMATS} value={store.format} onChange={setFormat} />
         </Animated.View>
       )}

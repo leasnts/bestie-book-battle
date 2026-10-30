@@ -113,11 +113,6 @@ export default function OnboardingScreen({
   );
 }
 
-/** Le petit libellé au-dessus d'une question (« Quand ? ») */
-export function QuestionLabel({ children }: { children: string }) {
-  return <Text style={styles.label}>{children}</Text>;
-}
-
 /** Un nœud par question, centrés : rouges jusqu'à celle-ci, sable après */
 function ProgressKnots({ index, total }: { index: number; total: number }) {
   const width = (total - 1) * KNOT_GAP + 2 * KNOT_CURRENT;
@@ -190,13 +185,6 @@ const styles = StyleSheet.create({
     lineHeight: 36,
     letterSpacing: -0.3,
     color: colors.textPrimary,
-  },
-  label: {
-    fontFamily: fonts.bodySemiBold,
-    fontSize: 13,
-    lineHeight: 18,
-    color: colors.textTertiary,
-    marginBottom: -spacing.sm,
   },
   footer: {
     paddingHorizontal: spacing.xl,
