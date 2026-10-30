@@ -93,6 +93,17 @@ export default function LivreScreen() {
     setBook(edition, edition.coverUrl ?? book?.cover ?? null);
   };
 
+  /** À la main, même après avoir choisi un livre : on repart d'une fiche vide */
+  const addByHand = () => {
+    Keyboard.dismiss();
+    clearResults();
+    pending.current = null;
+    setEditions(null);
+    setShowEditions(false);
+    setManual(true);
+    patch({ book: null, start: 0 });
+  };
+
   const ready = !!book && book.title.trim().length > 0;
 
   return (
@@ -104,10 +115,10 @@ export default function LivreScreen() {
       footer={
         <>
           <Button3D variant="primary" disabled={!ready} onPress={() => router.push(nextStep(flow, 'livre'))} style={styles.wide}>
-            C'est celui-là
+            Continuer
           </Button3D>
-          {!book && !manual && (
-            <Button3D variant="secondary" onPress={() => setManual(true)} style={styles.wide}>
+          {!manual && (
+            <Button3D variant="secondary" onPress={addByHand} style={styles.wide}>
               Ajouter à la main
             </Button3D>
           )}
