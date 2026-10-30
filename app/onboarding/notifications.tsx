@@ -2,13 +2,15 @@
  * Les notifs — après la carte de lecture, sur le seuil de l'accueil : l'onboarding
  * est fini, cet écran n'est pas dans le fil de progression.
  *
- * Sur l'aquarelle rouge de la bienvenue, un titre court et les deux
- * notifications qu'elle recevra, qui descendent du haut comme les vraies. Un
+ * Sur l'aquarelle rouge de la bienvenue, un titre court et le haut d'un iPhone
+ * verrouillé (sa couverture floutée en fond d'écran, l'heure de son rappel), où
+ * tombent les deux notifications qu'elle recevra ; il s'efface avant le bouton. Un
  * seul gros bouton, à toucher par réflexe ; « Plus tard » discret. Pas de
  * justification (Lea, 2026-10-30). La fenêtre d'iOS ne s'affiche qu'après le
  * bouton : elle ne s'affiche qu'une fois, on ne la gaspille pas.
  */
 
+import MaskedView from '../../components/ui/MaskedView';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
@@ -24,7 +26,7 @@ import AccentWord from '../../components/ui/AccentWord';
 import { requestNotificationPermission, scheduleEveningReminder } from '../../services/notifications';
 import { reminderTime } from '../../services/onboarding';
 import { bookFormat, useOnboardingStore } from '../../stores/onboardingStore';
-import { colors, fonts, inkAlpha, motion, shadowAlpha, spacing } from '../../utils/constants';
+import { colors, fonts, inkAlpha, inkGradient, motion, shadowAlpha, spacing } from '../../utils/constants';
 
 const APP_ICON = require('../../assets/images/app_icon.png');
 const WASH = require('../../assets/images/watercolor/login-wash.png');
@@ -47,7 +49,9 @@ export default function NotificationsScreen() {
     : `Page ${start} → ${Math.min(book?.pages ?? start + step, start + step)} ?`;
   const other = invitation
     ? { title: `${invitation.adminFirstName} vient d’annoter`, body: invitation.title }
-    : { title: 'Quelqu’un a rejoint ta lecture', body: book?.title ?? '' };
+    : { title: 'Quelqu’un te rejoint', body: book?.title ?? '' };
+
+  const today = new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
 
   /** L'accueil ; le brouillon de l'onboarding n'a plus lieu d'être */
   const home = () => {
@@ -75,14 +79,31 @@ export default function NotificationsScreen() {
           <Text style={styles.heading} accessibilityRole="header">
             <AccentWord text="Ne rate rien" accent="rien" size={TITLE} />
           </Text>
-          <View style={styles.stack}>
-            <Animated.View entering={drop(300)}>
-              <Notification time="maintenant" title={other.title} body={other.body} />
-            </Animated.View>
-            <Animated.View entering={drop(750)}>
-              <Notification time={reminderTime(moments)} title="Ton moment lecture" body={goal} />
-            </Animated.View>
-          </View>
+          {/* Le haut d'un iPhone verrouillé : la couverture floutée en fond d'écran, l'heure du rappel */}
+          <MaskedView
+            style={styles.phone}
+            maskElement={<LinearGradient colors={['#000', '#000', 'transparent']} locations={[0, 0.5, 0.82]} style={StyleSheet.absoluteFill} />}
+          >
+            <View style={styles.screen}>
+              {book?.cover ? (
+                <Image source={{ uri: book.cover }} style={StyleSheet.absoluteFill} contentFit="cover" blurRadius={40} />
+              ) : (
+                <LinearGradient colors={inkGradient} style={StyleSheet.absoluteFill} />
+              )}
+              <View style={[StyleSheet.absoluteFill, styles.dim]} />
+              <View style={styles.island} />
+              <Text style={styles.date}>{today}</Text>
+              <Text style={styles.clock}>{reminderTime(moments)}</Text>
+              <View style={styles.stack}>
+                <Animated.View entering={drop(400)}>
+                  <Notification time="maintenant" title={other.title} body={other.body} />
+                </Animated.View>
+                <Animated.View entering={drop(850)}>
+                  <Notification time="20 min" title="Ton moment lecture" body={goal} />
+                </Animated.View>
+              </View>
+            </View>
+          </MaskedView>
         </View>
 
         <View style={styles.footer}>
@@ -116,6 +137,10 @@ function Notification({ time, title, body }: { time: string; title: string; body
 }
 
 const TITLE = 31;
+const PHONE_RADIUS = 48;
+const BEZEL = 9;
+/** Ce que le téléphone glisse sous le pied */
+const UNDER_FOOTER = 90;
 
 const styles = StyleSheet.create({
   root: {
@@ -131,9 +156,52 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    justifyContent: 'center',
+    paddingTop: spacing['3xl'],
     gap: spacing['2xl'],
   },
+  // Le téléphone passe sous le bouton et s'efface dans l'aquarelle avant lui
+  phone: {
+    flex: 1,
+    marginHorizontal: spacing.sm,
+    marginBottom: -UNDER_FOOTER,
+  },
+  screen: {
+    flex: 1,
+    alignItems: 'center',
+    paddingHorizontal: spacing.md,
+    borderTopLeftRadius: PHONE_RADIUS,
+    borderTopRightRadius: PHONE_RADIUS,
+    borderWidth: BEZEL,
+    borderBottomWidth: 0,
+    borderColor: '#1c1210',
+    overflow: 'hidden',
+    backgroundColor: '#1c1210',
+  },
+  dim: {
+    backgroundColor: 'rgba(0,0,0,0.18)',
+  },
+  island: {
+    width: 96,
+    height: 28,
+    borderRadius: 14,
+    marginTop: spacing.sm,
+    backgroundColor: '#000',
+  },
+  date: {
+    marginTop: spacing.lg,
+    fontFamily: fonts.bodySemiBold,
+    fontSize: 15,
+    color: colors.white,
+    opacity: 0.9,
+  },
+  clock: {
+    fontFamily: fonts.displayHero,
+    fontSize: 64,
+    lineHeight: 72,
+    color: colors.white,
+    marginBottom: spacing.lg,
+  },
+
   heading: {
     fontFamily: fonts.display,
     fontSize: TITLE,
@@ -142,7 +210,8 @@ const styles = StyleSheet.create({
     color: colors.white,
   },
   stack: {
-    gap: spacing.md,
+    alignSelf: 'stretch',
+    gap: spacing.sm,
   },
   footer: {
     alignItems: 'center',
@@ -163,7 +232,7 @@ const styles = StyleSheet.create({
     gap: spacing.md,
     padding: spacing.md + 2,
     borderRadius: 22,
-    backgroundColor: colors.white,
+    backgroundColor: 'rgba(255,255,255,0.88)',
     borderWidth: 1,
     borderColor: inkAlpha(0.08),
     shadowColor: shadowAlpha(1),
