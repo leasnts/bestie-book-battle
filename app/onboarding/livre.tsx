@@ -1,23 +1,20 @@
 /**
- * On lit quoi ? Le livre, son édition, et comment on compte.
+ * On lit quoi ? Le livre, et son édition.
  *
- *    ( 🔍 Titre, auteur·ice, saga        )    la recherche, dans la page, toujours là
+ *    ( 🔍 Un autre livre                 )    la recherche, dans la page, toujours là
  *    ┌───────────────────────────────────┐
  *    │ ▐██▌  Le Prince cruel             │    le livre choisi, comme sur l'accueil
  *    │ ▐██▌  Holly Black                 │
  *    │       Rageot · 400 p.   Changer   │    l'édition proposée d'office
  *    └───────────────────────────────────┘
- *    En pages ou en % ?                       pages (papier) ou % (liseuse, audio)
- *    ( p. ) ( % )
- *    400 p.  ···········●···········          le nombre de pages, à la règle de Ma page
  *
  * - La recherche ne part pas dans un sheet : on tape, les résultats s'affichent
  *   dessous ; elle reste en haut une fois le livre choisi, pour en changer.
- * - Un livre choisi : ses éditions papier sont cherchées, la première avec un
- *   nombre de pages est prise d'office (pages préremplies) ; « Changer » les
- *   déroule. On peut toujours corriger les pages à la règle.
- * - Rien n'est choisi d'avance entre pages et % ; « C'est celui-là » attend.
- * - Ajouter à la main : titre et auteur·ice, le reste pareil.
+ * - Un livre choisi : ses éditions papier sont cherchées (d'avance pour les
+ *   premiers proposés), la première avec un nombre de pages est prise d'office ;
+ *   « Changer » les déroule.
+ * - Pages ou %, et le total de pages : à « Où en est ta lecture ? ».
+ * - Ajouter à la main : titre et auteur·ice.
  */
 
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -27,16 +24,13 @@ import { Keyboard, Pressable, StyleSheet, Text, TextInput, View } from 'react-na
 import Animated, { FadeIn } from 'react-native-reanimated';
 import Button3D from '../../components/Button3D';
 import OnboardingScreen, { rise } from '../../components/onboarding/OnboardingScreen';
-import UnitButtons, { type Unit } from '../../components/onboarding/UnitButtons';
 import BookCover, { COVER_RATIO } from '../../components/ui/BookCover';
 import BookResultRow, { BookResultSkeleton } from '../../components/ui/BookResultRow';
 import GlassSection from '../../components/ui/GlassSection';
-import PageRuler from '../../components/ui/PageRuler';
 import { useBookSearch } from '../../hooks/useBookSearch';
 import { fetchEditions, TRENDING_BOOKS } from '../../services/bookApi';
 import { useOnboardingStore } from '../../stores/onboardingStore';
 import type { BookSearchResult } from '../../types/bookSearch';
-import type { BookFormat } from '../../types/supabase';
 import { borderRadius, colors, fonts, fontSize, shadows, spacing } from '../../utils/constants';
 import { feel } from '../../utils/feel';
 import { nextStep } from '../../utils/onboardingFlow';
@@ -44,16 +38,11 @@ import { nextStep } from '../../utils/onboardingFlow';
 /** Combien de livres proposés ont leurs éditions demandées d'avance */
 const PREFETCH = 3;
 
-/** Plafond de la règle du nombre de pages */
-const MAX_PAGES = 2000;
-
 
 export default function LivreScreen() {
   const router = useRouter();
   const flow = useOnboardingStore((s) => s.flow);
   const book = useOnboardingStore((s) => s.book);
-  const format = useOnboardingStore((s) => s.format);
-  const usualFormats = useOnboardingStore((s) => s.usualFormats);
   const patch = useOnboardingStore((s) => s.patch);
   const { query, setQuery, results, isSearching, error, clearResults } = useBookSearch();
   const [manual, setManual] = useState(false);
@@ -74,7 +63,6 @@ export default function LivreScreen() {
   }, [results]);
 
   const searching = query.trim().length > 0;
-  const unit: Unit | null = format === null ? null : format === 'papier' ? 'pages' : 'percent';
 
   const setBook = (result: BookSearchResult, cover = result.coverUrl) =>
     patch({
@@ -105,14 +93,7 @@ export default function LivreScreen() {
     setBook(edition, edition.coverUrl ?? book?.cover ?? null);
   };
 
-  /** Pages → papier ; % → liseuse, ou audio si c'est ce qu'on écoute d'habitude */
-  const chooseUnit = (next: Unit) => {
-    if (next === 'pages') return patch({ format: 'papier' });
-    const listened: BookFormat = usualFormats.includes('audio') && !usualFormats.includes('liseuse') ? 'audio' : 'liseuse';
-    patch({ format: listened });
-  };
-
-  const ready = !!book && book.title.trim().length > 0 && unit !== null && (unit === 'percent' || book.pages > 0);
+  const ready = !!book && book.title.trim().length > 0;
 
   return (
     <OnboardingScreen
@@ -170,10 +151,7 @@ export default function LivreScreen() {
             ))}
         </View>
       ) : manual ? (
-        <>
-          <ManualBook onChange={(title, author) => patch({ book: { title, author, pages: book?.pages ?? 0, cover: null, publisher: null }, start: 0 })} />
-          {!!book?.title && <Counting unit={unit} onUnit={chooseUnit} pages={book.pages} onPages={(pages) => patch({ book: { ...book, pages } })} />}
-        </>
+        <ManualBook onChange={(title, author) => patch({ book: { title, author, pages: book?.pages ?? 0, cover: null, publisher: null }, start: 0 })} />
       ) : book ? (
         <>
           <Animated.View entering={FadeIn.duration(180)}>
@@ -212,7 +190,6 @@ export default function LivreScreen() {
             </Animated.View>
           )}
 
-          <Counting unit={unit} onUnit={chooseUnit} pages={book.pages} onPages={(pages) => patch({ book: { ...book, pages } })} />
         </>
       ) : (
         <View>
@@ -222,32 +199,6 @@ export default function LivreScreen() {
         </View>
       )}
     </OnboardingScreen>
-  );
-}
-
-/** Pages ou % ; en pages, le nombre de pages à la règle de Ma page */
-function Counting({
-  unit,
-  onUnit,
-  pages,
-  onPages,
-}: {
-  unit: Unit | null;
-  onUnit: (unit: Unit) => void;
-  pages: number;
-  onPages: (pages: number) => void;
-}) {
-  return (
-    <>
-      <View style={styles.unitRow}>
-        <UnitButtons value={unit} onChange={onUnit} />
-      </View>
-      {unit === 'pages' && (
-        <Animated.View entering={FadeIn.duration(180)}>
-          <PageRuler currentPage={pages} totalPages={MAX_PAGES} onPageChange={onPages} unit="count" fontSize={64} />
-        </Animated.View>
-      )}
-    </>
   );
 }
 
@@ -343,9 +294,6 @@ const styles = StyleSheet.create({
   },
   editions: {
     marginTop: spacing.md,
-  },
-  unitRow: {
-    alignItems: 'flex-start',
   },
   form: {
     gap: spacing.md,

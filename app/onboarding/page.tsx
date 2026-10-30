@@ -1,29 +1,31 @@
 /**
  * Où en est ta lecture ? Ma position dans ce livre-là.
  *
- * En lançant une lecture, le livre, son édition et pages ou % se règlent à
- * « On lit quoi ? » : ici, il ne reste que la règle. En rejoignant (pas d'écran
- * « On lit quoi ? »), on demande aussi le format et l'édition :
- * - « En quel format ? » : un seul format pour ce livre, rien de
- *   choisi d'avance ; l'édition et la règle n'apparaissent qu'ensuite.
- * - Papier : on compte en pages de MON édition, demandée ici seulement
- *   (le crayon rouvre la recherche, étape des éditions).
- * - Liseuse ou audio : on compte en %, la règle va de 0 à 100.
- * - La règle est celle de Ma page (PageRuler) : on apprend l'app en répondant.
+ *    ( p. ) ( % )                  pages (papier) ou % (liseuse, audio)
+ *          112                     la règle de Ma page
+ *    ·······●···········
+ *           ( ✎ )                  le total (« /503 »), à corriger si mon édition diffère
+ *
+ * - Rien n'est choisi d'avance entre pages et % ; la règle n'apparaît qu'ensuite.
+ * - En pages, le total vient de l'édition choisie à « On lit quoi ? » (ou de la
+ *   lecture qu'on rejoint) ; le crayon passe la règle sur le total, ✓ revient. Total inconnu
+ *   (livre ajouté à la main) : la règle commence par lui.
+ * - En rejoignant, papier : mon édition, le crayon rouvre la recherche.
+ * - En %, la règle va de 0 à 100.
  */
 
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { PencilIcon } from 'lucide-react-native';
-import React, { useEffect } from 'react';
+import { CheckIcon, PencilIcon } from 'lucide-react-native';
+import React, { useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import Button3D from '../../components/Button3D';
-import { FORMATS } from '../../components/onboarding/choices';
 import OnboardingScreen, { rise } from '../../components/onboarding/OnboardingScreen';
 import { COVER_RATIO, CoverImage } from '../../components/ui/BookCover';
-import OptionList from '../../components/onboarding/OptionList';
+import UnitButtons, { type Unit } from '../../components/onboarding/UnitButtons';
 import GlassButton from '../../components/ui/GlassButton';
+import RoundButton from '../../components/ui/RoundButton';
 import PageRuler from '../../components/ui/PageRuler';
 import { bookFormat, useOnboardingStore, type BookDraft } from '../../stores/onboardingStore';
 import type { BookFormat } from '../../types/supabase';
@@ -31,15 +33,22 @@ import { borderRadius, colors, fonts, inkAlpha, paperFrameGradient, spacing } fr
 import { nextStep } from '../../utils/onboardingFlow';
 
 const THUMB_W = 40;
+/** Plafond de la règle du total de pages */
+const MAX_PAGES = 2000;
 
 export default function PageScreen() {
   const router = useRouter();
   const store = useOnboardingStore();
-  const { flow, invitation, book, start, bookPick, patch } = store;
+  const { flow, invitation, book, start, bookPick, usualFormats, patch } = store;
   const format = bookFormat(store);
   const percent = format !== 'papier';
-  // Rejoindre : pas d'écran « On lit quoi ? », le format et l'édition se règlent ici
+  const unit: Unit | null = store.format === null ? null : percent ? 'percent' : 'pages';
+  // Rejoindre : pas d'écran « On lit quoi ? », l'édition se règle ici
   const joining = flow === 'join' || flow === 'addJoin';
+  // La règle sur le total de pages ; d'office quand on ne le connaît pas
+  const [editingTotal, setEditingTotal] = useState(false);
+  const totalUnknown = !!book && book.pages === 0;
+  const onTotal = !percent && (editingTotal || totalUnknown);
 
   // Rejoindre : mon édition part de celle de la lecture
   useEffect(() => {
@@ -64,13 +73,20 @@ export default function PageScreen() {
 
   if (!book) return null;
 
-  /** Changer de format garde la position : pages ↔ % */
-  const setFormat = (next: BookFormat) => {
-    if (next === store.format) return;
-    const toPercent = next !== 'papier';
-    const converted = toPercent ? Math.round((start / book.pages) * 100) : Math.round((start / 100) * book.pages);
-    patch({ format: next, start: percent === toPercent ? start : converted });
+  /** Pages → papier ; % → liseuse, ou audio si c'est ce qu'on écoute d'habitude. La position suit. */
+  const setUnit = (next: Unit) => {
+    const toPercent = next === 'percent';
+    const nextFormat: BookFormat = !toPercent
+      ? 'papier'
+      : usualFormats.includes('audio') && !usualFormats.includes('liseuse')
+        ? 'audio'
+        : 'liseuse';
+    const converted =
+      book.pages === 0 ? 0 : toPercent ? Math.round((start / book.pages) * 100) : Math.round((start / 100) * book.pages);
+    patch({ format: nextFormat, start: store.format === null || percent === toPercent ? start : converted });
   };
+
+  const setTotal = (pages: number) => patch({ book: { ...book, pages }, start: Math.min(start, pages) });
 
   return (
     <OnboardingScreen
@@ -81,20 +97,18 @@ export default function PageScreen() {
         <Button3D
           variant="primary"
           onPress={() => router.push(nextStep(flow, 'page'))}
-          disabled={!store.format}
+          disabled={!store.format || (!percent && book.pages === 0)}
           style={styles.wide}
         >
           Continuer
         </Button3D>
       }
     >
-      {joining && (
-        <Animated.View entering={rise(1)} style={styles.group}>
-          <OptionList options={FORMATS} value={store.format} onChange={setFormat} />
-        </Animated.View>
-      )}
+      <Animated.View entering={rise(1)}>
+        <UnitButtons value={unit} onChange={setUnit} />
+      </Animated.View>
 
-      {joining && store.format === 'papier' && (
+      {joining && unit === 'pages' && (
         <Animated.View entering={rise(2)}>
           <Edition
             book={book}
@@ -104,18 +118,28 @@ export default function PageScreen() {
         </Animated.View>
       )}
 
-      {store.format && (
+      {unit && (
         <Animated.View entering={rise(3)} style={styles.ruler}>
-          <PageRuler
-            key={percent ? 'percent' : 'pages'}
-            currentPage={start}
-            totalPages={percent ? 100 : book.pages}
-            onPageChange={(value) => patch({ start: value })}
-            unit={percent ? 'percent' : 'pages'}
-            fontSize={80}
-          />
-          {percent && (
-            <Text style={styles.hint}>{format === 'audio' ? 'En %, l’audio n’a pas de pages' : 'En %, comme sur ta liseuse'}</Text>
+          {onTotal ? (
+            <PageRuler key="total" currentPage={book.pages} totalPages={MAX_PAGES} onPageChange={setTotal} unit="count" fontSize={80} />
+          ) : (
+            <PageRuler
+              key={percent ? 'percent' : `pages-${book.pages}`}
+              currentPage={start}
+              totalPages={percent ? 100 : book.pages}
+              onPageChange={(value) => patch({ start: value })}
+              unit={percent ? 'percent' : 'pages'}
+              fontSize={80}
+            />
+          )}
+          {!percent && !totalUnknown && (
+            <View style={styles.total}>
+              {onTotal ? (
+                <RoundButton icon={CheckIcon} variant="dark" label="Valider le total de pages" onPress={() => setEditingTotal(false)} />
+              ) : (
+                <GlassButton icon={PencilIcon} onPress={() => setEditingTotal(true)} accessibilityLabel={`Modifier le total, ${book.pages} pages`} />
+              )}
+            </View>
           )}
         </Animated.View>
       )}
@@ -148,9 +172,6 @@ function Edition({ book, sameAs, onChange }: { book: BookDraft; sameAs: string |
 const styles = StyleSheet.create({
   wide: {
     width: '100%',
-  },
-  group: {
-    gap: spacing.lg,
   },
   edition: {
     flexDirection: 'row',
@@ -187,12 +208,8 @@ const styles = StyleSheet.create({
     flex: 1,
     minHeight: 220,
   },
-  hint: {
-    textAlign: 'center',
-    fontFamily: fonts.bodyMedium,
-    fontSize: 13,
-    lineHeight: 18,
-    color: colors.textTertiary,
-    marginTop: spacing.sm,
+  total: {
+    alignSelf: 'center',
+    marginTop: spacing.md,
   },
 });
