@@ -21,9 +21,9 @@ import { COVER_RATIO, CoverImage } from '../../components/ui/BookCover';
 import GlassButton from '../../components/ui/GlassButton';
 import { Seam } from '../../components/ui/GoalTrack';
 import { StitchBorder } from '../../components/ui/Stitch';
-import { createReading, endDateFor, ensureProfile, updateReadingBook } from '../../services/onboarding';
+import { createReading, deadlineFrom, ensureProfile, updateReadingBook } from '../../services/onboarding';
 import { useAuthStore } from '../../stores/authStore';
-import { bookFormat, useOnboardingStore } from '../../stores/onboardingStore';
+import { useOnboardingStore } from '../../stores/onboardingStore';
 import { useProjectStore } from '../../stores/projectStore';
 import {
   accentGradient,
@@ -58,9 +58,8 @@ export default function InviterScreen() {
     setFailed(false);
     try {
       const userId = await ensureProfile();
-      const percent = bookFormat(useOnboardingStore.getState()) !== 'papier';
-      const { start, perDay } = useOnboardingStore.getState();
-      const end = endDateFor((percent ? 100 : book.pages) - start, perDay);
+      const { dated, days } = useOnboardingStore.getState();
+      const end = deadlineFrom(dated, days);
       if (!createdChallengeId) {
         const created = await createReading(userId, book, end);
         patch({ createdChallengeId: created.id });

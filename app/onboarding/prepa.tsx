@@ -4,7 +4,7 @@
  * animation de marque d'environ 2 s, calée sur l'enregistrement.
  *
  * Enregistre : le profil (s'il n'était qu'en attente), la lecture rejointe,
- * ma lecture de ce livre (format, édition, position, rythme), mes habitudes,
+ * ma lecture de ce livre (format, édition, position, date de fin), mes habitudes,
  * le rappel à mon heure. Puis la carte de lecture.
  */
 
@@ -19,7 +19,7 @@ import Button3D from '../../components/Button3D';
 import Spine from '../../components/onboarding/Spine';
 import { Seam } from '../../components/ui/GoalTrack';
 import { scheduleEveningReminder } from '../../services/notifications';
-import { createReading, endDateFor, ensureProfile, reminderTime, saveReaderHabits, settleMyReading } from '../../services/onboarding';
+import { createReading, deadlineFrom, ensureProfile, reminderTime, saveReaderHabits, settleMyReading } from '../../services/onboarding';
 import { bookFormat, useOnboardingStore } from '../../stores/onboardingStore';
 import { useProjectStore } from '../../stores/projectStore';
 import { colors, fonts, lowki, spacing } from '../../utils/constants';
@@ -53,20 +53,21 @@ export default function PrepaScreen() {
 
   const save = useCallback(async () => {
     const store = useOnboardingStore.getState();
-    const { flow, book, invitation, start, perDay, moments, usualFormats } = store;
+    const { flow, book, invitation, start, dated, days, moments, usualFormats } = store;
     const format = bookFormat(store);
     if (!book) throw new Error('Pas de livre');
 
     const userId = await ensureProfile();
     const percent = format !== 'papier';
-    const end = endDateFor((percent ? 100 : book.pages) - start, perDay);
+    // La date de fin est celle du groupe : choisie en créant, reçue en rejoignant
+    const end = invitation ? undefined : deadlineFrom(dated, days);
 
     // La lecture : rejointe, ou créée (à « On invite qui ? », sinon ici)
     let challengeId = invitation?.challengeId ?? store.createdChallengeId;
     if (invitation) {
       await useProjectStore.getState().joinChallenge(invitation.challengeId, userId);
     } else if (!challengeId) {
-      challengeId = (await createReading(userId, book, end)).id;
+      challengeId = (await createReading(userId, book, end ?? null)).id;
       store.patch({ createdChallengeId: challengeId });
     }
     if (!challengeId) throw new Error('Pas de lecture');
@@ -76,7 +77,7 @@ export default function PrepaScreen() {
       !percent && invitation && (book.pages !== invitation.pages || book.cover !== invitation.cover || book.publisher)
         ? { pages: book.pages, cover: book.cover, publisher: book.publisher }
         : undefined;
-    await settleMyReading(challengeId, userId, { format, edition: ownEdition, start, perDay, targetEndDate: end });
+    await settleMyReading(challengeId, userId, { format, edition: ownEdition, start, targetEndDate: end });
 
     // Mes habitudes : seulement quand on les a demandées (première fois)
     if (flow === 'create' || flow === 'join') {

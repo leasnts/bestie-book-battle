@@ -103,8 +103,8 @@ interface MyReading {
   edition?: { pages: number; cover: string | null; publisher: string | null };
   /** Ma position de départ, dans l'unité du format */
   start: number;
-  perDay: number | null;
-  targetEndDate: string | null;
+  /** La date de fin du groupe (parcours créer) ; absente en rejoignant */
+  targetEndDate?: string | null;
 }
 
 /** Ma lecture de ce livre : format, édition, rythme, puis ma position de départ */
@@ -112,7 +112,6 @@ export async function settleMyReading(challengeId: string, userId: string, mine:
   const percent = mine.format !== 'papier';
   await saveMyEdition(challengeId, userId, {
     format: mine.format,
-    perDay: mine.perDay,
     targetEndDate: mine.targetEndDate,
     ...(percent
       ? { totalPages: 100 }
@@ -146,10 +145,11 @@ export async function saveReaderHabits(userId: string, moments: ReadingMoment[],
 }
 
 /** La date de fin, en partant d'aujourd'hui : YYYY-MM-DD, ou null si libre */
-export function endDateFor(remaining: number, perDay: number | null): string | null {
-  if (!perDay) return null;
+/** La date de fin du groupe, dans `days` jours ; null = sans date */
+export function deadlineFrom(dated: boolean | null, days: number | null): string | null {
+  if (!dated || !days) return null;
   const date = new Date();
-  date.setDate(date.getDate() + Math.ceil(Math.max(0, remaining) / perDay));
+  date.setDate(date.getDate() + days);
   return date.toISOString().slice(0, 10);
 }
 

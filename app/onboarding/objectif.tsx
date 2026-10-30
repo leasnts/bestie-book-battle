@@ -1,112 +1,141 @@
 /**
- * À quel rythme ? Un rythme, pas une deadline : la date de fin se calcule.
+ * On se donne une date de fin ? Pour tout le groupe : pas de rythme en pages,
+ * qui avantagerait qui lit vite (Lea, 2026-10-30).
  *
- * - Papier : en pages (10, 20, 40), le temps en dessous dans l'autocollant.
- * - Liseuse ou audio : en temps (≈ 15 min, 30 min, 1 h), l'équivalent en %
- *   dans l'autocollant ; on enregistre des % par jour.
- * - « Libre » : pas de date.
+ *    [ Non ]           chacun·e avance à son rythme
+ *    [ Oui ]
+ *         dim. 15 nov.             la roulette de la date
+ *    ▱ Le tempo parfait.         ◢  l'autocollant, toute la largeur, en bas :
+ *      Fin dans 3 semaines, soit ≈ 18 p. par jour     un mot, puis ce que ça fait chaque jour
  *
- * Au-dessus, le bloc de pages s'épaissit avec le choix ; dessous, un
- * autocollant réagit et donne la date (idées reprises de Basta).
+ * « Oui » d'office, à 3 semaines (Lea, 2026-10-30).
+ * « Non » : rien de plus. On rejoint : pas cet écran,
+ * la date est celle du groupe.
  */
 
 import { useRouter } from 'expo-router';
-import React from 'react';
-import { StyleSheet } from 'react-native';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import React, { useState } from 'react';
+import { StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import Button3D from '../../components/Button3D';
 import OnboardingScreen, { rise } from '../../components/onboarding/OnboardingScreen';
-import PageBlock from '../../components/onboarding/PageBlock';
-import StickerText from '../../components/onboarding/StickerText';
 import OptionList from '../../components/onboarding/OptionList';
-import { endDateFor } from '../../services/onboarding';
+import StickerText from '../../components/onboarding/StickerText';
+import { TORN_EDGE_H } from '../../components/onboarding/TornEdge';
+import { deadlineFrom } from '../../services/onboarding';
 import { bookFormat, useOnboardingStore } from '../../stores/onboardingStore';
-import { postIt, spacing } from '../../utils/constants';
+import { colors, spacing } from '../../utils/constants';
 import { nextStep } from '../../utils/onboardingFlow';
 
-/** Les rythmes proposés, en pages papier par jour ; 0 = libre */
-const PACES = [10, 20, 40, 0] as const;
-type Pace = (typeof PACES)[number];
-
-const MINUTES: Record<Pace, string> = { 10: '≈ 15 min', 20: '≈ 30 min', 40: '≈ 1 h', 0: 'Libre' };
-const SAY: Record<Pace, string> = { 10: 'Tranquille, et ça tient.', 20: 'Le bon rythme.', 40: 'À fond.', 0: 'Sans date, sans pression.' };
-/** L'épaisseur du bloc de pages pour chaque rythme */
-const THICKNESS: Record<Pace, number> = { 10: 16, 20: 38, 40: 80, 0: 30 };
+/** Ce que « Oui » propose d'emblée : 3 semaines */
+const FIRST_DAYS = 21;
+const DAY_MS = 24 * 60 * 60 * 1000;
 
 export default function ObjectifScreen() {
   const router = useRouter();
+  const flow = useOnboardingStore((s) => s.flow);
+  const dated = useOnboardingStore((s) => s.dated);
+  const days = useOnboardingStore((s) => s.days);
+  const patch = useOnboardingStore((s) => s.patch);
+  const [stickerWidth, setStickerWidth] = useState(0);
+
+  const end = deadlineFrom(dated, days);
+  // Ce que ça fait pour moi, chaque jour : à quoi sert la date
   const store = useOnboardingStore();
-  const { flow, book, start, perDay, paceChosen, patch } = store;
   const percent = bookFormat(store) !== 'papier';
-  if (!book) return null;
+  const left = (percent ? 100 : store.book?.pages ?? 0) - store.start;
+  const perDay = left > 0 ? Math.max(1, Math.ceil(left / (days ?? FIRST_DAYS))) : 0;
+  const perDayLine = `Fin dans ${inTime(days ?? FIRST_DAYS)}${perDay ? `, soit ≈ ${perDay} ${percent ? '%' : 'p.'} par jour` : ''}`;
+  const ready = dated === false || !!end;
 
-  // En %, sans nombre de pages connu (livre ajouté à la main) : un livre moyen
-  const refPages = book.pages || 300;
-  /** Le rythme choisi, ramené en pages papier pour l'afficher */
-  const pace: Pace = perDay === null ? 0 : nearestPace(percent ? (perDay / 100) * refPages : perDay);
-
-  const choose = (value: Pace) => {
-    if (value === 0) return patch({ perDay: null, paceChosen: true });
-    patch({ paceChosen: true, perDay: percent ? Math.max(1, Math.round((value / refPages) * 100)) : value });
+  /** La roulette : des jours entiers depuis aujourd'hui */
+  const onWheel = (date: Date) => {
+    const today = new Date();
+    today.setHours(12, 0, 0, 0);
+    const picked = new Date(date);
+    picked.setHours(12, 0, 0, 0);
+    patch({ days: Math.max(1, Math.round((picked.getTime() - today.getTime()) / DAY_MS)) });
   };
-
-  const remaining = (percent ? 100 : book.pages) - start;
-  const end = endDateFor(remaining, perDay);
-  const caption = end
-    ? `${percent ? `${perDay} % par jour` : MINUTES[pace]} · fin vers le ${formatDay(end)}`
-    : undefined;
 
   return (
     <OnboardingScreen
       step="objectif"
-      title="À quel rythme ?"
-      accent="rythme"
+      title="On se donne une date de fin ?"
+      accent="date"
       footer={
-        <Button3D
-          variant="primary"
-          onPress={() => router.push(nextStep(flow, 'objectif'))}
-          disabled={!paceChosen}
-          style={styles.wide}
-        >
+        <Button3D variant="primary" onPress={() => router.push(nextStep(flow, 'objectif'))} disabled={!ready} style={styles.wide}>
           Continuer
         </Button3D>
       }
     >
       <Animated.View entering={rise(1)}>
-        <PageBlock thickness={THICKNESS[pace]} faded={!paceChosen || pace === 0} />
-      </Animated.View>
-      <Animated.View entering={rise(2)}>
         <OptionList
-          options={PACES.map((p) => ({ key: String(p) as `${Pace}`, label: p === 0 ? 'Libre' : percent ? MINUTES[p] : `${p} p.` }))}
-          value={paceChosen ? (String(pace) as `${Pace}`) : null}
-          onChange={(key) => choose(Number(key) as Pace)}
+          options={[
+            { key: 'non', label: 'Non' },
+            { key: 'oui', label: 'Oui' },
+          ]}
+          value={dated === null ? null : dated ? 'oui' : 'non'}
+          onChange={(key) => patch(key === 'oui' ? { dated: true, days: days ?? FIRST_DAYS } : { dated: false })}
         />
       </Animated.View>
-      {paceChosen && (
-        <Animated.View entering={rise(3)} style={styles.center}>
-          <StickerText id="objectif-say" text={SAY[pace]} caption={caption} color={postIt.jaune} popKey={pace} width={300} height={112} />
+      {dated && end && (
+        <Animated.View entering={rise(0)} style={styles.when}>
+          <DateTimePicker
+            value={new Date(`${end}T12:00:00`)}
+            mode="date"
+            display="spinner"
+            minimumDate={new Date(Date.now() + DAY_MS)}
+            onChange={(_event, date) => date && onWheel(date)}
+            locale="fr-FR"
+            textColor={colors.textPrimary}
+          />
         </Animated.View>
       )}
+      {/* L'autocollant, toute la largeur, ferré en bas : 16 pt au-dessus du bord déchiré */}
+      <View style={styles.bottom} onLayout={(e) => setStickerWidth(e.nativeEvent.layout.width)}>
+        {dated && stickerWidth > 0 && (
+          <Animated.View entering={rise(0)}>
+            <StickerText
+              id="objectif-say"
+              text={moodFor(days ?? FIRST_DAYS)}
+              caption={perDayLine}
+              popKey={days ?? FIRST_DAYS}
+              width={stickerWidth}
+              height={88}
+            />
+          </Animated.View>
+        )}
+      </View>
     </OnboardingScreen>
   );
 }
 
-function nearestPace(pages: number): Pace {
-  return [10, 20, 40].reduce((a, b) => (Math.abs(b - pages) < Math.abs(a - pages) ? b : a)) as Pace;
+/** Le mot du post-it, selon le temps qu'on se donne */
+function moodFor(days: number) {
+  if (days <= 7) return 'Sprint, on y croit.';
+  if (days <= 14) return 'Ça va filer.';
+  if (days <= 28) return 'Le tempo parfait.';
+  if (days <= 60) return 'Tout en douceur.';
+  return 'On savoure.';
 }
 
-/** « jeudi 19 novembre » */
-function formatDay(isoDate: string) {
-  return new Date(`${isoDate}T12:00:00`).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+/** « 2 semaines », « 10 jours » */
+function inTime(days: number) {
+  if (days % 7 === 0) return days === 7 ? '1 semaine' : `${days / 7} semaines`;
+  return days === 1 ? '1 jour' : `${days} jours`;
 }
 
 const styles = StyleSheet.create({
   wide: {
     width: '100%',
   },
-  center: {
+  when: {
     alignItems: 'center',
-    marginTop: spacing.sm,
+    marginTop: spacing.lg,
+  },
+  bottom: {
+    marginTop: 'auto',
+    marginBottom: spacing.lg + TORN_EDGE_H - spacing.xl,
   },
 });
-

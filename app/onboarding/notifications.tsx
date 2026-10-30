@@ -29,11 +29,12 @@ const drop = (delay: number) =>
 export default function NotificationsScreen() {
   const router = useRouter();
   const store = useOnboardingStore();
-  const { flow, moments, start, perDay, book, invitation } = store;
+  const { flow, moments, start, book, invitation } = store;
   const [asking, setAsking] = useState(false);
 
   const percent = bookFormat(store) !== 'papier';
-  const step = perDay ?? (percent ? 4 : 20);
+  // Une soirée de lecture, pour l'exemple
+  const step = percent ? 4 : 20;
   const goal = percent
     ? `${start} % → ${Math.min(100, start + step)} % ?`
     : `Page ${start} → ${Math.min(book?.pages ?? start + step, start + step)} ?`;
