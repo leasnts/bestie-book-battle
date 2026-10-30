@@ -5,7 +5,8 @@
  *    [ Non ]           chacun·e avance à son rythme
  *    [ Oui ]
  *         dim. 15 nov.             la roulette de la date
- *    ▱ Fin dans 2 semaines      ◢  l'autocollant, toute la largeur, en bas
+ *    ▱ Le tempo parfait.         ◢  l'autocollant, toute la largeur, en bas :
+ *      Fin dans 3 semaines · ≈ 18 p. par jour     un mot, puis ce que ça fait chaque jour
  *
  * « Oui » d'office, à 3 semaines (Lea, 2026-10-30).
  * « Non » : rien de plus. On rejoint : pas cet écran,
@@ -23,8 +24,8 @@ import OptionList from '../../components/onboarding/OptionList';
 import StickerText from '../../components/onboarding/StickerText';
 import { TORN_EDGE_H } from '../../components/onboarding/TornEdge';
 import { deadlineFrom } from '../../services/onboarding';
-import { useOnboardingStore } from '../../stores/onboardingStore';
-import { colors, postIt, spacing } from '../../utils/constants';
+import { bookFormat, useOnboardingStore } from '../../stores/onboardingStore';
+import { colors, spacing } from '../../utils/constants';
 import { nextStep } from '../../utils/onboardingFlow';
 
 /** Ce que « Oui » propose d'emblée : 3 semaines */
@@ -40,6 +41,12 @@ export default function ObjectifScreen() {
   const [stickerWidth, setStickerWidth] = useState(0);
 
   const end = deadlineFrom(dated, days);
+  // Ce que ça fait pour moi, chaque jour : à quoi sert la date
+  const store = useOnboardingStore();
+  const percent = bookFormat(store) !== 'papier';
+  const left = (percent ? 100 : store.book?.pages ?? 0) - store.start;
+  const perDay = left > 0 ? Math.max(1, Math.ceil(left / (days ?? FIRST_DAYS))) : 0;
+  const perDayLine = `Fin dans ${inTime(days ?? FIRST_DAYS)}${perDay ? ` · ≈ ${perDay} ${percent ? '%' : 'p.'} par jour` : ''}`;
   const ready = dated === false || !!end;
 
   /** La roulette : des jours entiers depuis aujourd'hui */
@@ -91,17 +98,26 @@ export default function ObjectifScreen() {
           <Animated.View entering={rise(0)}>
             <StickerText
               id="objectif-say"
-              text={`Fin dans ${inTime(days ?? FIRST_DAYS)}`}
-              color={postIt.jaune}
+              text={moodFor(days ?? FIRST_DAYS)}
+              caption={perDayLine}
               popKey={days ?? FIRST_DAYS}
               width={stickerWidth}
-              height={72}
+              height={88}
             />
           </Animated.View>
         )}
       </View>
     </OnboardingScreen>
   );
+}
+
+/** Le mot du post-it, selon le temps qu'on se donne */
+function moodFor(days: number) {
+  if (days <= 7) return 'Sprint, on y croit.';
+  if (days <= 14) return 'Ça va filer.';
+  if (days <= 28) return 'Le tempo parfait.';
+  if (days <= 60) return 'Tout en douceur.';
+  return 'On savoure.';
 }
 
 /** « 2 semaines », « 10 jours » */

@@ -852,7 +852,7 @@ Prototype validé le 2026-10-28 (artefact « Onboarding chapi »). Deux temps :
 - **On se donne une date de fin ?** (`objectif`) : la date vaut pour tout le
   groupe, donc pas de rythme en pages (injuste pour qui lit moins vite). « Non »
   d'abord, « Oui » dessous, choisi d'office : la roulette de date iOS, 3 semaines
-  d'emblée, sans raccourcis, et un autocollant « Fin dans 2 semaines / 10 jours » recollé à chaque date, toute la largeur, ferré en bas à 16 pt du bord déchiré du pied. « Non » : rien de plus, pas d'autocollant. L'autocollant a le coin corné en bas à droite (`StickerText`) et se
+  d'emblée, sans raccourcis, et un autocollant (post-it sable, celui des notes) recollé à chaque date : un mot qui suit la durée (« Sprint, on y croit. », « Le tempo parfait. », « On savoure. »), puis ce que ça fait pour moi : « Fin dans 3 semaines · ≈ 18 p. par jour », toute la largeur, ferré en bas à 16 pt du bord déchiré du pied. « Non » : rien de plus, pas d'autocollant. L'autocollant a le coin corné en bas à droite (`StickerText`) et se
   colle, sans rebond. Pas de livre ni de bloc de pages dessiné
   en code (« vibe coding »). On rejoint : pas cet écran, la date est celle du groupe.
 - **Préparation** : trois tranches tombent et s'empilent pendant le vrai
