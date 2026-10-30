@@ -8,7 +8,7 @@
  *    ▱ Fin dans 2 semaines      ◢  l'autocollant, toute la largeur, en bas
  *
  * « Oui » propose 2 semaines d'emblée.
- * « Non » : un autocollant au coin corné se colle. On rejoint : pas cet écran,
+ * « Non » : rien de plus. On rejoint : pas cet écran,
  * la date est celle du groupe.
  */
 
@@ -87,13 +87,13 @@ export default function ObjectifScreen() {
       )}
       {/* L'autocollant, toute la largeur, ferré en bas : 16 pt au-dessus du bord déchiré */}
       <View style={styles.bottom} onLayout={(e) => setStickerWidth(e.nativeEvent.layout.width)}>
-        {dated !== null && stickerWidth > 0 && (
+        {dated && stickerWidth > 0 && (
           <Animated.View entering={rise(0)}>
             <StickerText
               id="objectif-say"
-              text={dated ? `Fin dans ${inTime(days ?? FIRST_DAYS)}` : 'Sans date, sans pression.'}
+              text={`Fin dans ${inTime(days ?? FIRST_DAYS)}`}
               color={postIt.jaune}
-              popKey={dated ? days ?? FIRST_DAYS : 'libre'}
+              popKey={days ?? FIRST_DAYS}
               width={stickerWidth}
               height={72}
             />
