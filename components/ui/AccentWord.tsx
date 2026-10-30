@@ -14,6 +14,7 @@
 import React from 'react';
 import { StyleSheet, Text } from 'react-native';
 import { fonts } from '../../utils/constants';
+import { keepLinesTogether } from '../../utils/lineBreaks';
 
 /** Welcome Valentines a un œil plus petit : 1,25× pour égaler le titre */
 export const ACCENT_SCALE = 1.25;
@@ -27,7 +28,9 @@ interface AccentWordProps {
   size: number;
 }
 
-export default function AccentWord({ text, accent, size }: AccentWordProps) {
+export default function AccentWord({ text: raw, accent, size }: AccentWordProps) {
+  // Jamais un mot seul sur sa ligne, des coupures naturelles (utils/lineBreaks)
+  const text = keepLinesTogether(raw);
   const at = accent ? text.lastIndexOf(accent) : -1;
   if (!accent || at < 0) return <>{text}</>;
 
