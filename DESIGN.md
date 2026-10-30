@@ -831,8 +831,8 @@ Prototype validé le 2026-10-28 (artefact « Onboarding chapi »). Deux temps :
 - **On lit quoi ?** (`livre`) : la recherche dans la page (pas de sheet), toujours
   en haut pour changer de livre ; le livre choisi en bandeau comme « Le livre » de
   l'accueil, son édition proposée d'office (pages préremplies, « Changer » s'il y en
-  a plusieurs) ; « En pages ou en % ? » en petit interrupteur
-  (`SegmentToggle`, pas une ligne par choix) puis le nombre de pages à la règle de Ma
+  a plusieurs) ; « En pages ou en % ? » à droite, deux boutons ronds
+  « p. » et « % » en police d'accent (`UnitButtons`) puis le nombre de pages à la règle de Ma
   page (`PageRuler unit="count"`). En rejoignant, format et édition restent à
   « Où en est ta lecture ? ».
 - **Un livre = un seul format.** Papier → pages de mon édition (demandée

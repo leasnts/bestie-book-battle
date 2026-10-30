@@ -8,7 +8,7 @@
  *    │       Rageot · 400 p.   Changer   │    l'édition proposée d'office
  *    └───────────────────────────────────┘
  *    En pages ou en % ?                       pages (papier) ou % (liseuse, audio)
- *    ( Pages |  %  )
+ *    En pages ou en % ?          ( p. ) ( % )
  *    400 p.  ···········●···········          le nombre de pages, à la règle de Ma page
  *
  * - La recherche ne part pas dans un sheet : on tape, les résultats s'affichent
@@ -27,7 +27,7 @@ import { Keyboard, Pressable, StyleSheet, Text, TextInput, View } from 'react-na
 import Animated, { FadeIn } from 'react-native-reanimated';
 import Button3D from '../../components/Button3D';
 import OnboardingScreen, { QuestionLabel, rise } from '../../components/onboarding/OnboardingScreen';
-import SegmentToggle from '../../components/onboarding/SegmentToggle';
+import UnitButtons, { type Unit } from '../../components/onboarding/UnitButtons';
 import BookCover, { COVER_RATIO } from '../../components/ui/BookCover';
 import BookResultRow, { BookResultSkeleton } from '../../components/ui/BookResultRow';
 import GlassSection from '../../components/ui/GlassSection';
@@ -44,11 +44,6 @@ import { nextStep } from '../../utils/onboardingFlow';
 /** Plafond de la règle du nombre de pages */
 const MAX_PAGES = 2000;
 
-type Unit = 'pages' | 'percent';
-const UNITS = [
-  { key: 'pages' as const, label: 'Pages' },
-  { key: 'percent' as const, label: '%', accessibilityLabel: 'Pourcentage' },
-];
 
 export default function LivreScreen() {
   const router = useRouter();
@@ -237,9 +232,9 @@ function Counting({
 }) {
   return (
     <>
-      <View style={styles.group}>
-        <QuestionLabel>En pages ou en % ?</QuestionLabel>
-        <SegmentToggle options={UNITS} value={unit} onChange={onUnit} />
+      <View style={styles.unitRow}>
+        <Text style={styles.unitQuestion}>En pages ou en % ?</Text>
+        <UnitButtons value={unit} onChange={onUnit} />
       </View>
       {unit === 'pages' && (
         <Animated.View entering={FadeIn.duration(250)} style={styles.group}>
@@ -354,6 +349,16 @@ const styles = StyleSheet.create({
   },
   group: {
     gap: spacing.lg,
+  },
+  unitRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  unitQuestion: {
+    fontFamily: fonts.bodySemiBold,
+    fontSize: 15,
+    color: colors.textPrimary,
   },
   form: {
     gap: spacing.md,
