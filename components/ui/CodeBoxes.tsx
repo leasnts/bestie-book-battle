@@ -57,12 +57,14 @@ export default function CodeBoxes({ value, onChange, editable, accessibilityLabe
 }
 
 const styles = StyleSheet.create({
+  // Centrées, d'une largeur fixe : six cases tiennent sur tous les écrans
   boxes: {
     flexDirection: 'row',
+    justifyContent: 'center',
     gap: spacing.sm,
   },
   box: {
-    flex: 1,
+    width: 48,
     height: 60,
     alignItems: 'center',
     justifyContent: 'center',
