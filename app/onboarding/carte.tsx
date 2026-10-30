@@ -9,6 +9,7 @@
  * yeux arrivent chacun de leur côté et se retrouvent, comme au splash.
  */
 
+import * as Notifications from 'expo-notifications';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
@@ -79,8 +80,13 @@ export default function CarteScreen() {
   if (!book) return null;
 
   const today = new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
-  const open = () => {
+  const open = async () => {
     feel('appui');
+    // Première fois : les notifications, sur le seuil de l'accueil (si iOS n'a pas déjà sa réponse)
+    if (flow === 'create' || flow === 'join') {
+      const { status } = await Notifications.getPermissionsAsync();
+      if (status === 'undetermined') return router.replace('/onboarding/notifications');
+    }
     useOnboardingStore.getState().reset();
     router.replace('/(tabs)');
   };

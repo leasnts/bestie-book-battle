@@ -1,26 +1,33 @@
 /**
- * Un petit rappel ? Montrer la notification avant de la demander.
+ * Les notifs — après la carte de lecture, sur le seuil de l'accueil : l'onboarding
+ * est fini, cet écran n'est pas dans le fil de progression.
  *
- * Les deux notifications qu'elle recevra descendent du haut, comme les vraies :
- * son moment lecture, à SON heure (déduite de ses moments), et l'autre qui
- * avance. La fenêtre d'iOS ne s'affiche qu'après « Me prévenir » : elle ne
- * s'affiche qu'une fois, on ne la gaspille pas.
+ * Sur l'aquarelle rouge de la bienvenue, un titre court et les deux
+ * notifications qu'elle recevra, qui descendent du haut comme les vraies. Un
+ * seul gros bouton, à toucher par réflexe ; « Plus tard » discret. Pas de
+ * justification (Lea, 2026-10-30). La fenêtre d'iOS ne s'affiche qu'après le
+ * bouton : elle ne s'affiche qu'une fois, on ne la gaspille pas.
  */
 
 import { Image } from 'expo-image';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
 import React, { useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, { Easing, FadeInDown } from 'react-native-reanimated';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { BRAND_BG } from '../../components/brand/BrandLockup';
 import Button3D from '../../components/Button3D';
-import OnboardingScreen from '../../components/onboarding/OnboardingScreen';
-import { requestNotificationPermission } from '../../services/notifications';
+import { ONBOARDING_MAX_W } from '../../components/onboarding/OnboardingScreen';
+import AccentWord from '../../components/ui/AccentWord';
+import { requestNotificationPermission, scheduleEveningReminder } from '../../services/notifications';
 import { reminderTime } from '../../services/onboarding';
 import { bookFormat, useOnboardingStore } from '../../stores/onboardingStore';
 import { colors, fonts, inkAlpha, motion, shadowAlpha, spacing } from '../../utils/constants';
-import { nextStep } from '../../utils/onboardingFlow';
 
 const APP_ICON = require('../../assets/images/app_icon.png');
+const WASH = require('../../assets/images/watercolor/login-wash.png');
 
 /** Une notification qui descend du haut, après `delay` ms */
 const drop = (delay: number) =>
@@ -29,7 +36,7 @@ const drop = (delay: number) =>
 export default function NotificationsScreen() {
   const router = useRouter();
   const store = useOnboardingStore();
-  const { flow, moments, start, book, invitation } = store;
+  const { moments, start, book, invitation } = store;
   const [asking, setAsking] = useState(false);
 
   const percent = bookFormat(store) !== 'papier';
@@ -42,43 +49,52 @@ export default function NotificationsScreen() {
     ? { title: `${invitation.adminFirstName} vient d’annoter`, body: invitation.title }
     : { title: 'Quelqu’un a rejoint ta lecture', body: book?.title ?? '' };
 
-  const next = () => router.push(nextStep(flow, 'notifications'));
+  /** L'accueil ; le brouillon de l'onboarding n'a plus lieu d'être */
+  const home = () => {
+    useOnboardingStore.getState().reset();
+    router.replace('/(tabs)');
+  };
 
   const ask = async () => {
     setAsking(true);
     try {
-      await requestNotificationPermission();
+      if (await requestNotificationPermission()) await scheduleEveningReminder(reminderTime(moments));
     } finally {
-      setAsking(false);
-      next();
+      home();
     }
   };
 
   return (
-    <OnboardingScreen
-      step="notifications"
-      title="Un petit rappel ?"
-      accent="rappel"
-      footer={
-        <>
-          <Button3D variant="primary" loading={asking} onPress={ask} style={styles.wide}>
-            Me prévenir
+    <View style={styles.root}>
+      <StatusBar style="light" />
+      <LinearGradient colors={BRAND_BG} style={StyleSheet.absoluteFill} />
+      <Image source={WASH} style={StyleSheet.absoluteFill} contentFit="cover" />
+
+      <SafeAreaView style={styles.column} edges={['top', 'bottom']}>
+        <View style={styles.content}>
+          <Text style={styles.heading} accessibilityRole="header">
+            <AccentWord text="Ne rate rien" accent="rien" size={TITLE} />
+          </Text>
+          <View style={styles.stack}>
+            <Animated.View entering={drop(300)}>
+              <Notification time="maintenant" title={other.title} body={other.body} />
+            </Animated.View>
+            <Animated.View entering={drop(750)}>
+              <Notification time={reminderTime(moments)} title="Ton moment lecture" body={goal} />
+            </Animated.View>
+          </View>
+        </View>
+
+        <View style={styles.footer}>
+          <Button3D variant="secondary" loading={asking} onPress={ask} style={styles.wide}>
+            Activer les notifs
           </Button3D>
-          <Button3D variant="secondary" disabled={asking} onPress={next} style={styles.wide}>
-            Plus tard
-          </Button3D>
-        </>
-      }
-    >
-      <View style={styles.stack}>
-        <Animated.View entering={drop(250)}>
-          <Notification time={reminderTime(moments)} title="Ton moment lecture" body={goal} />
-        </Animated.View>
-        <Animated.View entering={drop(700)}>
-          <Notification time="maintenant" title={other.title} body={other.body} />
-        </Animated.View>
-      </View>
-    </OnboardingScreen>
+          <Pressable onPress={home} disabled={asking} hitSlop={12} accessibilityRole="button">
+            <Text style={styles.later}>Plus tard</Text>
+          </Pressable>
+        </View>
+      </SafeAreaView>
+    </View>
   );
 }
 
@@ -99,13 +115,48 @@ function Notification({ time, title, body }: { time: string; title: string; body
   );
 }
 
+const TITLE = 31;
+
 const styles = StyleSheet.create({
-  wide: {
+  root: {
+    flex: 1,
+    backgroundColor: BRAND_BG[1],
+  },
+  column: {
+    flex: 1,
     width: '100%',
+    maxWidth: ONBOARDING_MAX_W,
+    alignSelf: 'center',
+    paddingHorizontal: spacing.xl,
+  },
+  content: {
+    flex: 1,
+    justifyContent: 'center',
+    gap: spacing['2xl'],
+  },
+  heading: {
+    fontFamily: fonts.display,
+    fontSize: TITLE,
+    lineHeight: 36,
+    letterSpacing: -0.4,
+    color: colors.white,
   },
   stack: {
     gap: spacing.md,
-    marginTop: spacing.sm,
+  },
+  footer: {
+    alignItems: 'center',
+    gap: spacing.lg,
+    paddingBottom: spacing.lg,
+  },
+  wide: {
+    width: '100%',
+  },
+  later: {
+    fontFamily: fonts.bodySemiBold,
+    fontSize: 15,
+    color: colors.white,
+    opacity: 0.8,
   },
   card: {
     flexDirection: 'row',

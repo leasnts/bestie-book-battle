@@ -9,6 +9,9 @@
  *
  * La connexion (auth/login) se glisse avant tout (ou après l'invitation) et
  * « Bienvenue » : elle n'est pas dans les listes, useAfterLogin y renvoie.
+ * Les notifications viennent après la carte, hors du fil de progression :
+ * l'onboarding est fini, c'est le seuil de l'accueil (sautées si iOS a déjà
+ * sa réponse).
  */
 
 import { useOnboardingStore } from '../stores/onboardingStore';
@@ -31,14 +34,14 @@ export type OnboardingStep =
   | 'carte';
 
 const FLOWS: Record<OnboardingFlow, OnboardingStep[]> = {
-  create: ['bienvenue', 'rythme', 'formats', 'choix', 'livre', 'page', 'objectif', 'inviter', 'notifications', 'prepa', 'carte'],
-  join: ['bienvenue', 'rythme', 'formats', 'page', 'notifications', 'prepa', 'carte'],
+  create: ['bienvenue', 'rythme', 'formats', 'choix', 'livre', 'page', 'objectif', 'inviter', 'prepa', 'carte', 'notifications'],
+  join: ['bienvenue', 'rythme', 'formats', 'page', 'prepa', 'carte', 'notifications'],
   add: ['choix', 'livre', 'page', 'objectif', 'inviter', 'prepa', 'carte'],
   addJoin: ['page', 'prepa', 'carte'],
 };
 
 /** Les écrans à questions, ceux qui portent le fil de progression */
-const ASKING: OnboardingStep[] = ['rythme', 'formats', 'choix', 'livre', 'page', 'objectif', 'inviter', 'notifications'];
+const ASKING: OnboardingStep[] = ['rythme', 'formats', 'choix', 'livre', 'page', 'objectif', 'inviter'];
 
 /** L'écran qui suit, dans ce parcours */
 export function nextStep(flow: OnboardingFlow, step: OnboardingStep): `/onboarding/${OnboardingStep}` {
