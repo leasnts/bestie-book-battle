@@ -6,7 +6,7 @@
  *    [ Oui ]
  *         dim. 15 nov.             la roulette de la date
  *    ▱ Le tempo parfait.         ◢  l'autocollant, toute la largeur, en bas :
- *      Fin dans 3 semaines · ≈ 18 p. par jour     un mot, puis ce que ça fait chaque jour
+ *      Fin dans 3 semaines, soit ≈ 18 p. par jour     un mot, puis ce que ça fait chaque jour
  *
  * « Oui » d'office, à 3 semaines (Lea, 2026-10-30).
  * « Non » : rien de plus. On rejoint : pas cet écran,
@@ -46,7 +46,7 @@ export default function ObjectifScreen() {
   const percent = bookFormat(store) !== 'papier';
   const left = (percent ? 100 : store.book?.pages ?? 0) - store.start;
   const perDay = left > 0 ? Math.max(1, Math.ceil(left / (days ?? FIRST_DAYS))) : 0;
-  const perDayLine = `Fin dans ${inTime(days ?? FIRST_DAYS)}${perDay ? ` · ≈ ${perDay} ${percent ? '%' : 'p.'} par jour` : ''}`;
+  const perDayLine = `Fin dans ${inTime(days ?? FIRST_DAYS)}${perDay ? `, soit ≈ ${perDay} ${percent ? '%' : 'p.'} par jour` : ''}`;
   const ready = dated === false || !!end;
 
   /** La roulette : des jours entiers depuis aujourd'hui */
