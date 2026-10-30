@@ -101,11 +101,11 @@ export default function InviterScreen() {
           </Button3D>
         ) : (
           <>
-            <Button3D variant="primary" icon={ShareIcon} iconPosition="left" disabled={!code} onPress={share} style={styles.wide}>
-              Envoyer le lien
-            </Button3D>
             <Button3D variant="secondary" onPress={() => router.push(nextStep(flow, 'inviter'))} style={styles.wide}>
               Plus tard
+            </Button3D>
+            <Button3D variant="primary" icon={ShareIcon} iconPosition="left" disabled={!code} onPress={share} style={styles.wide}>
+              Envoyer le lien
             </Button3D>
           </>
         )
