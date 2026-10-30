@@ -110,16 +110,24 @@ export default function PageScreen() {
           >
             Continuer
           </Button3D>
-          {!percent && !totalUnknown && (
-            <Button3D variant="secondary" onPress={() => setEditingTotal(!editingTotal)} style={styles.wide}>
-              {editingTotal ? 'Valider le total' : 'Modifier le total'}
-            </Button3D>
+          {/* En %, le bouton reste à sa place, invisible : rien ne bouge d'une unité à l'autre */}
+          {!totalUnknown && (
+            <View style={percent && styles.hidden} pointerEvents={percent ? 'none' : 'auto'} accessibilityElementsHidden={percent}>
+              <Button3D variant="secondary" onPress={() => setEditingTotal(!editingTotal)} style={styles.wide}>
+                {editingTotal ? 'Valider le total' : 'Modifier le total'}
+              </Button3D>
+            </View>
           )}
         </>
       }
     >
-      {joining && unit === 'pages' && (
-        <Animated.View entering={rise(2)}>
+      {joining && (
+        <Animated.View
+          entering={rise(2)}
+          style={percent && styles.hidden}
+          pointerEvents={percent ? 'none' : 'auto'}
+          accessibilityElementsHidden={percent}
+        >
           <Edition
             book={book}
             sameAs={invitation ? invitation.adminFirstName : null}
@@ -174,6 +182,9 @@ function Edition({ book, sameAs, onChange }: { book: BookDraft; sameAs: string |
 }
 
 const styles = StyleSheet.create({
+  hidden: {
+    opacity: 0,
+  },
   wide: {
     width: '100%',
   },
