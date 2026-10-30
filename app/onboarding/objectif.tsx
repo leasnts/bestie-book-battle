@@ -5,7 +5,7 @@
  *    [ Non ]           chacun·e avance à son rythme
  *    [ Oui ]
  *         dim. 15 nov.             la roulette de la date
- *    ▱ Fin dans 2 semaines ◢       l'autocollant, recollé à chaque date
+ *    ▱ Fin dans 2 semaines      ◢  l'autocollant, toute la largeur, en bas
  *
  * « Oui » propose 2 semaines d'emblée.
  * « Non » : un autocollant au coin corné se colle. On rejoint : pas cet écran,
@@ -14,13 +14,14 @@
 
 import { useRouter } from 'expo-router';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import React from 'react';
-import { StyleSheet } from 'react-native';
+import React, { useState } from 'react';
+import { StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import Button3D from '../../components/Button3D';
 import OnboardingScreen, { rise } from '../../components/onboarding/OnboardingScreen';
 import OptionList from '../../components/onboarding/OptionList';
 import StickerText from '../../components/onboarding/StickerText';
+import { TORN_EDGE_H } from '../../components/onboarding/TornEdge';
 import { deadlineFrom } from '../../services/onboarding';
 import { useOnboardingStore } from '../../stores/onboardingStore';
 import { colors, postIt, spacing } from '../../utils/constants';
@@ -36,6 +37,7 @@ export default function ObjectifScreen() {
   const dated = useOnboardingStore((s) => s.dated);
   const days = useOnboardingStore((s) => s.days);
   const patch = useOnboardingStore((s) => s.patch);
+  const [stickerWidth, setStickerWidth] = useState(0);
 
   const end = deadlineFrom(dated, days);
   const ready = dated === false || !!end;
@@ -81,14 +83,23 @@ export default function ObjectifScreen() {
             locale="fr-FR"
             textColor={colors.textPrimary}
           />
-          <StickerText id="objectif-when" text={`Fin dans ${inTime(days ?? FIRST_DAYS)}`} color={postIt.jaune} popKey={days ?? FIRST_DAYS} width={260} height={72} />
         </Animated.View>
       )}
-      {dated === false && (
-        <Animated.View entering={rise(0)} style={styles.center}>
-          <StickerText id="objectif-say" text="Sans date, sans pression." color={postIt.jaune} popKey="libre" width={300} height={96} />
-        </Animated.View>
-      )}
+      {/* L'autocollant, toute la largeur, ferré en bas : 16 pt au-dessus du bord déchiré */}
+      <View style={styles.bottom} onLayout={(e) => setStickerWidth(e.nativeEvent.layout.width)}>
+        {dated !== null && stickerWidth > 0 && (
+          <Animated.View entering={rise(0)}>
+            <StickerText
+              id="objectif-say"
+              text={dated ? `Fin dans ${inTime(days ?? FIRST_DAYS)}` : 'Sans date, sans pression.'}
+              color={postIt.jaune}
+              popKey={dated ? days ?? FIRST_DAYS : 'libre'}
+              width={stickerWidth}
+              height={72}
+            />
+          </Animated.View>
+        )}
+      </View>
     </OnboardingScreen>
   );
 }
@@ -107,8 +118,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: spacing.lg,
   },
-  center: {
-    alignItems: 'center',
-    marginTop: spacing.sm,
+  bottom: {
+    marginTop: 'auto',
+    marginBottom: spacing.lg + TORN_EDGE_H - spacing.xl,
   },
 });
