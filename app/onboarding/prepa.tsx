@@ -62,7 +62,7 @@ export default function PrepaScreen() {
     // La date de fin est celle du groupe : choisie en créant, reçue en rejoignant
     const end = invitation ? undefined : deadlineFrom(dated, days);
 
-    // La lecture : rejointe, ou créée (à « On invite qui ? », sinon ici)
+    // La lecture : rejointe, ou créée (à « Invite tes potes », sinon ici)
     let challengeId = invitation?.challengeId ?? store.createdChallengeId;
     if (invitation) {
       await useProjectStore.getState().joinChallenge(invitation.challengeId, userId);
