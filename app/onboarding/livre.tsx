@@ -36,7 +36,7 @@ import { feel } from '../../utils/feel';
 import { nextStep } from '../../utils/onboardingFlow';
 
 /** Combien de livres proposés ont leurs éditions demandées d'avance */
-const PREFETCH = 3;
+const PREFETCH = 5;
 
 
 export default function LivreScreen() {
@@ -46,6 +46,7 @@ export default function LivreScreen() {
   const patch = useOnboardingStore((s) => s.patch);
   const { query, setQuery, results, isSearching, error, clearResults } = useBookSearch();
   const [manual, setManual] = useState(false);
+  const [publishers, setPublishers] = useState<Record<string, string>>({});
   // Les éditions du livre choisi (null = en cours), et leur liste dépliée
   const [editions, setEditions] = useState<BookSearchResult[] | null>(null);
   const [showEditions, setShowEditions] = useState(false);
@@ -59,8 +60,20 @@ export default function LivreScreen() {
   // Les éditions des premiers livres proposés, demandées d'avance : touché, le
   // livre arrive tout de suite avec son édition et ses pages
   useEffect(() => {
-    (results.length > 0 ? results : TRENDING_BOOKS).slice(0, PREFETCH).forEach((result) => void fetchEditions(result));
+    let live = true;
+    (results.length > 0 ? results : TRENDING_BOOKS).slice(0, PREFETCH).forEach((result) =>
+      fetchEditions(result).then((found) => {
+        const publisher = found.find((edition) => edition.pageCount)?.publisher;
+        if (live && publisher) setPublishers((known) => ({ ...known, [result.id]: publisher }));
+      }),
+    );
+    return () => {
+      live = false;
+    };
   }, [results]);
+  // L'éditeur de l'édition qu'on proposera, affiché dans la liste (Apple Books ne le donne pas)
+  const withPublisher = (result: BookSearchResult) =>
+    result.publisher || !publishers[result.id] ? result : { ...result, publisher: publishers[result.id] };
 
   const searching = query.trim().length > 0;
 
@@ -148,7 +161,7 @@ export default function LivreScreen() {
       {searching ? (
         <View>
           {results.map((result) => (
-            <BookResultRow key={result.id} book={result} onPress={() => pick(result)} />
+            <BookResultRow key={result.id} book={withPublisher(result)} onPress={() => pick(result)} publisherOnly />
           ))}
           {results.length === 0 &&
             (isSearching ? (
@@ -205,7 +218,7 @@ export default function LivreScreen() {
       ) : (
         <View>
           {TRENDING_BOOKS.map((result) => (
-            <BookResultRow key={result.id} book={result} onPress={() => pick(result)} />
+            <BookResultRow key={result.id} book={withPublisher(result)} onPress={() => pick(result)} publisherOnly />
           ))}
         </View>
       )}

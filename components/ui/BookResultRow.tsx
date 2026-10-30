@@ -27,11 +27,14 @@ function formatEdition(publisher: string | null, publishedDate: string | null): 
 export default function BookResultRow({
   book,
   onPress,
+  publisherOnly = false,
 }: {
   book: BookSearchResult;
   onPress: () => void;
+  /** Juste la maison d'édition, si on la connaît : ni année ni pages (recherche de l'onboarding) */
+  publisherOnly?: boolean;
 }) {
-  const edition = formatEdition(book.publisher, book.publishedDate);
+  const edition = publisherOnly ? book.publisher : formatEdition(book.publisher, book.publishedDate);
 
   return (
     <Pressable
@@ -68,7 +71,7 @@ export default function BookResultRow({
             {edition}
           </Text>
         ) : null}
-        {book.pageCount ? <Text style={styles.pages}>{book.pageCount} p.</Text> : null}
+        {book.pageCount && !publisherOnly ? <Text style={styles.pages}>{book.pageCount} p.</Text> : null}
       </View>
     </Pressable>
   );
