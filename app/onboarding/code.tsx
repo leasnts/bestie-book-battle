@@ -1,5 +1,6 @@
 /**
- * Rejoindre avec un code, quand on n'a pas le lien : six cases centrées,
+ * Rejoindre avec un code, quand on n'a pas le lien : six cases au milieu de
+ * la page, sur toute la largeur,
  * vérifiées toutes seules au sixième chiffre ; « Continuer » reste en bas,
  * grisé tant que le code n'est pas complet. Trouvé → l'invitation. On y arrive par
  * « J'ai un code » (Par où on commence ?), un lien au code inconnu, ou
@@ -15,7 +16,7 @@ import OnboardingScreen, { rise } from '../../components/onboarding/OnboardingSc
 import CodeBoxes, { CODE_LENGTH } from '../../components/ui/CodeBoxes';
 import { fetchInvitation } from '../../services/onboarding';
 import { useOnboardingStore } from '../../stores/onboardingStore';
-import { colors, fonts, fontSize } from '../../utils/constants';
+import { colors, fonts, fontSize, ROUND_BUTTON_SIZE, spacing } from '../../utils/constants';
 import { feel } from '../../utils/feel';
 
 export default function CodeScreen() {
@@ -55,7 +56,7 @@ export default function CodeScreen() {
         </Button3D>
       }
     >
-      <Animated.View entering={rise(1)}>
+      <Animated.View entering={rise(1)} style={styles.middle}>
         <CodeBoxes value={code} onChange={onChange} editable={!busy} accessibilityLabel="Code de la lecture" />
         {missed && <Text style={styles.missed} accessibilityLiveRegion="polite">Ce code ne mène à aucune lecture.</Text>}
       </Animated.View>
@@ -63,9 +64,18 @@ export default function CodeScreen() {
   );
 }
 
+/** Ce que le titre prend en haut : les cases tombent au milieu de l'écran, pas de ce qui reste */
+const ONBOARDING_TITLE_SPACE = ROUND_BUTTON_SIZE + spacing.lg;
+
 const styles = StyleSheet.create({
   wide: {
     width: '100%',
+  },
+  // Les cases au milieu de la page, sur toute la largeur
+  middle: {
+    flex: 1,
+    justifyContent: 'center',
+    marginBottom: ONBOARDING_TITLE_SPACE,
   },
   missed: {
     marginTop: 12,
