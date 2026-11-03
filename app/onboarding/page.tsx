@@ -128,7 +128,7 @@ export default function PageScreen() {
         >
           <Edition
             book={book}
-            sameAs={invitation ? invitation.adminFirstName : null}
+            sameAs={!!invitation}
             onChange={() => router.push({ pathname: '/book-search', params: { q: book.title, for: 'edition' } })}
           />
         </Animated.View>
@@ -160,7 +160,7 @@ export default function PageScreen() {
 }
 
 /** Mon édition papier : sa couverture, son éditeur, ses pages ; le crayon en change */
-function Edition({ book, sameAs, onChange }: { book: BookDraft; sameAs: string | null; onChange: () => void }) {
+function Edition({ book, sameAs, onChange }: { book: BookDraft; sameAs: boolean; onChange: () => void }) {
   return (
     <View style={styles.edition}>
       {book.cover ? (
@@ -173,7 +173,7 @@ function Edition({ book, sameAs, onChange }: { book: BookDraft; sameAs: string |
           {[book.publisher, `${book.pages} pages`].filter(Boolean).join(' · ')}
         </Text>
         <Text style={styles.editionSub} numberOfLines={1}>
-          {sameAs ? `L’édition de ${sameAs}` : 'Ton édition papier'}
+          {sameAs ? 'L’édition du groupe' : 'Ton édition papier'}
         </Text>
       </View>
       <GlassButton icon={PencilIcon} onPress={onChange} accessibilityLabel="Changer d’édition" />

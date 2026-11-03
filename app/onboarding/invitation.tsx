@@ -1,7 +1,7 @@
 /**
  * L'invitation : ce qu'on rejoint, avant de créer un compte.
  *
- * La couverture au milieu, « On rejoint Chloé ? », puis le
+ * La couverture au milieu, « La lecture t'attend », puis le
  * cadre de la Progression : celles qui lisent déjà (photo, piste, %) et ma
  * place, encore à 0 %. Rejoindre → la connexion (puis « Ton
  * rythme »), ou directement « Où en est ta lecture ? » si je suis déjà inscrit·e.
@@ -32,6 +32,8 @@ export default function InvitationScreen() {
   const signedIn = useAuthStore((s) => !!s.user);
 
   if (!invitation) return null;
+  // Le titre et le bouton ne nomment personne : n'importe qui du groupe peut partager le code.
+  // Ce prénom ne sert qu'en secours, si la liste des lectrices n'est pas venue
   const name = invitation.adminFirstName;
 
   const join = () => {
@@ -43,11 +45,11 @@ export default function InvitationScreen() {
   return (
     <OnboardingScreen
       step="invitation"
-      title={`On rejoint ${name} ?`}
-      accent="rejoint"
+      title="La lecture t’attend"
+      accent="attend"
       footer={
         <Button3D variant="primary" onPress={join} style={styles.wide}>
-          {`Rejoindre ${name}`}
+          Rejoindre la lecture
         </Button3D>
       }
     >
