@@ -61,6 +61,8 @@ interface NoteStickerProps {
   notch?: { left: number; right: number } | null;
   /** Une matière à la place de la couleur (l'aquarelle de l'onboarding), découpée à la forme */
   image?: ImageSourcePropType;
+  /** La matière tournée d'un demi-tour (son clair passe en bas à droite) */
+  imageTurned?: boolean;
   /** La couleur de la couture, si la matière en demande une autre */
   stitch?: string;
 }
@@ -101,6 +103,7 @@ export default function NoteSticker({
   watermarkInset = 12,
   notch = null,
   image,
+  imageTurned = false,
   stitch: stitchOverride,
 }: NoteStickerProps) {
   const w = width ?? size;
@@ -194,7 +197,15 @@ export default function NoteSticker({
       </G>
       {!!image && (
         <G clipPath={`url(#clip-${id})`}>
-          <SvgImage href={image} x={0} y={0} width={w} height={h} preserveAspectRatio="none" />
+          <SvgImage
+            href={image}
+            x={0}
+            y={0}
+            width={w}
+            height={h}
+            preserveAspectRatio="none"
+            transform={imageTurned ? `rotate(180 ${w / 2} ${h / 2})` : undefined}
+          />
         </G>
       )}
       {!!watermark && (

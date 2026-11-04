@@ -31,7 +31,7 @@ interface StickerTextProps {
   popKey?: string | number;
   /** Inclinaison au repos, en degrés */
   angle?: number;
-  /** Sur l'aquarelle beurre-rouge de la charte, texte à l'encre */
+  /** Sur l'aquarelle de la charte, le beurre en bas à droite, texte crème */
   wash?: boolean;
 }
 
@@ -69,6 +69,7 @@ export default function StickerText({
           height={height}
           corner="bottom-right"
           image={wash ? WASH : undefined}
+          imageTurned
           stitch={wash ? creamAlpha(0.6) : undefined}
         />
       </View>
@@ -97,11 +98,10 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
   },
   onWash: {
-    color: colors.textPrimary,
+    color: colors.white,
   },
   captionOnWash: {
-    color: colors.textPrimary,
-    opacity: 0.8,
+    color: creamAlpha(0.88),
   },
   caption: {
     fontFamily: fonts.bodyMedium,
