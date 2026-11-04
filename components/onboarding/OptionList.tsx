@@ -70,7 +70,7 @@ const RADIUS = borderRadius.xl;
 
 /**
  * Une ligne au repos : comme les cadres de l'accueil (Le livre, Classement),
- * blanc crème, bord crème et couture d'encre pâle un peu en retrait. Pas d'ombre.
+ * blanc crème, bord crème. Pas de couture (elle dit « choisie »), pas d’ombre.
  */
 export const PAPER = ['#fdfcfa', '#f7f3ed'] as const;
 export const EDGE = creamAlpha(0.9);
@@ -183,9 +183,7 @@ function OptionRow<K extends string>({
           </Animated.View>
           <Animated.View style={[styles.ring, styles.ringIdle, idleFade]} />
           <Animated.View style={[styles.ring, styles.ringOn, fade]} />
-          <Animated.View style={[StyleSheet.absoluteFill, idleFade]}>
-            <StitchBorder radius={RADIUS} />
-          </Animated.View>
+          {/* Pas de couture au repos : seule la ligne choisie est cousue (Lea, 2026-11-04) */}
           <Animated.View style={[StyleSheet.absoluteFill, fade]}>
             <StitchBorder radius={RADIUS} inset={STITCH_INSET} color={STITCH_ON} weight={STITCH_WEIGHT} />
           </Animated.View>
