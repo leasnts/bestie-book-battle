@@ -20,7 +20,7 @@ import Animated, { Easing, FadeIn, FadeInDown, FadeOutUp } from 'react-native-re
 import { BRAND_BG } from '../../components/brand/BrandLockup';
 import { ONBOARDING_MAX_W } from '../../components/onboarding/OnboardingScreen';
 import PopEyes from '../../components/PopEyes';
-import AccentWord from '../../components/ui/AccentWord';
+import AccentWord, { accentHeadroom } from '../../components/ui/AccentWord';
 import { useAuthStore } from '../../stores/authStore';
 import { useOnboardingStore } from '../../stores/onboardingStore';
 import { colors, fonts, motion, spacing } from '../../utils/constants';
@@ -28,7 +28,8 @@ import { nextStep } from '../../utils/onboardingFlow';
 
 const WASH = require('../../assets/images/watercolor/login-wash.png');
 
-const PHRASES = ['Tu choisis un livre.', 'Tes ami·es te rejoignent.', 'Vous en parlez, page par page.'];
+// Coupées à la main, là où le sens coupe : jamais un mot seul sur sa ligne
+const PHRASES = ['Tu choisis un livre.', 'Tes ami·es\nte rejoignent.', 'Vous en parlez,\npage par page.'];
 
 /** Le temps de lire une phrase, puis le bonjour */
 const PHRASE_MS = 2100;
@@ -80,7 +81,7 @@ export default function BienvenueScreen() {
               <PopEyes vector size="large" tint={EYES_TINT} style={styles.eyes} />
             </Animated.View>
             <Text style={styles.hello}>{firstName ? `Bienvenue, ${firstName}` : 'Bienvenue'}</Text>
-            <Text style={styles.title} accessibilityRole="header">
+            <Text style={[styles.title, accentHeadroom(TITLE)]} accessibilityRole="header">
               <AccentWord text="Ici, on lit ensemble." accent="ensemble" size={TITLE} />
             </Text>
           </Animated.View>

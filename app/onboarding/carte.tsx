@@ -19,7 +19,7 @@ import Button3D from '../../components/Button3D';
 import PopEyes from '../../components/PopEyes';
 import { MOMENTS } from '../../components/onboarding/choices';
 import { ONBOARDING_MAX_W, ONBOARDING_TITLE } from '../../components/onboarding/OnboardingScreen';
-import AccentWord from '../../components/ui/AccentWord';
+import AccentWord, { accentHeadroom } from '../../components/ui/AccentWord';
 import { COVER_RATIO, CoverImage } from '../../components/ui/BookCover';
 import { InkStamp, STAMP_FALL } from '../../components/ui/Stamp';
 import { deadlineFrom } from '../../services/onboarding';
@@ -44,6 +44,8 @@ const eyeIn = (from: number) =>
     40: { opacity: 1 },
     100: { opacity: 1, transform: [{ translateX: 0 }], easing: Easing.bezier(0.2, 0.9, 0.3, 1) },
   }).duration(900).delay(600);
+
+const COUNT = ['', '', 'deux', 'trois', 'quatre', 'cinq', 'six', 'sept', 'huit', 'neuf', 'dix'];
 
 export default function CarteScreen() {
   const router = useRouter();
@@ -72,13 +74,15 @@ export default function CarteScreen() {
       list.push(['Quand', MOMENTS.filter((m) => moments.includes(m.key)).map((m) => m.label).join(', ') || '—']);
     }
     if (!invitation) list.push(['Fin', end ? new Date(`${end}T12:00:00`).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' }) : 'Sans date']);
-    if (invitation) list.push(['Avec', `${invitation.adminFirstName} · ${Math.round(invitation.groupPercent)} %`]);
+    if (invitation) list.push(['Avec', (invitation.readers ?? []).map((r) => r.name).join(', ') || invitation.adminFirstName]);
     else if (invited) list.push(['Avec', 'invitation envoyée']);
     return list;
   }, [book, invitation, start, dated, days, moments, invited, flow, format, percent]);
 
   if (!book) return null;
 
+  // Le groupe, moi comprise : « Vous êtes trois »
+  const together = COUNT[(invitation?.readers?.length || 1) + 1] ?? 'plein';
   const today = new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
   const open = async () => {
     feel('appui');
@@ -95,9 +99,9 @@ export default function CarteScreen() {
     <SafeAreaView style={styles.root} edges={['top']}>
       <View style={styles.column}>
       <View style={styles.body}>
-        <Text style={styles.title} accessibilityRole="header">
+        <Text style={[styles.title, accentHeadroom(ONBOARDING_TITLE)]} accessibilityRole="header">
           {invitation ? (
-            <AccentWord text="Vous êtes deux" accent="deux" size={ONBOARDING_TITLE} />
+            <AccentWord text={`Vous êtes ${together}`} accent={together} size={ONBOARDING_TITLE} />
           ) : (
             <AccentWord text="Tout est prêt" accent="Tout" size={ONBOARDING_TITLE} />
           )}

@@ -29,7 +29,7 @@ import Svg, { Circle } from 'react-native-svg';
 import { useOnboardingStore } from '../../stores/onboardingStore';
 import { colors, fonts, motion, spacing } from '../../utils/constants';
 import { isAddFlow, stepPosition, type OnboardingStep } from '../../utils/onboardingFlow';
-import AccentWord from '../ui/AccentWord';
+import AccentWord, { accentHeadroom } from '../ui/AccentWord';
 import GlassButton from '../ui/GlassButton';
 import { KnotGradients } from '../ui/GoalTrack';
 import TornEdge from './TornEdge';
@@ -95,7 +95,7 @@ export default function OnboardingScreen({
 
         <Body {...bodyProps}>
           <Animated.View entering={rise(0)}>
-            <Text style={styles.title} accessibilityRole="header">
+            <Text style={[styles.title, accentHeadroom(ONBOARDING_TITLE)]} accessibilityRole="header">
               <AccentWord text={title} accent={accent} size={ONBOARDING_TITLE} />
             </Text>
           </Animated.View>

@@ -103,6 +103,7 @@ export default function ObjectifScreen() {
               popKey={dated ? days ?? FIRST_DAYS : 'libre'}
               width={stickerWidth}
               height={88}
+              wash
             />
           </Animated.View>
         )}

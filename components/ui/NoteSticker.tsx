@@ -15,7 +15,8 @@
  */
 
 import React from 'react';
-import Svg, { ClipPath, Defs, G, LinearGradient, Path, Stop, Text as SvgText } from 'react-native-svg';
+import type { ImageSourcePropType } from 'react-native';
+import Svg, { ClipPath, Defs, G, Image as SvgImage, LinearGradient, Path, Stop, Text as SvgText } from 'react-native-svg';
 import { ACCENT_SCALE } from './AccentWord';
 import { borderRadius, fonts, inkAlpha, postItDeepOf, shadowAlpha, stickerMaterial } from '../../utils/constants';
 
@@ -58,12 +59,21 @@ interface NoteStickerProps {
    * et descend dans l'intercalaire choisi, qui la continue (`CategoryPicker`).
    */
   notch?: { left: number; right: number } | null;
+  /** Une matière à la place de la couleur (l'aquarelle de l'onboarding), découpée à la forme */
+  image?: ImageSourcePropType;
+  /** La matière tournée d'un demi-tour (son clair passe en bas à droite) */
+  imageTurned?: boolean;
+  /** La couleur de la couture, si la matière en demande une autre */
+  stitch?: string;
 }
 
 /**
  * Le point de couture, le même sur la note et sur l'intercalaire qui la prolonge :
  * un point rond (tiret de longueur nulle, bout arrondi) tous les 2,8 pt.
  */
+/** La matière déborde de l'autocollant d'autant : son coin clair se fait plus discret */
+const IMAGE_OVERSCAN = 1.35;
+
 export const STITCH = { width: 1.2, dash: '0 2.8', cap: 'round' as const };
 export const stitchColor = (colored: boolean) => inkAlpha(colored ? 0.32 : 0.2);
 /**
@@ -95,6 +105,9 @@ export default function NoteSticker({
   watermark,
   watermarkInset = 12,
   notch = null,
+  image,
+  imageTurned = false,
+  stitch: stitchOverride,
 }: NoteStickerProps) {
   const w = width ?? size;
   const h = height ?? size;
@@ -173,7 +186,7 @@ export default function NoteSticker({
           <Stop offset="0" stopColor={stickerMaterial.flap[0]} />
           <Stop offset="1" stopColor={stickerMaterial.flap[1]} />
         </LinearGradient>
-        {!!watermark && (
+        {(!!watermark || !!image) && (
           <ClipPath id={`clip-${id}`}>
             <Path d={shape} transform={flip} />
           </ClipPath>
@@ -185,6 +198,20 @@ export default function NoteSticker({
         {/* Jamais d'aplat : un voile clair en haut, plus sombre en bas */}
         <Path d={shape} fill={`url(#shade-${id})`} />
       </G>
+      {!!image && (
+        <G clipPath={`url(#clip-${id})`}>
+          {/* Un peu plus grande que l'autocollant : son coin clair (le beurre) déborde, on en voit moins */}
+          <SvgImage
+            href={image}
+            x={w - w * IMAGE_OVERSCAN}
+            y={h - h * IMAGE_OVERSCAN}
+            width={w * IMAGE_OVERSCAN}
+            height={h * IMAGE_OVERSCAN}
+            preserveAspectRatio="none"
+            transform={imageTurned ? `rotate(180 ${w / 2} ${h / 2})` : undefined}
+          />
+        </G>
+      )}
       {!!watermark && (
         <G clipPath={`url(#clip-${id})`}>
           <SvgText
@@ -203,7 +230,7 @@ export default function NoteSticker({
         <Path
           d={notched ? notchStitch : stitch}
           fill="none"
-          stroke={noteStitchColor(color)}
+          stroke={stitchOverride ?? noteStitchColor(color)}
           strokeWidth={STITCH.width}
           strokeDasharray={STITCH.dash}
           strokeLinecap={STITCH.cap}

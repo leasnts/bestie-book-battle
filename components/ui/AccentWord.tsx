@@ -20,6 +20,16 @@ import { keepLinesTogether } from '../../utils/lineBreaks';
 /** Welcome Valentines a un œil plus petit : 1,25× pour égaler le titre */
 export const ACCENT_SCALE = 1.25;
 
+/**
+ * Ses hampes (le « l », le « b ») montent plus haut que la ligne du titre : sur
+ * la première ligne, iOS les coupait net au bord du texte. À poser sur le <Text>
+ * du titre : de la place au-dessus, rendue aussitôt, le titre ne bouge pas.
+ */
+export const accentHeadroom = (size: number) => {
+  const room = Math.ceil(size * 0.3);
+  return { paddingTop: room, marginTop: -room };
+};
+
 interface AccentWordProps {
   /** Le titre en entier */
   text: string;
