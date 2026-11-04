@@ -194,7 +194,7 @@ export default function NoteSticker({
       </G>
       {!!image && (
         <G clipPath={`url(#clip-${id})`}>
-          <SvgImage href={image} x={0} y={0} width={w} height={h} preserveAspectRatio="xMidYMid slice" />
+          <SvgImage href={image} x={0} y={0} width={w} height={h} preserveAspectRatio="none" />
         </G>
       )}
       {!!watermark && (

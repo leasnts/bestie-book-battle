@@ -13,7 +13,8 @@ import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, w
 import { colors, creamAlpha, fonts, postIt, spacing } from '../../utils/constants';
 import NoteSticker from '../ui/NoteSticker';
 
-const WASH = require('../../assets/images/watercolor/login-wash.png');
+// L'aquarelle aux couleurs de la charte : beurre, beige, rouge (celle du profil)
+const WASH = require('../../assets/images/watercolor/profile-wash.png');
 
 /** Le temps de se plaquer sur la page */
 const STICK_MS = 200;
@@ -30,7 +31,7 @@ interface StickerTextProps {
   popKey?: string | number;
   /** Inclinaison au repos, en degrés */
   angle?: number;
-  /** Sur l'aquarelle rouge de l'onboarding, texte crème */
+  /** Sur l'aquarelle beurre-rouge de la charte, texte à l'encre */
   wash?: boolean;
 }
 
@@ -68,7 +69,7 @@ export default function StickerText({
           height={height}
           corner="bottom-right"
           image={wash ? WASH : undefined}
-          stitch={wash ? creamAlpha(0.45) : undefined}
+          stitch={wash ? creamAlpha(0.6) : undefined}
         />
       </View>
       <View style={styles.content}>
@@ -96,10 +97,11 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
   },
   onWash: {
-    color: colors.white,
+    color: colors.textPrimary,
   },
   captionOnWash: {
-    color: creamAlpha(0.85),
+    color: colors.textPrimary,
+    opacity: 0.8,
   },
   caption: {
     fontFamily: fonts.bodyMedium,
