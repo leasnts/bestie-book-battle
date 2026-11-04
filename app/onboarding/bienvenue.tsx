@@ -28,7 +28,8 @@ import { nextStep } from '../../utils/onboardingFlow';
 
 const WASH = require('../../assets/images/watercolor/login-wash.png');
 
-const PHRASES = ['Tu choisis un livre.', 'Tes ami·es te rejoignent.', 'Vous en parlez, page par page.'];
+// Coupées à la main, là où le sens coupe : jamais un mot seul sur sa ligne
+const PHRASES = ['Tu choisis un livre.', 'Tes ami·es\nte rejoignent.', 'Vous en parlez,\npage par page.'];
 
 /** Le temps de lire une phrase, puis le bonjour */
 const PHRASE_MS = 2100;
