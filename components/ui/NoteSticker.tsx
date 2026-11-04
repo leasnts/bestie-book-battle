@@ -15,7 +15,8 @@
  */
 
 import React from 'react';
-import Svg, { ClipPath, Defs, G, LinearGradient, Path, Stop, Text as SvgText } from 'react-native-svg';
+import type { ImageSourcePropType } from 'react-native';
+import Svg, { ClipPath, Defs, G, Image as SvgImage, LinearGradient, Path, Stop, Text as SvgText } from 'react-native-svg';
 import { ACCENT_SCALE } from './AccentWord';
 import { borderRadius, fonts, inkAlpha, postItDeepOf, shadowAlpha, stickerMaterial } from '../../utils/constants';
 
@@ -58,6 +59,10 @@ interface NoteStickerProps {
    * et descend dans l'intercalaire choisi, qui la continue (`CategoryPicker`).
    */
   notch?: { left: number; right: number } | null;
+  /** Une matière à la place de la couleur (l'aquarelle de l'onboarding), découpée à la forme */
+  image?: ImageSourcePropType;
+  /** La couleur de la couture, si la matière en demande une autre */
+  stitch?: string;
 }
 
 /**
@@ -95,6 +100,8 @@ export default function NoteSticker({
   watermark,
   watermarkInset = 12,
   notch = null,
+  image,
+  stitch: stitchOverride,
 }: NoteStickerProps) {
   const w = width ?? size;
   const h = height ?? size;
@@ -173,7 +180,7 @@ export default function NoteSticker({
           <Stop offset="0" stopColor={stickerMaterial.flap[0]} />
           <Stop offset="1" stopColor={stickerMaterial.flap[1]} />
         </LinearGradient>
-        {!!watermark && (
+        {(!!watermark || !!image) && (
           <ClipPath id={`clip-${id}`}>
             <Path d={shape} transform={flip} />
           </ClipPath>
@@ -185,6 +192,11 @@ export default function NoteSticker({
         {/* Jamais d'aplat : un voile clair en haut, plus sombre en bas */}
         <Path d={shape} fill={`url(#shade-${id})`} />
       </G>
+      {!!image && (
+        <G clipPath={`url(#clip-${id})`}>
+          <SvgImage href={image} x={0} y={0} width={w} height={h} preserveAspectRatio="xMidYMid slice" />
+        </G>
+      )}
       {!!watermark && (
         <G clipPath={`url(#clip-${id})`}>
           <SvgText
@@ -203,7 +215,7 @@ export default function NoteSticker({
         <Path
           d={notched ? notchStitch : stitch}
           fill="none"
-          stroke={noteStitchColor(color)}
+          stroke={stitchOverride ?? noteStitchColor(color)}
           strokeWidth={STITCH.width}
           strokeDasharray={STITCH.dash}
           strokeLinecap={STITCH.cap}

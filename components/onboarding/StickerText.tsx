@@ -10,8 +10,10 @@
 import React, { useEffect } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withSequence, withTiming } from 'react-native-reanimated';
-import { colors, fonts, postIt, spacing } from '../../utils/constants';
+import { colors, creamAlpha, fonts, postIt, spacing } from '../../utils/constants';
 import NoteSticker from '../ui/NoteSticker';
+
+const WASH = require('../../assets/images/watercolor/login-wash.png');
 
 /** Le temps de se plaquer sur la page */
 const STICK_MS = 200;
@@ -28,6 +30,8 @@ interface StickerTextProps {
   popKey?: string | number;
   /** Inclinaison au repos, en degrés */
   angle?: number;
+  /** Sur l'aquarelle rouge de l'onboarding, texte crème */
+  wash?: boolean;
 }
 
 export default function StickerText({
@@ -39,6 +43,7 @@ export default function StickerText({
   height = 112,
   popKey,
   angle = -2,
+  wash = false,
 }: StickerTextProps) {
   const reducedMotion = useReducedMotion();
   const lift = useSharedValue(0);
@@ -56,13 +61,21 @@ export default function StickerText({
   return (
     <Animated.View style={[{ width, height }, style]}>
       <View style={StyleSheet.absoluteFill} pointerEvents="none">
-        <NoteSticker id={id} color={color} width={width} height={height} corner="bottom-right" />
+        <NoteSticker
+          id={id}
+          color={color}
+          width={width}
+          height={height}
+          corner="bottom-right"
+          image={wash ? WASH : undefined}
+          stitch={wash ? creamAlpha(0.45) : undefined}
+        />
       </View>
       <View style={styles.content}>
-        <Text style={styles.text} numberOfLines={3}>
+        <Text style={[styles.text, wash && styles.onWash]} numberOfLines={3}>
           {text}
         </Text>
-        {caption && <Text style={styles.caption} numberOfLines={2}>{caption}</Text>}
+        {caption && <Text style={[styles.caption, wash && styles.captionOnWash]} numberOfLines={2}>{caption}</Text>}
       </View>
     </Animated.View>
   );
@@ -81,6 +94,12 @@ const styles = StyleSheet.create({
     lineHeight: 21,
     // Ce qui se lit sort du ton sur ton : l'encre (DESIGN.md › Charte Lowki)
     color: colors.textPrimary,
+  },
+  onWash: {
+    color: colors.white,
+  },
+  captionOnWash: {
+    color: creamAlpha(0.85),
   },
   caption: {
     fontFamily: fonts.bodyMedium,
