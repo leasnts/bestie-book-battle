@@ -23,7 +23,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { BRAND_BG } from '../../components/brand/BrandLockup';
 import Button3D from '../../components/Button3D';
 import { ONBOARDING_MAX_W } from '../../components/onboarding/OnboardingScreen';
-import AccentWord from '../../components/ui/AccentWord';
+import AccentWord, { accentHeadroom } from '../../components/ui/AccentWord';
 import { requestNotificationPermission, scheduleEveningReminder } from '../../services/notifications';
 import { reminderTime } from '../../services/onboarding';
 import { useOnboardingStore } from '../../stores/onboardingStore';
@@ -65,7 +65,7 @@ export default function NotificationsScreen() {
       <SafeAreaView style={styles.column} edges={['top', 'bottom']}>
         <View style={styles.content}>
           <View style={styles.head}>
-            <Text style={styles.heading} accessibilityRole="header">
+            <Text style={[styles.heading, accentHeadroom(TITLE)]} accessibilityRole="header">
               <AccentWord text="On te fait signe ?" accent="signe" size={TITLE} />
             </Text>
             <Text style={styles.sub}>Quand tes potes annotent, et pour ton moment lecture</Text>

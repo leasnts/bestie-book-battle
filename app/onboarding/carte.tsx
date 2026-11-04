@@ -19,7 +19,7 @@ import Button3D from '../../components/Button3D';
 import PopEyes from '../../components/PopEyes';
 import { MOMENTS } from '../../components/onboarding/choices';
 import { ONBOARDING_MAX_W, ONBOARDING_TITLE } from '../../components/onboarding/OnboardingScreen';
-import AccentWord from '../../components/ui/AccentWord';
+import AccentWord, { accentHeadroom } from '../../components/ui/AccentWord';
 import { COVER_RATIO, CoverImage } from '../../components/ui/BookCover';
 import { InkStamp, STAMP_FALL } from '../../components/ui/Stamp';
 import { deadlineFrom } from '../../services/onboarding';
@@ -99,7 +99,7 @@ export default function CarteScreen() {
     <SafeAreaView style={styles.root} edges={['top']}>
       <View style={styles.column}>
       <View style={styles.body}>
-        <Text style={styles.title} accessibilityRole="header">
+        <Text style={[styles.title, accentHeadroom(ONBOARDING_TITLE)]} accessibilityRole="header">
           {invitation ? (
             <AccentWord text={`Vous êtes ${together}`} accent={together} size={ONBOARDING_TITLE} />
           ) : (

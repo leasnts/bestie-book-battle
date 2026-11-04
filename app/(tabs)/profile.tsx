@@ -33,7 +33,7 @@ import PageTransition from '../../components/PageTransition';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Defs, LinearGradient as SvgGradient, Path, Stop } from 'react-native-svg';
 import { POP_EYES_HEIGHT, POP_EYES_PATH, POP_EYES_WIDTH } from '../../components/brand/popEyesPath';
-import AccentWord from '../../components/ui/AccentWord';
+import AccentWord, { accentHeadroom } from '../../components/ui/AccentWord';
 import BookCover, { COVER_RATIO } from '../../components/ui/BookCover';
 import { SHELF_BAR_H, SHELF_OVERLAP, ShelfBar } from '../../components/ui/BookLibrary';
 import PaperWashBackdrop from '../../components/ui/PaperWashBackdrop';
@@ -247,7 +247,7 @@ function InviteBanner({ onPress }: { onPress: () => void }) {
       </View>
       <StitchBorder radius={borderRadius.xl} color={creamAlpha(0.35)} />
       <View style={styles.bannerContent}>
-        <Text style={styles.bannerTitle}>
+        <Text style={[styles.bannerTitle, accentHeadroom(BANNER_TITLE)]}>
           <AccentWord text="Lire à plusieurs" accent="plusieurs" size={BANNER_TITLE} />
         </Text>
         <Button3D variant="secondary" size="small" onPress={onPress} style={styles.bannerButton}>
