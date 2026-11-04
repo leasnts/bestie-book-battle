@@ -71,6 +71,9 @@ interface NoteStickerProps {
  * Le point de couture, le même sur la note et sur l'intercalaire qui la prolonge :
  * un point rond (tiret de longueur nulle, bout arrondi) tous les 2,8 pt.
  */
+/** La matière déborde de l'autocollant d'autant : son coin clair se fait plus discret */
+const IMAGE_OVERSCAN = 1.35;
+
 export const STITCH = { width: 1.2, dash: '0 2.8', cap: 'round' as const };
 export const stitchColor = (colored: boolean) => inkAlpha(colored ? 0.32 : 0.2);
 /**
@@ -197,12 +200,13 @@ export default function NoteSticker({
       </G>
       {!!image && (
         <G clipPath={`url(#clip-${id})`}>
+          {/* Un peu plus grande que l'autocollant : son coin clair (le beurre) déborde, on en voit moins */}
           <SvgImage
             href={image}
-            x={0}
-            y={0}
-            width={w}
-            height={h}
+            x={w - w * IMAGE_OVERSCAN}
+            y={h - h * IMAGE_OVERSCAN}
+            width={w * IMAGE_OVERSCAN}
+            height={h * IMAGE_OVERSCAN}
             preserveAspectRatio="none"
             transform={imageTurned ? `rotate(180 ${w / 2} ${h / 2})` : undefined}
           />
