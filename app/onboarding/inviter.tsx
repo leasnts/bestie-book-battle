@@ -7,9 +7,12 @@
  *    Invite tes 𝓹𝓸𝓽𝓮𝓼
  *    Ta lecture est prête
  *
- *              ▐████▌                      la couverture, au milieu
- *              ▐████▌
- *            578006 (⧉)                    le code en Valentine, de quoi le copier
+ *    ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐
+ *    ┊ ▐█▌ Fourth Wing             ┊      la carte de lecture, papier cousu
+ *    ┊ ─────────────────────────── ┊      (d'après la carte-pass d'Opal)
+ *    ┊ [4][2][4][2][4][2]          ┊      le code en six cases, en Valentine
+ *    └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┘
+ *            ⧉ Copier le code
  *
  *    [      Envoyer le lien      ]         partagé → l'écran suivant, tout seul
  *
@@ -25,25 +28,25 @@ import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { CheckIcon, ChevronLeftIcon, CopyIcon, ShareIcon, XIcon } from 'lucide-react-native';
 import React, { useCallback, useEffect, useState } from 'react';
-import { Share, StyleSheet, Text, View } from 'react-native';
+import { Pressable, Share, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BRAND_BG } from '../../components/brand/BrandLockup';
 import Button3D from '../../components/Button3D';
 import { ONBOARDING_MAX_W, ONBOARDING_TITLE, rise } from '../../components/onboarding/OnboardingScreen';
 import AccentWord, { accentHeadroom } from '../../components/ui/AccentWord';
-import { COVER_RATIO, CoverImage } from '../../components/ui/BookCover';
+import BookCover, { COVER_RATIO } from '../../components/ui/BookCover';
+import { StitchBorder } from '../../components/ui/Stitch';
 import GlassButton from '../../components/ui/GlassButton';
 import { createReading, deadlineFrom, ensureProfile, updateReadingBook } from '../../services/onboarding';
 import { useOnboardingStore } from '../../stores/onboardingStore';
 import { useProjectStore } from '../../stores/projectStore';
-import { borderRadius, colors, fonts, paperFrameGradient, spacing } from '../../utils/constants';
+import { borderRadius, colors, fonts, inkAlpha, lowki, paperFrameGradient, spacing } from '../../utils/constants';
 import { feel } from '../../utils/feel';
 import { nextStep } from '../../utils/onboardingFlow';
 import { inviteMessage } from '../../utils/share';
 
 const WASH = require('../../assets/images/watercolor/login-wash.png');
-const COVER_W = 150;
 
 export default function InviterScreen() {
   const router = useRouter();
@@ -123,33 +126,51 @@ export default function InviterScreen() {
           <Text style={styles.sub}>Ta lecture est prête</Text>
         </Animated.View>
 
-        <Animated.View entering={rise(1)} style={styles.book}>
-          {book.cover ? (
-            <CoverImage uri={book.cover} style={styles.cover} />
-          ) : (
-            <LinearGradient colors={paperFrameGradient} style={styles.cover} />
-          )}
-
-          <View style={styles.codeRow}>
-            {code ? (
-              <Animated.Text
-                entering={FadeIn.duration(200)}
-                style={[styles.codeText, accentHeadroom(CODE_SIZE)]}
-                accessibilityLabel={`Code de la lecture : ${code.split('').join(' ')}`}
-              >
-                {code}
-              </Animated.Text>
-            ) : failed ? (
+        <Animated.View entering={rise(1)} style={styles.middle}>
+          {/* La carte de lecture : le livre, puis son code en six cases (d'après la carte-pass d'Opal) */}
+          <LinearGradient colors={paperFrameGradient} style={styles.card}>
+            <StitchBorder radius={borderRadius.xl} />
+            <View style={styles.bookRow}>
+              <View style={styles.thumb}>
+                <BookCover coverUrl={book.cover} />
+              </View>
+              <View style={styles.texts}>
+                <Text style={styles.title} numberOfLines={2}>{book.title}</Text>
+                {!!book.author && <Text style={styles.author} numberOfLines={1}>{book.author}</Text>}
+              </View>
+            </View>
+            <View style={styles.rule} />
+            {failed && !code ? (
               <Text style={styles.retry} onPress={ensureReading} accessibilityRole="button">
                 Pas de réseau ? Toucher pour réessayer
               </Text>
             ) : (
-              <View style={styles.skeleton} />
+              <View
+                style={styles.cases}
+                accessible
+                accessibilityLabel={code ? `Code de la lecture : ${code.split('').join(' ')}` : 'Code en préparation'}
+              >
+                {Array.from({ length: CODE_LENGTH }, (_, i) => (
+                  <LinearGradient key={i} colors={CASE_GRADIENT} style={styles.case}>
+                    {code ? (
+                      <Animated.Text entering={FadeIn.duration(200).delay(i * 40)} style={[styles.digit, accentHeadroom(DIGIT_SIZE)]}>
+                        {code[i]}
+                      </Animated.Text>
+                    ) : (
+                      <View style={styles.skeleton} />
+                    )}
+                  </LinearGradient>
+                ))}
+              </View>
             )}
-            {!failed && (
-              <GlassButton icon={copied ? CheckIcon : CopyIcon} onPress={copy} accessibilityLabel={copied ? 'Code copié' : 'Copier le code'} />
-            )}
-          </View>
+          </LinearGradient>
+
+          {!!code && (
+            <Pressable onPress={copy} hitSlop={12} style={styles.copy} accessibilityRole="button" accessibilityLabel={copied ? 'Code copié' : 'Copier le code'}>
+              {copied ? <CheckIcon size={16} color={colors.white} /> : <CopyIcon size={16} color={colors.white} />}
+              <Text style={styles.copyText}>{copied ? 'Copié' : 'Copier le code'}</Text>
+            </Pressable>
+          )}
         </Animated.View>
 
         <Animated.View entering={rise(2)} style={styles.footer}>
@@ -162,7 +183,11 @@ export default function InviterScreen() {
   );
 }
 
-const CODE_SIZE = 34;
+const CODE_LENGTH = 6;
+const DIGIT_SIZE = 30;
+const THUMB_W = 48;
+/** Une case du code : papier un cran plus clair que la carte */
+const CASE_GRADIENT = ['#fffdf9', '#f4eee5'] as const;
 
 const styles = StyleSheet.create({
   root: {
@@ -201,44 +226,88 @@ const styles = StyleSheet.create({
     color: colors.white,
     opacity: 0.85,
   },
-  // Le livre et son code au milieu de la place qui reste
-  book: {
+  // La carte au milieu de la place qui reste
+  middle: {
     flex: 1,
-    alignItems: 'center',
     justifyContent: 'center',
-    gap: spacing.xl,
+    gap: spacing.lg,
   },
-  cover: {
-    width: COVER_W,
-    height: COVER_W / COVER_RATIO,
-    borderRadius: 2,
-    transform: [{ rotate: '-2deg' }],
+  card: {
+    borderRadius: borderRadius.xl,
+    padding: spacing.lg,
   },
-  codeRow: {
+  bookRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.md,
-    minHeight: 44,
   },
-  codeText: {
+  thumb: {
+    width: THUMB_W,
+    aspectRatio: COVER_RATIO,
+  },
+  texts: {
+    flex: 1,
+    gap: 2,
+  },
+  title: {
+    fontFamily: fonts.display,
+    fontSize: 18,
+    lineHeight: 23,
+    color: colors.textPrimary,
+  },
+  author: {
+    fontFamily: fonts.body,
+    fontSize: 14,
+    lineHeight: 19,
+    color: colors.textTertiary,
+  },
+  rule: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: inkAlpha(0.12),
+    marginVertical: spacing.lg,
+  },
+  cases: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+  },
+  case: {
+    flex: 1,
+    height: 56,
+    borderRadius: borderRadius.sm,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: inkAlpha(0.1),
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  digit: {
     // Dans la police d'accent, comme le chiffre de Ma page
     fontFamily: fonts.accent,
-    fontSize: CODE_SIZE,
-    letterSpacing: 3,
-    color: colors.white,
+    fontSize: DIGIT_SIZE,
+    color: lowki.chocolate.dark,
+  },
+  skeleton: {
+    width: 14,
+    height: 20,
+    borderRadius: borderRadius.xs,
+    backgroundColor: inkAlpha(0.06),
   },
   retry: {
     fontFamily: fonts.bodyMedium,
     fontSize: 14,
     lineHeight: 20,
-    color: colors.white,
-    opacity: 0.85,
+    color: colors.textTertiary,
   },
-  skeleton: {
-    width: 140,
-    height: 20,
-    borderRadius: borderRadius.sm,
-    backgroundColor: 'rgba(255,255,255,0.18)',
+  copy: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'center',
+    gap: spacing.sm,
+  },
+  copyText: {
+    fontFamily: fonts.bodySemiBold,
+    fontSize: 15,
+    color: colors.white,
+    opacity: 0.9,
   },
   footer: {
     paddingBottom: spacing.lg,
