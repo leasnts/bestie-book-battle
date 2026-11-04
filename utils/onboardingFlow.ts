@@ -41,7 +41,7 @@ const FLOWS: Record<OnboardingFlow, OnboardingStep[]> = {
 };
 
 /** Les écrans à questions, ceux qui portent le fil de progression */
-const ASKING: OnboardingStep[] = ['rythme', 'formats', 'choix', 'livre', 'page', 'objectif', 'inviter'];
+const ASKING: OnboardingStep[] = ['rythme', 'formats', 'choix', 'livre', 'page', 'objectif'];
 
 /** L'écran qui suit, dans ce parcours */
 export function nextStep(flow: OnboardingFlow, step: OnboardingStep): `/onboarding/${OnboardingStep}` {
