@@ -97,11 +97,34 @@ const players = new Map<FeelName, AudioPlayer>();
 function player(name: FeelName): AudioPlayer {
   let p = players.get(name);
   if (!p) {
-    p = createAudioPlayer(SOUNDS[name]);
-    p.volume = VOLUME;
-    players.set(name, p);
+    const created = createAudioPlayer(SOUNDS[name]);
+    created.volume = VOLUME;
+    // Rembobiné dès qu'il a fini : le prochain play() part tout de suite du début
+    created.addListener('playbackStatusUpdate', (status) => {
+      if (status.didJustFinish) created.seekTo(0).catch(() => {});
+    });
+    players.set(name, created);
+    p = created;
   }
   return p;
+}
+
+/**
+ * Rejoue un son depuis le début. `seekTo` est asynchrone côté iOS, `play` non :
+ * les lancer l'un après l'autre sans attendre faisait partir play() avant le
+ * rembobinage, au bout du fichier — un son sur deux restait muet, au hasard
+ * (Lea, 2026-11-05). Déjà au début : on joue tout de suite ; sinon on attend
+ * le rembobinage.
+ */
+function replay(p: AudioPlayer) {
+  if (p.currentTime === 0 && !p.playing) {
+    p.play();
+    return;
+  }
+  p.pause();
+  p.seekTo(0)
+    .then(() => p.play())
+    .catch(() => {});
 }
 
 /**
@@ -137,9 +160,7 @@ export function feel(name: FeelName) {
   if (sounds) {
     // Un son raté ne doit jamais casser le geste qui l'a lancé
     try {
-      const p = player(name);
-      p.seekTo(0).catch(() => {});
-      p.play();
+      replay(player(name));
     } catch {}
   }
 }
