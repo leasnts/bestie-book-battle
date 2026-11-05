@@ -14,7 +14,6 @@ import DateTimePicker, { type DateTimePickerEvent } from '@react-native-communit
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback, useMemo, useState } from 'react';
 import {
-  Alert,
   InputAccessoryView,
   Keyboard,
   Pressable,
@@ -31,6 +30,7 @@ import { useProgressStore } from '../stores/progressStore';
 import { useProjectStore } from '../stores/projectStore';
 import { borderRadius, colors, fonts, fontSize, shadows, spacing } from '../utils/constants';
 import { confirmDeleteCap } from '../utils/confirmDeleteCap';
+import { nudge, oops } from '../utils/notice';
 
 function inAWeek(): Date {
   const d = new Date();
@@ -94,14 +94,11 @@ export default function CapRoute() {
 
     const pages = parseInt(targetPage, 10);
     if (!pages || pages <= 0) {
-      Alert.alert('Erreur', 'Entre un numéro de page valide.');
+      nudge('Choisis la page du cap', `Entre 1 et ${totalPages}`);
       return;
     }
     if (pages > totalPages) {
-      Alert.alert(
-        'Erreur',
-        `Le livre fait ${totalPages} pages, le cap ne peut pas dépasser ce nombre.`,
-      );
+      nudge(`Le livre s'arrête p. ${totalPages}`, `Choisis un cap entre 1 et ${totalPages}`);
       return;
     }
 
@@ -133,8 +130,8 @@ export default function CapRoute() {
         });
       }
       router.back();
-    } catch {
-      Alert.alert('Erreur', "Impossible d'enregistrer le cap.");
+    } catch (error) {
+      oops('Cap pas enregistré', error, { retry: () => handleSave() });
     } finally {
       setIsSaving(false);
     }

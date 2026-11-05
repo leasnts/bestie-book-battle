@@ -47,6 +47,7 @@ import { useAuthStore } from '../stores/authStore';
 import { useFeelStore } from '../stores/feelStore';
 import { borderRadius, colors, fonts, fontSize, paperFrameGradient, spacing } from '../utils/constants';
 import { buzz, feel } from '../utils/feel';
+import { oops } from '../utils/notice';
 
 const APP_VERSION = Constants.expoConfig?.version ?? '1.0';
 const REMINDER_LABEL = `${EVENING_REMINDER_TIME.hour}:${String(EVENING_REMINDER_TIME.minute).padStart(2, '0')}`;
@@ -112,8 +113,8 @@ export default function SettingsRoute() {
             await logout();
             router.dismissAll();
             router.replace('/auth/login');
-          } catch (error: any) {
-            Alert.alert('Erreur', error?.message || 'Impossible de te déconnecter. Réessaie.');
+          } catch (error) {
+            oops('Toujours connecté·e', error);
           } finally {
             setBusy(false);
           }
@@ -143,8 +144,8 @@ export default function SettingsRoute() {
                     await deleteAccount();
                     router.dismissAll();
                     router.replace('/auth/login');
-                  } catch (error: any) {
-                    Alert.alert('Erreur', error?.message || 'Impossible de supprimer ton compte. Réessaie.');
+                  } catch (error) {
+                    oops('Compte pas supprimé', error, { hint: 'Rien n’a été effacé, réessaie dans un instant' });
                   } finally {
                     setBusy(false);
                   }

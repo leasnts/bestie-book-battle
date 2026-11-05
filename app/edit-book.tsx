@@ -27,6 +27,7 @@ import {
   TextInput,
   type TextInputInstance,
   View,
+  Linking,
 } from 'react-native';
 import Button3D from '../components/Button3D';
 import ImageCropModal, { type PendingImage } from '../components/ui/ImageCropModal';
@@ -40,6 +41,7 @@ import { borderRadius, colors, fonts, fontSize, shadowAlpha, shadows, spacing } 
 import { extractCoverPalette, type CoverPalette } from '../utils/coverPalette';
 import { CoverImage } from '../components/ui/BookCover';
 import { StitchBorder } from '../components/ui/Stitch';
+import { nudge, oops } from '../utils/notice';
 
 // Retire la barre « OK » native au-dessus du clavier numérique d'iOS
 const ACCESSORY_ID = 'editbook-pages-empty';
@@ -77,7 +79,10 @@ export default function EditBookRoute() {
       setIsPickingImage(true);
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert('Permission refusée', "Nous avons besoin d'accéder à ta galerie pour changer la couverture.");
+        Alert.alert('Photos', "Autorise l'accès aux photos dans les réglages pour changer la couverture.", [
+          { text: 'Annuler', style: 'cancel' },
+          { text: 'Réglages', onPress: () => Linking.openSettings() },
+        ]);
         return;
       }
       const result = await ImagePicker.launchImageLibraryAsync({
@@ -91,7 +96,7 @@ export default function EditBookRoute() {
       }
     } catch (error) {
       console.error('Erreur sélection image:', error);
-      Alert.alert('Erreur', 'Impossible de sélectionner une image');
+      oops('Image pas chargée', error, { hint: 'Choisis-en une autre ou réessaie' });
     } finally {
       setIsPickingImage(false);
     }
@@ -100,11 +105,11 @@ export default function EditBookRoute() {
   const handleSave = useCallback(async () => {
     if (!activeChallenge || !user?.id) return;
     if (!editionOnly) {
-      if (!title.trim()) { Alert.alert('Titre manquant', 'Entre un titre pour le livre.'); return; }
-      if (!author.trim()) { Alert.alert('Auteur manquant', "Entre un nom d'auteur."); return; }
+      if (!title.trim()) { nudge('Il manque le titre', 'Écris-le juste au-dessus'); return; }
+      if (!author.trim()) { nudge("Il manque l'auteur·ice", 'Écris son nom juste au-dessus'); return; }
     }
     const pages = parseInt(totalPages, 10);
-    if (!pages || pages <= 0) { Alert.alert('Pages invalides', 'Entre un nombre de pages valide.'); return; }
+    if (!pages || pages <= 0) { nudge('Combien de pages ?', 'Écris le nombre de ton édition'); return; }
 
     Keyboard.dismiss();
     setIsSaving(true);
@@ -144,7 +149,7 @@ export default function EditBookRoute() {
       router.back();
     } catch (error) {
       console.error('Erreur sauvegarde:', error);
-      Alert.alert('Erreur', "Impossible d'enregistrer les modifications.");
+      oops('Livre pas enregistré', error, { retry: () => handleSave() });
     } finally {
       setIsSaving(false);
     }

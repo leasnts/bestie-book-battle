@@ -50,6 +50,7 @@ import { accentGradient, colors, creamAlpha, fonts, inkAlpha, spacing } from '..
 import GlassButton from './GlassButton';
 import RoundButton, { ROUND_BUTTON_SIZE } from './RoundButton';
 import VoicePlayer from './VoicePlayer';
+import { oops } from '../../utils/notice';
 
 /** La voix n'a pas besoin de plus : 22 kHz mono, AAC à 32 kbps */
 const VOICE_RECORDING: RecordingOptions = {
@@ -190,7 +191,7 @@ export default function VoiceRecorder({
       current.record({ forDuration: MAX_VOICE_SECONDS });
     } catch (error) {
       console.error('[Carnet] enregistrement impossible', error);
-      Alert.alert('Erreur', "Le vocal n'a pas pu démarrer. Réessaie.");
+      oops('Vocal pas lancé', error, { hint: 'Retouche le micro pour réessayer' });
       setRecordingBoth(false);
     }
   }, [recorder, onChange, setRecordingBoth]);
