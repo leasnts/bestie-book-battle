@@ -8,11 +8,12 @@
 
 import { useRouter } from 'expo-router';
 import React, { useCallback } from 'react';
-import { Alert, StyleSheet } from 'react-native';
+import { StyleSheet } from 'react-native';
 import EmojiGrid from '../components/ui/EmojiGrid';
 import SheetPage from '../components/ui/SheetPage';
 import { useQuickNote } from '../hooks/useQuickNote';
 import { spacing } from '../utils/constants';
+import { oops } from '../utils/notice';
 
 export default function EmojiNoteRoute() {
   const router = useRouter();
@@ -26,7 +27,7 @@ export default function EmojiNoteRoute() {
         router.back();
       } catch (error) {
         console.error('[Carnet] note emoji impossible', error);
-        Alert.alert('Erreur', "La note n'a pas pu être ajoutée. Réessaie.");
+        oops('Note pas postée', error, { hint: 'Retouche ton emoji dans un instant' });
       }
     },
     [post, posting, router],

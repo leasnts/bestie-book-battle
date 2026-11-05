@@ -861,6 +861,21 @@ Prototype validé le 2026-10-28 (artefact « Onboarding chapi »). Deux temps :
   (`feel('bienvenue')`). En rejoignant, les deux yeux se retrouvent.
 - Position de départ posée sans historique ni série (`set_start_position`).
 
+### Bandeau d'erreur — `oops()` / `nudge()` (#205)
+
+Un seul modèle pour dire qu'une chose n'a pas marché : une gélule en verre
+dépoli qui descend sous la Dynamic Island, au-dessus de tout (sheets compris).
+Code : `utils/notice.ts`, rendu par `components/ui/NoticeHost.tsx`.
+
+- **Ce qui s'est passé**, en quelques mots, sans point (« Page pas enregistrée »).
+- **Quoi faire** dessous. Sans réseau, toujours « Pas de réseau, réessaie quand
+  ça capte » ; sinon un conseil précis (« Tes changements sont gardés, réessaie »).
+- **Réessayer** en encre quand l'action peut être relancée telle quelle.
+- `oops` pour un échec (son `erreur`), `nudge` pour une saisie à corriger
+  (vibration seule, icône Info).
+- Jamais `Alert.alert('Erreur', …)`. Les `Alert` natifs restent pour les
+  confirmations et les autorisations qui renvoient aux Réglages.
+
 ### Icônes
 
 **Une seule banque : [Lucide](https://lucide.dev/icons/)** (`lucide-react-native`),

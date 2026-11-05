@@ -68,6 +68,7 @@ import {
 } from '../utils/track';
 import { AccentUnits } from '../components/ui/AccentWord';
 import { startAdding } from '../utils/onboardingFlow';
+import { oops } from '../utils/notice';
 
 export default function BookRoute() {
   const router = useRouter();
@@ -196,7 +197,7 @@ export default function BookRoute() {
               }
             } catch (error) {
               console.error('Erreur en quittant le livre:', error);
-              Alert.alert('Erreur', 'Impossible de quitter ce livre. Réessaie.');
+              oops('Livre pas quitté', error);
             }
           },
         },

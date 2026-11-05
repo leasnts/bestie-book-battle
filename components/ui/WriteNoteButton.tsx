@@ -23,6 +23,7 @@ import type { Annotation } from '../../types/supabase';
 import { positionFromPage } from '../../utils/annotations';
 import NoteComposer, { EMPTY_DRAFT, type ComposerDraft } from './NoteComposer';
 import GlassButton from './GlassButton';
+import { oops } from '../../utils/notice';
 
 interface WriteNoteButtonProps {
   /** Juste avant d'ouvrir la feuille (fermer ce qui est ouvert à côté) */
@@ -86,7 +87,7 @@ export function useEditNote() {
           return true;
         } catch (error) {
           console.error('[Carnet] modification impossible', error);
-          Alert.alert('Erreur', "La note n'a pas pu être enregistrée. Réessaie.");
+          oops('Note pas modifiée', error, { hint: 'Tes changements sont gardés, réessaie' });
           return false;
         }
       }}
@@ -104,7 +105,7 @@ export function useEditNote() {
                   resolve(true);
                 } catch (error) {
                   console.error('[Carnet] suppression impossible', error);
-                  Alert.alert('Erreur', "La note n'a pas pu être supprimée. Réessaie.");
+                  oops('Note toujours là', error);
                   resolve(false);
                 }
               },

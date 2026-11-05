@@ -16,6 +16,7 @@ import { useProgressStore } from '../stores/progressStore';
 import { useProjectStore } from '../stores/projectStore';
 import type { AnnotationCategory } from '../types/supabase';
 import { DEFAULT_CATEGORY, positionFromPage } from '../utils/annotations';
+import { oops } from '../utils/notice';
 
 export interface QuickNote {
   body?: string | null;
@@ -78,7 +79,7 @@ export function useQuickNote() {
         return await post(note);
       } catch (error) {
         console.error('[Carnet] note rapide impossible', error);
-        Alert.alert('Erreur', "La note n'a pas pu être ajoutée. Réessaie.");
+        oops('Note pas postée', error, { hint: 'Elle est gardée, réessaie dans un instant' });
         return false;
       }
     },

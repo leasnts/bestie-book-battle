@@ -32,6 +32,7 @@ import AnimatedSplash from '../components/AnimatedSplash';
 import { useSplashStore } from '../stores/splashStore';
 import { firstStep } from '../utils/onboardingFlow';
 import { sheetScreenOptions } from '../components/ui/SheetHeader';
+import NoticeHost from '../components/ui/NoticeHost';
 import { useFonts } from 'expo-font';
 
 // Désactivé : expo-splash-screen provoque des erreurs "No native splash screen
@@ -81,6 +82,7 @@ export default function RootLayout() {
       <SafeAreaProvider>
         <PaperProvider theme={theme}>
           <RootLayoutNav />
+          <NoticeHost />
           <StatusBar style="dark" />
         </PaperProvider>
       </SafeAreaProvider>

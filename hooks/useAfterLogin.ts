@@ -4,6 +4,7 @@ import type { AppleSignInResult } from '../services/supabase/auth';
 import { useOnboardingStore } from '../stores/onboardingStore';
 import { useProjectStore } from '../stores/projectStore';
 import { firstStep } from '../utils/onboardingFlow';
+import { oops } from '../utils/notice';
 
 /**
  * Où aller une fois connecté, par Apple ou par email :
@@ -16,7 +17,7 @@ export function useAfterLogin() {
   const router = useRouter();
   const loadUserChallenges = useProjectStore((state) => state.loadUserChallenges);
 
-  return async (result: AppleSignInResult) => {
+  const afterLogin = async (result: AppleSignInResult): Promise<void> => {
     const onboarding = useOnboardingStore.getState();
     const invited = !!onboarding.invitation;
 
@@ -36,7 +37,7 @@ export function useAfterLogin() {
     // l'onboarding : l'utilisateur a un compte existant. On affiche une erreur
     // pour qu'il réessaie plutôt que de lui faire re-créer une lecture.
     if (challengesError) {
-      Alert.alert('Erreur de connexion', 'Impossible de charger tes lectures. Vérifie ta connexion et réessaie.');
+      oops('Lectures pas chargées', challengesError, { retry: () => afterLogin(result) });
       return;
     }
 
@@ -51,4 +52,5 @@ export function useAfterLogin() {
       router.replace(firstStep('add'));
     }
   };
+  return afterLogin;
 }
