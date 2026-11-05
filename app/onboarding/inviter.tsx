@@ -38,6 +38,7 @@ import AccentWord, { accentHeadroom } from '../../components/ui/AccentWord';
 import BookCover, { COVER_RATIO } from '../../components/ui/BookCover';
 import { StitchBorder } from '../../components/ui/Stitch';
 import GlassButton from '../../components/ui/GlassButton';
+import Shimmer from '../../components/ui/Shimmer';
 import { createReading, deadlineFrom, ensureProfile, updateReadingBook } from '../../services/onboarding';
 import { useOnboardingStore } from '../../stores/onboardingStore';
 import { useProjectStore } from '../../stores/projectStore';
@@ -157,7 +158,10 @@ export default function InviterScreen() {
                         {code[i]}
                       </Animated.Text>
                     ) : (
-                      <View style={styles.skeleton} />
+                      // Pas encore de code : la case en creux, et une lueur qui passe de case en case
+                      <View style={styles.loading}>
+                        <Shimmer delay={i * SHIMMER_STEP} />
+                      </View>
                     )}
                   </LinearGradient>
                 ))}
@@ -185,6 +189,8 @@ export default function InviterScreen() {
 
 const CODE_LENGTH = 6;
 const DIGIT_SIZE = 30;
+/** La lueur passe d'une case à la suivante */
+const SHIMMER_STEP = 90;
 const THUMB_W = 48;
 /** Une case du code : papier un cran plus clair que la carte */
 const CASE_GRADIENT = ['#fffdf9', '#f4eee5'] as const;
@@ -272,6 +278,7 @@ const styles = StyleSheet.create({
   },
   case: {
     flex: 1,
+    overflow: 'hidden',
     height: 56,
     borderRadius: borderRadius.sm,
     borderWidth: StyleSheet.hairlineWidth,
@@ -285,11 +292,13 @@ const styles = StyleSheet.create({
     fontSize: DIGIT_SIZE,
     color: lowki.chocolate.dark,
   },
-  skeleton: {
-    width: 14,
-    height: 20,
-    borderRadius: borderRadius.xs,
-    backgroundColor: inkAlpha(0.06),
+  loading: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: inkAlpha(0.07),
   },
   retry: {
     fontFamily: fonts.bodyMedium,
