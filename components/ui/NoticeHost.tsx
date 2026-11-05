@@ -3,14 +3,16 @@
  *
  * On l'appelle par `oops()` ou `nudge()` (utils/notice.ts), jamais directement.
  *
- * - Une gélule en verre dépoli qui descend sous la Dynamic Island : une icône
- *   Lucide, ce qui s'est passé, quoi faire, et « Réessayer » en encre quand
- *   l'action peut être relancée.
+ * - Une carte rouge Lowki (dégradé, jamais d'aplat) qui naît de la Dynamic
+ *   Island, à la Opal : une icône Lucide ton sur ton, ce qui s'est passé, quoi
+ *   faire, et « Réessayer » en pleine largeur dessous quand l'action peut être
+ *   relancée. Rouge plutôt que chocolat : en chocolat, elle se lisait comme un
+ *   bouton (Lea, 2026-11-05).
+ * - Même marge intérieure partout (`PADDING`), entre le texte et le bouton aussi.
  * - Au-dessus de tout, sheets natifs compris : `FullWindowOverlay` la pose dans
  *   sa propre fenêtre iOS. Une vue à la racine passerait sous un formSheet.
  * - Elle part seule (5 s, 8 s avec « Réessayer »), ou au toucher.
- * - Née dans une vue en fondu : le verre reste translucide (GlassMaterial).
- * - Reduce Motion : fondu seul, sans glissé.
+ * - Reduce Motion : fondu seul, sans déploiement.
  * - VoiceOver lit le message dès qu'il apparaît.
  */
 
@@ -28,16 +30,24 @@ import Animated, {
 } from 'react-native-reanimated';
 import { FullWindowOverlay } from 'react-native-screens';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, fonts, inkGradient, motion, spacing } from '../../utils/constants';
+import { accentGradient, colors, fonts, lowki, motion, spacing } from '../../utils/constants';
 import { useNoticeStore, type Notice } from '../../utils/notice';
-import GlassMaterial from './GlassMaterial';
 import PressableScale from './PressableScale';
 
-const RADIUS = 24;
+/** Marge intérieure, identique sur les quatre côtés et entre texte et bouton */
+const PADDING = spacing.lg;
+/** Concentrique avec les coins de l'écran, comme les cartes à la Opal */
+const RADIUS = 32;
+/** Le bouton, concentrique avec la carte */
+const BUTTON_RADIUS = RADIUS - PADDING;
+/** Texte sur le rouge : même teinte, très claire (≥ 5:1 sur le haut du dégradé) */
+const ON_RED = '#fbe9ea';
+const ON_RED_SOFT = '#f6dadc';
 const LIFETIME = 5000;
 const LIFETIME_WITH_RETRY = 8000;
-/** D'où descend la gélule */
-const DROP = -28;
+/** Taille de départ, ramassée comme la Dynamic Island */
+const FROM_SCALE_X = 0.36;
+const FROM_SCALE_Y = 0.2;
 
 const ICONS = { error: CircleAlert, offline: WifiOff, hint: Info } as const;
 
@@ -57,7 +67,7 @@ export default function NoticeHost() {
       progress.value = 0;
       progress.value = withTiming(1, {
         duration: motion.duration.entrance,
-        easing: Easing.bezier(...motion.easing.easeOutQuart),
+        easing: Easing.bezier(...motion.easing.easeOutQuint),
       });
       AccessibilityInfo.announceForAccessibility(
         [current.title, current.hint].filter(Boolean).join('. '),
@@ -77,10 +87,18 @@ export default function NoticeHost() {
     );
   }, [current, hide, progress]);
 
-  const animatedStyle = useAnimatedStyle(() => ({
-    opacity: progress.value,
-    transform: [{ translateY: reducedMotion ? 0 : (1 - progress.value) * DROP }],
-  }));
+  const animatedStyle = useAnimatedStyle(() => {
+    const p = progress.value;
+    return {
+      opacity: reducedMotion ? p : Math.min(1, p * 2.5),
+      transform: reducedMotion
+        ? []
+        : [
+            { scaleX: FROM_SCALE_X + (1 - FROM_SCALE_X) * p },
+            { scaleY: FROM_SCALE_Y + (1 - FROM_SCALE_Y) * p },
+          ],
+    };
+  });
 
   if (!shown) return null;
 
@@ -88,44 +106,39 @@ export default function NoticeHost() {
   const retry = shown.retry;
 
   const banner = (
-    <View style={[styles.layer, { top: insets.top + spacing.xs }]} pointerEvents="box-none">
+    <View style={[styles.layer, { top: insets.top }]} pointerEvents="box-none">
       <Animated.View style={[styles.shadow, animatedStyle]}>
         <Pressable
-          style={styles.banner}
           onPress={() => hide(shown.id)}
           accessibilityRole="alert"
           accessibilityLabel={[shown.title, shown.hint].filter(Boolean).join('. ')}
           accessibilityHint="Touche pour fermer"
         >
-          <GlassMaterial radius={RADIUS} veil={0.72} rim frosted />
-          <Icon size={20} color={colors.textPrimary} strokeWidth={2.2} />
-          <View style={styles.texts}>
-            <Text style={styles.title} numberOfLines={2}>
-              {shown.title}
-            </Text>
-            {shown.hint ? (
-              <Text style={styles.hint} numberOfLines={2}>
-                {shown.hint}
-              </Text>
+          <LinearGradient colors={accentGradient} style={styles.card}>
+            <View style={styles.row}>
+              <Icon size={22} color={lowki.red.deep} strokeWidth={2.4} />
+              <View style={styles.texts}>
+                <Text style={styles.title}>{shown.title}</Text>
+                {shown.hint ? <Text style={styles.hint}>{shown.hint}</Text> : null}
+              </View>
+            </View>
+            {retry ? (
+              <PressableScale
+                pressedScale={0.97}
+                onPress={() => {
+                  hide(shown.id);
+                  retry();
+                }}
+                accessibilityRole="button"
+                accessibilityLabel="Réessayer"
+              >
+                <LinearGradient colors={[lowki.red.dark, lowki.red.deep]} style={styles.retry}>
+                  <RotateCw size={15} color={ON_RED} strokeWidth={2.4} />
+                  <Text style={styles.retryText}>Réessayer</Text>
+                </LinearGradient>
+              </PressableScale>
             ) : null}
-          </View>
-          {retry ? (
-            <PressableScale
-              pressedScale={0.94}
-              onPress={() => {
-                hide(shown.id);
-                retry();
-              }}
-              accessibilityRole="button"
-              accessibilityLabel="Réessayer"
-              hitSlop={8}
-            >
-              <LinearGradient colors={inkGradient} style={styles.retry}>
-                <RotateCw size={14} color={colors.white} strokeWidth={2.4} />
-                <Text style={styles.retryText}>Réessayer</Text>
-              </LinearGradient>
-            </PressableScale>
-          ) : null}
+          </LinearGradient>
         </Pressable>
       </Animated.View>
     </View>
@@ -137,23 +150,24 @@ export default function NoticeHost() {
 const styles = StyleSheet.create({
   layer: {
     position: 'absolute',
-    left: spacing.lg,
-    right: spacing.lg,
+    left: spacing.sm,
+    right: spacing.sm,
   },
-  // L'ombre vit hors du verre, sans overflow (comme GlassButton)
+  // L'ombre vit hors de la carte ; elle se déploie depuis le haut, comme l'île
   shadow: {
     borderRadius: RADIUS,
+    transformOrigin: 'top',
     shadowColor: colors.black,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.14,
-    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.28,
+    shadowRadius: 24,
   },
-  banner: {
-    minHeight: 56,
+  card: {
     borderRadius: RADIUS,
-    paddingVertical: spacing.md,
-    paddingLeft: spacing.lg,
-    paddingRight: spacing.md,
+    padding: PADDING,
+    gap: PADDING,
+  },
+  row: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.md,
@@ -163,26 +177,26 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   title: {
-    fontFamily: fonts.bodySemiBold,
+    fontFamily: fonts.bodyBold,
     fontSize: 15,
-    color: colors.textPrimary,
+    color: ON_RED,
   },
   hint: {
     fontFamily: fonts.body,
     fontSize: 13,
-    color: colors.textTertiary,
+    color: ON_RED_SOFT,
   },
   retry: {
-    height: 32,
-    borderRadius: 16,
-    paddingHorizontal: spacing.md,
+    height: 44,
+    borderRadius: BUTTON_RADIUS,
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     gap: 6,
   },
   retryText: {
     fontFamily: fonts.bodyBold,
-    fontSize: 13,
-    color: colors.white,
+    fontSize: 14,
+    color: ON_RED,
   },
 });

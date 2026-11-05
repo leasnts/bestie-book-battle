@@ -863,14 +863,18 @@ Prototype validé le 2026-10-28 (artefact « Onboarding chapi »). Deux temps :
 
 ### Bandeau d'erreur — `oops()` / `nudge()` (#205)
 
-Un seul modèle pour dire qu'une chose n'a pas marché : une gélule en verre
-dépoli qui descend sous la Dynamic Island, au-dessus de tout (sheets compris).
+Un seul modèle pour dire qu'une chose n'a pas marché : une carte rouge Lowki
+(dégradé) qui naît de la Dynamic Island, à la Opal, au-dessus de tout (sheets
+compris). Pas de chocolat : une surface chocolat se lit comme un bouton. Même
+marge intérieure sur les quatre côtés et entre le texte et le bouton ; texte en
+rose très clair, icône ton sur ton en `red.deep`.
 Code : `utils/notice.ts`, rendu par `components/ui/NoticeHost.tsx`.
 
 - **Ce qui s'est passé**, en quelques mots, sans point (« Page pas enregistrée »).
 - **Quoi faire** dessous. Sans réseau, toujours « Pas de réseau, réessaie quand
   ça capte » ; sinon un conseil précis (« Tes changements sont gardés, réessaie »).
-- **Réessayer** en encre quand l'action peut être relancée telle quelle.
+- **Réessayer** en pleine largeur sous le texte (rouge foncé → `red.deep`), seulement
+  quand l'action peut être relancée telle quelle.
 - `oops` pour un échec (son `erreur`), `nudge` pour une saisie à corriger
   (vibration seule, icône Info).
 - Jamais `Alert.alert('Erreur', …)`. Les `Alert` natifs restent pour les
