@@ -4,8 +4,7 @@
  * On l'appelle par `oops()` ou `nudge()` (utils/notice.ts), jamais directement.
  *
  * - Une carte rouge Lowki (dégradé, jamais d'aplat) qui naît de la Dynamic
- *   Island, à la Opal : ce qui s'est passé, précédé d'une icône Lucide à la
- *   taille du titre, quoi faire, et « Réessayer » en pleine largeur dessous quand l'action peut être
+ *   Island, à la Opal : l'icône dans un rond cerclé, ce qui s'est passé, quoi faire, et « Réessayer » en pleine largeur dessous quand l'action peut être
  *   relancée. Rouge plutôt que chocolat : en chocolat, elle se lisait comme un
  *   bouton (Lea, 2026-11-05).
  * - Même marge intérieure partout (`PADDING`), entre le texte et le bouton aussi.
@@ -30,7 +29,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { FullWindowOverlay } from 'react-native-screens';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { accentGradient, colors, fonts, lowki, motion, spacing } from '../../utils/constants';
+import { accentGradient, colors, fonts, lowki, motion, ROUND_BUTTON_SIZE, spacing } from '../../utils/constants';
 import { useNoticeStore, type Notice } from '../../utils/notice';
 import PressableScale from './PressableScale';
 
@@ -43,8 +42,9 @@ const BUTTON_RADIUS = RADIUS - PADDING;
 /** Texte sur le rouge : même teinte, très claire (≥ 5:1 sur le haut du dégradé) */
 const ON_RED = '#fbe9ea';
 const ON_RED_SOFT = '#f6dadc';
-/** L'icône à la taille du titre (15 pt), posée sur sa ligne */
-const ICON_SIZE = 15;
+/** Le rond de l'icône : la taille des boutons ronds de l'app */
+const BADGE = ROUND_BUTTON_SIZE;
+const BADGE_ICON = 20;
 const LIFETIME = 5000;
 const LIFETIME_WITH_RETRY = 8000;
 /** Taille de départ, ramassée comme la Dynamic Island */
@@ -117,12 +117,15 @@ export default function NoticeHost() {
           accessibilityHint="Touche pour fermer"
         >
           <LinearGradient colors={accentGradient} style={styles.card}>
-            <View style={styles.texts}>
-              <View style={styles.titleRow}>
-                <Icon size={ICON_SIZE} color={ON_RED} strokeWidth={2.4} />
+            <View style={styles.row}>
+              {/* L'icône a sa place, dans un rond cerclé, comme les feuilles d'Opal */}
+              <LinearGradient colors={[lowki.red.dark, lowki.red.deep]} style={styles.badge}>
+                <Icon size={BADGE_ICON} color={ON_RED} strokeWidth={2.2} />
+              </LinearGradient>
+              <View style={styles.texts}>
                 <Text style={styles.title}>{shown.title}</Text>
+                {shown.hint ? <Text style={styles.hint}>{shown.hint}</Text> : null}
               </View>
-              {shown.hint ? <Text style={styles.hint}>{shown.hint}</Text> : null}
             </View>
             {retry ? (
               <PressableScale
@@ -169,14 +172,23 @@ const styles = StyleSheet.create({
     padding: PADDING,
     gap: PADDING,
   },
-  texts: {
-    gap: spacing.xs,
-  },
-  // L'icône fait partie du titre : même hauteur que ses capitales, même couleur
-  titleRow: {
+  row: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: spacing.md,
+  },
+  badge: {
+    width: BADGE,
+    height: BADGE,
+    borderRadius: BADGE / 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(251,233,234,0.22)',
+  },
+  texts: {
+    flex: 1,
+    gap: 2,
   },
   title: {
     flexShrink: 1,
