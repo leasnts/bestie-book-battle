@@ -867,7 +867,8 @@ Un seul modèle pour dire qu'une chose n'a pas marché : une carte rouge Lowki
 (dégradé) qui naît de la Dynamic Island, à la Opal, au-dessus de tout (sheets
 compris). Pas de chocolat : une surface chocolat se lit comme un bouton. Même
 marge intérieure sur les quatre côtés et entre le texte et le bouton ; texte en
-rose très clair, icône ton sur ton en `red.deep`.
+rose très clair ; l'icône fait partie du titre (même ligne, même taille,
+même rose).
 Code : `utils/notice.ts`, rendu par `components/ui/NoticeHost.tsx`.
 
 - **Ce qui s'est passé**, en quelques mots, sans point (« Page pas enregistrée »).

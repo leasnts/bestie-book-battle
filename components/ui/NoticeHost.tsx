@@ -4,8 +4,8 @@
  * On l'appelle par `oops()` ou `nudge()` (utils/notice.ts), jamais directement.
  *
  * - Une carte rouge Lowki (dégradé, jamais d'aplat) qui naît de la Dynamic
- *   Island, à la Opal : une icône Lucide ton sur ton, ce qui s'est passé, quoi
- *   faire, et « Réessayer » en pleine largeur dessous quand l'action peut être
+ *   Island, à la Opal : ce qui s'est passé, précédé d'une icône Lucide à la
+ *   taille du titre, quoi faire, et « Réessayer » en pleine largeur dessous quand l'action peut être
  *   relancée. Rouge plutôt que chocolat : en chocolat, elle se lisait comme un
  *   bouton (Lea, 2026-11-05).
  * - Même marge intérieure partout (`PADDING`), entre le texte et le bouton aussi.
@@ -43,6 +43,8 @@ const BUTTON_RADIUS = RADIUS - PADDING;
 /** Texte sur le rouge : même teinte, très claire (≥ 5:1 sur le haut du dégradé) */
 const ON_RED = '#fbe9ea';
 const ON_RED_SOFT = '#f6dadc';
+/** L'icône à la taille du titre (15 pt), posée sur sa ligne */
+const ICON_SIZE = 15;
 const LIFETIME = 5000;
 const LIFETIME_WITH_RETRY = 8000;
 /** Taille de départ, ramassée comme la Dynamic Island */
@@ -115,12 +117,12 @@ export default function NoticeHost() {
           accessibilityHint="Touche pour fermer"
         >
           <LinearGradient colors={accentGradient} style={styles.card}>
-            <View style={styles.row}>
-              <Icon size={22} color={lowki.red.deep} strokeWidth={2.4} />
-              <View style={styles.texts}>
+            <View style={styles.texts}>
+              <View style={styles.titleRow}>
+                <Icon size={ICON_SIZE} color={ON_RED} strokeWidth={2.4} />
                 <Text style={styles.title}>{shown.title}</Text>
-                {shown.hint ? <Text style={styles.hint}>{shown.hint}</Text> : null}
               </View>
+              {shown.hint ? <Text style={styles.hint}>{shown.hint}</Text> : null}
             </View>
             {retry ? (
               <PressableScale
@@ -167,16 +169,17 @@ const styles = StyleSheet.create({
     padding: PADDING,
     gap: PADDING,
   },
-  row: {
+  texts: {
+    gap: spacing.xs,
+  },
+  // L'icône fait partie du titre : même hauteur que ses capitales, même couleur
+  titleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.md,
-  },
-  texts: {
-    flex: 1,
-    gap: 2,
+    gap: 6,
   },
   title: {
+    flexShrink: 1,
     fontFamily: fonts.bodyBold,
     fontSize: 15,
     color: ON_RED,
