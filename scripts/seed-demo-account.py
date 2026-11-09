@@ -37,6 +37,10 @@ def day(n):
 
 
 def ts(d, h, m=0):
+    # Aujourd'hui : tout se passe juste après minuit (UTC), jamais dans le futur, même
+    # quand le gel nocturne (scripts/showcase-freeze.sql) remet le compte à 00 h 01
+    if d == TODAY:
+        return f"{TODAY.isoformat()} 00:00:{m % 60:02d}+00"
     return f"{d.isoformat()} {h:02d}:{m:02d}:00+01"
 
 
@@ -99,7 +103,6 @@ BOOKS = [
 READ_HOURS = {ME: (7, 8, 21), EMMA: (22, 23), LUCAS: (12, 19), CHLOE: (21, 22), THEO: (18, 23)}
 
 emit("BEGIN;")
-emit("SET LOCAL session_replication_role = replica;  -- triggers coupés : on pose tout à la main")
 
 # ─── Nettoyage ────────────────────────────────────────────────────
 emit(f"""
@@ -110,6 +113,8 @@ DELETE FROM challenges WHERE id IN ({",".join(q(uid('book', b['key'])) for b in 
 DELETE FROM annotation_reactions WHERE user_id = '{ME}' AND annotation_id NOT IN (SELECT id FROM annotations WHERE challenge_id = '{KEEP}');
 DELETE FROM annotation_reads WHERE user_id = '{ME}' AND annotation_id NOT IN (SELECT id FROM annotations WHERE challenge_id = '{KEEP}');
 """)
+# Après les DELETE seulement : en mode replica, les clés étrangères ne cascadent plus
+emit("SET LOCAL session_replication_role = replica;  -- triggers coupés : on pose tout à la main")
 
 history_rows = []
 progress_rows = []
