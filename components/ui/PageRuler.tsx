@@ -82,6 +82,8 @@ interface PageRulerProps {
    * est alors le plafond de la règle ; « p. » remplace « /624 ».
    */
   unit?: 'pages' | 'percent' | 'count';
+  /** Posés de part et d'autre du chiffre, sur sa ligne (↺ annuler, ✓ enregistrer) */
+  actions?: React.ReactNode;
 }
 
 /** Un point de couture par page, tous les 11 pt */
@@ -91,6 +93,11 @@ const DECADE = STEP * 10;
 const RULER_HEIGHT = 74;
 /** L'air au-dessus du chiffre : aucun, il est posé en bas, contre la couture */
 const NUMBER_TOP = 0;
+/** Le total, sous le chiffre : sa taille, et la place qu'il prend sous lui (en fraction du chiffre) */
+const TOTAL_SIZE_EM = 0.5;
+const TOTAL_EM = 0.5;
+/** La place de ↺ ou ✓ de chaque côté du chiffre : le rond de 44 pt et de l'air */
+const ACTIONS_SIDE = 56;
 /** Le chiffre ne descend jamais sous cette taille, même sur le plus petit écran */
 const MIN_FONT_SIZE = 36;
 /** La ligne des points, depuis le haut de la règle (place au-dessus pour les épingles) */
@@ -120,17 +127,21 @@ const stitchThick = (page: number) => (page % 10 === 0 ? 3.6 : 2.6);
 
 const AnimatedTextInput = Animated.createAnimatedComponent(TextInput);
 
-export default function PageRuler({ currentPage, totalPages, onPageChange, fontSize = 88, club = [], unit = 'pages' }: PageRulerProps) {
+export default function PageRuler({ currentPage, totalPages, onPageChange, fontSize = 88, club = [], unit = 'pages', actions }: PageRulerProps) {
   const [width, setWidth] = useState(0);
   const onLayout = (e: LayoutChangeEvent) => setWidth(e.nativeEvent.layout.width);
   // La place laissée au chiffre : s'il en manque, il rétrécit plutôt que de faire
   // défiler l'accueil (le chiffre occupe FOOTPRINT_EM de sa taille, sous NUMBER_TOP)
   const [numberSpace, setNumberSpace] = useState(0);
   const onNumberLayout = (e: LayoutChangeEvent) => setNumberSpace(e.nativeEvent.layout.height);
+  // En largeur : le plus long nombre possible tient entre ↺ et ✓
+  const widest = figureWidth(String(totalPages), 1);
+  const widthCap = width > 0 ? Math.floor((width - 2 * BLEED - 2 * ACTIONS_SIDE) / widest) : fontSize;
   const fittedSize =
     numberSpace > 0
-      ? Math.max(MIN_FONT_SIZE, Math.min(fontSize, Math.floor((numberSpace - NUMBER_TOP) / FOOTPRINT_EM)))
+      ? Math.max(MIN_FONT_SIZE, Math.min(fontSize, widthCap, Math.floor((numberSpace - NUMBER_TOP) / (FOOTPRINT_EM + TOTAL_EM))))
       : fontSize;
+  const totalRoom = Math.round(fittedSize * TOTAL_EM);
 
   const listRef = useAnimatedRef<Animated.FlatList<number>>();
   // Où en est la règle, en points : tout le reste (chiffre, goutte) en découle
@@ -291,6 +302,7 @@ export default function PageRuler({ currentPage, totalPages, onPageChange, fontS
   );
 
   return (
+    <>
     <View
       style={styles.root}
       accessible
@@ -301,7 +313,7 @@ export default function PageRuler({ currentPage, totalPages, onPageChange, fontS
       onAccessibilityAction={(e) => step(e.nativeEvent.actionName === 'increment' ? 1 : -1)}
     >
       <GestureDetector gesture={numberPan}>
-        <View style={styles.numberBlock} onLayout={onNumberLayout}>
+        <View style={[styles.numberBlock, { paddingBottom: totalRoom }]} onLayout={onNumberLayout}>
           <InkNumber page={currentPage} total={totalPages} fontSize={fittedSize} scrollX={scrollX} label={unit === 'percent' ? '%' : unit === 'count' ? 'p.' : undefined} />
         </View>
       </GestureDetector>
@@ -335,6 +347,10 @@ export default function PageRuler({ currentPage, totalPages, onPageChange, fontS
               contentOffset={{ x: currentPage * STEP, y: 0 }}
               showsHorizontalScrollIndicator={false}
               decelerationRate={0.994}
+              // iOS pose lui-même la règle pile sur une page : lâchée doucement, elle
+              // restait parfois entre deux (point décentré dans la goutte, deux chiffres
+              // superposés, page pas enregistrée)
+              snapToInterval={STEP}
               onScroll={onScroll}
               scrollEventThrottle={16}
               // Toutes les dizaines d'emblée : partie de ma page, la liste n'a pas
@@ -348,6 +364,13 @@ export default function PageRuler({ currentPage, totalPages, onPageChange, fontS
         {width > 0 && <GlassDrop center={width / 2} totalPages={totalPages} scrollX={scrollX} stretch={stretch} lag={lag} />}
       </View>
     </View>
+    {/* Hors du bloc accessible (VoiceOver trouve les boutons), centrés sur le chiffre */}
+    {actions && (
+      <View pointerEvents="box-none" style={[styles.actions, { bottom: RULER_HEIGHT + totalRoom, height: Math.round(fittedSize * FOOTPRINT_EM) }]}>
+        {actions}
+      </View>
+    )}
+    </>
   );
 }
 
@@ -376,6 +399,7 @@ function InkNumber({
   const { lineHeight, frame, baseline } = figureBox(fontSize);
   // La largeur du chiffre, pour caler le « / 624 » (le nombre de chiffres change rarement)
   const numberWidth = figureWidth(String(page), fontSize);
+  const totalSize = Math.round(fontSize * TOTAL_SIZE_EM);
 
   const outText = useAnimatedProps(() => {
     const b = Math.max(0, Math.min(total, Math.floor(scrollX.value / STEP + 1e-3)));
@@ -434,8 +458,8 @@ function InkNumber({
 
   return (
     <View style={[frame, { width: numberWidth + 80 }]}>
-      {/* Le total, nettement en contrebas de ma page */}
-      <GhostTotal total={total} label={label} size={Math.round(fontSize * 0.72)} left={40 + numberWidth * 0.7} baseline={baseline} drop={0.4} />
+      {/* Le total, centré sous ma page */}
+      <GhostTotal total={total} label={label} size={totalSize} left={40 + (numberWidth - figureWidth(label ?? `/${total}`, totalSize)) / 2} baseline={baseline} drop={1.05} />
       {/* Le chiffre est le masque d'un dégradé d'encre : jamais d'aplat (DA) */}
       <MaskedView
         style={StyleSheet.absoluteFill}
@@ -692,6 +716,11 @@ const styles = StyleSheet.create({
   root: {
     flex: 1,
     justifyContent: 'space-between',
+  },
+  actions: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
   },
   numberBlock: {
     flex: 1,
