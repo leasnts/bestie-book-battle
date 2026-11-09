@@ -8,18 +8,17 @@
  *   règle sont posés à même le fond, entre « Le livre » et le bento.
  * - Ma page en grand sur une **règle** qu'on fait glisser (`PageRuler`,
  *   2026-09-30). Ma page est en **pages de mon édition**, d'où le « sur 624 ».
- * - La rangée du bas a une **hauteur fixe** :
- *   - au repos, rien : annoter ma page passe par les intercalaires du carré
- *     Carnet (`NoteTabs`) ; ma série est à côté du titre du livre (`BookSection`) ;
- *   - quand la page a changé, ↺ annuler, « +14 », ✓ enregistrer.
- *   La barre s'efface : il n'y a jamais de doute sur la page notée.
+ * - Quand la page a changé, ↺ annuler et ✓ enregistrer apparaissent de part et
+ *   d'autre du chiffre, sur sa ligne (retours de test, 2026-11-09). Pas de
+ *   « +14 » à côté : il s'envole à l'enregistrement (la feuille de l'accueil).
+ *   Au repos, rien : il n'y a jamais de doute sur la page notée.
  */
 
 import { CheckIcon, RotateCcwIcon } from 'lucide-react-native';
 import React, { useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
-import { colors, fonts, spacing } from '../../utils/constants';
+import { spacing } from '../../utils/constants';
 import GlassButton from './GlassButton';
 import PageRuler, { type ClubPin } from './PageRuler';
 import RoundButton from './RoundButton';
@@ -58,8 +57,7 @@ export default function PageSection({
   club,
   unit,
 }: PageSectionProps) {
-  const delta = currentPage - savedPage;
-  const hasChanged = delta !== 0;
+  const hasChanged = currentPage !== savedPage;
 
   return (
     // Remplit la place que l'accueil lui donne ; le chiffre est centré dedans
@@ -72,34 +70,21 @@ export default function PageSection({
           fontSize={pickerFontSize}
           club={club}
           unit={unit}
+          actions={
+            hasChanged ? (
+              // En fondu : le verre qui naît dans une vue en fondu reste translucide
+              <Animated.View entering={FadeIn.duration(180)} pointerEvents="box-none" style={styles.actions}>
+                {/* Secondaire : notre rond en verre, à la taille du ✓ */}
+                <GlassButton icon={RotateCcwIcon} accessibilityLabel="Annuler" onPress={onUndo} />
+                <RoundButton icon={CheckIcon} variant="dark" label="Enregistrer ma page" onPress={onSave} />
+              </Animated.View>
+            ) : null
+          }
         />
       </View>
-
-      {hasChanged ? (
-        // En fondu : le verre qui naît dans une vue en fondu reste translucide
-        <Animated.View entering={FadeIn.duration(180)} style={styles.row}>
-          {/* Secondaire : notre rond en verre, à la taille du ✓ */}
-          <GlassButton
-            icon={RotateCcwIcon}
-            accessibilityLabel="Annuler"
-            onPress={onUndo}
-          />
-          {/* Ce que je viens de lire */}
-          <Text style={styles.deltaText}>
-            {delta > 0 ? '+' : '−'}
-            {Math.abs(delta)}
-          </Text>
-          <RoundButton icon={CheckIcon} variant="dark" label="Enregistrer ma page" onPress={onSave} />
-        </Animated.View>
-      ) : (
-        <View style={styles.bar} />
-      )}
     </View>
   );
 }
-
-/** La rangée ↺ +14 ✓ : sa place reste réservée, rien ne saute quand elle apparaît */
-const ACTION_ROW_HEIGHT = 52;
 
 // ─── Styles ────────────────────────────────────────────────────────
 // Mesures de la maquette (échelle 0,865) ramenées en points.
@@ -121,22 +106,11 @@ const styles = StyleSheet.create({
     marginTop: spacing.xs,
   },
 
-  // Hauteur fixe, celle de la barre : les boutons apparaissent sans rien déplacer
-  row: {
-    height: ACTION_ROW_HEIGHT,
-    marginTop: spacing.sm,
+  // ↺ au bord gauche, ✓ au bord droit, le chiffre entre les deux
+  actions: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-  },
-  bar: {
-    height: ACTION_ROW_HEIGHT,
-    marginTop: spacing.sm,
-  },
-  deltaText: {
-    fontFamily: fonts.bodyExtraBold,
-    fontSize: 17,
-    color: colors.textSecondary,
-    fontVariant: ['tabular-nums'],
   },
 });
