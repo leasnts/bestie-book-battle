@@ -435,7 +435,7 @@ function InkNumber({
   return (
     <View style={[frame, { width: numberWidth + 80 }]}>
       {/* Le total, nettement en contrebas de ma page */}
-      <GhostTotal total={total} label={label} size={Math.round(fontSize * 0.72)} left={40 + numberWidth * 0.7} baseline={baseline} drop={0.4} />
+      <GhostTotal total={total} label={label} size={Math.round(fontSize * 0.72)} left={40 + numberWidth * 0.45} baseline={baseline} drop={0.75} />
       {/* Le chiffre est le masque d'un dégradé d'encre : jamais d'aplat (DA) */}
       <MaskedView
         style={StyleSheet.absoluteFill}
