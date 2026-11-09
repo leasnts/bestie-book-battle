@@ -85,7 +85,7 @@ export default function InkFigure({ value, total, fontSize, accessibilityLabel }
 }
 
 /**
- * « / 624 » derrière le chiffre : plus petit, décalé, pâle et flouté.
+ * « / 624 » derrière le chiffre : plus petit, décalé, en retrait mais lisible.
  * Calé sur la ligne de base du chiffre (`baseline`), un peu plus bas que lui.
  */
 export function GhostTotal({
@@ -106,7 +106,7 @@ export function GhostTotal({
   drop?: number;
 }) {
   const label = text ?? `/${total}`;
-  const blur = 3;
+  const blur = 1;
   const margin = blur * 4;
   const width = figureWidth(label, size) + margin * 2;
   const height = Math.round(size * 1.25) + margin * 2;
@@ -126,7 +126,7 @@ export function GhostTotal({
           fontFamily={fonts.displayHero}
           fontSize={size}
           fill={colors.textPrimary}
-          fillOpacity={0.16}
+          fillOpacity={0.38}
           filter="url(#ghostBlur)"
         >
           {label}
