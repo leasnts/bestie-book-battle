@@ -376,6 +376,7 @@ function InkNumber({
   const { lineHeight, frame, baseline } = figureBox(fontSize);
   // La largeur du chiffre, pour caler le « / 624 » (le nombre de chiffres change rarement)
   const numberWidth = figureWidth(String(page), fontSize);
+  const totalSize = Math.round(fontSize * 0.5);
 
   const outText = useAnimatedProps(() => {
     const b = Math.max(0, Math.min(total, Math.floor(scrollX.value / STEP + 1e-3)));
@@ -434,8 +435,8 @@ function InkNumber({
 
   return (
     <View style={[frame, { width: numberWidth + 80 }]}>
-      {/* Le total, nettement en contrebas de ma page */}
-      <GhostTotal total={total} label={label} size={Math.round(fontSize * 0.72)} left={40 + numberWidth * 0.45} baseline={baseline} drop={0.75} />
+      {/* Le total, centré sous ma page */}
+      <GhostTotal total={total} label={label} size={totalSize} left={40 + (numberWidth - figureWidth(label ?? `/${total}`, totalSize)) / 2} baseline={baseline} drop={1.05} />
       {/* Le chiffre est le masque d'un dégradé d'encre : jamais d'aplat (DA) */}
       <MaskedView
         style={StyleSheet.absoluteFill}
