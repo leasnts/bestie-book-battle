@@ -106,7 +106,7 @@ export function GhostTotal({
   drop?: number;
 }) {
   const label = text ?? `/${total}`;
-  const blur = 1;
+  const blur = 2;
   const margin = blur * 4;
   const width = figureWidth(label, size) + margin * 2;
   const height = Math.round(size * 1.25) + margin * 2;
