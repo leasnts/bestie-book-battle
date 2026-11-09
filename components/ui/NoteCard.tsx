@@ -308,6 +308,9 @@ export function LockedNoteCard({
  *   les six rapides à la place de la rangée.
  * - Sans `onToggle`, elles se lisent seulement (consultation).
  * - `inside` : posées dans la note (la liste), sur le papier.
+ * - `fitWidth` (le carré de l'accueil) : des pastilles serrées, sans « … » ni
+ *   ☺+ : les réactions posées d'abord, puis les rapides, autant qu'il en tient
+ *   dans cette largeur. Réagir sans ouvrir le carnet.
  */
 export function NoteReactions({
   note,
@@ -318,6 +321,7 @@ export function NoteReactions({
   inside = false,
   picking: pickingProp,
   onPickingChange,
+  fitWidth,
 }: {
   note: AnnotationWithAuthor;
   myUserId?: string;
@@ -329,6 +333,8 @@ export function NoteReactions({
   /** Les six rapides ouvertes, piloté par la note (son appui long) */
   picking?: boolean;
   onPickingChange?: (picking: boolean) => void;
+  /** La largeur à remplir (le carré de l'accueil) */
+  fitWidth?: number;
 }) {
   const [pickingState, setPickingState] = useState(false);
   const picking = pickingProp ?? pickingState;
@@ -370,9 +376,19 @@ export function NoteReactions({
     onToggle?.(emoji);
   };
 
-  // Les six rapides d'abord, dans leur ordre, puis les autres emojis posés
-  const shown =
-    quick || picking
+  // Les six rapides d'abord, dans leur ordre, puis les autres emojis posés.
+  // Dans le carré : les posées d'abord (leur compte se voit), puis les rapides
+  const fit = fitWidth !== undefined;
+  const shown = fit
+    ? fitInto(fitWidth, [
+        ...reactions,
+        ...QUICK_REACTIONS.filter((emoji) => !reactions.some((r) => r.emoji === emoji)).map((emoji) => ({
+          emoji,
+          count: 0,
+          mine: false,
+        })),
+      ])
+    : quick || picking
       ? [
           ...QUICK_REACTIONS.map(
             (emoji) => reactions.find((r) => r.emoji === emoji) ?? { emoji, count: 0, mine: false },
@@ -383,15 +399,15 @@ export function NoteReactions({
 
   if (!canReact && reactions.length === 0) return null;
   /** Des gélules : l'arrondi du verre suit la hauteur de la pastille */
-  const pillRadius = (quick ? 44 : inside ? 28 : 30) / 2;
+  const pillRadius = (quick ? 44 : inside || fit ? 28 : 30) / 2;
 
   return (
-    <View style={[styles.footer, quick && styles.footerQuick, inside && styles.footerInside]}>
+    <View style={[styles.footer, quick && styles.footerQuick, inside && styles.footerInside, fit && styles.footerFit]}>
       {shown.map(({ emoji, count, mine }) =>
         canReact ? (
           <PressableScale
             key={emoji}
-            style={[styles.reaction, quick && styles.reactionQuick, inside && styles.reactionInside]}
+            style={[styles.reaction, quick && styles.reactionQuick, inside && styles.reactionInside, fit && styles.reactionFit]}
             pressedScale={0.85}
             hitSlop={4}
             onPress={() => react(emoji)}
@@ -410,14 +426,14 @@ export function NoteReactions({
             {count > 0 && <RollingCount count={count} />}
           </PressableScale>
         ) : (
-          <View key={emoji} style={[styles.reaction, inside && styles.reactionInside]}>
+          <View key={emoji} style={[styles.reaction, inside && styles.reactionInside, fit && styles.reactionFit]}>
             <PillGlass radius={pillRadius} />
             <Text style={styles.reactionEmoji}>{emoji}</Text>
             <RollingCount count={count} />
           </View>
         ),
       )}
-      {canReact && (quick || picking) && (
+      {canReact && !fit && (quick || picking) && (
         <PressableScale
           style={[styles.reaction, quick && styles.reactionQuick, inside && styles.reactionInside]}
           pressedScale={0.85}
@@ -433,7 +449,7 @@ export function NoteReactions({
           <EllipsisIcon size={16} color={colors.dark900} strokeWidth={2.4} />
         </PressableScale>
       )}
-      {canReact && !quick && (
+      {canReact && !quick && !fit && (
         <PressableScale
           style={[styles.reaction, inside && styles.reactionInside]}
           pressedScale={0.85}
@@ -452,6 +468,28 @@ export function NoteReactions({
       )}
     </View>
   );
+}
+
+/**
+ * Une pastille serrée (`reactionFit`) : 32 pt seule, ~12 pt de plus avec son
+ * compte (le chiffre et l'écart). Assez juste pour ne jamais déborder du carré.
+ */
+const FIT_PILL = 32;
+const FIT_COUNT_DIGIT = 8;
+const FIT_COUNT_GAP = 4;
+
+/** Autant de pastilles qu'il en tient, dans l'ordre */
+function fitInto<T extends { count: number }>(width: number, items: T[]): T[] {
+  const out: T[] = [];
+  let used = 0;
+  for (const item of items) {
+    const w = FIT_PILL + (item.count > 0 ? FIT_COUNT_GAP + FIT_COUNT_DIGIT * String(item.count).length : 0);
+    const next = used + (out.length ? spacing.xs : 0) + w;
+    if (next > width) break;
+    out.push(item);
+    used = next;
+  }
+  return out;
 }
 
 /** Le sheet du sélecteur se range avant que l'emoji tombe */
@@ -662,6 +700,10 @@ const styles = StyleSheet.create({
   footerInside: {
     marginRight: Math.round(STICKER_BASE * 0.34),
   },
+  // Le carré de l'accueil : une seule rangée, qui ne passe jamais à la ligne
+  footerFit: {
+    flexWrap: 'nowrap',
+  },
   footerQuick: {
     justifyContent: 'center',
     gap: spacing.sm,
@@ -690,6 +732,13 @@ const styles = StyleSheet.create({
   // Sur le papier de la note : une pastille crème, plus basse
   reactionInside: {
     minHeight: 28,
+  },
+
+  // Le carré de l'accueil : serrée, pour en tenir trois à gauche du coin corné
+  reactionFit: {
+    minWidth: FIT_PILL,
+    minHeight: 28,
+    paddingHorizontal: 6,
   },
 
   reactionEmoji: {
