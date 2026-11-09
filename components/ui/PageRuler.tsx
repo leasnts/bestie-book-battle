@@ -347,6 +347,10 @@ export default function PageRuler({ currentPage, totalPages, onPageChange, fontS
               contentOffset={{ x: currentPage * STEP, y: 0 }}
               showsHorizontalScrollIndicator={false}
               decelerationRate={0.994}
+              // iOS pose lui-même la règle pile sur une page : lâchée doucement, elle
+              // restait parfois entre deux (point décentré dans la goutte, deux chiffres
+              // superposés, page pas enregistrée)
+              snapToInterval={STEP}
               onScroll={onScroll}
               scrollEventThrottle={16}
               // Toutes les dizaines d'emblée : partie de ma page, la liste n'a pas
