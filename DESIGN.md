@@ -891,7 +891,7 @@ Code : `utils/notice.ts`, rendu par `components/ui/NoticeHost.tsx`.
 - **2 par jour au plus**, rien de 22 h à 9 h pour le groupe (reporté à 9 h), jamais pour sa propre action, tout revérifié juste avant l'envoi.
 - **App ouverte : aucune notif système.** Seule une note déposée fait un signe : `notePing()`, le même bandeau que les erreurs mais en papier et encre (rond chocolat, icône `StickyNote`), le toucher ouvre le carnet.
 - Toucher une notif ouvre le bon écran sur le bon livre (`hooks/usePushNotifications.ts`).
-- Textes : courts, inclusifs, sans point final, « série » jamais « streak ». Le livre en sous-titre.
+- Textes : courts, inclusifs, sans point final, « série » jamais « streak ». Jamais le nom du livre (« Ton livre t’attend p. 214 ») : la notif ouvre le bon livre.
 - Réglages : « Rappel » avec l'heure en roue iOS compacte, et « Mon groupe ». Rien d'autre.
 
 ### Icônes

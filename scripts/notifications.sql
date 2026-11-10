@@ -239,7 +239,6 @@ create or replace function public.notif_compose(n public.notifications)
 returns table (title text, subtitle text, body text)
 language plpgsql stable security definer set search_path = '' as $$
 declare
-  v_book text;
   v_tz text := public.notif_tz(n.user_id);
   v_today date := (now() at time zone v_tz)::date;
   a public.annotations;
@@ -250,8 +249,6 @@ declare
   v_names text[];
   v_cap numeric;
 begin
-  select c.book_title into v_book from public.challenges c where c.id = n.challenge_id;
-
   if n.kind = 'reminder' then
     -- Déjà lu aujourd'hui (n'importe quel livre) : rien
     if exists (select 1 from public.progress_history h
@@ -266,7 +263,7 @@ begin
       case when p.streak_count >= 2 and p.last_streak_date >= v_today - 1
            then p.streak_count || ' jours de série' else 'Ton moment lecture' end,
       null::text,
-      p.book_title || ' t’attend' || case when p.current_page > 0 then ' p. ' || p.current_page else '' end;
+      'Ton livre t’attend' || case when p.current_page > 0 then ' p. ' || p.current_page else '' end;
 
   elsif n.kind = 'overtake' then
     -- Toujours devant ? Sinon on se tait
@@ -276,7 +273,7 @@ begin
       into p
     from public.users u where u.id = (n.data ->> 'actor')::uuid;
     if not found or p.theirs <= p.mine then return; end if;
-    return query select p.first_name || ' vient de te passer devant', null::text, v_book;
+    return query select p.first_name || ' vient de te passer devant', null::text, null::text;
 
   elsif n.kind = 'cap' then
     select gl.target_pages, gl.status, c.total_pages as ref into g
@@ -286,7 +283,7 @@ begin
     v_cap := g.target_pages::numeric / g.ref;
     if public.notif_position(n.user_id, n.challenge_id) >= v_cap then return; end if;
     return query select 'Cap demain'::text, null::text,
-      v_book || ', ' || public.notif_page(n.user_id, n.challenge_id, v_cap, g.ref) || ' à atteindre';
+      public.notif_page(n.user_id, n.challenge_id, v_cap, g.ref) || ' à atteindre';
 
   elsif n.kind = 'carnet' then
     -- Ce qui existe encore (une note supprimée, une réaction retirée ne comptent plus)
@@ -308,14 +305,14 @@ begin
       limit 1;
       return query select
         v_names[1] || ' a laissé une note ' || public.notif_page(n.user_id, n.challenge_id, a.position, a.edition_total_pages),
-        v_book, public.notif_excerpt(a);
+        null::text, public.notif_excerpt(a);
 
     elsif v_notes > 1 and v_reacts = 0 then
       -- Une seule personne : « Emma a laissé 3 notes » ; plusieurs : le compte, et qui
       if array_length(v_names, 1) = 1 then
-        return query select v_names[1] || ' a laissé ' || v_notes || ' notes', v_book, 'Dans le carnet'::text;
+        return query select v_names[1] || ' a laissé ' || v_notes || ' notes', null::text, 'Dans le carnet'::text;
       else
-        return query select v_notes || ' nouvelles notes dans le carnet', v_book, public.notif_names(v_names);
+        return query select v_notes || ' nouvelles notes dans le carnet', null::text, public.notif_names(v_names);
       end if;
 
     elsif v_notes = 0 then
@@ -334,13 +331,13 @@ begin
                                          where exists (select 1 from public.annotation_reactions ar
                                                        where ar.annotation_id = (r ->> 'a')::uuid and ar.user_id = (r ->> 'u')::uuid and ar.emoji = r ->> 'e')
                                          limit 1) || ' à ta note',
-          v_book, public.notif_excerpt(a);
+          null::text, public.notif_excerpt(a);
       else
-        return query select v_reacts || ' réactions sur tes notes', v_book, public.notif_names(v_names);
+        return query select v_reacts || ' réactions sur tes notes', null::text, public.notif_names(v_names);
       end if;
 
     else
-      return query select 'Du nouveau dans le carnet'::text, v_book,
+      return query select 'Du nouveau dans le carnet'::text, null::text,
         v_notes || case when v_notes > 1 then ' notes, ' else ' note, ' end
         || v_reacts || case when v_reacts > 1 then ' réactions' else ' réaction' end;
     end if;
