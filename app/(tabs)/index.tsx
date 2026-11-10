@@ -45,7 +45,6 @@ import BookSection from '../../components/ui/BookSection';
 import GlassButton from '../../components/ui/GlassButton';
 import StreakPill from '../../components/ui/StreakPill';
 import NoteTile from '../../components/ui/NoteTile';
-import NoteTabs, { NOTE_TABS_HEIGHT } from '../../components/ui/NoteTabs';
 import PageSection from '../../components/ui/PageSection';
 import { StitchLine } from '../../components/ui/Stitch';
 import LeaderboardSection from '../../components/ui/LeaderboardSection';
@@ -544,6 +543,7 @@ export default function HomeScreen() {
             pickerFontSize={pickerFontSize}
             club={clubPins}
             unit={inPercent ? 'percent' : 'pages'}
+            noteActions
           />
         </View>
       ) : !_hasHydrated || (challenges.length === 0 && challengesLoading) ? (
@@ -599,10 +599,7 @@ export default function HomeScreen() {
           style={[
             styles.bento,
             spread && styles.bentoSpread,
-            // De quoi laisser dépasser les intercalaires du carnet
-            spread
-              ? { paddingTop: spacing.md }
-              : { paddingTop: (compactSpacing ? spacing.xs : spacing.md) + NOTE_TABS_HEIGHT },
+            { paddingTop: spread ? spacing.md : compactSpacing ? spacing.xs : spacing.md },
           ]}
         >
           {!alone && (
@@ -617,9 +614,7 @@ export default function HomeScreen() {
               />
             </View>
           )}
-          <View style={[styles.bentoCell, spread && { paddingTop: NOTE_TABS_HEIGHT }]}>
-            {/* Avant la note : le bas des intercalaires glisse dessous */}
-            <NoteTabs />
+          <View style={styles.bentoCell}>
             <NoteTile
               notes={tileNotes}
               myUserId={user?.id}

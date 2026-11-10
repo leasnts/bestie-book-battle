@@ -625,13 +625,16 @@ défile (pas de − / +), ma page en pages de mon édition, ma série en **jours
 (Lea, 2026-09-29) : le cadre sort de sous « Le livre » (28 pt glissés dessous),
 son haut s'efface en fondu, coins droits en haut ; le bas garde l'arrondi et le
 bord d'un cadre (`GlassSection` `fadeTop`).
-- au repos, la rangée est vide : ✎ et ☺ sont les **intercalaires du carré
-  Carnet** (`NoteTabs`, Lea 2026-10-05), deux onglets dans le verre des cadres (`GlassMaterial` + `glassVeil`, comme `GlassSection` ; Lea 2026-10-09 : plus de chocolat),
-  ferrés à droite, qui sortent du haut de la note à la une, le bas glissé dessous. Tout annote ma
-  page **enregistrée**, sans quitter l'accueil. ☺ : une réaction en un geste, sans
-  note ; l'intercalaire se tire d'un cran, la liste à la mode (`TRENDING_EMOJIS`)
-  sort au-dessus, sur toute la largeur du bento, et défile ; « + » (`GlassButton`, secondaire) ouvre tous les emojis (/emoji-note,
-  `EmojiGrid`). Un brouillon laissé met un point rouge sur ✎ (`badge`).
+- au repos, + et ☺+ sont deux ronds en verre (`GlassButton`) au bout de la ligne
+  du chiffre, l'un sous l'autre (`PageNoteActions`, essai B, Lea 2026-11-10).
+  Avant : des intercalaires sur le carré Carnet, qu'on prenait pour des actions
+  sur la note à la une (rejeté aussi : « p. 351 » sur l'onglet = page en double ;
+  carnet fermé = moche ; bulle sur la goutte = pas découvrable). Tout annote ma
+  page **enregistrée**, sans quitter l'accueil. ☺+ : une réaction en un geste,
+  sans note ; la liste à la mode (`TRENDING_EMOJIS`) sort à gauche du rond, par-dessus
+  le chiffre le temps du choix, et défile ; « + » (`GlassButton`) ouvre tous les emojis
+  (/emoji-note, `EmojiGrid`). Un brouillon laissé met un point rouge sur + (`badge`).
+  Quand la page a changé, ↺ et ✓ prennent la ligne et ces deux-là s'effacent.
   ✎ ouvre la feuille (`NoteComposer`), où **tout se fait** : elle monte au-dessus
   du clavier, l'accueil s'assombrit. Ligne du haut : ✕, la page (« p. 157 »,
   une gélule en verre qu'on touche pour la changer au pavé numérique), ↗ pleine page,
