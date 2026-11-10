@@ -23,7 +23,7 @@
 import { buzz, feel } from '../utils/feel';
 import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Alert, View } from 'react-native';
+import { View } from 'react-native';
 import Button3D from '../components/Button3D';
 import BonusPill from '../components/ui/BonusPill';
 import GlassSection from '../components/ui/GlassSection';
@@ -34,7 +34,8 @@ import { useMyStreak } from '../hooks/useMyStreak';
 import { getReadingDays, spendStreakBonus } from '../services/supabase/database';
 import { useProgressStore } from '../stores/progressStore';
 import { spacing } from '../utils/constants';
-import { dayString } from '../utils/streak';
+import { dayString, STREAK_BONUS_PER_BOOK } from '../utils/streak';
+import { nudge, oops } from '../utils/notice';
 
 /** La flamme se rallume une fois le ruban recousu */
 const REVIVE_AT = BOOKMARK_LANDS + 360;
@@ -89,7 +90,10 @@ export default function StreakSaveRoute() {
       const ok = await spendStreakBonus(challengeId);
       if (!ok) {
         await loadChallengeProgress(challengeId);
-        Alert.alert('Série perdue', 'Plus assez de marque-pages.');
+        nudge(
+          'Pas assez de marque-pages',
+          `${bonusesLeft}/${STREAK_BONUS_PER_BOOK} en poche, ta série repart à ta prochaine lecture`,
+        );
         router.back();
         return;
       }
@@ -103,12 +107,12 @@ export default function StreakSaveRoute() {
         new Promise((resolve) => setTimeout(resolve, CLOSE_AFTER)),
       ]);
       router.back();
-    } catch {
-      Alert.alert('Erreur', 'Impossible de poser le marque-page.');
+    } catch (error) {
+      oops('Marque-page pas posé', error, { retry: () => handleUse() });
     } finally {
       setIsSaving(false);
     }
-  }, [challengeId, dropped, isSaving, missedDays, loadChallengeProgress, router]);
+  }, [challengeId, dropped, isSaving, missedDays, bonusesLeft, loadChallengeProgress, router]);
 
   return (
     <SheetPage

@@ -21,7 +21,6 @@ import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
     ActivityIndicator,
-    Alert,
     AppState,
     StyleSheet,
     Text,
@@ -61,6 +60,7 @@ import { useAnnotationStore } from '../../stores/annotationStore';
 import { useProjectStore } from '../../stores/projectStore';
 import { colors, fonts, shadowAlpha, spacing, SPREAD_MIN_WIDTH } from '../../utils/constants';
 import { feel, type FeelName } from '../../utils/feel';
+import { oops } from '../../utils/notice';
 import { dayString } from '../../utils/streak';
 import { useMyStreak } from '../../hooks/useMyStreak';
 import { useTabBarInset } from '../../components/ui/GlassTabBar';
@@ -362,10 +362,12 @@ export default function HomeScreen() {
       }
     } catch (error) {
       console.error('Erreur lors de la sauvegarde:', error);
-      feel('erreur');
-      Alert.alert('Page non enregistrée', 'Réessaie dans un instant.');
+      // La dernière version de handleSave : la page a pu bouger depuis l'échec
+      oops('Page pas enregistrée', error, { retry: () => saveRef.current() });
     }
   };
+  const saveRef = useRef(handleSave);
+  saveRef.current = handleSave;
 
   /**
    * Le moment à faire sentir après l'enregistrement : le plus fort l'emporte,

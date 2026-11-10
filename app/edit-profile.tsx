@@ -12,7 +12,6 @@ import { RotateCcwIcon } from 'lucide-react-native';
 import React, { useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   InputAccessoryView,
   Keyboard,
   Pressable,
@@ -26,6 +25,7 @@ import { pickImage, uploadProfilePhoto } from '../services/supabase/storage';
 import { useAuthStore } from '../stores/authStore';
 import { borderRadius, colors, fonts, fontSize, shadowAlpha, shadows, spacing } from '../utils/constants';
 import { resolvePhotoSource } from '../utils/profilePhoto';
+import { nudge, oops } from '../utils/notice';
 
 // Retire la barre « OK » native au-dessus du clavier d'iOS
 const ACCESSORY_ID = 'edit-profile-no-done';
@@ -48,9 +48,9 @@ export default function EditProfileRoute() {
       setIsUploadingPhoto(true);
       const { url } = await uploadProfilePhoto(user.id, imageUri);
       await updateProfile({ profile_photo_url: url });
-    } catch {
+    } catch (error) {
       setLocalPhotoUri(null);
-      Alert.alert('Erreur', 'Impossible de changer ta photo. Réessaie.');
+      oops('Photo pas changée', error);
     } finally {
       setIsUploadingPhoto(false);
     }
@@ -60,15 +60,15 @@ export default function EditProfileRoute() {
     Keyboard.dismiss();
     const trimmed = firstName.trim();
     if (!trimmed) {
-      Alert.alert('Erreur', 'Le prénom ne peut pas être vide.');
+      nudge('Il manque ton prénom', 'Écris-le juste au-dessus');
       return;
     }
     setIsSaving(true);
     try {
       await updateProfile({ first_name: trimmed });
       router.back();
-    } catch {
-      Alert.alert('Erreur', 'Impossible de sauvegarder. Réessaie.');
+    } catch (error) {
+      oops('Prénom pas enregistré', error, { retry: () => handleSave() });
     } finally {
       setIsSaving(false);
     }

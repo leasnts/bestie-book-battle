@@ -12,6 +12,7 @@
 import { randomUUID } from 'expo-crypto';
 import { create } from 'zustand';
 import { feel } from '../utils/feel';
+import { oops } from '../utils/notice';
 import {
   addReaction,
   createAnnotation,
@@ -191,8 +192,7 @@ export const useAnnotationStore = create<AnnotationStore>((set, get) => ({
       await get().loadAnnotations(note.challenge_id, note.user_id);
       return created;
     } catch (error) {
-      // Pas de vocal orphelin dans le bucket
-      feel('erreur');
+      // Pas de vocal orphelin dans le bucket (le son d'erreur : oops, côté écran)
       if (path) await deleteVoice(path);
       throw error;
     }
@@ -267,6 +267,7 @@ export const useAnnotationStore = create<AnnotationStore>((set, get) => ({
       else await addReaction(annotationId, userId, emoji);
     } catch (error) {
       console.error('[Carnet] réaction impossible', error);
+      oops('Réaction pas envoyée', error);
       // On remet l'écran d'accord avec le serveur
       const challengeId = get().challengeId;
       if (challengeId) await get().loadAnnotations(challengeId, userId);

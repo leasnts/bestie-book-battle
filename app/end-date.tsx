@@ -12,11 +12,12 @@
 import DateTimePicker, { type DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback, useState } from 'react';
-import { Alert, StyleSheet } from 'react-native';
+import { StyleSheet } from 'react-native';
 import Button3D from '../components/Button3D';
 import SheetPage, { SheetFooter } from '../components/ui/SheetPage';
 import { useProjectStore } from '../stores/projectStore';
 import { colors } from '../utils/constants';
+import { nudge, oops } from '../utils/notice';
 
 function tomorrow() {
   const d = new Date();
@@ -45,7 +46,7 @@ export default function EndDateRoute() {
     const day = new Date(selectedDate);
     day.setHours(0, 0, 0, 0);
     if (day < today) {
-      Alert.alert('Date passée', 'La date de fin doit être dans le futur.');
+      nudge('Cette date est passée', "Choisis aujourd'hui ou plus tard");
       return;
     }
 
@@ -53,8 +54,8 @@ export default function EndDateRoute() {
     try {
       await updateActiveChallenge({ target_end_date: selectedDate.toISOString() });
       router.back();
-    } catch {
-      Alert.alert('Erreur', "Impossible d'enregistrer la date de fin.");
+    } catch (error) {
+      oops('Date pas enregistrée', error, { retry: () => handleSave() });
     } finally {
       setIsSaving(false);
     }
@@ -65,8 +66,8 @@ export default function EndDateRoute() {
     try {
       await updateActiveChallenge({ target_end_date: null });
       router.back();
-    } catch {
-      Alert.alert('Erreur', 'Impossible de retirer la date de fin.');
+    } catch (error) {
+      oops('Date toujours là', error, { retry: () => handleClear() });
     } finally {
       setIsSaving(false);
     }

@@ -27,7 +27,7 @@ import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { MailIcon } from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
-import { Alert, Linking, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { Linking, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import Animated, {
   type SharedValue,
   Easing,
@@ -51,6 +51,7 @@ import { useOnboardingStore } from '../../stores/onboardingStore';
 import { useSplashStore } from '../../stores/splashStore';
 import { colors, fonts, inkGradient, lowki, spacing } from '../../utils/constants';
 import { firstStep } from '../../utils/onboardingFlow';
+import { nudge, oops } from '../../utils/notice';
 
 /** Les bandes de couvertures (scripts/generate-login-covers.py gris), une par colonne. */
 const COVER_STRIPS = [
@@ -235,7 +236,7 @@ export default function WelcomeScreen() {
 
       const isAvailable = await isAppleAuthAvailable();
       if (!isAvailable) {
-        Alert.alert('Non disponible', "Apple Sign In n'est pas disponible sur cet appareil");
+        nudge('Apple indisponible ici', 'Connecte-toi par email');
         return;
       }
 
@@ -248,7 +249,7 @@ export default function WelcomeScreen() {
         return;
       }
       console.error('Login error:', error);
-      Alert.alert('Erreur', error.message || 'Une erreur est survenue lors de la connexion');
+      oops('Connexion ratée', error, { retry: () => handleAppleLogin() });
     } finally {
       setIsLoading(false);
     }
