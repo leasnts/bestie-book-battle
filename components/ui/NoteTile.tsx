@@ -5,7 +5,7 @@
  *    ┆ ③ Camille  p. 142┆   les nouvelles qui restent, l'autrice et sa page
  *    ┆ Faria qui lui    ┆   le texte, la citation, l'emoji seul ou le vocal
  *    ┆ lègue tout…      ┆   (la catégorie en filigrane)
- *    ┆ 😭2 🥹 💀       ◢┆   réagir d'un toucher, sans ouvrir le carnet
+ *    ┆ (😭) 🥹 💀      ◢┆   ma réaction cerclée, sans compte ; rien sur ma note
  *    └┄┄┄┄┄┄┄┄┄┄┄┘
  *
  * Le prénom sur la ligne de la page : la note est à elle, à cette page. Le bas

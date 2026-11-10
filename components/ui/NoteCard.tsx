@@ -309,8 +309,9 @@ export function LockedNoteCard({
  * - Sans `onToggle`, elles se lisent seulement (consultation).
  * - `inside` : posées dans la note (la liste), sur le papier.
  * - `fitWidth` (le carré de l'accueil) : des pastilles serrées, sans « … » ni
- *   ☺+ : les réactions posées d'abord, puis les rapides, autant qu'il en tient
- *   dans cette largeur. Réagir sans ouvrir le carnet.
+ *   ☺+ ni comptes : seulement MA réaction (cerclée d'encre) puis les rapides,
+ *   autant qu'il en tient. Celles des autres se lisent dans le carnet (Lea,
+ *   2026-11-10 : pas la place). Sans pouvoir réagir (ma note) : rien.
  */
 export function NoteReactions({
   note,
@@ -379,11 +380,10 @@ export function NoteReactions({
   // Les six rapides d'abord, dans leur ordre, puis les autres emojis posés.
   // Dans le carré : les posées d'abord (leur compte se voit), puis les rapides
   const fit = fitWidth !== undefined;
-  // Sans pouvoir réagir (ma note) : seulement celles qu'on m'a laissées
   const shown = fit
     ? fitInto(fitWidth, [
-        ...reactions,
-        ...(canReact ? QUICK_REACTIONS : []).filter((emoji) => !reactions.some((r) => r.emoji === emoji)).map((emoji) => ({
+        ...reactions.filter((r) => r.mine).map((r) => ({ ...r, count: 0 })),
+        ...QUICK_REACTIONS.filter((emoji) => !reactions.some((r) => r.mine && r.emoji === emoji)).map((emoji) => ({
           emoji,
           count: 0,
           mine: false,
@@ -398,7 +398,7 @@ export function NoteReactions({
         ]
       : reactions;
 
-  if (!canReact && reactions.length === 0) return null;
+  if (!canReact && (fit || reactions.length === 0)) return null;
   /** Des gélules : l'arrondi du verre suit la hauteur de la pastille */
   const pillRadius = (quick ? 44 : inside || fit ? 28 : 30) / 2;
 
@@ -408,12 +408,12 @@ export function NoteReactions({
         canReact ? (
           <PressableScale
             key={emoji}
-            style={[styles.reaction, quick && styles.reactionQuick, inside && styles.reactionInside, fit && styles.reactionFit]}
+            style={[styles.reaction, quick && styles.reactionQuick, inside && styles.reactionInside, fit && styles.reactionFit, fit && mine && styles.reactionMine]}
             pressedScale={0.85}
             hitSlop={4}
             onPress={() => react(emoji)}
             accessibilityRole="button"
-            accessibilityLabel={count ? `${emoji}, ${count}` : emoji}
+            accessibilityLabel={count && !fit ? `${emoji}, ${count}` : emoji}
             accessibilityState={{ selected: mine }}
             accessibilityHint={mine ? 'Retire ma réaction' : 'Ajoute ma réaction'}
           >
@@ -424,7 +424,7 @@ export function NoteReactions({
               landed={!!mineBefore && mine && !mineBefore.has(emoji)}
               style={[styles.reactionEmoji, quick && styles.reactionEmojiQuick]}
             />
-            {count > 0 && <RollingCount count={count} />}
+            {count > 0 && !fit && <RollingCount count={count} />}
           </PressableScale>
         ) : (
           <View key={emoji} style={[styles.reaction, inside && styles.reactionInside, fit && styles.reactionFit]}>
@@ -471,26 +471,12 @@ export function NoteReactions({
   );
 }
 
-/**
- * Une pastille serrée (`reactionFit`) : 32 pt seule, ~12 pt de plus avec son
- * compte (le chiffre et l'écart). Assez juste pour ne jamais déborder du carré.
- */
+/** Une pastille serrée (`reactionFit`), sans compte : 32 pt */
 const FIT_PILL = 32;
-const FIT_COUNT_DIGIT = 8;
-const FIT_COUNT_GAP = 4;
 
 /** Autant de pastilles qu'il en tient, dans l'ordre */
-function fitInto<T extends { count: number }>(width: number, items: T[]): T[] {
-  const out: T[] = [];
-  let used = 0;
-  for (const item of items) {
-    const w = FIT_PILL + (item.count > 0 ? FIT_COUNT_GAP + FIT_COUNT_DIGIT * String(item.count).length : 0);
-    const next = used + (out.length ? spacing.xs : 0) + w;
-    if (next > width) break;
-    out.push(item);
-    used = next;
-  }
-  return out;
+function fitInto<T>(width: number, items: T[]): T[] {
+  return items.slice(0, Math.max(0, Math.floor((width + spacing.xs) / (FIT_PILL + spacing.xs))));
 }
 
 /** Le sheet du sélecteur se range avant que l'emoji tombe */
@@ -740,6 +726,12 @@ const styles = StyleSheet.create({
     minWidth: FIT_PILL,
     minHeight: 28,
     paddingHorizontal: 6,
+  },
+
+  // Ma réaction, dans le carré : un filet d'encre, pas de compte
+  reactionMine: {
+    borderWidth: 1.5,
+    borderColor: colors.dark900,
   },
 
   reactionEmoji: {
