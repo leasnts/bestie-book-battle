@@ -38,7 +38,7 @@ import { feel } from '../../utils/feel';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { LayoutChangeEvent, StyleSheet, TextInput, View } from 'react-native';
+import { LayoutChangeEvent, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   Easing,
@@ -56,7 +56,8 @@ import Animated, {
   withTiming,
   type SharedValue,
 } from 'react-native-reanimated';
-import { accentGradient, colors, fonts } from '../../utils/constants';
+import { accentGradient, colors, fonts, fontSize as textSize } from '../../utils/constants';
+import { ACCENT_SCALE } from './AccentWord';
 import { FOOTPRINT_EM, GhostTotal, INK, figureBox, figureWidth } from './InkFigure';
 
 /** Un membre du club épinglé sur la règle */
@@ -69,6 +70,11 @@ export interface ClubPin {
 }
 
 interface PageRulerProps {
+  /**
+   * Ce que le cadre du haut a de plus d'air que celui du bas autour de la règle
+   * (marges extérieures) : on en tient compte pour centrer le bloc à l'œil
+   */
+  centerBias?: number;
   currentPage: number;
   totalPages: number;
   onPageChange: (page: number) => void;
@@ -82,6 +88,8 @@ interface PageRulerProps {
    * est alors le plafond de la règle ; « p. » remplace « /624 ».
    */
   unit?: 'pages' | 'percent' | 'count';
+  /** Posés de part et d'autre du chiffre, sur sa ligne (↺ annuler, ✓ enregistrer) */
+  actions?: React.ReactNode;
 }
 
 /** Un point de couture par page, tous les 11 pt */
@@ -91,6 +99,23 @@ const DECADE = STEP * 10;
 const RULER_HEIGHT = 74;
 /** L'air au-dessus du chiffre : aucun, il est posé en bas, contre la couture */
 const NUMBER_TOP = 0;
+/** La chasse de « p. » en Welcome Valentines, en fraction de sa taille (mesurée à l'écran) */
+const P_WIDTH_EM = 0.55;
+/** Ce que « p. » déborde à droite du chiffre (le chiffre reste centré : autant de chaque côté), en fraction du chiffre */
+const UNIT_SIDE_EM = 0.18;
+/** « sur 624 » sous le chiffre : petit et net (Lea, 2026-11-10), et la place qu'il prend dessous */
+const TOTAL_GAP = 10;
+const TOTAL_ROOM = 30;
+/** Du haut de la boîte du chiffre au haut de ses chiffres (0,81 em au-dessus de la ligne de base, police Martian Grotesk Wide), en fraction de sa taille */
+const CAP_INSET_EM = 0.115;
+/** Du bas de la goutte de verre au bas de la règle, réglé à l’écran */
+const DROP_INSET = 2;
+/** Ce que le bloc peut descendre sous sa place, dans la marge du bas du cadre */
+const MAX_DROP = 12;
+/** En %, ce que le « % » calé en bas à droite du chiffre déborde sous lui */
+const PERCENT_EM = 0.12;
+/** La place de ↺ ou ✓ de chaque côté du chiffre : le rond de 44 pt et de l'air */
+const ACTIONS_SIDE = 56;
 /** Le chiffre ne descend jamais sous cette taille, même sur le plus petit écran */
 const MIN_FONT_SIZE = 36;
 /** La ligne des points, depuis le haut de la règle (place au-dessus pour les épingles) */
@@ -120,17 +145,39 @@ const stitchThick = (page: number) => (page % 10 === 0 ? 3.6 : 2.6);
 
 const AnimatedTextInput = Animated.createAnimatedComponent(TextInput);
 
-export default function PageRuler({ currentPage, totalPages, onPageChange, fontSize = 88, club = [], unit = 'pages' }: PageRulerProps) {
+export default function PageRuler({ centerBias = 0, currentPage, totalPages, onPageChange, fontSize = 88, club = [], unit = 'pages', actions }: PageRulerProps) {
   const [width, setWidth] = useState(0);
   const onLayout = (e: LayoutChangeEvent) => setWidth(e.nativeEvent.layout.width);
   // La place laissée au chiffre : s'il en manque, il rétrécit plutôt que de faire
   // défiler l'accueil (le chiffre occupe FOOTPRINT_EM de sa taille, sous NUMBER_TOP)
   const [numberSpace, setNumberSpace] = useState(0);
   const onNumberLayout = (e: LayoutChangeEvent) => setNumberSpace(e.nativeEvent.layout.height);
+  // En largeur : le plus long nombre possible tient entre ↺ et ✓
+  const widest = figureWidth(String(totalPages), 1) + (unit === 'percent' ? 0 : 2 * UNIT_SIDE_EM);
+  const widthCap = width > 0 ? Math.floor((width - 2 * BLEED - 2 * ACTIONS_SIDE) / widest) : fontSize;
+  // Le « % » ou le « p. » se cale en bas à droite du chiffre : presque pas de place
+  // dessous. En pages, « sur 624 » s'écrit en petit sous le chiffre
+  const roomEm = PERCENT_EM;
+  const roomPx = unit === 'pages' ? TOTAL_ROOM : 0;
   const fittedSize =
     numberSpace > 0
-      ? Math.max(MIN_FONT_SIZE, Math.min(fontSize, Math.floor((numberSpace - NUMBER_TOP) / FOOTPRINT_EM)))
+      ? Math.max(MIN_FONT_SIZE, Math.min(fontSize, widthCap, Math.floor((numberSpace - NUMBER_TOP - roomPx) / (FOOTPRINT_EM + roomEm))))
       : fontSize;
+  const totalRoom = roomPx + Math.round(fittedSize * roomEm);
+  // Le chiffre et la règle forment un bloc centré dans la place (Lea, 2026-11-10 :
+  // toujours à égale distance du cadre du haut et de celui du bas). Ce qui reste
+  // une fois le chiffre à sa taille se partage moitié au-dessus, moitié dessous.
+  const { frame: numberFrame } = figureBox(fittedSize);
+  const footprint = numberFrame.height + 2 * numberFrame.marginVertical;
+  // Centré à l'œil, pas à la boîte : le haut des chiffres est sous le haut de
+  // leur boîte, et le bas de la goutte au-dessus du bas de la règle
+  const free = numberSpace - NUMBER_TOP - footprint - totalRoom;
+  // Négatif : le bloc descend un peu dans l'air du bas du cadre (le chiffre
+  // remplit déjà la place, mais le haut a plus d'air à l'œil)
+  const lift =
+    numberSpace > 0
+      ? Math.max(-MAX_DROP, Math.min(free, Math.round((free + centerBias + fittedSize * CAP_INSET_EM - DROP_INSET) / 2)))
+      : 0;
 
   const listRef = useAnimatedRef<Animated.FlatList<number>>();
   // Où en est la règle, en points : tout le reste (chiffre, goutte) en découle
@@ -291,6 +338,7 @@ export default function PageRuler({ currentPage, totalPages, onPageChange, fontS
   );
 
   return (
+    <>
     <View
       style={styles.root}
       accessible
@@ -301,12 +349,14 @@ export default function PageRuler({ currentPage, totalPages, onPageChange, fontS
       onAccessibilityAction={(e) => step(e.nativeEvent.actionName === 'increment' ? 1 : -1)}
     >
       <GestureDetector gesture={numberPan}>
-        <View style={styles.numberBlock} onLayout={onNumberLayout}>
-          <InkNumber page={currentPage} total={totalPages} fontSize={fittedSize} scrollX={scrollX} label={unit === 'percent' ? '%' : unit === 'count' ? 'p.' : undefined} />
+        {/* Déplacé par transform : la mise en page (et donc la mesure) ne bouge pas */}
+        <View style={[styles.numberBlock, { paddingBottom: totalRoom, transform: [{ translateY: -lift }] }]} onLayout={onNumberLayout}>
+          <InkNumber page={currentPage} total={totalPages} fontSize={fittedSize} scrollX={scrollX} unit={unit} />
         </View>
       </GestureDetector>
 
-      <View style={styles.ruler} onLayout={onLayout}>
+      {/* Remontée d'autant que le chiffre, sans changer la mise en page (pas de boucle de mesure) */}
+      <View style={[styles.ruler, { transform: [{ translateY: -lift }] }]} onLayout={onLayout}>
         {width > 0 && (
           <MaskedView
             style={StyleSheet.absoluteFill}
@@ -335,6 +385,10 @@ export default function PageRuler({ currentPage, totalPages, onPageChange, fontS
               contentOffset={{ x: currentPage * STEP, y: 0 }}
               showsHorizontalScrollIndicator={false}
               decelerationRate={0.994}
+              // iOS pose lui-même la règle pile sur une page : lâchée doucement, elle
+              // restait parfois entre deux (point décentré dans la goutte, deux chiffres
+              // superposés, page pas enregistrée)
+              snapToInterval={STEP}
               onScroll={onScroll}
               scrollEventThrottle={16}
               // Toutes les dizaines d'emblée : partie de ma page, la liste n'a pas
@@ -348,6 +402,13 @@ export default function PageRuler({ currentPage, totalPages, onPageChange, fontS
         {width > 0 && <GlassDrop center={width / 2} totalPages={totalPages} scrollX={scrollX} stretch={stretch} lag={lag} />}
       </View>
     </View>
+    {/* Hors du bloc accessible (VoiceOver trouve les boutons), centrés sur le chiffre */}
+    {actions && (
+      <View pointerEvents="box-none" style={[styles.actions, { bottom: RULER_HEIGHT + totalRoom + lift, height: Math.round(fittedSize * FOOTPRINT_EM) }]}>
+        {actions}
+      </View>
+    )}
+    </>
   );
 }
 
@@ -364,18 +425,20 @@ function InkNumber({
   total,
   fontSize,
   scrollX,
-  label,
+  unit,
 }: {
   page: number;
   total: number;
   fontSize: number;
   scrollX: SharedValue<number>;
-  /** Ce qui remplace « /624 » derrière le chiffre (« % », « p. ») */
-  label?: string;
+  /** En %, un « % » ; en pages, « p. » et « sur 624 » dessous ; en nombre de pages, « p. » seul */
+  unit: 'pages' | 'percent' | 'count';
 }) {
   const { lineHeight, frame, baseline } = figureBox(fontSize);
-  // La largeur du chiffre, pour caler le « / 624 » (le nombre de chiffres change rarement)
+  // La largeur du chiffre, pour caler son signe (le nombre de chiffres change rarement)
   const numberWidth = figureWidth(String(page), fontSize);
+  const percentSize = Math.round(fontSize * 0.5);
+  const unitSize = Math.round(percentSize * ACCENT_SCALE);
 
   const outText = useAnimatedProps(() => {
     const b = Math.max(0, Math.min(total, Math.floor(scrollX.value / STEP + 1e-3)));
@@ -434,8 +497,29 @@ function InkNumber({
 
   return (
     <View style={[frame, { width: numberWidth + 80 }]}>
-      {/* Le total, nettement en contrebas de ma page */}
-      <GhostTotal total={total} label={label} size={Math.round(fontSize * 0.72)} left={40 + numberWidth * 0.7} baseline={baseline} drop={0.4} />
+      {/* Le « % » se glisse en bas à droite, derrière le chiffre, flouté et pâle.
+          Le « p. » pareil, écrit à la main, devant le chiffre en pages ; le total, « sur 624 », en petit
+          dessous (Lea, 2026-11-10) */}
+      {unit === 'percent' ? (
+        <GhostTotal total={total} label="%" size={percentSize} left={40 + numberWidth - percentSize * 0.3} baseline={baseline} drop={0.18} />
+      ) : (
+        // « p. 351 » : la page où j'en suis s'écrit « p. » devant (en bas à gauche) ;
+        // un nombre de pages, « 650 p. », derrière (en bas à droite)
+        <GhostTotal
+          total={total}
+          label="p."
+          accent
+          size={unitSize}
+          left={unit === 'pages' ? 40 - unitSize * P_WIDTH_EM + percentSize * 0.3 : 40 + numberWidth - percentSize * 0.3}
+          baseline={baseline}
+          drop={0.18}
+        />
+      )}
+      {unit === 'pages' && (
+        <Text allowFontScaling={false} numberOfLines={1} style={[styles.total, { top: baseline + TOTAL_GAP }]}>
+          sur {total}
+        </Text>
+      )}
       {/* Le chiffre est le masque d'un dégradé d'encre : jamais d'aplat (DA) */}
       <MaskedView
         style={StyleSheet.absoluteFill}
@@ -693,6 +777,11 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'space-between',
   },
+  actions: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+  },
   numberBlock: {
     flex: 1,
     minHeight: 0,
@@ -708,6 +797,15 @@ const styles = StyleSheet.create({
     fontVariant: ['tabular-nums'],
     textAlign: 'center',
     padding: 0,
+  },
+  total: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    textAlign: 'center',
+    fontFamily: fonts.bodyMedium,
+    fontSize: textSize.sm,
+    color: colors.textTertiary,
   },
   layer: {
     position: 'absolute',

@@ -44,14 +44,13 @@ import BookSection from '../../components/ui/BookSection';
 import GlassButton from '../../components/ui/GlassButton';
 import StreakPill from '../../components/ui/StreakPill';
 import NoteTile from '../../components/ui/NoteTile';
-import NoteTabs, { NOTE_TABS_HEIGHT } from '../../components/ui/NoteTabs';
 import PageSection from '../../components/ui/PageSection';
 import { StitchLine } from '../../components/ui/Stitch';
 import LeaderboardSection from '../../components/ui/LeaderboardSection';
 import { getAllUserPages } from '../../services/supabase/database';
 import { myCoverUrl } from '../../services/myEdition';
 import { updateWidgetData } from '../../utils/widget';
-import { buildCaps } from '../../utils/track';
+import { buildCaps, clubAverage } from '../../utils/track';
 import { useLeaderboardParticipants } from '../../hooks/useLeaderboardParticipants';
 import { useNotificationScheduler } from '../../hooks/useNotificationScheduler';
 import { useAuthStore } from '../../stores/authStore';
@@ -523,8 +522,13 @@ export default function HomeScreen() {
           <BookSection
             challenge={activeChallenge}
             coverUrl={myCoverUrl(activeChallenge, myProgress ?? cachedMyProgress)}
-            myPercent={myPercent}
+            // La piste du livre : où en est le groupe (Lea, 2026-11-10) ; seule, moi.
+            // La moyenne, comme la fiche du livre : le même chiffre partout
+            percent={alone || !participantsMatchChallenge ? myPercent : clubAverage(participants.map((p) => p.percentage || 0))}
+            group={!alone && participantsMatchChallenge}
             caps={caps}
+            // Seule et en % : Ma page dit déjà mon % en grand
+            showPercent={!(alone && inPercent)}
             compact={compactSpacing}
             onPress={() => router.push('/book')}
           />
@@ -546,6 +550,10 @@ export default function HomeScreen() {
             pickerFontSize={pickerFontSize}
             club={clubPins}
             unit={inPercent ? 'percent' : 'pages'}
+            // Centré entre le cadre du livre et le bento : l'écart au-dessus
+            // (frameGap) moins celui au-dessous (le haut du bento)
+            centerBias={spread ? 0 : frameGap.paddingTop - (compactSpacing ? spacing.xs : spacing.md)}
+            noteActions
           />
         </View>
       ) : !_hasHydrated || (challenges.length === 0 && challengesLoading) ? (
@@ -601,10 +609,7 @@ export default function HomeScreen() {
           style={[
             styles.bento,
             spread && styles.bentoSpread,
-            // De quoi laisser dépasser les intercalaires du carnet
-            spread
-              ? { paddingTop: spacing.md }
-              : { paddingTop: (compactSpacing ? spacing.xs : spacing.md) + NOTE_TABS_HEIGHT },
+            { paddingTop: spread ? spacing.md : compactSpacing ? spacing.xs : spacing.md },
           ]}
         >
           {!alone && (
@@ -619,9 +624,7 @@ export default function HomeScreen() {
               />
             </View>
           )}
-          <View style={[styles.bentoCell, spread && { paddingTop: NOTE_TABS_HEIGHT }]}>
-            {/* Avant la note : le bas des intercalaires glisse dessous */}
-            <NoteTabs />
+          <View style={styles.bentoCell}>
             <NoteTile
               notes={tileNotes}
               myUserId={user?.id}

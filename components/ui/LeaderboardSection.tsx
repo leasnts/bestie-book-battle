@@ -261,11 +261,8 @@ export default function LeaderboardSection({
       accessibilityHint="Ouvre la progression complète"
       style={square && (fill ? styles.fill : styles.square)}
     >
-      <View style={styles.head}>
-        {/* Plus de nombre de membres à côté du titre (Lea, 2026-10-01) : il ne menait nulle part */}
-        <Text style={styles.title}>Progression</Text>
-      </View>
-
+      {/* Plus de titre « Progression » (Lea, 2026-11-10) : les avatars et les %
+          disent déjà ce que c'est */}
       {duel ? (
         <Duel pair={ranked} animate={animate} />
       ) : (
@@ -305,28 +302,12 @@ const ROW_HEIGHT = 36;
 /** Colonne du rang : trois chiffres tiennent sans pousser les avatars */
 const RANK_WIDTH = 23;
 /** Avatars du face-à-face : assez grands pour remplir le carré à deux */
-const DUEL_AVATAR = 36;
+const DUEL_AVATAR = 48;
 /** Hauteur du dessin du fil : assez pour ses points */
 const THREAD_HEIGHT = 4;
 
 const styles = StyleSheet.create({
-  // minHeight, pas height : aux gros corps de texte le titre doit pouvoir
-  // pousser au lieu d'être coupé.
-  head: {
-    minHeight: 21,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  title: {
-    fontFamily: fonts.bodyExtraBold,
-    fontSize: 15,
-    color: colors.textPrimary,
-  },
-
-  rows: {
-    marginTop: 7,
-  },
+  rows: {},
 
   // En carré : les lignes se posent en bas du cadre, plus serrées
   square: {
@@ -420,7 +401,6 @@ const styles = StyleSheet.create({
   duel: {
     flex: 1,
     justifyContent: 'center',
-    paddingTop: spacing.xs,
   },
   /** Les avatars collés aux bords : le milieu reste au fil */
   duelRow: {
@@ -429,7 +409,7 @@ const styles = StyleSheet.create({
   },
   duelSide: {
     alignItems: 'flex-start',
-    gap: 3,
+    gap: 4,
   },
   duelSideEnd: {
     alignItems: 'flex-end',
@@ -437,14 +417,15 @@ const styles = StyleSheet.create({
   duelAvatar: {
     width: DUEL_AVATAR,
     height: DUEL_AVATAR,
-    borderRadius: 10,
+    borderRadius: 13,
     borderWidth: 1,
     borderColor: creamAlpha(0.6),
   },
   duelName: {
     maxWidth: '100%',
+    marginTop: 2,
     fontFamily: fonts.bodySemiBold,
-    fontSize: 13,
+    fontSize: 14,
     color: colors.textSecondary,
   },
   duelNameMe: {
@@ -453,12 +434,12 @@ const styles = StyleSheet.create({
   },
   duelScore: {
     fontFamily: fonts.display,
-    fontSize: 20,
+    fontSize: 26,
     color: colors.textPrimary,
     fontVariant: ['tabular-nums'],
   },
   duelScoreUnit: {
-    fontSize: 13,
+    fontSize: 17,
   },
   /** Le fil entre les deux, à hauteur des avatars */
   duelThread: {

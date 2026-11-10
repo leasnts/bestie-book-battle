@@ -308,6 +308,12 @@ export function LockedNoteCard({
  *   les six rapides à la place de la rangée.
  * - Sans `onToggle`, elles se lisent seulement (consultation).
  * - `inside` : posées dans la note (la liste), sur le papier.
+ * - `tile` (le carré de l'accueil) : seulement ☺+, comme dans la liste ; il
+ *   ouvre les rapides à sa place. Jamais les réactions des autres (Lea,
+ *   2026-11-10 : pas la place, elles se lisent dans le carnet).
+ *
+ * Toujours UNE ligne, jamais deux (Lea, 2026-11-10) : on mesure la rangée et
+ * on garde ce qui tient, les boutons de fin (…, ☺+, ✕) compris.
  */
 export function NoteReactions({
   note,
@@ -318,6 +324,7 @@ export function NoteReactions({
   inside = false,
   picking: pickingProp,
   onPickingChange,
+  tile = false,
 }: {
   note: AnnotationWithAuthor;
   myUserId?: string;
@@ -329,7 +336,11 @@ export function NoteReactions({
   /** Les six rapides ouvertes, piloté par la note (son appui long) */
   picking?: boolean;
   onPickingChange?: (picking: boolean) => void;
+  /** Le carré de l'accueil : ☺+ seul, sans les réactions des autres */
+  tile?: boolean;
 }) {
+  /** La largeur de la rangée, pour ne jamais passer à la ligne */
+  const [rowWidth, setRowWidth] = useState(0);
   const [pickingState, setPickingState] = useState(false);
   const picking = pickingProp ?? pickingState;
   const setPicking = (next: boolean | ((p: boolean) => boolean)) => {
@@ -371,7 +382,7 @@ export function NoteReactions({
   };
 
   // Les six rapides d'abord, dans leur ordre, puis les autres emojis posés
-  const shown =
+  const all =
     quick || picking
       ? [
           ...QUICK_REACTIONS.map(
@@ -379,15 +390,39 @@ export function NoteReactions({
           ),
           ...(quick ? reactions.filter((r) => !QUICK_REACTIONS.includes(r.emoji)) : []),
         ]
-      : reactions;
+      : tile
+        ? []
+        : reactions;
 
   if (!canReact && reactions.length === 0) return null;
+  if (tile && !canReact) return null;
   /** Des gélules : l'arrondi du verre suit la hauteur de la pastille */
-  const pillRadius = (quick ? 44 : inside ? 28 : 30) / 2;
+  const pillRadius = (quick ? 44 : inside || tile ? 28 : 30) / 2;
+  const showMore = canReact && !tile && (quick || picking);
+  const showToggle = canReact && !quick;
+
+  // Une seule ligne : ce qui tient, après la place des boutons de fin
+  const gap = quick ? spacing.sm : spacing.xs;
+  const minPill = quick ? 44 : 36;
+  const emojiWidth = quick ? 26 : 20;
+  const pillWidth = (count: number) =>
+    Math.max(minPill, spacing.sm * 2 + emojiWidth + (count > 0 ? 4 + 8 * String(count).length : 0));
+  const trailing = [showMore, showToggle].filter(Boolean).length;
+  let used = trailing * (minPill + gap);
+  const shown: typeof all = [];
+  for (const item of all) {
+    const w = pillWidth(item.count) + gap;
+    if (used + w > rowWidth + gap) break;
+    shown.push(item);
+    used += w;
+  }
 
   return (
-    <View style={[styles.footer, quick && styles.footerQuick, inside && styles.footerInside]}>
-      {shown.map(({ emoji, count, mine }) =>
+    <View
+      style={[styles.footer, quick && styles.footerQuick, inside && styles.footerInside]}
+      onLayout={(e) => setRowWidth(Math.floor(e.nativeEvent.layout.width))}
+    >
+      {rowWidth > 0 && shown.map(({ emoji, count, mine }) =>
         canReact ? (
           <PressableScale
             key={emoji}
@@ -417,7 +452,7 @@ export function NoteReactions({
           </View>
         ),
       )}
-      {canReact && (quick || picking) && (
+      {rowWidth > 0 && showMore && (
         <PressableScale
           style={[styles.reaction, quick && styles.reactionQuick, inside && styles.reactionInside]}
           pressedScale={0.85}
@@ -433,7 +468,7 @@ export function NoteReactions({
           <EllipsisIcon size={16} color={colors.dark900} strokeWidth={2.4} />
         </PressableScale>
       )}
-      {canReact && !quick && (
+      {rowWidth > 0 && showToggle && (
         <PressableScale
           style={[styles.reaction, inside && styles.reactionInside]}
           pressedScale={0.85}
@@ -654,9 +689,12 @@ const styles = StyleSheet.create({
 
   footer: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
     alignItems: 'center',
     gap: spacing.xs,
+    // La hauteur d'une pastille, le temps de mesurer la rangée
+    minHeight: 28,
+    // Toute la largeur donnée : c'est elle qu'on mesure
+    alignSelf: 'stretch',
   },
   // Dans la note : à gauche du coin corné (34 % de STICKER_BASE), jamais dessous
   footerInside: {

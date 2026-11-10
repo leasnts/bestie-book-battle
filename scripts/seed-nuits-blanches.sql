@@ -99,20 +99,20 @@ INSERT INTO public.annotations
 VALUES
   -- Visibles pour moi (avant ma page)
   ('4c6650d1-a213-48d2-8f86-7aaf52cf2be9', 'aaaaaaaa-1111-4000-a000-000000000001', 4, 58, 0.06897,
-   'Le narrateur qui parle aux maisons de Saint-Pétersbourg, j''étais pas prête', '😭', 'larmes', 'club'),
+   'Le narrateur qui parle aux maisons de Saint-Pétersbourg, j''étais pas prête', NULL, 'larmes', 'club'),
   ('4c6650d1-a213-48d2-8f86-7aaf52cf2be9', 'aaaaaaaa-1111-4000-a000-000000000002', 9, 96, 0.09375,
-   'Il tombe amoureux en une nuit, le mec est un projet', '😂', 'mdr', 'club'),
+   'Il tombe amoureux en une nuit, le mec est un projet', NULL, 'mdr', 'club'),
   ('4c6650d1-a213-48d2-8f86-7aaf52cf2be9', 'aaaaaaaa-1111-4000-a000-000000000003', 13, 74, 0.17568,
    NULL, '🔥', 'coup_de_coeur', 'club'),
   ('4c6650d1-a213-48d2-8f86-7aaf52cf2be9', '9b8c837f-0755-4d7a-972f-37cbe51395c1', 12, 62, 0.19355,
-   'Relire ce passage, la description de la nuit blanche', '📌', 'a_retenir', 'club'),
+   'Relire ce passage, la description de la nuit blanche', NULL, 'a_retenir', 'club'),
   -- La mienne, privée : visible de moi seule
   ('4c6650d1-a213-48d2-8f86-7aaf52cf2be9', '9b8c837f-0755-4d7a-972f-37cbe51395c1', 15, 62, 0.24194,
-   'Note pour moi : demander à Zoé ce qu''elle pense de Nastenka', '🤔', 'theorie', 'private'),
+   'Note pour moi : demander à Zoé ce qu''elle pense de Nastenka', NULL, 'theorie', 'private'),
   -- Verrouillées pour moi (plus loin que ma page + la marge)
   ('4c6650d1-a213-48d2-8f86-7aaf52cf2be9', 'aaaaaaaa-1111-4000-a000-000000000001', 22, 58, 0.37931,
-   'LA phrase du livre, je la recopie partout', '😭', 'coup_de_coeur', 'club'),
+   'LA phrase du livre, je la recopie partout', NULL, 'coup_de_coeur', 'club'),
   ('4c6650d1-a213-48d2-8f86-7aaf52cf2be9', 'aaaaaaaa-1111-4000-a000-000000000002', 40, 96, 0.41667,
    'Théorie : elle savait depuis le début', NULL, 'theorie', 'club'),
   ('4c6650d1-a213-48d2-8f86-7aaf52cf2be9', 'aaaaaaaa-1111-4000-a000-000000000004', 60, 112, 0.53571,
-   'Je vous préviens, préparez les mouchoirs', '😭', 'larmes', 'club');
+   'Je vous préviens, préparez les mouchoirs', NULL, 'larmes', 'club');

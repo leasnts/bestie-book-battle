@@ -63,7 +63,7 @@ import {
   countAtCapOnDate,
   daysLeft,
   formatTrackDate,
-  median,
+  clubAverage,
   type TrackCap,
 } from '../utils/track';
 import { AccentUnits } from '../components/ui/AccentWord';
@@ -150,7 +150,7 @@ export default function BookRoute() {
   }, [allNotes, allAhead, notesBookId, challengeId, user?.id]);
   /** Pour colorer les ronds des caps comme sur la piste de l'accueil */
   const myPercent = participants.find((p) => p.user.id === user?.id)?.percentage ?? 0;
-  const clubPercent = median(percentages);
+  const clubPercent = clubAverage(percentages);
   /** Mes co-lectrices et co-lecteurs, les plus avancés d'abord, pour les avatars */
   const members = useMemo(
     () =>
