@@ -444,15 +444,8 @@ export const storageKeys = {
 // Préférences de notifications par défaut (cohérent avec la DB)
 // Format aligné avec notification_preferences JSONB dans users
 export const DEFAULT_NOTIFICATION_PREFERENCES = {
-  enabled: true,
   daily_reminder: true,
   daily_reminder_time: '20:00',
-  competitive_alerts: true,
-  milestone_alerts: true,
-  streak_alerts: true,
-  goal_reminders: true,
-  friend_activity: true,
-  inactivity_alerts: true,
-  other_finished_book: true,
+  group: true,
 } as const;
 

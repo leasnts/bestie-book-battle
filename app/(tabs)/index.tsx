@@ -52,7 +52,6 @@ import { myCoverUrl } from '../../services/myEdition';
 import { updateWidgetData } from '../../utils/widget';
 import { buildCaps, clubAverage } from '../../utils/track';
 import { useLeaderboardParticipants } from '../../hooks/useLeaderboardParticipants';
-import { useNotificationScheduler } from '../../hooks/useNotificationScheduler';
 import { useAuthStore } from '../../stores/authStore';
 import { useGoalStore } from '../../stores/goalStore';
 import { useProgressStore } from '../../stores/progressStore';
@@ -135,13 +134,6 @@ export default function HomeScreen() {
     loadActiveGoals,
     loadGoalHistory,
   } = useGoalStore();
-
-  // Planifie les notifications (streak en danger, rappels objectifs, inactivité)
-  useNotificationScheduler({
-    challengeId: activeChallenge?.id ?? null,
-    participantsLoaded: participants.length > 0,
-    goalsLoaded: true, // loadActiveGoals est appelé en parallèle
-  });
 
 
   // ===== État local =====

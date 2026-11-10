@@ -1,24 +1,18 @@
 /**
  * Page Notifications / Activité
  *
- * Affiche les alertes importantes du challenge actif :
- * milestones, dépassements, écarts, livre terminé, streak en danger, etc.
- *
- * Ce feed NE contient PAS "l'ami a lu 3 pages" car c'est du spam.
- * Les données viennent du notificationStore (persisté en local via AsyncStorage).
- *
- * Logique de l'image affichée :
- * - avatarSource === 'self'        → ma photo de profil
- * - avatarSource starts with http  → photo d'un autre utilisateur
- * - avatarSource === null          → image BBB par défaut (notif générale)
- * - aucune photo disponible        → image BBB par défaut (fallback)
+ * L'historique des notifs du groupe du livre actif (#178) : une pote passe
+ * devant, le carnet. La source est le serveur ; le notificationStore le garde
+ * sur le téléphone pour s'ouvrir plein. Toucher une ligne ouvre l'écran dont
+ * elle parle.
  */
 
 import { Image } from 'expo-image';
-import { useRouter } from 'expo-router';
-import React from 'react';
+import { useRouter, type Href } from 'expo-router';
+import React, { useEffect } from 'react';
 import {
   FlatList,
+  Pressable,
   StyleSheet,
   Text,
   View,
@@ -29,7 +23,6 @@ import Button3D from '../components/Button3D';
 import PageTransition from '../components/PageTransition';
 import { useSwipeBack } from '../hooks/useSwipeBack';
 import PopEyes from '../components/PopEyes';
-import { useAuthStore } from '../stores/authStore';
 import { useNotificationStore } from '../stores/notificationStore';
 import { useProjectStore } from '../stores/projectStore';
 import { borderRadius, colors, fonts, fontSize, spacing } from '../utils/constants';
@@ -38,12 +31,6 @@ import { ChevronLeftIcon } from 'lucide-react-native';
 // ─── Assets ──────────────────────────────────────────────────────────────────
 
 
-/**
- * Image BBB par défaut.
- * Affichée pour :
- * 1. Les notifications générales (streak, deadline, inactivité)
- * 2. Tout utilisateur sans photo de profil uploadée
- */
 const DEFAULT_PROFILE_IMAGE = require('../assets/images/pop-eyes.png');
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -65,47 +52,18 @@ function formatRelativeTime(isoString: string): string {
   return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
 }
 
-/**
- * Résout la source image à afficher pour une notification.
- *
- * - 'self' + photo dispo         → { source: { uri }, fit: 'cover' }
- * - URL http(s)                  → { source: { uri }, fit: 'cover' }
- * - null ou aucune photo dispo   → { source: DEFAULT_PROFILE_IMAGE, fit: 'contain' }
- *
- * On retourne aussi le `fit` pour que les PopEyes ne soient jamais coupés.
- */
-function resolveAvatarSource(
-  avatarSource: 'self' | string | null,
-  currentUserPhotoUrl: string | null | undefined
-): { source: any; fit: 'cover' | 'contain' } {
-  if (avatarSource === null) return { source: DEFAULT_PROFILE_IMAGE, fit: 'contain' };
-
-  if (avatarSource === 'self') {
-    if (
-      currentUserPhotoUrl &&
-      (currentUserPhotoUrl.startsWith('http://') ||
-        currentUserPhotoUrl.startsWith('https://'))
-    ) {
-      return { source: { uri: currentUserPhotoUrl }, fit: 'cover' };
-    }
-    return { source: DEFAULT_PROFILE_IMAGE, fit: 'contain' };
-  }
-
-  // URL directe d'un autre utilisateur
-  if (avatarSource.startsWith('http://') || avatarSource.startsWith('https://')) {
-    return { source: { uri: avatarSource }, fit: 'cover' };
-  }
-
-  return { source: DEFAULT_PROFILE_IMAGE, fit: 'contain' };
-}
-
 // ─── Composant principal ─────────────────────────────────────────────────────
 
 export default function ActivityScreen() {
   const router = useRouter();
-  const { user } = useAuthStore();
   const { activeChallenge } = useProjectStore();
-  const { notifications } = useNotificationStore();
+  const notifications = useNotificationStore((s) => s.notifications);
+  const load = useNotificationStore((s) => s.load);
+
+  // Ce qu'on avait s'affiche tout de suite ; le serveur complète
+  useEffect(() => {
+    load().catch((error) => console.warn('[activité]', error));
+  }, [load]);
 
   // Swipe vers la droite pour fermer l'activité (symétrique à l'ouverture)
   const swipeGesture = useSwipeBack('right');
@@ -150,24 +108,16 @@ export default function ActivityScreen() {
         initialNumToRender={12}
         windowSize={7}
         removeClippedSubviews
-        renderItem={({ item }) => {
-          const { source: avatarSrc, fit: avatarFit } = resolveAvatarSource(
-            item.avatarSource,
-            user?.profile_photo_url
-          );
-
-          return (
-            <View style={styles.row}>
-                {/* Thumbnail carré 48×48 */}
+        renderItem={({ item }) => (
+            <Pressable
+              style={styles.row}
+              onPress={() => router.push(item.url as Href)}
+              accessibilityRole="button"
+            >
                 <View style={styles.avatarWrapper}>
-                  <Image
-                    source={avatarSrc}
-                    style={styles.avatarImage}
-                    contentFit={avatarFit}
-                  />
+                  <Image source={DEFAULT_PROFILE_IMAGE} style={styles.avatarImage} contentFit="contain" />
                 </View>
 
-                {/* Texte */}
                 <View style={styles.rowContent}>
                   <View style={styles.rowTopLine}>
                     <Text style={styles.rowTitle} numberOfLines={1}>
@@ -181,9 +131,8 @@ export default function ActivityScreen() {
                     {item.body}
                   </Text>
                 </View>
-            </View>
-          );
-        }}
+            </Pressable>
+        )}
       />
     </SafeAreaView>
     </GestureDetector>
@@ -197,10 +146,7 @@ function EmptyState() {
   return (
     <View style={styles.centerContainer}>
       <PopEyes variant="together" size="large" style={styles.emptyEyes} />
-      <Text style={styles.emptyTitle}>Aucune notification</Text>
-      <Text style={styles.emptySubtitle}>
-        Les alertes importantes (milestones, dépassements, streaks…) apparaîtront ici
-      </Text>
+      <Text style={styles.emptyTitle}>Rien pour l’instant</Text>
     </View>
   );
 }

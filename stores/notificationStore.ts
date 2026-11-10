@@ -1,115 +1,74 @@
 /**
- * Store des notifications in-app importantes
+ * L'historique des notifs du groupe (#178), pour l'écran Activité.
  *
- * Ce store persiste (AsyncStorage) les alertes significatives :
- * milestone, dépassement, écart, ami qui finit, livre terminé, etc.
+ * La source est le serveur (table `notifications`, scripts/notifications.sql) :
+ * ce qui a été envoyé, ou l'aurait été sans autorisation, limite du jour ou
+ * réglage coupé. Seulement le groupe (une pote passe devant, le carnet) : le
+ * rappel et le cap n'ont rien à raconter après coup.
  *
- * Il NE stocke PAS :
- * - "l'ami a lu 3 pages" (sendFriendActivityNotification) → trop verbeux
- * - Le rappel quotidien → c'est une notification système planifiée, pas un feed
- *
- * Logique de l'image affichée :
- * - avatarSource === 'self'        → photo de profil de l'utilisateur connecté
- * - avatarSource starts with http  → photo de profil d'un autre utilisateur
- * - avatarSource === null          → image BBB par défaut (notification générale)
+ * Gardé sur le téléphone (AsyncStorage) : l'écran s'ouvre plein tout de suite,
+ * puis se met à jour (jamais de loader).
  */
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
+import { supabase } from '../supabaseConfig';
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-export type NotificationType =
-  | 'milestone'       // J'ai atteint X pages
-  | 'half_book'       // J'ai lu la moitié du livre
-  | 'book_finished'   // J'ai terminé le livre
-  | 'overtake'        // Un ami m'a dépassé
-  | 'gap'             // Un ami a X pages d'avance
-  | 'friend_finished' // Un ami a terminé le livre
-  | 'streak_risk'     // Ma série est en danger
-  | 'goal_deadline'   // Deadline d'objectif demain
-  | 'inactivity';     // Inactivité depuis X jours
+export type NotificationType = 'overtake' | 'carnet';
 
 export type NotificationEntry = {
   id: string;
   type: NotificationType;
   title: string;
   body: string;
-  timestamp: string; // ISO string pour sérialisation
-  challengeId: string;
-  /**
-   * Source de l'image pour cette notification :
-   * - 'self'        → photo de l'utilisateur connecté
-   * - URL (https://) → photo d'un autre utilisateur (déjà résolue)
-   * - null          → image BBB par défaut
-   */
-  avatarSource: 'self' | string | null;
+  /** Le livre, quand la notif en parle */
+  subtitle: string | null;
+  timestamp: string; // ISO
+  challengeId: string | null;
+  url: string;
 };
-
-// ─── Store ────────────────────────────────────────────────────────────────────
 
 interface NotificationStore {
   notifications: NotificationEntry[];
-  addNotification: (entry: Omit<NotificationEntry, 'id' | 'timestamp'>) => void;
-  removeNotification: (id: string) => void;
-  clearAll: () => void;
-  clearForChallenge: (challengeId: string) => void;
+  load: () => Promise<void>;
 }
+
+/** Ce qui compte comme « arrivé » : envoyé, ou retenu seulement par un réglage */
+const DELIVERED = 'status.eq.sent,skip_reason.in.(no_token,daily_cap,off)';
 
 export const useNotificationStore = create<NotificationStore>()(
   persist(
     (set) => ({
       notifications: [],
 
-      addNotification: (entry) => {
-        // Déduplication : on ne sauvegarde pas si une notif du même type
-        // pour le même challenge a déjà été enregistrée dans les dernières 12h.
-        // Évite le spam quand le hook se re-déclenche plusieurs fois.
-        const DEDUP_WINDOW_MS = 12 * 60 * 60 * 1000; // 12 heures
-        const now = Date.now();
-
-        const isDuplicate = useNotificationStore
-          .getState()
-          .notifications.some(
-            (n) =>
-              n.type === entry.type &&
-              n.challengeId === entry.challengeId &&
-              now - new Date(n.timestamp).getTime() < DEDUP_WINDOW_MS
-          );
-
-        if (isDuplicate) return;
-
-        const newEntry: NotificationEntry = {
-          ...entry,
-          id: `notif_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
-          timestamp: new Date().toISOString(),
-        };
-        set((state) => ({
-          // Les plus récentes en premier, max 50 entrées
-          notifications: [newEntry, ...state.notifications].slice(0, 50),
-        }));
-      },
-
-      removeNotification: (id) => {
-        set((state) => ({
-          notifications: state.notifications.filter((n) => n.id !== id),
-        }));
-      },
-
-      clearAll: () => set({ notifications: [] }),
-
-      clearForChallenge: (challengeId) => {
-        set((state) => ({
-          notifications: state.notifications.filter(
-            (n) => n.challengeId !== challengeId
-          ),
-        }));
+      load: async () => {
+        const { data, error } = await supabase
+          .from('notifications')
+          .select('id, kind, title, subtitle, body, url, challenge_id, sent_at, created_at')
+          .in('kind', ['overtake', 'carnet'])
+          .not('title', 'is', null)
+          .or(DELIVERED)
+          .order('created_at', { ascending: false })
+          .limit(50);
+        if (error) throw error;
+        set({
+          notifications: (data ?? []).map((row) => ({
+            id: row.id,
+            type: row.kind as NotificationType,
+            title: row.title ?? '',
+            body: row.body ?? '',
+            subtitle: row.subtitle,
+            timestamp: row.sent_at ?? row.created_at,
+            challengeId: row.challenge_id,
+            url: row.url,
+          })),
+        });
       },
     }),
     {
-      name: 'bbb-notifications',
+      name: 'bbb-notifications-v2',
       storage: createJSONStorage(() => AsyncStorage),
-    }
-  )
+    },
+  ),
 );

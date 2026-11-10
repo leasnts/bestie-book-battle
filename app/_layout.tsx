@@ -12,7 +12,6 @@
 // import StorybookUIRoot from '../.rnstorybook/index';
 const SHOW_STORYBOOK = false;
 
-import * as Notifications from 'expo-notifications';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
@@ -21,9 +20,8 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { MD3LightTheme, PaperProvider } from 'react-native-paper';
 import 'react-native-reanimated';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { scheduleEveningReminder } from '../services/notifications';
+import { usePushNotifications } from '../hooks/usePushNotifications';
 import { useAuthStore } from '../stores/authStore';
-import { useFeelStore } from '../stores/feelStore';
 import { useProjectStore } from '../stores/projectStore';
 import { colors } from '../utils/constants';
 import { prepareFeel } from '../utils/feel';
@@ -227,40 +225,9 @@ function RootLayoutNav() {
     }
   }, [user, isInitialized, challenges, segments, isMounted, router, pendingUserData]);
 
-  // Initialise les notifications pour les utilisateurs DÉJÀ connectés (hors onboarding)
-  // IMPORTANT: On ne demande JAMAIS les permissions ici — c'est l'écran onboarding/notifications
-  // qui s'en charge. Sinon la boîte native iOS s'affiche trop tôt et quand l'user tape
-  // "Autoriser", iOS ne la réaffiche pas (déjà consommée).
-  // Ici on vérifie seulement si les perms sont déjà accordées et on planifie le rappel.
-  useEffect(() => {
-    if (!user?.id || Platform.OS === 'web') return;
-    const inOnboarding = segments[0] === 'onboarding';
-    if (inOnboarding) return; // Laissons l'écran notifications gérer la première demande
-
-    let cancelled = false;
-
-    const setupNotifications = async () => {
-      try {
-        const { status } = await Notifications.getPermissionsAsync();
-        // Éteint dans les Réglages : on ne le replanifie pas (réglage relu sur le téléphone d'abord)
-        if (!useFeelStore.persist.hasHydrated()) {
-          await new Promise<void>((done) => useFeelStore.persist.onFinishHydration(() => done()));
-        }
-        const wanted = useFeelStore.getState().eveningReminder;
-        if (!cancelled && status === 'granted' && wanted) {
-          await scheduleEveningReminder(user.notification_preferences?.daily_reminder_time);
-        }
-      } catch (error) {
-        console.error('Erreur lors de l\'initialisation des notifications:', error);
-      }
-    };
-
-    setupNotifications();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [user?.id, segments[0]]);
+  // Les notifs (#178) : adresse du téléphone, silence app ouverte, toucher = bon écran.
+  // La fenêtre d'iOS n'est jamais demandée ici : c'est l'écran onboarding/notifications.
+  usePushNotifications();
 
   // Callback quand le splash screen se termine
   const handleSplashFinish = () => {
