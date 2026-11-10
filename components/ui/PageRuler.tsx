@@ -99,6 +99,8 @@ const DECADE = STEP * 10;
 const RULER_HEIGHT = 74;
 /** L'air au-dessus du chiffre : aucun, il est posé en bas, contre la couture */
 const NUMBER_TOP = 0;
+/** La chasse de « p. » en Welcome Valentines, en fraction de sa taille (mesurée à l'écran) */
+const P_WIDTH_EM = 0.55;
 /** Ce que « p. » déborde à droite du chiffre (le chiffre reste centré : autant de chaque côté), en fraction du chiffre */
 const UNIT_SIDE_EM = 0.18;
 /** « sur 624 » sous le chiffre : petit et net (Lea, 2026-11-10), et la place qu'il prend dessous */
@@ -436,6 +438,7 @@ function InkNumber({
   // La largeur du chiffre, pour caler son signe (le nombre de chiffres change rarement)
   const numberWidth = figureWidth(String(page), fontSize);
   const percentSize = Math.round(fontSize * 0.5);
+  const unitSize = Math.round(percentSize * ACCENT_SCALE);
 
   const outText = useAnimatedProps(() => {
     const b = Math.max(0, Math.min(total, Math.floor(scrollX.value / STEP + 1e-3)));
@@ -495,12 +498,22 @@ function InkNumber({
   return (
     <View style={[frame, { width: numberWidth + 80 }]}>
       {/* Le « % » se glisse en bas à droite, derrière le chiffre, flouté et pâle.
-          Le « p. » pareil, écrit à la main ; le total, « sur 624 », en petit
+          Le « p. » pareil, écrit à la main, devant le chiffre en pages ; le total, « sur 624 », en petit
           dessous (Lea, 2026-11-10) */}
       {unit === 'percent' ? (
         <GhostTotal total={total} label="%" size={percentSize} left={40 + numberWidth - percentSize * 0.3} baseline={baseline} drop={0.18} />
       ) : (
-        <GhostTotal total={total} label="p." accent size={Math.round(percentSize * ACCENT_SCALE)} left={40 + numberWidth - percentSize * 0.3} baseline={baseline} drop={0.18} />
+        // « p. 351 » : la page où j'en suis s'écrit « p. » devant (en bas à gauche) ;
+        // un nombre de pages, « 650 p. », derrière (en bas à droite)
+        <GhostTotal
+          total={total}
+          label="p."
+          accent
+          size={unitSize}
+          left={unit === 'pages' ? 40 - unitSize * P_WIDTH_EM + percentSize * 0.3 : 40 + numberWidth - percentSize * 0.3}
+          baseline={baseline}
+          drop={0.18}
+        />
       )}
       {unit === 'pages' && (
         <Text allowFontScaling={false} numberOfLines={1} style={[styles.total, { top: baseline + TOTAL_GAP }]}>
