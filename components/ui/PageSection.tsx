@@ -12,6 +12,9 @@
  *   d'autre du chiffre, sur sa ligne (retours de test, 2026-11-09). Pas de
  *   « +14 » à côté : il s'envole à l'enregistrement (la feuille de l'accueil).
  *   Au repos, rien : il n'y a jamais de doute sur la page notée.
+ * - Au repos, + et ☺+ au bout de la ligne : écrire sur ma page, là où elle est
+ *   (`PageNoteActions`, essai B du 2026-11-10 ; avant, des intercalaires sur
+ *   le carré Carnet qu'on prenait pour des actions sur la note à la une).
  */
 
 import { CheckIcon, RotateCcwIcon } from 'lucide-react-native';
@@ -20,6 +23,7 @@ import { StyleSheet, View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { spacing } from '../../utils/constants';
 import GlassButton from './GlassButton';
+import PageNoteActions from './PageNoteActions';
 import PageRuler, { type ClubPin } from './PageRuler';
 import RoundButton from './RoundButton';
 
@@ -43,6 +47,8 @@ interface PageSectionProps {
   club?: ClubPin[];
   /** Liseuse ou audio : la règle avance en % */
   unit?: 'pages' | 'percent';
+  /** + et ☺+ au repos (un livre du club est ouvert) */
+  noteActions?: boolean;
 }
 
 export default function PageSection({
@@ -56,6 +62,7 @@ export default function PageSection({
   pickerFontSize = 88,
   club,
   unit,
+  noteActions = false,
 }: PageSectionProps) {
   const hasChanged = currentPage !== savedPage;
 
@@ -77,6 +84,10 @@ export default function PageSection({
                 {/* Secondaire : notre rond en verre, à la taille du ✓ */}
                 <GlassButton icon={RotateCcwIcon} accessibilityLabel="Annuler" onPress={onUndo} />
                 <RoundButton icon={CheckIcon} variant="dark" label="Enregistrer ma page" onPress={onSave} />
+              </Animated.View>
+            ) : noteActions ? (
+              <Animated.View entering={FadeIn.duration(180)} pointerEvents="box-none" style={styles.actions}>
+                <PageNoteActions />
               </Animated.View>
             ) : null
           }

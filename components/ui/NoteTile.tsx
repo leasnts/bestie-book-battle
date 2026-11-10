@@ -2,11 +2,16 @@
  * NoteTile — le carré du carnet sur l'accueil : la note « à la une », seule.
  *
  *    ┌┄┄┄┄┄┄┄┄┄┄┄┐
- *    ┆ Larmes    p. 142 ┆   la catégorie (toujours écrite) et la page
+ *    ┆ ③ Camille  p. 142┆   les nouvelles qui restent, l'autrice et sa page
  *    ┆ Faria qui lui    ┆   le texte, la citation, l'emoji seul ou le vocal
- *    ┆ lègue tout…      ┆
- *    ┆ Camille   1 / 3 ◢┆   l'autrice, et où on en est dans les nouvelles
+ *    ┆ lègue tout…      ┆   (la catégorie en filigrane)
+ *    ┆ ☺+              ◢┆   réagir sans ouvrir le carnet (☺+ ouvre les rapides)
  *    └┄┄┄┄┄┄┄┄┄┄┄┘
+ *
+ * Le prénom sur la ligne de la page : la note est à elle, à cette page. Le bas
+ * réagit à CETTE note ; l'intercalaire ☺ au-dessus, lui, annote MA page (Lea,
+ * 2026-11-09 : sans réactions sur la note, on croyait que ☺ y réagissait).
+ * Réagir ici ne marque pas la note comme lue : elle reste dans les nouvelles.
  *
  * Pas de cadre en verre derrière : le carré EST la note (retour de Lea,
  * 2026-09-29). Le coin corné en bas à droite invite à tourner la page ; tout le
@@ -46,6 +51,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import type { AnnotationWithAuthor } from '../../services/supabase/annotations';
+import { useAnnotationStore } from '../../stores/annotationStore';
 import {
   ANNOTATION_CATEGORIES,
   formatNotePage,
@@ -53,6 +59,7 @@ import {
   isEmojiOnly,
 } from '../../utils/annotations';
 import { colors, fonts, inkAlpha, inkGradient, motion, postIt, postItDeepOf, spacing } from '../../utils/constants';
+import { NoteReactions } from './NoteCard';
 import NoteSticker, { STICKER_BASE_LARGE } from './NoteSticker';
 import PeelSurface, { peelAmount, pullSpeed } from './PeelSurface';
 import PressableScale from './PressableScale';
@@ -145,6 +152,12 @@ export default function NoteTile({
   /** Rien du tout, ni lisible ni plus loin : on invite à la première note */
   const untouched = !note && aheadCount === 0;
   const write = useWriteNote();
+  const toggleReaction = useAnnotationStore((s) => s.toggleReaction);
+  /** Réagir à une note partagée au groupe, la mienne comprise (comme dans le carnet) */
+  const reactTo = (n: AnnotationWithAuthor) =>
+    myUserId && n.visibility === 'club'
+      ? (emoji: string) => toggleReaction(n.id, myUserId, emoji)
+      : undefined;
 
   const label = note
     ? `Carnet de notes. Note de ${isMine(note) ? 'moi' : note.author?.first_name ?? 'quelqu’un'}${
@@ -162,6 +175,8 @@ export default function NoteTile({
         freshAt={freshPlace(i)}
         freshCount={freshCount}
         myTotalPages={myTotalPages}
+        myUserId={myUserId}
+        onReact={reactTo(n)}
       />
     </Face>
   );
@@ -309,7 +324,7 @@ function FirstNote({ tile, page }: { tile: TileSize; page: number }) {
               <NoteSticker id="note-tile-first" color={postIt.rose} width={tile.w} height={tile.h} maxBase={STICKER_BASE_LARGE} corner="none" />
             </View>
             <View style={styles.content}>
-              <View style={styles.head}>
+              <View style={[styles.head, styles.headEnd]}>
                 <Text style={styles.page} maxFontSizeMultiplier={1.3}><AccentUnit size={styles.page.fontSize} color={styles.page.color}>p.</AccentUnit> {page}</Text>
               </View>
               <View style={styles.lines}>
@@ -529,9 +544,14 @@ function NoteContent({
   freshAt,
   freshCount,
   myTotalPages,
+  myUserId,
+  onReact,
 }: {
   note: AnnotationWithAuthor;
   isMine: boolean;
+  myUserId?: string;
+  /** Réagir d'un toucher ; absent : les réactions se lisent seulement */
+  onReact?: (emoji: string) => void;
   /** Sa place dans les nouvelles (1, 2…), 0 si elle n'en est pas */
   freshAt: number;
   freshCount: number;
@@ -543,7 +563,6 @@ function NoteContent({
   const author = isMine ? 'Moi' : note.author?.first_name || 'Participant';
   // Une note, c'est un emoji seul OU un texte : l'emoji d'une ancienne note passe en tête
   const text = note.body ? (note.emoji ? `${note.emoji} ${note.body}` : note.body) : null;
-
   return (
     <View style={styles.content}>
       <View style={styles.head}>
@@ -555,6 +574,9 @@ function NoteContent({
             </Text>
           </LinearGradient>
         )}
+        <Text style={styles.author} numberOfLines={1}>
+          {author}
+        </Text>
         <Text style={[styles.page, { color: pageTone }]} maxFontSizeMultiplier={1.3}>
           <AccentUnits text={page} size={styles.page.fontSize} color={pageTone} />
         </Text>
@@ -579,9 +601,7 @@ function NoteContent({
       </View>
 
       <View style={styles.foot}>
-        <Text style={styles.author} numberOfLines={1}>
-          {author}
-        </Text>
+        {note.visibility === 'club' && <NoteReactions tile inside note={note} myUserId={myUserId} onToggle={onReact} />}
       </View>
     </View>
   );
@@ -632,8 +652,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.sm,
   },
+  // Le bloc neuf : la page seule, ferrée à droite
+  headEnd: {
+    justifyContent: 'flex-end',
+  },
   page: {
-    marginLeft: 'auto',
     fontFamily: fonts.display,
     fontSize: 14,
     color: colors.textPrimary,
@@ -662,14 +685,15 @@ const styles = StyleSheet.create({
     lineHeight: 64,
     marginTop: spacing.xs,
   },
+  // La hauteur d'une pastille de réaction, qu'il y en ait ou non
+  // En colonne : la rangée de réactions prend toute la largeur pour se mesurer
   foot: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
+    justifyContent: 'center',
+    minHeight: 28,
     marginRight: 34,
   },
   author: {
-    flexShrink: 1,
+    flex: 1,
     fontFamily: fonts.bodyExtraBold,
     fontSize: 12,
     color: inkAlpha(0.66),
