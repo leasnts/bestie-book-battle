@@ -10,11 +10,12 @@
  * - les **caps** et la **fin** sont des nœuds de broderie : rouge une fois
  *   dépassés, sable sinon. Plus de date sous le cap en cours (Lea, 2026-10-01) :
  *   on la trouve dans la fiche du livre ;
- * - **moi** : là où le fil passe du chocolat au sable (plus de pastille ni de
- *   loupe, Lea, 2026-10-01) ;
+ * - **le groupe** : là où le fil passe du chocolat au sable, à la moyenne de
+ *   tous les membres (Lea, 2026-11-10 ; seule, c'est moi). Plus de pastille ni
+ *   de loupe (2026-10-01) ;
  * - le repère de gauche (J-x) dit le temps qu'il reste, la date de fin est au bout.
  *   La date de fin est facultative : sans elle, ni J-x ni date, la ligne disparaît.
- * - `marker` : un repère posé sous MOI, qui avance avec le fil (l'accueil y met
+ * - `marker` : un repère posé sous ce point, qui avance avec le fil (l'accueil y met
  *   mon %, Lea, 2026-11-10). Borné : jamais avant le départ, et près de la fin
  *   il se cale contre la date sans la chevaucher.
  *
@@ -30,24 +31,26 @@ import { colors, fonts, inkAlpha, lowki } from '../../utils/constants';
 import { formatTrackDate, type TrackCap } from '../../utils/track';
 
 interface GoalTrackProps {
-  /** Ma progression, 0 à 100 */
-  myPercent: number;
+  /** Où en est la piste, 0 à 100 : la moyenne du groupe (la mienne si je suis seule) */
+  percent: number;
+  /** Vrai à plusieurs : la piste dit où en est le groupe, pas moi */
+  group?: boolean;
   caps: TrackCap[];
   /** Date de fin du livre, affichée au bout de la piste */
   endDate: string | null;
   /** Repère posé au début de la ligne des dates, sous le départ de la piste (le J-x) */
   leadingLabel?: React.ReactNode;
-  /** Repère centré sous moi sur la ligne des dates, qui suit le fil */
+  /** Repère centré sous le point du fil, sur la ligne des dates */
   marker?: React.ReactNode;
 }
 
-export default function GoalTrack({ myPercent, caps, endDate, leadingLabel, marker }: GoalTrackProps) {
+export default function GoalTrack({ percent: progress, group = false, caps, endDate, leadingLabel, marker }: GoalTrackProps) {
   const currentCap = caps.find((cap) => cap.state === 'current') ?? null;
   // Largeur de la piste, pour placer les points du fil
   const [width, setWidth] = useState(0);
   // Un cap à 100 % et la fin tombent sur le même nœud : un seul
   const knots = [...new Set([...caps.map((cap) => cap.percent), ...(endDate ? [100] : [])])];
-  const meX = (width * myPercent) / 100;
+  const meX = (width * progress) / 100;
   // Largeurs du repère et de la date, pour borner le repère
   const [markerWidth, setMarkerWidth] = useState(0);
   const [dateWidth, setDateWidth] = useState(0);
@@ -55,7 +58,7 @@ export default function GoalTrack({ myPercent, caps, endDate, leadingLabel, mark
   const markerLeft = Math.max(-LEAD_OVERHANG, Math.min(meX - markerWidth / 2, markerMax));
 
   return (
-    <View accessible accessibilityLabel={trackLabel(myPercent, currentCap, endDate)}>
+    <View accessible accessibilityLabel={trackLabel(progress, group, currentCap, endDate)}>
       <View style={styles.track} onLayout={(e) => setWidth(e.nativeEvent.layout.width)}>
         {width > 0 && (
           <>
@@ -65,7 +68,7 @@ export default function GoalTrack({ myPercent, caps, endDate, leadingLabel, mark
               <G transform={`translate(${KNOT_PAD} 0)`}>
                 <Seam width={width} readUntil={meX} />
                 {knots.map((percent) => (
-                  <Knot key={percent} x={(width * percent) / 100} reached={percent <= myPercent} />
+                  <Knot key={percent} x={(width * percent) / 100} reached={percent <= progress} />
                 ))}
               </G>
             </Svg>
@@ -149,8 +152,8 @@ function Knot({ x, reached }: { x: number; reached: boolean }) {
 }
 
 /** Ce que VoiceOver lit : la piste en une phrase, puisqu'elle n'en porte aucune */
-function trackLabel(myPercent: number, currentCap: TrackCap | null, endDate: string | null) {
-  const parts = [`J'en suis à ${Math.round(myPercent)} pour cent du livre`];
+function trackLabel(progress: number, group: boolean, currentCap: TrackCap | null, endDate: string | null) {
+  const parts = [`${group ? 'Le groupe en est' : "J'en suis"} à ${Math.round(progress)} pour cent du livre`];
   if (currentCap) {
     parts.push(
       `prochain cap à ${Math.round(currentCap.percent)} pour cent, le ${formatTrackDate(currentCap.deadline)}`,

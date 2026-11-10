@@ -520,7 +520,9 @@ export default function HomeScreen() {
           <BookSection
             challenge={activeChallenge}
             coverUrl={myCoverUrl(activeChallenge, myProgress ?? cachedMyProgress)}
-            myPercent={myPercent}
+            // La piste du livre : le groupe en moyenne (Lea, 2026-11-10) ; seule, moi
+            percent={alone || !participantsMatchChallenge ? myPercent : averagePercentage}
+            group={!alone && participantsMatchChallenge}
             caps={caps}
             // Seule et en % : Ma page dit déjà mon % en grand
             showPercent={!(alone && inPercent)}

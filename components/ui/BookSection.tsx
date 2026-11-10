@@ -3,7 +3,8 @@
  *
  * Première question de l'accueil : qu'est-ce qu'on lit, et qu'est-ce qu'on vise.
  * La couverture à gauche ; à droite, le titre, l'autrice, puis la piste du livre.
- * Sous la piste, sous mon point, où j'en suis (`42 %`) ; la date de fin au bout.
+ * Sous la piste, où en est le groupe en moyenne (`42 %`), sous le point du fil ;
+ * la date de fin au bout.
  * Pas une phrase.
  *
  * Le % a remplacé le J-x (Lea, 2026-11-10). Avant, le J-x avait quitté le
@@ -35,11 +36,13 @@ interface BookSectionProps {
   challenge: Challenge;
   /** La couverture de mon édition, sinon celle du bbb */
   coverUrl: string | null;
-  /** Ma progression, 0 à 100 */
-  myPercent: number;
+  /** Où en est le livre, 0 à 100 : la moyenne du groupe (la mienne si je suis seule) */
+  percent: number;
+  /** Vrai à plusieurs : la piste dit où en est le groupe */
+  group?: boolean;
   caps: TrackCap[];
   /**
-   * Mon % sous la piste. Faux quand il est déjà à l'écran ailleurs : seule dans
+   * Le % sous la piste. Faux quand il est déjà à l'écran ailleurs : seule dans
    * un livre lu en %, Ma page l'affiche déjà en grand (Lea, 2026-11-10 : jamais
    * de redondance)
    */
@@ -53,7 +56,8 @@ interface BookSectionProps {
 export default function BookSection({
   challenge,
   coverUrl,
-  myPercent,
+  percent,
+  group = false,
   caps,
   showPercent = true,
   compact = false,
@@ -91,11 +95,12 @@ export default function BookSection({
             </Text>
           )}
 
-          {/* La piste sous l'autrice ; sous mon point, où j'en suis en %, qui
-              avance avec le fil. Il a remplacé le J-x (Lea, 2026-11-10) */}
+          {/* La piste sous l'autrice : où en est le groupe (la moyenne ; seule,
+              moi), en % sous le point du fil. Il a remplacé le J-x (Lea, 2026-11-10) */}
           <View style={styles.track}>
             <GoalTrack
-              myPercent={myPercent}
+              percent={percent}
+              group={group}
               caps={caps}
               endDate={challenge.target_end_date}
               marker={
@@ -107,7 +112,7 @@ export default function BookSection({
                   importantForAccessibility="no-hide-descendants"
                   accessibilityElementsHidden
                 >
-                  {Math.round(myPercent)}
+                  {Math.round(percent)}
                   <AccentUnit size={styles.percent.fontSize} color={styles.percent.color}>%</AccentUnit>
                 </Text>
                 )
