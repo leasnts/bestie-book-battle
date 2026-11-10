@@ -18,16 +18,11 @@ export type Json =
  * Stockées en JSONB dans la base de données
  */
 export interface NotificationPreferences {
-  enabled: boolean;
+  /** Le rappel, seulement les jours sans lecture */
   daily_reminder: boolean;
   daily_reminder_time: string; // Format "HH:mm"
-  competitive_alerts: boolean;      // Dépassement + écart qui se creuse
-  milestone_alerts: boolean;
-  streak_alerts: boolean;          // Streak en danger
-  goal_reminders: boolean;         // Rappels d'objectifs (deadline demain)
-  friend_activity: boolean;        // L'autre vient de mettre à jour
-  inactivity_alerts: boolean;      // Pas de mise à jour depuis X jours
-  other_finished_book: boolean;    // L'autre a fini le livre
+  /** Mon groupe : une pote passe devant, le carnet, la veille d'un cap */
+  group: boolean;
 }
 
 /**
@@ -46,6 +41,8 @@ export interface Database {
           last_name: string | null;
           profile_photo_url: string | null;
           notification_token: string | null;
+          /** Fuseau du téléphone (« Europe/Paris ») : le serveur y compte jours et nuits */
+          timezone: string | null;
           notification_preferences: NotificationPreferences;
           reading_moments: ReadingMoment[]; // Quand je lis, en général : fixe l'heure du rappel
           usual_formats: BookFormat[]; // Mes formats habituels, en général (plusieurs possibles)
@@ -61,6 +58,7 @@ export interface Database {
           last_name?: string | null;
           profile_photo_url?: string | null;
           notification_token?: string | null;
+          timezone?: string | null;
           notification_preferences?: NotificationPreferences;
           reading_moments?: ReadingMoment[];
           usual_formats?: BookFormat[];
@@ -76,6 +74,7 @@ export interface Database {
           last_name?: string | null;
           profile_photo_url?: string | null;
           notification_token?: string | null;
+          timezone?: string | null;
           notification_preferences?: NotificationPreferences;
           reading_moments?: ReadingMoment[];
           usual_formats?: BookFormat[];

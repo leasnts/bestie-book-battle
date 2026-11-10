@@ -9,7 +9,6 @@
  */
 
 import { useRouter } from 'expo-router';
-import * as Notifications from 'expo-notifications';
 import React, { useCallback, useEffect, useState } from 'react';
 import { StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native';
 import Animated, { Keyframe, useReducedMotion } from 'react-native-reanimated';
@@ -18,8 +17,8 @@ import Svg from 'react-native-svg';
 import Button3D from '../../components/Button3D';
 import Spine from '../../components/onboarding/Spine';
 import { Seam } from '../../components/ui/GoalTrack';
-import { scheduleEveningReminder } from '../../services/notifications';
-import { createReading, deadlineFrom, ensureProfile, reminderTime, saveReaderHabits, settleMyReading } from '../../services/onboarding';
+import { registerPushToken } from '../../services/notifications';
+import { createReading, deadlineFrom, ensureProfile, saveReaderHabits, settleMyReading } from '../../services/onboarding';
 import { bookFormat, useOnboardingStore } from '../../stores/onboardingStore';
 import { useProjectStore } from '../../stores/projectStore';
 import { colors, fonts, lowki, spacing } from '../../utils/constants';
@@ -82,8 +81,8 @@ export default function PrepaScreen() {
     // Mes habitudes : seulement quand on les a demandées (première fois)
     if (flow === 'create' || flow === 'join') {
       await saveReaderHabits(userId, moments, usualFormats);
-      const { status } = await Notifications.getPermissionsAsync();
-      if (status === 'granted') await scheduleEveningReminder(reminderTime(moments));
+      // Déjà autorisé (un autre livre, une réinstallation) : le serveur a besoin de l'adresse du téléphone
+      registerPushToken(userId).catch((e) => console.warn('[notifs] jeton', e));
     }
 
     const projects = useProjectStore.getState();

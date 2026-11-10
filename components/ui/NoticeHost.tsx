@@ -11,12 +11,14 @@
  * - Au-dessus de tout, sheets natifs compris : `FullWindowOverlay` la pose dans
  *   sa propre fenêtre iOS. Une vue à la racine passerait sous un formSheet.
  * - Elle part seule (5 s, 8 s avec « Réessayer »), ou au toucher.
+ * - Une note déposée (`notePing`, #178) : même forme, mais en papier et encre,
+ *   pas en rouge — ce n'est pas une erreur. Le toucher ouvre le carnet.
  * - Reduce Motion : fondu seul, sans déploiement.
  * - VoiceOver lit le message dès qu'il apparaît.
  */
 
 import { LinearGradient } from 'expo-linear-gradient';
-import { CircleAlert, Info, RotateCw, WifiOff } from 'lucide-react-native';
+import { CircleAlert, Info, RotateCw, StickyNote, WifiOff } from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
 import { AccessibilityInfo, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, {
@@ -29,7 +31,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { FullWindowOverlay } from 'react-native-screens';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { accentGradient, colors, fonts, lowki, motion, ROUND_BUTTON_SIZE, spacing } from '../../utils/constants';
+import { accentGradient, colors, fonts, lowki, motion, paperFrameGradient, ROUND_BUTTON_SIZE, spacing } from '../../utils/constants';
 import { useNoticeStore, type Notice } from '../../utils/notice';
 import PressableScale from './PressableScale';
 
@@ -51,7 +53,7 @@ const LIFETIME_WITH_RETRY = 8000;
 const FROM_SCALE_X = 0.36;
 const FROM_SCALE_Y = 0.2;
 
-const ICONS = { error: CircleAlert, offline: WifiOff, hint: Info } as const;
+const ICONS = { error: CircleAlert, offline: WifiOff, hint: Info, note: StickyNote } as const;
 
 export default function NoticeHost() {
   const current = useNoticeStore((s) => s.current);
@@ -106,25 +108,36 @@ export default function NoticeHost() {
 
   const Icon = ICONS[shown.kind];
   const retry = shown.retry;
+  const open = shown.open;
+  // Une note déposée : papier et encre ; le reste : le rouge des erreurs
+  const paper = shown.kind === 'note';
 
   const banner = (
     <View style={[styles.layer, { top: insets.top }]} pointerEvents="box-none">
       <Animated.View style={[styles.shadow, animatedStyle]}>
         <Pressable
-          onPress={() => hide(shown.id)}
-          accessibilityRole="alert"
+          onPress={() => {
+            hide(shown.id);
+            open?.();
+          }}
+          accessibilityRole={open ? 'button' : 'alert'}
           accessibilityLabel={[shown.title, shown.hint].filter(Boolean).join('. ')}
-          accessibilityHint="Touche pour fermer"
+          accessibilityHint={open ? 'Ouvre le carnet' : 'Touche pour fermer'}
         >
-          <LinearGradient colors={accentGradient} style={styles.card}>
+          <LinearGradient colors={paper ? paperFrameGradient : accentGradient} style={styles.card}>
             <View style={styles.row}>
               {/* L'icône a sa place, dans un rond cerclé, comme les feuilles d'Opal */}
-              <LinearGradient colors={[lowki.red.dark, lowki.red.deep]} style={styles.badge}>
-                <Icon size={BADGE_ICON} color={ON_RED} strokeWidth={2.2} />
+              <LinearGradient
+                colors={paper ? [lowki.chocolate.light, lowki.chocolate.dark] : [lowki.red.dark, lowki.red.deep]}
+                style={[styles.badge, paper && styles.badgePaper]}
+              >
+                <Icon size={BADGE_ICON} color={paper ? paperFrameGradient[0] : ON_RED} strokeWidth={2.2} />
               </LinearGradient>
               <View style={styles.texts}>
-                <Text style={styles.title}>{shown.title}</Text>
-                {shown.hint ? <Text style={styles.hint}>{shown.hint}</Text> : null}
+                <Text style={[styles.title, paper && styles.titlePaper]} numberOfLines={2}>{shown.title}</Text>
+                {shown.hint ? (
+                  <Text style={[styles.hint, paper && styles.hintPaper]} numberOfLines={2}>{shown.hint}</Text>
+                ) : null}
               </View>
             </View>
             {retry ? (
@@ -200,6 +213,15 @@ const styles = StyleSheet.create({
     fontFamily: fonts.body,
     fontSize: 13,
     color: ON_RED_SOFT,
+  },
+  badgePaper: {
+    borderColor: 'rgba(46,27,22,0.12)',
+  },
+  titlePaper: {
+    color: colors.textPrimary,
+  },
+  hintPaper: {
+    color: colors.textSecondary,
   },
   retry: {
     height: 44,

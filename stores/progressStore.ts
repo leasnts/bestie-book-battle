@@ -32,7 +32,6 @@ import {
   subscribeToChallengeHistory,
   unsubscribeChannel,
 } from '../services/supabase/realtime';
-import { handleRealtimeProgressUpdate } from '../services/notificationTriggers';
 import { saveMyEdition as saveMyEditionDb, type MyEditionInput } from '../services/myEdition';
 import { useProjectStore } from './projectStore';
 
@@ -77,7 +76,6 @@ interface ProgressStore {
   // Actions - Subscriptions temps réel
   subscribeToProgress: (
     challengeId: string,
-    options?: { currentUserId: string; totalPages: number; bookTitle: string }
   ) => () => void;
   subscribeToHistory: (challengeId: string) => () => void;
   unsubscribeAll: () => void;
@@ -302,13 +300,12 @@ export const useProgressStore = create<ProgressStore>()(
    * 
    * Écoute tous les changements de progression du challenge.
    * Met à jour automatiquement le store quand quelqu'un lit.
-   * Déclenche les notifications (dépassement, écart, activité ami, etc.) si options fournies.
+   * (Les notifs, elles, partent du serveur : scripts/notifications.sql.)
    * 
    * @param challengeId - L'ID du challenge
-   * @param options - Contexte pour les notifications (currentUserId, totalPages, bookTitle)
    * @returns Fonction pour se désabonner
    */
-  subscribeToProgress: (challengeId, options) => {
+  subscribeToProgress: (challengeId) => {
     const unsubscribe = subscribeToChallengeProgress(
       challengeId,
       async (progress, event, oldProgress) => {
@@ -332,22 +329,6 @@ export const useProgressStore = create<ProgressStore>()(
           try {
             const participants = await getChallengeParticipants(challengeId);
             set({ participants });
-
-            // Déclencher les notifications si mise à jour par un AUTRE utilisateur
-            if (
-              options &&
-              progress.user_id !== options.currentUserId
-            ) {
-              handleRealtimeProgressUpdate(
-                challengeId,
-                options.currentUserId,
-                progress,
-                oldProgress ?? null,
-                participants,
-                options.totalPages,
-                options.bookTitle
-              ).catch(() => {});
-            }
           } catch (error) {
             console.error('Failed to reload participants:', error);
           }

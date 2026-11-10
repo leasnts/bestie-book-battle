@@ -4,19 +4,23 @@
  * Sheet natif (`SheetPage`). Des cadres papier regroupés par thème, une ligne
  * par réglage, cousus entre eux (`StitchLine`) :
  *
- *    Rappels      Rappel du soir · 20:00        (○)
+ *    Notifs       Rappel · [20:00]               (○)
+ *                 Mon groupe                     (○)
  *    Dans l'app   Sons / Vibrations             (○)
  *                 Activité                       ›
  *    Aide         Inviter / Signaler             ›
  *    [ Se déconnecter ]
  *    Compte       Supprimer mon compte  (rouge : c'est irréversible)
  *
- * Le rappel du soir est une notification locale : l'éteindre l'annule vraiment
- * (plus besoin de passer par les Réglages d'iOS), le rallumer le replanifie.
+ * Les notifs (#178) partent du serveur, qui relit ces réglages à chaque envoi :
+ * le rappel (à son heure, les jours sans lecture) et « Mon groupe » (une pote
+ * passe devant, le carnet, la veille d'un cap). Allumer l'un demande d'abord
+ * l'autorisation d'iOS si besoin.
  * Ouvrir un écran depuis ici ferme d'abord le sheet, sinon l'écran poussé
  * s'ouvrirait À L'INTÉRIEUR du sheet (cf. app/library.tsx).
  */
 
+import DateTimePicker from '@react-native-community/datetimepicker';
 import Constants from 'expo-constants';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Notifications from 'expo-notifications';
@@ -28,6 +32,7 @@ import {
   InboxIcon,
   ShareIcon,
   TriangleAlertIcon,
+  UsersIcon,
   VibrateIcon,
   Volume2Icon,
   type LucideIcon,
@@ -39,9 +44,9 @@ import PressableScale from '../components/ui/PressableScale';
 import SheetPage from '../components/ui/SheetPage';
 import { StitchLine } from '../components/ui/Stitch';
 import {
-  cancelDailyReminder,
-  EVENING_REMINDER_TIME,
-  scheduleEveningReminder,
+  notificationPrefs,
+  registerPushToken,
+  saveNotificationPrefs,
 } from '../services/notifications';
 import { useAuthStore } from '../stores/authStore';
 import { useFeelStore } from '../stores/feelStore';
@@ -50,38 +55,59 @@ import { buzz, feel } from '../utils/feel';
 import { oops } from '../utils/notice';
 
 const APP_VERSION = Constants.expoConfig?.version ?? '1.0';
-const REMINDER_LABEL = `${EVENING_REMINDER_TIME.hour}:${String(EVENING_REMINDER_TIME.minute).padStart(2, '0')}`;
+
+/** « 20:30 » ↔ une date du jour à 20 h 30, pour la roue d'iOS */
+const toDate = (hhmm: string) => {
+  const [h, m] = hhmm.split(':').map(Number);
+  const d = new Date();
+  d.setHours(h || 0, m || 0, 0, 0);
+  return d;
+};
+const toHHMM = (d: Date) => `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
 
 export default function SettingsRoute() {
   const router = useRouter();
   const { logout, deleteAccount } = useAuthStore();
-  const { sounds, haptics, eveningReminder, setSounds, setHaptics, setEveningReminder } = useFeelStore();
+  const { sounds, haptics, setSounds, setHaptics } = useFeelStore();
+  const user = useAuthStore((st) => st.user);
+  const prefs = notificationPrefs(user?.notification_preferences);
   const [allowed, setAllowed] = useState(false);
   const [busy, setBusy] = useState(false);
 
-  // Le rappel n'est « allumé » que si iOS laisse aussi passer les notifications
+  // Une notif n'est « allumée » que si iOS les laisse aussi passer
   useEffect(() => {
     Notifications.getPermissionsAsync().then(({ status }) => setAllowed(status === 'granted'));
   }, []);
 
-  const handleReminder = async (on: boolean) => {
-    if (!on) {
-      setEveningReminder(false);
-      await cancelDailyReminder();
-      return;
-    }
+  /** Allumer : l'autorisation d'iOS d'abord ; refusée une fois, seuls ses Réglages peuvent rouvrir */
+  const ensureAllowed = async (): Promise<boolean> => {
+    if (allowed) return true;
     const { status } = await Notifications.requestPermissionsAsync();
     if (status !== 'granted') {
-      // Refusé une fois, iOS ne redemande plus : seuls ses Réglages peuvent rouvrir
       Alert.alert('Notifications coupées', 'Active-les pour chapi dans les Réglages de ton iPhone.', [
         { text: 'Plus tard', style: 'cancel' },
         { text: 'Ouvrir les Réglages', onPress: () => Linking.openURL('app-settings:') },
       ]);
-      return;
+      return false;
     }
     setAllowed(true);
-    setEveningReminder(true);
-    await scheduleEveningReminder(useAuthStore.getState().user?.notification_preferences?.daily_reminder_time);
+    if (user) registerPushToken(user.id).catch((e) => console.warn('[notifs] jeton', e));
+    return true;
+  };
+
+  const savePrefs = async (patch: Parameters<typeof saveNotificationPrefs>[1]) => {
+    if (!user) return;
+    try {
+      await saveNotificationPrefs(user.id, patch);
+    } catch (error) {
+      oops('Réglage pas enregistré', error, { retry: () => savePrefs(patch) });
+    }
+  };
+
+  const toggle = async (key: 'daily_reminder' | 'group', on: boolean) => {
+    if (on && !(await ensureAllowed())) return;
+    // Allumé alors qu'iOS les bloquait : l'autre réglage, lui, n'a pas bougé
+    await savePrefs({ [key]: on });
   };
 
   // Ferme le sheet, puis ouvre l'écran (sinon il s'ouvre dans le sheet)
@@ -159,13 +185,33 @@ export default function SettingsRoute() {
 
   return (
     <SheetPage title="Réglages">
-      <Group label="Rappels">
+      <Group label="Notifs">
         <ToggleRow
           icon={BellIcon}
-          label="Rappel du soir"
-          value={REMINDER_LABEL}
-          on={eveningReminder && allowed}
-          onChange={handleReminder}
+          label="Rappel"
+          on={prefs.daily_reminder && allowed}
+          onChange={(on) => toggle('daily_reminder', on)}
+          accessory={
+            prefs.daily_reminder && allowed ? (
+              <DateTimePicker
+                value={toDate(prefs.daily_reminder_time)}
+                mode="time"
+                display="compact"
+                minuteInterval={5}
+                locale="fr-FR"
+                accentColor={colors.accent}
+                onChange={(_, date) => date && savePrefs({ daily_reminder_time: toHHMM(date) })}
+                accessibilityLabel="Heure du rappel"
+              />
+            ) : null
+          }
+        />
+        <StitchLine />
+        <ToggleRow
+          icon={UsersIcon}
+          label="Mon groupe"
+          on={prefs.group && allowed}
+          onChange={(on) => toggle('group', on)}
         />
       </Group>
 
@@ -256,13 +302,14 @@ function Group({ label, children }: { label: string; children: React.ReactNode }
 function ToggleRow({
   icon: Icon,
   label,
-  value,
+  accessory,
   on,
   onChange,
 }: {
   icon: LucideIcon;
   label: string;
-  value?: string;
+  /** Avant l'interrupteur : l'heure du rappel */
+  accessory?: React.ReactNode;
   on: boolean;
   onChange: (on: boolean) => void;
 }) {
@@ -270,7 +317,7 @@ function ToggleRow({
     <View style={styles.row}>
       <Icon size={22} color={colors.textSecondary} />
       <Text style={styles.label}>{label}</Text>
-      {value && <Text style={styles.value}>{value}</Text>}
+      {accessory}
       <Switch
         value={on}
         onValueChange={onChange}
@@ -324,11 +371,6 @@ const styles = StyleSheet.create({
     fontFamily: fonts.bodySemiBold,
     fontSize: fontSize.md,
     color: colors.textPrimary,
-  },
-  value: {
-    fontFamily: fonts.body,
-    fontSize: fontSize.sm,
-    color: colors.textTertiary,
   },
   danger: {
     color: colors.accent,

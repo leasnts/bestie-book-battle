@@ -52,16 +52,10 @@ export function useProject(projectId: string | undefined): UseProjectResult {
     }
   }, [projectId]);
   
-  // S'abonne aux changements de progression quand le projet est chargé (+ notifications)
+  // S'abonne aux changements de progression quand le projet est chargé
   useEffect(() => {
     if (currentProject && isInitialized && user?.id) {
-      const totalPages = currentProject.total_pages ?? 100;
-      const bookTitle = currentProject.book_title ?? 'Le livre';
-      const unsubscribe = subscribeToProgress(currentProject.id, {
-        currentUserId: user.id,
-        totalPages,
-        bookTitle,
-      });
+      const unsubscribe = subscribeToProgress(currentProject.id);
       return () => unsubscribe();
     }
   }, [currentProject?.id, isInitialized, user?.id]);

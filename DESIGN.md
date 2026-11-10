@@ -885,6 +885,15 @@ Code : `utils/notice.ts`, rendu par `components/ui/NoticeHost.tsx`.
 - Jamais `Alert.alert('Erreur', …)`. Les `Alert` natifs restent pour les
   confirmations et les autorisations qui renvoient aux Réglages.
 
+### Notifications — le serveur décide, l'app se tait (#178)
+
+- **Quatre notifs seulement**, toutes envoyées par Supabase (`scripts/notifications.sql`) : le rappel (à son heure, seulement les jours sans lecture), une pote passe devant (1 fois par pote et par jour), le carnet (note à une page déjà lue, réaction sur ma note, regroupées), la veille d'un cap.
+- **2 par jour au plus**, rien de 22 h à 9 h pour le groupe (reporté à 9 h), jamais pour sa propre action, tout revérifié juste avant l'envoi.
+- **App ouverte : aucune notif système.** Seule une note déposée fait un signe : `notePing()`, le même bandeau que les erreurs mais en papier et encre (rond chocolat, icône `StickyNote`), le toucher ouvre le carnet.
+- Toucher une notif ouvre le bon écran sur le bon livre (`hooks/usePushNotifications.ts`).
+- Textes : courts, inclusifs, sans point final, « série » jamais « streak ». Le livre en sous-titre.
+- Réglages : « Rappel » avec l'heure en roue iOS compacte, et « Mon groupe ». Rien d'autre.
+
 ### Icônes
 
 **Une seule banque : [Lucide](https://lucide.dev/icons/)** (`lucide-react-native`),

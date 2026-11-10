@@ -24,8 +24,8 @@ import { BRAND_BG } from '../../components/brand/BrandLockup';
 import Button3D from '../../components/Button3D';
 import { ONBOARDING_MAX_W } from '../../components/onboarding/OnboardingScreen';
 import AccentWord, { accentHeadroom } from '../../components/ui/AccentWord';
-import { requestNotificationPermission, scheduleEveningReminder } from '../../services/notifications';
-import { reminderTime } from '../../services/onboarding';
+import { registerPushToken, requestNotificationPermission } from '../../services/notifications';
+import { useAuthStore } from '../../stores/authStore';
 import { useOnboardingStore } from '../../stores/onboardingStore';
 import { colors, fonts, motion, spacing } from '../../utils/constants';
 
@@ -38,7 +38,6 @@ const drop = (delay: number) =>
 
 export default function NotificationsScreen() {
   const router = useRouter();
-  const moments = useOnboardingStore((s) => s.moments);
   const [asking, setAsking] = useState(false);
 
   /** L'accueil ; le brouillon de l'onboarding n'a plus lieu d'être */
@@ -50,7 +49,9 @@ export default function NotificationsScreen() {
   const ask = async () => {
     setAsking(true);
     try {
-      if (await requestNotificationPermission()) await scheduleEveningReminder(reminderTime(moments));
+      // L'heure du rappel est déjà enregistrée (habitudes) : il ne manque que l'adresse du téléphone
+      const userId = useAuthStore.getState().user?.id;
+      if ((await requestNotificationPermission()) && userId) await registerPushToken(userId).catch(() => {});
     } finally {
       home();
     }
