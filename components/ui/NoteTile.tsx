@@ -127,8 +127,9 @@ export default function NoteTile({
   const [size, setSize] = useState<TileSize | null>(null);
   const onLayout = (e: LayoutChangeEvent) => {
     const { width, height: given } = e.nativeEvent.layout;
-    // En large : la hauteur d'un des deux carrés du bento
-    const height = fill ? given : wide ? (width - spacing.md) / 2 : width;
+    // En large (seule dans le livre) : une bande basse, une note n'a pas
+    // besoin de la hauteur d'un carré (Lea, 2026-11-10) ; Ma page prend le reste
+    const height = fill ? given : wide ? Math.round(width * WIDE_RATIO) : width;
     setSize((prev) => (prev && prev.w === width && prev.h === height ? prev : { w: width, h: height }));
   };
 
@@ -628,13 +629,16 @@ function VoiceBadge({ seconds, levels }: { seconds: number; levels: number[] | n
   );
 }
 
+/** La bande large : sa hauteur, en fraction de sa largeur */
+const WIDE_RATIO = 0.34;
+
 const styles = StyleSheet.create({
   tile: {
     aspectRatio: 1,
   },
   // Avant la mesure : à peu près la hauteur d'un carré du bento
   tileWide: {
-    aspectRatio: 2,
+    aspectRatio: 1 / WIDE_RATIO,
   },
   tileFill: {
     flex: 1,

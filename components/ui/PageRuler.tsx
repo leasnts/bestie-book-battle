@@ -96,6 +96,8 @@ const NUMBER_TOP = 0;
 /** Le total, sous le chiffre : sa taille, et la place qu'il prend sous lui (en fraction du chiffre) */
 const TOTAL_SIZE_EM = 0.5;
 const TOTAL_EM = 0.5;
+/** En %, ce que le « % » calé en bas à droite du chiffre déborde sous lui */
+const PERCENT_EM = 0.12;
 /** La place de ↺ ou ✓ de chaque côté du chiffre : le rond de 44 pt et de l'air */
 const ACTIONS_SIDE = 56;
 /** Le chiffre ne descend jamais sous cette taille, même sur le plus petit écran */
@@ -137,11 +139,13 @@ export default function PageRuler({ currentPage, totalPages, onPageChange, fontS
   // En largeur : le plus long nombre possible tient entre ↺ et ✓
   const widest = figureWidth(String(totalPages), 1);
   const widthCap = width > 0 ? Math.floor((width - 2 * BLEED - 2 * ACTIONS_SIDE) / widest) : fontSize;
+  // En %, le signe se cale en bas à droite du chiffre, derrière : presque pas de place dessous
+  const roomEm = unit === 'percent' ? PERCENT_EM : TOTAL_EM;
   const fittedSize =
     numberSpace > 0
-      ? Math.max(MIN_FONT_SIZE, Math.min(fontSize, widthCap, Math.floor((numberSpace - NUMBER_TOP) / (FOOTPRINT_EM + TOTAL_EM))))
+      ? Math.max(MIN_FONT_SIZE, Math.min(fontSize, widthCap, Math.floor((numberSpace - NUMBER_TOP) / (FOOTPRINT_EM + roomEm))))
       : fontSize;
-  const totalRoom = Math.round(fittedSize * TOTAL_EM);
+  const totalRoom = Math.round(fittedSize * roomEm);
 
   const listRef = useAnimatedRef<Animated.FlatList<number>>();
   // Où en est la règle, en points : tout le reste (chiffre, goutte) en découle
@@ -458,8 +462,13 @@ function InkNumber({
 
   return (
     <View style={[frame, { width: numberWidth + 80 }]}>
-      {/* Le total, centré sous ma page */}
-      <GhostTotal total={total} label={label} size={totalSize} left={40 + (numberWidth - figureWidth(label ?? `/${total}`, totalSize)) / 2} baseline={baseline} drop={1.05} />
+      {/* Le total, centré sous ma page. Le « % », lui, se glisse en bas à droite,
+          derrière le chiffre (Lea, 2026-11-10) */}
+      {label === '%' ? (
+        <GhostTotal total={total} label={label} size={totalSize} left={40 + numberWidth - totalSize * 0.3} baseline={baseline} drop={0.18} />
+      ) : (
+        <GhostTotal total={total} label={label} size={totalSize} left={40 + (numberWidth - figureWidth(label ?? `/${total}`, totalSize)) / 2} baseline={baseline} drop={1.05} />
+      )}
       {/* Le chiffre est le masque d'un dégradé d'encre : jamais d'aplat (DA) */}
       <MaskedView
         style={StyleSheet.absoluteFill}

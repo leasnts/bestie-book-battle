@@ -56,7 +56,7 @@ export default function BookSection({
   // Date de fin dépassée : on lit toujours, plus de compte à rebours
   const remaining = daysLeft(challenge.target_end_date);
   const countdown =
-    remaining === null || isChallengeDone(challenge) ? null : remaining >= 0 ? `J-${remaining}` : 'Prolong.';
+    remaining === null || isChallengeDone(challenge) ? null : remaining >= 0 ? `J-${remaining}` : `J+${-remaining}`;
   return (
     <GlassSection
       compact={compact}
@@ -75,9 +75,9 @@ export default function BookSection({
         </View>
 
         <View style={styles.texts} onLayout={(e) => setTextsHeight(e.nativeEvent.layout.height)}>
-          {/* Deux lignes : aux gros corps de texte, « Les nuits blanches » ne
-              doit pas se réduire à « Les nu… ». */}
-          <Text style={styles.title} numberOfLines={2} maxFontSizeMultiplier={1.3}>
+          {/* Une ligne, toujours : un titre long finit en « … », sans rétrécir ni
+              faire grandir le cadre (Lea, 2026-11-10). Pareil pour l'autrice. */}
+          <Text style={styles.title} numberOfLines={1} maxFontSizeMultiplier={1.3}>
             {challenge.book_title}
           </Text>
           {!!challenge.book_author && (
@@ -92,6 +92,7 @@ export default function BookSection({
               myPercent={myPercent}
               caps={caps}
               endDate={challenge.target_end_date}
+              showPercent
               leadingLabel={
                 countdown && (
                   // Déjà lu par VoiceOver dans la phrase de la piste (la date de fin)

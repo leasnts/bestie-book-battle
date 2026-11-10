@@ -87,7 +87,7 @@ export default function BookBento({
 
 
   const countdown =
-    remaining === null ? '—' : remaining >= 0 ? `J-${remaining}` : 'Prolong.';
+    remaining === null ? '—' : remaining >= 0 ? `J-${remaining}` : `J+${-remaining}`;
 
   return (
     <View

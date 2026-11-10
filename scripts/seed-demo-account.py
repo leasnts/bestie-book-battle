@@ -194,9 +194,12 @@ VALUES ('{bid}', '{b["code"]}', 'bestie-book-battle://join/{b["code"]}', {q(b['t
         last_upd = ts(day(last), 8 if user == ME else 22, 4) if last is not None else ts(day(joined), 19, 20)
         if b["key"] == "fourth" and user == ME:
             last_upd = ts(TODAY, 7, 52)
+        # Liseuse ou audio : on avance en %, la page vaut alors un % et le total 100 (comme l'app)
+        pct = round(page / pages * 100, 2)
+        row_page, row_total = (round(pct), 100) if fmt != "papier" else (page, pages)
         progress_rows.append(
-            f"('{pid}','{bid}','{user}',{page},{round(page / pages * 100, 2)},{streak},{q(last_streak)},{q(last_upd)},"
-            f"{q(ts(day(joined), 19, 20))},{pages},NULL,{q(pub)},{bonus},'{fmt}',NULL,NULL)"
+            f"('{pid}','{bid}','{user}',{row_page},{pct},{streak},{q(last_streak)},{q(last_upd)},"
+            f"{q(ts(day(joined), 19, 20))},{row_total},NULL,{q(pub)},{bonus},'{fmt}',NULL,NULL)"
         )
         emit(f"INSERT INTO challenge_participants (id, challenge_id, user_id, joined_at) VALUES "
              f"('{uid('member', b['key'], user)}','{bid}','{user}',{q(ts(day(joined), 19, 20))});")
@@ -282,7 +285,8 @@ for i, (k, user, page, d, cat, emoji, body, quote, chapter, vis) in enumerate(NO
     note_ids[i] = nid
     h = random.choice(READ_HOURS[user])
     rows.append(
-        f"('{nid}','{b['id']}','{user}',{page},{ed},{round(page / ed, 5)},{q(chapter)},{q(quote)},{q(body)},{q(emoji)},"
+        # Une note, c'est un emoji seul OU un texte (comme dans l'app)
+        f"('{nid}','{b['id']}','{user}',{page},{ed},{round(page / ed, 5)},{q(chapter)},{q(quote)},{q(body)},{q(None if body or quote else emoji)},"
         f"'{cat}','{vis}','{ts(day(d), h, random.randint(0, 59))}','{ts(day(d), h, 59)}')"
     )
 emit("INSERT INTO annotations (id, challenge_id, user_id, page, edition_total_pages, position, chapter, quote, body, emoji, category, visibility, created_at, updated_at) VALUES\n"
