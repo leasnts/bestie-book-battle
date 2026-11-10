@@ -5,7 +5,7 @@
  *    ┆ ③ Camille  p. 142┆   les nouvelles qui restent, l'autrice et sa page
  *    ┆ Faria qui lui    ┆   le texte, la citation, l'emoji seul ou le vocal
  *    ┆ lègue tout…      ┆   (la catégorie en filigrane)
- *    ┆ (😭) 🥹 💀      ◢┆   ma réaction cerclée, sans compte ; rien sur ma note
+ *    ┆ (😭) 🥹 💀      ◢┆   réagir d’un toucher ; ma réaction cerclée, sans compte
  *    └┄┄┄┄┄┄┄┄┄┄┄┘
  *
  * Le prénom sur la ligne de la page : la note est à elle, à cette page. Le bas
@@ -153,9 +153,9 @@ export default function NoteTile({
   const untouched = !note && aheadCount === 0;
   const write = useWriteNote();
   const toggleReaction = useAnnotationStore((s) => s.toggleReaction);
-  /** Réagir à une note des autres, partagée au groupe ; les miennes se lisent seulement */
+  /** Réagir à une note partagée au groupe, la mienne comprise (comme dans le carnet) */
   const reactTo = (n: AnnotationWithAuthor) =>
-    myUserId && !isMine(n) && n.visibility === 'club'
+    myUserId && n.visibility === 'club'
       ? (emoji: string) => toggleReaction(n.id, myUserId, emoji)
       : undefined;
 
