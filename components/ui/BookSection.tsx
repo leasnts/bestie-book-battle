@@ -3,7 +3,7 @@
  *
  * Première question de l'accueil : qu'est-ce qu'on lit, et qu'est-ce qu'on vise.
  * La couverture à gauche ; à droite, le titre, l'autrice, puis la piste du livre.
- * Sous la piste, sur la ligne de la date de fin, où j'en suis (`42 %`).
+ * Sous la piste, sous mon point, où j'en suis (`42 %`) ; la date de fin au bout.
  * Pas une phrase.
  *
  * Le % a remplacé le J-x (Lea, 2026-11-10). Avant, le J-x avait quitté le
@@ -84,14 +84,14 @@ export default function BookSection({
             </Text>
           )}
 
-          {/* La piste sous l'autrice ; sous son départ, où j'en suis en %, à la
-              place du J-x (Lea, 2026-11-10 : le % sert plus qu'un compte à rebours) */}
+          {/* La piste sous l'autrice ; sous mon point, où j'en suis en %, qui
+              avance avec le fil. Il a remplacé le J-x (Lea, 2026-11-10) */}
           <View style={styles.track}>
             <GoalTrack
               myPercent={myPercent}
               caps={caps}
               endDate={challenge.target_end_date}
-              leadingLabel={
+              marker={
                 // Déjà lu par VoiceOver dans la phrase de la piste
                 <Text
                   style={styles.percent}

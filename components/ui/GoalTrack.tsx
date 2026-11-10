@@ -14,6 +14,9 @@
  *   loupe, Lea, 2026-10-01) ;
  * - le repère de gauche (J-x) dit le temps qu'il reste, la date de fin est au bout.
  *   La date de fin est facultative : sans elle, ni J-x ni date, la ligne disparaît.
+ * - `marker` : un repère posé sous MOI, qui avance avec le fil (l'accueil y met
+ *   mon %, Lea, 2026-11-10). Borné : jamais avant le départ, et près de la fin
+ *   il se cale contre la date sans la chevaucher.
  *
  * Tout est en pourcentage : les caps aussi, pour tomber au même endroit quelle
  * que soit l'édition de chacun.
@@ -34,15 +37,22 @@ interface GoalTrackProps {
   endDate: string | null;
   /** Repère posé au début de la ligne des dates, sous le départ de la piste (le J-x) */
   leadingLabel?: React.ReactNode;
+  /** Repère centré sous moi sur la ligne des dates, qui suit le fil */
+  marker?: React.ReactNode;
 }
 
-export default function GoalTrack({ myPercent, caps, endDate, leadingLabel }: GoalTrackProps) {
+export default function GoalTrack({ myPercent, caps, endDate, leadingLabel, marker }: GoalTrackProps) {
   const currentCap = caps.find((cap) => cap.state === 'current') ?? null;
   // Largeur de la piste, pour placer les points du fil
   const [width, setWidth] = useState(0);
   // Un cap à 100 % et la fin tombent sur le même nœud : un seul
   const knots = [...new Set([...caps.map((cap) => cap.percent), ...(endDate ? [100] : [])])];
   const meX = (width * myPercent) / 100;
+  // Largeurs du repère et de la date, pour borner le repère
+  const [markerWidth, setMarkerWidth] = useState(0);
+  const [dateWidth, setDateWidth] = useState(0);
+  const markerMax = (endDate ? width + END_OVERHANG - dateWidth - MARKER_GAP : width + LEAD_OVERHANG) - markerWidth;
+  const markerLeft = Math.max(-LEAD_OVERHANG, Math.min(meX - markerWidth / 2, markerMax));
 
   return (
     <View accessible accessibilityLabel={trackLabel(myPercent, currentCap, endDate)}>
@@ -64,7 +74,7 @@ export default function GoalTrack({ myPercent, caps, endDate, leadingLabel }: Go
       </View>
 
       {/* Sans date de fin ni J-x, pas de ligne vide sous la piste */}
-      {(leadingLabel || endDate) && (
+      {(leadingLabel || endDate || marker) && (
         <View style={styles.labels}>
           {/*
             Les dates sont posées à un endroit précis de la piste : elles suivent
@@ -72,8 +82,20 @@ export default function GoalTrack({ myPercent, caps, endDate, leadingLabel }: Go
             et ne désignent plus rien. Même règle que le chiffre du sélecteur.
           */}
           {leadingLabel && <View style={styles.leading}>{leadingLabel}</View>}
+          {marker && (
+            <View
+              style={[styles.marker, { left: markerLeft, opacity: markerWidth > 0 && width > 0 ? 1 : 0 }]}
+              onLayout={(e) => setMarkerWidth(e.nativeEvent.layout.width)}
+            >
+              {marker}
+            </View>
+          )}
           {endDate && (
-            <Text style={[styles.label, styles.endLabel]} maxFontSizeMultiplier={1.3}>
+            <Text
+              style={[styles.label, styles.endLabel]}
+              maxFontSizeMultiplier={1.3}
+              onLayout={(e) => setDateWidth(e.nativeEvent.layout.width)}
+            >
               {formatTrackDate(endDate)}
             </Text>
           )}
@@ -141,6 +163,11 @@ function trackLabel(myPercent: number, currentCap: TrackCap | null, endDate: str
 // ─── Styles ────────────────────────────────────────────────────────
 
 const TRACK_HEIGHT = 28;
+/** Ce que la date (à droite) et le départ (à gauche) débordent de la piste */
+const END_OVERHANG = 5;
+const LEAD_OVERHANG = 7;
+/** L'air entre le repère et la date quand il la rattrape */
+const MARKER_GAP = 10;
 /** Le fil : un point rond de 2,2 pt tous les 5 pt (les points de la règle de Ma page, en petit) */
 const STITCH_STEP = 5;
 const STITCH_R = 1.1;
@@ -244,11 +271,15 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
   },
   endLabel: {
-    right: -5,
+    right: -END_OVERHANG,
+  },
+  marker: {
+    position: 'absolute',
+    top: 0,
   },
   // Aligné sur le départ de la piste (qui déborde de 7 pt de chaque côté)
   leading: {
     position: 'absolute',
-    left: -7,
+    left: -LEAD_OVERHANG,
   },
 });
