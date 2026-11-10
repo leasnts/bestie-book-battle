@@ -631,8 +631,8 @@ bord d'un cadre (`GlassSection` `fadeTop`).
   sur la note à la une (rejeté aussi : « p. 351 » sur l'onglet = page en double ;
   carnet fermé = moche ; bulle sur la goutte = pas découvrable). Tout annote ma
   page **enregistrée**, sans quitter l'accueil. ☺+ : une réaction en un geste,
-  sans note ; la liste à la mode (`TRENDING_EMOJIS`) sort à gauche du rond, par-dessus
-  le chiffre le temps du choix, et défile ; « + » (`GlassButton`) ouvre tous les emojis
+  sans note ; la liste à la mode (`TRENDING_EMOJIS`) sort sous le rond, sur toute
+  la largeur, et défile ; « + » (`GlassButton`) ouvre tous les emojis
   (/emoji-note, `EmojiGrid`). Un brouillon laissé met un point rouge sur + (`badge`).
   Quand la page a changé, ↺ et ✓ prennent la ligne et ces deux-là s'effacent.
   ✎ ouvre la feuille (`NoteComposer`), où **tout se fait** : elle monte au-dessus

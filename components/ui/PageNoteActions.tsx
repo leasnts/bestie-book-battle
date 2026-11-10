@@ -10,8 +10,8 @@
  * on croyait qu'ils ajoutaient quelque chose à CETTE note. Ici, ils sont à côté
  * de ma page, celle qu'ils annotent.
  * - + : la feuille d'écriture (`useWriteNote`). Un brouillon laissé = point rouge.
- * - ☺+ : une réaction en un geste, sans note. La liste à la mode sort à gauche,
- *   par-dessus le chiffre le temps du choix, et défile ; « + » ouvre tous les
+ * - ☺+ : une réaction en un geste, sans note. La liste à la mode sort dessous
+ *   (Lea, 2026-11-10 : pas à côté), sur toute la largeur, et défile ; « + » ouvre tous les
  *   emojis (/emoji-note). ✕ referme.
  *
  * Quand la page a changé, ↺ et ✓ prennent la ligne : ces deux-là s'effacent.
@@ -58,9 +58,9 @@ export default function PageNoteActions() {
           onPress={() => setEmojiOpen((o) => !o)}
         />
         {emojiOpen && (
-          // À gauche du rond, sur la largeur de l'écran
+          // Sous le rond, ferrée sur son bord droit, sur toute la largeur
           <Animated.View
-            style={[styles.emojis, { width: screenWidth - spacing.lg * 2 - ROUND_BUTTON_SIZE - spacing.sm }]}
+            style={[styles.emojis, { width: screenWidth - spacing.lg * 2 }]}
             entering={reducedMotion ? undefined : FadeIn.duration(180)}
             exiting={reducedMotion ? undefined : FadeOut.duration(120)}
           >
@@ -110,8 +110,8 @@ const styles = StyleSheet.create({
   },
   emojis: {
     position: 'absolute',
-    right: ROUND_BUTTON_SIZE + spacing.sm,
-    top: (ROUND_BUTTON_SIZE - 52) / 2,
+    right: 0,
+    top: ROUND_BUTTON_SIZE + spacing.sm,
     height: 52,
     flexDirection: 'row',
     alignItems: 'center',
