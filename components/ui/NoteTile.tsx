@@ -5,7 +5,7 @@
  *    ┆ ③ Camille  p. 142┆   les nouvelles qui restent, l'autrice et sa page
  *    ┆ Faria qui lui    ┆   le texte, la citation, l'emoji seul ou le vocal
  *    ┆ lègue tout…      ┆   (la catégorie en filigrane)
- *    ┆ (😭) 🥹 💀      ◢┆   réagir d’un toucher ; ma réaction cerclée, sans compte
+ *    ┆ ☺+              ◢┆   réagir sans ouvrir le carnet (☺+ ouvre les rapides)
  *    └┄┄┄┄┄┄┄┄┄┄┄┘
  *
  * Le prénom sur la ligne de la page : la note est à elle, à cette page. Le bas
@@ -563,9 +563,6 @@ function NoteContent({
   const author = isMine ? 'Moi' : note.author?.first_name || 'Participant';
   // Une note, c'est un emoji seul OU un texte : l'emoji d'une ancienne note passe en tête
   const text = note.body ? (note.emoji ? `${note.emoji} ${note.body}` : note.body) : null;
-  /** La place des réactions, à gauche du coin corné */
-  const [footWidth, setFootWidth] = useState(0);
-
   return (
     <View style={styles.content}>
       <View style={styles.head}>
@@ -603,10 +600,8 @@ function NoteContent({
         {!!note.audio_path && <VoiceBadge seconds={note.audio_seconds ?? 0} levels={note.audio_levels} />}
       </View>
 
-      <View style={styles.foot} onLayout={(e) => setFootWidth(Math.floor(e.nativeEvent.layout.width))}>
-        {footWidth > 0 && note.visibility === 'club' && (
-          <NoteReactions note={note} myUserId={myUserId} onToggle={onReact} fitWidth={footWidth} />
-        )}
+      <View style={styles.foot}>
+        {note.visibility === 'club' && <NoteReactions tile inside note={note} myUserId={myUserId} onToggle={onReact} />}
       </View>
     </View>
   );
@@ -691,9 +686,9 @@ const styles = StyleSheet.create({
     marginTop: spacing.xs,
   },
   // La hauteur d'une pastille de réaction, qu'il y en ait ou non
+  // En colonne : la rangée de réactions prend toute la largeur pour se mesurer
   foot: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    justifyContent: 'center',
     minHeight: 28,
     marginRight: 34,
   },
