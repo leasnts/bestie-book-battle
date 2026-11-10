@@ -57,7 +57,7 @@ import Animated, {
   type SharedValue,
 } from 'react-native-reanimated';
 import { accentGradient, colors, fonts, fontSize as textSize } from '../../utils/constants';
-import { ACCENT_SCALE, AccentUnit } from './AccentWord';
+import { ACCENT_SCALE } from './AccentWord';
 import { FOOTPRINT_EM, GhostTotal, INK, figureBox, figureWidth } from './InkFigure';
 
 /** Un membre du club épinglé sur la règle */
@@ -99,10 +99,7 @@ const DECADE = STEP * 10;
 const RULER_HEIGHT = 74;
 /** L'air au-dessus du chiffre : aucun, il est posé en bas, contre la couture */
 const NUMBER_TOP = 0;
-/** « p. » collé en bas à droite du chiffre (AccentUnit, comme partout) : sa taille avant ACCENT_SCALE, en fraction du chiffre.
-    Petit : la Valentines s'épaissit en grandissant, elle doit rester aussi fine que les « % » de l'accueil */
-const UNIT_EM = 0.24;
-/** Ce que « p. » prend à droite du chiffre (le chiffre reste centré : autant de chaque côté), en fraction du chiffre */
+/** Ce que « p. » déborde à droite du chiffre (le chiffre reste centré : autant de chaque côté), en fraction du chiffre */
 const UNIT_SIDE_EM = 0.18;
 /** « sur 624 » sous le chiffre : petit et net (Lea, 2026-11-10), et la place qu'il prend dessous */
 const TOTAL_GAP = 10;
@@ -439,7 +436,6 @@ function InkNumber({
   // La largeur du chiffre, pour caler son signe (le nombre de chiffres change rarement)
   const numberWidth = figureWidth(String(page), fontSize);
   const percentSize = Math.round(fontSize * 0.5);
-  const unitSize = Math.round(fontSize * UNIT_EM);
 
   const outText = useAnimatedProps(() => {
     const b = Math.max(0, Math.min(total, Math.floor(scrollX.value / STEP + 1e-3)));
@@ -498,18 +494,13 @@ function InkNumber({
 
   return (
     <View style={[frame, { width: numberWidth + 80 }]}>
-      {/* Le « % » se glisse en bas à droite, derrière le chiffre. Le « p. », au
-          même endroit, écrit à la main ; le total, « sur 624 », en petit
+      {/* Le « % » se glisse en bas à droite, derrière le chiffre, flouté et pâle.
+          Le « p. » pareil, écrit à la main ; le total, « sur 624 », en petit
           dessous (Lea, 2026-11-10) */}
       {unit === 'percent' ? (
         <GhostTotal total={total} label="%" size={percentSize} left={40 + numberWidth - percentSize * 0.3} baseline={baseline} drop={0.18} />
       ) : (
-        <Text
-          allowFontScaling={false}
-          style={[styles.unit, { lineHeight: Math.round(unitSize * ACCENT_SCALE * 1.4), left: 40 + numberWidth + Math.round(fontSize * 0.03), top: baseline - Math.round(unitSize * ACCENT_SCALE * 1.05) }]}
-        >
-          <AccentUnit size={unitSize} color={colors.textPrimary}>p.</AccentUnit>
-        </Text>
+        <GhostTotal total={total} label="p." accent size={Math.round(percentSize * ACCENT_SCALE)} left={40 + numberWidth - percentSize * 0.3} baseline={baseline} drop={0.18} />
       )}
       {unit === 'pages' && (
         <Text allowFontScaling={false} numberOfLines={1} style={[styles.total, { top: baseline + TOTAL_GAP }]}>
@@ -793,9 +784,6 @@ const styles = StyleSheet.create({
     fontVariant: ['tabular-nums'],
     textAlign: 'center',
     padding: 0,
-  },
-  unit: {
-    position: 'absolute',
   },
   total: {
     position: 'absolute',
