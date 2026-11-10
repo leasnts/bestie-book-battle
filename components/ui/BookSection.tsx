@@ -3,10 +3,11 @@
  *
  * Première question de l'accueil : qu'est-ce qu'on lit, et qu'est-ce qu'on vise.
  * La couverture à gauche ; à droite, le titre, l'autrice, puis la piste du livre.
- * Sous la piste, sur la ligne de la date de fin, le temps qu'il reste (`J-12`).
+ * Sous la piste, sur la ligne de la date de fin, où j'en suis (`42 %`).
  * Pas une phrase.
  *
- * Le J-x a quitté le dessus du titre (Lea, 2026-09-24) puis remplacé le % du
+ * Le % a remplacé le J-x (Lea, 2026-11-10). Avant, le J-x avait quitté le
+ * dessus du titre (2026-09-24) puis remplacé le % du
  * club sous la piste (2026-10-01) : le groupe, c'est le classement.
  *
  * Plus de ligne de repères en bas (« Club · 26 % du livre », « Cap · 9/38 ») :
@@ -24,7 +25,8 @@ import React, { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import type { Challenge } from '../../types/supabase';
 import { colors, fonts, spacing } from '../../utils/constants';
-import { daysLeft, type TrackCap } from '../../utils/track';
+import { type TrackCap } from '../../utils/track';
+import { AccentUnit } from './AccentWord';
 import BookCover, { COVER_RATIO, isChallengeDone } from './BookCover';
 import GlassSection from './GlassSection';
 import GoalTrack from './GoalTrack';
@@ -53,10 +55,6 @@ export default function BookSection({
   // La couverture prend toujours la hauteur du texte à côté d'elle (titre sur
   // une ou deux lignes, texte agrandi…) : on la mesure.
   const [textsHeight, setTextsHeight] = useState(0);
-  // Date de fin dépassée : on lit toujours, plus de compte à rebours
-  const remaining = daysLeft(challenge.target_end_date);
-  const countdown =
-    remaining === null || isChallengeDone(challenge) ? null : remaining >= 0 ? `J-${remaining}` : `J+${-remaining}`;
   return (
     <GlassSection
       compact={compact}
@@ -86,25 +84,24 @@ export default function BookSection({
             </Text>
           )}
 
-          {/* La piste sous l'autrice ; le temps qu'il reste sur la ligne de la date de fin */}
+          {/* La piste sous l'autrice ; sous son départ, où j'en suis en %, à la
+              place du J-x (Lea, 2026-11-10 : le % sert plus qu'un compte à rebours) */}
           <View style={styles.track}>
             <GoalTrack
               myPercent={myPercent}
               caps={caps}
               endDate={challenge.target_end_date}
-              showPercent
               leadingLabel={
-                countdown && (
-                  // Déjà lu par VoiceOver dans la phrase de la piste (la date de fin)
-                  <Text
-                    style={styles.countdown}
-                    maxFontSizeMultiplier={1.3}
-                    importantForAccessibility="no-hide-descendants"
-                    accessibilityElementsHidden
-                  >
-                    {countdown}
-                  </Text>
-                )
+                // Déjà lu par VoiceOver dans la phrase de la piste
+                <Text
+                  style={styles.percent}
+                  maxFontSizeMultiplier={1.3}
+                  importantForAccessibility="no-hide-descendants"
+                  accessibilityElementsHidden
+                >
+                  {Math.round(myPercent)}
+                  <AccentUnit size={styles.percent.fontSize} color={styles.percent.color}>%</AccentUnit>
+                </Text>
               }
             />
           </View>
@@ -150,9 +147,12 @@ const styles = StyleSheet.create({
   track: {
     marginTop: spacing.sm,
   },
-  countdown: {
+  // La hauteur de ligne de la date d'à côté : sans elle, le « % » (police
+  // d'accent, plus haute) faisait descendre le chiffre sous la date
+  percent: {
     fontFamily: fonts.bodyExtraBold,
     fontSize: 13,
+    lineHeight: 17,
     color: colors.textPrimary,
     fontVariant: ['tabular-nums'],
   },

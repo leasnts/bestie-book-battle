@@ -14,8 +14,6 @@
  *   loupe, Lea, 2026-10-01) ;
  * - le repère de gauche (J-x) dit le temps qu'il reste, la date de fin est au bout.
  *   La date de fin est facultative : sans elle, ni J-x ni date, la ligne disparaît.
- * - `showPercent` : où j'en suis dans le livre, en %, au bout du fil (Lea,
- *   2026-11-10 : seule dans un livre, l'accueil ne le disait nulle part).
  *
  * Tout est en pourcentage : les caps aussi, pour tomber au même endroit quelle
  * que soit l'édition de chacun.
@@ -25,9 +23,8 @@ import { CheckIcon } from 'lucide-react-native';
 import React, { useState } from 'react';
 import Svg, { Circle, Defs, G, RadialGradient, Stop } from 'react-native-svg';
 import { StyleSheet, Text, View } from 'react-native';
-import { colors, fonts, inkAlpha, lowki, spacing } from '../../utils/constants';
+import { colors, fonts, inkAlpha, lowki } from '../../utils/constants';
 import { formatTrackDate, type TrackCap } from '../../utils/track';
-import { AccentUnit } from './AccentWord';
 
 interface GoalTrackProps {
   /** Ma progression, 0 à 100 */
@@ -37,11 +34,9 @@ interface GoalTrackProps {
   endDate: string | null;
   /** Repère posé au début de la ligne des dates, sous le départ de la piste (le J-x) */
   leadingLabel?: React.ReactNode;
-  /** Mon % du livre au bout du fil, sur sa ligne */
-  showPercent?: boolean;
 }
 
-export default function GoalTrack({ myPercent, caps, endDate, leadingLabel, showPercent = false }: GoalTrackProps) {
+export default function GoalTrack({ myPercent, caps, endDate, leadingLabel }: GoalTrackProps) {
   const currentCap = caps.find((cap) => cap.state === 'current') ?? null;
   // Largeur de la piste, pour placer les points du fil
   const [width, setWidth] = useState(0);
@@ -51,8 +46,6 @@ export default function GoalTrack({ myPercent, caps, endDate, leadingLabel, show
 
   return (
     <View accessible accessibilityLabel={trackLabel(myPercent, currentCap, endDate)}>
-      <View style={styles.trackRow}>
-      <View style={styles.trackColumn}>
       <View style={styles.track} onLayout={(e) => setWidth(e.nativeEvent.layout.width)}>
         {width > 0 && (
           <>
@@ -86,14 +79,6 @@ export default function GoalTrack({ myPercent, caps, endDate, leadingLabel, show
           )}
         </View>
       )}
-      </View>
-      {showPercent && (
-        <Text style={styles.percent} maxFontSizeMultiplier={1.3}>
-          {Math.round(myPercent)}
-          <AccentUnit size={styles.percent.fontSize} color={styles.percent.color}>%</AccentUnit>
-        </Text>
-      )}
-      </View>
     </View>
   );
 }
@@ -220,26 +205,9 @@ function stepStyle(percent: number, myPercent: number, clubPercent: number) {
 }
 
 const styles = StyleSheet.create({
-  trackRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-  },
   track: {
     height: TRACK_HEIGHT,
     marginHorizontal: 7,
-  },
-  trackColumn: {
-    flex: 1,
-  },
-  /** Mon % au bout du fil : le chiffre des scores du classement, en petit */
-  percent: {
-    marginLeft: spacing.md,
-    height: TRACK_HEIGHT,
-    lineHeight: TRACK_HEIGHT,
-    fontFamily: fonts.display,
-    fontSize: 15,
-    color: colors.textPrimary,
-    fontVariant: ['tabular-nums'],
   },
   seam: {
     position: 'absolute',
