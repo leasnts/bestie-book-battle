@@ -522,6 +522,8 @@ export default function HomeScreen() {
             coverUrl={myCoverUrl(activeChallenge, myProgress ?? cachedMyProgress)}
             myPercent={myPercent}
             caps={caps}
+            // Seule et en % : Ma page dit déjà mon % en grand
+            showPercent={!(alone && inPercent)}
             compact={compactSpacing}
             onPress={() => router.push('/book')}
           />

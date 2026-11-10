@@ -38,6 +38,12 @@ interface BookSectionProps {
   /** Ma progression, 0 à 100 */
   myPercent: number;
   caps: TrackCap[];
+  /**
+   * Mon % sous la piste. Faux quand il est déjà à l'écran ailleurs : seule dans
+   * un livre lu en %, Ma page l'affiche déjà en grand (Lea, 2026-11-10 : jamais
+   * de redondance)
+   */
+  showPercent?: boolean;
   /** Petit écran : marges resserrées, pour que l'accueil tienne sans défiler */
   compact?: boolean;
   /** Toucher le cadre → la fiche du livre */
@@ -49,6 +55,7 @@ export default function BookSection({
   coverUrl,
   myPercent,
   caps,
+  showPercent = true,
   compact = false,
   onPress,
 }: BookSectionProps) {
@@ -92,6 +99,7 @@ export default function BookSection({
               caps={caps}
               endDate={challenge.target_end_date}
               marker={
+                showPercent && (
                 // Déjà lu par VoiceOver dans la phrase de la piste
                 <Text
                   style={styles.percent}
@@ -102,6 +110,7 @@ export default function BookSection({
                   {Math.round(myPercent)}
                   <AccentUnit size={styles.percent.fontSize} color={styles.percent.color}>%</AccentUnit>
                 </Text>
+                )
               }
             />
           </View>
