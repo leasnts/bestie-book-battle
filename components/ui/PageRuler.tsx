@@ -57,6 +57,7 @@ import Animated, {
   type SharedValue,
 } from 'react-native-reanimated';
 import { accentGradient, colors, fonts, fontSize as textSize } from '../../utils/constants';
+import { ACCENT_SCALE, AccentUnit } from './AccentWord';
 import { FOOTPRINT_EM, GhostTotal, INK, figureBox, figureWidth } from './InkFigure';
 
 /** Un membre du club épinglé sur la règle */
@@ -98,10 +99,11 @@ const DECADE = STEP * 10;
 const RULER_HEIGHT = 74;
 /** L'air au-dessus du chiffre : aucun, il est posé en bas, contre la couture */
 const NUMBER_TOP = 0;
-/** « p. » collé en bas à droite du chiffre, à la main (Welcome Valentines) : sa taille, en fraction du chiffre */
-const UNIT_EM = 0.45;
+/** « p. » collé en bas à droite du chiffre (AccentUnit, comme partout) : sa taille avant ACCENT_SCALE, en fraction du chiffre.
+    Petit : la Valentines s'épaissit en grandissant, elle doit rester aussi fine que les « % » de l'accueil */
+const UNIT_EM = 0.24;
 /** Ce que « p. » prend à droite du chiffre (le chiffre reste centré : autant de chaque côté), en fraction du chiffre */
-const UNIT_SIDE_EM = 0.28;
+const UNIT_SIDE_EM = 0.18;
 /** « sur 624 » sous le chiffre : petit et net (Lea, 2026-11-10), et la place qu'il prend dessous */
 const TOTAL_GAP = 10;
 const TOTAL_ROOM = 30;
@@ -504,9 +506,9 @@ function InkNumber({
       ) : (
         <Text
           allowFontScaling={false}
-          style={[styles.unit, { fontSize: unitSize, lineHeight: Math.round(unitSize * 1.4), left: 40 + numberWidth + Math.round(fontSize * 0.04), top: baseline - Math.round(unitSize * 1.05) }]}
+          style={[styles.unit, { lineHeight: Math.round(unitSize * ACCENT_SCALE * 1.4), left: 40 + numberWidth + Math.round(fontSize * 0.03), top: baseline - Math.round(unitSize * ACCENT_SCALE * 1.05) }]}
         >
-          p.
+          <AccentUnit size={unitSize} color={colors.textPrimary}>p.</AccentUnit>
         </Text>
       )}
       {unit === 'pages' && (
@@ -794,9 +796,6 @@ const styles = StyleSheet.create({
   },
   unit: {
     position: 'absolute',
-    fontFamily: fonts.accent,
-    // L'encre du chiffre, un peu pâlie : un détail, pas la vedette (AccentUnit)
-    color: 'rgba(72,43,36,0.6)',
   },
   total: {
     position: 'absolute',
