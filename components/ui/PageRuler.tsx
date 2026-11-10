@@ -38,7 +38,7 @@ import { feel } from '../../utils/feel';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { LayoutChangeEvent, StyleSheet, TextInput, View } from 'react-native';
+import { LayoutChangeEvent, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   Easing,
@@ -56,7 +56,8 @@ import Animated, {
   withTiming,
   type SharedValue,
 } from 'react-native-reanimated';
-import { accentGradient, colors, fonts } from '../../utils/constants';
+import { accentGradient, colors, fonts, fontSize as textSize } from '../../utils/constants';
+import { ACCENT_SCALE } from './AccentWord';
 import { FOOTPRINT_EM, GhostTotal, INK, figureBox, figureWidth } from './InkFigure';
 
 /** Un membre du club épinglé sur la règle */
@@ -98,9 +99,13 @@ const DECADE = STEP * 10;
 const RULER_HEIGHT = 74;
 /** L'air au-dessus du chiffre : aucun, il est posé en bas, contre la couture */
 const NUMBER_TOP = 0;
-/** Le total, sous le chiffre : sa taille, et la place qu'il prend sous lui (en fraction du chiffre) */
-const TOTAL_SIZE_EM = 0.5;
-const TOTAL_EM = 0.5;
+/** La chasse de « p. » en Welcome Valentines, en fraction de sa taille (mesurée à l'écran) */
+const P_WIDTH_EM = 0.55;
+/** Ce que « p. » déborde à droite du chiffre (le chiffre reste centré : autant de chaque côté), en fraction du chiffre */
+const UNIT_SIDE_EM = 0.18;
+/** « sur 624 » sous le chiffre : petit et net (Lea, 2026-11-10), et la place qu'il prend dessous */
+const TOTAL_GAP = 10;
+const TOTAL_ROOM = 30;
 /** Du haut de la boîte du chiffre au haut de ses chiffres (0,81 em au-dessus de la ligne de base, police Martian Grotesk Wide), en fraction de sa taille */
 const CAP_INSET_EM = 0.115;
 /** Du bas de la goutte de verre au bas de la règle, réglé à l’écran */
@@ -148,15 +153,17 @@ export default function PageRuler({ centerBias = 0, currentPage, totalPages, onP
   const [numberSpace, setNumberSpace] = useState(0);
   const onNumberLayout = (e: LayoutChangeEvent) => setNumberSpace(e.nativeEvent.layout.height);
   // En largeur : le plus long nombre possible tient entre ↺ et ✓
-  const widest = figureWidth(String(totalPages), 1);
+  const widest = figureWidth(String(totalPages), 1) + (unit === 'percent' ? 0 : 2 * UNIT_SIDE_EM);
   const widthCap = width > 0 ? Math.floor((width - 2 * BLEED - 2 * ACTIONS_SIDE) / widest) : fontSize;
-  // En %, le signe se cale en bas à droite du chiffre, derrière : presque pas de place dessous
-  const roomEm = unit === 'percent' ? PERCENT_EM : TOTAL_EM;
+  // Le « % » ou le « p. » se cale en bas à droite du chiffre : presque pas de place
+  // dessous. En pages, « sur 624 » s'écrit en petit sous le chiffre
+  const roomEm = PERCENT_EM;
+  const roomPx = unit === 'pages' ? TOTAL_ROOM : 0;
   const fittedSize =
     numberSpace > 0
-      ? Math.max(MIN_FONT_SIZE, Math.min(fontSize, widthCap, Math.floor((numberSpace - NUMBER_TOP) / (FOOTPRINT_EM + roomEm))))
+      ? Math.max(MIN_FONT_SIZE, Math.min(fontSize, widthCap, Math.floor((numberSpace - NUMBER_TOP - roomPx) / (FOOTPRINT_EM + roomEm))))
       : fontSize;
-  const totalRoom = Math.round(fittedSize * roomEm);
+  const totalRoom = roomPx + Math.round(fittedSize * roomEm);
   // Le chiffre et la règle forment un bloc centré dans la place (Lea, 2026-11-10 :
   // toujours à égale distance du cadre du haut et de celui du bas). Ce qui reste
   // une fois le chiffre à sa taille se partage moitié au-dessus, moitié dessous.
@@ -344,7 +351,7 @@ export default function PageRuler({ centerBias = 0, currentPage, totalPages, onP
       <GestureDetector gesture={numberPan}>
         {/* Déplacé par transform : la mise en page (et donc la mesure) ne bouge pas */}
         <View style={[styles.numberBlock, { paddingBottom: totalRoom, transform: [{ translateY: -lift }] }]} onLayout={onNumberLayout}>
-          <InkNumber page={currentPage} total={totalPages} fontSize={fittedSize} scrollX={scrollX} label={unit === 'percent' ? '%' : unit === 'count' ? 'p.' : undefined} />
+          <InkNumber page={currentPage} total={totalPages} fontSize={fittedSize} scrollX={scrollX} unit={unit} />
         </View>
       </GestureDetector>
 
@@ -418,19 +425,20 @@ function InkNumber({
   total,
   fontSize,
   scrollX,
-  label,
+  unit,
 }: {
   page: number;
   total: number;
   fontSize: number;
   scrollX: SharedValue<number>;
-  /** Ce qui remplace « /624 » derrière le chiffre (« % », « p. ») */
-  label?: string;
+  /** En %, un « % » ; en pages, « p. » et « sur 624 » dessous ; en nombre de pages, « p. » seul */
+  unit: 'pages' | 'percent' | 'count';
 }) {
   const { lineHeight, frame, baseline } = figureBox(fontSize);
-  // La largeur du chiffre, pour caler le « / 624 » (le nombre de chiffres change rarement)
+  // La largeur du chiffre, pour caler son signe (le nombre de chiffres change rarement)
   const numberWidth = figureWidth(String(page), fontSize);
-  const totalSize = Math.round(fontSize * TOTAL_SIZE_EM);
+  const percentSize = Math.round(fontSize * 0.5);
+  const unitSize = Math.round(percentSize * ACCENT_SCALE);
 
   const outText = useAnimatedProps(() => {
     const b = Math.max(0, Math.min(total, Math.floor(scrollX.value / STEP + 1e-3)));
@@ -489,12 +497,28 @@ function InkNumber({
 
   return (
     <View style={[frame, { width: numberWidth + 80 }]}>
-      {/* Le total, centré sous ma page. Le « % », lui, se glisse en bas à droite,
-          derrière le chiffre (Lea, 2026-11-10) */}
-      {label === '%' ? (
-        <GhostTotal total={total} label={label} size={totalSize} left={40 + numberWidth - totalSize * 0.3} baseline={baseline} drop={0.18} />
+      {/* Le « % » se glisse en bas à droite, derrière le chiffre, flouté et pâle.
+          Le « p. » pareil, écrit à la main, devant le chiffre en pages ; le total, « sur 624 », en petit
+          dessous (Lea, 2026-11-10) */}
+      {unit === 'percent' ? (
+        <GhostTotal total={total} label="%" size={percentSize} left={40 + numberWidth - percentSize * 0.3} baseline={baseline} drop={0.18} />
       ) : (
-        <GhostTotal total={total} label={label} size={totalSize} left={40 + (numberWidth - figureWidth(label ?? `/${total}`, totalSize)) / 2} baseline={baseline} drop={1.05} />
+        // « p. 351 » : la page où j'en suis s'écrit « p. » devant (en bas à gauche) ;
+        // un nombre de pages, « 650 p. », derrière (en bas à droite)
+        <GhostTotal
+          total={total}
+          label="p."
+          accent
+          size={unitSize}
+          left={unit === 'pages' ? 40 - unitSize * P_WIDTH_EM + percentSize * 0.3 : 40 + numberWidth - percentSize * 0.3}
+          baseline={baseline}
+          drop={0.18}
+        />
+      )}
+      {unit === 'pages' && (
+        <Text allowFontScaling={false} numberOfLines={1} style={[styles.total, { top: baseline + TOTAL_GAP }]}>
+          sur {total}
+        </Text>
       )}
       {/* Le chiffre est le masque d'un dégradé d'encre : jamais d'aplat (DA) */}
       <MaskedView
@@ -773,6 +797,15 @@ const styles = StyleSheet.create({
     fontVariant: ['tabular-nums'],
     textAlign: 'center',
     padding: 0,
+  },
+  total: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    textAlign: 'center',
+    fontFamily: fonts.bodyMedium,
+    fontSize: textSize.sm,
+    color: colors.textTertiary,
   },
   layer: {
     position: 'absolute',

@@ -95,6 +95,7 @@ export function GhostTotal({
   baseline,
   drop = 0.12,
   label: text,
+  accent = false,
 }: {
   total: number;
   /** Ce qui s'écrit à la place de « /624 » (« % » pour une progression en %) */
@@ -104,6 +105,8 @@ export function GhostTotal({
   baseline: number;
   /** De combien sa ligne de base descend sous celle du chiffre, en fraction de sa taille */
   drop?: number;
+  /** Écrit à la main (Welcome Valentines), pour le « p. » de Ma page */
+  accent?: boolean;
 }) {
   const label = text ?? `/${total}`;
   const blur = 2;
@@ -123,7 +126,7 @@ export function GhostTotal({
         <SvgText
           x={margin}
           y={margin + size}
-          fontFamily={fonts.displayHero}
+          fontFamily={accent ? fonts.accent : fonts.displayHero}
           fontSize={size}
           fill={colors.textPrimary}
           fillOpacity={0.38}
