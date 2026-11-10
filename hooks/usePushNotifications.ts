@@ -5,8 +5,8 @@
  * - Connecté·e, hors onboarding : donne au serveur l'adresse du téléphone et
  *   son fuseau (à chaque retour dans l'app : on a pu voyager) ; efface les
  *   anciens rappels que le téléphone planifiait lui-même.
- * - App ouverte : aucune notif système (services/notifications.ts). Seule une
- *   note déposée par une pote fait un signe : un bandeau papier qui ouvre le carnet.
+ * - App ouverte : aucune notif, sauf une note déposée par une pote, qui arrive
+ *   comme une notif iPhone normale (services/notifications.ts).
  * - Toucher une notif ouvre le bon écran, sur le bon livre, même app fermée.
  */
 
@@ -17,7 +17,6 @@ import { AppState } from 'react-native';
 import { registerPushToken, type PushData } from '../services/notifications';
 import { useAuthStore } from '../stores/authStore';
 import { useProjectStore } from '../stores/projectStore';
-import { notePing } from '../utils/notice';
 
 export function usePushNotifications() {
   const router = useRouter();
@@ -35,6 +34,9 @@ export function usePushNotifications() {
       const reading = challenges.find((c) => c.id === data.challengeId);
       if (reading) setActiveChallenge(reading);
     }
+    // Repartir de l'accueil : un écran ouvert (sheet du classement…) se ferme
+    // d'abord, sinon le carnet s'empilerait dessus avec un blanc en haut
+    if (router.canDismiss()) router.dismissAll();
     if (!data.url || data.url === '/') router.navigate('/(tabs)');
     else router.push(data.url as Href);
   });
@@ -49,17 +51,6 @@ export function usePushNotifications() {
     const sub = AppState.addEventListener('change', (state) => state === 'active' && register());
     return () => sub.remove();
   }, [userId, inOnboarding]);
-
-  // App ouverte : seule une note déposée mérite un signe
-  useEffect(() => {
-    const sub = Notifications.addNotificationReceivedListener((notification) => {
-      const { title, body } = notification.request.content;
-      const data = notification.request.content.data as unknown as PushData | undefined;
-      if (data?.kind !== 'carnet' || !data.note || !title) return;
-      notePing(title, body ?? undefined, () => openRef.current(data));
-    });
-    return () => sub.remove();
-  }, []);
 
   // Toucher une notif : une seule fois chacune, dès que l'app est prête (lancée par la notif aussi)
   const response = Notifications.useLastNotificationResponse();

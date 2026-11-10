@@ -5,9 +5,8 @@
  * (rappel, une pote passe devant, carnet, cap), 2 par jour au plus, rien la nuit
  * pour le groupe, tout revérifié juste avant l'envoi. L'app, elle :
  * - donne au serveur son adresse de notification (jeton Expo) et son fuseau ;
- * - ne montre AUCUNE notif système quand elle est ouverte. Seule une nouvelle
- *   note déposée mérite un signe : un bandeau papier dans l'app
- *   (hooks/usePushNotifications.ts) ;
+ * - ne montre AUCUNE notif quand elle est ouverte, sauf une nouvelle note
+ *   déposée, qui arrive comme une notif iPhone normale ;
  * - ouvre le bon écran quand on touche une notif.
  */
 
@@ -28,14 +27,14 @@ export interface PushData {
   note?: boolean;
 }
 
-// App ouverte : rien ne s'affiche, ne sonne ni ne s'empile
+// App ouverte : rien ne s'affiche, sauf une note déposée par une pote, qui
+// arrive comme une notif iPhone normale (bandeau, son, centre de notifs)
 Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldPlaySound: false,
-    shouldSetBadge: false,
-    shouldShowBanner: false,
-    shouldShowList: false,
-  }),
+  handleNotification: async (notification) => {
+    const data = notification.request.content.data as unknown as PushData | undefined;
+    const show = data?.kind === 'carnet' && !!data.note;
+    return { shouldPlaySound: show, shouldSetBadge: false, shouldShowBanner: show, shouldShowList: show };
+  },
 });
 
 export async function hasNotificationPermission(): Promise<boolean> {

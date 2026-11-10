@@ -12,9 +12,6 @@
  * - `oops` : une action a échoué. Le conseil se déduit de l'erreur : sans réseau,
  *   « réessaie quand ça capte », sinon « réessaie dans un instant ».
  * - `nudge` : une saisie à corriger, plus doux (une vibration, pas de son).
- * - `notePing` : pas une erreur, la seule nouvelle qui mérite un signe app
- *   ouverte (#178) — une pote vient de déposer une note. Bandeau papier, le
- *   toucher ouvre le carnet.
  *
  * Restent des `Alert` natifs : les confirmations (supprimer, se déconnecter) et
  * les autorisations qui renvoient vers les Réglages. Ce sont des choix, pas des
@@ -27,7 +24,7 @@
 import { create } from 'zustand';
 import { buzz, feel } from './feel';
 
-export type NoticeKind = 'error' | 'offline' | 'hint' | 'note';
+export type NoticeKind = 'error' | 'offline' | 'hint';
 
 export interface Notice {
   id: number;
@@ -38,8 +35,6 @@ export interface Notice {
   hint?: string;
   /** Relance l'action ratée : affiche « Réessayer » */
   retry?: () => unknown;
-  /** Le toucher ouvre quelque chose (une note déposée → le carnet) */
-  open?: () => unknown;
 }
 
 interface NoticeState {
@@ -114,10 +109,4 @@ export function oops(title: string, error?: unknown, options: OopsOptions = {}) 
 export function nudge(title: string, hint?: string) {
   buzz();
   useNoticeStore.getState().show({ kind: 'hint', title, hint });
-}
-
-/** Une note vient d'être déposée, app ouverte : un bandeau papier, le toucher ouvre le carnet */
-export function notePing(title: string, hint: string | undefined, open: () => unknown) {
-  feel('lue');
-  useNoticeStore.getState().show({ kind: 'note', title, hint, open });
 }
