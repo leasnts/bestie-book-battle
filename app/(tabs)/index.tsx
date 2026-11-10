@@ -545,6 +545,9 @@ export default function HomeScreen() {
             pickerFontSize={pickerFontSize}
             club={clubPins}
             unit={inPercent ? 'percent' : 'pages'}
+            // Centré entre le cadre du livre et le bento : l'écart au-dessus
+            // (frameGap) moins celui au-dessous (le haut du bento)
+            centerBias={spread ? 0 : frameGap.paddingTop - (compactSpacing ? spacing.xs : spacing.md)}
             noteActions
           />
         </View>

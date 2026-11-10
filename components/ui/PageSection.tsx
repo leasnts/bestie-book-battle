@@ -28,6 +28,8 @@ import PageRuler, { type ClubPin } from './PageRuler';
 import RoundButton from './RoundButton';
 
 interface PageSectionProps {
+  /** L'air en plus au-dessus qu'en dessous, hors du cadre (voir PageRuler) */
+  centerBias?: number;
   /** Page affichée par le sélecteur */
   currentPage: number;
   /** Dernière page enregistrée */
@@ -63,6 +65,7 @@ export default function PageSection({
   club,
   unit,
   noteActions = false,
+  centerBias = 0,
 }: PageSectionProps) {
   const hasChanged = currentPage !== savedPage;
 
@@ -71,6 +74,8 @@ export default function PageSection({
     <View style={[styles.frame, compact && styles.frameCompact]}>
       <View style={styles.book}>
         <PageRuler
+          // + la marge du haut de la règle, qui n'a pas d'équivalent en bas
+          centerBias={centerBias + BOOK_TOP}
           currentPage={currentPage}
           totalPages={totalPages}
           onPageChange={onPageChange}
@@ -100,6 +105,8 @@ export default function PageSection({
 // ─── Styles ────────────────────────────────────────────────────────
 // Mesures de la maquette (échelle 0,865) ramenées en points.
 
+const BOOK_TOP = spacing.xs;
+
 const styles = StyleSheet.create({
   // Pas de cadre : juste de l'air en haut et en bas, aligné sur les bords des cadres
   frame: {
@@ -114,7 +121,7 @@ const styles = StyleSheet.create({
   book: {
     flex: 1,
     minHeight: 0,
-    marginTop: spacing.xs,
+    marginTop: BOOK_TOP,
   },
 
   // ↺ au bord gauche, ✓ au bord droit, le chiffre entre les deux
