@@ -604,8 +604,8 @@ droite le titre (`display` 20), l'autrice, puis **juste dessous** la
 **piste** (`GoalTrack`) de 0 à 100 % du livre, avec **deux remplissages
 superposés**, comme la barre d'une vidéo (lu / chargé) : devant, en rouge,
 **ma** progression jusqu'à ma photo ; derrière, en beurre, la
-**médiane** du club (pas la moyenne : trois lectrices rapides fausseraient le
-repère). Une seule barre pour le club faisait croire que j'avais atteint des
+**moyenne** du club (Lea, 2026-11-10 : la moyenne, toujours, partout ; plus de
+médiane). Une seule barre pour le club faisait croire que j'avais atteint des
 étapes que seul le club avait dépassées. **Étapes** (caps et fin du livre) en
 ronds pleins de 9 pt, un peu plus gros que la barre, qui est **découpée** de
 2 pt tout autour (masque SVG) : un vrai vide où l'on voit le fond, qui détache le

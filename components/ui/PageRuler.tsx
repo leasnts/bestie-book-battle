@@ -69,6 +69,11 @@ export interface ClubPin {
 }
 
 interface PageRulerProps {
+  /**
+   * Ce que le cadre du haut a de plus d'air que celui du bas autour de la règle
+   * (marges extérieures) : on en tient compte pour centrer le bloc à l'œil
+   */
+  centerBias?: number;
   currentPage: number;
   totalPages: number;
   onPageChange: (page: number) => void;
@@ -96,6 +101,14 @@ const NUMBER_TOP = 0;
 /** Le total, sous le chiffre : sa taille, et la place qu'il prend sous lui (en fraction du chiffre) */
 const TOTAL_SIZE_EM = 0.5;
 const TOTAL_EM = 0.5;
+/** Du haut de la boîte du chiffre au haut de ses chiffres (0,81 em au-dessus de la ligne de base, police Martian Grotesk Wide), en fraction de sa taille */
+const CAP_INSET_EM = 0.115;
+/** Du bas de la goutte de verre au bas de la règle, réglé à l’écran */
+const DROP_INSET = 2;
+/** Ce que le bloc peut descendre sous sa place, dans la marge du bas du cadre */
+const MAX_DROP = 12;
+/** En %, ce que le « % » calé en bas à droite du chiffre déborde sous lui */
+const PERCENT_EM = 0.12;
 /** La place de ↺ ou ✓ de chaque côté du chiffre : le rond de 44 pt et de l'air */
 const ACTIONS_SIDE = 56;
 /** Le chiffre ne descend jamais sous cette taille, même sur le plus petit écran */
@@ -127,7 +140,7 @@ const stitchThick = (page: number) => (page % 10 === 0 ? 3.6 : 2.6);
 
 const AnimatedTextInput = Animated.createAnimatedComponent(TextInput);
 
-export default function PageRuler({ currentPage, totalPages, onPageChange, fontSize = 88, club = [], unit = 'pages', actions }: PageRulerProps) {
+export default function PageRuler({ centerBias = 0, currentPage, totalPages, onPageChange, fontSize = 88, club = [], unit = 'pages', actions }: PageRulerProps) {
   const [width, setWidth] = useState(0);
   const onLayout = (e: LayoutChangeEvent) => setWidth(e.nativeEvent.layout.width);
   // La place laissée au chiffre : s'il en manque, il rétrécit plutôt que de faire
@@ -137,11 +150,27 @@ export default function PageRuler({ currentPage, totalPages, onPageChange, fontS
   // En largeur : le plus long nombre possible tient entre ↺ et ✓
   const widest = figureWidth(String(totalPages), 1);
   const widthCap = width > 0 ? Math.floor((width - 2 * BLEED - 2 * ACTIONS_SIDE) / widest) : fontSize;
+  // En %, le signe se cale en bas à droite du chiffre, derrière : presque pas de place dessous
+  const roomEm = unit === 'percent' ? PERCENT_EM : TOTAL_EM;
   const fittedSize =
     numberSpace > 0
-      ? Math.max(MIN_FONT_SIZE, Math.min(fontSize, widthCap, Math.floor((numberSpace - NUMBER_TOP) / (FOOTPRINT_EM + TOTAL_EM))))
+      ? Math.max(MIN_FONT_SIZE, Math.min(fontSize, widthCap, Math.floor((numberSpace - NUMBER_TOP) / (FOOTPRINT_EM + roomEm))))
       : fontSize;
-  const totalRoom = Math.round(fittedSize * TOTAL_EM);
+  const totalRoom = Math.round(fittedSize * roomEm);
+  // Le chiffre et la règle forment un bloc centré dans la place (Lea, 2026-11-10 :
+  // toujours à égale distance du cadre du haut et de celui du bas). Ce qui reste
+  // une fois le chiffre à sa taille se partage moitié au-dessus, moitié dessous.
+  const { frame: numberFrame } = figureBox(fittedSize);
+  const footprint = numberFrame.height + 2 * numberFrame.marginVertical;
+  // Centré à l'œil, pas à la boîte : le haut des chiffres est sous le haut de
+  // leur boîte, et le bas de la goutte au-dessus du bas de la règle
+  const free = numberSpace - NUMBER_TOP - footprint - totalRoom;
+  // Négatif : le bloc descend un peu dans l'air du bas du cadre (le chiffre
+  // remplit déjà la place, mais le haut a plus d'air à l'œil)
+  const lift =
+    numberSpace > 0
+      ? Math.max(-MAX_DROP, Math.min(free, Math.round((free + centerBias + fittedSize * CAP_INSET_EM - DROP_INSET) / 2)))
+      : 0;
 
   const listRef = useAnimatedRef<Animated.FlatList<number>>();
   // Où en est la règle, en points : tout le reste (chiffre, goutte) en découle
@@ -313,12 +342,14 @@ export default function PageRuler({ currentPage, totalPages, onPageChange, fontS
       onAccessibilityAction={(e) => step(e.nativeEvent.actionName === 'increment' ? 1 : -1)}
     >
       <GestureDetector gesture={numberPan}>
-        <View style={[styles.numberBlock, { paddingBottom: totalRoom }]} onLayout={onNumberLayout}>
+        {/* Déplacé par transform : la mise en page (et donc la mesure) ne bouge pas */}
+        <View style={[styles.numberBlock, { paddingBottom: totalRoom, transform: [{ translateY: -lift }] }]} onLayout={onNumberLayout}>
           <InkNumber page={currentPage} total={totalPages} fontSize={fittedSize} scrollX={scrollX} label={unit === 'percent' ? '%' : unit === 'count' ? 'p.' : undefined} />
         </View>
       </GestureDetector>
 
-      <View style={styles.ruler} onLayout={onLayout}>
+      {/* Remontée d'autant que le chiffre, sans changer la mise en page (pas de boucle de mesure) */}
+      <View style={[styles.ruler, { transform: [{ translateY: -lift }] }]} onLayout={onLayout}>
         {width > 0 && (
           <MaskedView
             style={StyleSheet.absoluteFill}
@@ -366,7 +397,7 @@ export default function PageRuler({ currentPage, totalPages, onPageChange, fontS
     </View>
     {/* Hors du bloc accessible (VoiceOver trouve les boutons), centrés sur le chiffre */}
     {actions && (
-      <View pointerEvents="box-none" style={[styles.actions, { bottom: RULER_HEIGHT + totalRoom, height: Math.round(fittedSize * FOOTPRINT_EM) }]}>
+      <View pointerEvents="box-none" style={[styles.actions, { bottom: RULER_HEIGHT + totalRoom + lift, height: Math.round(fittedSize * FOOTPRINT_EM) }]}>
         {actions}
       </View>
     )}
@@ -458,8 +489,13 @@ function InkNumber({
 
   return (
     <View style={[frame, { width: numberWidth + 80 }]}>
-      {/* Le total, centré sous ma page */}
-      <GhostTotal total={total} label={label} size={totalSize} left={40 + (numberWidth - figureWidth(label ?? `/${total}`, totalSize)) / 2} baseline={baseline} drop={1.05} />
+      {/* Le total, centré sous ma page. Le « % », lui, se glisse en bas à droite,
+          derrière le chiffre (Lea, 2026-11-10) */}
+      {label === '%' ? (
+        <GhostTotal total={total} label={label} size={totalSize} left={40 + numberWidth - totalSize * 0.3} baseline={baseline} drop={0.18} />
+      ) : (
+        <GhostTotal total={total} label={label} size={totalSize} left={40 + (numberWidth - figureWidth(label ?? `/${total}`, totalSize)) / 2} baseline={baseline} drop={1.05} />
+      )}
       {/* Le chiffre est le masque d'un dégradé d'encre : jamais d'aplat (DA) */}
       <MaskedView
         style={StyleSheet.absoluteFill}
