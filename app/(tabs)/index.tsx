@@ -51,7 +51,7 @@ import LeaderboardSection from '../../components/ui/LeaderboardSection';
 import { getAllUserPages } from '../../services/supabase/database';
 import { myCoverUrl } from '../../services/myEdition';
 import { updateWidgetData } from '../../utils/widget';
-import { buildCaps } from '../../utils/track';
+import { buildCaps, median } from '../../utils/track';
 import { useLeaderboardParticipants } from '../../hooks/useLeaderboardParticipants';
 import { useNotificationScheduler } from '../../hooks/useNotificationScheduler';
 import { useAuthStore } from '../../stores/authStore';
@@ -520,8 +520,9 @@ export default function HomeScreen() {
           <BookSection
             challenge={activeChallenge}
             coverUrl={myCoverUrl(activeChallenge, myProgress ?? cachedMyProgress)}
-            // La piste du livre : le groupe en moyenne (Lea, 2026-11-10) ; seule, moi
-            percent={alone || !participantsMatchChallenge ? myPercent : averagePercentage}
+            // La piste du livre : où en est le groupe (Lea, 2026-11-10) ; seule, moi.
+            // La médiane, comme la fiche du livre : le même chiffre partout
+            percent={alone || !participantsMatchChallenge ? myPercent : median(participants.map((p) => p.percentage || 0))}
             group={!alone && participantsMatchChallenge}
             caps={caps}
             // Seule et en % : Ma page dit déjà mon % en grand
