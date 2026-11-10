@@ -379,10 +379,11 @@ export function NoteReactions({
   // Les six rapides d'abord, dans leur ordre, puis les autres emojis posés.
   // Dans le carré : les posées d'abord (leur compte se voit), puis les rapides
   const fit = fitWidth !== undefined;
+  // Sans pouvoir réagir (ma note) : seulement celles qu'on m'a laissées
   const shown = fit
     ? fitInto(fitWidth, [
         ...reactions,
-        ...QUICK_REACTIONS.filter((emoji) => !reactions.some((r) => r.emoji === emoji)).map((emoji) => ({
+        ...(canReact ? QUICK_REACTIONS : []).filter((emoji) => !reactions.some((r) => r.emoji === emoji)).map((emoji) => ({
           emoji,
           count: 0,
           mine: false,
