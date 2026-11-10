@@ -3,7 +3,7 @@
  *
  * Première question de l'accueil : qu'est-ce qu'on lit, et qu'est-ce qu'on vise.
  * La couverture à gauche ; à droite, le titre, l'autrice, puis la piste du livre.
- * Sous la piste, où en est le groupe (`42 %`, la médiane), sous le point du fil ;
+ * Sous la piste, où en est le groupe (`42 %`, la moyenne), sous le point du fil ;
  * la date de fin au bout.
  * Pas une phrase.
  *
@@ -36,7 +36,7 @@ interface BookSectionProps {
   challenge: Challenge;
   /** La couverture de mon édition, sinon celle du bbb */
   coverUrl: string | null;
-  /** Où en est le livre, 0 à 100 : le groupe, sa médiane comme dans la fiche du livre (la mienne si je suis seule) */
+  /** Où en est le livre, 0 à 100 : le groupe, sa moyenne comme dans la fiche du livre (la mienne si je suis seule) */
   percent: number;
   /** Vrai à plusieurs : la piste dit où en est le groupe */
   group?: boolean;
@@ -95,7 +95,7 @@ export default function BookSection({
             </Text>
           )}
 
-          {/* La piste sous l'autrice : où en est le groupe (la médiane ; seule,
+          {/* La piste sous l'autrice : où en est le groupe (la moyenne ; seule,
               moi), en % sous le point du fil. Il a remplacé le J-x (Lea, 2026-11-10) */}
           <View style={styles.track}>
             <GoalTrack

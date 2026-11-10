@@ -26,19 +26,12 @@ export interface TrackCap {
 }
 
 /**
- * Avancée du club : la **médiane** des pourcentages, pas la moyenne.
- *
- * Trois lectrices très rapides suffiraient à tirer une moyenne vers le haut et à
- * donner l'impression que tout le monde est loin devant. La médiane dit « la
- * moitié du club est ici », ce qui est le repère qu'on cherche.
+ * Avancée du club : la **moyenne** des pourcentages, partout dans l'app
+ * (accueil et fiche du livre, Lea, 2026-11-10). Seule, c'est mon %.
  */
-export function median(values: number[]): number {
+export function clubAverage(values: number[]): number {
   if (values.length === 0) return 0;
-  const sorted = [...values].sort((a, b) => a - b);
-  const middle = Math.floor(sorted.length / 2);
-  return sorted.length % 2 === 1
-    ? sorted[middle]
-    : (sorted[middle - 1] + sorted[middle]) / 2;
+  return values.reduce((sum, v) => sum + v, 0) / values.length;
 }
 
 /**

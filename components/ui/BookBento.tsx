@@ -42,7 +42,7 @@ interface BookBentoProps {
   /** « Mar. 13 oct. », ou `null` sans date */
   endLabel: string | null;
   onEditEnd: () => void;
-  /** Médiane du club, 0 à 100 */
+  /** Moyenne du club, 0 à 100 */
   clubPercent: number;
   myPercent: number;
   /** Ma page, et le total de mon édition */

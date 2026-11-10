@@ -34,7 +34,7 @@ import { AccentUnit } from './AccentWord';
 const AnimatedRect = Animated.createAnimatedComponent(Rect);
 
 interface ProgressGaugeProps {
-  /** Médiane du club, 0 à 100 */
+  /** Moyenne du club, 0 à 100 */
   clubPercent: number;
   /** Ma progression, 0 à 100 */
   myPercent: number;
@@ -98,7 +98,7 @@ export default function ProgressGauge({
         setSize({ width });
       }}
       accessible
-      accessibilityLabel={`La moitié du club est à ${Math.round(clubPercent)} %, toi à ${Math.round(myPercent)} %`}
+      accessibilityLabel={`Le club est en moyenne à ${Math.round(clubPercent)} %, toi à ${Math.round(myPercent)} %`}
     >
       {/* Toi puis le club : chacun son libellé et son pourcentage, sa rangée de traits dessous */}
       <View style={styles.rows}>

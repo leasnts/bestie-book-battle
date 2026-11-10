@@ -10,7 +10,7 @@
  * - les **caps** et la **fin** sont des nœuds de broderie : rouge une fois
  *   dépassés, sable sinon. Plus de date sous le cap en cours (Lea, 2026-10-01) :
  *   on la trouve dans la fiche du livre ;
- * - **le groupe** : là où le fil passe du chocolat au sable, à la médiane du
+ * - **le groupe** : là où le fil passe du chocolat au sable, à la moyenne du
  *   groupe, comme la fiche du livre (Lea, 2026-11-10 ; seule, c'est moi). Plus de pastille ni
  *   de loupe (2026-10-01) ;
  * - le repère de gauche (J-x) dit le temps qu'il reste, la date de fin est au bout.
@@ -31,7 +31,7 @@ import { colors, fonts, inkAlpha, lowki } from '../../utils/constants';
 import { formatTrackDate, type TrackCap } from '../../utils/track';
 
 interface GoalTrackProps {
-  /** Où en est la piste, 0 à 100 : le groupe, sa médiane comme dans la fiche du livre (la mienne si je suis seule) */
+  /** Où en est la piste, 0 à 100 : le groupe, sa moyenne comme dans la fiche du livre (la mienne si je suis seule) */
   percent: number;
   /** Vrai à plusieurs : la piste dit où en est le groupe, pas moi */
   group?: boolean;
