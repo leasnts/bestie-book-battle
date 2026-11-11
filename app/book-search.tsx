@@ -2,20 +2,16 @@
  * Route /book-search — trouver un livre (onboarding : créer un bbb, ou trouver
  * mon édition). `?q=` pré-remplit la recherche.
  *
- *    ┌───────────────────────────────┐       ┌───────────────────────────────┐
- *    │ Rechercher                    │       │ (‹) Ton édition               │
- *    │ ( 🔍 le prince cr          ✕ )│  →    │     Le Prince cruel · H. Black│
- *    │ ▐██▌ Le Prince cruel          │       │ ▐██▌ Rageot, 2019 · 400 p.    │
- *    │ ▐██▌ Le Roi maléfique         │       │ ▐██▌ Pocket Jeunesse · 432 p. │
- *    └───────────────────────────────┘       │        [ Autre édition ]      │
- *                                            └───────────────────────────────┘
+ *    ┌───────────────────────────────────┐
+ *    │ Rechercher                        │
+ *    │ ( 🔍 l'étranger                ✕ )│
+ *    │ ▐██▌ L'Étranger  DigiCat, 2022    │   chaque édition est un résultat :
+ *    │ ▐██▌ L'Étranger  Gallimard, 2005  │   un toucher, et on a la sienne
+ *    └───────────────────────────────────┘
  *
- * 1. **Recherche** au fil de la frappe (useBookSearch) ; avant de taper, les
- *    livres du moment.
- * 2. **Ton édition** : le livre touché, ses éditions papier (Google Books)
- *    pour pré-remplir les pages. Pas d'édition trouvée, ou une seule : on
- *    saute l'étape. « Autre édition » garde le livre sans édition précise
- *    (les pages se règlent à la main ensuite).
+ * Recherche au fil de la frappe (useBookSearch), les premiers livres dépliés
+ * en leurs éditions papier (Google Books) pour avoir les pages. Avant de taper,
+ * les livres du moment : touché, l'un d'eux arrive avec sa première édition.
  *
  * Sheet natif (`SheetPage`) à palier haut : le clavier et les résultats.
  * Le livre choisi est déposé dans le store de l'onboarding (`bookPick`) : c'est
@@ -24,9 +20,8 @@
 
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { CircleXIcon, SearchIcon } from 'lucide-react-native';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import { Keyboard, Pressable, StyleSheet, Text, TextInput, View, type TextInputInstance } from 'react-native';
-import Button3D from '../components/Button3D';
 import BookResultRow, { BookResultSkeleton } from '../components/ui/BookResultRow';
 import SheetPage from '../components/ui/SheetPage';
 import { useBookSearch } from '../hooks/useBookSearch';
@@ -39,13 +34,10 @@ export default function BookSearchRoute() {
   const router = useRouter();
   // `for` : l'écran qui attend le livre (le livre lui-même, ou une autre édition)
   const { q, for: target = 'livre' } = useLocalSearchParams<{ q?: string; for?: BookPickTarget }>();
-  const { query, setQuery, results, isSearching, error, clearResults } = useBookSearch();
+  const { query, setQuery, results, isSearching, error, clearResults } = useBookSearch({ editions: true });
   const inputRef = useRef<TextInputInstance>(null);
 
-  // Étape 2 : le livre touché et ses éditions (null = en cours)
-  const [picked, setPicked] = useState<BookSearchResult | null>(null);
-  const [editions, setEditions] = useState<BookSearchResult[] | null>(null);
-  // Le livre dont on attend les éditions : revenir en arrière entre-temps l'oublie
+  // Le dernier livre touché : un second toucher entre-temps remplace le premier
   const pendingRef = useRef<BookSearchResult | null>(null);
 
   // Recherche pré-remplie si on en a une, puis le clavier une fois le sheet monté
@@ -66,53 +58,16 @@ export default function BookSearchRoute() {
   const handlePick = useCallback(
     async (book: BookSearchResult) => {
       Keyboard.dismiss();
-      setPicked(book);
-      setEditions(null);
+      // Une édition : c'est la sienne
+      if (book.id.startsWith('google:')) return finish(book);
+      // Un livre sans édition affichée : sa première édition connue, s'il en a une
       pendingRef.current = book;
-      const found = await fetchEditions(book);
+      const [first] = await fetchEditions(book);
       if (pendingRef.current !== book) return;
-      // Rien à choisir : on garde le livre (avec les pages de l'édition s'il n'y en a qu'une)
-      if (found.length <= 1) {
-        finish(found[0] ? { ...found[0], coverUrl: found[0].coverUrl ?? book.coverUrl } : book);
-        return;
-      }
-      setEditions(found);
+      finish(first ?? book);
     },
     [finish],
   );
-
-  if (picked) {
-    return (
-      <SheetPage
-        title="Ton édition"
-        subtitle={[picked.title, picked.author].filter(Boolean).join(' · ')}
-        onBack={() => {
-          pendingRef.current = null;
-          setPicked(null);
-        }}
-        fit={false}
-      >
-        {editions === null ? (
-          <>
-            <BookResultSkeleton />
-            <BookResultSkeleton />
-            <BookResultSkeleton />
-          </>
-        ) : (
-          <>
-            {editions.map((edition) => (
-              <BookResultRow key={edition.id} book={edition} onPress={() => finish(edition)} />
-            ))}
-            <View style={styles.otherEdition}>
-              <Button3D variant="secondary" onPress={() => finish(picked)}>
-                Autre édition
-              </Button3D>
-            </View>
-          </>
-        )}
-      </SheetPage>
-    );
-  }
 
   const showTrending = query.trim().length === 0;
   const list = showTrending ? TRENDING_BOOKS : results;
@@ -200,8 +155,5 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     color: colors.textTertiary,
     marginBottom: spacing.sm,
-  },
-  otherEdition: {
-    marginTop: spacing.xl,
   },
 });
