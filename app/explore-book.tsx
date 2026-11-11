@@ -8,7 +8,7 @@
  *    │ │    │ 518 p. · 2023          │
  *    │ └────┘                         │
  *    │ [  ♥   ] [   ▶    ] [  ✓   ] │  ← trois gros boutons, icône sur le mot ;
- *    │ [Envie ] [Commencer] [  Lu  ] │    Envie et Lu en rouge une fois activés
+ *    │ [Envie ] [  Lire  ] [  Lu  ] │    Envie et Lu en rouge une fois activés
  *    │ Passer toutes les épreuves…⌄  │  ← résumé, 9 lignes, toucher pour déplier
  *    │ (◉) Rebecca Yarros         ›  │
  *    │     29 livres                 │
@@ -21,7 +21,7 @@
  *   dernière, posée comme une page de départ (ni pages du jour, ni série, ni
  *   notif). Un livre lu quitte mes envies. Le décocher demande confirmation ;
  *   ma page revient à la dernière vraiment lue (historique), sinon à 0.
- * - **Commencer** ▶ : le livre va sur l'accueil à la page 0, sans question (ni
+ * - **Lire** ▶ : le livre va sur l'accueil à la page 0, sans question (ni
  *   page de départ ni date de fin) ; déjà dans ma PAL, il y passe. En cours →
  *   **Reprendre**, lu → **Voir** : il revient sur l'accueil.
  * - **Partager** ↗ : le partage iOS.
@@ -177,7 +177,7 @@ export default function ExploreBookRoute() {
     else router.back();
   }, [from, router]);
 
-  // Commencer : le livre va sur l'accueil, à la page 0, sans aucune question
+  // Lire : le livre va sur l'accueil, à la page 0, sans aucune question
   // (ni page de départ ni date de fin : Lea, 2026-11-11). Déjà là : il y revient.
   const [starting, setStarting] = useState(false);
   const handleRead = useCallback(async () => {
@@ -317,7 +317,7 @@ export default function ExploreBookRoute() {
   // Le mot dit ce qui va se passer : commencer (nouveau, ou dans ma PAL),
   // reprendre (en cours), voir (déjà lu : il revient sur l'accueil)
   const readLabel =
-    !inLibrary || reading?.state === 'unread' ? 'Commencer' : reading?.state === 'reading' ? 'Reprendre' : 'Voir';
+    !inLibrary || reading?.state === 'unread' ? 'Lire' : reading?.state === 'reading' ? 'Reprendre' : 'Voir';
 
   return (
     <SheetPage
@@ -387,14 +387,14 @@ export default function ExploreBookRoute() {
           variant="secondary"
           stacked
           iconComponent={
-            readLabel === 'Commencer' ? (
+            readLabel === 'Lire' ? (
               <PlayIcon size={22} color={colors.textPrimary} strokeWidth={2.25} />
             ) : (
               <BookOpenIcon size={22} color={colors.textPrimary} strokeWidth={2.25} />
             )
           }
           onPress={handleRead}
-          accessibilityLabel={readLabel === 'Commencer' ? 'Commencer la lecture' : `${readLabel}, sur l’accueil`}
+          accessibilityLabel={readLabel === 'Lire' ? 'Commencer la lecture' : `${readLabel}, sur l’accueil`}
           style={styles.action}
         >
           {readLabel}

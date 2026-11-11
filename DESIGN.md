@@ -928,10 +928,10 @@ La fiche d'un livre (`/explore-book`) est une **fiche d'information, sans gros
 bouton** (Lea, 2026-11-11). En tête, **comme la carte du livre de l'accueil** :
 la couverture à gauche (84 pt de large, pas le sujet) ; à droite le titre,
 l'autrice, `518 p. · 2023`. Dessous, **trois gros boutons** `Button3D`
-`stacked` (icône sur le mot, 72 pt) qui se partagent la largeur : **Envie** ♥ (rouge et plein si gardé), **Lu** ✓ (rouge si lu ; sinon
-le range dans « Lus » sans changer le livre de l'accueil), **Commencer** ▶
-(création ; PAL → accueil + date de fin), **Reprendre** s'il est en cours,
-**Voir** s'il est lu (« Ouvrir » ne disait pas ce qui se passe), puis **Lu** ✓
+`stacked` (icône sur le mot, 72 pt) qui se partagent la largeur, tous en
+papier, icône et mot de la même couleur : **Envie** ♥, au centre **Lire** ▶
+(plus court que « Commencer »), **Reprendre** s'il est en cours, **Voir** s'il
+est lu (« Ouvrir » ne disait pas ce qui se passe), puis **Lu** ✓
 (le range dans « Lus » sans changer le livre de l'accueil). Envie et Lu sont
 des bascules : activés, **tout le bouton passe en rouge** (`Button3D`
 `accent`, relief `red`), icône et mot crème — on voit l'état d'un coup d'œil.
@@ -943,7 +943,7 @@ initiales, « 29 livres » dessous) qui ouvre **ses livres par-dessus la fiche**
 (`/explore-author`, retour vers le livre ; en toucher un le met à la place,
 jamais de renvoi dans l'onglet). Pas de note ni d'avis d'inconnu·es.
 
-**Commencer** met le livre sur l'accueil à la page 0, sans question (ni page de
+**Lire** met le livre sur l'accueil à la page 0, sans question (ni page de
 départ ni date de fin). **Lu** s'allume tout de suite, sans attendre la base ;
 la dernière page est posée comme une page de départ (`set_start_position`) :
 ni pages du jour, ni série, ni notif au groupe. **Décocher Lu** passe par une
