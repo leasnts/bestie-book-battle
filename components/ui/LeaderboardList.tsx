@@ -240,8 +240,9 @@ function Separator() {
 
 // ─── Styles ────────────────────────────────────────────────────────
 
-// Mêmes mesures que la case de l'accueil en large (LeaderboardSection › SIZES.wide)
-const AVATAR_SIZE = 32;
+// Photo plus grande que sur l'accueil : le prénom en haut, le fil en bas, calés
+// sur sa hauteur
+const AVATAR_SIZE = 48;
 
 const styles = StyleSheet.create({
   // « 5 membres ⌄ » : touchable pour inverser l'ordre
@@ -278,7 +279,8 @@ const styles = StyleSheet.create({
   rowBody: {
     flex: 1,
     minWidth: 0,
-    gap: 8,
+    height: AVATAR_SIZE,
+    justifyContent: 'space-between',
   },
   rowTop: {
     flexDirection: 'row',
