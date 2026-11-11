@@ -5,7 +5,6 @@
  * suffit (icône + mot), cousues entre elles (`StitchLine`) :
  *
  *    Notifications                 ›   (sheet posé dessus : rappel, groupe)
- *    Activité                      ›
  *    Sons / Vibrations           (○)
  *    Inviter / Signaler            ›
  *    [ Se déconnecter ]
@@ -23,8 +22,6 @@ import Constants from 'expo-constants';
 import { useRouter, type Href } from 'expo-router';
 import {
   BellIcon,
-  FlaskConicalIcon,
-  InboxIcon,
   LogOutIcon,
   ShieldCheckIcon,
   ShareIcon,
@@ -128,14 +125,10 @@ export default function SettingsRoute() {
   };
 
   return (
-    <SheetPage title="Réglages">
+    <SheetPage title="Réglages" scrollEnabled={false}>
       <SettingsCard>
         <LinkRow icon={BellIcon} label="Notifications" onPress={() => router.push('/settings-notifications')} />
         <StitchLine />
-        <LinkRow icon={InboxIcon} label="Activité" onPress={() => openScreen('/activity')} />
-      </SettingsCard>
-
-      <SettingsCard>
         <ToggleRow
           icon={Volume2Icon}
           label="Sons"
@@ -167,12 +160,6 @@ export default function SettingsRoute() {
           label="Confidentialité et conditions"
           onPress={() => router.push('/settings-legal')}
         />
-        {__DEV__ && (
-          <>
-            <StitchLine />
-            <LinkRow icon={FlaskConicalIcon} label="Tester l’onboarding" onPress={() => openScreen('/auth/login')} />
-          </>
-        )}
       </SettingsCard>
 
       <Button3D variant="secondary" icon={LogOutIcon} onPress={handleLogout} disabled={busy} style={styles.logout}>
