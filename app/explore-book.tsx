@@ -129,6 +129,7 @@ export default function ExploreBookRoute() {
   // la fiche s'affiche sans les attendre
   const [summary, setSummary] = useState<string | null>(book?.description ?? null);
   const [summaryOpen, setSummaryOpen] = useState(false);
+  const [summaryLong, setSummaryLong] = useState(false);
   useEffect(() => {
     setSummary(book?.description ?? null);
     setSummaryOpen(false);
@@ -414,14 +415,30 @@ export default function ExploreBookRoute() {
 
       {!!summary && (
         <PressableScale
-          onPress={() => setSummaryOpen((open) => !open)}
+          onPress={() => summaryLong && setSummaryOpen((open) => !open)}
           style={styles.summaryBox}
-          accessibilityRole="button"
-          accessibilityHint={summaryOpen ? 'Replier le résumé' : 'Lire tout le résumé'}
+          accessibilityRole={summaryLong ? 'button' : undefined}
+          accessibilityHint={summaryLong ? (summaryOpen ? 'Replier le résumé' : 'Lire tout le résumé') : undefined}
         >
           <Text style={styles.summary} numberOfLines={summaryOpen ? undefined : SUMMARY_LINES}>
             {summary}
           </Text>
+          {/* Le résumé entier, invisible et sans limite : on compte ses lignes
+              pour ne montrer « Voir plus » que s'il est vraiment coupé */}
+          <Text
+            style={[styles.summary, styles.measure]}
+            onTextLayout={(e) => setSummaryLong(e.nativeEvent.lines.length > SUMMARY_LINES)}
+            accessibilityElementsHidden
+            importantForAccessibility="no-hide-descendants"
+            pointerEvents="none"
+          >
+            {summary}
+          </Text>
+          {summaryLong && (
+            <Text style={styles.more} importantForAccessibility="no">
+              {summaryOpen ? 'Voir moins' : 'Voir plus'}
+            </Text>
+          )}
         </PressableScale>
       )}
 
@@ -506,6 +523,20 @@ const styles = StyleSheet.create({
     fontSize: 15,
     lineHeight: 22,
     color: colors.textSecondary,
+  },
+  // Hors du flux, à la largeur du résumé
+  measure: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    opacity: 0,
+  },
+  more: {
+    fontFamily: fonts.bodyBold,
+    fontSize: 15,
+    lineHeight: 22,
+    color: colors.textPrimary,
+    marginTop: spacing.xs,
   },
   author: {
     flexDirection: 'row',
