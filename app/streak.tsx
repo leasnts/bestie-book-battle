@@ -59,17 +59,12 @@ function prevMonth(first: string): string {
 }
 
 /**
- * « Octobre 2026 ». Le titre partage sa ligne avec trois boutons : un nom de
- * mois trop long passe en court (« Sept. 2026 »).
+ * « Novembre 2026 », ou « Nov. 2026 ». Le titre partage sa ligne avec trois
+ * boutons : le nom entier quand il tient, l'abrégé seulement sinon (SheetPage).
  */
-function monthLabel(first: string): string {
+function monthLabel(first: string, month: 'long' | 'short'): string {
   const date = new Date(`${first}T00:00:00Z`);
-  const long = date.toLocaleDateString('fr-FR', { month: 'long', timeZone: 'UTC' });
-  const label = date.toLocaleDateString('fr-FR', {
-    month: long.length > 8 ? 'short' : 'long',
-    year: 'numeric',
-    timeZone: 'UTC',
-  });
+  const label = date.toLocaleDateString('fr-FR', { month, year: 'numeric', timeZone: 'UTC' });
   return label.charAt(0).toUpperCase() + label.slice(1);
 }
 
@@ -141,7 +136,8 @@ export default function StreakRoute() {
   const saved = useMemo(() => new Set(bonusDates), [bonusDates]);
   const month = months[page] ?? months[months.length - 1];
   // Le titre du sheet : le mois affiché, l'année en mot d'accent
-  const title = monthLabel(month);
+  const title = monthLabel(month, 'long');
+  const shortTitle = monthLabel(month, 'short');
   const readCount = [...read].filter((d) => d.startsWith(month.slice(0, 7))).length;
   const used = bonusDates.length;
   const entering = (direction > 0 ? FadeInRight : FadeInLeft).duration(220);
@@ -152,6 +148,7 @@ export default function StreakRoute() {
   return (
     <SheetPage
       title={title}
+      shortTitle={shortTitle}
       accent={title.split(' ')[1]}
       actions={
         <View style={styles.arrows}>

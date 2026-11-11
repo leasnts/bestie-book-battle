@@ -28,7 +28,7 @@
  */
 
 import { ChevronLeftIcon } from 'lucide-react-native';
-import React, { forwardRef, useCallback } from 'react';
+import React, { forwardRef, useCallback, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View, type ScrollViewInstance, type ScrollViewProps } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFitSheet } from '../../hooks/useFitSheet';
@@ -43,6 +43,8 @@ export const SHEET_GUTTER = spacing.lg;
 interface SheetPageProps
   extends Omit<ScrollViewProps, 'children' | 'stickyHeaderIndices' | 'onScroll'> {
   title: string;
+  /** Le titre abrégé, pris seulement si `title` ne tient pas (« Nov. 2026 ») */
+  shortTitle?: string;
   /** Le mot du titre mis en avant (voir AccentWord) */
   accent?: string;
   /** Une ligne sous le titre (l'auteur d'un livre, le prénom d'une personne) */
@@ -61,6 +63,7 @@ interface SheetPageProps
 const SheetPage = forwardRef<ScrollViewInstance, SheetPageProps>(function SheetPage(
   {
     title,
+    shortTitle,
     accent,
     subtitle,
     onBack,
@@ -94,6 +97,7 @@ const SheetPage = forwardRef<ScrollViewInstance, SheetPageProps>(function SheetP
     >
       <SheetPageHeader
         title={title}
+        shortTitle={shortTitle}
         accent={accent}
         subtitle={subtitle}
         onBack={onBack}
@@ -150,6 +154,8 @@ export function useSheetScroll({ fit = true }: { fit?: boolean } = {}) {
 
 interface SheetPageHeaderProps {
   title: string;
+  /** Le titre abrégé, pris seulement si `title` ne tient pas */
+  shortTitle?: string;
   /** Le mot du titre mis en avant (voir AccentWord) */
   accent?: string;
   /** À la ligne sous le titre : un texte, ou un élément touchable (tri du classement) */
@@ -182,6 +188,7 @@ export function SheetSubtitle({ children }: { children: React.ReactNode }) {
  */
 export function SheetPageHeader({
   title,
+  shortTitle,
   accent,
   subtitle,
   onBack,
@@ -191,6 +198,7 @@ export function SheetPageHeader({
   background,
   children,
 }: SheetPageHeaderProps) {
+  const [fits, setFits] = useState(true);
   return (
     <SheetStickyHeader scrolled={scrolled} gutter={SHEET_GUTTER}>
       {background}
@@ -200,13 +208,33 @@ export function SheetPageHeader({
           {onBack && (
             <GlassButton icon={ChevronLeftIcon} onPress={onBack} accessibilityLabel="Retour" />
           )}
-          <Text
-            style={[styles.title, accent && styles.titleAccent]}
-            numberOfLines={titleLines}
-            accessibilityRole="header"
-          >
-            <AccentWord text={title} accent={accent} size={styles.title.fontSize} />
-          </Text>
+          <View style={styles.titleBox}>
+            <Text
+              style={[styles.title, accent && styles.titleAccent]}
+              numberOfLines={titleLines}
+              accessibilityRole="header"
+              accessibilityLabel={title}
+            >
+              <AccentWord
+                text={shortTitle && !fits ? shortTitle : title}
+                accent={accent}
+                size={styles.title.fontSize}
+              />
+            </Text>
+            {/* Le titre entier, invisible, mesuré sans limite de lignes : s'il
+                déborde, l'abrégé prend sa place (jamais de « … ») */}
+            {shortTitle && (
+              <Text
+                style={[styles.title, accent && styles.titleAccent, styles.measure]}
+                onTextLayout={(e) => setFits(e.nativeEvent.lines.length <= titleLines)}
+                accessibilityElementsHidden
+                importantForAccessibility="no-hide-descendants"
+                pointerEvents="none"
+              >
+                <AccentWord text={title} accent={accent} size={styles.title.fontSize} />
+              </Text>
+            )}
+          </View>
           {actions && <View style={styles.actions}>{actions}</View>}
         </View>
         {/* Le sous-titre à la ligne, sous le retour, jamais à côté */}
@@ -270,8 +298,10 @@ const styles = StyleSheet.create({
     gap: spacing.md,
     minHeight: 36,
   },
-  title: {
+  titleBox: {
     flex: 1,
+  },
+  title: {
     fontFamily: fonts.display,
     fontSize: 26,
     lineHeight: 31,
@@ -282,6 +312,13 @@ const styles = StyleSheet.create({
   titleAccent: {
     paddingTop: 6,
     marginTop: -6,
+  },
+  // Hors du flux, à la largeur du titre
+  measure: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    opacity: 0,
   },
   subtitle: {
     fontFamily: fonts.body,
