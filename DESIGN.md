@@ -930,9 +930,10 @@ la couverture à gauche (84 pt de large, pas le sujet), le titre, l'autrice et
 `518 p. · 2023` à droite (le sheet n'a pas d'autre titre) ; puis une **rangée d'actions comme la fiche
 Contact d'iOS** — quatre `GlassButton` à places fixes, un mot dessous : **Envie**
 ♥ (rouge et plein si gardé), **Lu** ✓ (rouge si lu ; sinon le range dans « Lus »
-sans changer le livre de l'accueil), **Lire** ▶ (création ; PAL → accueil + date
-de fin) ou **Ouvrir** s'il est en cours ou lu, **Partager** ↗. Dessous, le
-**résumé** de la boutique en 4 lignes, à toucher pour le déplier ; enfin la ligne
+sans changer le livre de l'accueil), **Commencer** ▶ (création ; PAL → accueil +
+date de fin), **Reprendre** s'il est en cours, **Voir** s'il est lu (« Ouvrir »
+ne disait pas ce qui se passe), **Partager** ↗. Dessous, le **résumé** de la
+boutique en 9 lignes, à toucher pour le déplier ; enfin la ligne
 de l'autrice (photo ou initiales, « 29 livres » dessous) qui ouvre **ses livres
 par-dessus la fiche** (`/explore-author`, retour vers le livre ; en toucher un le
 met à la place dans la fiche, jamais de renvoi dans l'onglet). Pas de note ni

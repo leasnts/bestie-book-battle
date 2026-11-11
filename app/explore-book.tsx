@@ -7,8 +7,8 @@
  *    │ │cov │ Rebecca Yarros         │
  *    │ └────┘ 518 p. · 2023          │
  *    │  (♥)    (✓)    (▶)    (↗)     │  ← rangée d'actions, comme la fiche Contact
- *    │ Envie    Lu    Lire  Partager │
- *    │ Passer toutes les épreuves…⌄  │  ← résumé, 4 lignes, toucher pour déplier
+ *    │ Envie   Lu  Commencer Partager│
+ *    │ Passer toutes les épreuves…⌄  │  ← résumé, 9 lignes, toucher pour déplier
  *    │ (◉) Rebecca Yarros         ›  │
  *    │     12 livres                 │
  *    └───────────────────────────────┘
@@ -18,9 +18,10 @@
  * - **Lu** ✓ : pas dans ma bibliothèque → l'y range directement dans « Lus »
  *   (sans changer le livre de l'accueil) ; commencé → ma page passe à la
  *   dernière ; déjà lu → rouge, rien à faire.
- * - **Lire** ▶ : pas dans ma bibliothèque → le parcours de création, livre
+ * - **Commencer** ▶ : pas dans ma bibliothèque → le parcours de création, livre
  *   déjà rempli ; dans ma PAL (« Non lus ») → il passe sur l'accueil et on
- *   choisit sa date de fin ; en cours ou lu → **Ouvrir** sur l'accueil.
+ *   choisit sa date de fin. En cours → **Reprendre**, lu → **Voir** : il
+ *   revient sur l'accueil.
  * - **Partager** ↗ : le partage iOS.
  * - La ligne de l'autrice ouvre ses livres par-dessus la fiche (`/explore-author`).
  *
@@ -58,7 +59,7 @@ const COVER_W = 84;
 const AUTHOR_AVATAR = 44;
 const FACTS_SIZE = 14;
 /** Le résumé replié : assez pour donner envie, pas une page de texte */
-const SUMMARY_LINES = 4;
+const SUMMARY_LINES = 9;
 
 const AUTHORS = authorsCatalog.authors as ExploreAuthor[];
 
@@ -220,7 +221,10 @@ export default function ExploreBookRoute() {
   if (!book) return null;
 
   const year = book.publishedDate?.slice(0, 4);
-  const opens = !!inLibrary && reading?.state !== 'unread';
+  // Le mot dit ce qui va se passer : commencer (nouveau, ou dans ma PAL),
+  // reprendre (en cours), voir (déjà lu : il revient sur l'accueil)
+  const readLabel =
+    !inLibrary || reading?.state === 'unread' ? 'Commencer' : reading?.state === 'reading' ? 'Reprendre' : 'Voir';
 
   return (
     <SheetPage title="">
@@ -262,7 +266,10 @@ export default function ExploreBookRoute() {
           label="Envie"
           selected={isFavorite}
           fill
-          onPress={() => toggleFavorite(book)}
+          onPress={() => {
+            feel('tic');
+            toggleFavorite(book);
+          }}
           accessibilityLabel={isFavorite ? 'Retirer de mes envies' : 'Garder dans mes envies'}
         />
         <Action
@@ -273,10 +280,10 @@ export default function ExploreBookRoute() {
           accessibilityLabel={isRead ? 'Lu' : 'Je l’ai lu'}
         />
         <Action
-          icon={opens ? BookOpenIcon : PlayIcon}
-          label={opens ? 'Ouvrir' : 'Lire'}
+          icon={readLabel === 'Commencer' ? PlayIcon : BookOpenIcon}
+          label={readLabel}
           onPress={handleRead}
-          accessibilityLabel={opens ? 'Ouvrir sur l’accueil' : 'Lancer une lecture'}
+          accessibilityLabel={readLabel === 'Commencer' ? 'Commencer la lecture' : `${readLabel}, sur l’accueil`}
         />
         <Action icon={ShareIcon} label="Partager" onPress={handleShare} accessibilityLabel="Partager" />
       </View>
