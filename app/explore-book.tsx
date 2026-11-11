@@ -1,47 +1,60 @@
 /**
  * Route /explore-book — la fiche d'un livre de l'onglet Explorer, en sheet natif.
  *
- *    ┌────────────────────────────────┐
- *    │ Fourth Wing                    │
- *    │ Rebecca Yarros                 │
- *    │                                │
- *    │ ▐██▌  [518 p. · 2023]          │
- *    │ ▐██▌  🔍 Ses livres            │
- *    │                                │
- *    │ [ Lancer une lecture ] (♥) (↗) │
- *    └────────────────────────────────┘
+ *    ┌──────────────────────── ░▒▒░──┐
+ *    │ Fourth Wing          ░(♥)(↗)▒ │  ← lavis aux couleurs de la couverture
+ *    │                               │
+ *    │ ┌────────┐                    │
+ *    │ │        │                    │
+ *    │ │ cover  │  518 p.            │
+ *    │ │        │  2023              │
+ *    │ └────────┘                    │
+ *    │ (◉) Rebecca Yarros         ›  │  ← cherche ses livres
+ *    │ [     Lancer une lecture    ] │
+ *    └───────────────────────────────┘
  *
  * - **Lancer une lecture** : reprend le parcours de création au nombre de
  *   pages, titre, autrice, pages et couverture déjà remplis. Si le livre est
  *   déjà dans ma bibliothèque, le bouton devient **Ouvrir** et l'affiche sur
  *   l'accueil.
- * - **♥** : le garde dans mes envies (première étagère de l'onglet).
+ * - **♥** (en verre, rouge une fois gardé) : mes envies, première étagère de l'onglet.
  * - **↗** : le propose au club par le partage iOS.
- * - « Ses livres » lance la recherche de ses livres dans l'onglet.
+ * - La ligne de l'autrice (sa photo si on l'a) lance la recherche de ses livres.
  *
  * Pas de note, pas d'avis, pas de résumé : pas de fiche produit (DESIGN.md,
  * anti-référence Goodreads). Le livre vient du store (`selectedBook`).
- *
- * Mise en page : `SheetPage`, comme tous les sheets (titre du livre en en-tête,
- * comme la fiche du livre en cours).
  */
 
 import { useRouter } from 'expo-router';
-import { BookOpenIcon, CirclePlusIcon, HeartIcon, SearchIcon, ShareIcon } from 'lucide-react-native';
+import { BookOpenIcon, ChevronRightIcon, CirclePlusIcon, HeartIcon, ShareIcon } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Pressable, Share, StyleSheet, Text, View } from 'react-native';
+import { Share, StyleSheet, Text, View } from 'react-native';
 import Button3D from '../components/Button3D';
+import { AccentUnit } from '../components/ui/AccentWord';
 import BookCover, { COVER_RATIO } from '../components/ui/BookCover';
+import { AuthorAvatar, type ExploreAuthor } from '../components/ui/ExploreAuthors';
+import GlassButton from '../components/ui/GlassButton';
+import PressableScale from '../components/ui/PressableScale';
 import SheetPage, { SheetFooter } from '../components/ui/SheetPage';
+import WatercolorCorner from '../components/ui/WatercolorCorner';
+import authorsCatalog from '../constants/exploreAuthors.json';
 import { fetchEditions } from '../services/bookApi';
 import { useExploreStore } from '../stores/exploreStore';
 import { useOnboardingStore } from '../stores/onboardingStore';
 import { useProjectStore } from '../stores/projectStore';
-import { borderRadius, colors, fonts, inkAlpha, spacing } from '../utils/constants';
+import { colors, fonts, spacing } from '../utils/constants';
+import { extractCoverPalette } from '../utils/coverPalette';
 import { compactText } from '../utils/normalizeText';
 import { startAdding } from '../utils/onboardingFlow';
+import { coverWash, NEUTRAL_WASH, type WashTints } from '../utils/watercolor';
 
-const COVER_H = 140;
+/** La couverture est le sujet de la fiche : grande, comme posée sur la table */
+const COVER_H = 216;
+const AUTHOR_AVATAR = 44;
+const PAGES_SIZE = 40;
+
+const AUTHORS = authorsCatalog.authors as ExploreAuthor[];
+
 
 export default function ExploreBookRoute() {
   const router = useRouter();
@@ -68,6 +81,30 @@ export default function ExploreBookRoute() {
     };
   }, [book]);
   const pageCount = book?.pageCount ?? editionPages;
+
+  // Le lavis du coin prend les couleurs de la couverture : l'écran parle de CE livre
+  const [wash, setWash] = useState<WashTints>(NEUTRAL_WASH);
+  useEffect(() => {
+    setWash(NEUTRAL_WASH);
+    if (!book?.coverUrl) return;
+    let cancelled = false;
+    extractCoverPalette(book.coverUrl)
+      .then((palette) => {
+        if (!cancelled) setWash(coverWash(palette));
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [book?.coverUrl]);
+
+  // La première autrice : sa photo si elle est dans les auteur·ices d'Explorer
+  const author = useMemo<ExploreAuthor | null>(() => {
+    const name = book?.author?.split(',')[0].trim();
+    if (!name) return null;
+    const key = compactText(name);
+    return AUTHORS.find((a) => compactText(a.name) === key) ?? { name, photoUrl: null };
+  }, [book?.author]);
 
   // Déjà dans ma bibliothèque ? Alors on l'ouvre au lieu d'en relancer un
   const inLibrary = useMemo(() => {
@@ -106,133 +143,116 @@ export default function ExploreBookRoute() {
   }, [book]);
 
   const handleAuthor = useCallback(() => {
-    if (!book?.author) return;
-    searchFor(book.author.split(',')[0].trim());
+    if (!author) return;
+    searchFor(author.name);
     router.back();
-  }, [book, searchFor, router]);
+  }, [author, searchFor, router]);
+
 
   if (!book) return null;
 
-  const details = [pageCount ? `${pageCount} p.` : null, book.publishedDate?.slice(0, 4)]
-    .filter(Boolean)
-    .join(' · ');
+  const year = book.publishedDate?.slice(0, 4);
 
   return (
-    <SheetPage title={book.title} subtitle={book.author} titleLines={2}>
-      <View style={styles.body}>
+    <SheetPage
+      title={book.title}
+      titleLines={2}
+      headerBackground={<WatercolorCorner tints={wash} />}
+      actions={
+        <>
+          <GlassButton
+            icon={HeartIcon}
+            selected={isFavorite}
+            onPress={() => toggleFavorite(book)}
+            accessibilityLabel={isFavorite ? 'Retirer de mes envies' : 'Garder dans mes envies'}
+          />
+          <GlassButton icon={ShareIcon} onPress={handleShare} accessibilityLabel="Proposer au club" />
+        </>
+      }
+    >
+      <View style={styles.hero}>
         <View style={styles.cover}>
           <BookCover coverUrl={book.coverUrl} outlined />
         </View>
-        <View style={styles.bodyTexts}>
-          {!!details && (
-            <View style={styles.pill}>
-              <Text style={styles.pillText}>{details}</Text>
-            </View>
+        <View style={styles.facts}>
+          {!!pageCount && (
+            <Text style={styles.pages} accessibilityLabel={`${pageCount} pages`}>
+              {pageCount}
+              <AccentUnit size={PAGES_SIZE * 0.55} color={colors.textPrimary}>{' p.'}</AccentUnit>
+            </Text>
           )}
-          {!!book.author && (
-            <Pressable
-              onPress={handleAuthor}
-              hitSlop={8}
-              style={({ pressed }) => [styles.authorLink, pressed && { opacity: 0.6 }]}
-              accessibilityRole="button"
-              accessibilityLabel={`Ses livres : ${book.author}`}
-            >
-              <SearchIcon size={14} color={colors.textTertiary} strokeWidth={2.25} />
-              <Text style={styles.authorLinkText}>Ses livres</Text>
-            </Pressable>
-          )}
+          {!!year && <Text style={styles.year}>{year}</Text>}
         </View>
       </View>
 
-      {/* Trois places fixes : l'action, l'envie, le partage */}
+      {author && (
+        <PressableScale
+          onPress={handleAuthor}
+          style={styles.author}
+          accessibilityRole="button"
+          accessibilityLabel={author.name}
+          accessibilityHint="Chercher ses livres"
+        >
+          <AuthorAvatar author={author} size={AUTHOR_AVATAR} />
+          <Text style={styles.authorName} numberOfLines={1}>
+            {author.name}
+          </Text>
+          <ChevronRightIcon size={20} color={colors.textTertiary} strokeWidth={2.25} />
+        </PressableScale>
+      )}
+
       <SheetFooter>
-        <View style={styles.actions}>
-          <Button3D
-            variant="primary"
-            icon={inLibrary ? BookOpenIcon : CirclePlusIcon}
-            iconPosition="left"
-            onPress={handleStart}
-            style={styles.mainAction}
-          >
-            {inLibrary ? 'Ouvrir' : 'Lancer une lecture'}
-          </Button3D>
-          <Button3D
-            variant="secondary"
-            iconOnly
-            iconComponent={
-              <HeartIcon
-                size={22}
-                color={isFavorite ? colors.accent : colors.dark900}
-                fill={isFavorite ? colors.accent : 'transparent'}
-                strokeWidth={2}
-              />
-            }
-            onPress={() => toggleFavorite(book)}
-            accessibilityLabel={isFavorite ? 'Retirer de mes envies' : 'Garder dans mes envies'}
-            style={styles.iconAction}
-          />
-          <Button3D
-            variant="secondary"
-            iconOnly
-            icon={ShareIcon}
-            onPress={handleShare}
-            accessibilityLabel="Proposer au club"
-            style={styles.iconAction}
-          />
-        </View>
+        <Button3D
+          variant="primary"
+          icon={inLibrary ? BookOpenIcon : CirclePlusIcon}
+          iconPosition="left"
+          onPress={handleStart}
+        >
+          {inLibrary ? 'Ouvrir' : 'Lancer une lecture'}
+        </Button3D>
       </SheetFooter>
     </SheetPage>
   );
 }
 
 const styles = StyleSheet.create({
-  body: {
+  hero: {
     flexDirection: 'row',
     alignItems: 'flex-end',
-    gap: spacing.lg,
-    marginTop: spacing.sm,
+    gap: spacing.xl,
   },
   cover: {
     width: Math.round(COVER_H * COVER_RATIO),
     height: COVER_H,
   },
-  bodyTexts: {
+  facts: {
     flex: 1,
-    gap: spacing.md,
-    alignItems: 'flex-start',
-  },
-  authorLink: {
-    flexDirection: 'row',
-    alignItems: 'center',
     gap: spacing.xs,
-    minHeight: 32,
+    paddingBottom: spacing.xs,
   },
-  authorLinkText: {
-    fontFamily: fonts.bodySemiBold,
-    fontSize: 15,
-    color: colors.textTertiary,
-  },
-  pill: {
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 2,
-    borderRadius: borderRadius.sm,
-    backgroundColor: inkAlpha(0.07),
-  },
-  pillText: {
-    fontFamily: fonts.bodyBold,
-    fontSize: 12,
-    color: colors.textSecondary,
+  pages: {
+    fontFamily: fonts.display,
+    fontSize: PAGES_SIZE,
+    lineHeight: PAGES_SIZE * 1.15,
+    color: colors.textPrimary,
     fontVariant: ['tabular-nums'],
   },
-  actions: {
+  year: {
+    fontFamily: fonts.bodyMedium,
+    fontSize: 15,
+    color: colors.textTertiary,
+    fontVariant: ['tabular-nums'],
+  },
+  author: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.md,
+    marginTop: spacing['2xl'],
   },
-  mainAction: {
+  authorName: {
     flex: 1,
-  },
-  iconAction: {
-    width: 56,
+    fontFamily: fonts.bodySemiBold,
+    fontSize: 16,
+    color: colors.textPrimary,
   },
 });

@@ -57,6 +57,8 @@ interface SheetPageProps
   fit?: boolean;
   /** Le titre sur deux lignes au plus (un titre de livre) ; une par défaut */
   titleLines?: number;
+  /** Un décor derrière l'en-tête (l'aquarelle du coin) */
+  headerBackground?: React.ReactNode;
   children: React.ReactNode;
 }
 
@@ -70,6 +72,7 @@ const SheetPage = forwardRef<ScrollViewInstance, SheetPageProps>(function SheetP
     actions,
     fit = true,
     titleLines = 1,
+    headerBackground,
     children,
     style,
     contentContainerStyle,
@@ -104,6 +107,7 @@ const SheetPage = forwardRef<ScrollViewInstance, SheetPageProps>(function SheetP
         actions={actions}
         titleLines={titleLines}
         scrolled={sheet.scrolled}
+        background={headerBackground}
       />
       {children}
     </ScrollView>

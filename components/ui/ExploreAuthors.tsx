@@ -62,28 +62,37 @@ export default function ExploreAuthors({ authors, onSelect }: ExploreAuthorsProp
             accessibilityLabel={author.name}
             accessibilityHint="Chercher ses livres"
           >
-            <View style={styles.avatar}>
-              {author.photoUrl ? (
-                <Image
-                  source={{ uri: author.photoUrl }}
-                  style={StyleSheet.absoluteFill}
-                  contentFit="cover"
-                  contentPosition="top"
-                  transition={200}
-                />
-              ) : (
-                <LinearGradient colors={INK} style={styles.placeholder}>
-                  <Text style={styles.initials}>{initials(author.name)}</Text>
-                </LinearGradient>
-              )}
-              <GlassRim radius={AVATAR / 2} />
-            </View>
+            <AuthorAvatar author={author} />
             <Text style={styles.name} numberOfLines={2}>
               {author.name}
             </Text>
           </PressableScale>
         ))}
       </ScrollView>
+    </View>
+  );
+}
+
+/** La photo d'un·e auteur·ice dans un rond, ses initiales à l'encre sinon */
+export function AuthorAvatar({ author, size = AVATAR }: { author: ExploreAuthor; size?: number }) {
+  return (
+    <View style={[styles.avatar, { width: size, height: size, borderRadius: size / 2 }]}>
+      {author.photoUrl ? (
+        <Image
+          source={{ uri: author.photoUrl }}
+          style={StyleSheet.absoluteFill}
+          contentFit="cover"
+          contentPosition="top"
+          transition={200}
+        />
+      ) : (
+        <LinearGradient colors={INK} style={styles.placeholder}>
+          <Text style={[styles.initials, { fontSize: size / 3 * ACCENT_SCALE, lineHeight: size / 1.9 }]}>
+            {initials(author.name)}
+          </Text>
+        </LinearGradient>
+      )}
+      <GlassRim radius={size / 2} />
     </View>
   );
 }
