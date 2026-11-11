@@ -38,7 +38,7 @@ import PressableScale from './PressableScale';
 const SIDE = spacing.lg;
 const GAP = spacing.sm;
 /** Trois cartes entières à l'écran, la quatrième bien coupée : on devine qu'il y en a d'autres (Lea, 2026-11-11) */
-const TILE_W = 110;
+const TILE_W = 116;
 /** Assez haute pour respirer : à 64, la carte faisait étiquette (Lea, 2026-11-11) */
 const TILE_H = 84;
 const RADIUS = borderRadius.md;
