@@ -39,9 +39,10 @@ const SIDE = spacing.lg;
 const GAP = spacing.sm;
 /** Environ quatre cartes à l'écran : la quatrième dépasse, on devine qu'il y en a d'autres */
 const TILE_W = 92;
-const TILE_H = 64;
+/** Assez haute pour respirer : à 64, la carte faisait étiquette (Lea, 2026-11-11) */
+const TILE_H = 84;
 const RADIUS = borderRadius.md;
-const ILLUSTRATION = 60;
+const ILLUSTRATION = 72;
 
 const WASH = require('../../assets/images/watercolor/genres-wash.jpg');
 /** La bande d'aquarelle couvre 14 cartes ; au-delà, on repart du début */
