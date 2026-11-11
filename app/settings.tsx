@@ -270,10 +270,10 @@ export default function SettingsRoute() {
 
       <View style={styles.footer}>
         <View style={styles.footerLinks}>
-          <Pressable onPress={() => Linking.openURL('https://bbb.leasantos.me/terms')} accessibilityRole="link">
+          <Pressable onPress={() => Linking.openURL('https://chapi.leasantos.me/terms')} accessibilityRole="link">
             <Text style={styles.footerLink}>Conditions</Text>
           </Pressable>
-          <Pressable onPress={() => Linking.openURL('https://bbb.leasantos.me/privacy')} accessibilityRole="link">
+          <Pressable onPress={() => Linking.openURL('https://chapi.leasantos.me/privacy')} accessibilityRole="link">
             <Text style={styles.footerLink}>Confidentialité</Text>
           </Pressable>
         </View>

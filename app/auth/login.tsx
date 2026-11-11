@@ -74,8 +74,8 @@ const DRIFT_DURATION = 40000;
 
 const ENTRANCE = Easing.inOut(Easing.cubic);
 /** Les mêmes pages que les Réglages */
-const TERMS_URL = 'https://bbb.leasantos.me/terms';
-const PRIVACY_URL = 'https://bbb.leasantos.me/privacy';
+const TERMS_URL = 'https://chapi.leasantos.me/terms';
+const PRIVACY_URL = 'https://chapi.leasantos.me/privacy';
 /** Le crème des textes sur le rouge */
 const CREAM = '#FFFBF4';
 /** Les yeux, une fois posés au-dessus de la question : leur taille */
