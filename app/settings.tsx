@@ -7,8 +7,8 @@
  *    Notifications                 ›   (sheet posé dessus : rappel, groupe)
  *    Sons / Vibrations           (○)
  *    Inviter / Signaler            ›
- *    [ Se déconnecter ]
  *    Supprimer mon compte  (seul dans son cadre, rouge : irréversible)
+ *    [ Se déconnecter ]
  *
  *    Confidentialité et conditions  ›   (sheet posé dessus)
  *
@@ -160,14 +160,14 @@ export default function SettingsRoute() {
         />
       </SettingsCard>
 
-      <Button3D variant="secondary" icon={LogOutIcon} onPress={handleLogout} disabled={busy} style={styles.logout}>
-        Se déconnecter
-      </Button3D>
-
       {/* Irréversible : seul dans son cadre, en rouge d'erreur (pas le rouge Lowki) */}
       <SettingsCard>
         <LinkRow icon={Trash2Icon} label="Supprimer mon compte" danger disabled={busy} onPress={handleDelete} />
       </SettingsCard>
+
+      <Button3D variant="secondary" icon={LogOutIcon} onPress={handleLogout} disabled={busy} style={styles.logout}>
+        Se déconnecter
+      </Button3D>
     </SheetPage>
   );
 }
@@ -175,6 +175,6 @@ export default function SettingsRoute() {
 const styles = StyleSheet.create({
   logout: {
     marginTop: spacing.sm,
-    marginBottom: spacing.xl,
+    marginBottom: spacing.lg,
   },
 });
