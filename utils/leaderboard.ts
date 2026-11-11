@@ -111,6 +111,22 @@ export function selectVisibleRows(ranked: RankedParticipant[], compact = false):
   return { rows, pinnedMe, hasMore: ranked.length > shownCount };
 }
 
+/**
+ * La case Progression de l'accueil : moi et mes voisins, jamais un podium.
+ *
+ * Toujours 3 lignes (ou moins si le groupe est plus petit) : la personne juste
+ * devant, moi, la personne juste derrière. En tête ou dernière, la fenêtre se
+ * cale au bord (moi + les deux suivants, ou les deux d'avant + moi).
+ * Sans moi dans le groupe : les 3 plus avancés.
+ */
+export function selectNeighbours(ranked: RankedParticipant[], size = PODIUM_SLOTS): RankedParticipant[] {
+  if (ranked.length <= size) return ranked;
+  const i = ranked.findIndex((p) => p.isMe);
+  if (i < 0) return ranked.slice(0, size);
+  const start = Math.max(0, Math.min(i - Math.floor((size - 1) / 2), ranked.length - size));
+  return ranked.slice(start, start + size);
+}
+
 // ─── Helpers d'affichage ───────────────────────────────────────────
 
 /**

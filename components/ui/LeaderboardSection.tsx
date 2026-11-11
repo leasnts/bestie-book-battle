@@ -7,10 +7,11 @@
  * dessous un bout du fil de l'app (`Seam`) qui s'encre jusqu'au % de la
  * personne et finit sur un nœud. Moi en rouge (prénom, %, fil, liseré).
  *
- * Ce qu'on montre :
- * - moi parmi les 3 plus avancés → ces 3 lignes
- * - moi plus loin → les 3 plus avancés, trois points, puis MA ligne
+ * Ce qu'on montre : moi et mes voisins, toujours 3 lignes (`selectNeighbours`)
+ * - la personne juste devant, moi, la personne juste derrière
+ * - en tête ou dernière, la fenêtre se cale au bord
  * - à deux → deux lignes plus grandes, centrées dans le carré
+ * - petit écran (`compact`) → le 1er et moi, avec trois points entre les deux
  *
  * **Toujours en %**, même quand tout le monde lit la même édition : la page
  * n'appartient qu'à soi, seul le pourcentage se compare (DESIGN.md › Pages ou %).
@@ -47,6 +48,7 @@ import {
   LeaderboardParticipant,
   RankedParticipant,
   rankParticipants,
+  selectNeighbours,
   selectVisibleRows,
 } from '../../utils/leaderboard';
 import GlassSection from './GlassSection';
@@ -246,7 +248,7 @@ function Row({
   );
 }
 
-/** Trois points : il y a du monde entre le top 3 et moi, sans dire combien */
+/** Petit écran : trois points entre le 1er et moi, sans dire combien de monde */
 function Gap() {
   return (
     <View style={styles.gap} accessible={false}>
@@ -271,7 +273,15 @@ export default function LeaderboardSection({
   const animate = !reducedMotion;
 
   const ranked = useMemo(() => rankParticipants(participants, myUserId), [participants, myUserId]);
-  const { rows, pinnedMe } = useMemo(() => selectVisibleRows(ranked, compact), [ranked, compact]);
+  // Petit écran : le 1er et moi ; sinon moi et mes voisins (Lea, 2026-11-11 :
+  // pas de « top 3 · · · moi », ça faisait classement)
+  const { rows, pinnedMe } = useMemo(
+    () =>
+      compact
+        ? selectVisibleRows(ranked, true)
+        : { rows: selectNeighbours(ranked), pinnedMe: null as RankedParticipant | null },
+    [ranked, compact],
+  );
   const duo = ranked.length === 2;
   const size: RowSize = !square ? 'wide' : duo ? 'duo' : 'square';
   const a11y = `Progression, ${ranked.map((p) => `${p.name} ${formatScore(p)} pour cent`).join(', ')}`;
