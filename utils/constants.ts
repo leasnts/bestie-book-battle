@@ -182,7 +182,7 @@ export const bevel = {
 } as const;
 
 /** Le papier beige des cadres posés dans un sheet (GlassSection `paper`) */
-export const paperFrameGradient = ['#f1ebe2', '#e7dfd2'] as const;
+export const paperFrameGradient = ['#f7f3ed', '#f0eae1'] as const;
 
 /**
  * Les six post-it du carnet — tirés de la charte Lowki (Lea, 2026-10-08).
