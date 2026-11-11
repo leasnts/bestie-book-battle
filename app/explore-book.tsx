@@ -314,7 +314,8 @@ export default function ExploreBookRoute() {
       </View>
 
       {/* Trois gros boutons qui se partagent la largeur, icône et mot dedans,
-          tous en papier ; la lecture au centre. Envie et Lu sont des bascules :
+          tous en papier ; la lecture au centre. Icône et mot de la même couleur :
+          encre au repos, crème une fois activé. Envie et Lu sont des bascules :
           activés, ils passent en rouge (on voit l'état d'un coup d'œil) */}
       <View style={styles.actions}>
         <Button3D
@@ -323,9 +324,9 @@ export default function ExploreBookRoute() {
           iconComponent={
             <HeartIcon
               size={22}
-              color={isFavorite ? colors.white : colors.textTertiary}
+              color={isFavorite ? colors.white : colors.textPrimary}
               fill={isFavorite ? colors.white : 'transparent'}
-              strokeWidth={2}
+              strokeWidth={2.25}
             />
           }
           onPress={() => toggleFavorite(book)}
@@ -338,7 +339,13 @@ export default function ExploreBookRoute() {
         <Button3D
           variant="secondary"
           stacked
-          icon={readLabel === 'Commencer' ? PlayIcon : BookOpenIcon}
+          iconComponent={
+            readLabel === 'Commencer' ? (
+              <PlayIcon size={22} color={colors.textPrimary} strokeWidth={2.25} />
+            ) : (
+              <BookOpenIcon size={22} color={colors.textPrimary} strokeWidth={2.25} />
+            )
+          }
           onPress={handleRead}
           accessibilityLabel={readLabel === 'Commencer' ? 'Commencer la lecture' : `${readLabel}, sur l’accueil`}
           style={styles.action}
@@ -348,7 +355,7 @@ export default function ExploreBookRoute() {
         <Button3D
           variant={isRead ? 'accent' : 'secondary'}
           stacked
-          iconComponent={<CheckIcon size={22} color={isRead ? colors.white : colors.textTertiary} strokeWidth={2.5} />}
+          iconComponent={<CheckIcon size={22} color={isRead ? colors.white : colors.textPrimary} strokeWidth={2.5} />}
           onPress={handleDone}
           accessibilityLabel="Lu"
           selected={isRead}
