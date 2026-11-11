@@ -5,7 +5,8 @@
  * numéro de rang (Lea, 2026-11-10 : rien de « compet ») : l'ordre suit
  * l'avancée, c'est tout. Chaque ligne porte l'avatar, le prénom, le %, et
  * dessous un bout du fil de l'app (`Seam`) qui s'encre jusqu'au % de la
- * personne et finit sur un nœud. Moi en rouge (prénom, %, fil, liseré).
+ * personne et finit sur un nœud. Moi en rouge (prénom, %, fil), sans contour
+ * autour des photos.
  *
  * Ce qu'on montre : moi et mes voisins, toujours 3 lignes (`selectNeighbours`)
  * - la personne juste devant, moi, la personne juste derrière
@@ -23,7 +24,6 @@
  */
 
 import { Image } from 'expo-image';
-import { LinearGradient } from 'expo-linear-gradient';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle, Defs, G, RadialGradient, Stop } from 'react-native-svg';
@@ -34,9 +34,7 @@ import Animated, {
   useReducedMotion,
 } from 'react-native-reanimated';
 import {
-  accentGradient,
   colors,
-  creamAlpha,
   fonts,
   inkAlpha,
   lowki,
@@ -191,7 +189,6 @@ function Row({
       style={[
         styles.avatar,
         { width: s.avatar, height: s.avatar, borderRadius: s.avatar * AVATAR_ROUND },
-        me && styles.avatarInRing,
       ]}
       contentFit="cover"
     />
@@ -214,18 +211,7 @@ function Row({
       accessible
       accessibilityLabel={`${participant.name}, ${score} pour cent`}
     >
-      {me ? (
-        // Mon liseré : un anneau en dégradé rouge, jamais un aplat
-        <LinearGradient
-          colors={accentGradient}
-          style={[styles.ring, { borderRadius: (s.avatar + RING * 2) * AVATAR_ROUND }]}
-        >
-          {avatar}
-        </LinearGradient>
-      ) : (
-        // La même place que mon anneau : prénoms et fils restent alignés
-        <View style={styles.ringSpace}>{avatar}</View>
-      )}
+      {avatar}
       <View style={[styles.body, { gap: s.lineGap }]}>
         <View style={styles.line}>
           <Text
@@ -320,8 +306,6 @@ const SIZES: Record<RowSize, { avatar: number; name: number; score: number; gap:
 };
 /** Arrondi des avatars, en part du côté (carré arrondi, comme partout) */
 const AVATAR_ROUND = 0.32;
-/** Épaisseur de mon liseré rouge */
-const RING = 2;
 /** Hauteur du dessin du fil : assez pour le nœud */
 const THREAD_HEIGHT = KNOT_R * 2 + 2;
 
@@ -351,19 +335,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  avatar: {
-    borderWidth: 1,
-    borderColor: creamAlpha(0.85),
-  },
-  avatarInRing: {
-    borderWidth: 0,
-  },
-  ring: {
-    padding: RING,
-  },
-  ringSpace: {
-    padding: RING,
-  },
+  // Pas de contour (Lea, 2026-11-11) : la photo seule
+  avatar: {},
   body: {
     flex: 1,
     minWidth: 0,
