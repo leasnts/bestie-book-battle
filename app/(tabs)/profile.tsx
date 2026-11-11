@@ -35,6 +35,7 @@ import Svg, { Defs, LinearGradient as SvgGradient, Path, Stop } from 'react-nati
 import { POP_EYES_HEIGHT, POP_EYES_PATH, POP_EYES_WIDTH } from '../../components/brand/popEyesPath';
 import AccentWord, { accentHeadroom } from '../../components/ui/AccentWord';
 import BookCover, { COVER_RATIO } from '../../components/ui/BookCover';
+import { useExploreStore } from '../../stores/exploreStore';
 import { SHELF_BAR_H, SHELF_OVERLAP, ShelfBar } from '../../components/ui/BookLibrary';
 import PaperWashBackdrop from '../../components/ui/PaperWashBackdrop';
 import PressableScale from '../../components/ui/PressableScale';
@@ -77,6 +78,8 @@ const BANNER_EYES_W = 150;
 
 export default function ProfileScreen() {
   const router = useRouter();
+  const wishes = useExploreStore((state) => state.favorites);
+  const openBook = useExploreStore((state) => state.openBook);
   const insets = useSafeAreaInsets();
   const tabBarInset = useTabBarInset();
   const user = useAuthStore((state) => state.user);
@@ -210,6 +213,41 @@ export default function ProfileScreen() {
             }))}
           />
         </View>
+
+        {/* ═══════════ MES ENVIES : gardées depuis Explorer, seulement s'il y en a ═══════════ */}
+        {wishes.length > 0 && (
+          <View style={styles.shelfSection}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle} accessibilityRole="header">
+                Mes envies
+              </Text>
+              {wishes.length > SHELF_MAX && (
+                <PressableScale
+                  onPress={() => router.push({ pathname: '/library', params: { filter: 'wish' } })}
+                  hitSlop={12}
+                  accessibilityRole="button"
+                  accessibilityLabel="Voir toutes mes envies"
+                  style={styles.seeAll}
+                >
+                  <Text style={styles.seeAllText}>Tout voir</Text>
+                  <ChevronRightIcon size={16} color={colors.textSecondary} />
+                </PressableScale>
+              )}
+            </View>
+            <ReadShelf
+              covers={wishes.slice(0, SHELF_MAX).map((book) => ({
+                id: book.id,
+                title: book.title,
+                uri: book.coverUrl,
+                // Toucher une envie ouvre sa fiche d'Explorer
+                onPress: () => {
+                  openBook(book);
+                  router.push('/explore-book');
+                },
+              }))}
+            />
+          </View>
+        )}
       </ScrollView>
     </PageTransition>
   );
@@ -266,7 +304,11 @@ function InviteBanner({ onPress }: { onPress: () => void }) {
  * - 4 livres ou moins : les livres, puis des places vides cousues, sans défiler ;
  * - plus : mes 10 derniers défilent d'un bord de l'écran à l'autre.
  */
-function ReadShelf({ covers }: { covers: { id: string; title: string; uri: string | null }[] }) {
+function ReadShelf({
+  covers,
+}: {
+  covers: { id: string; title: string; uri: string | null; onPress?: () => void }[];
+}) {
   const { width } = useWindowDimensions();
   const coverW = (width - 2 * SIDE - 2 * SHELF_PAD - (SHELF_SLOTS - 1) * SHELF_GAP) / SHELF_SLOTS;
   const size = { width: coverW, height: coverW / COVER_RATIO };
@@ -281,11 +323,23 @@ function ReadShelf({ covers }: { covers: { id: string; title: string; uri: strin
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.shelfRow}
       >
-        {covers.map((cover) => (
-          <View key={cover.id} style={size} accessible accessibilityLabel={cover.title}>
-            <BookCover coverUrl={cover.uri} outlined />
-          </View>
-        ))}
+        {covers.map((cover) =>
+          cover.onPress ? (
+            <PressableScale
+              key={cover.id}
+              style={size}
+              onPress={cover.onPress}
+              accessibilityRole="button"
+              accessibilityLabel={cover.title}
+            >
+              <BookCover coverUrl={cover.uri} outlined />
+            </PressableScale>
+          ) : (
+            <View key={cover.id} style={size} accessible accessibilityLabel={cover.title}>
+              <BookCover coverUrl={cover.uri} outlined />
+            </View>
+          ),
+        )}
         {Array.from({ length: empty }, (_, i) => (
           <View key={`empty-${i}`} style={size} accessible={false}>
             <GlassMaterial radius={EMPTY_RADIUS} veil={glassVeil} edgeColor={creamAlpha(0.9)} />

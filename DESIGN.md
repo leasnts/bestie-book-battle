@@ -919,7 +919,7 @@ Trouver la prochaine lecture du club (`app/(tabs)/explore.tsx`). Même
 habillage que l'accueil (fond neutre en taches, texture, titre centré). Un champ
 de recherche (titre, auteur, saga), puis des **étagères** qui défilent de côté,
 posées sur la barre en verre de la bibliothèque (`ExploreShelf`, `ShelfBar`) :
-**Mes envies** d'abord, puis En ce moment et les genres. Les étagères sont
+les genres, puis En ce moment (mes envies vivent sur le profil, pas ici). Les étagères sont
 choisies à la main et figées dans `constants/exploreCatalog.json`
 (`scripts/build-explore-catalog.mjs`) : elles s'affichent sans réseau.
 Pendant une recherche : des silhouettes de lignes, jamais de spinner.
@@ -943,7 +943,12 @@ initiales, « 29 livres » dessous) qui ouvre **ses livres par-dessus la fiche**
 (`/explore-author`, retour vers le livre ; en toucher un le met à la place,
 jamais de renvoi dans l'onglet). Pas de note ni d'avis d'inconnu·es.
 
-Les envies ont aussi leur filtre **Envies** dans la bibliothèque (« Mes
+**Commencer** met le livre sur l'accueil à la page 0, sans question (ni page de
+départ ni date de fin). **Lu** s'allume tout de suite, sans attendre la base.
+
+Les envies ont leur étagère **Mes envies** sur le profil (sous « Mes livres
+lus », seulement s'il y en a ; toucher une couverture ouvre sa fiche), plus
+d'étagère dans Explorer, et leur filtre **Envies** dans la bibliothèque (« Mes
 lectures », dernière pastille ; la rangée défile) : toucher une envie ouvre sa
 fiche par-dessus, avec un retour.
 

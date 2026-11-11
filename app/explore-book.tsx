@@ -19,10 +19,9 @@
  * - **Lu** ✓ : pas dans ma bibliothèque → l'y range directement dans « Lus »
  *   (sans changer le livre de l'accueil) ; commencé → ma page passe à la
  *   dernière ; déjà lu → rouge, rien à faire. Un livre lu quitte mes envies.
- * - **Commencer** ▶ : pas dans ma bibliothèque → le parcours de création, livre
- *   déjà rempli ; dans ma PAL (« Non lus ») → il passe sur l'accueil et on
- *   choisit sa date de fin. En cours → **Reprendre**, lu → **Voir** : il
- *   revient sur l'accueil.
+ * - **Commencer** ▶ : le livre va sur l'accueil à la page 0, sans question (ni
+ *   page de départ ni date de fin) ; déjà dans ma PAL, il y passe. En cours →
+ *   **Reprendre**, lu → **Voir** : il revient sur l'accueil.
  * - **Partager** ↗ : le partage iOS.
  * - La ligne de l'autrice ouvre ses livres par-dessus la fiche (`/explore-author`).
  *
@@ -48,7 +47,6 @@ import { updateUserProgress } from '../services/supabase/database';
 import { createReading, settleMyReading } from '../services/onboarding';
 import { useAuthStore } from '../stores/authStore';
 import { useExploreStore } from '../stores/exploreStore';
-import { useOnboardingStore } from '../stores/onboardingStore';
 import { useProjectStore } from '../stores/projectStore';
 import { colors, fonts, ROUND_BUTTON_SIZE, spacing } from '../utils/constants';
 import { extractCoverPalette } from '../utils/coverPalette';
@@ -56,7 +54,6 @@ import { feel } from '../utils/feel';
 import { readingOf } from '../utils/library';
 import { oops } from '../utils/notice';
 import { compactText } from '../utils/normalizeText';
-import { startAdding } from '../utils/onboardingFlow';
 import { coverWash, NEUTRAL_WASH, type WashTints } from '../utils/watercolor';
 
 /** La couverture de la carte : un peu plus grande que celle de l'accueil (54), pas le sujet */
@@ -164,7 +161,11 @@ export default function ExploreBookRoute() {
 
   // Où j'en suis de ce livre : pas dans ma bibliothèque, non lu (PAL), en cours, lu
   const reading = inLibrary ? readingOf(myProgress[inLibrary.id]) : null;
-  const isRead = reading?.state === 'done';
+  // « Lu » s'allume tout de suite : la base répond 2-3 s plus tard, et sans
+  // retour on croyait que rien ne se passait (Lea, 2026-11-11)
+  const [markedRead, setMarkedRead] = useState(false);
+  useEffect(() => setMarkedRead(false), [book?.id]);
+  const isRead = markedRead || reading?.state === 'done';
   const [marking, setMarking] = useState(false);
 
   // Fermer la fiche, et la bibliothèque dessous si on vient d'elle
@@ -173,33 +174,46 @@ export default function ExploreBookRoute() {
     else router.back();
   }, [from, router]);
 
-  const handleRead = useCallback(() => {
-    if (!book) return;
+  // Commencer : le livre va sur l'accueil, à la page 0, sans aucune question
+  // (ni page de départ ni date de fin : Lea, 2026-11-11). Déjà là : il y revient.
+  const [starting, setStarting] = useState(false);
+  const handleRead = useCallback(async () => {
+    if (!book || starting) return;
     if (inLibrary) {
-      if (reading?.state === 'unread') {
-        // Dans ma PAL : il passe sur l'accueil, et on choisit sa date de fin
-        setActiveChallenge(inLibrary);
-        router.push({ pathname: '/end-date', params: { from: 'explore' } });
-        return;
-      }
       setActiveChallenge(inLibrary);
       closeSheets();
       router.navigate('/(tabs)');
       return;
     }
-    // Le livre déjà choisi : on passe le choix et « On lit quoi ? », direct à « Où en est ta lecture ? »
-    const next = startAdding();
-    useOnboardingStore.getState().patch({
-      book: { title: book.title, author: book.author, pages: pageCount ?? 0, cover: book.coverUrl, publisher: book.publisher },
-    });
-    // Fermer d'abord le(s) sheet(s), sinon l'écran poussé s'ouvrirait À L'INTÉRIEUR
-    closeSheets();
-    router.push(pageCount ? '/onboarding/page' : next);
-  }, [book, pageCount, inLibrary, reading?.state, setActiveChallenge, router, closeSheets]);
+    if (!userId) return;
+    setStarting(true);
+    try {
+      const challenge = await createReading(
+        userId,
+        { title: book.title, author: book.author, pages: pageCount ?? 0, cover: book.coverUrl, publisher: book.publisher },
+        null,
+      );
+      await settleMyReading(challenge.id, userId, { format: 'papier', start: 0 });
+      // createReading l'a déjà mis sur l'accueil
+      useProjectStore.getState().loadMyProgress(userId);
+      feel('valider');
+      closeSheets();
+      router.navigate('/(tabs)');
+    } catch (error) {
+      oops('Pas pu le commencer', error, { retry: handleRead });
+    } finally {
+      setStarting(false);
+    }
+  }, [book, starting, inLibrary, userId, pageCount, setActiveChallenge, router, closeSheets]);
 
   const handleDone = useCallback(async () => {
     if (!book || !userId || isRead || marking) return;
     setMarking(true);
+    setMarkedRead(true);
+    feel('fini');
+    // Lu, ce n'est plus une envie : il change d'état, il quitte l'étagère
+    const explore = useExploreStore.getState();
+    if (explore.favorites.some((f) => f.id === book.id)) explore.toggleFavorite(book);
     try {
       const store = useProjectStore.getState();
       if (inLibrary) {
@@ -224,11 +238,8 @@ export default function ExploreBookRoute() {
         store.setActiveChallenge(previous);
       }
       await store.loadMyProgress(userId);
-      // Lu, ce n'est plus une envie : il change d'état, il quitte l'étagère
-      const explore = useExploreStore.getState();
-      if (explore.favorites.some((f) => f.id === book.id)) explore.toggleFavorite(book);
-      feel('fini');
     } catch (error) {
+      setMarkedRead(false);
       oops('Pas pu le marquer lu', error, { retry: handleDone });
     } finally {
       setMarking(false);
