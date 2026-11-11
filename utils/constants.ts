@@ -171,6 +171,12 @@ export const bevel = {
     stroke: [creamAlpha(1), creamAlpha(0)],
     ring: shadowAlpha(0.16),
   },
+  /** Le rouge Lowki : un bouton à bascule activé (♥ gardé, ✓ lu) */
+  red: {
+    fill: [lowki.red.light, lowki.red.dark],
+    stroke: ['#c25a6c', '#8a2638'],
+    ring: '#3f0f18',
+  },
   strokeWidth: 1.5,
   ringWidth: 1.5,
 } as const;

@@ -33,6 +33,10 @@ interface GlassButtonProps {
   stretch?: boolean;
   /** Un point rouge dans le coin : quelque chose attend (un brouillon) */
   badge?: boolean;
+  /** Activé (♥ gardé, ✓ lu) : l'icône en rouge */
+  selected?: boolean;
+  /** Activé, l'icône se remplit aussi (le ♥) ; pas un ✓, qui disparaîtrait */
+  fillWhenSelected?: boolean;
   /** Marges et placement dans le parent */
   style?: StyleProp<ViewStyle>;
 }
@@ -43,6 +47,8 @@ export default function GlassButton({
   accessibilityLabel,
   stretch = false,
   badge = false,
+  selected = false,
+  fillWhenSelected = false,
   style,
 }: GlassButtonProps) {
   const size = ROUND_BUTTON_SIZE;
@@ -54,9 +60,15 @@ export default function GlassButton({
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
+      accessibilityState={selected ? { selected } : undefined}
     >
       <GlassMaterial radius={size / 2} veil={glassControlVeil} rim />
-      <Icon size={iconSize} color={colors.dark900} strokeWidth={2.25} />
+      <Icon
+        size={iconSize}
+        color={selected ? colors.accent : colors.dark900}
+        fill={selected && fillWhenSelected ? colors.accent : 'transparent'}
+        strokeWidth={2.25}
+      />
       {/* Le point se pose sur le coin haut droit de l'icône, rond ou gélule */}
       {badge && <View style={[styles.badge, { top: (size - iconSize) / 2 - 3, marginLeft: iconSize / 2 - 2 }]} />}
     </PressableScale>

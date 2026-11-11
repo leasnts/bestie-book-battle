@@ -5,7 +5,6 @@
  *    │ Explorer                      │
  *    │ ( 🔍 Titre, auteur, saga    ) │
  *    │                               │
- *    │ ♥ Mes envies                  │
  *    │ ▐██▌ ┏━━┓ ▛▀▀▜ →              │
  *    │ ░░░░░░░░░░░░░░░               │
  *    │ Genres                        │
@@ -23,7 +22,6 @@
  * - **Recherche** : titre, auteur ou saga. Taper remplace les étagères par les
  *   résultats au fil de la frappe (Apple Books, repli Open Library ; les
  *   livres des étagères qui correspondent d'abord, sans attendre le réseau).
- * - **Mes envies** : les livres gardés pour plus tard, en première étagère.
  * - **Genres** : une rangée de petites cartes aquarelle qui défile ; toucher un genre remplace la
  *   page par la liste de ses livres (bouton retour pour revenir). Rester dans
  *   l'onglet évite d'empiler un sheet sous la fiche du livre.
@@ -46,8 +44,8 @@
 
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
-import { ChevronLeftIcon, CircleXIcon, HeartIcon, SearchIcon } from 'lucide-react-native';
-import React, { useCallback, useEffect, useState } from 'react';
+import { ChevronLeftIcon, CircleXIcon, SearchIcon } from 'lucide-react-native';
+import React, { useCallback, useState } from 'react';
 import { FlatList, Keyboard, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import PageTransition from '../../components/PageTransition';
@@ -98,18 +96,8 @@ export default function ExploreScreen() {
   const tabBarInset = useTabBarInset();
   const router = useRouter();
   const { query, setQuery, results, isSearching, error, clearResults } = useBookSearch();
-  const favorites = useExploreStore((state) => state.favorites);
   const openBook = useExploreStore((state) => state.openBook);
-  const pendingQuery = useExploreStore((state) => state.pendingQuery);
-  const clearPendingQuery = useExploreStore((state) => state.clearPendingQuery);
   const [genre, setGenre] = useState<ExploreGenre | null>(null);
-
-  // Recherche demandée depuis une fiche (toucher l'autrice)
-  useEffect(() => {
-    if (!pendingQuery) return;
-    setQuery(pendingQuery);
-    clearPendingQuery();
-  }, [pendingQuery, setQuery, clearPendingQuery]);
 
   const handleOpen = useCallback(
     (book: BookSearchResult) => {
@@ -204,9 +192,6 @@ export default function ExploreScreen() {
             showsVerticalScrollIndicator={false}
             contentContainerStyle={[styles.shelves, { paddingBottom: bottomSpace }]}
           >
-            {favorites.length > 0 && (
-              <ExploreShelf label="Mes envies" icon={HeartIcon} books={favorites} onSelect={handleOpen} />
-            )}
             <ExploreGenres genres={GENRES} onSelect={setGenre} />
             {BOOKTOK && (
               <ExploreShelf label={BOOKTOK.label} books={BOOKTOK.books} onSelect={handleOpen} />

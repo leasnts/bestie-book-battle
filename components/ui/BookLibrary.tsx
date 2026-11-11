@@ -30,10 +30,11 @@
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useMemo, useState } from 'react';
-import { FlatList, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
+import { FlatList, ScrollView, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 import Animated, { Easing, FadeInDown, useReducedMotion } from 'react-native-reanimated';
 import Svg, { Path } from 'react-native-svg';
 import { useFitSheet } from '../../hooks/useFitSheet';
+import type { BookSearchResult } from '../../types/bookSearch';
 import { Challenge } from '../../types/supabase';
 import { colors, creamAlpha, fonts, motion, spacing } from '../../utils/constants';
 import { BookReading, LIBRARY_FILTERS, LibraryFilter, readingLabel } from '../../utils/library';
@@ -45,6 +46,11 @@ import { SHEET_TOP_INSET, useSheetScrolled } from './SheetHeader';
 import { SHEET_GUTTER, SheetPageHeader } from './SheetPage';
 
 // ─── Props ─────────────────────────────────────────────────────────
+
+/** Une place d'étagère : un de mes livres, ou une envie d'Explorer */
+type ShelfItem = { kind: 'book'; challenge: Challenge } | { kind: 'wish'; book: BookSearchResult };
+
+const itemId = (item: ShelfItem) => (item.kind === 'book' ? item.challenge.id : `wish:${item.book.id}`);
 
 interface BookLibraryProps {
   /** Mes livres, déjà triés et filtrés */
@@ -59,6 +65,9 @@ interface BookLibraryProps {
   activeChallengeId: string | null;
   /** Toucher une couverture */
   onSelect: (challenge: Challenge) => void;
+  /** Mes envies (filtre « Envies ») : leur fiche s'ouvre au toucher */
+  wishes: BookSearchResult[];
+  onSelectWish: (book: BookSearchResult) => void;
   filter: LibraryFilter;
   onFilterChange: (filter: LibraryFilter) => void;
   /** Décor derrière l'en-tête du sheet (l'aquarelle du coin) */
@@ -183,15 +192,17 @@ function Shelf({
   newBookId,
   activeChallengeId,
   onSelect,
+  onSelectWish,
   animate,
 }: {
-  books: Challenge[];
+  books: ShelfItem[];
   index: number;
   readings: Record<string, BookReading>;
   covers: Record<string, string | null>;
   newBookId: string | null;
   activeChallengeId: string | null;
   onSelect: (challenge: Challenge) => void;
+  onSelectWish: (book: BookSearchResult) => void;
   animate: boolean;
 }) {
   // Les étagères apparaissent l'une après l'autre, cascade plafonnée
@@ -199,7 +210,7 @@ function Shelf({
 
   // On complète toujours la rangée à 3 places : une étagère à 1 livre garde
   // ses couvertures alignées sur les colonnes des étagères du dessus.
-  const padded: (Challenge | null)[] = [...books];
+  const padded: (ShelfItem | null)[] = [...books];
   while (padded.length < BOOKS_PER_SHELF) padded.push(null);
 
   return (
@@ -215,8 +226,28 @@ function Shelf({
     >
       {/* ── Couvertures, derrière la barre ── */}
       <View style={styles.row}>
-        {padded.map((challenge, i) => {
-          if (!challenge) return <View key={i} style={styles.column} />;
+        {padded.map((item, i) => {
+          if (!item) return <View key={i} style={styles.column} />;
+
+          // Une envie : sa couverture seule, sans signet (pas encore commencée)
+          if (item.kind === 'wish') {
+            const { book } = item;
+            return (
+              <View key={i} style={styles.column}>
+                <PressableScale
+                  style={styles.coverSlot}
+                  onPress={() => onSelectWish(book)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${book.title}${book.author ? `, ${book.author}` : ''}`}
+                  accessibilityHint="Ouvre sa fiche"
+                >
+                  <BookCover coverUrl={book.coverUrl} outlined />
+                </PressableScale>
+              </View>
+            );
+          }
+
+          const { challenge } = item;
 
           const isActive = challenge.id === activeChallengeId;
           const reading = readings[challenge.id] ?? UNREAD;
@@ -263,6 +294,8 @@ export default function BookLibrary({
   newBookId,
   activeChallengeId,
   onSelect,
+  wishes,
+  onSelectWish,
   filter,
   onFilterChange,
   headerBackground,
@@ -277,12 +310,16 @@ export default function BookLibrary({
 
   // Livres découpés par étagères de 3
   const shelves = useMemo(() => {
-    const rows: Challenge[][] = [];
-    for (let i = 0; i < challenges.length; i += BOOKS_PER_SHELF) {
-      rows.push(challenges.slice(i, i + BOOKS_PER_SHELF));
+    const items: ShelfItem[] =
+      filter === 'wish'
+        ? wishes.map((book) => ({ kind: 'wish', book }))
+        : challenges.map((challenge) => ({ kind: 'book', challenge }));
+    const rows: ShelfItem[][] = [];
+    for (let i = 0; i < items.length; i += BOOKS_PER_SHELF) {
+      rows.push(items.slice(i, i + BOOKS_PER_SHELF));
     }
     return rows;
-  }, [challenges]);
+  }, [challenges, wishes, filter]);
 
   const listHeight = Math.min(
     measuredHeight ?? estimateContentHeight(shelves.length),
@@ -297,7 +334,7 @@ export default function BookLibrary({
     */
     <FlatList
       data={shelves}
-      keyExtractor={(books) => books.map((book) => book.id).join('-')}
+      keyExtractor={(items) => items.map(itemId).join('-')}
       renderItem={({ item, index }) => (
         <Shelf
           books={item}
@@ -307,19 +344,28 @@ export default function BookLibrary({
           newBookId={newBookId}
           activeChallengeId={activeChallengeId}
           onSelect={onSelect}
+          onSelectWish={onSelectWish}
           animate={!reducedMotion}
         />
       )}
       // L'en-tête du sheet, filtres compris, reste collé en haut
       ListHeaderComponent={
         <SheetPageHeader title="Mes lectures" accent="lectures" actions={actions} background={headerBackground} scrolled={scrolled}>
-          <FilterChips options={LIBRARY_FILTERS} value={filter} onChange={onFilterChange} />
+          {/* Cinq filtres ne tiennent pas en largeur : la rangée défile de bord à bord */}
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.chips}
+            contentContainerStyle={styles.chipsContent}
+          >
+            <FilterChips options={LIBRARY_FILTERS} value={filter} onChange={onFilterChange} />
+          </ScrollView>
         </SheetPageHeader>
       }
       stickyHeaderIndices={[0]}
       onScroll={onScroll}
       scrollEventThrottle={16}
-      ListEmptyComponent={<Text style={styles.empty}>Aucun livre</Text>}
+      ListEmptyComponent={<Text style={styles.empty}>{filter === 'wish' ? 'Aucune envie' : 'Aucun livre'}</Text>}
       style={[styles.list, { height: listHeight }]}
       contentContainerStyle={styles.listContent}
       // On ne rétrécit jamais : filtrer ne doit pas faire sauter le sheet
@@ -345,6 +391,13 @@ const styles = StyleSheet.create({
     paddingTop: 0,
     paddingBottom: LIST_BOTTOM,
     gap: SHELF_GAP,
+  },
+
+  chips: {
+    marginHorizontal: -LIST_SIDE,
+  },
+  chipsContent: {
+    paddingHorizontal: LIST_SIDE,
   },
 
   // Aucun livre pour ce filtre : un repère court, à la place des étagères

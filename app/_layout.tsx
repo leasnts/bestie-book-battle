@@ -309,6 +309,7 @@ function RootLayoutNav() {
 
       {/* Fiche d'un livre de l'onglet Explorer — lancer une lecture, envie, partage */}
       <Stack.Screen name="explore-book" options={sheetScreenOptions()} />
+      <Stack.Screen name="explore-author" options={sheetScreenOptions()} />
 
       {/* Les formulaires de la fiche du livre : ils se posent dessus */}
       <Stack.Screen name="end-date" options={sheetScreenOptions()} />

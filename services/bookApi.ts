@@ -81,8 +81,8 @@ export async function searchBooks(
   query: string,
   { limit = 12, signal }: { limit?: number; signal?: AbortSignal } = {},
 ): Promise<BookSearchResult[]> {
-  const key = normalizeText(query);
-  if (!key) return [];
+  if (!normalizeText(query)) return [];
+  const key = `${normalizeText(query)}|${limit}`;
   const cached = searchCache.get(key);
   if (cached) return cached;
 
@@ -169,7 +169,29 @@ function toBook(item: AppleBookItem): BookSearchResult {
     coverUrl: item.artworkUrl100?.replace(/\/\d+x\d+bb\./, '/600x600bb.') ?? null,
     publisher: null,
     publishedDate: item.releaseDate?.slice(0, 10) ?? null,
+    description: plainText(item.description),
   };
+}
+
+/** Le résumé Apple est en HTML : en texte, paragraphes gardés */
+function plainText(html: string | undefined): string | null {
+  if (!html) return null;
+  const text = html
+    .replace(/<br\s*\/?>|<\/p>/gi, '\n')
+    .replace(/<[^>]+>/g, '')
+    // Entités numériques (&#xa0; &#8217;…) : le caractère (l'insécable reste insécable : « mourir ! » ne se coupe pas)
+    .replace(/&#x([0-9a-f]+);/gi, (_, hex) => String.fromCodePoint(parseInt(hex, 16)))
+    .replace(/&#(\d+);/g, (_, dec) => String.fromCodePoint(Number(dec)))
+    .replace(/&nbsp;/g, '\u00a0')
+    .replace(/&amp;/g, '&')
+    .replace(/&quot;/g, '"')
+    .replace(/&rsquo;/g, '’')
+    .replace(/&laquo;/g, '«')
+    .replace(/&raquo;/g, '»')
+    .replace(/[ \t]+/g, ' ')
+    .replace(/\n\s*\n+/g, '\n\n')
+    .trim();
+  return text || null;
 }
 
 /**
@@ -268,6 +290,26 @@ const editionsCache = new Map<string, Promise<BookSearchResult[]>>();
  * ses pages à la main. Appelée d'avance sur les premiers résultats, pour que le
  * livre touché arrive avec son édition.
  */
+/** Les livres d'un·e auteur·ice : une recherche par son nom, sans les livres qui ne font que le citer */
+export async function fetchAuthorBooks(name: string): Promise<BookSearchResult[]> {
+  const key = compactText(name);
+  const books = await searchBooks(name, { limit: 30 });
+  return books.filter((book) => compactText(book.author ?? '').includes(key));
+}
+
+/**
+ * Le résumé d'un livre. Les livres des étagères n'en ont pas (catalogue figé) :
+ * on le demande à la boutique, par titre et auteur·ice. null s'il n'y en a pas.
+ */
+export async function fetchSummary(book: BookSearchResult): Promise<string | null> {
+  if (book.description) return book.description;
+  const title = compactText(book.title);
+  const books = await searchBooks(`${book.title} ${book.author ?? ''}`, { limit: 5 });
+  const same = books.find((b) => b.description && compactText(b.title) === title);
+  const close = books.find((b) => b.description && compactText(b.title).includes(title));
+  return (same ?? close)?.description ?? null;
+}
+
 export function fetchEditions(book: BookSearchResult): Promise<BookSearchResult[]> {
   const cacheKey = `${compactText(book.title)}|${compactText(book.author)}`;
   const cached = editionsCache.get(cacheKey);

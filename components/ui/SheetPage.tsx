@@ -57,6 +57,8 @@ interface SheetPageProps
   fit?: boolean;
   /** Le titre sur deux lignes au plus (un titre de livre) ; une par défaut */
   titleLines?: number;
+  /** Un décor derrière l'en-tête (l'aquarelle du coin) */
+  headerBackground?: React.ReactNode;
   children: React.ReactNode;
 }
 
@@ -70,6 +72,7 @@ const SheetPage = forwardRef<ScrollViewInstance, SheetPageProps>(function SheetP
     actions,
     fit = true,
     titleLines = 1,
+    headerBackground,
     children,
     style,
     contentContainerStyle,
@@ -104,6 +107,7 @@ const SheetPage = forwardRef<ScrollViewInstance, SheetPageProps>(function SheetP
         actions={actions}
         titleLines={titleLines}
         scrolled={sheet.scrolled}
+        background={headerBackground}
       />
       {children}
     </ScrollView>
@@ -203,7 +207,9 @@ export function SheetPageHeader({
     <SheetStickyHeader scrolled={scrolled} gutter={SHEET_GUTTER}>
       {background}
       <View style={styles.header}>
-        {/* Retour, titre et actions sur une ligne */}
+        {/* Retour, titre et actions sur une ligne ; sans titre (la fiche d'un
+            livre d'Explorer porte le sien dans sa carte), rien que le décor */}
+        {(!!title || onBack || actions) && (
         <View style={styles.headerRow}>
           {onBack && (
             <GlassButton icon={ChevronLeftIcon} onPress={onBack} accessibilityLabel="Retour" />
@@ -237,6 +243,7 @@ export function SheetPageHeader({
           </View>
           {actions && <View style={styles.actions}>{actions}</View>}
         </View>
+        )}
         {/* Le sous-titre à la ligne, sous le retour, jamais à côté */}
         {typeof subtitle === 'string'
           ? !!subtitle && <SheetSubtitle>{subtitle}</SheetSubtitle>

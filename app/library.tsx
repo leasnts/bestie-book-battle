@@ -18,9 +18,11 @@ import BookLibrary from '../components/ui/BookLibrary';
 import GlassButton from '../components/ui/GlassButton';
 import WatercolorCorner from '../components/ui/WatercolorCorner';
 import { useAuthStore } from '../stores/authStore';
+import { useExploreStore } from '../stores/exploreStore';
 import { useProgressStore } from '../stores/progressStore';
 import { useProjectStore } from '../stores/projectStore';
 import { myCoverUrl } from '../services/myEdition';
+import type { BookSearchResult } from '../types/bookSearch';
 import { Challenge } from '../types/supabase';
 import { BookReading, LibraryFilter, newBookId, readingOf, sortBooks } from '../utils/library';
 import { startAdding } from '../utils/onboardingFlow';
@@ -34,7 +36,9 @@ export default function LibraryRoute() {
   const loadMyProgress = useProjectStore((state) => state.loadMyProgress);
   const liveProgress = useProgressStore((state) => state.currentUserProgress);
   const userId = useAuthStore((state) => state.user?.id);
-  // Filtre Tout / En cours / Non lus / Lus : pas retenu, chaque ouverture montre tout
+  const wishes = useExploreStore((state) => state.favorites);
+  const openBook = useExploreStore((state) => state.openBook);
+  // Filtre Tout / En cours / Non lus / Lus / Envies : pas retenu, chaque ouverture montre tout
   // (sauf `?filter=done`, le « Tout voir » de mes livres lus sur le profil)
   const params = useLocalSearchParams<{ filter?: LibraryFilter }>();
   const [filter, setFilter] = useState<LibraryFilter>(params.filter ?? 'all');
@@ -79,6 +83,15 @@ export default function LibraryRoute() {
     [setActiveChallenge, router],
   );
 
+  // Une envie : sa fiche d'Explorer, posée sur la bibliothèque (retour vers elle)
+  const handleSelectWish = useCallback(
+    (book: BookSearchResult) => {
+      openBook(book);
+      router.push({ pathname: '/explore-book', params: { from: 'library' } });
+    },
+    [openBook, router],
+  );
+
   // Ajouter un livre : même parcours que le « + » de la barre d'onglets. On
   // ferme d'abord le sheet, sinon l'écran poussé s'ouvrirait À L'INTÉRIEUR du sheet.
   const handleAdd = useCallback(() => {
@@ -94,6 +107,8 @@ export default function LibraryRoute() {
         newBookId={newId}
         activeChallengeId={activeChallengeId}
         onSelect={handleSelect}
+        wishes={wishes}
+        onSelectWish={handleSelectWish}
         filter={filter}
         onFilterChange={setFilter}
         actions={

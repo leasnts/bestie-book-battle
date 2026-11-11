@@ -919,16 +919,42 @@ Trouver la prochaine lecture du club (`app/(tabs)/explore.tsx`). Même
 habillage que l'accueil (fond neutre en taches, texture, titre centré). Un champ
 de recherche (titre, auteur, saga), puis des **étagères** qui défilent de côté,
 posées sur la barre en verre de la bibliothèque (`ExploreShelf`, `ShelfBar`) :
-**Mes envies** d'abord, puis En ce moment et les genres. Les étagères sont
+les genres, puis En ce moment (mes envies vivent sur le profil, pas ici). Les étagères sont
 choisies à la main et figées dans `constants/exploreCatalog.json`
 (`scripts/build-explore-catalog.mjs`) : elles s'affichent sans réseau.
 Pendant une recherche : des silhouettes de lignes, jamais de spinner.
 
-La fiche d'un livre (`/explore-book`, sheet sans titre) : couverture, titre,
-autrice (la toucher cherche ses livres), `518 p. · 2023`, puis trois places
-fixes : **Lancer une lecture** (ou **Ouvrir** s'il est déjà dans ma
-bibliothèque), ♥ envie (rouge quand gardé), partager. Pas de note, pas
-d'avis, pas de résumé.
+La fiche d'un livre (`/explore-book`) est une **fiche d'information, sans gros
+bouton** (Lea, 2026-11-11). En tête, **comme la carte du livre de l'accueil** :
+la couverture à gauche (84 pt de large, pas le sujet) ; à droite le titre,
+l'autrice, `518 p. · 2023`. Dessous, **trois gros boutons** `Button3D`
+`stacked` (icône sur le mot, 72 pt) qui se partagent la largeur, tous en
+papier, icône et mot de la même couleur : **Envie** ♥, au centre **Lire** ▶
+(plus court que « Commencer »), **Reprendre** s'il est en cours, **Voir** s'il
+est lu (« Ouvrir » ne disait pas ce qui se passe), puis **Lu** ✓
+(le range dans « Lus » sans changer le livre de l'accueil). Envie et Lu sont
+des bascules : activés, **tout le bouton passe en rouge** (`Button3D`
+`accent`, relief `red`), icône et mot crème — on voit l'état d'un coup d'œil.
+Un livre lu quitte mes envies. **Partager** ↗
+seul en haut à droite, sur le lavis aux couleurs de la couverture (rendu sous
+la carte : le titre passe par-dessus). Dessous, le **résumé** de la boutique en
+9 lignes, « Voir plus » dessous s'il est coupé (« Voir moins » une fois déplié) ; enfin la ligne de l'autrice (photo ou
+initiales, « 29 livres » dessous) qui ouvre **ses livres par-dessus la fiche**
+(`/explore-author`, retour vers le livre ; en toucher un le met à la place,
+jamais de renvoi dans l'onglet). Pas de note ni d'avis d'inconnu·es.
+
+**Lire** met le livre sur l'accueil à la page 0, sans question (ni page de
+départ ni date de fin). **Lu** s'allume tout de suite, sans attendre la base ;
+la dernière page est posée comme une page de départ (`set_start_position`) :
+ni pages du jour, ni série, ni notif au groupe. **Décocher Lu** passe par une
+confirmation native (« Retirer des lus ? ») : ma page revient à la dernière
+vraiment lue, sinon à 0 — le livre ne quitte jamais ma bibliothèque.
+
+Les envies ont leur étagère **Mes envies** sur le profil (sous « Mes livres
+lus », seulement s'il y en a ; toucher une couverture ouvre sa fiche), plus
+d'étagère dans Explorer, et leur filtre **Envies** dans la bibliothèque (« Mes
+lectures », dernière pastille ; la rangée défile) : toucher une envie ouvre sa
+fiche par-dessus, avec un retour.
 
 ### Barre d'onglets
 

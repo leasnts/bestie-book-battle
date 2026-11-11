@@ -28,11 +28,14 @@ export default function BookResultRow({
   book,
   onPress,
   publisherOnly = false,
+  hideAuthor = false,
 }: {
   book: BookSearchResult;
   onPress: () => void;
   /** Juste la maison d'édition, si on la connaît : ni année ni pages (recherche de l'onboarding) */
   publisherOnly?: boolean;
+  /** L'auteur·ice est déjà le titre de l'écran (ses livres) : pas répété */
+  hideAuthor?: boolean;
 }) {
   const edition = publisherOnly ? book.publisher : formatEdition(book.publisher, book.publishedDate);
 
@@ -61,7 +64,7 @@ export default function BookResultRow({
         <Text style={styles.title} numberOfLines={2}>
           {book.title}
         </Text>
-        {book.author ? (
+        {book.author && !hideAuthor ? (
           <Text style={styles.author} numberOfLines={1}>
             {book.author}
           </Text>
