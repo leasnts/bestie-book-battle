@@ -130,6 +130,8 @@ export default function ProfileScreen() {
         contentContainerStyle={{ paddingBottom: tabBarInset + spacing['2xl'] }}
         contentInsetAdjustmentBehavior="never"
         showsVerticalScrollIndicator={false}
+        // Pas de rebond : tirer vers le bas ne doit jamais dévoiler de blanc au-dessus de l'aquarelle
+        bounces={false}
       >
         {/* ═══════════ EN-TÊTE : moi, sur le papier aquarelle ═══════════ */}
         <View style={[styles.hero, { paddingTop: insets.top + spacing['3xl'] }]}>
