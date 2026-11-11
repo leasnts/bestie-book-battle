@@ -7,9 +7,9 @@
  * beurre) et avec le nom en blanc, comme le prénom : le maximum de cohérence
  * (Lea, 2026-10-27). L'aquarelle est UNE bande aussi longue que la rangée
  * (scripts/generate-genre-wash.py) : chaque carte en montre sa tranche, la
- * grille se lit comme une seule peinture découpée. Le nom est petit (11) et
- * plus étroit (Martian Grotesk, pas la version large) pour tenir dans une
- * carte ; « Développement perso » garde une version courte (`SHORT_LABELS`).
+ * grille se lit comme une seule peinture découpée. Le nom fait 14 (Lea, 2026-11-11), plus
+ * étroit que les titres (Martian Grotesk, pas la version large) pour tenir dans une
+ * carte ; deux noms ont une version courte (`SHORT_LABELS`).
  *
  *    Genres
  *    ┌───────┐ ┌───────┐ ┌───────┐ ┌────
@@ -74,6 +74,7 @@ const ILLUSTRATIONS: Record<string, number> = {
 
 /** Les noms trop longs pour une carte en quart de largeur (le titre de la liste garde le nom entier) */
 const SHORT_LABELS: Record<string, string> = {
+  contemporary: 'Contempo',
   'self-help': 'Dév. perso',
 };
 
@@ -170,8 +171,8 @@ const styles = StyleSheet.create({
   },
   label: {
     fontFamily: fonts.bodyBold,
-    fontSize: 11,
-    lineHeight: 14,
+    fontSize: 14,
+    lineHeight: 18,
     color: colors.white,
   },
 });
