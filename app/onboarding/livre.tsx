@@ -10,9 +10,10 @@
  *
  * - La recherche ne part pas dans un sheet : on tape, les résultats s'affichent
  *   dessous ; elle reste en haut une fois le livre choisi, pour en changer.
- * - Un livre choisi : ses éditions papier sont cherchées (d'avance pour les
- *   premiers proposés), la première avec un nombre de pages est prise d'office ;
- *   la couverture reste celle du livre touché. Coffrets et suites écartés.
+ * - Les résultats sont les éditions papier des premiers livres trouvés (éditeur,
+ *   année, pages) : un toucher, et c'est la sienne. Coffrets et suites écartés.
+ * - Un livre du moment (avant de taper) : la première édition avec un nombre de
+ *   pages est prise d'office ; la couverture reste celle du livre touché.
  * - Pages ou %, et le total de pages : à « Où en est ta lecture ? ».
  * - Pas d'ajout à la main pour l'instant (Lea, 2026-10-30).
  */
@@ -34,7 +35,7 @@ import { borderRadius, colors, fonts, fontSize, shadows, spacing } from '../../u
 import { feel } from '../../utils/feel';
 import { nextStep } from '../../utils/onboardingFlow';
 
-/** Combien de livres proposés ont leurs éditions demandées d'avance */
+/** Combien de livres du moment ont leurs éditions demandées d'avance */
 const PREFETCH = 5;
 
 
@@ -43,7 +44,7 @@ export default function LivreScreen() {
   const flow = useOnboardingStore((s) => s.flow);
   const book = useOnboardingStore((s) => s.book);
   const patch = useOnboardingStore((s) => s.patch);
-  const { query, setQuery, results, isSearching, error, clearResults } = useBookSearch();
+  const { query, setQuery, results, isSearching, error, clearResults } = useBookSearch({ editions: true });
   const [publishers, setPublishers] = useState<Record<string, string>>({});
   const pending = useRef<BookSearchResult | null>(null);
   // `?q=` pré-remplit la recherche (lien profond, tests)
@@ -52,11 +53,11 @@ export default function LivreScreen() {
     if (q) setQuery(q);
   }, [q, setQuery]);
 
-  // Les éditions des premiers livres proposés, demandées d'avance : touché, le
-  // livre arrive tout de suite avec son édition et ses pages
+  // Les éditions des livres du moment, demandées d'avance : touché, le livre
+  // arrive tout de suite avec son édition et ses pages
   useEffect(() => {
     let live = true;
-    (results.length > 0 ? results : TRENDING_BOOKS).slice(0, PREFETCH).forEach((result) =>
+    TRENDING_BOOKS.slice(0, PREFETCH).forEach((result) =>
       fetchEditions(result).then((found) => {
         const publisher = found.find((edition) => edition.pageCount)?.publisher;
         if (live && publisher) setPublishers((known) => ({ ...known, [result.id]: publisher }));
@@ -65,7 +66,7 @@ export default function LivreScreen() {
     return () => {
       live = false;
     };
-  }, [results]);
+  }, []);
   // L'éditeur de l'édition qu'on proposera, affiché dans la liste (Apple Books ne le donne pas)
   const withPublisher = (result: BookSearchResult) =>
     result.publisher || !publishers[result.id] ? result : { ...result, publisher: publishers[result.id] };
@@ -83,6 +84,8 @@ export default function LivreScreen() {
     clearResults();
     feel('tic');
     setBook(result);
+    // Une édition touchée dans les résultats : c'est la sienne
+    if (result.id.startsWith('google:')) return;
     pending.current = result;
     const found = await fetchEditions(result);
     if (pending.current !== result) return;
@@ -130,7 +133,7 @@ export default function LivreScreen() {
       {searching ? (
         <View>
           {results.map((result) => (
-            <BookResultRow key={result.id} book={withPublisher(result)} onPress={() => pick(result)} publisherOnly />
+            <BookResultRow key={result.id} book={result} onPress={() => pick(result)} />
           ))}
           {results.length === 0 &&
             (isSearching ? (

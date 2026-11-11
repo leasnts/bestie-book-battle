@@ -260,8 +260,8 @@ const editionsCache = new Map<string, Promise<BookSearchResult[]>>();
 
 /**
  * Les éditions françaises d'un livre : éditeur, année, pages, couverture.
- * Seules celles qui ont un nombre de pages comptent (c'est ce qu'on vient
- * chercher), une seule fois par éditeur et nombre de pages, les plus
+ * Seules celles en français, avec un éditeur et un nombre de pages comptent
+ * (c'est ce qu'on vient chercher), une seule fois par éditeur et nombre de pages, les plus
  * récentes d'abord. La couverture de l'édition, sinon celle du livre.
  *
  * Liste vide si Google ne répond pas (après un second essai) : on règle alors
@@ -311,8 +311,18 @@ async function loadEditions(book: BookSearchResult): Promise<BookSearchResult[]>
   const wanted = compactText(title);
   const seen = new Set<string>();
   const editions = (data.items ?? [])
-    // Le même titre, pas une suite (« … voit tout ») ni un coffret (« Bundle … », « Les 3 tomes »)
-    .filter(({ volumeInfo: v }) => v.pageCount && compactText(bareTitle(v.title)) === wanted && !OMNIBUS.test(`${v.title} ${v.subtitle ?? ''}`))
+    // Le même titre, pas une suite (« … voit tout ») ni un coffret (« Bundle … », « Les 3 tomes »).
+    // En français (langRestrict laisse passer des éditions hongroises, suédoises, anglaises)
+    // et avec un éditeur : sans, ce sont des scans et des ebooks autoédités aux pages fantaisistes.
+    .filter(
+      ({ volumeInfo: v }) =>
+        v.pageCount &&
+        // Un éditeur en lettres latines : « ببلومانيا » ou « 文藝春秋 » ne sont pas des éditions d'ici
+        /[a-z]/i.test(v.publisher ?? '') &&
+        v.language === 'fr' &&
+        compactText(bareTitle(v.title)) === wanted &&
+        !OMNIBUS.test(`${v.title} ${v.subtitle ?? ''}`),
+    )
     .map((item) => toEdition(item, book))
     .sort((a, b) => (b.publishedDate ?? '').localeCompare(a.publishedDate ?? ''))
     .filter((edition) => {
@@ -334,7 +344,7 @@ function toEdition(item: GoogleBooksVolumeItem, book: BookSearchResult): BookSea
     title: book.title,
     author: book.author,
     pageCount: v.pageCount ?? null,
-    coverUrl: thumbnail ? cleanGoogleCover(thumbnail) : book.coverUrl,
+    coverUrl: thumbnail ? cleanGoogleCover(thumbnail, v.readingModes?.image !== false) : book.coverUrl,
     publisher: v.publisher ?? null,
     publishedDate: v.publishedDate ?? null,
     isbn: v.industryIdentifiers?.find((id) => id.type === 'ISBN_13')?.identifier ?? null,
@@ -342,9 +352,8 @@ function toEdition(item: GoogleBooksVolumeItem, book: BookSearchResult): BookSea
 }
 
 /** HTTPS, sans l'effet « page cornée », en meilleure résolution */
-function cleanGoogleCover(url: string): string {
-  return url
-    .replace('http://', 'https://')
-    .replace('&edge=curl', '')
-    .replace(/&zoom=\d/, '&zoom=2');
+function cleanGoogleCover(url: string, large: boolean): string {
+  const clean = url.replace('http://', 'https://').replace('&edge=curl', '');
+  // Plus grande, seulement si Google l'a : sinon zoom=2 renvoie « image not available »
+  return large ? clean.replace(/&zoom=\d/, '&zoom=2') : clean;
 }

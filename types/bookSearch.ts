@@ -50,6 +50,8 @@ export interface GoogleBooksVolumeItem {
     publisher?: string;
     publishedDate?: string;
     language?: string;
+    /** `image: false` : pas de couverture en grand (zoom=2 renvoie « image not available ») */
+    readingModes?: { text?: boolean; image?: boolean };
     industryIdentifiers?: { type: string; identifier: string }[];
   };
 }

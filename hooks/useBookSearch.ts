@@ -1,10 +1,13 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { searchBooks, searchCatalog } from '../services/bookApi';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { fetchEditions, searchBooks, searchCatalog } from '../services/bookApi';
 import type { BookSearchResult } from '../types/bookSearch';
 import { compactText } from '../utils/normalizeText';
 
 /** Assez court pour suivre la frappe, assez long pour ne pas chercher chaque lettre */
 const DEBOUNCE_MS = 250;
+
+/** Combien de livres, en tête de liste, sont dépliés en leurs éditions */
+const EXPANDED = 5;
 
 /**
  * Recherche de livres au fil de la frappe.
@@ -15,8 +18,11 @@ const DEBOUNCE_MS = 250;
  *   se met à jour, elle ne se vide pas à chaque lettre.
  * - Une recherche dépassée par la frappe est annulée : jamais de résultats
  *   d'un mot précédent qui arrivent en retard.
+ * - `editions` : les premiers livres sont remplacés par leurs éditions
+ *   (éditeur, année, pages) dès que Google les donne, pour choisir la sienne
+ *   d'un seul toucher. Un livre sans édition connue reste tel quel.
  */
-export function useBookSearch() {
+export function useBookSearch({ editions = false }: { editions?: boolean } = {}) {
   const [query, setQueryState] = useState('');
   const [results, setResults] = useState<BookSearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -78,7 +84,31 @@ export function useBookSearch() {
     setError(null);
   }, [cancelPending]);
 
-  return { query, setQuery, results, isSearching, error, clearResults };
+  // Les éditions des premiers livres, par livre, au fil des réponses de Google
+  const [editionsByBook, setEditionsByBook] = useState<Record<string, BookSearchResult[]>>({});
+  useEffect(() => {
+    if (!editions) return;
+    let live = true;
+    results.slice(0, EXPANDED).forEach((book) =>
+      fetchEditions(book).then((found) => {
+        if (live && found.length > 0) setEditionsByBook((known) => ({ ...known, [bookKey(book)]: found }));
+      }),
+    );
+    return () => {
+      live = false;
+    };
+  }, [editions, results]);
+
+  const shown = useMemo(() => {
+    if (!editions) return results;
+    // Deux fiches Apple du même livre ont les mêmes éditions : chacune une seule fois
+    const seen = new Set<string>();
+    return results
+      .flatMap((book, index) => (index < EXPANDED && editionsByBook[bookKey(book)]) || [book])
+      .filter((book) => !seen.has(book.id) && !!seen.add(book.id));
+  }, [editions, results, editionsByBook]);
+
+  return { query, setQuery, results: shown, isSearching, error, clearResults };
 }
 
 /** Les livres de `first` d'abord, puis ceux de `rest` qui n'y sont pas déjà */
