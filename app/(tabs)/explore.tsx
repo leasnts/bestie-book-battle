@@ -5,14 +5,12 @@
  *    │ Explorer                      │
  *    │ ( 🔍 Titre, auteur, saga    ) │
  *    │                               │
- *    │ ▐██▌ ┏━━┓ ▛▀▀▜ →              │
- *    │ ░░░░░░░░░░░░░░░               │
- *    │ Genres                        │
- *    │ [Contemporain] [Thriller] [… →│
- *    │ Populaire sur BookTok         │
+ *    │ Nouveautés                    │
  *    │ ▐██▌ ┏━━┓ ▛▀▀▜ ▐██▌ →         │
  *    │ ░░░░░░░░░░░░░░░░░░░░          │
- *    │ Nouveautés                    │
+ *    │ Genres                        │
+ *    │ [Contemporain] [Thriller] [… →│
+ *    │ Populaire sur les réseaux     │
  *    │ ▐██▌ ┏━━┓ ▛▀▀▜ ▐██▌ →         │
  *    │ ░░░░░░░░░░░░░░░░░░░░          │
  *    │ Auteur·ices                   │
@@ -22,13 +20,17 @@
  * - **Recherche** : titre, auteur ou saga. Taper remplace les étagères par les
  *   résultats au fil de la frappe (Apple Books, repli Open Library ; les
  *   livres des étagères qui correspondent d'abord, sans attendre le réseau).
+ * - **Nouveautés** : en premier, parus ces derniers mois et déjà bien lus.
  * - **Genres** : une rangée de petites cartes aquarelle qui défile ; toucher un genre remplace la
  *   page par la liste de ses livres (bouton retour pour revenir). Rester dans
  *   l'onglet évite d'empiler un sheet sous la fiche du livre.
- * - **Populaire sur BookTok** : l'étagère des livres qui tournent en ce moment.
- * - **Nouveautés** : parus ces derniers mois et déjà bien lus.
+ * - **Populaire sur les réseaux** : les livres qui tournent en ce moment
+ *   (TikTok, Instagram…), sans nommer un réseau en particulier.
  * - **Auteur·ices** : en dernier ; les plus lu·es, photo (ou initiales) en
  *   rond ; toucher lance la recherche (constants/exploreAuthors.json).
+ *
+ * Une vingtaine de livres par étagère, une quinzaine par genre : avec huit,
+ * on arrivait vite au bout (Lea, 2026-11-11).
  *
  * Tous ces livres sont choisis à la main et figés dans
  * constants/exploreCatalog.json (s'affichent sans réseau ; régénérer avec
@@ -64,8 +66,8 @@ import { borderRadius, colors, fontSize, fonts, shadows, spacing } from '../../u
 
 
 const SHELVES = catalog.shelves as ExploreGenre[];
-/** L'étagère des tendances : la première du catalogue, hors grille des genres */
-const BOOKTOK = SHELVES.find((shelf) => shelf.key === 'booktok');
+/** L'étagère des tendances sur les réseaux, hors grille des genres */
+const TRENDING = SHELVES.find((shelf) => shelf.key === 'booktok');
 /** Les livres parus ces derniers mois et déjà bien lus */
 const NEW_RELEASES = SHELVES.find((shelf) => shelf.key === 'new');
 /** L'ordre des genres : on varie dès le début, pour parler à tout le monde */
@@ -192,12 +194,12 @@ export default function ExploreScreen() {
             showsVerticalScrollIndicator={false}
             contentContainerStyle={[styles.shelves, { paddingBottom: bottomSpace }]}
           >
-            <ExploreGenres genres={GENRES} onSelect={setGenre} />
-            {BOOKTOK && (
-              <ExploreShelf label={BOOKTOK.label} books={BOOKTOK.books} onSelect={handleOpen} />
-            )}
             {NEW_RELEASES && (
               <ExploreShelf label={NEW_RELEASES.label} books={NEW_RELEASES.books} onSelect={handleOpen} />
+            )}
+            <ExploreGenres genres={GENRES} onSelect={setGenre} />
+            {TRENDING && (
+              <ExploreShelf label={TRENDING.label} books={TRENDING.books} onSelect={handleOpen} />
             )}
             <ExploreAuthors authors={AUTHORS} onSelect={setQuery} />
           </ScrollView>

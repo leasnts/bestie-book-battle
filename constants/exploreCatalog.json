@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-10-27",
+  "generatedAt": "2026-11-11",
   "shelves": [
     {
       "key": "booktok",
-      "label": "Populaire sur BookTok",
+      "label": "Populaire sur les réseaux",
       "books": [
         {
           "id": "/works/OL29226517W",
@@ -46,7 +46,7 @@
           "title": "Les Sept Maris d’Evelyn Hugo",
           "author": "Taylor Jenkins Reid",
           "pageCount": 400,
-          "coverUrl": "https://is1-ssl.mzstatic.com/image/thumb/Publication116/v4/aa/d1/29/aad129f2-b1dd-fa8f-5239-8e720646ef30/9782811235949-001-x.jpeg/600x600bb.jpg",
+          "coverUrl": "https://is1-ssl.mzstatic.com/image/thumb/Publication211/v4/34/66/25/34662591-f1ad-7ed9-cc77-8546ca17e7d5/9782811235949-001-x.jpeg/600x600bb.jpg",
           "publisher": null,
           "publishedDate": "2017"
         },
@@ -55,7 +55,7 @@
           "title": "Le Prince cruel",
           "author": "Holly Black",
           "pageCount": 370,
-          "coverUrl": "https://is1-ssl.mzstatic.com/image/thumb/Publication123/v4/8e/09/e2/8e09e240-882a-a4a3-b816-3c73566cf794/9782700263510-001-x.jpeg/600x600bb.jpg",
+          "coverUrl": "https://is1-ssl.mzstatic.com/image/thumb/Publication211/v4/94/3a/3c/943a3c2f-a9b9-3fd0-83fe-53f704119e40/9782700263510-001-x.jpeg/600x600bb.jpg",
           "publisher": null,
           "publishedDate": "2018"
         },
@@ -64,7 +64,7 @@
           "title": "Babel",
           "author": "R. F. Kuang",
           "pageCount": 577,
-          "coverUrl": "https://is1-ssl.mzstatic.com/image/thumb/Publication112/v4/b3/2b/0d/b32b0d6d-2425-2357-6c2d-e1056fcc2e27/9780063021440.jpg/600x600bb.jpg",
+          "coverUrl": "https://is1-ssl.mzstatic.com/image/thumb/Publication126/v4/c8/4e/5d/c84e5df8-f251-de1a-cf75-4bb1086a4205/9780008501839.jpg/600x600bb.jpg",
           "publisher": null,
           "publishedDate": "2022"
         },
@@ -74,6 +74,132 @@
           "author": "Alice Oseman",
           "pageCount": 288,
           "coverUrl": "https://is1-ssl.mzstatic.com/image/thumb/Publication113/v4/69/d8/f6/69d8f603-a648-39f3-79ee-651335702979/9782017079361-001-x.jpeg/600x600bb.jpg",
+          "publisher": null,
+          "publishedDate": "2018"
+        },
+        {
+          "id": "/works/OL20068530W",
+          "title": "Verity",
+          "author": "Colleen Hoover",
+          "pageCount": 343,
+          "coverUrl": "https://is1-ssl.mzstatic.com/image/thumb/Publication211/v4/d7/1f/14/d71f1406-a1b1-8ac6-25cd-4ae138b481ed/9782755648720-001-x.jpeg/600x600bb.jpg",
+          "publisher": null,
+          "publishedDate": "2018"
+        },
+        {
+          "id": "/works/OL24178205W",
+          "title": "Love Hypothesis",
+          "author": "Ali Hazelwood",
+          "pageCount": 398,
+          "coverUrl": "https://is1-ssl.mzstatic.com/image/thumb/Publication211/v4/31/bd/ea/31bdeafa-5372-941a-6b4f-c9bcbcfbb651/9782381222608-001-x.jpeg/600x600bb.jpg",
+          "publisher": null,
+          "publishedDate": "2021"
+        },
+        {
+          "id": "/works/OL17352669W",
+          "title": "Un palais d’épines et de roses",
+          "author": "Sarah J. Maas",
+          "pageCount": 454,
+          "coverUrl": "https://is1-ssl.mzstatic.com/image/thumb/Publication221/v4/0c/5e/ee/0c5eee77-b948-0783-f33c-9b0884f99b43/9791040127888.jpg/600x600bb.jpg",
+          "publisher": null,
+          "publishedDate": "2013"
+        },
+        {
+          "id": "/works/OL16509148W",
+          "title": "Le Chant d’Achille",
+          "author": "Madeline Miller",
+          "pageCount": 386,
+          "coverUrl": "https://is1-ssl.mzstatic.com/image/thumb/Publication126/v4/e7/d9/7b/e7d97b81-8ca9-96a7-9c15-8197e7756864/9782266338646.jpg/600x600bb.jpg",
+          "publisher": null,
+          "publishedDate": "2011"
+        },
+        {
+          "id": "/works/OL24390422W",
+          "title": "Twisted Love",
+          "author": "Ana Huang",
+          "pageCount": 358,
+          "coverUrl": "https://is1-ssl.mzstatic.com/image/thumb/Publication126/v4/eb/68/68/eb6868c2-c1c6-6fc4-7fdc-a77aa5619cda/9788835724490.jpg/600x600bb.jpg",
+          "publisher": null,
+          "publishedDate": "2021"
+        },
+        {
+          "id": "/works/OL29312395W",
+          "title": "Les Douleurs fantômes",
+          "author": "Mélissa Da Costa",
+          "pageCount": 448,
+          "coverUrl": "https://is1-ssl.mzstatic.com/image/thumb/Publication221/v4/bb/4e/e2/bb4ee2db-5a9f-d7b7-8e33-19de6ec704aa/9782226473448.jpg/600x600bb.jpg",
+          "publisher": null,
+          "publishedDate": "2022"
+        },
+        {
+          "id": "/works/OL32153935W",
+          "title": "Captive",
+          "author": "Sarah Rivens",
+          "pageCount": 544,
+          "coverUrl": "https://is1-ssl.mzstatic.com/image/thumb/Publication122/v4/48/50/82/485082dd-294b-ecc3-7bef-b18009a82915/9782017184690-001-x.jpeg/600x600bb.jpg",
+          "publisher": null,
+          "publishedDate": "2022"
+        },
+        {
+          "id": "/works/OL24801992W",
+          "title": "Book Lovers",
+          "author": "Emily Henry",
+          "pageCount": 408,
+          "coverUrl": "https://is1-ssl.mzstatic.com/image/thumb/Publication221/v4/1c/f6/e2/1cf6e22c-5de9-ddd3-e2e8-002f6fd1bf85/9782387216953-001-x.jpeg/600x600bb.jpg",
+          "publisher": null,
+          "publishedDate": "2022"
+        },
+        {
+          "id": "/works/OL28952677W",
+          "title": "Icebreaker",
+          "author": "Hannah Grace",
+          "pageCount": 448,
+          "coverUrl": "https://is1-ssl.mzstatic.com/image/thumb/Publication126/v4/b6/dc/87/b6dc87fe-f4e4-40f9-a80d-d7d0de8d149a/9782017243366-001-x.jpeg/600x600bb.jpg",
+          "publisher": null,
+          "publishedDate": "2020"
+        },
+        {
+          "id": "/works/OL20796936W",
+          "title": "La Vie invisible d’Addie LaRue",
+          "author": "V. E. Schwab",
+          "pageCount": 504,
+          "coverUrl": "https://is1-ssl.mzstatic.com/image/thumb/Publication125/v4/a9/97/d2/a997d231-be9a-7a92-7a91-83f4f4dd2bbb/9782371023055.jpg/600x600bb.jpg",
+          "publisher": null,
+          "publishedDate": "2015"
+        },
+        {
+          "id": "/works/OL34028551W",
+          "title": "Iron Flame",
+          "author": "Rebecca Yarros",
+          "pageCount": 640,
+          "coverUrl": "https://is1-ssl.mzstatic.com/image/thumb/Publication221/v4/84/ab/c0/84abc07b-f2cf-1eee-4cab-18a600eee477/9780349437040.jpg/600x600bb.jpg",
+          "publisher": null,
+          "publishedDate": "2023"
+        },
+        {
+          "id": "/works/OL20965973W",
+          "title": "La Bibliothèque de minuit",
+          "author": "Matt Haig",
+          "pageCount": 304,
+          "coverUrl": "https://is1-ssl.mzstatic.com/image/thumb/Publication211/v4/c7/8e/1e/c78e1e84-5908-0806-b900-ae56c45d2dda/9782863748145-001-x.jpeg/600x600bb.jpg",
+          "publisher": null,
+          "publishedDate": "2020"
+        },
+        {
+          "id": "/works/OL34774028W",
+          "title": "Powerless",
+          "author": "Lauren Roberts",
+          "pageCount": 600,
+          "coverUrl": "https://is1-ssl.mzstatic.com/image/thumb/Publication211/v4/54/2a/e4/542ae442-aa9a-837a-aa56-c4bdd8f92c52/9782073141453.jpg/600x600bb.jpg",
+          "publisher": null,
+          "publishedDate": "2023"
+        },
+        {
+          "id": "/works/OL19096402W",
+          "title": "Dans son silence",
+          "author": "Alex Michaelides",
+          "pageCount": 352,
+          "coverUrl": "https://is1-ssl.mzstatic.com/image/thumb/Publication124/v4/f7/1c/b5/f71cb5cd-7f36-7cc9-f23a-f33580b984c8/9782702164532-001-X.jpeg/600x600bb.jpg",
           "publisher": null,
           "publishedDate": "2018"
         }
@@ -181,6 +307,15 @@
           "coverUrl": "https://is1-ssl.mzstatic.com/image/thumb/Publication221/v4/b1/3e/2c/b13e2cf1-735c-9d7e-9934-85c9fb916f33/9782889730759.jpg/600x600bb.jpg",
           "publisher": null,
           "publishedDate": "2025"
+        },
+        {
+          "id": "/works/OL42434087W",
+          "title": "Onyx Storm",
+          "author": "Rebecca Yarros",
+          "pageCount": null,
+          "coverUrl": "https://is1-ssl.mzstatic.com/image/thumb/Publication211/v4/cf/4f/33/cf4f3346-2416-4611-8313-bcc420ed505e/9780349437088.jpg/600x600bb.jpg",
+          "publisher": null,
+          "publishedDate": "2025"
         }
       ]
     },
@@ -211,7 +346,7 @@
           "title": "Changer l’eau des fleurs",
           "author": "Valérie Perrin",
           "pageCount": 555,
-          "coverUrl": "https://is1-ssl.mzstatic.com/image/thumb/Publication211/v4/b7/ab/76/b7ab76c2-7f78-b19b-e738-155772e612c2/9782226429537.jpg/600x600bb.jpg",
+          "coverUrl": "https://is1-ssl.mzstatic.com/image/thumb/Publication221/v4/bc/b0/46/bcb04616-31eb-6893-b76c-68a5d5efab73/9782226429537.jpg/600x600bb.jpg",
           "publisher": null,
           "publishedDate": "2018"
         },
@@ -229,7 +364,7 @@
           "title": "Il est grand temps de rallumer les étoiles",
           "author": "Virginie Grimaldi",
           "pageCount": 390,
-          "coverUrl": "https://is1-ssl.mzstatic.com/image/thumb/Publication123/v4/32/4c/c5/324cc546-0da6-588c-7a39-89068bee2009/9782213710556-001-x.jpeg/600x600bb.jpg",
+          "coverUrl": "https://is1-ssl.mzstatic.com/image/thumb/Publication211/v4/f5/98/0a/f5980a33-c4ab-0b25-d131-8673408187e7/9782213710556-001-x.jpeg/600x600bb.jpg",
           "publisher": null,
           "publishedDate": "2018"
         },
@@ -238,7 +373,7 @@
           "title": "La Tresse",
           "author": "Laetitia Colombani",
           "pageCount": 221,
-          "coverUrl": "https://is1-ssl.mzstatic.com/image/thumb/Publication122/v4/57/9a/13/579a13f2-3fb8-1143-64e7-b8b4387eb2e5/9782246813927-001-X.jpeg/600x600bb.jpg",
+          "coverUrl": "https://is1-ssl.mzstatic.com/image/thumb/Publication221/v4/f1/1d/fa/f11dfa5e-e446-40ac-c505-77702a4131a0/9782246813927-001-x.jpeg/600x600bb.jpg",
           "publisher": null,
           "publishedDate": "2017"
         },
@@ -259,6 +394,69 @@
           "coverUrl": "https://is1-ssl.mzstatic.com/image/thumb/Publication126/v4/97/9d/ef/979def7e-c88e-a63d-127c-f39885c6491e/9782265156548.jpg/600x600bb.jpg",
           "publisher": null,
           "publishedDate": "2022"
+        },
+        {
+          "id": "/works/OL17841200W",
+          "title": "Petit Pays",
+          "author": "Gaël Faye",
+          "pageCount": 219,
+          "coverUrl": "https://is1-ssl.mzstatic.com/image/thumb/Publication221/v4/90/0e/54/900e545d-4ad1-2115-43b4-b34e404c36be/9782246857341-001-x.jpeg/600x600bb.jpg",
+          "publisher": null,
+          "publishedDate": "2016"
+        },
+        {
+          "id": "/works/OL37813233W",
+          "title": "Les Yeux de Mona",
+          "author": "Thomas Schlesser",
+          "pageCount": 496,
+          "coverUrl": "https://is1-ssl.mzstatic.com/image/thumb/Publication126/v4/f9/9e/fa/f99efa04-f3a2-1180-d1fe-10651ad641f3/9782226492326.jpg/600x600bb.jpg",
+          "publisher": null,
+          "publishedDate": "2024"
+        },
+        {
+          "id": "/works/OL34897844W",
+          "title": "Les Femmes du bout du monde",
+          "author": "Mélissa Da Costa",
+          "pageCount": 384,
+          "coverUrl": "https://is1-ssl.mzstatic.com/image/thumb/Publication211/v4/e3/89/ef/e389efec-6fc1-bf06-8457-9a59195939d6/9782226482990.jpg/600x600bb.jpg",
+          "publisher": null,
+          "publishedDate": "2023"
+        },
+        {
+          "id": "/works/OL20150260W",
+          "title": "Normal People",
+          "author": "Sally Rooney",
+          "pageCount": 304,
+          "coverUrl": "https://is1-ssl.mzstatic.com/image/thumb/Publication116/v4/12/97/89/12978937-6ae2-48b3-5910-dad143fdf7f7/9782823615258.jpg/600x600bb.jpg",
+          "publisher": null,
+          "publishedDate": "2018"
+        },
+        {
+          "id": "/works/OL17370186W",
+          "title": "Une vie comme les autres",
+          "author": "Hanya Yanagihara",
+          "pageCount": 784,
+          "coverUrl": "https://is1-ssl.mzstatic.com/image/thumb/Publication126/v4/ce/c4/bd/cec4bddf-d8ed-fdc9-fe9c-acb699a0d536/9782283031360.png/600x600bb.jpg",
+          "publisher": null,
+          "publishedDate": "2008"
+        },
+        {
+          "id": "/works/OL24326615W",
+          "title": "Les Choses humaines",
+          "author": "Karine Tuil",
+          "pageCount": 352,
+          "coverUrl": "https://is1-ssl.mzstatic.com/image/thumb/Publication116/v4/43/73/b8/4373b8ed-930b-43d4-8553-fdcaa5f7d335/9782072921124.jpg/600x600bb.jpg",
+          "publisher": null,
+          "publishedDate": "2019"
+        },
+        {
+          "id": "/works/OL24344253W",
+          "title": "La Vraie Vie",
+          "author": "Adeline Dieudonné",
+          "pageCount": 262,
+          "coverUrl": "https://is1-ssl.mzstatic.com/image/thumb/Publication114/v4/fa/bf/e9/fabfe928-e9f5-71b7-162c-569057fd4003/9782378800413.jpg/600x600bb.jpg",
+          "publisher": null,
+          "publishedDate": "2018"
         }
       ]
     },
@@ -337,6 +535,69 @@
           "coverUrl": "https://is1-ssl.mzstatic.com/image/thumb/Publication211/v4/98/51/d4/9851d434-2a59-821c-c162-3231efb80ec5/cover.jpg/600x600bb.jpg",
           "publisher": null,
           "publishedDate": "2018"
+        },
+        {
+          "id": "/works/OL17112428W",
+          "title": "La Fille du train",
+          "author": "Paula Hawkins",
+          "pageCount": 360,
+          "coverUrl": "https://covers.openlibrary.org/b/id/7350360-L.jpg",
+          "publisher": null,
+          "publishedDate": "2014"
+        },
+        {
+          "id": "/works/OL20878311W",
+          "title": "Le Club des Crimes du jeudi",
+          "author": "Richard Osman",
+          "pageCount": 449,
+          "coverUrl": "https://covers.openlibrary.org/b/id/10201431-L.jpg",
+          "publisher": null,
+          "publishedDate": "2020"
+        },
+        {
+          "id": "/works/OL23481W",
+          "title": "Le Silence des agneaux",
+          "author": "Thomas Harris",
+          "pageCount": 352,
+          "coverUrl": "https://covers.openlibrary.org/b/id/8580475-L.jpg",
+          "publisher": null,
+          "publishedDate": "1988"
+        },
+        {
+          "id": "/works/OL8995201W",
+          "title": "Les Rivières pourpres",
+          "author": "Jean-Christophe Grangé",
+          "pageCount": 409,
+          "coverUrl": "https://covers.openlibrary.org/b/id/9657640-L.jpg",
+          "publisher": null,
+          "publishedDate": "2001"
+        },
+        {
+          "id": "/works/OL17116911W",
+          "title": "Big Little Lies",
+          "author": "Liane Moriarty",
+          "pageCount": 512,
+          "coverUrl": "https://covers.openlibrary.org/b/id/7352410-L.jpg",
+          "publisher": null,
+          "publishedDate": "2014"
+        },
+        {
+          "id": "/works/OL23017118W",
+          "title": "Sharko",
+          "author": "Franck Thilliez",
+          "pageCount": 576,
+          "coverUrl": "https://covers.openlibrary.org/b/id/10505860-L.jpg",
+          "publisher": null,
+          "publishedDate": "2017"
+        },
+        {
+          "id": "/works/OL24280827W",
+          "title": "Les Hommes qui n’aimaient pas les femmes",
+          "author": "Stieg Larsson",
+          "pageCount": 705,
+          "coverUrl": "https://covers.openlibrary.org/b/id/10779429-L.jpg",
+          "publisher": null,
+          "publishedDate": "2010"
         }
       ]
     },
@@ -367,7 +628,7 @@
           "title": "Love Hypothesis",
           "author": "Ali Hazelwood",
           "pageCount": 398,
-          "coverUrl": "https://is1-ssl.mzstatic.com/image/thumb/Publication211/v4/45/02/73/4502731c-64dc-6662-330e-654df74fcc59/9782381222608-001-x.jpeg/600x600bb.jpg",
+          "coverUrl": "https://is1-ssl.mzstatic.com/image/thumb/Publication211/v4/31/bd/ea/31bdeafa-5372-941a-6b4f-c9bcbcfbb651/9782381222608-001-x.jpeg/600x600bb.jpg",
           "publisher": null,
           "publishedDate": "2021"
         },
@@ -394,7 +655,7 @@
           "title": "Icebreaker",
           "author": "Hannah Grace",
           "pageCount": 448,
-          "coverUrl": "https://is1-ssl.mzstatic.com/image/thumb/Publication211/v4/55/9d/3f/559d3f4a-e6ef-4f46-8563-c678cb3c0058/9788702415346.jpeg/600x600bb.jpg",
+          "coverUrl": "https://is1-ssl.mzstatic.com/image/thumb/Publication126/v4/b6/dc/87/b6dc87fe-f4e4-40f9-a80d-d7d0de8d149a/9782017243366-001-x.jpeg/600x600bb.jpg",
           "publisher": null,
           "publishedDate": "2020"
         },
@@ -403,9 +664,72 @@
           "title": "Les Sept Maris d’Evelyn Hugo",
           "author": "Taylor Jenkins Reid",
           "pageCount": 400,
-          "coverUrl": "https://is1-ssl.mzstatic.com/image/thumb/Publication116/v4/aa/d1/29/aad129f2-b1dd-fa8f-5239-8e720646ef30/9782811235949-001-x.jpeg/600x600bb.jpg",
+          "coverUrl": "https://is1-ssl.mzstatic.com/image/thumb/Publication211/v4/34/66/25/34662591-f1ad-7ed9-cc77-8546ca17e7d5/9782811235949-001-x.jpeg/600x600bb.jpg",
           "publisher": null,
           "publishedDate": "2017"
+        },
+        {
+          "id": "/works/OL20090688W",
+          "title": "Rouge, blanc et bleu roi",
+          "author": "Casey McQuiston",
+          "pageCount": 440,
+          "coverUrl": "https://covers.openlibrary.org/b/id/9171544-L.jpg",
+          "publisher": null,
+          "publishedDate": "2019"
+        },
+        {
+          "id": "/works/OL32153935W",
+          "title": "Captive",
+          "author": "Sarah Rivens",
+          "pageCount": 544,
+          "coverUrl": "https://is1-ssl.mzstatic.com/image/thumb/Publication122/v4/48/50/82/485082dd-294b-ecc3-7bef-b18009a82915/9782017184690-001-x.jpeg/600x600bb.jpg",
+          "publisher": null,
+          "publishedDate": "2022"
+        },
+        {
+          "id": "/works/OL17719508W",
+          "title": "After",
+          "author": "Anna Todd",
+          "pageCount": 592,
+          "coverUrl": "https://covers.openlibrary.org/b/id/14418944-L.jpg",
+          "publisher": null,
+          "publishedDate": "2014"
+        },
+        {
+          "id": "/works/OL36090166W",
+          "title": "Regretting You",
+          "author": "Colleen Hoover",
+          "pageCount": 366,
+          "coverUrl": "https://covers.openlibrary.org/b/id/8581190-L.jpg",
+          "publisher": null,
+          "publishedDate": "2019"
+        },
+        {
+          "id": "/works/OL20564687W",
+          "title": "Hopeless",
+          "author": "Colleen Hoover",
+          "pageCount": 416,
+          "coverUrl": "https://covers.openlibrary.org/b/id/10549926-L.jpg",
+          "publisher": null,
+          "publishedDate": "2013"
+        },
+        {
+          "id": "/works/OL26345722W",
+          "title": "The Spanish Love Deception",
+          "author": "Elena Armas",
+          "pageCount": 480,
+          "coverUrl": "https://covers.openlibrary.org/b/id/14425253-L.jpg",
+          "publisher": null,
+          "publishedDate": "2021"
+        },
+        {
+          "id": "/works/OL28744393W",
+          "title": "King of Wrath",
+          "author": "Ana Huang",
+          "pageCount": 416,
+          "coverUrl": "https://covers.openlibrary.org/b/id/13588136-L.jpg",
+          "publisher": null,
+          "publishedDate": "2022"
         }
       ]
     },
@@ -472,9 +796,72 @@
           "title": "Le Prince cruel",
           "author": "Holly Black",
           "pageCount": 370,
-          "coverUrl": "https://is1-ssl.mzstatic.com/image/thumb/Publication123/v4/8e/09/e2/8e09e240-882a-a4a3-b816-3c73566cf794/9782700263510-001-x.jpeg/600x600bb.jpg",
+          "coverUrl": "https://is1-ssl.mzstatic.com/image/thumb/Publication211/v4/94/3a/3c/943a3c2f-a9b9-3fd0-83fe-53f704119e40/9782700263510-001-x.jpeg/600x600bb.jpg",
           "publisher": null,
           "publishedDate": "2018"
+        },
+        {
+          "id": "/works/OL15719630W",
+          "title": "Divergente",
+          "author": "Veronica Roth",
+          "pageCount": 487,
+          "coverUrl": "https://covers.openlibrary.org/b/id/13274634-L.jpg",
+          "publisher": null,
+          "publishedDate": "2010"
+        },
+        {
+          "id": "/works/OL6027236W",
+          "title": "Le Labyrinthe",
+          "author": "James Dashner",
+          "pageCount": 375,
+          "coverUrl": "https://covers.openlibrary.org/b/id/10464801-L.jpg",
+          "publisher": null,
+          "publishedDate": "2009"
+        },
+        {
+          "id": "/works/OL17876096W",
+          "title": "La Faucheuse",
+          "author": "Neal Shusterman",
+          "pageCount": 449,
+          "coverUrl": "https://covers.openlibrary.org/b/id/8184999-L.jpg",
+          "publisher": null,
+          "publishedDate": "2016"
+        },
+        {
+          "id": "/works/OL20646061W",
+          "title": "A Good Girl’s Guide to Murder",
+          "author": "Holly Jackson",
+          "pageCount": 432,
+          "coverUrl": "https://covers.openlibrary.org/b/id/13156188-L.jpg",
+          "publisher": null,
+          "publishedDate": "2019"
+        },
+        {
+          "id": "/works/OL5720023W",
+          "title": "Twilight",
+          "author": "Stephenie Meyer",
+          "pageCount": 498,
+          "coverUrl": "https://covers.openlibrary.org/b/id/12641977-L.jpg",
+          "publisher": null,
+          "publishedDate": "2005"
+        },
+        {
+          "id": "/works/OL16151508W",
+          "title": "Miss Peregrine et les enfants particuliers",
+          "author": "Ransom Riggs",
+          "pageCount": 388,
+          "coverUrl": "https://covers.openlibrary.org/b/id/14416577-L.jpg",
+          "publisher": null,
+          "publishedDate": "2011"
+        },
+        {
+          "id": "/works/OL17357353W",
+          "title": "Moi, Simon, 16 ans, Homo Sapiens",
+          "author": "Becky Albertalli",
+          "pageCount": 320,
+          "coverUrl": "https://covers.openlibrary.org/b/id/12303551-L.jpg",
+          "publisher": null,
+          "publishedDate": "2015"
         }
       ]
     },
@@ -496,7 +883,7 @@
           "title": "Babel",
           "author": "R. F. Kuang",
           "pageCount": 577,
-          "coverUrl": "https://is1-ssl.mzstatic.com/image/thumb/Publication112/v4/b3/2b/0d/b32b0d6d-2425-2357-6c2d-e1056fcc2e27/9780063021440.jpg/600x600bb.jpg",
+          "coverUrl": "https://is1-ssl.mzstatic.com/image/thumb/Publication126/v4/c8/4e/5d/c84e5df8-f251-de1a-cf75-4bb1086a4205/9780008501839.jpg/600x600bb.jpg",
           "publisher": null,
           "publishedDate": "2022"
         },
@@ -533,6 +920,60 @@
           "author": "Madeline Miller",
           "pageCount": 404,
           "coverUrl": "https://is1-ssl.mzstatic.com/image/thumb/Publication126/v4/77/f1/69/77f16957-b610-eeac-3c6d-df1fd71801ac/9782266338639.jpg/600x600bb.jpg",
+          "publisher": null,
+          "publishedDate": "2018"
+        },
+        {
+          "id": "/works/OL82563W",
+          "title": "Harry Potter à l’école des sorciers",
+          "author": "J. K. Rowling",
+          "pageCount": 302,
+          "coverUrl": "https://covers.openlibrary.org/b/id/15155833-L.jpg",
+          "publisher": null,
+          "publishedDate": "1997"
+        },
+        {
+          "id": "/works/OL27482W",
+          "title": "Le Hobbit",
+          "author": "J. R. R. Tolkien",
+          "pageCount": 310,
+          "coverUrl": "https://covers.openlibrary.org/b/id/14627509-L.jpg",
+          "publisher": null,
+          "publishedDate": "1937"
+        },
+        {
+          "id": "/works/OL257943W",
+          "title": "Le Trône de fer",
+          "author": "George R. R. Martin",
+          "pageCount": 801,
+          "coverUrl": "https://covers.openlibrary.org/b/id/9269962-L.jpg",
+          "publisher": null,
+          "publishedDate": "1996"
+        },
+        {
+          "id": "/works/OL2707183W",
+          "title": "L’Assassin royal",
+          "author": "Robin Hobb",
+          "pageCount": 400,
+          "coverUrl": "https://covers.openlibrary.org/b/id/4915230-L.jpg",
+          "publisher": null,
+          "publishedDate": "1995"
+        },
+        {
+          "id": "/works/OL16239519W",
+          "title": "Ombre et Os",
+          "author": "Leigh Bardugo",
+          "pageCount": 352,
+          "coverUrl": "https://covers.openlibrary.org/b/id/13816048-L.jpg",
+          "publisher": null,
+          "publishedDate": "2012"
+        },
+        {
+          "id": "/works/OL19351054W",
+          "title": "La Guerre du pavot",
+          "author": "R. F. Kuang",
+          "pageCount": 522,
+          "coverUrl": "https://covers.openlibrary.org/b/id/8463552-L.jpg",
           "publisher": null,
           "publishedDate": "2018"
         }
@@ -604,6 +1045,69 @@
           "coverUrl": "https://is1-ssl.mzstatic.com/image/thumb/Publication211/v4/54/2a/e4/542ae442-aa9a-837a-aa56-c4bdd8f92c52/9782073141453.jpg/600x600bb.jpg",
           "publisher": null,
           "publishedDate": "2023"
+        },
+        {
+          "id": "/works/OL17860744W",
+          "title": "Un palais de colère et de brume",
+          "author": "Sarah J. Maas",
+          "pageCount": 626,
+          "coverUrl": "https://covers.openlibrary.org/b/id/14315081-L.jpg",
+          "publisher": null,
+          "publishedDate": "2014"
+        },
+        {
+          "id": "/works/OL17850410W",
+          "title": "Le Prince cruel",
+          "author": "Holly Black",
+          "pageCount": 370,
+          "coverUrl": "https://is1-ssl.mzstatic.com/image/thumb/Publication211/v4/94/3a/3c/943a3c2f-a9b9-3fd0-83fe-53f704119e40/9782700263510-001-x.jpeg/600x600bb.jpg",
+          "publisher": null,
+          "publishedDate": "2018"
+        },
+        {
+          "id": "/works/OL39663865W",
+          "title": "Quicksilver",
+          "author": "Callie Hart",
+          "pageCount": 624,
+          "coverUrl": "https://covers.openlibrary.org/b/id/15227615-L.jpg",
+          "publisher": null,
+          "publishedDate": "2024"
+        },
+        {
+          "id": "/works/OL17715454W",
+          "title": "Caraval",
+          "author": "Stephanie Garber",
+          "pageCount": 436,
+          "coverUrl": "https://covers.openlibrary.org/b/id/7990753-L.jpg",
+          "publisher": null,
+          "publishedDate": "2000"
+        },
+        {
+          "id": "/works/OL24706481W",
+          "title": "Il était une fois un cœur brisé",
+          "author": "Stephanie Garber",
+          "pageCount": 416,
+          "coverUrl": "https://covers.openlibrary.org/b/id/11427092-L.jpg",
+          "publisher": null,
+          "publishedDate": "2021"
+        },
+        {
+          "id": "/works/OL21676651W",
+          "title": "Kingdom of the Wicked",
+          "author": "Kerri Maniscalco",
+          "pageCount": 448,
+          "coverUrl": "https://covers.openlibrary.org/b/id/10526129-L.jpg",
+          "publisher": null,
+          "publishedDate": "2020"
+        },
+        {
+          "id": "/works/OL21330193W",
+          "title": "De chair et de feu",
+          "author": "Jennifer L. Armentrout",
+          "pageCount": 572,
+          "coverUrl": "https://covers.openlibrary.org/b/id/10360316-L.jpg",
+          "publisher": null,
+          "publishedDate": "2020"
         }
       ]
     },
@@ -625,7 +1129,7 @@
           "title": "La Bibliothèque de minuit",
           "author": "Matt Haig",
           "pageCount": 304,
-          "coverUrl": "https://covers.openlibrary.org/b/id/10313767-L.jpg",
+          "coverUrl": "https://is1-ssl.mzstatic.com/image/thumb/Publication211/v4/c7/8e/1e/c78e1e84-5908-0806-b900-ae56c45d2dda/9782863748145-001-x.jpeg/600x600bb.jpg",
           "publisher": null,
           "publishedDate": "2020"
         },
@@ -664,6 +1168,51 @@
           "coverUrl": "https://covers.openlibrary.org/b/id/6992110-L.jpg",
           "publisher": null,
           "publishedDate": "2004"
+        },
+        {
+          "id": "/works/OL34588801W",
+          "title": "Le Restaurant de l’amour retrouvé",
+          "author": "Ito Ogawa",
+          "pageCount": 258,
+          "coverUrl": "https://covers.openlibrary.org/b/id/14489445-L.jpg",
+          "publisher": null,
+          "publishedDate": "2015"
+        },
+        {
+          "id": "/works/OL24400450W",
+          "title": "La Papeterie Tsubaki",
+          "author": "Ito Ogawa",
+          "pageCount": 394,
+          "coverUrl": "https://covers.openlibrary.org/b/id/11949744-L.jpg",
+          "publisher": null,
+          "publishedDate": "2018"
+        },
+        {
+          "id": "/works/OL20332502W",
+          "title": "Le Liseur du 6h27",
+          "author": "Jean-Paul Didierlaurent",
+          "pageCount": 213,
+          "coverUrl": "https://covers.openlibrary.org/b/id/8995701-L.jpg",
+          "publisher": null,
+          "publishedDate": "2015"
+        },
+        {
+          "id": "/works/OL9334371W",
+          "title": "Le Cercle littéraire des amateurs d’épluchures de patates",
+          "author": "Mary Ann Shaffer",
+          "pageCount": 288,
+          "coverUrl": "https://covers.openlibrary.org/b/id/14859218-L.jpg",
+          "publisher": null,
+          "publishedDate": "2008"
+        },
+        {
+          "id": "/works/OL20000284W",
+          "title": "La Bibliothèque des cœurs cabossés",
+          "author": "Katarina Bivald",
+          "pageCount": 481,
+          "coverUrl": "https://covers.openlibrary.org/b/id/9268137-L.jpg",
+          "publisher": null,
+          "publishedDate": "2015"
         }
       ]
     },
@@ -742,6 +1291,69 @@
           "coverUrl": "https://is1-ssl.mzstatic.com/image/thumb/Publication211/v4/c9/9f/d5/c99fd543-0b02-9110-b758-c91f60c7a8f6/9782073002327.jpg/600x600bb.jpg",
           "publisher": null,
           "publishedDate": "2019"
+        },
+        {
+          "id": "/works/OL64365W",
+          "title": "Le Meilleur des mondes",
+          "author": "Aldous Huxley",
+          "pageCount": 241,
+          "coverUrl": "https://covers.openlibrary.org/b/id/8231823-L.jpg",
+          "publisher": null,
+          "publishedDate": "1932"
+        },
+        {
+          "id": "/works/OL46125W",
+          "title": "Fondation",
+          "author": "Isaac Asimov",
+          "pageCount": 240,
+          "coverUrl": "https://covers.openlibrary.org/b/id/14612610-L.jpg",
+          "publisher": null,
+          "publishedDate": "1951"
+        },
+        {
+          "id": "/works/OL1963268W",
+          "title": "Hypérion",
+          "author": "Dan Simmons",
+          "pageCount": 481,
+          "coverUrl": "https://covers.openlibrary.org/b/id/380332-L.jpg",
+          "publisher": null,
+          "publishedDate": "1989"
+        },
+        {
+          "id": "/works/OL17202418W",
+          "title": "Station Eleven",
+          "author": "Emily St. John Mandel",
+          "pageCount": 352,
+          "coverUrl": "https://covers.openlibrary.org/b/id/7369961-L.jpg",
+          "publisher": null,
+          "publishedDate": "2014"
+        },
+        {
+          "id": "/works/OL15936512W",
+          "title": "Ready Player One",
+          "author": "Ernest Cline",
+          "pageCount": 462,
+          "coverUrl": "https://covers.openlibrary.org/b/id/8737626-L.jpg",
+          "publisher": null,
+          "publishedDate": "2008"
+        },
+        {
+          "id": "/works/OL24210931W",
+          "title": "L’Anomalie",
+          "author": "Hervé Le Tellier",
+          "pageCount": 340,
+          "coverUrl": "https://covers.openlibrary.org/b/id/10660381-L.jpg",
+          "publisher": null,
+          "publishedDate": "2020"
+        },
+        {
+          "id": "/works/OL15505243W",
+          "title": "La Horde du Contrevent",
+          "author": "Alain Damasio",
+          "pageCount": 736,
+          "coverUrl": "https://covers.openlibrary.org/b/id/15250589-L.jpg",
+          "publisher": null,
+          "publishedDate": "2007"
         }
       ]
     },
@@ -811,6 +1423,51 @@
           "coverUrl": "https://is1-ssl.mzstatic.com/image/thumb/Publication211/v4/ca/1d/6c/ca1d6cb5-c78c-17b5-a22f-e9e181822f29/9782072622861.png/600x600bb.jpg",
           "publisher": null,
           "publishedDate": "2023"
+        },
+        {
+          "id": "/works/OL16821606W",
+          "title": "Toute la lumière que nous ne pouvons voir",
+          "author": "Anthony Doerr",
+          "pageCount": 544,
+          "coverUrl": "https://covers.openlibrary.org/b/id/14559680-L.jpg",
+          "publisher": null,
+          "publishedDate": "2014"
+        },
+        {
+          "id": "/works/OL5819456W",
+          "title": "La Voleuse de livres",
+          "author": "Markus Zusak",
+          "pageCount": 556,
+          "coverUrl": "https://covers.openlibrary.org/b/id/15267110-L.jpg",
+          "publisher": null,
+          "publishedDate": "1998"
+        },
+        {
+          "id": "/works/OL3261155W",
+          "title": "Le Chardon et le Tartan",
+          "author": "Diana Gabaldon",
+          "pageCount": 672,
+          "coverUrl": "https://covers.openlibrary.org/b/id/14428230-L.jpg",
+          "publisher": null,
+          "publishedDate": "1991"
+        },
+        {
+          "id": "/works/OL17762217W",
+          "title": "Pachinko",
+          "author": "Min Jin Lee",
+          "pageCount": 512,
+          "coverUrl": "https://covers.openlibrary.org/b/id/8044605-L.jpg",
+          "publisher": null,
+          "publishedDate": "2017"
+        },
+        {
+          "id": "/works/OL27306406W",
+          "title": "L’Art de perdre",
+          "author": "Alice Zeniter",
+          "pageCount": 560,
+          "coverUrl": "https://covers.openlibrary.org/b/id/13168870-L.jpg",
+          "publisher": null,
+          "publishedDate": "2017"
         }
       ]
     },
@@ -889,6 +1546,69 @@
           "coverUrl": "https://covers.openlibrary.org/b/id/10708272-L.jpg",
           "publisher": null,
           "publishedDate": "1943"
+        },
+        {
+          "id": "/works/OL893707W",
+          "title": "Madame Bovary",
+          "author": "Gustave Flaubert",
+          "pageCount": 351,
+          "coverUrl": "https://covers.openlibrary.org/b/id/12993424-L.jpg",
+          "publisher": null,
+          "publishedDate": "1856"
+        },
+        {
+          "id": "/works/OL733640W",
+          "title": "Le Rouge et le Noir",
+          "author": "Stendhal",
+          "pageCount": 518,
+          "coverUrl": "https://covers.openlibrary.org/b/id/8231413-L.jpg",
+          "publisher": null,
+          "publishedDate": "1830"
+        },
+        {
+          "id": "/works/OL468431W",
+          "title": "Gatsby le Magnifique",
+          "author": "F. Scott Fitzgerald",
+          "pageCount": 185,
+          "coverUrl": "https://covers.openlibrary.org/b/id/10590366-L.jpg",
+          "publisher": null,
+          "publishedDate": "1920"
+        },
+        {
+          "id": "/works/OL29983W",
+          "title": "Les Quatre Filles du docteur March",
+          "author": "Louisa May Alcott",
+          "pageCount": 422,
+          "coverUrl": "https://covers.openlibrary.org/b/id/8775559-L.jpg",
+          "publisher": null,
+          "publishedDate": "1848"
+        },
+        {
+          "id": "/works/OL29495654W",
+          "title": "Crime et Châtiment",
+          "author": "Fiodor Dostoïevski",
+          "pageCount": 651,
+          "coverUrl": "https://covers.openlibrary.org/b/id/13643709-L.jpg",
+          "publisher": null,
+          "publishedDate": "2017"
+        },
+        {
+          "id": "/works/OL93842W",
+          "title": "Bel-Ami",
+          "author": "Guy de Maupassant",
+          "pageCount": 412,
+          "coverUrl": "https://covers.openlibrary.org/b/id/997432-L.jpg",
+          "publisher": null,
+          "publishedDate": "1893"
+        },
+        {
+          "id": "/works/OL15202030W",
+          "title": "Notre-Dame de Paris",
+          "author": "Victor Hugo",
+          "pageCount": 436,
+          "coverUrl": "https://covers.openlibrary.org/b/id/2626880-L.jpg",
+          "publisher": null,
+          "publishedDate": "1831"
         }
       ]
     },
@@ -958,6 +1678,69 @@
           "coverUrl": "https://covers.openlibrary.org/b/id/6450442-L.jpg",
           "publisher": null,
           "publishedDate": "1998"
+        },
+        {
+          "id": "/works/OL81626W",
+          "title": "Carrie",
+          "author": "Stephen King",
+          "pageCount": 255,
+          "coverUrl": "https://covers.openlibrary.org/b/id/9256043-L.jpg",
+          "publisher": null,
+          "publishedDate": "1974"
+        },
+        {
+          "id": "/works/OL81634W",
+          "title": "Misery",
+          "author": "Stephen King",
+          "pageCount": 382,
+          "coverUrl": "https://covers.openlibrary.org/b/id/8259296-L.jpg",
+          "publisher": null,
+          "publishedDate": "1978"
+        },
+        {
+          "id": "/works/OL3171069W",
+          "title": "Maison hantée",
+          "author": "Shirley Jackson",
+          "pageCount": 246,
+          "coverUrl": "https://covers.openlibrary.org/b/id/4289014-L.jpg",
+          "publisher": null,
+          "publishedDate": "1959"
+        },
+        {
+          "id": "/works/OL19976661W",
+          "title": "Bird Box",
+          "author": "Josh Malerman",
+          "pageCount": 36,
+          "coverUrl": "https://covers.openlibrary.org/b/id/11377399-L.jpg",
+          "publisher": null,
+          "publishedDate": "2001"
+        },
+        {
+          "id": "/works/OL16070670W",
+          "title": "Ring",
+          "author": "Kōji Suzuki",
+          "pageCount": 286,
+          "coverUrl": "https://covers.openlibrary.org/b/id/6973619-L.jpg",
+          "publisher": null,
+          "publishedDate": "2003"
+        },
+        {
+          "id": "/works/OL679358W",
+          "title": "Coraline",
+          "author": "Neil Gaiman",
+          "pageCount": 176,
+          "coverUrl": "https://covers.openlibrary.org/b/id/14171421-L.jpg",
+          "publisher": null,
+          "publishedDate": "2001"
+        },
+        {
+          "id": "/works/OL20027994W",
+          "title": "Hex",
+          "author": "Thomas Olde Heuvelt",
+          "pageCount": 384,
+          "coverUrl": "https://covers.openlibrary.org/b/id/10194993-L.jpg",
+          "publisher": null,
+          "publishedDate": "2001"
         }
       ]
     },
@@ -1018,6 +1801,69 @@
           "coverUrl": "https://covers.openlibrary.org/b/id/962725-L.jpg",
           "publisher": null,
           "publishedDate": "1961"
+        },
+        {
+          "id": "/works/OL8755980W",
+          "title": "Naruto",
+          "author": "Masashi Kishimoto",
+          "pageCount": 192,
+          "coverUrl": "https://covers.openlibrary.org/b/id/1020779-L.jpg",
+          "publisher": null,
+          "publishedDate": "2000"
+        },
+        {
+          "id": "/works/OL19066602W",
+          "title": "L’Attaque des Titans",
+          "author": "Hajime Isayama",
+          "pageCount": null,
+          "coverUrl": "https://covers.openlibrary.org/b/id/8380541-L.jpg",
+          "publisher": null,
+          "publishedDate": "2013"
+        },
+        {
+          "id": "/works/OL20644916W",
+          "title": "Jujutsu Kaisen",
+          "author": "Gege Akutami",
+          "pageCount": 192,
+          "coverUrl": "https://covers.openlibrary.org/b/id/9270022-L.jpg",
+          "publisher": null,
+          "publishedDate": "2019"
+        },
+        {
+          "id": "/works/OL31341755W",
+          "title": "Demon Slayer",
+          "author": "Koyoharu Gotouge",
+          "pageCount": null,
+          "coverUrl": "https://covers.openlibrary.org/b/id/14562511-L.jpg",
+          "publisher": null,
+          "publishedDate": "2023"
+        },
+        {
+          "id": "/works/OL8756309W",
+          "title": "Death Note",
+          "author": "Tsugumi Ohba",
+          "pageCount": 200,
+          "coverUrl": "https://covers.openlibrary.org/b/id/1041608-L.jpg",
+          "publisher": null,
+          "publishedDate": "2005"
+        },
+        {
+          "id": "/works/OL15507163W",
+          "title": "Blacksad",
+          "author": "Juan Díaz Canales",
+          "pageCount": 184,
+          "coverUrl": "https://covers.openlibrary.org/b/id/6671224-L.jpg",
+          "publisher": null,
+          "publishedDate": "2010"
+        },
+        {
+          "id": "/works/OL20024422W",
+          "title": "Les Cahiers d’Esther",
+          "author": "Riad Sattouf",
+          "pageCount": 54,
+          "coverUrl": "https://covers.openlibrary.org/b/id/13571805-L.jpg",
+          "publisher": null,
+          "publishedDate": "2016"
         }
       ]
     },
@@ -1078,6 +1924,51 @@
           "coverUrl": "https://covers.openlibrary.org/b/id/11556106-L.jpg",
           "publisher": null,
           "publishedDate": "2010"
+        },
+        {
+          "id": "/works/OL19629024W",
+          "title": "Miracle Morning",
+          "author": "Hal Elrod",
+          "pageCount": 176,
+          "coverUrl": "https://covers.openlibrary.org/b/id/8539416-L.jpg",
+          "publisher": null,
+          "publishedDate": "2012"
+        },
+        {
+          "id": "/works/OL17315119W",
+          "title": "Le Charme discret de l’intestin",
+          "author": "Giulia Enders",
+          "pageCount": 384,
+          "coverUrl": "https://covers.openlibrary.org/b/id/7393587-L.jpg",
+          "publisher": null,
+          "publishedDate": "2015"
+        },
+        {
+          "id": "/works/OL21540172W",
+          "title": "Cessez d’être gentil, soyez vrai",
+          "author": "Thomas d’Ansembourg",
+          "pageCount": 249,
+          "coverUrl": "https://covers.openlibrary.org/b/id/10380829-L.jpg",
+          "publisher": null,
+          "publishedDate": "2013"
+        },
+        {
+          "id": "/works/OL17713267W",
+          "title": "Deep Work",
+          "author": "Cal Newport",
+          "pageCount": 303,
+          "coverUrl": "https://covers.openlibrary.org/b/id/7988607-L.jpg",
+          "publisher": null,
+          "publishedDate": "2016"
+        },
+        {
+          "id": "/works/OL17080845W",
+          "title": "La Magie du rangement",
+          "author": "Marie Kondo",
+          "pageCount": 192,
+          "coverUrl": "https://covers.openlibrary.org/b/id/7367218-L.jpg",
+          "publisher": null,
+          "publishedDate": "2014"
         }
       ]
     },
@@ -1138,6 +2029,69 @@
           "coverUrl": "https://covers.openlibrary.org/b/id/6559057-L.jpg",
           "publisher": null,
           "publishedDate": "1929"
+        },
+        {
+          "id": "/works/OL102389W",
+          "title": "Les Années",
+          "author": "Annie Ernaux",
+          "pageCount": 241,
+          "coverUrl": "https://covers.openlibrary.org/b/id/12452575-L.jpg",
+          "publisher": null,
+          "publishedDate": "2001"
+        },
+        {
+          "id": "/works/OL22594933W",
+          "title": "Yoga",
+          "author": "Emmanuel Carrère",
+          "pageCount": 344,
+          "coverUrl": "https://covers.openlibrary.org/b/id/10480658-L.jpg",
+          "publisher": null,
+          "publishedDate": "2020"
+        },
+        {
+          "id": "/works/OL2303159W",
+          "title": "King Kong Théorie",
+          "author": "Virginie Despentes",
+          "pageCount": 159,
+          "coverUrl": "https://covers.openlibrary.org/b/id/7257634-L.jpg",
+          "publisher": null,
+          "publishedDate": "2006"
+        },
+        {
+          "id": "/works/OL27049121W",
+          "title": "Le Lambeau",
+          "author": "Philippe Lançon",
+          "pageCount": 512,
+          "coverUrl": "https://covers.openlibrary.org/b/id/12560523-L.jpg",
+          "publisher": null,
+          "publishedDate": null
+        },
+        {
+          "id": "/works/OL24141796W",
+          "title": "Sorcières",
+          "author": "Mona Chollet",
+          "pageCount": 240,
+          "coverUrl": "https://covers.openlibrary.org/b/id/10539342-L.jpg",
+          "publisher": null,
+          "publishedDate": "2018"
+        },
+        {
+          "id": "/works/OL20196515W",
+          "title": "Homo Deus",
+          "author": "Yuval Noah Harari",
+          "pageCount": null,
+          "coverUrl": "https://covers.openlibrary.org/b/id/8846275-L.jpg",
+          "publisher": null,
+          "publishedDate": "2017"
+        },
+        {
+          "id": "/works/OL28813613W",
+          "title": "Réinventer l’amour",
+          "author": "Mona Chollet",
+          "pageCount": null,
+          "coverUrl": "https://covers.openlibrary.org/b/id/12903365-L.jpg",
+          "publisher": null,
+          "publishedDate": "2021"
         }
       ]
     }

@@ -2,14 +2,14 @@
  * Composant ExploreGenres
  *
  * Les genres de l'onglet Explorer, en une rangée qui défile de côté, avec
- * environ quatre cartes à l'écran (Lea, 2026-10-27), sur le
+ * trois cartes entières et la quatrième bien coupée (Lea, 2026-11-11), sur le
  * même papier aquarelle que l'en-tête du profil (rouge, chocolat, un peu de
  * beurre) et avec le nom en blanc, comme le prénom : le maximum de cohérence
  * (Lea, 2026-10-27). L'aquarelle est UNE bande aussi longue que la rangée
  * (scripts/generate-genre-wash.py) : chaque carte en montre sa tranche, la
- * grille se lit comme une seule peinture découpée. Le nom est petit (11) et
- * plus étroit (Martian Grotesk, pas la version large) pour tenir dans un quart
- * d'écran ; deux noms ont une version courte (`SHORT_LABELS`).
+ * grille se lit comme une seule peinture découpée. Le nom fait 14 (Lea, 2026-11-11), plus
+ * étroit que les titres (Martian Grotesk, pas la version large) pour tenir dans une
+ * carte ; deux noms ont une version courte (`SHORT_LABELS`).
  *
  *    Genres
  *    ┌───────┐ ┌───────┐ ┌───────┐ ┌────
@@ -37,11 +37,12 @@ import PressableScale from './PressableScale';
 
 const SIDE = spacing.lg;
 const GAP = spacing.sm;
-/** Environ quatre cartes à l'écran : la quatrième dépasse, on devine qu'il y en a d'autres */
-const TILE_W = 92;
-const TILE_H = 64;
+/** Trois cartes entières à l'écran, la quatrième bien coupée : on devine qu'il y en a d'autres (Lea, 2026-11-11) */
+const TILE_W = 116;
+/** Assez haute pour respirer : à 64, la carte faisait étiquette (Lea, 2026-11-11) */
+const TILE_H = 84;
 const RADIUS = borderRadius.md;
-const ILLUSTRATION = 60;
+const ILLUSTRATION = 72;
 
 const WASH = require('../../assets/images/watercolor/genres-wash.jpg');
 /** La bande d'aquarelle couvre 14 cartes ; au-delà, on repart du début */
@@ -170,8 +171,8 @@ const styles = StyleSheet.create({
   },
   label: {
     fontFamily: fonts.bodyBold,
-    fontSize: 11,
-    lineHeight: 14,
+    fontSize: 14,
+    lineHeight: 18,
     color: colors.white,
   },
 });
