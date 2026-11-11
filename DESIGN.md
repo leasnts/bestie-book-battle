@@ -925,19 +925,23 @@ choisies à la main et figées dans `constants/exploreCatalog.json`
 Pendant une recherche : des silhouettes de lignes, jamais de spinner.
 
 La fiche d'un livre (`/explore-book`) est une **fiche d'information, sans gros
-bouton** (Lea, 2026-11-11) : en tête, **comme la carte du livre de l'accueil**,
-la couverture à gauche (84 pt de large, pas le sujet), le titre, l'autrice et
-`518 p. · 2023` à droite (le sheet n'a pas d'autre titre) ; puis une **rangée d'actions comme la fiche
-Contact d'iOS** — quatre `GlassButton` à places fixes, un mot dessous : **Envie**
-♥ (rouge et plein si gardé), **Lu** ✓ (rouge si lu ; sinon le range dans « Lus »
-sans changer le livre de l'accueil), **Commencer** ▶ (création ; PAL → accueil +
-date de fin), **Reprendre** s'il est en cours, **Voir** s'il est lu (« Ouvrir »
-ne disait pas ce qui se passe), **Partager** ↗. Dessous, le **résumé** de la
-boutique en 9 lignes, à toucher pour le déplier ; enfin la ligne
-de l'autrice (photo ou initiales, « 29 livres » dessous) qui ouvre **ses livres
-par-dessus la fiche** (`/explore-author`, retour vers le livre ; en toucher un le
-met à la place dans la fiche, jamais de renvoi dans l'onglet). Pas de note ni
-d'avis d'inconnu·es.
+bouton** (Lea, 2026-11-11). En tête, **comme la carte du livre de l'accueil** :
+la couverture à gauche (84 pt de large, pas le sujet) ; à droite le titre,
+l'autrice, `518 p. · 2023`, puis **trois actions** en `GlassButton`, un mot
+dessous : **Envie** ♥ (rouge et plein si gardé), **Lu** ✓ (rouge si lu ; sinon
+le range dans « Lus » sans changer le livre de l'accueil), **Commencer** ▶
+(création ; PAL → accueil + date de fin), **Reprendre** s'il est en cours,
+**Voir** s'il est lu (« Ouvrir » ne disait pas ce qui se passe). **Partager** ↗
+seul en haut à droite, sur le lavis aux couleurs de la couverture (rendu sous
+la carte : le titre passe par-dessus). Dessous, le **résumé** de la boutique en
+9 lignes, à toucher pour le déplier ; enfin la ligne de l'autrice (photo ou
+initiales, « 29 livres » dessous) qui ouvre **ses livres par-dessus la fiche**
+(`/explore-author`, retour vers le livre ; en toucher un le met à la place,
+jamais de renvoi dans l'onglet). Pas de note ni d'avis d'inconnu·es.
+
+Les envies ont aussi leur filtre **Envies** dans la bibliothèque (« Mes
+lectures », dernière pastille ; la rangée défile) : toucher une envie ouvre sa
+fiche par-dessus, avec un retour.
 
 ### Barre d'onglets
 

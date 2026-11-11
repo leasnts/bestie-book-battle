@@ -2,15 +2,15 @@
  * Route /explore-book — la fiche d'un livre de l'onglet Explorer, en sheet natif.
  * Une fiche d'information : les actions sont là, discrètes, pas un gros bouton.
  *
- *    ┌───────────────────────────────┐
- *    │ ┌────┐ Fourth Wing            │  ← comme la carte du livre de l'accueil
+ *    ┌──────────────────────── ░▒▒░──┐
+ *    │ ┌────┐ Fourth Wing      ░(↗)▒ │  ← partager, sur un lavis de la couverture
  *    │ │cov │ Rebecca Yarros         │
- *    │ └────┘ 518 p. · 2023          │
- *    │  (♥)    (✓)    (▶)    (↗)     │  ← rangée d'actions, comme la fiche Contact
- *    │ Envie   Lu  Commencer Partager│
+ *    │ │    │ 518 p. · 2023          │
+ *    │ │    │ (♥)  (✓)  (▶)          │
+ *    │ └────┘ Envie Lu Commencer     │
  *    │ Passer toutes les épreuves…⌄  │  ← résumé, 9 lignes, toucher pour déplier
  *    │ (◉) Rebecca Yarros         ›  │
- *    │     12 livres                 │
+ *    │     29 livres                 │
  *    └───────────────────────────────┘
  *
  * Les actions, selon où en est le livre dans ma bibliothèque :
@@ -29,16 +29,17 @@
  * store (`selectedBook`).
  */
 
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { BookOpenIcon, CheckIcon, ChevronRightIcon, HeartIcon, PlayIcon, ShareIcon, type LucideIcon } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Share, StyleSheet, Text, View } from 'react-native';
 import { AccentUnit } from '../components/ui/AccentWord';
 import BookCover, { COVER_RATIO } from '../components/ui/BookCover';
+import WatercolorCorner, { WATERCOLOR_OVERFLOW_RIGHT, WATERCOLOR_OVERFLOW_TOP } from '../components/ui/WatercolorCorner';
 import { AuthorAvatar, type ExploreAuthor } from '../components/ui/ExploreAuthors';
 import GlassButton from '../components/ui/GlassButton';
 import PressableScale from '../components/ui/PressableScale';
-import SheetPage from '../components/ui/SheetPage';
+import SheetPage, { SHEET_GUTTER } from '../components/ui/SheetPage';
 import authorsCatalog from '../constants/exploreAuthors.json';
 import { fetchAuthorBooks, fetchEditions, fetchSummary } from '../services/bookApi';
 import { updateUserProgress } from '../services/supabase/database';
@@ -47,17 +48,21 @@ import { useAuthStore } from '../stores/authStore';
 import { useExploreStore } from '../stores/exploreStore';
 import { useOnboardingStore } from '../stores/onboardingStore';
 import { useProjectStore } from '../stores/projectStore';
-import { colors, fonts, spacing } from '../utils/constants';
+import { colors, fonts, ROUND_BUTTON_SIZE, spacing } from '../utils/constants';
+import { extractCoverPalette } from '../utils/coverPalette';
 import { feel } from '../utils/feel';
 import { readingOf } from '../utils/library';
 import { oops } from '../utils/notice';
 import { compactText } from '../utils/normalizeText';
 import { startAdding } from '../utils/onboardingFlow';
+import { coverWash, NEUTRAL_WASH, type WashTints } from '../utils/watercolor';
 
 /** La couverture de la carte : un peu plus grande que celle de l'accueil (54), pas le sujet */
 const COVER_W = 84;
 const AUTHOR_AVATAR = 44;
 const FACTS_SIZE = 14;
+/** Du haut de l'en-tête collant (sous la poignée) au haut de la carte */
+const WASH_ABOVE_HERO = 26;
 /** Le résumé replié : assez pour donner envie, pas une page de texte */
 const SUMMARY_LINES = 9;
 
@@ -66,6 +71,8 @@ const AUTHORS = authorsCatalog.authors as ExploreAuthor[];
 
 export default function ExploreBookRoute() {
   const router = useRouter();
+  // Posée sur la bibliothèque (une envie) : un retour, et fermer = tout fermer
+  const { from } = useLocalSearchParams<{ from?: string }>();
   const book = useExploreStore((state) => state.selectedBook);
   const isFavorite = useExploreStore(
     (state) => !!book && state.favorites.some((f) => f.id === book.id),
@@ -90,6 +97,23 @@ export default function ExploreBookRoute() {
     };
   }, [book]);
   const pageCount = book?.pageCount ?? editionPages;
+
+  // Le lavis du coin, sous le bouton partager, prend les couleurs de la couverture :
+  // l'écran parle de CE livre (sans rien de coloré dessous, le verre ne se voit pas)
+  const [wash, setWash] = useState<WashTints>(NEUTRAL_WASH);
+  useEffect(() => {
+    setWash(NEUTRAL_WASH);
+    if (!book?.coverUrl) return;
+    let cancelled = false;
+    extractCoverPalette(book.coverUrl)
+      .then((palette) => {
+        if (!cancelled) setWash(coverWash(palette));
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [book?.coverUrl]);
 
   // La première autrice : sa photo si elle est dans les auteur·ices d'Explorer
   const author = useMemo<ExploreAuthor | null>(() => {
@@ -141,6 +165,12 @@ export default function ExploreBookRoute() {
   const isRead = reading?.state === 'done';
   const [marking, setMarking] = useState(false);
 
+  // Fermer la fiche, et la bibliothèque dessous si on vient d'elle
+  const closeSheets = useCallback(() => {
+    if (from) router.dismissAll();
+    else router.back();
+  }, [from, router]);
+
   const handleRead = useCallback(() => {
     if (!book) return;
     if (inLibrary) {
@@ -151,7 +181,7 @@ export default function ExploreBookRoute() {
         return;
       }
       setActiveChallenge(inLibrary);
-      router.back();
+      closeSheets();
       router.navigate('/(tabs)');
       return;
     }
@@ -160,10 +190,10 @@ export default function ExploreBookRoute() {
     useOnboardingStore.getState().patch({
       book: { title: book.title, author: book.author, pages: pageCount ?? 0, cover: book.coverUrl, publisher: book.publisher },
     });
-    // Fermer d'abord le sheet, sinon l'écran poussé s'ouvrirait À L'INTÉRIEUR
-    router.back();
+    // Fermer d'abord le(s) sheet(s), sinon l'écran poussé s'ouvrirait À L'INTÉRIEUR
+    closeSheets();
     router.push(pageCount ? '/onboarding/page' : next);
-  }, [book, pageCount, inLibrary, reading?.state, setActiveChallenge, router]);
+  }, [book, pageCount, inLibrary, reading?.state, setActiveChallenge, router, closeSheets]);
 
   const handleDone = useCallback(async () => {
     if (!book || !userId || isRead || marking) return;
@@ -227,11 +257,18 @@ export default function ExploreBookRoute() {
     !inLibrary || reading?.state === 'unread' ? 'Commencer' : reading?.state === 'reading' ? 'Reprendre' : 'Voir';
 
   return (
-    <SheetPage title="">
-      {/* Comme la carte du livre de l'accueil : la couverture à gauche, le titre,
-          l'autrice et les repères à droite (Lea : la couverture ne doit pas
-          voler la vedette au titre) */}
+    <SheetPage
+      title=""
+      onBack={from ? () => router.back() : undefined}
+      actions={<GlassButton icon={ShareIcon} onPress={handleShare} accessibilityLabel="Partager" />}
+    >
+      {/* Comme la carte du livre de l'accueil : la couverture à gauche ; à
+          droite le titre, l'autrice, les repères, puis les trois actions.
+          Remontée à hauteur du bouton partager, qui est seul dans l'en-tête */}
       <View style={styles.hero}>
+        {/* Le lavis, rendu AVANT la carte : le titre passe par-dessus, le
+            bouton en verre de l'en-tête aussi. Recalé sur le coin du sheet */}
+        <WatercolorCorner tints={wash} style={styles.wash} />
         <View style={styles.cover}>
           <BookCover coverUrl={book.coverUrl} outlined />
         </View>
@@ -256,36 +293,34 @@ export default function ExploreBookRoute() {
               {year}
             </Text>
           )}
-        </View>
-      </View>
 
-      {/* Quatre places fixes, comme la fiche Contact d'iOS */}
-      <View style={styles.actions}>
-        <Action
-          icon={HeartIcon}
-          label="Envie"
-          selected={isFavorite}
-          fill
-          onPress={() => {
-            feel('tic');
-            toggleFavorite(book);
-          }}
-          accessibilityLabel={isFavorite ? 'Retirer de mes envies' : 'Garder dans mes envies'}
-        />
-        <Action
-          icon={CheckIcon}
-          label="Lu"
-          selected={isRead}
-          onPress={handleDone}
-          accessibilityLabel={isRead ? 'Lu' : 'Je l’ai lu'}
-        />
-        <Action
-          icon={readLabel === 'Commencer' ? PlayIcon : BookOpenIcon}
-          label={readLabel}
-          onPress={handleRead}
-          accessibilityLabel={readLabel === 'Commencer' ? 'Commencer la lecture' : `${readLabel}, sur l’accueil`}
-        />
-        <Action icon={ShareIcon} label="Partager" onPress={handleShare} accessibilityLabel="Partager" />
+          <View style={styles.actions}>
+            <Action
+              icon={HeartIcon}
+              label="Envie"
+              selected={isFavorite}
+              fill
+              onPress={() => {
+                feel('tic');
+                toggleFavorite(book);
+              }}
+              accessibilityLabel={isFavorite ? 'Retirer de mes envies' : 'Garder dans mes envies'}
+            />
+            <Action
+              icon={CheckIcon}
+              label="Lu"
+              selected={isRead}
+              onPress={handleDone}
+              accessibilityLabel={isRead ? 'Lu' : 'Je l’ai lu'}
+            />
+            <Action
+              icon={readLabel === 'Commencer' ? PlayIcon : BookOpenIcon}
+              label={readLabel}
+              onPress={handleRead}
+              accessibilityLabel={readLabel === 'Commencer' ? 'Commencer la lecture' : `${readLabel}, sur l’accueil`}
+            />
+          </View>
+        </View>
       </View>
 
       {!!summary && (
@@ -362,6 +397,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.lg,
+    // Le haut de la carte au niveau du bouton partager (en-tête : 44 + 12)
+    marginTop: -(ROUND_BUTTON_SIZE + spacing.md),
+  },
+  // Là où le posait l'en-tête : coin haut droit du sheet, au-dessus du bouton
+  wash: {
+    top: -(WATERCOLOR_OVERFLOW_TOP + WASH_ABOVE_HERO),
+    right: -(SHEET_GUTTER + WATERCOLOR_OVERFLOW_RIGHT),
   },
   cover: {
     width: COVER_W,
@@ -375,6 +417,8 @@ const styles = StyleSheet.create({
     fontSize: 22,
     lineHeight: 27,
     color: colors.textPrimary,
+    // Ne passe jamais sous le bouton partager
+    paddingRight: ROUND_BUTTON_SIZE + spacing.sm,
   },
   heroAuthor: {
     fontFamily: fonts.body,
@@ -391,12 +435,12 @@ const styles = StyleSheet.create({
   },
   actions: {
     flexDirection: 'row',
-    marginTop: spacing['2xl'],
+    gap: spacing.lg,
+    marginTop: spacing.lg,
   },
   action: {
-    flex: 1,
     alignItems: 'center',
-    gap: spacing.sm,
+    gap: spacing.xs,
   },
   actionLabel: {
     fontFamily: fonts.bodyMedium,
