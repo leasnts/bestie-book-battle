@@ -130,7 +130,7 @@ function useRollingCounter(target: number, duration = 800, enabled = true): numb
  * % de la personne (rouge pour moi), puis un nœud bombé. À 0 %, pas de nœud :
  * rien n'est encore cousu.
  */
-function PersonThread({ percent, me }: { percent: number; me: boolean }) {
+export function PersonThread({ percent, me }: { percent: number; me: boolean }) {
   const [width, setWidth] = useState(0);
   // Le fil s'arrête à un rayon de nœud des bords : le nœud n'est jamais coupé
   const inner = Math.max(0, width - KNOT_R * 2);
@@ -305,7 +305,7 @@ const SIZES: Record<RowSize, { avatar: number; name: number; score: number; gap:
   wide: { avatar: 32, name: 16, score: 18, gap: spacing.md, lineGap: 8 },
 };
 /** Arrondi des avatars, en part du côté (carré arrondi, comme partout) */
-const AVATAR_ROUND = 0.32;
+export const AVATAR_ROUND = 0.32;
 /** Hauteur du dessin du fil : assez pour le nœud */
 const THREAD_HEIGHT = KNOT_R * 2 + 2;
 

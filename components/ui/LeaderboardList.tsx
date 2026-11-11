@@ -7,11 +7,12 @@
  * présente, et c'est iOS qui dessine le sheet lui-même (poignée, paliers de
  * hauteur, glissement pour fermer). Ce composant ne s'occupe que du contenu.
  *
- * Une ligne :
- * [rang] [avatar + couronne si leader] [prénom + streak] [barre] [score]
+ * Même langage que la case Progression de l'accueil (LeaderboardSection) :
+ * [avatar] [prénom + série … %], et dessous le fil de la personne, encré
+ * jusqu'à son % et fini par un nœud. Moi en rouge (prénom, %, fil).
  *
- * Ta ligne est surlignée pour que tu te repères d'un coup d'œil, même au milieu
- * de vingt participants.
+ * Pas de couronne, pas de numéro de rang (Lea, 2026-11-11 : rien de « compet ») :
+ * l'ordre suffit.
  */
 
 import { Image } from 'expo-image';
@@ -28,10 +29,11 @@ import {
   rankParticipants,
   RankedParticipant,
 } from '../../utils/leaderboard';
-import { borderRadius, colors, fonts, inkAlpha, lowki, motion, spacing } from '../../utils/constants';
+import { colors, fonts, lowki, motion, spacing } from '../../utils/constants';
 import { ChevronDownIcon, ChevronUpIcon } from 'lucide-react-native';
 import { AccentUnit } from './AccentWord';
 import { STREAK_FLAME } from './StreakPill';
+import { AVATAR_ROUND, PersonThread } from './LeaderboardSection';
 
 // ─── Props ─────────────────────────────────────────────────────────
 
@@ -47,7 +49,6 @@ interface LeaderboardListProps {
 }
 
 const DEFAULT_AVATAR = require('../../assets/images/profile_picture_default.png');
-const CROWN_IMAGE = require('../../assets/images/crown.png');
 
 const resolveAvatar = (url: string | null) => {
   if (!url) return DEFAULT_AVATAR;
@@ -69,12 +70,8 @@ function LeaderboardRow({
   /** Absent : la ligne ne s'ouvre pas */
   onPress?: () => void;
 }) {
-  const { isMe, isLeader, rank } = participant;
+  const { isMe, rank } = participant;
   const score = formatScore(participant);
-
-  // La barre est dessinée pleine largeur puis compressée horizontalement :
-  // on anime `transform`, jamais `width`, donc aucun recalcul de layout.
-  const fillScale = Math.max(0, Math.min(1, participant.percentage / 100));
 
   // Cascade d'apparition, plafonnée pour que le 20e participant n'attende pas
   // une seconde avant de s'afficher.
@@ -93,62 +90,48 @@ function LeaderboardRow({
       <Pressable
         onPress={onPress}
         disabled={!onPress}
-        style={({ pressed }) => [styles.row, isMe && styles.rowMe, pressed && styles.rowPressed]}
+        style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
         accessibilityRole={onPress ? 'button' : undefined}
         accessibilityLabel={`${participant.name}, rang ${rank}, ${score} pour cent`}
         accessibilityHint={onPress ? 'Ouvre son journal de lecture' : undefined}
       >
-      {/* ── Rang ── */}
-      <Text style={[styles.rank, isMe && styles.rankMe]}>
-        <AccentUnit size={styles.rank.fontSize}>{String(rank)}</AccentUnit>
-      </Text>
-
-      {/* ── Avatar (+ couronne pour le leader) ── */}
-      <View style={styles.avatarWrapper}>
         <Image
           source={resolveAvatar(participant.photoUrl)}
           style={styles.avatar}
           contentFit="cover"
         />
-        {isLeader && (
-          <View style={styles.crownOverAvatar}>
-            <Image source={CROWN_IMAGE} style={styles.crownImage} contentFit="contain" />
+
+        <View style={styles.rowBody}>
+          <View style={styles.rowTop}>
+            <Text style={[styles.name, isMe && styles.nameMe]} numberOfLines={1}>
+              {participant.name}
+            </Text>
+
+            {participant.streak > 0 && (
+              <View
+                style={[styles.streak, participant.streakAtRisk && styles.streakAtRisk]}
+                accessibilityLabel={`Série de ${participant.streak} jour${participant.streak > 1 ? 's' : ''}`}
+              >
+                <Image source={STREAK_FLAME} style={styles.streakFlame} />
+                <Text style={styles.streakText} maxFontSizeMultiplier={1.3}>{participant.streak}</Text>
+              </View>
+            )}
+
+            <View style={styles.spacer} />
+
+            <Text style={[styles.score, isMe && styles.scoreMe]}>
+              {score}
+              <AccentUnit
+                size={Math.round(styles.score.fontSize * 0.72)}
+                color={isMe ? colors.accent : colors.textPrimary}
+              >
+                %
+              </AccentUnit>
+            </Text>
           </View>
-        )}
-      </View>
 
-      {/* ── Prénom, streak, score, barre ── */}
-      <View style={styles.rowBody}>
-        <View style={styles.rowTop}>
-          <Text style={[styles.name, isMe && styles.nameMe]} numberOfLines={1}>
-            {participant.name}
-          </Text>
-
-          {participant.streak > 0 && (
-            <View
-              style={[styles.streak, participant.streakAtRisk && styles.streakAtRisk]}
-              accessibilityLabel={`Série de ${participant.streak} jour${participant.streak > 1 ? 's' : ''}`}
-            >
-              <Image source={STREAK_FLAME} style={styles.streakFlame} />
-              <Text style={styles.streakText} maxFontSizeMultiplier={1.3}>{participant.streak}</Text>
-            </View>
-          )}
-
-          <View style={styles.spacer} />
-
-          <Text style={styles.score}>{score}<AccentUnit size={styles.score.fontSize} color={styles.score.color}>%</AccentUnit></Text>
+          <PersonThread percent={participant.percentage} me={isMe} />
         </View>
-
-        <View style={styles.progressTrack}>
-          <View
-            style={[
-              styles.progressFill,
-              isMe && styles.progressFillMe,
-              { transform: [{ scaleX: fillScale }] },
-            ]}
-          />
-        </View>
-      </View>
       </Pressable>
     </Animated.View>
   );
@@ -211,9 +194,6 @@ export default function LeaderboardList({
       )}
       {...sheet.scrollProps}
       ItemSeparatorComponent={Separator}
-      // La couronne du premier dépasse de sa ligne : de la place sous l'en-tête
-      // (collant, il passe par-dessus la liste et la couperait)
-      ListHeaderComponentStyle={styles.listHeader}
       ListHeaderComponent={
         <SheetPageHeader
           title="Progression"
@@ -260,8 +240,8 @@ function Separator() {
 
 // ─── Styles ────────────────────────────────────────────────────────
 
-const AVATAR_SIZE = 36;
-const RANK_WIDTH = 22;
+// Mêmes mesures que la case de l'accueil en large (LeaderboardSection › SIZES.wide)
+const AVATAR_SIZE = 32;
 
 const styles = StyleSheet.create({
   // « 5 membres ⌄ » : touchable pour inverser l'ordre
@@ -270,10 +250,6 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
     gap: spacing.xs,
     alignSelf: 'flex-start',
-  },
-  // La couronne dépasse de 8 pt au-dessus de la ligne du premier
-  listHeader: {
-    marginBottom: spacing.sm,
   },
   // Un peu d'air entre les lignes
   separator: {
@@ -285,63 +261,24 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.md,
-    paddingVertical: spacing.md,
-    // Le contenu (le rang d'abord) ferré sur la marge du sheet, comme le titre ;
-    // seul le fond de ma ligne déborde dans la marge
-    paddingHorizontal: spacing.sm,
-    marginHorizontal: -spacing.sm,
-    borderRadius: borderRadius.md,
+    paddingVertical: spacing.sm,
   },
-  /** Ma ligne : fond teinté pour la repérer d'un coup d'œil */
   rowPressed: {
     opacity: 0.6,
   },
-  rowMe: {
-    backgroundColor: inkAlpha(0.06),
-  },
 
-  // ═══ RANG ═══
-  rank: {
-    width: RANK_WIDTH,
-    fontFamily: fonts.display,
-    fontSize: 15,
-    color: colors.textPlaceholder,
-    textAlign: 'left',
-  },
-  rankMe: {
-    color: colors.textPrimary,
-  },
-
-  // ═══ AVATAR ═══
-  avatarWrapper: {
-    position: 'relative',
-    width: AVATAR_SIZE,
-    height: AVATAR_SIZE,
-  },
+  // Pas de contour : la photo seule, carré arrondi comme sur l'accueil
   avatar: {
     width: AVATAR_SIZE,
     height: AVATAR_SIZE,
-    borderRadius: borderRadius.md,
-    borderWidth: 1,
-    borderColor: colors.alphaBlack10,
-  },
-  crownOverAvatar: {
-    position: 'absolute',
-    top: -20,
-    left: -2,
-    right: -2,
-    zIndex: 10,
-    alignItems: 'center',
-  },
-  crownImage: {
-    width: 28,
-    height: 28,
+    borderRadius: AVATAR_SIZE * AVATAR_ROUND,
   },
 
   // ═══ CORPS DE LIGNE ═══
   rowBody: {
     flex: 1,
-    gap: spacing.sm,
+    minWidth: 0,
+    gap: 8,
   },
   rowTop: {
     flexDirection: 'row',
@@ -359,33 +296,17 @@ const styles = StyleSheet.create({
   },
   nameMe: {
     fontFamily: fonts.bodyExtraBold,
-    color: colors.textPrimary,
+    color: colors.accent,
   },
   score: {
     fontFamily: fonts.display,
     fontSize: 18,
     color: colors.textPrimary,
     textAlign: 'right',
+    fontVariant: ['tabular-nums'],
   },
-
-  // ═══ BARRE DE PROGRESSION ═══
-  progressTrack: {
-    height: 6,
-    borderRadius: borderRadius.full,
-    backgroundColor: inkAlpha(0.08),
-    overflow: 'hidden',
-  },
-  progressFill: {
-    height: '100%',
-    width: '100%',
-    borderRadius: borderRadius.full,
-    backgroundColor: colors.textPlaceholder,
-    // Compression depuis la gauche, pas depuis le centre
-    transformOrigin: 'left',
-  },
-  // Ma barre : l'accent, comme toute progression (6 pt : un filet, donc uni)
-  progressFillMe: {
-    backgroundColor: colors.accent,
+  scoreMe: {
+    color: colors.accent,
   },
 
   // ═══ SÉRIE ═══
