@@ -12,7 +12,7 @@
  */
 
 import { feel } from '../utils/feel';
-import { colors, fonts } from '../utils/constants';
+import { colors, fonts, spacing } from '../utils/constants';
 import Bevel from './ui/Bevel';
 import {
   CheckIcon,
@@ -76,6 +76,12 @@ interface Button3DProps {
    * posée dans un cadre (« Inviter » de la bannière du profil).
    */
   size?: 'default' | 'compact' | 'small';
+  /**
+   * `stacked` : l'icône AU-DESSUS du texte, 72 pt de haut. Pour une rangée de
+   * boutons qui se partagent la largeur (la fiche d'un livre d'Explorer) :
+   * « Commencer » ne tient pas à côté de son icône dans un tiers d'écran.
+   */
+  stacked?: boolean;
   style?: ViewStyle;
   textStyle?: TextStyle;
   /**
@@ -104,6 +110,7 @@ export default function Button3D({
   iconPosition = 'left',
   iconOnly = false,
   size = 'default',
+  stacked = false,
   style,
   textStyle,
   accessibilityLabel,
@@ -166,6 +173,7 @@ export default function Button3D({
           styles.button,
           isCompact && styles.buttonCompact,
           isSmall && styles.buttonSmall,
+          stacked && styles.buttonStacked,
           isPrimary ? styles.primaryFill : styles.secondaryFill,
         ]}>
 
@@ -173,7 +181,7 @@ export default function Button3D({
           <Bevel tone={isPrimary ? 'ink' : 'paper'} radius={isCompact || isSmall ? 12 : 24} pressed={pressed} />
 
           {/* ====== CONTENU ====== */}
-          <View style={[styles.content, isCompact && styles.contentCompact, isSmall && styles.contentSmall]}>
+          <View style={[styles.content, isCompact && styles.contentCompact, isSmall && styles.contentSmall, stacked && styles.contentStacked]}>
             {loading ? (
               <ActivityIndicator color={isPrimary ? colors.white : colors.textTertiary} size="small" />
             ) : iconOnly && leadingIcon ? (
@@ -181,13 +189,13 @@ export default function Button3D({
             ) : (
               <>
                 {leadingIcon && iconPosition === 'left' && (
-                  <View style={styles.iconLeft}>{leadingIcon}</View>
+                  <View style={stacked ? undefined : styles.iconLeft}>{leadingIcon}</View>
                 )}
                 {showText && (
                   <Text style={[
                     styles.text,
                     isPrimary ? styles.primaryText : styles.secondaryText,
-                    isSmall && styles.textSmall,
+                    (isSmall || stacked) && styles.textSmall,
                     textStyle,
                   ]}>
                     {children}
@@ -275,6 +283,14 @@ const styles = StyleSheet.create({
   },
   contentSmall: {
     paddingHorizontal: 16,
+  },
+  buttonStacked: {
+    height: 72,
+  },
+  contentStacked: {
+    flexDirection: 'column',
+    gap: 4,
+    paddingHorizontal: spacing.sm,
   },
   textSmall: {
     fontSize: 14,

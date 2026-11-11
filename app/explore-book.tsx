@@ -6,8 +6,9 @@
  *    │ ┌────┐ Fourth Wing      ░(↗)▒ │  ← partager, sur un lavis de la couverture
  *    │ │cov │ Rebecca Yarros         │
  *    │ │    │ 518 p. · 2023          │
- *    │ │    │ (♥)  (✓)  (▶)          │
- *    │ └────┘ Envie Lu Commencer     │
+ *    │ └────┘                         │
+ *    │ [ ♥    ] [ ✓    ] [▶ (plein) ]│  ← trois gros boutons, icône sur le mot
+ *    │ [Envie ] [ Lu   ] [Commencer ]│
  *    │ Passer toutes les épreuves…⌄  │  ← résumé, 9 lignes, toucher pour déplier
  *    │ (◉) Rebecca Yarros         ›  │
  *    │     29 livres                 │
@@ -30,9 +31,10 @@
  */
 
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { BookOpenIcon, CheckIcon, ChevronRightIcon, HeartIcon, PlayIcon, ShareIcon, type LucideIcon } from 'lucide-react-native';
+import { BookOpenIcon, CheckIcon, ChevronRightIcon, HeartIcon, PlayIcon, ShareIcon } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Share, StyleSheet, Text, View } from 'react-native';
+import Button3D from '../components/Button3D';
 import { AccentUnit } from '../components/ui/AccentWord';
 import BookCover, { COVER_RATIO } from '../components/ui/BookCover';
 import WatercolorCorner, { WATERCOLOR_OVERFLOW_RIGHT, WATERCOLOR_OVERFLOW_TOP } from '../components/ui/WatercolorCorner';
@@ -294,33 +296,49 @@ export default function ExploreBookRoute() {
             </Text>
           )}
 
-          <View style={styles.actions}>
-            <Action
-              icon={HeartIcon}
-              label="Envie"
-              selected={isFavorite}
-              fill
-              onPress={() => {
-                feel('tic');
-                toggleFavorite(book);
-              }}
-              accessibilityLabel={isFavorite ? 'Retirer de mes envies' : 'Garder dans mes envies'}
-            />
-            <Action
-              icon={CheckIcon}
-              label="Lu"
-              selected={isRead}
-              onPress={handleDone}
-              accessibilityLabel={isRead ? 'Lu' : 'Je l’ai lu'}
-            />
-            <Action
-              icon={readLabel === 'Commencer' ? PlayIcon : BookOpenIcon}
-              label={readLabel}
-              onPress={handleRead}
-              accessibilityLabel={readLabel === 'Commencer' ? 'Commencer la lecture' : `${readLabel}, sur l’accueil`}
-            />
-          </View>
         </View>
+      </View>
+
+      {/* Trois gros boutons qui se partagent la largeur, icône et mot dedans ;
+          l'action de lecture en chocolat, la seule pleine */}
+      <View style={styles.actions}>
+        <Button3D
+          variant="secondary"
+          stacked
+          iconComponent={
+            <HeartIcon
+              size={22}
+              color={isFavorite ? colors.accent : colors.textTertiary}
+              fill={isFavorite ? colors.accent : 'transparent'}
+              strokeWidth={2}
+            />
+          }
+          onPress={() => toggleFavorite(book)}
+          accessibilityLabel={isFavorite ? 'Retirer de mes envies' : 'Garder dans mes envies'}
+          style={styles.action}
+        >
+          Envie
+        </Button3D>
+        <Button3D
+          variant="secondary"
+          stacked
+          iconComponent={<CheckIcon size={22} color={isRead ? colors.accent : colors.textTertiary} strokeWidth={2.25} />}
+          onPress={handleDone}
+          accessibilityLabel={isRead ? 'Lu' : 'Je l’ai lu'}
+          style={styles.action}
+        >
+          Lu
+        </Button3D>
+        <Button3D
+          variant="primary"
+          stacked
+          icon={readLabel === 'Commencer' ? PlayIcon : BookOpenIcon}
+          onPress={handleRead}
+          accessibilityLabel={readLabel === 'Commencer' ? 'Commencer la lecture' : `${readLabel}, sur l’accueil`}
+          style={styles.action}
+        >
+          {readLabel}
+        </Button3D>
       </View>
 
       {!!summary && (
@@ -357,38 +375,6 @@ export default function ExploreBookRoute() {
         </PressableScale>
       )}
     </SheetPage>
-  );
-}
-
-/** Un rond en verre et son mot dessous */
-function Action({
-  icon,
-  label,
-  onPress,
-  accessibilityLabel,
-  selected = false,
-  fill = false,
-}: {
-  icon: LucideIcon;
-  label: string;
-  onPress: () => void;
-  accessibilityLabel: string;
-  selected?: boolean;
-  fill?: boolean;
-}) {
-  return (
-    <View style={styles.action}>
-      <GlassButton
-        icon={icon}
-        selected={selected}
-        fillWhenSelected={fill}
-        onPress={onPress}
-        accessibilityLabel={accessibilityLabel}
-      />
-      <Text style={[styles.actionLabel, selected && styles.actionLabelOn]} importantForAccessibility="no">
-        {label}
-      </Text>
-    </View>
   );
 }
 
@@ -435,20 +421,11 @@ const styles = StyleSheet.create({
   },
   actions: {
     flexDirection: 'row',
-    gap: spacing.lg,
-    marginTop: spacing.lg,
+    gap: spacing.sm,
+    marginTop: spacing['2xl'],
   },
   action: {
-    alignItems: 'center',
-    gap: spacing.xs,
-  },
-  actionLabel: {
-    fontFamily: fonts.bodyMedium,
-    fontSize: 13,
-    color: colors.textSecondary,
-  },
-  actionLabelOn: {
-    color: colors.accent,
+    flex: 1,
   },
   summaryBox: {
     marginTop: spacing['2xl'],

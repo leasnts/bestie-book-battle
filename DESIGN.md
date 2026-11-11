@@ -927,11 +927,12 @@ Pendant une recherche : des silhouettes de lignes, jamais de spinner.
 La fiche d'un livre (`/explore-book`) est une **fiche d'information, sans gros
 bouton** (Lea, 2026-11-11). En tête, **comme la carte du livre de l'accueil** :
 la couverture à gauche (84 pt de large, pas le sujet) ; à droite le titre,
-l'autrice, `518 p. · 2023`, puis **trois actions** en `GlassButton`, un mot
-dessous : **Envie** ♥ (rouge et plein si gardé), **Lu** ✓ (rouge si lu ; sinon
+l'autrice, `518 p. · 2023`. Dessous, **trois gros boutons** `Button3D`
+`stacked` (icône sur le mot, 72 pt) qui se partagent la largeur : **Envie** ♥ (rouge et plein si gardé), **Lu** ✓ (rouge si lu ; sinon
 le range dans « Lus » sans changer le livre de l'accueil), **Commencer** ▶
 (création ; PAL → accueil + date de fin), **Reprendre** s'il est en cours,
-**Voir** s'il est lu (« Ouvrir » ne disait pas ce qui se passe). **Partager** ↗
+**Voir** s'il est lu (« Ouvrir » ne disait pas ce qui se passe) — celui-là en
+chocolat, le seul plein. **Partager** ↗
 seul en haut à droite, sur le lavis aux couleurs de la couverture (rendu sous
 la carte : le titre passe par-dessus). Dessous, le **résumé** de la boutique en
 9 lignes, à toucher pour le déplier ; enfin la ligne de l'autrice (photo ou
