@@ -364,11 +364,10 @@ const styles = StyleSheet.create({
   scoreMe: {
     color: colors.accent,
   },
+  // Le fil tient dans la ligne : à 100 %, le nœud s'arrête au bord du %, jamais
+  // coupé par le cadre
   thread: {
     height: THREAD_HEIGHT,
-    // Le fil déborde d'un rayon de nœud à gauche : il démarre sous le prénom
-    marginLeft: -KNOT_R,
-    marginRight: -KNOT_R,
   },
   gap: {
     flexDirection: 'row',
