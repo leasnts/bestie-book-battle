@@ -7,8 +7,8 @@
  *    │ │cov │ Rebecca Yarros         │
  *    │ │    │ 518 p. · 2023          │
  *    │ └────┘                         │
- *    │ [ ♥    ] [ ✓    ] [▶ (plein) ]│  ← trois gros boutons, icône sur le mot
- *    │ [Envie ] [ Lu   ] [Commencer ]│
+ *    │ [  ♥   ] [   ▶    ] [  ✓   ] │  ← trois gros boutons, icône sur le mot ;
+ *    │ [Envie ] [Commencer] [  Lu  ] │    Envie et Lu en rouge une fois activés
  *    │ Passer toutes les épreuves…⌄  │  ← résumé, 9 lignes, toucher pour déplier
  *    │ (◉) Rebecca Yarros         ›  │
  *    │     29 livres                 │
@@ -18,7 +18,7 @@
  * - **Envie** ♥ : mes envies, première étagère de l'onglet (rouge si gardé).
  * - **Lu** ✓ : pas dans ma bibliothèque → l'y range directement dans « Lus »
  *   (sans changer le livre de l'accueil) ; commencé → ma page passe à la
- *   dernière ; déjà lu → rouge, rien à faire.
+ *   dernière ; déjà lu → rouge, rien à faire. Un livre lu quitte mes envies.
  * - **Commencer** ▶ : pas dans ma bibliothèque → le parcours de création, livre
  *   déjà rempli ; dans ma PAL (« Non lus ») → il passe sur l'accueil et on
  *   choisit sa date de fin. En cours → **Reprendre**, lu → **Voir** : il
@@ -224,6 +224,9 @@ export default function ExploreBookRoute() {
         store.setActiveChallenge(previous);
       }
       await store.loadMyProgress(userId);
+      // Lu, ce n'est plus une envie : il change d'état, il quitte l'étagère
+      const explore = useExploreStore.getState();
+      if (explore.favorites.some((f) => f.id === book.id)) explore.toggleFavorite(book);
       feel('fini');
     } catch (error) {
       oops('Pas pu le marquer lu', error, { retry: handleDone });
@@ -299,22 +302,24 @@ export default function ExploreBookRoute() {
         </View>
       </View>
 
-      {/* Trois gros boutons qui se partagent la largeur, icône et mot dedans ;
-          l'action de lecture en chocolat, la seule pleine */}
+      {/* Trois gros boutons qui se partagent la largeur, icône et mot dedans,
+          tous en papier ; la lecture au centre. Envie et Lu sont des bascules :
+          activés, ils passent en rouge (on voit l'état d'un coup d'œil) */}
       <View style={styles.actions}>
         <Button3D
-          variant="secondary"
+          variant={isFavorite ? 'accent' : 'secondary'}
           stacked
           iconComponent={
             <HeartIcon
               size={22}
-              color={isFavorite ? colors.accent : colors.textTertiary}
-              fill={isFavorite ? colors.accent : 'transparent'}
+              color={isFavorite ? colors.white : colors.textTertiary}
+              fill={isFavorite ? colors.white : 'transparent'}
               strokeWidth={2}
             />
           }
           onPress={() => toggleFavorite(book)}
-          accessibilityLabel={isFavorite ? 'Retirer de mes envies' : 'Garder dans mes envies'}
+          accessibilityLabel="Envie"
+          selected={isFavorite}
           style={styles.action}
         >
           Envie
@@ -322,22 +327,23 @@ export default function ExploreBookRoute() {
         <Button3D
           variant="secondary"
           stacked
-          iconComponent={<CheckIcon size={22} color={isRead ? colors.accent : colors.textTertiary} strokeWidth={2.25} />}
-          onPress={handleDone}
-          accessibilityLabel={isRead ? 'Lu' : 'Je l’ai lu'}
-          style={styles.action}
-        >
-          Lu
-        </Button3D>
-        <Button3D
-          variant="primary"
-          stacked
           icon={readLabel === 'Commencer' ? PlayIcon : BookOpenIcon}
           onPress={handleRead}
           accessibilityLabel={readLabel === 'Commencer' ? 'Commencer la lecture' : `${readLabel}, sur l’accueil`}
           style={styles.action}
         >
           {readLabel}
+        </Button3D>
+        <Button3D
+          variant={isRead ? 'accent' : 'secondary'}
+          stacked
+          iconComponent={<CheckIcon size={22} color={isRead ? colors.white : colors.textTertiary} strokeWidth={2.5} />}
+          onPress={handleDone}
+          accessibilityLabel="Lu"
+          selected={isRead}
+          style={styles.action}
+        >
+          Lu
         </Button3D>
       </View>
 

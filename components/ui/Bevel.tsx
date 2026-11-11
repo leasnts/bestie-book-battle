@@ -5,7 +5,8 @@
  * identiques.
  *
  * - `ink` : le chocolat (Button3D primaire, RoundButton `dark`) ;
- * - `paper` : le papier (Button3D secondaire).
+ * - `paper` : le papier (Button3D secondaire) ;
+ * - `red` : le rouge (Button3D `accent`, un bouton à bascule activé).
  */
 
 import { LinearGradient } from 'expo-linear-gradient';
@@ -14,7 +15,7 @@ import { StyleSheet, View } from 'react-native';
 import { bevel } from '../../utils/constants';
 
 interface BevelProps {
-  tone: 'ink' | 'paper';
+  tone: 'ink' | 'paper' | 'red';
   radius: number;
   /** Appuyé : le liseré s'inverse, la lumière passe en bas */
   pressed?: boolean;

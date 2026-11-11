@@ -61,7 +61,8 @@ const ICON_LABELS = new Map<LucideIcon, string>([
 interface Button3DProps {
   onPress: () => void;
   children?: React.ReactNode;
-  variant?: 'primary' | 'secondary';
+  /** `accent` : le rouge, pour un bouton à bascule activé (♥ gardé, ✓ lu) */
+  variant?: 'primary' | 'secondary' | 'accent';
   disabled?: boolean;
   loading?: boolean;
   /** Icône Lucide (le composant, pas un nom) : icon={ChevronLeftIcon}. Seule banque d'icônes de l'app. */
@@ -82,6 +83,8 @@ interface Button3DProps {
    * « Commencer » ne tient pas à côté de son icône dans un tiers d'écran.
    */
   stacked?: boolean;
+  /** Bouton à bascule : son état, lu par VoiceOver (« sélectionné ») */
+  selected?: boolean;
   style?: ViewStyle;
   textStyle?: TextStyle;
   /**
@@ -111,12 +114,15 @@ export default function Button3D({
   iconOnly = false,
   size = 'default',
   stacked = false,
+  selected,
   style,
   textStyle,
   accessibilityLabel,
   accessibilityHint,
 }: Button3DProps) {
-  const isPrimary = variant === 'primary';
+  const isAccent = variant === 'accent';
+  // Le rouge se lit comme le chocolat : texte et icône crème
+  const isPrimary = variant === 'primary' || isAccent;
   const isCompact = size === 'compact';
   const isSmall = size === 'small';
   const showText = !iconOnly && (children !== undefined && children !== null && children !== '');
@@ -147,7 +153,7 @@ export default function Button3D({
       accessibilityHint={accessibilityHint}
       // Annonce « estompé » quand le bouton est inactif, et « en cours » pendant
       // une action asynchrone — sinon rien ne signale que l'appui n'a rien fait.
-      accessibilityState={{ disabled: disabled || loading, busy: loading }}
+      accessibilityState={{ disabled: disabled || loading, busy: loading, selected }}
       /*
         Le format compact mesure 40 pt, valeur venue du Figma, alors que la HIG
         demande 44 pt minimum. On garde les 40 pt visuels — les changer
@@ -178,7 +184,7 @@ export default function Button3D({
         ]}>
 
           {/* Cerne, liseré et fond en dégradé : chocolat ou papier (Bevel) */}
-          <Bevel tone={isPrimary ? 'ink' : 'paper'} radius={isCompact || isSmall ? 12 : 24} pressed={pressed} />
+          <Bevel tone={isAccent ? 'red' : isPrimary ? 'ink' : 'paper'} radius={isCompact || isSmall ? 12 : 24} pressed={pressed} />
 
           {/* ====== CONTENU ====== */}
           <View style={[styles.content, isCompact && styles.contentCompact, isSmall && styles.contentSmall, stacked && styles.contentStacked]}>
