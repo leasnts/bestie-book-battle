@@ -207,7 +207,9 @@ export function SheetPageHeader({
     <SheetStickyHeader scrolled={scrolled} gutter={SHEET_GUTTER}>
       {background}
       <View style={styles.header}>
-        {/* Retour, titre et actions sur une ligne */}
+        {/* Retour, titre et actions sur une ligne ; sans titre (la fiche d'un
+            livre d'Explorer porte le sien dans sa carte), rien que le décor */}
+        {(!!title || onBack || actions) && (
         <View style={styles.headerRow}>
           {onBack && (
             <GlassButton icon={ChevronLeftIcon} onPress={onBack} accessibilityLabel="Retour" />
@@ -241,6 +243,7 @@ export function SheetPageHeader({
           </View>
           {actions && <View style={styles.actions}>{actions}</View>}
         </View>
+        )}
         {/* Le sous-titre à la ligne, sous le retour, jamais à côté */}
         {typeof subtitle === 'string'
           ? !!subtitle && <SheetSubtitle>{subtitle}</SheetSubtitle>

@@ -2,12 +2,10 @@
  * Route /explore-book — la fiche d'un livre de l'onglet Explorer, en sheet natif.
  * Une fiche d'information : les actions sont là, discrètes, pas un gros bouton.
  *
- *    ┌──────────────────────── ░▒▒░──┐
- *    │ Fourth Wing             ░▒▒░  │  ← lavis aux couleurs de la couverture
- *    │ ┌────────┐                    │
- *    │ │ cover  │  518 p.            │
- *    │ │        │  2023              │
- *    │ └────────┘                    │
+ *    ┌───────────────────────────────┐
+ *    │ ┌────┐ Fourth Wing            │  ← comme la carte du livre de l'accueil
+ *    │ │cov │ Rebecca Yarros         │
+ *    │ └────┘ 518 p. · 2023          │
  *    │  (♥)    (✓)    (▶)    (↗)     │  ← rangée d'actions, comme la fiche Contact
  *    │ Envie    Lu    Lire  Partager │
  *    │ Passer toutes les épreuves…⌄  │  ← résumé, 4 lignes, toucher pour déplier
@@ -40,7 +38,6 @@ import { AuthorAvatar, type ExploreAuthor } from '../components/ui/ExploreAuthor
 import GlassButton from '../components/ui/GlassButton';
 import PressableScale from '../components/ui/PressableScale';
 import SheetPage from '../components/ui/SheetPage';
-import WatercolorCorner from '../components/ui/WatercolorCorner';
 import authorsCatalog from '../constants/exploreAuthors.json';
 import { fetchAuthorBooks, fetchEditions, fetchSummary } from '../services/bookApi';
 import { updateUserProgress } from '../services/supabase/database';
@@ -50,18 +47,16 @@ import { useExploreStore } from '../stores/exploreStore';
 import { useOnboardingStore } from '../stores/onboardingStore';
 import { useProjectStore } from '../stores/projectStore';
 import { colors, fonts, spacing } from '../utils/constants';
-import { extractCoverPalette } from '../utils/coverPalette';
 import { feel } from '../utils/feel';
 import { readingOf } from '../utils/library';
 import { oops } from '../utils/notice';
 import { compactText } from '../utils/normalizeText';
 import { startAdding } from '../utils/onboardingFlow';
-import { coverWash, NEUTRAL_WASH, type WashTints } from '../utils/watercolor';
 
-/** La couverture est le sujet de la fiche : grande, comme posée sur la table */
-const COVER_H = 216;
+/** La couverture de la carte : un peu plus grande que celle de l'accueil (54), pas le sujet */
+const COVER_W = 84;
 const AUTHOR_AVATAR = 44;
-const PAGES_SIZE = 40;
+const FACTS_SIZE = 14;
 /** Le résumé replié : assez pour donner envie, pas une page de texte */
 const SUMMARY_LINES = 4;
 
@@ -94,22 +89,6 @@ export default function ExploreBookRoute() {
     };
   }, [book]);
   const pageCount = book?.pageCount ?? editionPages;
-
-  // Le lavis du coin prend les couleurs de la couverture : l'écran parle de CE livre
-  const [wash, setWash] = useState<WashTints>(NEUTRAL_WASH);
-  useEffect(() => {
-    setWash(NEUTRAL_WASH);
-    if (!book?.coverUrl) return;
-    let cancelled = false;
-    extractCoverPalette(book.coverUrl)
-      .then((palette) => {
-        if (!cancelled) setWash(coverWash(palette));
-      })
-      .catch(() => {});
-    return () => {
-      cancelled = true;
-    };
-  }, [book?.coverUrl]);
 
   // La première autrice : sa photo si elle est dans les auteur·ices d'Explorer
   const author = useMemo<ExploreAuthor | null>(() => {
@@ -244,19 +223,35 @@ export default function ExploreBookRoute() {
   const opens = !!inLibrary && reading?.state !== 'unread';
 
   return (
-    <SheetPage title={book.title} titleLines={2} headerBackground={<WatercolorCorner tints={wash} />}>
+    <SheetPage title="">
+      {/* Comme la carte du livre de l'accueil : la couverture à gauche, le titre,
+          l'autrice et les repères à droite (Lea : la couverture ne doit pas
+          voler la vedette au titre) */}
       <View style={styles.hero}>
         <View style={styles.cover}>
           <BookCover coverUrl={book.coverUrl} outlined />
         </View>
-        <View style={styles.facts}>
-          {!!pageCount && (
-            <Text style={styles.pages} accessibilityLabel={`${pageCount} pages`}>
-              {pageCount}
-              <AccentUnit size={PAGES_SIZE * 0.55} color={colors.textPrimary}>{' p.'}</AccentUnit>
+        <View style={styles.heroTexts}>
+          <Text style={styles.title} numberOfLines={3} accessibilityRole="header">
+            {book.title}
+          </Text>
+          {!!book.author && (
+            <Text style={styles.heroAuthor} numberOfLines={1}>
+              {book.author}
             </Text>
           )}
-          {!!year && <Text style={styles.year}>{year}</Text>}
+          {(!!pageCount || !!year) && (
+            <Text style={styles.facts} accessibilityLabel={[pageCount && `${pageCount} pages`, year].filter(Boolean).join(', ')}>
+              {!!pageCount && (
+                <>
+                  {pageCount}
+                  <AccentUnit size={FACTS_SIZE} color={colors.textSecondary}>{' p.'}</AccentUnit>
+                </>
+              )}
+              {!!pageCount && !!year && '  ·  '}
+              {year}
+            </Text>
+          )}
         </View>
       </View>
 
@@ -358,29 +353,33 @@ function Action({
 const styles = StyleSheet.create({
   hero: {
     flexDirection: 'row',
-    alignItems: 'flex-end',
-    gap: spacing.xl,
+    alignItems: 'center',
+    gap: spacing.lg,
   },
   cover: {
-    width: Math.round(COVER_H * COVER_RATIO),
-    height: COVER_H,
+    width: COVER_W,
+    aspectRatio: COVER_RATIO,
   },
-  facts: {
+  heroTexts: {
     flex: 1,
-    gap: spacing.xs,
-    paddingBottom: spacing.xs,
   },
-  pages: {
+  title: {
     fontFamily: fonts.display,
-    fontSize: PAGES_SIZE,
-    lineHeight: PAGES_SIZE * 1.15,
+    fontSize: 22,
+    lineHeight: 27,
     color: colors.textPrimary,
-    fontVariant: ['tabular-nums'],
   },
-  year: {
-    fontFamily: fonts.bodyMedium,
+  heroAuthor: {
+    fontFamily: fonts.body,
     fontSize: 15,
     color: colors.textTertiary,
+    marginTop: 2,
+  },
+  facts: {
+    fontFamily: fonts.bodySemiBold,
+    fontSize: FACTS_SIZE,
+    color: colors.textSecondary,
+    marginTop: spacing.sm,
     fontVariant: ['tabular-nums'],
   },
   actions: {

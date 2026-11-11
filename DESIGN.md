@@ -925,9 +925,9 @@ choisies à la main et figées dans `constants/exploreCatalog.json`
 Pendant une recherche : des silhouettes de lignes, jamais de spinner.
 
 La fiche d'un livre (`/explore-book`) est une **fiche d'information, sans gros
-bouton** (Lea, 2026-11-11) : le titre en en-tête sur un lavis aux couleurs de la
-couverture ; la **couverture en grand** (216 pt), les pages en gros chiffre
-(`518 p.`, `AccentUnit`) et l'année ; puis une **rangée d'actions comme la fiche
+bouton** (Lea, 2026-11-11) : en tête, **comme la carte du livre de l'accueil**,
+la couverture à gauche (84 pt de large, pas le sujet), le titre, l'autrice et
+`518 p. · 2023` à droite (le sheet n'a pas d'autre titre) ; puis une **rangée d'actions comme la fiche
 Contact d'iOS** — quatre `GlassButton` à places fixes, un mot dessous : **Envie**
 ♥ (rouge et plein si gardé), **Lu** ✓ (rouge si lu ; sinon le range dans « Lus »
 sans changer le livre de l'accueil), **Lire** ▶ (création ; PAL → accueil + date
