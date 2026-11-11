@@ -2,14 +2,14 @@
  * Composant ExploreGenres
  *
  * Les genres de l'onglet Explorer, en une rangée qui défile de côté, avec
- * environ quatre cartes à l'écran (Lea, 2026-10-27), sur le
+ * trois cartes entières et la quatrième bien coupée (Lea, 2026-11-11), sur le
  * même papier aquarelle que l'en-tête du profil (rouge, chocolat, un peu de
  * beurre) et avec le nom en blanc, comme le prénom : le maximum de cohérence
  * (Lea, 2026-10-27). L'aquarelle est UNE bande aussi longue que la rangée
  * (scripts/generate-genre-wash.py) : chaque carte en montre sa tranche, la
  * grille se lit comme une seule peinture découpée. Le nom est petit (11) et
- * plus étroit (Martian Grotesk, pas la version large) pour tenir dans un quart
- * d'écran ; deux noms ont une version courte (`SHORT_LABELS`).
+ * plus étroit (Martian Grotesk, pas la version large) pour tenir dans une
+ * carte ; « Développement perso » garde une version courte (`SHORT_LABELS`).
  *
  *    Genres
  *    ┌───────┐ ┌───────┐ ┌───────┐ ┌────
@@ -37,8 +37,8 @@ import PressableScale from './PressableScale';
 
 const SIDE = spacing.lg;
 const GAP = spacing.sm;
-/** Environ quatre cartes à l'écran : la quatrième dépasse, on devine qu'il y en a d'autres */
-const TILE_W = 92;
+/** Trois cartes entières à l'écran, la quatrième bien coupée : on devine qu'il y en a d'autres (Lea, 2026-11-11) */
+const TILE_W = 110;
 /** Assez haute pour respirer : à 64, la carte faisait étiquette (Lea, 2026-11-11) */
 const TILE_H = 84;
 const RADIUS = borderRadius.md;
@@ -74,7 +74,6 @@ const ILLUSTRATIONS: Record<string, number> = {
 
 /** Les noms trop longs pour une carte en quart de largeur (le titre de la liste garde le nom entier) */
 const SHORT_LABELS: Record<string, string> = {
-  contemporary: 'Contempo',
   'self-help': 'Dév. perso',
 };
 
