@@ -128,13 +128,24 @@ export function KnotGradients() {
 
 /**
  * Le fil en points ronds : chocolat jusqu'à `readUntil`, sable après. Partagé
- * avec la piste du carnet (`NotesTrack`) : un seul fil dans l'app.
+ * avec la piste du carnet (`NotesTrack`) et la case Progression : un seul fil
+ * dans l'app. `readColor` encre la partie lue autrement (le rouge de « moi »).
  */
-export function Seam({ width, readUntil, y = TRACK_HEIGHT / 2 }: { width: number; readUntil: number; y?: number }) {
+export function Seam({
+  width,
+  readUntil,
+  y = TRACK_HEIGHT / 2,
+  readColor = THREAD_READ,
+}: {
+  width: number;
+  readUntil: number;
+  y?: number;
+  readColor?: string;
+}) {
   const stitches = [];
   for (let x = 0; x <= width; x += STITCH_STEP) {
     stitches.push(
-      <Circle key={x} cx={x} cy={y} r={STITCH_R} fill={x < readUntil ? THREAD_READ : THREAD_AHEAD} />,
+      <Circle key={x} cx={x} cy={y} r={STITCH_R} fill={x < readUntil ? readColor : THREAD_AHEAD} />,
     );
   }
   return <>{stitches}</>;

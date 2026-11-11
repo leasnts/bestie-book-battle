@@ -1,50 +1,56 @@
 /**
- * LeaderboardSection — le cadre « Classement » de l'accueil.
+ * LeaderboardSection — la case « Progression » de l'accueil.
  *
- * Troisième question de l'accueil : où je me situe dans le club. Le classement
- * est du contexte, pas une compétition : rangs 1-2-3, puis ma ligne si je suis
- * plus loin. Rien d'autre.
+ * Troisième question de l'accueil : où en est le groupe. Pas de podium ni de
+ * numéro de rang (Lea, 2026-11-10 : rien de « compet ») : l'ordre suit
+ * l'avancée, c'est tout. Chaque ligne porte l'avatar, le prénom, le %, et
+ * dessous un bout du fil de l'app (`Seam`) qui s'encre jusqu'au % de la
+ * personne et finit sur un nœud. Moi en rouge (prénom, %, fil), sans contour
+ * autour des photos.
  *
- * Ce qu'on montre :
- * - moi dans le top 3 → le top 3
- * - moi ailleurs      → le top 3, un trait pointillé, puis MA ligne avec mon
- *   rang réel, alignée sur les mêmes colonnes
+ * Ce qu'on montre : moi et mes voisins, toujours 3 lignes (`selectNeighbours`)
+ * - la personne juste devant, moi, la personne juste derrière
+ * - en tête ou dernière, la fenêtre se cale au bord
+ * - à deux → deux lignes plus grandes, centrées dans le carré
+ * - petit écran (`compact`) → le 1er et moi, avec trois points entre les deux
  *
  * **Toujours en %**, même quand tout le monde lit la même édition : la page
  * n'appartient qu'à soi, seul le pourcentage se compare (DESIGN.md › Pages ou %).
  *
- * Tout le cadre s'ouvre d'un toucher (classement complet). Les lignes ne se
- * touchent plus une par une : deux cibles imbriquées rendaient le geste
- * incertain. La timeline d'une personne s'ouvre depuis le classement complet.
+ * Tout le cadre s'ouvre d'un toucher (classement complet).
  *
- * Gardés de l'ancienne carte : le compteur qui roule quand un score change, et
- * le glissement des lignes quand l'ordre change. Les deux se coupent avec
- * « Réduire les animations ».
+ * Gardés : le compteur qui roule quand un score change, et le glissement des
+ * lignes quand l'ordre change. Les deux se coupent avec « Réduire les animations ».
  */
 
 import { Image } from 'expo-image';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import Svg from 'react-native-svg';
+import Svg, { Circle, Defs, G, RadialGradient, Stop } from 'react-native-svg';
 import Animated, {
   Easing,
   FadeIn,
   LinearTransition,
   useReducedMotion,
 } from 'react-native-reanimated';
-import { colors, creamAlpha, fonts, inkAlpha, motion, spacing } from '../../utils/constants';
+import {
+  colors,
+  fonts,
+  inkAlpha,
+  lowki,
+  motion,
+  spacing,
+} from '../../utils/constants';
 import {
   formatScore,
   LeaderboardParticipant,
-  PODIUM_SLOTS,
-  rankParticipants,
   RankedParticipant,
+  rankParticipants,
+  selectNeighbours,
   selectVisibleRows,
 } from '../../utils/leaderboard';
 import GlassSection from './GlassSection';
-import { Seam } from './GoalTrack';
-import { stitchColor } from './NoteSticker';
-import { StitchLine } from './Stitch';
+import { KNOT_R, Seam } from './GoalTrack';
 import { AccentUnit } from './AccentWord';
 
 // ─── Props ─────────────────────────────────────────────────────────
@@ -118,19 +124,75 @@ function useRollingCounter(target: number, duration = 800, enabled = true): numb
   return display;
 }
 
+// ─── Le fil d'une personne ────────────────────────────────────────
+/**
+ * Le fil de l'app en petit, sur toute la largeur de la ligne : encré jusqu'au
+ * % de la personne (rouge pour moi), puis un nœud bombé. À 0 %, pas de nœud :
+ * rien n'est encore cousu.
+ */
+function PersonThread({ percent, me }: { percent: number; me: boolean }) {
+  const [width, setWidth] = useState(0);
+  // Le fil s'arrête à un rayon de nœud des bords : le nœud n'est jamais coupé
+  const inner = Math.max(0, width - KNOT_R * 2);
+  const until = (inner * Math.min(Math.max(percent, 0), 100)) / 100;
+  const knot = me ? 'url(#progressKnotMe)' : 'url(#progressKnotInk)';
+  return (
+    <View style={styles.thread} onLayout={(e) => setWidth(e.nativeEvent.layout.width)}>
+      {width > 0 && (
+        <Svg width={width} height={THREAD_HEIGHT}>
+          <Defs>
+            <RadialGradient id="progressKnotMe" cx="35%" cy="30%" r="80%">
+              <Stop offset="0" stopColor="#bc6271" />
+              <Stop offset="0.55" stopColor={lowki.red.light} />
+              <Stop offset="1" stopColor={lowki.red.dark} />
+            </RadialGradient>
+            <RadialGradient id="progressKnotInk" cx="35%" cy="30%" r="80%">
+              <Stop offset="0" stopColor="#8a5d51" />
+              <Stop offset="0.55" stopColor={lowki.chocolate.light} />
+              <Stop offset="1" stopColor={lowki.chocolate.dark} />
+            </RadialGradient>
+          </Defs>
+          <G x={KNOT_R}>
+            <Seam
+              width={inner}
+              readUntil={percent > 0 ? until + 0.5 : 0}
+              y={THREAD_HEIGHT / 2}
+              readColor={me ? colors.accent : undefined}
+            />
+            {percent > 0 && <Circle cx={until} cy={THREAD_HEIGHT / 2} r={KNOT_R} fill={knot} />}
+          </G>
+        </Svg>
+      )}
+    </View>
+  );
+}
+
 // ─── Une ligne ────────────────────────────────────────────────────
-/** `[rang] [avatar] [prénom] … [score %]`, sur quatre colonnes fixes */
+/** `[avatar] [prénom … %]`, et dessous le fil de la personne */
 function Row({
   participant,
   animate,
-  square,
+  size,
 }: {
   participant: RankedParticipant;
   animate: boolean;
-  square: boolean;
+  size: RowSize;
 }) {
   const score = formatScore(participant);
   const displayScore = useRollingCounter(score, 800, animate);
+  const s = SIZES[size];
+  const me = participant.isMe;
+
+  const avatar = (
+    <Image
+      source={resolveAvatar(participant.photoUrl)}
+      style={[
+        styles.avatar,
+        { width: s.avatar, height: s.avatar, borderRadius: s.avatar * AVATAR_ROUND },
+      ]}
+      contentFit="cover"
+    />
+  );
 
   return (
     // `layout` anime le glissement quand quelqu'un double quelqu'un d'autre
@@ -145,89 +207,40 @@ function Row({
             )
           : undefined
       }
-      style={[styles.row, square && styles.rowSquare, participant.isMe && styles.rowMe]}
+      style={[styles.row, { gap: s.gap }]}
       accessible
-      accessibilityLabel={`${participant.rank}, ${participant.name}, ${score} pour cent`}
+      accessibilityLabel={`${participant.name}, ${score} pour cent`}
     >
-      <Text style={[styles.rank, square && styles.rankSquare]}>
-        <AccentUnit size={square ? styles.rankSquare.fontSize : styles.rank.fontSize}>{String(participant.rank)}</AccentUnit>
-      </Text>
-      <Image
-        source={resolveAvatar(participant.photoUrl)}
-        style={[styles.avatar, square && styles.avatarSquare]}
-        contentFit="cover"
-      />
-      <Text
-        style={[styles.name, square && styles.nameSquare, participant.isMe && styles.nameMe]}
-        numberOfLines={1}
-      >
-        {participant.name}
-      </Text>
-      <Text style={[styles.score, square && styles.scoreSquare]}>
-        {displayScore}
-        <AccentUnit size={square ? styles.scoreUnitSquare.fontSize : styles.scoreUnit.fontSize} color={styles.score.color}>%</AccentUnit>
-      </Text>
+      {avatar}
+      <View style={[styles.body, { gap: s.lineGap }]}>
+        <View style={styles.line}>
+          <Text
+            style={[styles.name, { fontSize: s.name }, me && styles.nameMe]}
+            numberOfLines={1}
+            maxFontSizeMultiplier={1.2}
+          >
+            {participant.name}
+          </Text>
+          <Text style={[styles.score, { fontSize: s.score }, me && styles.scoreMe]} maxFontSizeMultiplier={1.2}>
+            {displayScore}
+            <AccentUnit size={Math.round(s.score * 0.72)} color={me ? colors.accent : colors.textPrimary}>
+              %
+            </AccentUnit>
+          </Text>
+        </View>
+        <PersonThread percent={participant.percentage} me={me} />
+      </View>
     </Animated.View>
   );
 }
 
-// ─── À deux : face-à-face ─────────────────────────────────────────
-/**
- * Un groupe de deux n'a rien à classer : une liste de deux lignes laissait le
- * carré à moitié vide. À la place, les deux avatars en grand, chacun avec son
- * %, et entre eux un bout de fil cousu. Le plus avancé à droite, comme sur
- * la piste qui avance de gauche à droite.
- */
-function Side({
-  participant,
-  animate,
-  end = false,
-}: {
-  participant: RankedParticipant;
-  animate: boolean;
-  /** Côté droit : tout s'aligne sur le bord droit du cadre */
-  end?: boolean;
-}) {
-  const score = useRollingCounter(formatScore(participant), 800, animate);
+/** Petit écran : trois points entre le 1er et moi, sans dire combien de monde */
+function Gap() {
   return (
-    <View style={[styles.duelSide, end && styles.duelSideEnd]}>
-      <Image
-        source={resolveAvatar(participant.photoUrl)}
-        style={styles.duelAvatar}
-        contentFit="cover"
-      />
-      <Text style={[styles.duelName, participant.isMe && styles.duelNameMe]} numberOfLines={1}>
-        {participant.name}
-      </Text>
-      <Text style={styles.duelScore}>
-        {score}
-        <AccentUnit size={styles.duelScoreUnit.fontSize} color={styles.duelScore.color}>%</AccentUnit>
-      </Text>
-    </View>
-  );
-}
-
-function Duel({ pair, animate }: { pair: RankedParticipant[]; animate: boolean }) {
-  const [first, second] = pair;
-  // Largeur du fil, pour y placer les points
-  const [threadWidth, setThreadWidth] = useState(0);
-  return (
-    <View style={styles.duel}>
-      <View style={styles.duelRow}>
-        <Side participant={second} animate={animate} />
-        <View
-          style={styles.duelThread}
-          onLayout={(e) => setThreadWidth(e.nativeEvent.layout.width)}
-        >
-          {/* Le même fil à points que la piste du livre (GoalTrack) */}
-          {threadWidth > 0 && (
-            <Svg width={threadWidth} height={THREAD_HEIGHT}>
-              <Seam width={threadWidth} readUntil={threadWidth} y={THREAD_HEIGHT / 2} />
-            </Svg>
-          )}
-        </View>
-        <Side participant={first} animate={animate} end />
-      </View>
+    <View style={styles.gap} accessible={false}>
+      {[0, 1, 2].map((i) => (
+        <View key={i} style={styles.gapDot} />
+      ))}
     </View>
   );
 }
@@ -246,12 +259,18 @@ export default function LeaderboardSection({
   const animate = !reducedMotion;
 
   const ranked = useMemo(() => rankParticipants(participants, myUserId), [participants, myUserId]);
-  const { rows, pinnedMe } = useMemo(() => selectVisibleRows(ranked, compact), [ranked, compact]);
-  const spread = square && !pinnedMe;
-  const duel = square && ranked.length === 2;
-  const a11y = duel
-    ? `Progression, ${ranked.map((p) => `${p.name} ${formatScore(p)} pour cent`).join(', ')}`
-    : `Progression, ${ranked.length} membres`;
+  // Petit écran : le 1er et moi ; sinon moi et mes voisins (Lea, 2026-11-11 :
+  // pas de « top 3 · · · moi », ça faisait classement)
+  const { rows, pinnedMe } = useMemo(
+    () =>
+      compact
+        ? selectVisibleRows(ranked, true)
+        : { rows: selectNeighbours(ranked), pinnedMe: null as RankedParticipant | null },
+    [ranked, compact],
+  );
+  const duo = ranked.length === 2;
+  const size: RowSize = !square ? 'wide' : duo ? 'duo' : 'square';
+  const a11y = `Progression, ${ranked.map((p) => `${p.name} ${formatScore(p)} pour cent`).join(', ')}`;
 
   return (
     <GlassSection
@@ -261,197 +280,104 @@ export default function LeaderboardSection({
       accessibilityHint="Ouvre la progression complète"
       style={square && (fill ? styles.fill : styles.square)}
     >
-      {/* Plus de titre « Progression » (Lea, 2026-11-10) : les avatars et les %
-          disent déjà ce que c'est */}
-      {duel ? (
-        <Duel pair={ranked} animate={animate} />
-      ) : (
-        <View style={[styles.rows, square && styles.rowsSquare]}>
-          {rows.map((participant) => (
-            <React.Fragment key={participant.id}>
-              {/* En carré sans ma ligne épinglée : 2 ou 3 lignes ne remplissent pas
-                le cadre. Un ressort avant chaque ligne les répartit sur la hauteur,
-                la dernière reste posée en bas comme dans le cas épinglé. */}
-              {spread && <View style={styles.spring} />}
-              <Row participant={participant} animate={animate} square={square} />
-            </React.Fragment>
-          ))}
-          {/* À deux, la 2e ligne posée en bas laissait un vide lourd au-dessus :
-            un dernier ressort centre la paire dans le cadre. */}
-          {spread && rows.length < PODIUM_SLOTS && <View style={styles.spring} />}
-
-          {/* Ma ligne, quand je suis hors du top 3 : le pointillé dit qu'il y a
-            du monde entre les deux, sans écrire combien. Une couture, comme tout trait de l'app (#112). */}
-          {pinnedMe && (
-            <>
-              <StitchLine color={stitchColor(false)} style={styles.gap} />
-              <Row participant={pinnedMe} animate={animate} square={square} />
-            </>
-          )}
-        </View>
-      )}
+      <View style={[styles.rows, square && (duo ? styles.rowsDuo : styles.rowsSquare)]}>
+        {rows.map((participant) => (
+          <Row key={participant.id} participant={participant} animate={animate} size={size} />
+        ))}
+        {pinnedMe && (
+          <>
+            <Gap />
+            <Row participant={pinnedMe} animate={animate} size={size} />
+          </>
+        )}
+      </View>
     </GlassSection>
   );
 }
 
 // ─── Styles ────────────────────────────────────────────────────────
-// Mesures de la maquette (échelle 0,865) ramenées en points.
+// Mesures de la maquette G2 (artefact « Progression », tour 3), en points.
 
-const AVATAR_SIZE = 30;
-const ROW_HEIGHT = 36;
-/** Colonne du rang : trois chiffres tiennent sans pousser les avatars */
-const RANK_WIDTH = 23;
-/** Avatars du face-à-face : assez grands pour remplir le carré à deux */
-const DUEL_AVATAR = 48;
-/** Hauteur du dessin du fil : assez pour ses points */
-const THREAD_HEIGHT = 4;
+type RowSize = 'square' | 'duo' | 'wide';
+const SIZES: Record<RowSize, { avatar: number; name: number; score: number; gap: number; lineGap: number }> = {
+  square: { avatar: 28, name: 13, score: 14, gap: 9, lineGap: 6 },
+  duo: { avatar: 34, name: 14, score: 16, gap: 10, lineGap: 8 },
+  wide: { avatar: 32, name: 16, score: 18, gap: spacing.md, lineGap: 8 },
+};
+/** Arrondi des avatars, en part du côté (carré arrondi, comme partout) */
+const AVATAR_ROUND = 0.32;
+/** Hauteur du dessin du fil : assez pour le nœud */
+const THREAD_HEIGHT = KNOT_R * 2 + 2;
 
 const styles = StyleSheet.create({
-  rows: {},
-
-  // En carré : les lignes se posent en bas du cadre, plus serrées
+  rows: {
+    gap: spacing.md,
+  },
   square: {
     aspectRatio: 1,
   },
   fill: {
     flex: 1,
   },
+  // En carré : les lignes réparties sur toute la hauteur
   rowsSquare: {
     flex: 1,
-    justifyContent: 'flex-end',
+    gap: 0,
+    justifyContent: 'space-between',
   },
-  spring: {
+  // À deux : deux lignes plus grandes, centrées
+  rowsDuo: {
     flex: 1,
-  },
-  rowSquare: {
-    minHeight: 27,
-    gap: spacing.sm,
-    marginHorizontal: -6,
-    paddingHorizontal: 6,
-    borderRadius: 10,
-  },
-  rankSquare: {
-    width: 12,
-    fontSize: 13,
-  },
-  avatarSquare: {
-    width: 22,
-    height: 22,
-    borderRadius: 7,
-  },
-  nameSquare: {
-    fontSize: 14,
-  },
-  scoreSquare: {
-    fontSize: 16,
-  },
-  scoreUnitSquare: {
-    fontSize: 11,
+    gap: 22,
+    justifyContent: 'center',
   },
   row: {
-    minHeight: ROW_HEIGHT,
-    paddingVertical: 2,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.md,
-    // La ligne déborde du padding du cadre : son fond entoure le texte sans
-    // décaler les colonnes.
-    marginHorizontal: -9,
-    paddingHorizontal: 9,
-    borderRadius: 14,
   },
-  rowMe: {
-    backgroundColor: inkAlpha(0.06),
+  // Pas de contour (Lea, 2026-11-11) : la photo seule
+  avatar: {},
+  body: {
+    flex: 1,
+    minWidth: 0,
   },
-  rank: {
-    width: RANK_WIDTH,
-    fontFamily: fonts.display,
-    fontSize: 15,
-    color: colors.textPlaceholder,
-    textAlign: 'center',
-    fontVariant: ['tabular-nums'],
-  },
-  avatar: {
-    width: AVATAR_SIZE,
-    height: AVATAR_SIZE,
-    borderRadius: 9,
-    borderWidth: 1,
-    borderColor: creamAlpha(0.6),
+  line: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
   },
   name: {
-    flex: 1,
+    flexShrink: 1,
     fontFamily: fonts.bodySemiBold,
-    fontSize: 17,
-    color: colors.textPrimary,
+    color: colors.textSecondary,
   },
   nameMe: {
     fontFamily: fonts.bodyExtraBold,
+    color: colors.accent,
   },
   score: {
     fontFamily: fonts.display,
-    fontSize: 20,
     color: colors.textPrimary,
     fontVariant: ['tabular-nums'],
   },
-  scoreUnit: {
-    fontSize: 14,
+  scoreMe: {
+    color: colors.accent,
   },
-
-  // Face-à-face (groupe de deux)
-  duel: {
-    flex: 1,
-    justifyContent: 'center',
+  // Le fil tient dans la ligne : à 100 %, le nœud s'arrête au bord du %, jamais
+  // coupé par le cadre
+  thread: {
+    height: THREAD_HEIGHT,
   },
-  /** Les avatars collés aux bords : le milieu reste au fil */
-  duelRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-  },
-  duelSide: {
-    alignItems: 'flex-start',
-    gap: 4,
-  },
-  duelSideEnd: {
-    alignItems: 'flex-end',
-  },
-  duelAvatar: {
-    width: DUEL_AVATAR,
-    height: DUEL_AVATAR,
-    borderRadius: 13,
-    borderWidth: 1,
-    borderColor: creamAlpha(0.6),
-  },
-  duelName: {
-    maxWidth: '100%',
-    marginTop: 2,
-    fontFamily: fonts.bodySemiBold,
-    fontSize: 14,
-    color: colors.textSecondary,
-  },
-  duelNameMe: {
-    fontFamily: fonts.bodyExtraBold,
-    color: colors.textPrimary,
-  },
-  duelScore: {
-    fontFamily: fonts.display,
-    fontSize: 26,
-    color: colors.textPrimary,
-    fontVariant: ['tabular-nums'],
-  },
-  duelScoreUnit: {
-    fontSize: 17,
-  },
-  /** Le fil entre les deux, à hauteur des avatars */
-  duelThread: {
-    flex: 1,
-    alignSelf: 'flex-start',
-    height: DUEL_AVATAR,
-    marginHorizontal: spacing.sm,
-    justifyContent: 'center',
-  },
-
-  /** Couture : un saut dans le classement, pas une séparation */
   gap: {
-    marginVertical: 5,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 5,
+  },
+  gapDot: {
+    width: 3,
+    height: 3,
+    borderRadius: 1.5,
+    backgroundColor: inkAlpha(0.3),
   },
 });
