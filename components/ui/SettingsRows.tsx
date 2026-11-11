@@ -9,7 +9,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { ChevronRightIcon, type LucideIcon } from 'lucide-react-native';
 import React from 'react';
 import { StyleSheet, Switch, Text, View } from 'react-native';
-import { borderRadius, colors, fonts, fontSize, paperFrameGradient, spacing } from '../../utils/constants';
+import { borderRadius, colors, dangerText, fonts, fontSize, paperFrameGradient, spacing } from '../../utils/constants';
 import PressableScale from './PressableScale';
 
 export function SettingsCard({ children }: { children: React.ReactNode }) {
@@ -51,12 +51,31 @@ export function ToggleRow({
   );
 }
 
-export function LinkRow({ icon: Icon, label, onPress }: { icon: LucideIcon; label: string; onPress: () => void }) {
+export function LinkRow({
+  icon: Icon,
+  label,
+  onPress,
+  danger = false,
+  disabled,
+}: {
+  icon: LucideIcon;
+  label: string;
+  onPress: () => void;
+  /** Irréversible (« Supprimer mon compte ») : rouge d'erreur, pas de › (rien ne s'ouvre) */
+  danger?: boolean;
+  disabled?: boolean;
+}) {
   return (
-    <PressableScale style={styles.row} pressedScale={0.98} onPress={onPress} accessibilityRole="button">
-      <Icon size={22} color={colors.textSecondary} />
-      <Text style={styles.label}>{label}</Text>
-      <ChevronRightIcon size={20} color={colors.textTertiary} />
+    <PressableScale
+      style={styles.row}
+      pressedScale={0.98}
+      onPress={onPress}
+      disabled={disabled}
+      accessibilityRole="button"
+    >
+      <Icon size={22} color={danger ? dangerText : colors.textSecondary} />
+      <Text style={[styles.label, danger && styles.danger]}>{label}</Text>
+      {!danger && <ChevronRightIcon size={20} color={colors.textTertiary} />}
     </PressableScale>
   );
 }
@@ -84,5 +103,8 @@ const styles = StyleSheet.create({
     fontFamily: fonts.bodySemiBold,
     fontSize: fontSize.md,
     color: colors.textPrimary,
+  },
+  danger: {
+    color: dangerText,
   },
 });

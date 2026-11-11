@@ -8,10 +8,9 @@
  *    Sons / Vibrations           (○)
  *    Inviter / Signaler            ›
  *    [ Se déconnecter ]
- *    [ Supprimer mon compte ]  (rouge : c'est irréversible)
+ *    Supprimer mon compte  (seul dans son cadre, rouge : irréversible)
  *
  *    Confidentialité et conditions  ›   (sheet posé dessus)
- *    chapi v1.1.0  (tout en bas, discret)
  *
  * Ouvrir un écran depuis ici ferme d'abord le sheet, sinon l'écran poussé
  * s'ouvrirait À L'INTÉRIEUR du sheet (cf. app/library.tsx). Les notifs et les
@@ -31,15 +30,14 @@ import {
   Volume2Icon,
 } from 'lucide-react-native';
 import React, { useState } from 'react';
-import { Alert, Linking, StyleSheet, Text } from 'react-native';
+import { Alert, Linking, StyleSheet } from 'react-native';
 import Button3D from '../components/Button3D';
-import PressableScale from '../components/ui/PressableScale';
 import SheetPage from '../components/ui/SheetPage';
 import { LinkRow, SettingsCard, ToggleRow } from '../components/ui/SettingsRows';
 import { StitchLine } from '../components/ui/Stitch';
 import { useAuthStore } from '../stores/authStore';
 import { useFeelStore } from '../stores/feelStore';
-import { colors, dangerText, fonts, fontSize, spacing } from '../utils/constants';
+import { spacing } from '../utils/constants';
 import { buzz, feel } from '../utils/feel';
 import { oops } from '../utils/notice';
 
@@ -166,19 +164,10 @@ export default function SettingsRoute() {
         Se déconnecter
       </Button3D>
 
-      {/* Irréversible : à l'écart, en rouge d'erreur (pas le rouge Lowki), juste du texte */}
-      <PressableScale
-        style={styles.delete}
-        pressedScale={0.97}
-        onPress={handleDelete}
-        disabled={busy}
-        accessibilityRole="button"
-      >
-        <Trash2Icon size={20} color={dangerText} />
-        <Text style={styles.deleteText}>Supprimer mon compte</Text>
-      </PressableScale>
-
-      <Text style={styles.version}>chapi v{APP_VERSION}</Text>
+      {/* Irréversible : seul dans son cadre, en rouge d'erreur (pas le rouge Lowki) */}
+      <SettingsCard>
+        <LinkRow icon={Trash2Icon} label="Supprimer mon compte" danger disabled={busy} onPress={handleDelete} />
+      </SettingsCard>
     </SheetPage>
   );
 }
@@ -186,27 +175,6 @@ export default function SettingsRoute() {
 const styles = StyleSheet.create({
   logout: {
     marginTop: spacing.sm,
-  },
-  delete: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.sm,
-    minHeight: 44,
-    marginTop: spacing.lg,
     marginBottom: spacing.xl,
-  },
-  deleteText: {
-    fontFamily: fonts.bodySemiBold,
-    fontSize: fontSize.md,
-    color: dangerText,
-  },
-  version: {
-    textAlign: 'center',
-    fontFamily: fonts.bodyMedium,
-    fontSize: fontSize.xs,
-    lineHeight: 18,
-    color: colors.textTertiary,
-    paddingBottom: spacing.lg,
   },
 });
