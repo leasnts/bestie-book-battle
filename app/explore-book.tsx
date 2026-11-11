@@ -32,7 +32,7 @@
  */
 
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { BookOpenIcon, CheckIcon, ChevronRightIcon, HeartIcon, PlayIcon, ShareIcon } from 'lucide-react-native';
+import { BookOpenIcon, CheckIcon, ChevronDownIcon, ChevronRightIcon, ChevronUpIcon, HeartIcon, PlayIcon, ShareIcon } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Alert, Share, StyleSheet, Text, View } from 'react-native';
 import Button3D from '../components/Button3D';
@@ -434,10 +434,16 @@ export default function ExploreBookRoute() {
           >
             {summary}
           </Text>
+          {/* Le mot et sa flèche : on voit que ça se déplie */}
           {summaryLong && (
-            <Text style={styles.more} importantForAccessibility="no">
-              {summaryOpen ? 'Voir moins' : 'Voir plus'}
-            </Text>
+            <View style={styles.moreRow} importantForAccessibility="no-hide-descendants">
+              <Text style={styles.more}>{summaryOpen ? 'Voir moins' : 'Voir plus'}</Text>
+              {summaryOpen ? (
+                <ChevronUpIcon size={18} color={colors.textPrimary} strokeWidth={2.5} />
+              ) : (
+                <ChevronDownIcon size={18} color={colors.textPrimary} strokeWidth={2.5} />
+              )}
+            </View>
           )}
         </PressableScale>
       )}
@@ -531,12 +537,17 @@ const styles = StyleSheet.create({
     right: 0,
     opacity: 0,
   },
+  moreRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    marginTop: spacing.xs,
+  },
   more: {
     fontFamily: fonts.bodyBold,
     fontSize: 15,
     lineHeight: 22,
     color: colors.textPrimary,
-    marginTop: spacing.xs,
   },
   author: {
     flexDirection: 'row',

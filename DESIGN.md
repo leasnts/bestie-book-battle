@@ -938,7 +938,7 @@ des bascules : activés, **tout le bouton passe en rouge** (`Button3D`
 Un livre lu quitte mes envies. **Partager** ↗
 seul en haut à droite, sur le lavis aux couleurs de la couverture (rendu sous
 la carte : le titre passe par-dessus). Dessous, le **résumé** de la boutique en
-9 lignes, « Voir plus » dessous s'il est coupé (« Voir moins » une fois déplié) ; enfin la ligne de l'autrice (photo ou
+9 lignes, « Voir plus ⌄ » dessous s'il est coupé (« Voir moins » une fois déplié) ; enfin la ligne de l'autrice (photo ou
 initiales, « 29 livres » dessous) qui ouvre **ses livres par-dessus la fiche**
 (`/explore-author`, retour vers le livre ; en toucher un le met à la place,
 jamais de renvoi dans l'onglet). Pas de note ni d'avis d'inconnu·es.
