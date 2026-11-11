@@ -19,7 +19,8 @@
  *   l'accueil.
  * - **♥** (en verre, rouge une fois gardé) : mes envies, première étagère de l'onglet.
  * - **↗** : le propose au club par le partage iOS.
- * - La ligne de l'autrice (sa photo si on l'a) lance la recherche de ses livres.
+ * - La ligne de l'autrice (sa photo si on l'a) ouvre ses livres par-dessus la
+ *   fiche (`/explore-author`) ; en choisir un le met à la place de celui-ci.
  *
  * Pas de note, pas d'avis, pas de résumé : pas de fiche produit (DESIGN.md,
  * anti-référence Goodreads). Le livre vient du store (`selectedBook`).
@@ -63,7 +64,6 @@ export default function ExploreBookRoute() {
     (state) => !!book && state.favorites.some((f) => f.id === book.id),
   );
   const toggleFavorite = useExploreStore((state) => state.toggleFavorite);
-  const searchFor = useExploreStore((state) => state.searchFor);
   const challenges = useProjectStore((state) => state.challenges);
   const setActiveChallenge = useProjectStore((state) => state.setActiveChallenge);
 
@@ -142,11 +142,11 @@ export default function ExploreBookRoute() {
     }
   }, [book]);
 
+  // Ses livres, dans un sheet posé sur la fiche : le retour ramène à ce livre
   const handleAuthor = useCallback(() => {
     if (!author) return;
-    searchFor(author.name);
-    router.back();
-  }, [author, searchFor, router]);
+    router.push({ pathname: '/explore-author', params: { name: author.name } });
+  }, [author, router]);
 
 
   if (!book) return null;

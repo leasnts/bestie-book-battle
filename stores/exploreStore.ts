@@ -6,8 +6,6 @@
  * - `selectedBook` : le livre dont la fiche est ouverte (route /explore-book).
  *   Passé par le store plutôt que par l'URL : une URL de couverture est longue
  *   (cf. onboardingStore).
- * - `pendingQuery` : une recherche demandée depuis la fiche (toucher l'autrice),
- *   que l'onglet lance en revenant au premier plan.
  */
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -18,12 +16,9 @@ import type { BookSearchResult } from '../types/bookSearch';
 interface ExploreStore {
   favorites: BookSearchResult[];
   selectedBook: BookSearchResult | null;
-  pendingQuery: string | null;
 
   toggleFavorite: (book: BookSearchResult) => void;
   openBook: (book: BookSearchResult) => void;
-  searchFor: (query: string) => void;
-  clearPendingQuery: () => void;
 }
 
 export const useExploreStore = create<ExploreStore>()(
@@ -31,7 +26,6 @@ export const useExploreStore = create<ExploreStore>()(
     (set) => ({
       favorites: [],
       selectedBook: null,
-      pendingQuery: null,
 
       toggleFavorite: (book) =>
         set((state) => ({
@@ -40,8 +34,6 @@ export const useExploreStore = create<ExploreStore>()(
             : [book, ...state.favorites],
         })),
       openBook: (book) => set({ selectedBook: book }),
-      searchFor: (query) => set({ pendingQuery: query }),
-      clearPendingQuery: () => set({ pendingQuery: null }),
     }),
     {
       name: 'bbb-explore',

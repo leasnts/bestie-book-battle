@@ -928,7 +928,9 @@ La fiche d'un livre (`/explore-book`) : le titre en en-tête, ♥ envie (rouge
 quand gardé) et ↗ partager en `GlassButton` à droite, sur un lavis aux couleurs
 de la couverture. Dessous, la **couverture en grand** (216 pt), le nombre de
 pages en gros chiffre (`518 p.`, `AccentUnit`) et l'année ; puis la ligne de
-l'autrice (sa photo si on l'a, sinon ses initiales) qui cherche ses livres ;
+l'autrice (sa photo si on l'a, sinon ses initiales) qui ouvre **ses livres
+par-dessus la fiche** (`/explore-author`, retour vers le livre ; en toucher un
+le met à la place dans la fiche, jamais de renvoi dans l'onglet) ;
 enfin **Lancer une lecture** (ou **Ouvrir** s'il est déjà dans ma
 bibliothèque), seul, pleine largeur. Pas de note, pas d'avis, pas de résumé.
 

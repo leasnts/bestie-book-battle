@@ -47,7 +47,7 @@
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { ChevronLeftIcon, CircleXIcon, HeartIcon, SearchIcon } from 'lucide-react-native';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { FlatList, Keyboard, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import PageTransition from '../../components/PageTransition';
@@ -100,16 +100,7 @@ export default function ExploreScreen() {
   const { query, setQuery, results, isSearching, error, clearResults } = useBookSearch();
   const favorites = useExploreStore((state) => state.favorites);
   const openBook = useExploreStore((state) => state.openBook);
-  const pendingQuery = useExploreStore((state) => state.pendingQuery);
-  const clearPendingQuery = useExploreStore((state) => state.clearPendingQuery);
   const [genre, setGenre] = useState<ExploreGenre | null>(null);
-
-  // Recherche demandée depuis une fiche (toucher l'autrice)
-  useEffect(() => {
-    if (!pendingQuery) return;
-    setQuery(pendingQuery);
-    clearPendingQuery();
-  }, [pendingQuery, setQuery, clearPendingQuery]);
 
   const handleOpen = useCallback(
     (book: BookSearchResult) => {
