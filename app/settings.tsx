@@ -11,9 +11,12 @@
  *    [ Se déconnecter ]
  *    [ Supprimer mon compte ]  (rouge : c'est irréversible)
  *
+ *    Confidentialité et conditions  ›   (sheet posé dessus)
+ *    chapi v1.1.0  (tout en bas, discret)
+ *
  * Ouvrir un écran depuis ici ferme d'abord le sheet, sinon l'écran poussé
- * s'ouvrirait À L'INTÉRIEUR du sheet (cf. app/library.tsx). Seules les notifs
- * se posent dessus, avec un retour.
+ * s'ouvrirait À L'INTÉRIEUR du sheet (cf. app/library.tsx). Les notifs et les
+ * pages légales se posent dessus, avec un retour.
  */
 
 import Constants from 'expo-constants';
@@ -23,6 +26,7 @@ import {
   FlaskConicalIcon,
   InboxIcon,
   LogOutIcon,
+  ShieldCheckIcon,
   ShareIcon,
   Trash2Icon,
   TriangleAlertIcon,
@@ -30,7 +34,7 @@ import {
   Volume2Icon,
 } from 'lucide-react-native';
 import React, { useState } from 'react';
-import { Alert, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, Linking, StyleSheet, Text } from 'react-native';
 import Button3D from '../components/Button3D';
 import PressableScale from '../components/ui/PressableScale';
 import SheetPage from '../components/ui/SheetPage';
@@ -157,6 +161,12 @@ export default function SettingsRoute() {
         <LinkRow icon={ShareIcon} label="Inviter" onPress={() => openScreen('/invite')} />
         <StitchLine />
         <LinkRow icon={TriangleAlertIcon} label="Signaler un problème" onPress={handleReport} />
+        <StitchLine />
+        <LinkRow
+          icon={ShieldCheckIcon}
+          label="Confidentialité et conditions"
+          onPress={() => router.push('/settings-legal')}
+        />
         {__DEV__ && (
           <>
             <StitchLine />
@@ -181,17 +191,7 @@ export default function SettingsRoute() {
         <Text style={styles.deleteText}>Supprimer mon compte</Text>
       </PressableScale>
 
-      <View style={styles.footer}>
-        <View style={styles.footerLinks}>
-          <Pressable onPress={() => Linking.openURL('https://chapi.leasantos.me/terms')} accessibilityRole="link">
-            <Text style={styles.footerLink}>Conditions</Text>
-          </Pressable>
-          <Pressable onPress={() => Linking.openURL('https://chapi.leasantos.me/privacy')} accessibilityRole="link">
-            <Text style={styles.footerLink}>Confidentialité</Text>
-          </Pressable>
-        </View>
-        <Text style={styles.footerText}>chapi v{APP_VERSION}</Text>
-      </View>
+      <Text style={styles.version}>chapi v{APP_VERSION}</Text>
     </SheetPage>
   );
 }
@@ -214,27 +214,12 @@ const styles = StyleSheet.create({
     fontSize: fontSize.md,
     color: dangerText,
   },
-  footer: {
-    alignItems: 'center',
-    gap: spacing.xs,
-    paddingTop: spacing.sm,
+  version: {
+    textAlign: 'center',
+    fontFamily: fonts.bodyMedium,
+    fontSize: fontSize.xs,
+    lineHeight: 18,
+    color: colors.textTertiary,
     paddingBottom: spacing.lg,
-  },
-  footerLinks: {
-    flexDirection: 'row',
-    gap: spacing['2xl'],
-  },
-  footerLink: {
-    fontFamily: fonts.bodyMedium,
-    fontSize: fontSize.xs,
-    lineHeight: 18,
-    color: colors.textTertiary,
-    textDecorationLine: 'underline',
-  },
-  footerText: {
-    fontFamily: fonts.bodyMedium,
-    fontSize: fontSize.xs,
-    lineHeight: 18,
-    color: colors.textTertiary,
   },
 });

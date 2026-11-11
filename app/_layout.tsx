@@ -320,6 +320,7 @@ function RootLayoutNav() {
       <Stack.Screen name="edit-profile" options={sheetScreenOptions()} />
       <Stack.Screen name="settings" options={sheetScreenOptions()} />
       <Stack.Screen name="settings-notifications" options={sheetScreenOptions()} />
+      <Stack.Screen name="settings-legal" options={sheetScreenOptions()} />
       <Stack.Screen name="invite" options={sheetScreenOptions()} />
 
       {/* Recherche d'un livre (onboarding) : haute d'emblée, le clavier et les résultats */}
