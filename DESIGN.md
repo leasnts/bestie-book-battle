@@ -924,15 +924,19 @@ choisies à la main et figées dans `constants/exploreCatalog.json`
 (`scripts/build-explore-catalog.mjs`) : elles s'affichent sans réseau.
 Pendant une recherche : des silhouettes de lignes, jamais de spinner.
 
-La fiche d'un livre (`/explore-book`) : le titre en en-tête, ♥ envie (rouge
-quand gardé) et ↗ partager en `GlassButton` à droite, sur un lavis aux couleurs
-de la couverture. Dessous, la **couverture en grand** (216 pt), le nombre de
-pages en gros chiffre (`518 p.`, `AccentUnit`) et l'année ; puis la ligne de
-l'autrice (sa photo si on l'a, sinon ses initiales) qui ouvre **ses livres
-par-dessus la fiche** (`/explore-author`, retour vers le livre ; en toucher un
-le met à la place dans la fiche, jamais de renvoi dans l'onglet) ;
-enfin **Lancer une lecture** (ou **Ouvrir** s'il est déjà dans ma
-bibliothèque), seul, pleine largeur. Pas de note, pas d'avis, pas de résumé.
+La fiche d'un livre (`/explore-book`) est une **fiche d'information, sans gros
+bouton** (Lea, 2026-11-11) : le titre en en-tête sur un lavis aux couleurs de la
+couverture ; la **couverture en grand** (216 pt), les pages en gros chiffre
+(`518 p.`, `AccentUnit`) et l'année ; puis une **rangée d'actions comme la fiche
+Contact d'iOS** — quatre `GlassButton` à places fixes, un mot dessous : **Envie**
+♥ (rouge et plein si gardé), **Lu** ✓ (rouge si lu ; sinon le range dans « Lus »
+sans changer le livre de l'accueil), **Lire** ▶ (création ; PAL → accueil + date
+de fin) ou **Ouvrir** s'il est en cours ou lu, **Partager** ↗. Dessous, le
+**résumé** de la boutique en 4 lignes, à toucher pour le déplier ; enfin la ligne
+de l'autrice (photo ou initiales, « 29 livres » dessous) qui ouvre **ses livres
+par-dessus la fiche** (`/explore-author`, retour vers le livre ; en toucher un le
+met à la place dans la fiche, jamais de renvoi dans l'onglet). Pas de note ni
+d'avis d'inconnu·es.
 
 ### Barre d'onglets
 

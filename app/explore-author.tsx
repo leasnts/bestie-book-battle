@@ -14,32 +14,32 @@
  */
 
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useState } from 'react';
 import { StyleSheet, Text } from 'react-native';
 import BookResultRow, { BookResultSkeleton } from '../components/ui/BookResultRow';
 import SheetPage from '../components/ui/SheetPage';
-import { useBookSearch } from '../hooks/useBookSearch';
+import { fetchAuthorBooks } from '../services/bookApi';
 import { useExploreStore } from '../stores/exploreStore';
 import type { BookSearchResult } from '../types/bookSearch';
 import { colors, fonts, spacing } from '../utils/constants';
-import { compactText } from '../utils/normalizeText';
 
 export default function ExploreAuthorRoute() {
   const router = useRouter();
   const { name = '' } = useLocalSearchParams<{ name?: string }>();
   const openBook = useExploreStore((state) => state.openBook);
-  const { setQuery, results, isSearching, error } = useBookSearch();
-
+  // Les mêmes que le compte de la fiche (même recherche, en cache)
+  const [books, setBooks] = useState<BookSearchResult[] | null>(null);
+  const [error, setError] = useState(false);
   useEffect(() => {
-    if (name) setQuery(name);
-  }, [name, setQuery]);
-
-  // Seulement ses livres : une recherche par nom remonte aussi des livres qui le citent
-  const books = useMemo(() => {
-    const key = compactText(name);
-    const hers = results.filter((book) => compactText(book.author ?? '').includes(key));
-    return hers.length > 0 ? hers : results;
-  }, [results, name]);
+    if (!name) return;
+    let cancelled = false;
+    fetchAuthorBooks(name)
+      .then((found) => !cancelled && setBooks(found))
+      .catch(() => !cancelled && setError(true));
+    return () => {
+      cancelled = true;
+    };
+  }, [name]);
 
   const handleOpen = (book: BookSearchResult) => {
     openBook(book);
@@ -48,16 +48,16 @@ export default function ExploreAuthorRoute() {
 
   return (
     <SheetPage title={name} onBack={() => router.back()}>
-      {books.length > 0 ? (
+      {books?.length ? (
         books.map((book) => <BookResultRow key={book.id} book={book} hideAuthor onPress={() => handleOpen(book)} />)
-      ) : isSearching ? (
+      ) : !books && !error ? (
         <>
           <BookResultSkeleton />
           <BookResultSkeleton />
           <BookResultSkeleton />
         </>
       ) : (
-        <Text style={styles.empty}>{error ?? 'Aucun livre'}</Text>
+        <Text style={styles.empty}>{error ? 'Recherche indisponible' : 'Aucun livre'}</Text>
       )}
     </SheetPage>
   );

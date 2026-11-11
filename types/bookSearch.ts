@@ -9,6 +9,8 @@ export interface BookSearchResult {
   publishedDate: string | null;
   /** ISBN-13 de l'édition, quand on la connaît (Google Books) */
   isbn?: string | null;
+  /** Le résumé de l'éditeur, en texte brut, quand la boutique le donne (Apple Books) */
+  description?: string | null;
 }
 
 /** Livre de la boutique Apple Books (API de recherche iTunes, champs utiles seulement) */

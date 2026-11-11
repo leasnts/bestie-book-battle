@@ -33,8 +33,10 @@ interface GlassButtonProps {
   stretch?: boolean;
   /** Un point rouge dans le coin : quelque chose attend (un brouillon) */
   badge?: boolean;
-  /** Activé (♥ gardé) : l'icône pleine, en rouge */
+  /** Activé (♥ gardé, ✓ lu) : l'icône en rouge */
   selected?: boolean;
+  /** Activé, l'icône se remplit aussi (le ♥) ; pas un ✓, qui disparaîtrait */
+  fillWhenSelected?: boolean;
   /** Marges et placement dans le parent */
   style?: StyleProp<ViewStyle>;
 }
@@ -46,6 +48,7 @@ export default function GlassButton({
   stretch = false,
   badge = false,
   selected = false,
+  fillWhenSelected = false,
   style,
 }: GlassButtonProps) {
   const size = ROUND_BUTTON_SIZE;
@@ -63,7 +66,7 @@ export default function GlassButton({
       <Icon
         size={iconSize}
         color={selected ? colors.accent : colors.dark900}
-        fill={selected ? colors.accent : 'transparent'}
+        fill={selected && fillWhenSelected ? colors.accent : 'transparent'}
         strokeWidth={2.25}
       />
       {/* Le point se pose sur le coin haut droit de l'icône, rond ou gélule */}

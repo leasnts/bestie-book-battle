@@ -1,50 +1,59 @@
 /**
  * Route /explore-book — la fiche d'un livre de l'onglet Explorer, en sheet natif.
+ * Une fiche d'information : les actions sont là, discrètes, pas un gros bouton.
  *
  *    ┌──────────────────────── ░▒▒░──┐
- *    │ Fourth Wing          ░(♥)(↗)▒ │  ← lavis aux couleurs de la couverture
- *    │                               │
+ *    │ Fourth Wing             ░▒▒░  │  ← lavis aux couleurs de la couverture
  *    │ ┌────────┐                    │
- *    │ │        │                    │
  *    │ │ cover  │  518 p.            │
  *    │ │        │  2023              │
  *    │ └────────┘                    │
- *    │ (◉) Rebecca Yarros         ›  │  ← cherche ses livres
- *    │ [     Lancer une lecture    ] │
+ *    │  (♥)    (✓)    (▶)    (↗)     │  ← rangée d'actions, comme la fiche Contact
+ *    │ Envie    Lu    Lire  Partager │
+ *    │ Passer toutes les épreuves…⌄  │  ← résumé, 4 lignes, toucher pour déplier
+ *    │ (◉) Rebecca Yarros         ›  │
+ *    │     12 livres                 │
  *    └───────────────────────────────┘
  *
- * - **Lancer une lecture** : reprend le parcours de création au nombre de
- *   pages, titre, autrice, pages et couverture déjà remplis. Si le livre est
- *   déjà dans ma bibliothèque, le bouton devient **Ouvrir** et l'affiche sur
- *   l'accueil.
- * - **♥** (en verre, rouge une fois gardé) : mes envies, première étagère de l'onglet.
- * - **↗** : le propose au club par le partage iOS.
- * - La ligne de l'autrice (sa photo si on l'a) ouvre ses livres par-dessus la
- *   fiche (`/explore-author`) ; en choisir un le met à la place de celui-ci.
+ * Les actions, selon où en est le livre dans ma bibliothèque :
+ * - **Envie** ♥ : mes envies, première étagère de l'onglet (rouge si gardé).
+ * - **Lu** ✓ : pas dans ma bibliothèque → l'y range directement dans « Lus »
+ *   (sans changer le livre de l'accueil) ; commencé → ma page passe à la
+ *   dernière ; déjà lu → rouge, rien à faire.
+ * - **Lire** ▶ : pas dans ma bibliothèque → le parcours de création, livre
+ *   déjà rempli ; dans ma PAL (« Non lus ») → il passe sur l'accueil et on
+ *   choisit sa date de fin ; en cours ou lu → **Ouvrir** sur l'accueil.
+ * - **Partager** ↗ : le partage iOS.
+ * - La ligne de l'autrice ouvre ses livres par-dessus la fiche (`/explore-author`).
  *
- * Pas de note, pas d'avis, pas de résumé : pas de fiche produit (DESIGN.md,
- * anti-référence Goodreads). Le livre vient du store (`selectedBook`).
+ * Pas de note ni d'avis (pas de fiche produit, DESIGN.md). Le livre vient du
+ * store (`selectedBook`).
  */
 
 import { useRouter } from 'expo-router';
-import { BookOpenIcon, ChevronRightIcon, CirclePlusIcon, HeartIcon, ShareIcon } from 'lucide-react-native';
+import { BookOpenIcon, CheckIcon, ChevronRightIcon, HeartIcon, PlayIcon, ShareIcon, type LucideIcon } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Share, StyleSheet, Text, View } from 'react-native';
-import Button3D from '../components/Button3D';
 import { AccentUnit } from '../components/ui/AccentWord';
 import BookCover, { COVER_RATIO } from '../components/ui/BookCover';
 import { AuthorAvatar, type ExploreAuthor } from '../components/ui/ExploreAuthors';
 import GlassButton from '../components/ui/GlassButton';
 import PressableScale from '../components/ui/PressableScale';
-import SheetPage, { SheetFooter } from '../components/ui/SheetPage';
+import SheetPage from '../components/ui/SheetPage';
 import WatercolorCorner from '../components/ui/WatercolorCorner';
 import authorsCatalog from '../constants/exploreAuthors.json';
-import { fetchEditions } from '../services/bookApi';
+import { fetchAuthorBooks, fetchEditions, fetchSummary } from '../services/bookApi';
+import { updateUserProgress } from '../services/supabase/database';
+import { createReading, settleMyReading } from '../services/onboarding';
+import { useAuthStore } from '../stores/authStore';
 import { useExploreStore } from '../stores/exploreStore';
 import { useOnboardingStore } from '../stores/onboardingStore';
 import { useProjectStore } from '../stores/projectStore';
 import { colors, fonts, spacing } from '../utils/constants';
 import { extractCoverPalette } from '../utils/coverPalette';
+import { feel } from '../utils/feel';
+import { readingOf } from '../utils/library';
+import { oops } from '../utils/notice';
 import { compactText } from '../utils/normalizeText';
 import { startAdding } from '../utils/onboardingFlow';
 import { coverWash, NEUTRAL_WASH, type WashTints } from '../utils/watercolor';
@@ -53,6 +62,8 @@ import { coverWash, NEUTRAL_WASH, type WashTints } from '../utils/watercolor';
 const COVER_H = 216;
 const AUTHOR_AVATAR = 44;
 const PAGES_SIZE = 40;
+/** Le résumé replié : assez pour donner envie, pas une page de texte */
+const SUMMARY_LINES = 4;
 
 const AUTHORS = authorsCatalog.authors as ExploreAuthor[];
 
@@ -66,6 +77,8 @@ export default function ExploreBookRoute() {
   const toggleFavorite = useExploreStore((state) => state.toggleFavorite);
   const challenges = useProjectStore((state) => state.challenges);
   const setActiveChallenge = useProjectStore((state) => state.setActiveChallenge);
+  const myProgress = useProjectStore((state) => state.myProgress);
+  const userId = useAuthStore((state) => state.user?.id ?? null);
 
   // Les résultats de recherche n'ont pas de pages : celles de l'édition la plus récente
   const [editionPages, setEditionPages] = useState<number | null>(null);
@@ -106,6 +119,36 @@ export default function ExploreBookRoute() {
     return AUTHORS.find((a) => compactText(a.name) === key) ?? { name, photoUrl: null };
   }, [book?.author]);
 
+  // Le résumé, et combien de livres a l'autrice : deux recherches en ligne,
+  // la fiche s'affiche sans les attendre
+  const [summary, setSummary] = useState<string | null>(book?.description ?? null);
+  const [summaryOpen, setSummaryOpen] = useState(false);
+  useEffect(() => {
+    setSummary(book?.description ?? null);
+    setSummaryOpen(false);
+    if (!book) return;
+    let cancelled = false;
+    fetchSummary(book)
+      .then((text) => !cancelled && setSummary(text))
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [book]);
+
+  const [authorCount, setAuthorCount] = useState<number | null>(null);
+  useEffect(() => {
+    setAuthorCount(null);
+    if (!author) return;
+    let cancelled = false;
+    fetchAuthorBooks(author.name)
+      .then((books) => !cancelled && setAuthorCount(books.length))
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [author]);
+
   // Déjà dans ma bibliothèque ? Alors on l'ouvre au lieu d'en relancer un
   const inLibrary = useMemo(() => {
     if (!book) return null;
@@ -113,9 +156,20 @@ export default function ExploreBookRoute() {
     return challenges.find((c) => compactText(c.book_title) === title) ?? null;
   }, [book, challenges]);
 
-  const handleStart = useCallback(() => {
+  // Où j'en suis de ce livre : pas dans ma bibliothèque, non lu (PAL), en cours, lu
+  const reading = inLibrary ? readingOf(myProgress[inLibrary.id]) : null;
+  const isRead = reading?.state === 'done';
+  const [marking, setMarking] = useState(false);
+
+  const handleRead = useCallback(() => {
     if (!book) return;
     if (inLibrary) {
+      if (reading?.state === 'unread') {
+        // Dans ma PAL : il passe sur l'accueil, et on choisit sa date de fin
+        setActiveChallenge(inLibrary);
+        router.push({ pathname: '/end-date', params: { from: 'explore' } });
+        return;
+      }
       setActiveChallenge(inLibrary);
       router.back();
       router.navigate('/(tabs)');
@@ -129,7 +183,42 @@ export default function ExploreBookRoute() {
     // Fermer d'abord le sheet, sinon l'écran poussé s'ouvrirait À L'INTÉRIEUR
     router.back();
     router.push(pageCount ? '/onboarding/page' : next);
-  }, [book, pageCount, inLibrary, setActiveChallenge, router]);
+  }, [book, pageCount, inLibrary, reading?.state, setActiveChallenge, router]);
+
+  const handleDone = useCallback(async () => {
+    if (!book || !userId || isRead || marking) return;
+    setMarking(true);
+    try {
+      const store = useProjectStore.getState();
+      if (inLibrary) {
+        // Commencé ou dans ma PAL : ma page passe à la dernière de MON édition
+        const mine = store.myProgress[inLibrary.id];
+        const total =
+          mine && mine.progress_percentage > 0
+            ? Math.round((mine.current_page * 100) / mine.progress_percentage)
+            : mine && mine.format !== 'papier'
+              ? 100
+              : inLibrary.total_pages;
+        await updateUserProgress(inLibrary.id, userId, total);
+      } else {
+        // Lu avant chapi : rangé dans « Lus », sans prendre la place du livre de l'accueil
+        const previous = store.activeChallenge;
+        const challenge = await createReading(
+          userId,
+          { title: book.title, author: book.author, pages: pageCount ?? 0, cover: book.coverUrl, publisher: book.publisher },
+          null,
+        );
+        await settleMyReading(challenge.id, userId, { format: 'papier', start: challenge.total_pages });
+        store.setActiveChallenge(previous);
+      }
+      await store.loadMyProgress(userId);
+      feel('fini');
+    } catch (error) {
+      oops('Pas pu le marquer lu', error, { retry: handleDone });
+    } finally {
+      setMarking(false);
+    }
+  }, [book, userId, isRead, marking, inLibrary, pageCount]);
 
   const handleShare = useCallback(async () => {
     if (!book) return;
@@ -152,24 +241,10 @@ export default function ExploreBookRoute() {
   if (!book) return null;
 
   const year = book.publishedDate?.slice(0, 4);
+  const opens = !!inLibrary && reading?.state !== 'unread';
 
   return (
-    <SheetPage
-      title={book.title}
-      titleLines={2}
-      headerBackground={<WatercolorCorner tints={wash} />}
-      actions={
-        <>
-          <GlassButton
-            icon={HeartIcon}
-            selected={isFavorite}
-            onPress={() => toggleFavorite(book)}
-            accessibilityLabel={isFavorite ? 'Retirer de mes envies' : 'Garder dans mes envies'}
-          />
-          <GlassButton icon={ShareIcon} onPress={handleShare} accessibilityLabel="Proposer au club" />
-        </>
-      }
-    >
+    <SheetPage title={book.title} titleLines={2} headerBackground={<WatercolorCorner tints={wash} />}>
       <View style={styles.hero}>
         <View style={styles.cover}>
           <BookCover coverUrl={book.coverUrl} outlined />
@@ -185,33 +260,98 @@ export default function ExploreBookRoute() {
         </View>
       </View>
 
+      {/* Quatre places fixes, comme la fiche Contact d'iOS */}
+      <View style={styles.actions}>
+        <Action
+          icon={HeartIcon}
+          label="Envie"
+          selected={isFavorite}
+          fill
+          onPress={() => toggleFavorite(book)}
+          accessibilityLabel={isFavorite ? 'Retirer de mes envies' : 'Garder dans mes envies'}
+        />
+        <Action
+          icon={CheckIcon}
+          label="Lu"
+          selected={isRead}
+          onPress={handleDone}
+          accessibilityLabel={isRead ? 'Lu' : 'Je l’ai lu'}
+        />
+        <Action
+          icon={opens ? BookOpenIcon : PlayIcon}
+          label={opens ? 'Ouvrir' : 'Lire'}
+          onPress={handleRead}
+          accessibilityLabel={opens ? 'Ouvrir sur l’accueil' : 'Lancer une lecture'}
+        />
+        <Action icon={ShareIcon} label="Partager" onPress={handleShare} accessibilityLabel="Partager" />
+      </View>
+
+      {!!summary && (
+        <PressableScale
+          onPress={() => setSummaryOpen((open) => !open)}
+          style={styles.summaryBox}
+          accessibilityRole="button"
+          accessibilityHint={summaryOpen ? 'Replier le résumé' : 'Lire tout le résumé'}
+        >
+          <Text style={styles.summary} numberOfLines={summaryOpen ? undefined : SUMMARY_LINES}>
+            {summary}
+          </Text>
+        </PressableScale>
+      )}
+
       {author && (
         <PressableScale
           onPress={handleAuthor}
           style={styles.author}
           accessibilityRole="button"
-          accessibilityLabel={author.name}
-          accessibilityHint="Chercher ses livres"
+          accessibilityLabel={authorCount ? `${author.name}, ${authorCount} livres` : author.name}
+          accessibilityHint="Voir ses livres"
         >
           <AuthorAvatar author={author} size={AUTHOR_AVATAR} />
-          <Text style={styles.authorName} numberOfLines={1}>
-            {author.name}
-          </Text>
+          <View style={styles.authorTexts}>
+            <Text style={styles.authorName} numberOfLines={1}>
+              {author.name}
+            </Text>
+            {authorCount !== null && authorCount > 1 && (
+              <Text style={styles.authorCount}>{authorCount} livres</Text>
+            )}
+          </View>
           <ChevronRightIcon size={20} color={colors.textTertiary} strokeWidth={2.25} />
         </PressableScale>
       )}
-
-      <SheetFooter>
-        <Button3D
-          variant="primary"
-          icon={inLibrary ? BookOpenIcon : CirclePlusIcon}
-          iconPosition="left"
-          onPress={handleStart}
-        >
-          {inLibrary ? 'Ouvrir' : 'Lancer une lecture'}
-        </Button3D>
-      </SheetFooter>
     </SheetPage>
+  );
+}
+
+/** Un rond en verre et son mot dessous */
+function Action({
+  icon,
+  label,
+  onPress,
+  accessibilityLabel,
+  selected = false,
+  fill = false,
+}: {
+  icon: LucideIcon;
+  label: string;
+  onPress: () => void;
+  accessibilityLabel: string;
+  selected?: boolean;
+  fill?: boolean;
+}) {
+  return (
+    <View style={styles.action}>
+      <GlassButton
+        icon={icon}
+        selected={selected}
+        fillWhenSelected={fill}
+        onPress={onPress}
+        accessibilityLabel={accessibilityLabel}
+      />
+      <Text style={[styles.actionLabel, selected && styles.actionLabelOn]} importantForAccessibility="no">
+        {label}
+      </Text>
+    </View>
   );
 }
 
@@ -243,16 +383,50 @@ const styles = StyleSheet.create({
     color: colors.textTertiary,
     fontVariant: ['tabular-nums'],
   },
+  actions: {
+    flexDirection: 'row',
+    marginTop: spacing['2xl'],
+  },
+  action: {
+    flex: 1,
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  actionLabel: {
+    fontFamily: fonts.bodyMedium,
+    fontSize: 13,
+    color: colors.textSecondary,
+  },
+  actionLabelOn: {
+    color: colors.accent,
+  },
+  summaryBox: {
+    marginTop: spacing['2xl'],
+  },
+  summary: {
+    fontFamily: fonts.body,
+    fontSize: 15,
+    lineHeight: 22,
+    color: colors.textSecondary,
+  },
   author: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.md,
     marginTop: spacing['2xl'],
   },
-  authorName: {
+  authorTexts: {
     flex: 1,
+    gap: 2,
+  },
+  authorName: {
     fontFamily: fonts.bodySemiBold,
     fontSize: 16,
     color: colors.textPrimary,
+  },
+  authorCount: {
+    fontFamily: fonts.bodyMedium,
+    fontSize: 13,
+    color: colors.textTertiary,
   },
 });
