@@ -147,6 +147,12 @@ export const accentGradient = [lowki.red.light, lowki.red.dark] as const;
  */
 export const dangerGradient = ['#d4453f', '#a92f2a'] as const;
 
+/**
+ * Le rouge d'erreur en texte (« Supprimer mon compte ») : un rouge vif, pas le
+ * rouge vin Lowki, pour ne pas se confondre avec l'accent. 5:1 sur le papier.
+ */
+export const dangerText = '#C8372F';
+
 /** L'encre en surface (boutons d'action) : chocolat Lowki, clair en haut → foncé en bas ; crème dessus : 9,1:1 */
 export const inkGradient = [lowki.chocolate.light, lowki.chocolate.dark] as const;
 
@@ -182,7 +188,7 @@ export const bevel = {
 } as const;
 
 /** Le papier beige des cadres posés dans un sheet (GlassSection `paper`) */
-export const paperFrameGradient = ['#f1ebe2', '#e7dfd2'] as const;
+export const paperFrameGradient = ['#f7f3ed', '#f0eae1'] as const;
 
 /**
  * Les six post-it du carnet — tirés de la charte Lowki (Lea, 2026-10-08).
