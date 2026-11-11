@@ -944,7 +944,11 @@ initiales, « 29 livres » dessous) qui ouvre **ses livres par-dessus la fiche**
 jamais de renvoi dans l'onglet). Pas de note ni d'avis d'inconnu·es.
 
 **Commencer** met le livre sur l'accueil à la page 0, sans question (ni page de
-départ ni date de fin). **Lu** s'allume tout de suite, sans attendre la base.
+départ ni date de fin). **Lu** s'allume tout de suite, sans attendre la base ;
+la dernière page est posée comme une page de départ (`set_start_position`) :
+ni pages du jour, ni série, ni notif au groupe. **Décocher Lu** passe par une
+confirmation native (« Retirer des lus ? ») : ma page revient à la dernière
+vraiment lue, sinon à 0 — le livre ne quitte jamais ma bibliothèque.
 
 Les envies ont leur étagère **Mes envies** sur le profil (sous « Mes livres
 lus », seulement s'il y en a ; toucher une couverture ouvre sa fiche), plus

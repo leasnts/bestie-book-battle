@@ -18,7 +18,9 @@
  * - **Envie** ♥ : mes envies, première étagère de l'onglet (rouge si gardé).
  * - **Lu** ✓ : pas dans ma bibliothèque → l'y range directement dans « Lus »
  *   (sans changer le livre de l'accueil) ; commencé → ma page passe à la
- *   dernière ; déjà lu → rouge, rien à faire. Un livre lu quitte mes envies.
+ *   dernière, posée comme une page de départ (ni pages du jour, ni série, ni
+ *   notif). Un livre lu quitte mes envies. Le décocher demande confirmation ;
+ *   ma page revient à la dernière vraiment lue (historique), sinon à 0.
  * - **Commencer** ▶ : le livre va sur l'accueil à la page 0, sans question (ni
  *   page de départ ni date de fin) ; déjà dans ma PAL, il y passe. En cours →
  *   **Reprendre**, lu → **Voir** : il revient sur l'accueil.
@@ -32,7 +34,7 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { BookOpenIcon, CheckIcon, ChevronRightIcon, HeartIcon, PlayIcon, ShareIcon } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Share, StyleSheet, Text, View } from 'react-native';
+import { Alert, Share, StyleSheet, Text, View } from 'react-native';
 import Button3D from '../components/Button3D';
 import { AccentUnit } from '../components/ui/AccentWord';
 import BookCover, { COVER_RATIO } from '../components/ui/BookCover';
@@ -43,7 +45,8 @@ import PressableScale from '../components/ui/PressableScale';
 import SheetPage, { SHEET_GUTTER } from '../components/ui/SheetPage';
 import authorsCatalog from '../constants/exploreAuthors.json';
 import { fetchAuthorBooks, fetchEditions, fetchSummary } from '../services/bookApi';
-import { updateUserProgress } from '../services/supabase/database';
+import { getUserHistory } from '../services/supabase/database';
+import { supabase } from '../supabaseConfig';
 import { createReading, settleMyReading } from '../services/onboarding';
 import { useAuthStore } from '../stores/authStore';
 import { useExploreStore } from '../stores/exploreStore';
@@ -163,9 +166,9 @@ export default function ExploreBookRoute() {
   const reading = inLibrary ? readingOf(myProgress[inLibrary.id]) : null;
   // « Lu » s'allume tout de suite : la base répond 2-3 s plus tard, et sans
   // retour on croyait que rien ne se passait (Lea, 2026-11-11)
-  const [markedRead, setMarkedRead] = useState(false);
-  useEffect(() => setMarkedRead(false), [book?.id]);
-  const isRead = markedRead || reading?.state === 'done';
+  const [readOverride, setReadOverride] = useState<boolean | null>(null);
+  useEffect(() => setReadOverride(null), [book?.id]);
+  const isRead = readOverride ?? reading?.state === 'done';
   const [marking, setMarking] = useState(false);
 
   // Fermer la fiche, et la bibliothèque dessous si on vient d'elle
@@ -206,10 +209,51 @@ export default function ExploreBookRoute() {
     }
   }, [book, starting, inLibrary, userId, pageCount, setActiveChallenge, router, closeSheets]);
 
+  // Décocher « Lu » : une confirmation native (comme « Quitter le livre »).
+  // Ma page revient à la dernière vraiment lue avant (l'historique), ou à 0 :
+  // il repasse dans « En cours » ou « Non lus », jamais hors de ma bibliothèque.
+  const confirmUnread = useCallback(async () => {
+    if (!book || !userId || !inLibrary) return;
+    let history: Awaited<ReturnType<typeof getUserHistory>> = [];
+    try {
+      history = await getUserHistory(inLibrary.id, userId);
+    } catch (error) {
+      oops('Pas pu le retirer des lus', error);
+      return;
+    }
+    const total = inLibrary.total_pages;
+    const before = history.find((h) => h.page_number < total)?.page_number ?? 0;
+
+    Alert.alert('Retirer des lus ?', before > 0 ? `Ta page revient à ${before}` : 'Il repasse dans tes non lus', [
+      { text: 'Annuler', style: 'cancel' },
+      {
+        text: 'Retirer',
+        style: 'destructive',
+        onPress: async () => {
+          setReadOverride(false);
+          try {
+            // Posée comme une page de départ : pas d'historique ni de notif
+            const { error } = await supabase.rpc('set_start_position', { p_challenge_id: inLibrary.id, p_page: before });
+            if (error) throw error;
+            const store = useProjectStore.getState();
+            await Promise.all([store.loadUserChallenges(userId), store.loadMyProgress(userId)]);
+          } catch (error) {
+            setReadOverride(null);
+            oops('Pas pu le retirer des lus', error);
+          }
+        },
+      },
+    ]);
+  }, [book, userId, inLibrary]);
+
   const handleDone = useCallback(async () => {
-    if (!book || !userId || isRead || marking) return;
+    if (!book || !userId || marking) return;
+    if (isRead) {
+      confirmUnread();
+      return;
+    }
     setMarking(true);
-    setMarkedRead(true);
+    setReadOverride(true);
     feel('fini');
     // Lu, ce n'est plus une envie : il change d'état, il quitte l'étagère
     const explore = useExploreStore.getState();
@@ -217,7 +261,9 @@ export default function ExploreBookRoute() {
     try {
       const store = useProjectStore.getState();
       if (inLibrary) {
-        // Commencé ou dans ma PAL : ma page passe à la dernière de MON édition
+        // Commencé ou dans ma PAL : ma page passe à la dernière de MON édition,
+        // posée comme une page de départ : ni pages « lues aujourd'hui », ni
+        // série, ni notif au groupe
         const mine = store.myProgress[inLibrary.id];
         const total =
           mine && mine.progress_percentage > 0
@@ -225,7 +271,8 @@ export default function ExploreBookRoute() {
             : mine && mine.format !== 'papier'
               ? 100
               : inLibrary.total_pages;
-        await updateUserProgress(inLibrary.id, userId, total);
+        const { error } = await supabase.rpc('set_start_position', { p_challenge_id: inLibrary.id, p_page: total });
+        if (error) throw error;
       } else {
         // Lu avant chapi : rangé dans « Lus », sans prendre la place du livre de l'accueil
         const previous = store.activeChallenge;
@@ -239,12 +286,12 @@ export default function ExploreBookRoute() {
       }
       await store.loadMyProgress(userId);
     } catch (error) {
-      setMarkedRead(false);
+      setReadOverride(null);
       oops('Pas pu le marquer lu', error, { retry: handleDone });
     } finally {
       setMarking(false);
     }
-  }, [book, userId, isRead, marking, inLibrary, pageCount]);
+  }, [book, userId, isRead, marking, inLibrary, pageCount, confirmUnread]);
 
   const handleShare = useCallback(async () => {
     if (!book) return;
