@@ -22,7 +22,9 @@ import {
   BellIcon,
   FlaskConicalIcon,
   InboxIcon,
+  LogOutIcon,
   ShareIcon,
+  Trash2Icon,
   TriangleAlertIcon,
   VibrateIcon,
   Volume2Icon,
@@ -30,12 +32,13 @@ import {
 import React, { useState } from 'react';
 import { Alert, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 import Button3D from '../components/Button3D';
+import PressableScale from '../components/ui/PressableScale';
 import SheetPage from '../components/ui/SheetPage';
 import { LinkRow, SettingsCard, ToggleRow } from '../components/ui/SettingsRows';
 import { StitchLine } from '../components/ui/Stitch';
 import { useAuthStore } from '../stores/authStore';
 import { useFeelStore } from '../stores/feelStore';
-import { colors, fonts, fontSize, spacing } from '../utils/constants';
+import { colors, dangerText, fonts, fontSize, spacing } from '../utils/constants';
 import { buzz, feel } from '../utils/feel';
 import { oops } from '../utils/notice';
 
@@ -162,14 +165,21 @@ export default function SettingsRoute() {
         )}
       </SettingsCard>
 
-      <Button3D variant="secondary" onPress={handleLogout} disabled={busy} style={styles.logout}>
+      <Button3D variant="secondary" icon={LogOutIcon} onPress={handleLogout} disabled={busy} style={styles.logout}>
         Se déconnecter
       </Button3D>
 
-      {/* Irréversible : même bouton, en rouge, à l'écart (demande de Lea) */}
-      <Button3D variant="accent" onPress={handleDelete} disabled={busy} style={styles.delete}>
-        Supprimer mon compte
-      </Button3D>
+      {/* Irréversible : à l'écart, en rouge d'erreur (pas le rouge Lowki), juste du texte */}
+      <PressableScale
+        style={styles.delete}
+        pressedScale={0.97}
+        onPress={handleDelete}
+        disabled={busy}
+        accessibilityRole="button"
+      >
+        <Trash2Icon size={20} color={dangerText} />
+        <Text style={styles.deleteText}>Supprimer mon compte</Text>
+      </PressableScale>
 
       <View style={styles.footer}>
         <View style={styles.footerLinks}>
@@ -191,8 +201,18 @@ const styles = StyleSheet.create({
     marginTop: spacing.sm,
   },
   delete: {
-    marginTop: spacing['2xl'],
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    minHeight: 44,
+    marginTop: spacing.lg,
     marginBottom: spacing.xl,
+  },
+  deleteText: {
+    fontFamily: fonts.bodySemiBold,
+    fontSize: fontSize.md,
+    color: dangerText,
   },
   footer: {
     alignItems: 'center',

@@ -147,6 +147,12 @@ export const accentGradient = [lowki.red.light, lowki.red.dark] as const;
  */
 export const dangerGradient = ['#d4453f', '#a92f2a'] as const;
 
+/**
+ * Le rouge d'erreur en texte (« Supprimer mon compte ») : un rouge vif, pas le
+ * rouge vin Lowki, pour ne pas se confondre avec l'accent. 5:1 sur le papier.
+ */
+export const dangerText = '#C8372F';
+
 /** L'encre en surface (boutons d'action) : chocolat Lowki, clair en haut → foncé en bas ; crème dessus : 9,1:1 */
 export const inkGradient = [lowki.chocolate.light, lowki.chocolate.dark] as const;
 
