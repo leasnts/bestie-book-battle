@@ -1,6 +1,6 @@
 /**
  * Le brouillon de l'onboarding : ce que la personne a répondu, écran après
- * écran, jusqu'à la préparation (prepa.tsx) qui enregistre tout.
+ * écran, jusqu'à la carte de lecture qui enregistre tout (utils/finishOnboarding).
  *
  * Deux temps :
  * - toi, en général (moments, formats habituels) → le profil ;
@@ -44,7 +44,7 @@ export interface InvitationDraft {
   readers: { name: string; photoUrl: string | null; percent: number }[];
 }
 
-interface OnboardingStore {
+export interface OnboardingStore {
   /** Le parcours en cours (voir utils/onboardingFlow) */
   flow: OnboardingFlow;
 

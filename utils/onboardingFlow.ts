@@ -9,6 +9,8 @@
  *
  * La connexion (auth/login) se glisse avant tout (ou après l'invitation) et
  * « Bienvenue » : elle n'est pas dans les listes, useAfterLogin y renvoie.
+ * En créant, la fin se joue sur « Invite tes potes » : la carte se retourne
+ * et s'écrit (utils/finishOnboarding) ; en rejoignant, sur « carte ».
  * Les notifications viennent après la carte, hors du fil de progression :
  * l'onboarding est fini, c'est le seuil de l'accueil (sautées si iOS a déjà
  * sa réponse).
@@ -31,14 +33,13 @@ export type OnboardingStep =
   | 'objectif'
   | 'inviter'
   | 'notifications'
-  | 'prepa'
   | 'carte';
 
 const FLOWS: Record<OnboardingFlow, OnboardingStep[]> = {
-  create: ['bienvenue', 'rythme', 'formats', 'choix', 'livre', 'page', 'objectif', 'inviter', 'prepa', 'carte', 'notifications'],
-  join: ['bienvenue', 'rythme', 'formats', 'page', 'prepa', 'carte', 'notifications'],
-  add: ['choix', 'livre', 'page', 'objectif', 'inviter', 'prepa', 'carte'],
-  addJoin: ['page', 'prepa', 'carte'],
+  create: ['bienvenue', 'rythme', 'formats', 'choix', 'livre', 'page', 'objectif', 'inviter', 'notifications'],
+  join: ['bienvenue', 'rythme', 'formats', 'page', 'carte', 'notifications'],
+  add: ['choix', 'livre', 'page', 'objectif', 'inviter'],
+  addJoin: ['page', 'carte'],
 };
 
 /** Les écrans à questions, ceux qui portent le fil de progression */

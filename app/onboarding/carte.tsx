@@ -1,36 +1,30 @@
 /**
- * La carte de lecture : le moment fort de la fin (idée reprise de la carte de
- * Basta, en version bibliothèque).
+ * La carte de lecture, quand on rejoint une lecture (lien ou code) : il n'y
+ * a pas eu d'« Invite tes potes », la carte arrive donc côté livre, se
+ * retourne, et ma carte de lecture s'écrit au verso pendant que tout
+ * s'enregistre (essai A, Lea, 2026-11-12). En créant, la même fin se joue
+ * directement sur la carte d'« Invite tes potes ».
  *
- * Tout ce qu'elle vient de dire devient un objet à son prénom : le livre, le
- * format, où elle en est, ses moments, la date de fin, avec qui.
- * La carte glisse et se pose de travers, puis le tampon du jour s'écrase
- * (feel('bienvenue')). Les yeux dépassent derrière ; en rejoignant, les deux
- * yeux arrivent chacun de leur côté et se retrouvent, comme au splash.
+ * Les deux yeux arrivent chacun de leur côté et se retrouvent, comme au
+ * splash : « Vous êtes trois ».
  */
 
-import * as Notifications from 'expo-notifications';
-import { useRouter } from 'expo-router';
-import React, { useEffect, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import Animated, { Easing, Keyframe, useReducedMotion } from 'react-native-reanimated';
+import Animated, { Easing, FadeIn, FadeInDown, Keyframe, useReducedMotion } from 'react-native-reanimated';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import Button3D from '../../components/Button3D';
 import PopEyes from '../../components/PopEyes';
-import { MOMENTS } from '../../components/onboarding/choices';
 import { ONBOARDING_MAX_W, ONBOARDING_TITLE } from '../../components/onboarding/OnboardingScreen';
+import { CardBook, CardPaper, FlipCard, ReadingCardBack, cardRows } from '../../components/onboarding/ReadingCard';
 import AccentWord, { accentHeadroom } from '../../components/ui/AccentWord';
-import { COVER_RATIO, CoverImage } from '../../components/ui/BookCover';
-import { InkStamp, STAMP_FALL } from '../../components/ui/Stamp';
-import { deadlineFrom } from '../../services/onboarding';
-import { useAuthStore } from '../../stores/authStore';
-import { bookFormat, useOnboardingStore } from '../../stores/onboardingStore';
-import { colors, fonts, inkAlpha, lowki, motion, spacing } from '../../utils/constants';
-import { feel } from '../../utils/feel';
+import { STAMP_FALL } from '../../components/ui/Stamp';
+import { useOnboardingStore } from '../../stores/onboardingStore';
+import { colors, fonts, motion, spacing } from '../../utils/constants';
+import { useFinishOnboarding } from '../../utils/finishOnboarding';
 
-/** Le tampon tombe une fois la carte posée */
-const STAMP_AT = 1050;
-const THUMB_W = 64;
+/** La carte arrive, puis se retourne */
+const FLIP_AFTER = 800;
 
 const cardIn = new Keyframe({
   0: { opacity: 0, transform: [{ translateY: 90 }, { rotate: '6.5deg' }] },
@@ -48,67 +42,35 @@ const eyeIn = (from: number) =>
 const COUNT = ['', '', 'deux', 'trois', 'quatre', 'cinq', 'six', 'sept', 'huit', 'neuf', 'dix'];
 
 export default function CarteScreen() {
-  const router = useRouter();
   const insets = useSafeAreaInsets();
   const reducedMotion = useReducedMotion();
-  const store = useOnboardingStore();
-  const firstName = useAuthStore((s) => s.user?.first_name ?? '');
-  const { book, invitation, start, dated, days, moments, invited, flow } = store;
-  const format = bookFormat(store);
-  const percent = format !== 'papier';
-
-  useEffect(() => {
-    const timer = setTimeout(() => feel('bienvenue'), reducedMotion ? 0 : STAMP_AT + STAMP_FALL);
-    return () => clearTimeout(timer);
-  }, [reducedMotion]);
-
-  const rows = useMemo(() => {
-    if (!book) return [];
-    const end = deadlineFrom(dated, days);
-    const list: [string, string][] = [
-      ['Livre', book.title],
-      ['Format', format === 'papier' ? ['Papier', book.publisher].filter(Boolean).join(' · ') : `${format === 'liseuse' ? 'Liseuse' : 'Audio'} · en %`],
-      ['Où', percent ? `${start} %` : `p. ${start} / ${book.pages}`],
-    ];
-    if (flow === 'create' || flow === 'join') {
-      list.push(['Quand', MOMENTS.filter((m) => moments.includes(m.key)).map((m) => m.label).join(', ') || '—']);
-    }
-    if (!invitation) list.push(['Fin', end ? new Date(`${end}T12:00:00`).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' }) : 'Sans date']);
-    if (invitation) list.push(['Avec', (invitation.readers ?? []).map((r) => r.name).join(', ') || invitation.adminFirstName]);
-    else if (invited) list.push(['Avec', 'invitation envoyée']);
-    return list;
-  }, [book, invitation, start, dated, days, moments, invited, flow, format, percent]);
+  const book = useOnboardingStore((s) => s.book);
+  const invitation = useOnboardingStore((s) => s.invitation);
+  const rows = useMemo(() => cardRows(useOnboardingStore.getState()), []);
+  const end = useFinishOnboarding(!!book, rows.length, FLIP_AFTER);
 
   if (!book) return null;
 
   // Le groupe, moi comprise : « Vous êtes trois »
   const together = COUNT[(invitation?.readers?.length || 1) + 1] ?? 'plein';
-  const today = new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
-  const open = async () => {
-    feel('appui');
-    // Première fois : les notifications, sur le seuil de l'accueil (si iOS n'a pas déjà sa réponse)
-    if (flow === 'create' || flow === 'join') {
-      const { status } = await Notifications.getPermissionsAsync();
-      if (status === 'undetermined') return router.replace('/onboarding/notifications');
-    }
-    useOnboardingStore.getState().reset();
-    router.replace('/(tabs)');
-  };
 
   return (
     <SafeAreaView style={styles.root} edges={['top']}>
       <View style={styles.column}>
-      <View style={styles.body}>
-        <Text style={[styles.title, accentHeadroom(ONBOARDING_TITLE)]} accessibilityRole="header">
-          {invitation ? (
-            <AccentWord text={`Vous êtes ${together}`} accent={together} size={ONBOARDING_TITLE} />
-          ) : (
-            <AccentWord text="Tout est prêt" accent="Tout" size={ONBOARDING_TITLE} />
-          )}
-        </Text>
+        <View style={styles.body}>
+          <Animated.Text
+            entering={reducedMotion ? undefined : FadeIn.duration(400)}
+            style={[styles.title, accentHeadroom(ONBOARDING_TITLE)]}
+            accessibilityRole="header"
+          >
+            {invitation ? (
+              <AccentWord text={`Vous êtes ${together}`} accent={together} size={ONBOARDING_TITLE} />
+            ) : (
+              <AccentWord text="On y va !" accent="y va" size={ONBOARDING_TITLE} />
+            )}
+          </Animated.Text>
 
-        <View style={styles.cardZone}>
-          {invitation ? (
+          <View style={styles.cardZone}>
             <View style={styles.meet} pointerEvents="none">
               <Animated.View entering={reducedMotion ? undefined : eyeIn(-220)}>
                 <PopEyes variant="left" size="medium" />
@@ -117,39 +79,44 @@ export default function CarteScreen() {
                 <PopEyes variant="right" size="medium" />
               </Animated.View>
             </View>
-          ) : (
-            <PopEyes vector size="large" style={styles.peek} />
-          )}
 
-          <View style={styles.tilt}>
-          <Animated.View entering={reducedMotion ? undefined : cardIn} style={styles.card}>
-            <View style={styles.hole} />
-            <View style={styles.head}>
-              <Text style={styles.headText}>Carte de lecture</Text>
-              <Text style={styles.headText} numberOfLines={1}>{firstName}</Text>
-            </View>
-            <View style={styles.cardBody}>
-              {book.cover ? <CoverImage uri={book.cover} style={styles.thumb} /> : null}
-              <View style={styles.rows}>
-                {rows.map(([label, value]) => (
-                  <View key={label} style={styles.row}>
-                    <Text style={styles.label}>{label}</Text>
-                    <Text style={styles.value} numberOfLines={1}>{value}</Text>
-                  </View>
-                ))}
-              </View>
-            </View>
-            <InkStamp label={today} delay={STAMP_AT} angle={-9} style={styles.stamp} />
-          </Animated.View>
+            <Animated.View entering={reducedMotion ? undefined : cardIn}>
+              <FlipCard
+                turned={end.turned}
+                front={
+                  <CardPaper>
+                    <CardBook title={book.title} author={book.author} cover={book.cover} />
+                  </CardPaper>
+                }
+                back={
+                  <ReadingCardBack
+                        book={{ title: book.title, author: book.author, cover: book.cover }}
+                    rows={rows}
+                    written={end.written}
+                    stamped={end.done}
+                  />
+                }
+              />
+            </Animated.View>
           </View>
         </View>
-      </View>
 
-      <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, spacing.lg) + spacing.lg }]}>
-        <Button3D variant="primary" onPress={open} style={styles.wide}>
-          Ouvrir le livre
-        </Button3D>
-      </View>
+        <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, spacing.lg) + spacing.lg }]}>
+          {end.failed ? (
+            <Animated.View entering={FadeIn.duration(250)} style={styles.failed}>
+              <Text style={styles.failedText}>Ça n’a pas marché. Le réseau ?</Text>
+              <Button3D variant="secondary" onPress={end.retry} style={styles.wide}>
+                Réessayer
+              </Button3D>
+            </Animated.View>
+          ) : end.done ? (
+            <Animated.View entering={FadeInDown.duration(350).delay(STAMP_FALL + 250)}>
+              <Button3D variant="primary" onPress={end.open} style={styles.wide}>
+                Ouvrir le livre
+              </Button3D>
+            </Animated.View>
+          ) : null}
+        </View>
       </View>
     </SafeAreaView>
   );
@@ -182,100 +149,24 @@ const styles = StyleSheet.create({
   cardZone: {
     marginTop: spacing.xl,
   },
-  peek: {
-    position: 'absolute',
-    top: -50,
-    right: spacing['3xl'],
-  },
   meet: {
     position: 'absolute',
     top: -58,
     alignSelf: 'center',
     flexDirection: 'row',
   },
-  card: {
-    padding: spacing.lg,
-    paddingTop: spacing.xl + 2,
-    borderRadius: 18,
-    backgroundColor: colors.white,
-    borderWidth: 1,
-    borderColor: inkAlpha(0.1),
-    shadowColor: colors.black,
-    shadowOpacity: 0.18,
-    shadowRadius: 18,
-    shadowOffset: { width: 0, height: 14 },
-  },
-  /** La carte posée de travers ; son entrée part de là */
-  tilt: {
-    transform: [{ rotate: '-1.5deg' }],
-  },
-  hole: {
-    position: 'absolute',
-    top: 9,
-    alignSelf: 'center',
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: colors.bgApp,
-    borderWidth: 1,
-    borderColor: inkAlpha(0.12),
-  },
-  head: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: spacing.md,
-    paddingBottom: spacing.sm,
-    borderBottomWidth: 1.5,
-    borderBottomColor: lowki.red.light,
-  },
-  headText: {
-    fontFamily: fonts.bodySemiBold,
-    fontSize: 11,
-    letterSpacing: 1.1,
-    textTransform: 'uppercase',
-    color: lowki.red.dark,
-  },
-  cardBody: {
-    flexDirection: 'row',
-    gap: spacing.md,
-    paddingTop: spacing.md,
-  },
-  thumb: {
-    width: THUMB_W,
-    height: THUMB_W / COVER_RATIO,
-    transform: [{ rotate: '2deg' }],
-  },
-  rows: {
-    flex: 1,
-  },
-  row: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: spacing.md,
-    paddingVertical: 6,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  label: {
-    fontFamily: fonts.bodySemiBold,
-    fontSize: 13,
-    lineHeight: 18,
-    color: colors.textTertiary,
-  },
-  value: {
-    flexShrink: 1,
-    textAlign: 'right',
-    fontFamily: fonts.bodySemiBold,
-    fontSize: 13,
-    lineHeight: 18,
-    color: colors.textPrimary,
-  },
-  stamp: {
-    right: spacing.md,
-    bottom: -16,
-  },
   footer: {
     paddingHorizontal: spacing.xl,
+  },
+  failed: {
+    gap: spacing.md,
+    alignItems: 'center',
+  },
+  failedText: {
+    fontFamily: fonts.bodySemiBold,
+    fontSize: 15,
+    lineHeight: 20,
+    color: colors.textTertiary,
   },
   wide: {
     width: '100%',

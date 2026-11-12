@@ -24,37 +24,46 @@
 import * as Clipboard from 'expo-clipboard';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useRouter } from 'expo-router';
+import { useNavigation, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { CheckIcon, ChevronLeftIcon, CopyIcon, ShareIcon, XIcon } from 'lucide-react-native';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Pressable, Share, StyleSheet, Text, View } from 'react-native';
-import Animated, { FadeIn } from 'react-native-reanimated';
+import Animated, { Easing, FadeIn, FadeInDown, useAnimatedStyle, useSharedValue, withDelay, withSequence, withTiming } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BRAND_BG } from '../../components/brand/BrandLockup';
 import Button3D from '../../components/Button3D';
+import PopEyes from '../../components/PopEyes';
 import { ONBOARDING_MAX_W, ONBOARDING_TITLE, rise } from '../../components/onboarding/OnboardingScreen';
+import { CardBook, CardPaper, FlipCard, ReadingCardBack, cardRows } from '../../components/onboarding/ReadingCard';
 import AccentWord, { accentHeadroom } from '../../components/ui/AccentWord';
-import BookCover, { COVER_RATIO } from '../../components/ui/BookCover';
-import { StitchBorder } from '../../components/ui/Stitch';
+import { STAMP_FALL } from '../../components/ui/Stamp';
 import GlassButton from '../../components/ui/GlassButton';
 import Shimmer from '../../components/ui/Shimmer';
 import { createReading, deadlineFrom, ensureProfile, updateReadingBook } from '../../services/onboarding';
 import { useOnboardingStore } from '../../stores/onboardingStore';
 import { useProjectStore } from '../../stores/projectStore';
-import { borderRadius, colors, fonts, inkAlpha, lowki, paperFrameGradient, spacing } from '../../utils/constants';
+import { borderRadius, colors, fonts, inkAlpha, lowki, spacing } from '../../utils/constants';
 import { feel } from '../../utils/feel';
-import { nextStep } from '../../utils/onboardingFlow';
+import { FLIP_MS, useFinishOnboarding } from '../../utils/finishOnboarding';
 import { inviteMessage } from '../../utils/share';
 
+/** Les yeux de l'icône, en crème sur l'aquarelle rouge (comme « Bienvenue ») */
+const EYES_TINT = [colors.white, '#efe7da'] as const;
 const WASH = require('../../assets/images/watercolor/login-wash.png');
 
 export default function InviterScreen() {
   const router = useRouter();
   const store = useOnboardingStore();
-  const { flow, book, createdChallengeId, patch } = store;
+  const navigation = useNavigation();
+  const { book, createdChallengeId, patch } = store;
   const challenge = useProjectStore((s) => s.challenges.find((c) => c.id === createdChallengeId) ?? null);
   const [failed, setFailed] = useState(false);
+  /** La fin : la carte se retourne, tout s'enregistre */
+  const [finishing, setFinishing] = useState(false);
+  const gone = useSharedValue(0);
+  const rows = useMemo(() => cardRows(useOnboardingStore.getState()), []);
+  const end = useFinishOnboarding(finishing, rows.length, 250);
   const [copied, setCopied] = useState(false);
 
   /** La lecture existe, et porte le livre choisi */
@@ -82,9 +91,33 @@ export default function InviterScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Les yeux : ils montent une fois la carte retournée, puis un petit sursaut au tampon (sans rebond)
+  const peek = useSharedValue(0);
+  const hop = useSharedValue(0);
+  useEffect(() => {
+    if (end.turned) peek.value = withDelay(FLIP_MS - 150, withTiming(1, { duration: 420, easing: Easing.out(Easing.cubic) }));
+  }, [end.turned, peek]);
+  useEffect(() => {
+    if (end.done) hop.value = withDelay(STAMP_FALL, withSequence(withTiming(1, { duration: 120, easing: Easing.out(Easing.quad) }), withTiming(0, { duration: 260, easing: Easing.inOut(Easing.quad) })));
+  }, [end.done, hop]);
+  const peekStyle = useAnimatedStyle(() => ({
+    opacity: Math.min(1, peek.value * 3),
+    transform: [{ translateY: 46 * (1 - peek.value) - 5 * hop.value }],
+  }));
+
+  // La fin : les mots d'invitation s'effacent, la carte reste et se retourne
+  const fade = useAnimatedStyle(() => ({ opacity: 1 - gone.value }));
+  const appear = useAnimatedStyle(() => ({ opacity: gone.value, transform: [{ translateY: (1 - gone.value) * 12 }] }));
+
   if (!book) return null;
   const code = challenge?.invite_code ?? null;
-  const next = () => router.push(nextStep(flow, 'inviter'));
+  /** Envoyé, ou « Plus tard » : la carte se retourne, tout s'enregistre */
+  const finish = () => {
+    if (finishing) return;
+    navigation.setOptions({ gestureEnabled: false });
+    gone.value = withTiming(1, { duration: 320 });
+    setFinishing(true);
+  };
 
   const share = async () => {
     if (!code) return;
@@ -93,7 +126,7 @@ export default function InviterScreen() {
       if (result.action === Share.sharedAction) {
         feel('inviter');
         patch({ invited: true });
-        next();
+        finish();
       }
     } catch {
       // Annulé
@@ -115,72 +148,110 @@ export default function InviterScreen() {
       <Image source={WASH} style={StyleSheet.absoluteFill} contentFit="cover" />
 
       <SafeAreaView style={styles.column} edges={['top', 'bottom']}>
-        <View style={styles.header}>
+        <Animated.View style={[styles.header, fade]} pointerEvents={finishing ? 'none' : 'auto'}>
           <GlassButton icon={ChevronLeftIcon} onPress={() => router.back()} accessibilityLabel="Retour" />
-          <GlassButton icon={XIcon} onPress={next} accessibilityLabel="Plus tard" />
-        </View>
+          <GlassButton icon={XIcon} onPress={finish} accessibilityLabel="Plus tard" />
+        </Animated.View>
 
         <Animated.View entering={rise(0)} style={styles.head}>
-          <Text style={[styles.heading, accentHeadroom(ONBOARDING_TITLE)]} accessibilityRole="header">
-            <AccentWord text="Invite tes potes" accent="potes" size={ONBOARDING_TITLE} />
-          </Text>
-          <Text style={styles.sub}>Ta lecture est prête</Text>
+          <Animated.View style={fade} accessibilityElementsHidden={finishing} importantForAccessibility={finishing ? 'no-hide-descendants' : 'auto'}>
+            <Text style={[styles.heading, accentHeadroom(ONBOARDING_TITLE)]} accessibilityRole="header">
+              <AccentWord text="Invite tes potes" accent="potes" size={ONBOARDING_TITLE} />
+            </Text>
+            <Text style={styles.sub}>Ta lecture est prête</Text>
+          </Animated.View>
+          {finishing && (
+            <Animated.View style={[styles.doneTitle, appear]}>
+              <Text style={[styles.heading, accentHeadroom(ONBOARDING_TITLE)]} accessibilityRole="header">
+                <AccentWord text="On y va !" accent="y va" size={ONBOARDING_TITLE} />
+              </Text>
+            </Animated.View>
+          )}
         </Animated.View>
 
         <Animated.View entering={rise(1)} style={styles.middle}>
-          {/* La carte de lecture : le livre, puis son code en six cases (d'après la carte-pass d'Opal) */}
-          <LinearGradient colors={paperFrameGradient} style={styles.card}>
-            <StitchBorder radius={borderRadius.xl} />
-            <View style={styles.bookRow}>
-              <View style={styles.thumb}>
-                <BookCover coverUrl={book.cover} />
-              </View>
-              <View style={styles.texts}>
-                <Text style={styles.title} numberOfLines={2}>{book.title}</Text>
-                {!!book.author && <Text style={styles.author} numberOfLines={1}>{book.author}</Text>}
-              </View>
-            </View>
-            <View style={styles.rule} />
-            {failed && !code ? (
-              <Text style={styles.retry} onPress={ensureReading} accessibilityRole="button">
-                Pas de réseau ? Toucher pour réessayer
-              </Text>
-            ) : (
-              <View
-                style={styles.cases}
-                accessible
-                accessibilityLabel={code ? `Code de la lecture : ${code.split('').join(' ')}` : 'Code en préparation'}
-              >
-                {Array.from({ length: CODE_LENGTH }, (_, i) => (
-                  <LinearGradient key={i} colors={CASE_GRADIENT} style={styles.case}>
-                    {code ? (
-                      <Animated.Text entering={FadeIn.duration(200).delay(i * 40)} style={[styles.digit, accentHeadroom(DIGIT_SIZE)]}>
-                        {code[i]}
-                      </Animated.Text>
-                    ) : (
-                      // Pas encore de code : la case en creux, et une lueur qui passe de case en case
-                      <View style={styles.loading}>
-                        <Shimmer delay={i * SHIMMER_STEP} />
-                      </View>
-                    )}
-                  </LinearGradient>
-                ))}
-              </View>
-            )}
-          </LinearGradient>
+          {/* La carte de lecture : le livre, puis son code en six cases (d'après la carte-pass d'Opal) ;
+              à la fin elle se retourne, et ma carte de lecture s'écrit au verso */}
+          <View>
+          {/* Les yeux de chapi sortent de derrière la carte retournée, et sautent au coup de tampon */}
+          <Animated.View style={[styles.peek, peekStyle]} pointerEvents="none">
+            <PopEyes vector size="medium" tint={EYES_TINT} />
+          </Animated.View>
+          <FlipCard
+            turned={end.turned}
+            front={
+              <CardPaper>
+                <CardBook title={book.title} author={book.author} cover={book.cover} />
+                <View style={styles.rule} />
+                {failed && !code ? (
+                  <Text style={styles.retry} onPress={ensureReading} accessibilityRole="button">
+                    Pas de réseau ? Toucher pour réessayer
+                  </Text>
+                ) : (
+                  <View
+                    style={styles.cases}
+                    accessible
+                    accessibilityLabel={code ? `Code de la lecture : ${code.split('').join(' ')}` : 'Code en préparation'}
+                  >
+                    {Array.from({ length: CODE_LENGTH }, (_, i) => (
+                      <LinearGradient key={i} colors={CASE_GRADIENT} style={styles.case}>
+                        {code ? (
+                          <Animated.Text entering={FadeIn.duration(200).delay(i * 40)} style={[styles.digit, accentHeadroom(DIGIT_SIZE)]}>
+                            {code[i]}
+                          </Animated.Text>
+                        ) : (
+                          // Pas encore de code : la case en creux, et une lueur qui passe de case en case
+                          <View style={styles.loading}>
+                            <Shimmer delay={i * SHIMMER_STEP} />
+                          </View>
+                        )}
+                      </LinearGradient>
+                    ))}
+                  </View>
+                )}
+              </CardPaper>
+            }
+            back={
+              <ReadingCardBack
+                book={{ title: book.title, author: book.author, cover: book.cover }}
+                rows={rows}
+                written={end.written}
+                stamped={end.done}
+              />
+            }
+          />
+          </View>
 
           {!!code && (
-            <Pressable onPress={copy} hitSlop={12} style={styles.copy} accessibilityRole="button" accessibilityLabel={copied ? 'Code copié' : 'Copier le code'}>
-              {copied ? <CheckIcon size={16} color={colors.white} /> : <CopyIcon size={16} color={colors.white} />}
-              <Text style={styles.copyText}>{copied ? 'Copié' : 'Copier le code'}</Text>
-            </Pressable>
+            <Animated.View style={fade} pointerEvents={finishing ? 'none' : 'auto'}>
+              <Pressable onPress={copy} hitSlop={12} style={styles.copy} accessibilityRole="button" accessibilityLabel={copied ? 'Code copié' : 'Copier le code'}>
+                {copied ? <CheckIcon size={16} color={colors.white} /> : <CopyIcon size={16} color={colors.white} />}
+                <Text style={styles.copyText}>{copied ? 'Copié' : 'Copier le code'}</Text>
+              </Pressable>
+            </Animated.View>
           )}
         </Animated.View>
 
         <Animated.View entering={rise(2)} style={styles.footer}>
-          <Button3D variant="secondary" icon={ShareIcon} iconPosition="left" disabled={!code} onPress={share} style={styles.wide}>
-            Envoyer le lien
-          </Button3D>
+          <Animated.View style={fade} pointerEvents={finishing ? 'none' : 'auto'}>
+            <Button3D variant="secondary" icon={ShareIcon} iconPosition="left" disabled={!code} onPress={share} style={styles.wide}>
+              Envoyer le lien
+            </Button3D>
+          </Animated.View>
+          {/* À la place, une fois le tampon posé : ouvrir le livre (ou réessayer) */}
+          {end.failed ? (
+            <Animated.View entering={FadeIn.duration(250)} style={styles.over}>
+              <Button3D variant="secondary" onPress={end.retry} style={styles.wide}>
+                Réessayer
+              </Button3D>
+            </Animated.View>
+          ) : end.done ? (
+            <Animated.View entering={FadeInDown.duration(350).delay(STAMP_FALL + 250)} style={styles.over}>
+              <Button3D variant="secondary" onPress={end.open} style={styles.wide}>
+                Ouvrir le livre
+              </Button3D>
+            </Animated.View>
+          ) : null}
         </Animated.View>
       </SafeAreaView>
     </View>
@@ -191,7 +262,6 @@ const CODE_LENGTH = 6;
 const DIGIT_SIZE = 30;
 /** La lueur passe d'une case à la suivante */
 const SHIMMER_STEP = 90;
-const THUMB_W = 48;
 /** Une case du code : papier un cran plus clair que la carte */
 const CASE_GRADIENT = ['#fffdf9', '#f4eee5'] as const;
 
@@ -233,39 +303,23 @@ const styles = StyleSheet.create({
     opacity: 0.85,
   },
   // La carte au milieu de la place qui reste
+  // « On y va ! » prend la place du titre d'invitation
+  doneTitle: {
+    position: 'absolute',
+    top: spacing['2xl'],
+    left: 0,
+    right: 0,
+  },
+  // Les yeux, posés derrière le bord haut de la carte, côté gauche (le tampon est à droite)
+  peek: {
+    position: 'absolute',
+    top: -44,
+    left: spacing.xl,
+  },
   middle: {
     flex: 1,
     justifyContent: 'center',
     gap: spacing.lg,
-  },
-  card: {
-    borderRadius: borderRadius.xl,
-    padding: spacing.lg,
-  },
-  bookRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-  },
-  thumb: {
-    width: THUMB_W,
-    aspectRatio: COVER_RATIO,
-  },
-  texts: {
-    flex: 1,
-    gap: 2,
-  },
-  title: {
-    fontFamily: fonts.display,
-    fontSize: 18,
-    lineHeight: 23,
-    color: colors.textPrimary,
-  },
-  author: {
-    fontFamily: fonts.body,
-    fontSize: 14,
-    lineHeight: 19,
-    color: colors.textTertiary,
   },
   rule: {
     height: StyleSheet.hairlineWidth,
@@ -320,6 +374,13 @@ const styles = StyleSheet.create({
   },
   footer: {
     paddingBottom: spacing.lg,
+  },
+  /** Le bouton de la fin, à la place d'« Envoyer le lien » */
+  over: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
   },
   wide: {
     width: '100%',

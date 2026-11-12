@@ -5,14 +5,19 @@
  *
  * - `useStamp` : le mouvement seul, pour tout ce qui se tamponne (l'emoji d'une
  *   réaction dans NoteCard, le tampon d'encre ci-dessous).
- * - `InkStamp` : un tampon d'encre rouge, cadre et mot en capitales, posé de
- *   travers (la date sur la carte de lecture).
+ * - `InkStamp` : un vrai coup de tampon d'encre rouge, cadre et mot en
+ *   capitales, posé de travers (« En lecture » sur la carte de lecture, comme
+ *   un emprunt à la bibliothèque ; `small` : plus petit, pour un coin). L'encre
+ *   manque par endroits : grain, trous, un côté moins appuyé (une des trois
+ *   empreintes d'assets/images/stamp, tirée au hasard, parfois retournée).
  *
  * « Réduire les animations » : rien ne bouge, le tampon est déjà posé.
  */
 
-import React, { useEffect } from 'react';
-import { StyleSheet, Text, type StyleProp, type ViewStyle } from 'react-native';
+import MaskedView from './MaskedView';
+import { Image } from 'expo-image';
+import React, { useEffect, useState } from 'react';
+import { StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 import Animated, {
   Easing,
   useAnimatedStyle,
@@ -75,24 +80,44 @@ export function useStamp({ fallAfter, height = 26, grow = 0.7 }: { fallAfter?: n
   return { style, press };
 }
 
+/** Les empreintes d'encre : blanc = encre, transparent = papier qui reste */
+const INK = [
+  require('../../assets/images/stamp/ink-1.png'),
+  require('../../assets/images/stamp/ink-2.png'),
+  require('../../assets/images/stamp/ink-3.png'),
+];
+
 /** Un tampon d'encre rouge, posé de travers, qui tombe après `delay` ms */
 export function InkStamp({
   label,
   delay,
   angle = -10,
+  small = false,
   style,
 }: {
   label: string;
+  /** Plus petit, pour se poser dans un coin */
+  small?: boolean;
   delay: number;
   /** Son inclinaison, en degrés */
   angle?: number;
   style?: StyleProp<ViewStyle>;
 }) {
   const { style: stamp } = useStamp({ fallAfter: delay, height: 0, grow: 0.9 });
+  // Chaque coup de tampon a son empreinte
+  const [print] = useState(() => ({ ink: INK[Math.floor(Math.random() * INK.length)], flip: Math.random() < 0.5 }));
   return (
     <Animated.View style={[styles.place, { transform: [{ rotate: `${angle}deg` }] }, style]} pointerEvents="none">
-      <Animated.View style={[styles.frame, stamp]}>
-        <Text style={styles.label}>{label}</Text>
+      <Animated.View style={stamp}>
+        <MaskedView
+          maskElement={
+            <Image source={print.ink} style={[StyleSheet.absoluteFill, print.flip && styles.flip]} contentFit="fill" />
+          }
+        >
+          <View style={[styles.frame, small && styles.frameSmall]}>
+            <Text style={[styles.label, small && styles.small]}>{label}</Text>
+          </View>
+        </MaskedView>
       </Animated.View>
     </Animated.View>
   );
@@ -108,7 +133,21 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     paddingHorizontal: 12,
     paddingVertical: 5,
-    opacity: 0.9,
+    opacity: 0.92,
+  },
+  frameSmall: {
+    borderWidth: 2,
+    borderRadius: 7,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+  /** Le mot du petit tampon */
+  small: {
+    fontSize: 11,
+    letterSpacing: 1,
+  },
+  flip: {
+    transform: [{ scaleX: -1 }, { scaleY: -1 }],
   },
   label: {
     fontFamily: fonts.displayBold,
