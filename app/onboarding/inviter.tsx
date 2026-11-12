@@ -29,7 +29,7 @@ import { StatusBar } from 'expo-status-bar';
 import { CheckIcon, ChevronLeftIcon, CopyIcon, ShareIcon, XIcon } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Pressable, Share, StyleSheet, Text, View } from 'react-native';
-import Animated, { FadeIn, FadeInDown, useAnimatedStyle, useSharedValue, withDelay, withSequence, withSpring, withTiming } from 'react-native-reanimated';
+import Animated, { Easing, FadeIn, FadeInDown, useAnimatedStyle, useSharedValue, withDelay, withSequence, withTiming } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BRAND_BG } from '../../components/brand/BrandLockup';
 import Button3D from '../../components/Button3D';
@@ -91,18 +91,18 @@ export default function InviterScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Les yeux : ils montent une fois la carte retournée, puis sautent au tampon
+  // Les yeux : ils montent une fois la carte retournée, puis un petit sursaut au tampon (sans rebond)
   const peek = useSharedValue(0);
   const hop = useSharedValue(0);
   useEffect(() => {
-    if (end.turned) peek.value = withDelay(FLIP_MS - 150, withSpring(1, { damping: 12, stiffness: 160 }));
+    if (end.turned) peek.value = withDelay(FLIP_MS - 150, withTiming(1, { duration: 420, easing: Easing.out(Easing.cubic) }));
   }, [end.turned, peek]);
   useEffect(() => {
-    if (end.done) hop.value = withDelay(STAMP_FALL, withSequence(withTiming(1, { duration: 140 }), withSpring(0, { damping: 7, stiffness: 260 })));
+    if (end.done) hop.value = withDelay(STAMP_FALL, withSequence(withTiming(1, { duration: 120, easing: Easing.out(Easing.quad) }), withTiming(0, { duration: 260, easing: Easing.inOut(Easing.quad) })));
   }, [end.done, hop]);
   const peekStyle = useAnimatedStyle(() => ({
     opacity: Math.min(1, peek.value * 3),
-    transform: [{ translateY: 46 * (1 - peek.value) - 14 * hop.value }],
+    transform: [{ translateY: 46 * (1 - peek.value) - 5 * hop.value }],
   }));
 
   // La fin : les mots d'invitation s'effacent, la carte reste et se retourne

@@ -30,7 +30,6 @@ import Animated, {
   useSharedValue,
   withDelay,
   withSequence,
-  withSpring,
   withTiming,
 } from 'react-native-reanimated';
 import { deadlineFrom } from '../../services/onboarding';
@@ -170,9 +169,9 @@ export function ReadingCardBack({
   const thud = useSharedValue(0);
   useEffect(() => {
     if (!stamped || reducedMotion) return;
-    thud.value = withDelay(STAMP_FALL, withSequence(withTiming(1, { duration: 60 }), withSpring(0, { damping: 9, stiffness: 420 })));
+    thud.value = withDelay(STAMP_FALL, withSequence(withTiming(1, { duration: 60 }), withTiming(0, { duration: 220, easing: Easing.out(Easing.quad) })));
   }, [stamped, reducedMotion, thud]);
-  const thudStyle = useAnimatedStyle(() => ({ transform: [{ scale: 1 - 0.025 * thud.value }, { translateY: 3 * thud.value }] }));
+  const thudStyle = useAnimatedStyle(() => ({ transform: [{ scale: 1 - 0.012 * thud.value }, { translateY: 1.5 * thud.value }] }));
 
   return (
     <Animated.View style={thudStyle}>
