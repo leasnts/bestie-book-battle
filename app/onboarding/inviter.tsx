@@ -40,7 +40,6 @@ import { STAMP_FALL } from '../../components/ui/Stamp';
 import GlassButton from '../../components/ui/GlassButton';
 import Shimmer from '../../components/ui/Shimmer';
 import { createReading, deadlineFrom, ensureProfile, updateReadingBook } from '../../services/onboarding';
-import { useAuthStore } from '../../stores/authStore';
 import { useOnboardingStore } from '../../stores/onboardingStore';
 import { useProjectStore } from '../../stores/projectStore';
 import { borderRadius, colors, fonts, inkAlpha, lowki, spacing } from '../../utils/constants';
@@ -55,15 +54,12 @@ export default function InviterScreen() {
   const store = useOnboardingStore();
   const navigation = useNavigation();
   const { book, createdChallengeId, patch } = store;
-  const firstName = useAuthStore((s) => s.user?.first_name ?? '');
   const challenge = useProjectStore((s) => s.challenges.find((c) => c.id === createdChallengeId) ?? null);
   const [failed, setFailed] = useState(false);
   /** La fin : la carte se retourne, tout s'enregistre */
   const [finishing, setFinishing] = useState(false);
   const gone = useSharedValue(0);
-  // Lues au moment de finir : « Avec » dit si l'invitation est partie
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const rows = useMemo(() => cardRows(useOnboardingStore.getState()), [finishing]);
+  const rows = useMemo(() => cardRows(useOnboardingStore.getState()), []);
   const end = useFinishOnboarding(finishing, rows.length, 250);
   const [copied, setCopied] = useState(false);
 
@@ -150,7 +146,7 @@ export default function InviterScreen() {
           {finishing && (
             <Animated.View style={[styles.doneTitle, appear]}>
               <Text style={[styles.heading, accentHeadroom(ONBOARDING_TITLE)]} accessibilityRole="header">
-                <AccentWord text="Tout est prêt" accent="Tout" size={ONBOARDING_TITLE} />
+                <AccentWord text="On y va" accent="y va" size={ONBOARDING_TITLE} />
               </Text>
             </Animated.View>
           )}
@@ -195,7 +191,6 @@ export default function InviterScreen() {
             }
             back={
               <ReadingCardBack
-                firstName={firstName}
                 book={{ title: book.title, author: book.author, cover: book.cover }}
                 rows={rows}
                 written={end.written}
@@ -285,7 +280,7 @@ const styles = StyleSheet.create({
     opacity: 0.85,
   },
   // La carte au milieu de la place qui reste
-  // « Tout est prêt » prend la place du titre d'invitation
+  // « On y va » prend la place du titre d'invitation
   doneTitle: {
     position: 'absolute',
     top: spacing['2xl'],

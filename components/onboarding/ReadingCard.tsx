@@ -6,16 +6,16 @@
  *   d'avant, le verso, plus haut, déborde autant en haut qu'en bas.
  * - `CardPaper` : la matière, celle de la carte d'« Invite tes potes ».
  * - `ReadingCardBack` : le verso, ma carte de lecture. Ses lignes s'écrivent
- *   une à une à l'encre (de gauche à droite), puis la date se tamponne.
+ *   une à une à l'encre (de gauche à droite), puis « En lecture » se tamponne,
+ *   comme un emprunt à la bibliothèque.
  *
  *    ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐
- *    ┊ CARTE DE LECTURE      LILI  ┊
  *    ┊ ▐█▌ Educated               ┊
  *    ┊     Tara Westover           ┊
  *    ┊ ─────────────────────────── ┊
  *    ┊ Format        Papier · Folio┊
  *    ┊ Où              p. 12 / 352 ┊
- *    ┊ …                ╱12 NOV.╱  ┊
+ *    ┊ …            ╱EN LECTURE╱   ┊
  *    └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┘
  */
 
@@ -88,7 +88,7 @@ export function FlipCard({ front, back, turned }: { front: React.ReactNode; back
 
 /** Les lignes de ma carte, d'après le brouillon */
 export function cardRows(store: OnboardingStore): [string, string][] {
-  const { book, invitation, start, dated, days, moments, invited, flow } = store;
+  const { book, invitation, start, dated, days, moments, flow } = store;
   if (!book) return [];
   const format = bookFormat(store);
   const percent = format !== 'papier';
@@ -118,8 +118,6 @@ export function cardRows(store: OnboardingStore): [string, string][] {
           })
         : 'Sans date',
     ]);
-  if (invitation) list.push(['Avec', (invitation.readers ?? []).map((r) => r.name).join(', ') || invitation.adminFirstName]);
-  else if (invited) list.push(['Avec', 'invitation envoyée']);
   return list;
 }
 
@@ -145,38 +143,25 @@ export function CardBook({ title, author, cover }: { title: string; author?: str
 }
 
 export function ReadingCardBack({
-  firstName,
   book,
   rows,
   written,
   stamped,
 }: {
-  firstName: string;
   book: { title: string; author?: string; cover: string | null };
   rows: [string, string][];
   /** Combien de lignes sont déjà écrites */
   written: number;
-  /** La date se tamponne */
+  /** « En lecture » se tamponne */
   stamped: boolean;
 }) {
-  const today = new Date().toLocaleDateString('fr-FR', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  });
   return (
     <View>
       <CardPaper>
         <View
           accessible
-          accessibilityLabel={`Carte de lecture de ${firstName} : ${book.title}. ${rows.map(([l, v]) => `${l} : ${v}`).join('. ')}`}
+          accessibilityLabel={`Carte de lecture : ${book.title}. ${rows.map(([l, v]) => `${l} : ${v}`).join('. ')}`}
         >
-          <View style={styles.head}>
-            <Text style={styles.headText}>Carte de lecture</Text>
-            <Text style={styles.headText} numberOfLines={1}>
-              {firstName}
-            </Text>
-          </View>
           <CardBook {...book} />
           <View style={styles.rule} />
           {rows.map(([label, value], i) => (
@@ -187,7 +172,7 @@ export function ReadingCardBack({
           ))}
         </View>
         {/* La place du tampon, en bas à droite du papier (sur l'aquarelle rouge, l'encre rouge se perdrait) */}
-        <View style={styles.stampPlace}>{stamped && <InkStamp label={today} delay={0} angle={-7} style={styles.stamp} />}</View>
+        <View style={styles.stampPlace}>{stamped && <InkStamp label="En lecture" double delay={0} angle={-7} style={styles.stamp} />}</View>
       </CardPaper>
     </View>
   );
@@ -245,19 +230,6 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     justifyContent: 'center',
-  },
-  head: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: spacing.md,
-    marginBottom: spacing.md,
-  },
-  headText: {
-    fontFamily: fonts.bodySemiBold,
-    fontSize: 11,
-    letterSpacing: 1.1,
-    textTransform: 'uppercase',
-    color: lowki.red.dark,
   },
   bookRow: {
     flexDirection: 'row',
@@ -327,7 +299,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   stampPlace: {
-    height: 40,
+    height: 54,
   },
   stamp: {
     right: spacing.xs,

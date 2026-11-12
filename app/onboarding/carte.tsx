@@ -19,7 +19,6 @@ import { ONBOARDING_MAX_W, ONBOARDING_TITLE } from '../../components/onboarding/
 import { CardBook, CardPaper, FlipCard, ReadingCardBack, cardRows } from '../../components/onboarding/ReadingCard';
 import AccentWord, { accentHeadroom } from '../../components/ui/AccentWord';
 import { STAMP_FALL } from '../../components/ui/Stamp';
-import { useAuthStore } from '../../stores/authStore';
 import { useOnboardingStore } from '../../stores/onboardingStore';
 import { colors, fonts, motion, spacing } from '../../utils/constants';
 import { useFinishOnboarding } from '../../utils/finishOnboarding';
@@ -45,7 +44,6 @@ const COUNT = ['', '', 'deux', 'trois', 'quatre', 'cinq', 'six', 'sept', 'huit',
 export default function CarteScreen() {
   const insets = useSafeAreaInsets();
   const reducedMotion = useReducedMotion();
-  const firstName = useAuthStore((s) => s.user?.first_name ?? '');
   const book = useOnboardingStore((s) => s.book);
   const invitation = useOnboardingStore((s) => s.invitation);
   const rows = useMemo(() => cardRows(useOnboardingStore.getState()), []);
@@ -68,7 +66,7 @@ export default function CarteScreen() {
             {invitation ? (
               <AccentWord text={`Vous êtes ${together}`} accent={together} size={ONBOARDING_TITLE} />
             ) : (
-              <AccentWord text="Tout est prêt" accent="Tout" size={ONBOARDING_TITLE} />
+              <AccentWord text="On y va" accent="y va" size={ONBOARDING_TITLE} />
             )}
           </Animated.Text>
 
@@ -92,8 +90,7 @@ export default function CarteScreen() {
                 }
                 back={
                   <ReadingCardBack
-                    firstName={firstName}
-                    book={{ title: book.title, author: book.author, cover: book.cover }}
+                        book={{ title: book.title, author: book.author, cover: book.cover }}
                     rows={rows}
                     written={end.written}
                     stamped={end.done}

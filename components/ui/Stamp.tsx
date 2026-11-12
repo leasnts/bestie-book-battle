@@ -6,7 +6,8 @@
  * - `useStamp` : le mouvement seul, pour tout ce qui se tamponne (l'emoji d'une
  *   réaction dans NoteCard, le tampon d'encre ci-dessous).
  * - `InkStamp` : un vrai coup de tampon d'encre rouge, cadre et mot en
- *   capitales, posé de travers (la date sur la carte de lecture). L'encre
+ *   capitales, posé de travers (« En lecture » sur la carte de lecture, comme
+ *   un emprunt à la bibliothèque ; `double` : le cadre à double filet). L'encre
  *   manque par endroits : grain, trous, un côté moins appuyé (une des trois
  *   empreintes d'assets/images/stamp, tirée au hasard, parfois retournée).
  *
@@ -91,9 +92,12 @@ export function InkStamp({
   label,
   delay,
   angle = -10,
+  double = false,
   style,
 }: {
   label: string;
+  /** Le cadre à double filet des tampons de bibliothèque */
+  double?: boolean;
   delay: number;
   /** Son inclinaison, en degrés */
   angle?: number;
@@ -110,8 +114,14 @@ export function InkStamp({
             <Image source={print.ink} style={[StyleSheet.absoluteFill, print.flip && styles.flip]} contentFit="fill" />
           }
         >
-          <View style={styles.frame}>
-            <Text style={styles.label}>{label}</Text>
+          <View style={[styles.frame, double && styles.outer]}>
+            {double ? (
+              <View style={styles.inner}>
+                <Text style={styles.label}>{label}</Text>
+              </View>
+            ) : (
+              <Text style={styles.label}>{label}</Text>
+            )}
           </View>
         </MaskedView>
       </Animated.View>
@@ -130,6 +140,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 5,
     opacity: 0.92,
+  },
+  outer: {
+    padding: 2.5,
+    borderRadius: 9,
+  },
+  inner: {
+    borderWidth: 1.2,
+    borderColor: colors.accent,
+    borderRadius: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
   },
   flip: {
     transform: [{ scaleX: -1 }, { scaleY: -1 }],
