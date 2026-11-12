@@ -45,6 +45,10 @@ export default function AccentWord({ text: raw, accent, size }: AccentWordProps)
   // L'accent peut faire deux mots (« meilleur moment ») : ses espaces sont peut-être devenus insécables
   const match = accent ? lastMatch(text, accent) : null;
   if (!match) return <>{text}</>;
+  // Welcome Valentines n'a ni é, ni à, ni ç… : le mot d'accent doit s'en passer (#196)
+  if (__DEV__ && /[^\x00-\x7F]/.test(match.found.replace(/ /g, ' '))) {
+    console.warn(`AccentWord : « ${match.found} » a une lettre que Welcome Valentines n'a pas`);
+  }
 
   return (
     <>

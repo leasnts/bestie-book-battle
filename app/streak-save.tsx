@@ -117,7 +117,7 @@ export default function StreakSaveRoute() {
   return (
     <SheetPage
       title="Garder ma série"
-      accent="série"
+      accent="Garder"
       actions={<BonusPill left={pillLeft} />}
     >
       <StreakHero days={days} flame="dim" revive={!!dropped} delay={REVIVE_AT} />
