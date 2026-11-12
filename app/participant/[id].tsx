@@ -17,12 +17,13 @@ import { useAuthStore } from '../../stores/authStore';
 import { useProgressStore } from '../../stores/progressStore';
 import { useProjectStore } from '../../stores/projectStore';
 import type { ProgressHistory } from '../../types/supabase';
+import { useShallow } from 'zustand/react/shallow';
 
 export default function ParticipantRoute() {
   const { id, from } = useLocalSearchParams<{ id: string; from?: string }>();
   const router = useRouter();
-  const { user } = useAuthStore();
-  const { participants } = useProgressStore();
+  const { user } = useAuthStore(useShallow((s) => ({ user: s.user })));
+  const { participants } = useProgressStore(useShallow((s) => ({ participants: s.participants })));
   const activeChallenge = useProjectStore((s) => s.activeChallenge);
 
   const [history, setHistory] = useState<ProgressHistory[]>([]);

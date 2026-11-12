@@ -29,7 +29,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { FullWindowOverlay } from 'react-native-screens';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { accentGradient, colors, fonts, lowki, motion, ROUND_BUTTON_SIZE, spacing } from '../../utils/constants';
+import { accentGradient, colors, fonts, lowki, motion, ROUND_BUTTON_SIZE, spacing, dropShadow } from '../../utils/constants';
 import { useNoticeStore, type Notice } from '../../utils/notice';
 import PressableScale from './PressableScale';
 
@@ -162,10 +162,7 @@ const styles = StyleSheet.create({
   shadow: {
     borderRadius: RADIUS,
     transformOrigin: 'top',
-    shadowColor: colors.black,
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.28,
-    shadowRadius: 24,
+    boxShadow: dropShadow(10, 24, 0.28),
   },
   card: {
     borderRadius: RADIUS,

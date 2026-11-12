@@ -9,7 +9,7 @@
 
 import React from 'react';
 import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
-import { colors, glassControlVeil, ROUND_BUTTON_SIZE } from '../../utils/constants';
+import { colors, glassControlVeil, ROUND_BUTTON_SIZE, dropShadow } from '../../utils/constants';
 import GlassMaterial from './GlassMaterial';
 import PressableScale from './PressableScale';
 
@@ -61,9 +61,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 5,
-    shadowColor: colors.black,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.12,
-    shadowRadius: 12,
+    boxShadow: dropShadow(4, 12, 0.12),
   },
 });

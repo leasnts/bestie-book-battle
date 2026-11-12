@@ -18,6 +18,7 @@ import { useProgressStore } from '../stores/progressStore';
 import { useProjectStore } from '../stores/projectStore';
 import { LeaderboardParticipant } from '../utils/leaderboard';
 import { getActiveStreak, isStreakAtRisk } from '../utils/streak';
+import { useShallow } from 'zustand/react/shallow';
 
 /**
  * Ajoute un paramètre de version à une URL d'image.
@@ -40,9 +41,9 @@ export interface LeaderboardData {
 }
 
 export function useLeaderboardParticipants(): LeaderboardData {
-  const { user } = useAuthStore();
-  const { participants } = useProgressStore();
-  const { activeChallenge } = useProjectStore();
+  const { user } = useAuthStore(useShallow((s) => ({ user: s.user })));
+  const { participants } = useProgressStore(useShallow((s) => ({ participants: s.participants })));
+  const { activeChallenge } = useProjectStore(useShallow((s) => ({ activeChallenge: s.activeChallenge })));
 
   return useMemo(() => {
     const myUserId = user?.id ?? '';

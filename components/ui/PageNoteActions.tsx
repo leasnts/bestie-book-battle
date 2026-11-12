@@ -23,7 +23,7 @@ import React, { useState } from 'react';
 import { ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import Animated, { FadeIn, FadeOut, useReducedMotion, ZoomIn } from 'react-native-reanimated';
 import { useQuickNote } from '../../hooks/useQuickNote';
-import { creamAlpha, inkAlpha, ROUND_BUTTON_SIZE, shadowAlpha, spacing } from '../../utils/constants';
+import { creamAlpha, inkAlpha, ROUND_BUTTON_SIZE, shadowAlpha, spacing, dropShadow } from '../../utils/constants';
 import { TRENDING_EMOJIS } from '../../utils/emojis';
 import GlassButton from './GlassButton';
 import PressableScale from './PressableScale';
@@ -120,10 +120,7 @@ const styles = StyleSheet.create({
     backgroundColor: creamAlpha(0.97),
     borderWidth: 1,
     borderColor: inkAlpha(0.08),
-    shadowColor: shadowAlpha(0.25),
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 1,
-    shadowRadius: 16,
+    boxShadow: dropShadow(8, 16, 0.25),
   },
   emojiRow: {
     gap: 2,

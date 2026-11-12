@@ -27,6 +27,14 @@ const CREAM_RGB = '253,252,250'; // #fdfcfa
 export const inkAlpha = (alpha: number) => `rgba(${INK_RGB},${alpha})`;
 /** Ombre marron très sombre transparente : ombres portées, ombres internes, voiles */
 export const shadowAlpha = (alpha: number) => `rgba(${SHADOW_RGB},${alpha})`;
+/**
+ * Ombre portée en `boxShadow` : iOS la dessine une fois, d'après la forme de la vue
+ * (rayon compris). Les ombres `shadow*` sur une vue sans fond opaque obligent iOS
+ * à recalculer l'ombre à chaque image : c'était la grosse source de saccades (#230).
+ * `radius` = l'ancien `shadowRadius` (le flou CSS vaut le double).
+ */
+export const dropShadow = (y: number, radius: number, alpha: number, x = 0) =>
+  `${x}px ${y}px ${radius * 2}px rgba(${SHADOW_RGB},${alpha})`;
 /** Blanc chaud transparent : reflets et bordures claires sur fond sombre */
 export const creamAlpha = (alpha: number) => `rgba(${CREAM_RGB},${alpha})`;
 
@@ -332,35 +340,19 @@ export const fontWeight = {
 export const shadows = {
   // Shadow-xs (inputs)
   xs: {
-    shadowColor: shadowAlpha(0.05),
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 1,
-    shadowRadius: 2,
-    elevation: 1,
+    boxShadow: dropShadow(1, 2, 0.05),
   },
   // Ombre bouton principal
   button: {
-    shadowColor: shadowAlpha(0.25),
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 1,
-    shadowRadius: 6,
-    elevation: 3,
+    boxShadow: dropShadow(4, 6, 0.25),
   },
   // Ombre bouton secondaire
   buttonLight: {
-    shadowColor: shadowAlpha(0.1),
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 1,
-    shadowRadius: 6,
-    elevation: 2,
+    boxShadow: dropShadow(0, 6, 0.1),
   },
   // Ombre carte sélectionnée
   cardSelected: {
-    shadowColor: shadowAlpha(0.09),
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 1,
-    shadowRadius: 20,
-    elevation: 4,
+    boxShadow: dropShadow(4, 20, 0.09),
   },
 };
 

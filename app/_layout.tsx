@@ -59,6 +59,7 @@ export {
   // Catch any errors thrown by the Layout component.
   ErrorBoundary
 } from 'expo-router';
+import { useShallow } from 'zustand/react/shallow';
 
 export const unstable_settings = {
   // Définit la route initiale
@@ -96,8 +97,21 @@ export default function RootLayout() {
  * - Si projet → écran principal (tabs)
  */
 function RootLayoutNav() {
-  const { user, isInitialized, initialize: initAuth, pendingUserData } = useAuthStore();
-  const { challenges, loadUserChallenges, _hasHydrated } = useProjectStore();
+  const { user, isInitialized, initialize: initAuth, pendingUserData } = useAuthStore(
+    useShallow((s) => ({
+      user: s.user,
+      isInitialized: s.isInitialized,
+      initialize: s.initialize,
+      pendingUserData: s.pendingUserData,
+    })),
+  );
+  const { challenges, loadUserChallenges, _hasHydrated } = useProjectStore(
+    useShallow((s) => ({
+      challenges: s.challenges,
+      loadUserChallenges: s.loadUserChallenges,
+      _hasHydrated: s._hasHydrated,
+    })),
+  );
   const router = useRouter();
   const segments = useSegments();
   const [isMounted, setIsMounted] = useState(false);

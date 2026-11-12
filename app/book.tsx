@@ -69,17 +69,30 @@ import {
 import { AccentUnits } from '../components/ui/AccentWord';
 import { startAdding } from '../utils/onboardingFlow';
 import { oops } from '../utils/notice';
+import { useShallow } from 'zustand/react/shallow';
 
 export default function BookRoute() {
   const router = useRouter();
-  const { user } = useAuthStore();
+  const { user } = useAuthStore(useShallow((s) => ({ user: s.user })));
   const {
     activeChallenge,
     challenges,
     leaveActiveChallenge,
-  } = useProjectStore();
-  const { participants } = useProgressStore();
-  const { secondaryGoal, history: goalHistory, removeGoal } = useGoalStore();
+  } = useProjectStore(
+    useShallow((s) => ({
+      activeChallenge: s.activeChallenge,
+      challenges: s.challenges,
+      leaveActiveChallenge: s.leaveActiveChallenge,
+    })),
+  );
+  const { participants } = useProgressStore(useShallow((s) => ({ participants: s.participants })));
+  const { secondaryGoal, history: goalHistory, removeGoal } = useGoalStore(
+    useShallow((s) => ({
+      secondaryGoal: s.secondaryGoal,
+      history: s.history,
+      removeGoal: s.removeGoal,
+    })),
+  );
 
   const [clubHistory, setClubHistory] = useState<ProgressHistory[]>([]);
 
@@ -129,7 +142,9 @@ export default function BookRoute() {
   // Le carnet : combien de notes, dont les miennes, et où elles sont dans le
   // livre. Celles que je peux lire gardent leur couleur ; les verrouillées ne
   // montrent que leur place (règle du carnet : rien de leur contenu)
-  const { notes: allNotes, ahead: allAhead, challengeId: notesBookId } = useAnnotationStore();
+  const { notes: allNotes, ahead: allAhead, challengeId: notesBookId } = useAnnotationStore(
+    useShallow((s) => ({ notes: s.notes, ahead: s.ahead, challengeId: s.challengeId })),
+  );
   const noteCounts = useMemo(() => {
     // Le carnet chargé est peut-être celui d'un autre livre
     const sameBook = notesBookId === challengeId;

@@ -27,6 +27,7 @@ import { useNotificationStore } from '../stores/notificationStore';
 import { useProjectStore } from '../stores/projectStore';
 import { borderRadius, colors, fonts, fontSize, spacing } from '../utils/constants';
 import { ChevronLeftIcon } from 'lucide-react-native';
+import { useShallow } from 'zustand/react/shallow';
 
 // ─── Assets ──────────────────────────────────────────────────────────────────
 
@@ -56,7 +57,7 @@ function formatRelativeTime(isoString: string): string {
 
 export default function ActivityScreen() {
   const router = useRouter();
-  const { activeChallenge } = useProjectStore();
+  const { activeChallenge } = useProjectStore(useShallow((s) => ({ activeChallenge: s.activeChallenge })));
   const notifications = useNotificationStore((s) => s.notifications);
   const load = useNotificationStore((s) => s.load);
 

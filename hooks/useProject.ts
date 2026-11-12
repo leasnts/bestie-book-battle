@@ -10,6 +10,7 @@ import { useAuthStore } from '../stores/authStore';
 import { useProjectStore } from '../stores/projectStore';
 import { useProgressStore } from '../stores/progressStore';
 import { Project, ParticipantWithProgress } from '../types';
+import { useShallow } from 'zustand/react/shallow';
 
 interface UseProjectResult {
   project: Project | null;
@@ -26,20 +27,34 @@ interface UseProjectResult {
  * @returns Les données du projet et des participants
  */
 export function useProject(projectId: string | undefined): UseProjectResult {
-  const { user } = useAuthStore();
+  const { user } = useAuthStore(useShallow((s) => ({ user: s.user })));
   const { 
     currentChallenge: currentProject, 
     loadChallenge: selectProject, 
     isLoading: projectLoading,
     error: projectError 
-  } = useProjectStore();
+  } = useProjectStore(
+    useShallow((s) => ({
+      currentChallenge: s.currentChallenge,
+      loadChallenge: s.loadChallenge,
+      isLoading: s.isLoading,
+      error: s.error,
+    })),
+  );
   
   const { 
     participants, 
     subscribeToProgress,
     isLoading: progressLoading,
     error: progressError 
-  } = useProgressStore();
+  } = useProgressStore(
+    useShallow((s) => ({
+      participants: s.participants,
+      subscribeToProgress: s.subscribeToProgress,
+      isLoading: s.isLoading,
+      error: s.error,
+    })),
+  );
   
   const [isInitialized, setIsInitialized] = useState(false);
   

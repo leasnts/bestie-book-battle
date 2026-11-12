@@ -31,6 +31,7 @@ import { useProjectStore } from '../stores/projectStore';
 import { borderRadius, colors, fonts, fontSize, shadows, spacing } from '../utils/constants';
 import { confirmDeleteCap } from '../utils/confirmDeleteCap';
 import { nudge, oops } from '../utils/notice';
+import { useShallow } from 'zustand/react/shallow';
 
 function inAWeek(): Date {
   const d = new Date();
@@ -66,7 +67,15 @@ export default function CapRoute() {
   const user = useAuthStore((s) => s.user);
   const activeChallenge = useProjectStore((s) => s.activeChallenge);
   const participants = useProgressStore((s) => s.participants);
-  const { secondaryGoal, history, addGoal, editGoal, removeGoal } = useGoalStore();
+  const { secondaryGoal, history, addGoal, editGoal, removeGoal } = useGoalStore(
+    useShallow((s) => ({
+      secondaryGoal: s.secondaryGoal,
+      history: s.history,
+      addGoal: s.addGoal,
+      editGoal: s.editGoal,
+      removeGoal: s.removeGoal,
+    })),
+  );
 
   /** Le cap qu'on modifie, ou `null` pour en poser un */
   const goal = useMemo(

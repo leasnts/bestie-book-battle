@@ -45,7 +45,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, glassControlVeil, motion, ROUND_BUTTON_SIZE } from '../../utils/constants';
+import { colors, glassControlVeil, motion, ROUND_BUTTON_SIZE, dropShadow } from '../../utils/constants';
 import GlassButton from './GlassButton';
 import GlassMaterial from './GlassMaterial';
 import PressableScale from './PressableScale';
@@ -212,10 +212,7 @@ const styles = StyleSheet.create({
   // `overflow: hidden` la couperait.
   shadow: {
     borderRadius: BAR_HEIGHT / 2,
-    shadowColor: colors.black,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.12,
-    shadowRadius: 20,
+    boxShadow: dropShadow(8, 20, 0.12),
   },
   bar: {
     flexDirection: 'row',

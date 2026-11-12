@@ -6,7 +6,7 @@ import { ActivityIndicator, Alert, Share, StyleSheet, Text, TouchableOpacity, Vi
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { getChallengeByInviteCode } from '../../services/supabase/database';
 import { Challenge } from '../../types/supabase';
-import { colors, fonts } from '../../utils/constants';
+import { colors, fonts, dropShadow } from '../../utils/constants';
 import { ArrowRightIcon, CopyIcon, ShareIcon } from 'lucide-react-native';
 import { CoverImage } from '../../components/ui/BookCover';
 import { inviteMessage } from '../../utils/share';
@@ -143,11 +143,7 @@ const styles = StyleSheet.create({
         height: 140,
         borderRadius: 12,
         marginBottom: 16,
-        shadowColor: colors.black,
-        shadowOffset: { width: 0, height: 8 },
-        shadowOpacity: 0.15,
-        shadowRadius: 12,
-        elevation: 8,
+        boxShadow: dropShadow(8, 12, 0.15),
     },
     bookTitle: {
         fontFamily: fonts.display,
@@ -184,10 +180,7 @@ const styles = StyleSheet.create({
         borderRadius: 16,
         borderWidth: 1,
         borderColor: colors.borderLight,
-        shadowColor: colors.black,
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.05,
-        shadowRadius: 4,
+        boxShadow: dropShadow(2, 4, 0.05),
         gap: 12,
     },
     codeText: {
