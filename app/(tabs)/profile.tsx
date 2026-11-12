@@ -142,13 +142,15 @@ export default function ProfileScreen() {
             accessibilityLabel="Réglages"
             style={[styles.settingsButton, { top: insets.top + spacing.sm }]}
           />
-          {/* Rejouer l'onboarding depuis l'écran d'entrée, pour le tester (#189) */}
-          <GlassButton
-            icon={PlayIcon}
-            onPress={() => router.push('/auth/login')}
-            accessibilityLabel="Rejouer l’onboarding"
-            style={[styles.replayButton, { top: insets.top + spacing.sm }]}
-          />
+          {/* Rejouer l'onboarding depuis l'écran d'entrée, pour le tester (#189) : build de dev seulement */}
+          {__DEV__ && (
+            <GlassButton
+              icon={PlayIcon}
+              onPress={() => router.push('/auth/login')}
+              accessibilityLabel="Rejouer l’onboarding"
+              style={[styles.replayButton, { top: insets.top + spacing.sm }]}
+            />
+          )}
           {/* La photo ronde, dans un anneau de verre nu (sans voile crème) au liseré des boutons en verre */}
           <View style={styles.photoRing}>
             <GlassMaterial radius={PHOTO / 2 + PHOTO_RING} rim />
