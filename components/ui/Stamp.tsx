@@ -7,7 +7,7 @@
  *   réaction dans NoteCard, le tampon d'encre ci-dessous).
  * - `InkStamp` : un vrai coup de tampon d'encre rouge, cadre et mot en
  *   capitales, posé de travers (« En lecture » sur la carte de lecture, comme
- *   un emprunt à la bibliothèque ; `double` : le cadre à double filet). L'encre
+ *   un emprunt à la bibliothèque ; `small` : plus petit, pour un coin). L'encre
  *   manque par endroits : grain, trous, un côté moins appuyé (une des trois
  *   empreintes d'assets/images/stamp, tirée au hasard, parfois retournée).
  *
@@ -92,12 +92,12 @@ export function InkStamp({
   label,
   delay,
   angle = -10,
-  double = false,
+  small = false,
   style,
 }: {
   label: string;
-  /** Le cadre à double filet des tampons de bibliothèque */
-  double?: boolean;
+  /** Plus petit, pour se poser dans un coin */
+  small?: boolean;
   delay: number;
   /** Son inclinaison, en degrés */
   angle?: number;
@@ -114,14 +114,8 @@ export function InkStamp({
             <Image source={print.ink} style={[StyleSheet.absoluteFill, print.flip && styles.flip]} contentFit="fill" />
           }
         >
-          <View style={[styles.frame, double && styles.outer]}>
-            {double ? (
-              <View style={styles.inner}>
-                <Text style={[styles.label, styles.small]}>{label}</Text>
-              </View>
-            ) : (
-              <Text style={styles.label}>{label}</Text>
-            )}
+          <View style={[styles.frame, small && styles.frameSmall]}>
+            <Text style={[styles.label, small && styles.small]}>{label}</Text>
           </View>
         </MaskedView>
       </Animated.View>
@@ -141,19 +135,13 @@ const styles = StyleSheet.create({
     paddingVertical: 5,
     opacity: 0.92,
   },
-  outer: {
+  frameSmall: {
     borderWidth: 2,
-    padding: 2,
-    borderRadius: 8,
-  },
-  inner: {
-    borderWidth: 1.2,
-    borderColor: colors.accent,
-    borderRadius: 5,
-    paddingHorizontal: 7,
+    borderRadius: 7,
+    paddingHorizontal: 8,
     paddingVertical: 3,
   },
-  /** Plus petit dans le double filet : il se pose dans un coin */
+  /** Le mot du petit tampon */
   small: {
     fontSize: 11,
     letterSpacing: 1,

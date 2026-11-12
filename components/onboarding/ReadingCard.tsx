@@ -190,7 +190,7 @@ export function ReadingCardBack({
           ))}
         </View>
         {/* Le tampon, dans le coin en haut à droite du papier (sur l'aquarelle rouge, l'encre rouge se perdrait) */}
-        {stamped && <InkStamp label="En lecture" double delay={0} angle={8} style={styles.stamp} />}
+        {stamped && <InkStamp label="En lecture" small delay={0} angle={8} style={styles.stamp} />}
       </CardPaper>
     </Animated.View>
   );
@@ -322,6 +322,6 @@ const styles = StyleSheet.create({
   },
   /** La place du tampon, à droite du titre */
   reserve: {
-    paddingRight: 112,
+    paddingRight: 104,
   },
 });
