@@ -6,8 +6,8 @@
  *   d'avant, le verso, plus haut, déborde autant en haut qu'en bas.
  * - `CardPaper` : la matière, celle de la carte d'« Invite tes potes ».
  * - `ReadingCardBack` : le verso, ma carte de lecture. Ses lignes s'écrivent
- *   une à une à l'encre (de gauche à droite), puis « En lecture » se tamponne,
- *   comme un emprunt à la bibliothèque.
+ *   une à une à l'encre (de gauche à droite), puis « En lecture » se tamponne
+ *   dans le coin, comme un emprunt à la bibliothèque, et la carte plie sous le coup.
  *
  *    ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐
  *    ┊ ▐█▌ Educated               ┊
@@ -22,13 +22,23 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, Text, View, type LayoutChangeEvent, type StyleProp, type ViewStyle } from 'react-native';
-import Animated, { Easing, interpolate, useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
+import Animated, {
+  Easing,
+  interpolate,
+  useAnimatedStyle,
+  useReducedMotion,
+  useSharedValue,
+  withDelay,
+  withSequence,
+  withSpring,
+  withTiming,
+} from 'react-native-reanimated';
 import { deadlineFrom } from '../../services/onboarding';
 import { bookFormat, type OnboardingStore } from '../../stores/onboardingStore';
 import { borderRadius, colors, fonts, inkAlpha, lowki, paperFrameGradient, spacing } from '../../utils/constants';
 import { FLIP_MS } from '../../utils/finishOnboarding';
 import BookCover, { COVER_RATIO } from '../ui/BookCover';
-import { InkStamp } from '../ui/Stamp';
+import { InkStamp, STAMP_FALL } from '../ui/Stamp';
 import { StitchBorder } from '../ui/Stitch';
 import { MOMENTS } from './choices';
 
@@ -122,9 +132,9 @@ export function cardRows(store: OnboardingStore): [string, string][] {
 }
 
 /** Le livre : vignette, titre, auteur (le recto et le verso le partagent) */
-export function CardBook({ title, author, cover }: { title: string; author?: string; cover: string | null }) {
+export function CardBook({ title, author, cover, reserve }: { title: string; author?: string; cover: string | null; reserve?: boolean }) {
   return (
-    <View style={styles.bookRow}>
+    <View style={[styles.bookRow, reserve && styles.reserve]}>
       <View style={styles.thumb}>
         <BookCover coverUrl={cover} />
       </View>
@@ -155,14 +165,23 @@ export function ReadingCardBack({
   /** « En lecture » se tamponne */
   stamped: boolean;
 }) {
+  // Le coup de tampon fait plier la carte un instant
+  const reducedMotion = useReducedMotion();
+  const thud = useSharedValue(0);
+  useEffect(() => {
+    if (!stamped || reducedMotion) return;
+    thud.value = withDelay(STAMP_FALL, withSequence(withTiming(1, { duration: 60 }), withSpring(0, { damping: 9, stiffness: 420 })));
+  }, [stamped, reducedMotion, thud]);
+  const thudStyle = useAnimatedStyle(() => ({ transform: [{ scale: 1 - 0.025 * thud.value }, { translateY: 3 * thud.value }] }));
+
   return (
-    <View>
+    <Animated.View style={thudStyle}>
       <CardPaper>
         <View
           accessible
           accessibilityLabel={`Carte de lecture : ${book.title}. ${rows.map(([l, v]) => `${l} : ${v}`).join('. ')}`}
         >
-          <CardBook {...book} />
+          <CardBook {...book} reserve />
           <View style={styles.rule} />
           {rows.map(([label, value], i) => (
             <View key={label} style={[styles.row, i === rows.length - 1 && styles.lastRow]}>
@@ -171,10 +190,10 @@ export function ReadingCardBack({
             </View>
           ))}
         </View>
-        {/* La place du tampon, en bas à droite du papier (sur l'aquarelle rouge, l'encre rouge se perdrait) */}
-        <View style={styles.stampPlace}>{stamped && <InkStamp label="En lecture" double delay={0} angle={-7} style={styles.stamp} />}</View>
+        {/* Le tampon, dans le coin en haut à droite du papier (sur l'aquarelle rouge, l'encre rouge se perdrait) */}
+        {stamped && <InkStamp label="En lecture" double delay={0} angle={8} style={styles.stamp} />}
       </CardPaper>
-    </View>
+    </Animated.View>
   );
 }
 
@@ -298,11 +317,12 @@ const styles = StyleSheet.create({
     bottom: 0,
     overflow: 'hidden',
   },
-  stampPlace: {
-    height: 54,
-  },
   stamp: {
-    right: spacing.xs,
-    bottom: 0,
+    top: spacing.lg + 2,
+    right: spacing.md - 2,
+  },
+  /** La place du tampon, à droite du titre */
+  reserve: {
+    paddingRight: 112,
   },
 });

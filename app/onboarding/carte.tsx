@@ -66,7 +66,7 @@ export default function CarteScreen() {
             {invitation ? (
               <AccentWord text={`Vous êtes ${together}`} accent={together} size={ONBOARDING_TITLE} />
             ) : (
-              <AccentWord text="On y va" accent="y va" size={ONBOARDING_TITLE} />
+              <AccentWord text="On y va !" accent="y va" size={ONBOARDING_TITLE} />
             )}
           </Animated.Text>
 

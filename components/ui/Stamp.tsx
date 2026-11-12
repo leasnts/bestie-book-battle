@@ -117,7 +117,7 @@ export function InkStamp({
           <View style={[styles.frame, double && styles.outer]}>
             {double ? (
               <View style={styles.inner}>
-                <Text style={styles.label}>{label}</Text>
+                <Text style={[styles.label, styles.small]}>{label}</Text>
               </View>
             ) : (
               <Text style={styles.label}>{label}</Text>
@@ -142,15 +142,21 @@ const styles = StyleSheet.create({
     opacity: 0.92,
   },
   outer: {
-    padding: 2.5,
-    borderRadius: 9,
+    borderWidth: 2,
+    padding: 2,
+    borderRadius: 8,
   },
   inner: {
     borderWidth: 1.2,
     borderColor: colors.accent,
-    borderRadius: 6,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
+    borderRadius: 5,
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+  },
+  /** Plus petit dans le double filet : il se pose dans un coin */
+  small: {
+    fontSize: 11,
+    letterSpacing: 1,
   },
   flip: {
     transform: [{ scaleX: -1 }, { scaleY: -1 }],

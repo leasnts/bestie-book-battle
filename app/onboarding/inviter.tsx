@@ -29,10 +29,11 @@ import { StatusBar } from 'expo-status-bar';
 import { CheckIcon, ChevronLeftIcon, CopyIcon, ShareIcon, XIcon } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Pressable, Share, StyleSheet, Text, View } from 'react-native';
-import Animated, { FadeIn, FadeInDown, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
+import Animated, { FadeIn, FadeInDown, useAnimatedStyle, useSharedValue, withDelay, withSequence, withSpring, withTiming } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BRAND_BG } from '../../components/brand/BrandLockup';
 import Button3D from '../../components/Button3D';
+import PopEyes from '../../components/PopEyes';
 import { ONBOARDING_MAX_W, ONBOARDING_TITLE, rise } from '../../components/onboarding/OnboardingScreen';
 import { CardBook, CardPaper, FlipCard, ReadingCardBack, cardRows } from '../../components/onboarding/ReadingCard';
 import AccentWord, { accentHeadroom } from '../../components/ui/AccentWord';
@@ -44,7 +45,7 @@ import { useOnboardingStore } from '../../stores/onboardingStore';
 import { useProjectStore } from '../../stores/projectStore';
 import { borderRadius, colors, fonts, inkAlpha, lowki, spacing } from '../../utils/constants';
 import { feel } from '../../utils/feel';
-import { useFinishOnboarding } from '../../utils/finishOnboarding';
+import { FLIP_MS, useFinishOnboarding } from '../../utils/finishOnboarding';
 import { inviteMessage } from '../../utils/share';
 
 const WASH = require('../../assets/images/watercolor/login-wash.png');
@@ -87,6 +88,20 @@ export default function InviterScreen() {
     ensureReading();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Les yeux : ils montent une fois la carte retournée, puis sautent au tampon
+  const peek = useSharedValue(0);
+  const hop = useSharedValue(0);
+  useEffect(() => {
+    if (end.turned) peek.value = withDelay(FLIP_MS - 150, withSpring(1, { damping: 12, stiffness: 160 }));
+  }, [end.turned, peek]);
+  useEffect(() => {
+    if (end.done) hop.value = withDelay(STAMP_FALL, withSequence(withTiming(1, { duration: 140 }), withSpring(0, { damping: 7, stiffness: 260 })));
+  }, [end.done, hop]);
+  const peekStyle = useAnimatedStyle(() => ({
+    opacity: Math.min(1, peek.value * 3),
+    transform: [{ translateY: 46 * (1 - peek.value) - 14 * hop.value }],
+  }));
 
   // La fin : les mots d'invitation s'effacent, la carte reste et se retourne
   const fade = useAnimatedStyle(() => ({ opacity: 1 - gone.value }));
@@ -146,7 +161,7 @@ export default function InviterScreen() {
           {finishing && (
             <Animated.View style={[styles.doneTitle, appear]}>
               <Text style={[styles.heading, accentHeadroom(ONBOARDING_TITLE)]} accessibilityRole="header">
-                <AccentWord text="On y va" accent="y va" size={ONBOARDING_TITLE} />
+                <AccentWord text="On y va !" accent="y va" size={ONBOARDING_TITLE} />
               </Text>
             </Animated.View>
           )}
@@ -155,6 +170,11 @@ export default function InviterScreen() {
         <Animated.View entering={rise(1)} style={styles.middle}>
           {/* La carte de lecture : le livre, puis son code en six cases (d'après la carte-pass d'Opal) ;
               à la fin elle se retourne, et ma carte de lecture s'écrit au verso */}
+          <View>
+          {/* Les yeux de chapi sortent de derrière la carte retournée, et sautent au coup de tampon */}
+          <Animated.View style={[styles.peek, peekStyle]} pointerEvents="none">
+            <PopEyes size="medium" />
+          </Animated.View>
           <FlipCard
             turned={end.turned}
             front={
@@ -198,6 +218,7 @@ export default function InviterScreen() {
               />
             }
           />
+          </View>
 
           {!!code && (
             <Animated.View style={fade} pointerEvents={finishing ? 'none' : 'auto'}>
@@ -280,12 +301,18 @@ const styles = StyleSheet.create({
     opacity: 0.85,
   },
   // La carte au milieu de la place qui reste
-  // « On y va » prend la place du titre d'invitation
+  // « On y va ! » prend la place du titre d'invitation
   doneTitle: {
     position: 'absolute',
     top: spacing['2xl'],
     left: 0,
     right: 0,
+  },
+  // Les yeux, posés derrière le bord haut de la carte, côté gauche (le tampon est à droite)
+  peek: {
+    position: 'absolute',
+    top: -44,
+    left: spacing.xl,
   },
   middle: {
     flex: 1,
