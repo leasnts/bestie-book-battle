@@ -4,7 +4,7 @@ export default {
   expo: {
     name: IS_DEV ? "chapi (Dev)" : "chapi",
     slug: "bestie-book-battle",
-    version: "1.1.0",
+    version: "2.0.0",
     orientation: "portrait",
     icon: "./assets/images/app_icon.png",
     scheme: "bestie-book-battle",
