@@ -90,6 +90,7 @@ import {
   motion,
   spacing,
 } from '../utils/constants';
+import { useShallow } from 'zustand/react/shallow';
 
 /** Une section de la liste : les nouvelles (avec leur titre), puis toutes les autres (sans titre) */
 type NoteSection = {
@@ -139,11 +140,19 @@ export default function Carnet({ mode }: { mode: CarnetMode }) {
   const inSheet = mode === 'consult';
   /** Ouvert au-dessus d'un sheet (la fiche du livre) : un retour y ramène */
   const from = isPage ? '' : '?from=notes';
-  const { user } = useAuthStore();
+  const { user } = useAuthStore(useShallow((s) => ({ user: s.user })));
   const activeChallenge = useProjectStore((s) => s.activeChallenge);
-  const { participants } = useProgressStore();
-  const { notes, ahead, readIds, markRead, dismissRevealed, toggleReaction } =
-    useAnnotationStore();
+  const { participants } = useProgressStore(useShallow((s) => ({ participants: s.participants })));
+  const { notes, ahead, readIds, markRead, dismissRevealed, toggleReaction } = useAnnotationStore(
+    useShallow((s) => ({
+      notes: s.notes,
+      ahead: s.ahead,
+      readIds: s.readIds,
+      markRead: s.markRead,
+      dismissRevealed: s.dismissRevealed,
+      toggleReaction: s.toggleReaction,
+    })),
+  );
 
   /**
    * La pile : les notes du club que je n'ai pas encore lues, dans l'ordre des

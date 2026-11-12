@@ -30,7 +30,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import type { AnnotationWithAuthor } from '../../services/supabase/annotations';
 import { ANNOTATION_CATEGORIES, formatNoteDate, formatNotePage, isEmojiOnly } from '../../utils/annotations';
-import { borderRadius, colors, creamAlpha, fonts, glassControlVeil, inkAlpha, postItDeepOf, spacing } from '../../utils/constants';
+import { borderRadius, colors, creamAlpha, fonts, glassControlVeil, inkAlpha, postItDeepOf, spacing, dropShadow } from '../../utils/constants';
 import { QUICK_REACTIONS } from '../../utils/emojis';
 import GlassMaterial from './GlassMaterial';
 import NoteSticker, { STICKER_BASE_LARGE } from './NoteSticker';
@@ -715,10 +715,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.sm,
     borderRadius: borderRadius.full,
     // Du verre, comme nos boutons ronds ; l'ombre douce de GlassButton
-    shadowColor: colors.black,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 6,
+    boxShadow: dropShadow(2, 6, 0.08),
   },
   // Sous la pile : de vraies touches, 44 pt
   reactionQuick: {

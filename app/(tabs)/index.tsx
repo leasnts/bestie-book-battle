@@ -57,7 +57,7 @@ import { useGoalStore } from '../../stores/goalStore';
 import { useProgressStore } from '../../stores/progressStore';
 import { useAnnotationStore } from '../../stores/annotationStore';
 import { useProjectStore } from '../../stores/projectStore';
-import { colors, fonts, shadowAlpha, spacing, SPREAD_MIN_WIDTH } from '../../utils/constants';
+import { colors, fonts, shadowAlpha, spacing, SPREAD_MIN_WIDTH, dropShadow } from '../../utils/constants';
 import { feel, type FeelName } from '../../utils/feel';
 import { oops } from '../../utils/notice';
 import { dayString } from '../../utils/streak';
@@ -65,6 +65,7 @@ import { useMyStreak } from '../../hooks/useMyStreak';
 import { useTabBarInset } from '../../components/ui/GlassTabBar';
 import { BookOpenIcon, CirclePlusIcon, LibraryBigIcon } from 'lucide-react-native';
 import { startAdding } from '../../utils/onboardingFlow';
+import { useShallow } from 'zustand/react/shallow';
 
 
 /**
@@ -99,7 +100,7 @@ export default function HomeScreen() {
   const compactSpacing = compactLeaderboard;
   // Espace entre les cadres : serré sur SE, plus aéré sur les grands écrans
   const frameGap = { paddingTop: compactSpacing ? spacing.sm : compactPage ? spacing.md : spacing.lg };
-  const { user } = useAuthStore();
+  const { user } = useAuthStore(useShallow((s) => ({ user: s.user })));
 
   // ===== Stores Supabase =====
   const {
@@ -109,7 +110,16 @@ export default function HomeScreen() {
     loadUserChallenges,
     challengesLoading,
     _hasHydrated,
-  } = useProjectStore();
+  } = useProjectStore(
+    useShallow((s) => ({
+      challenges: s.challenges,
+      activeChallenge: s.activeChallenge,
+      setLastProgressChallengeId: s.setLastProgressChallengeId,
+      loadUserChallenges: s.loadUserChallenges,
+      challengesLoading: s.challengesLoading,
+      _hasHydrated: s._hasHydrated,
+    })),
+  );
   const cachedMyProgress = useProjectStore((s) =>
     s.activeChallenge ? s.myProgress[s.activeChallenge.id] : undefined,
   );
@@ -126,14 +136,28 @@ export default function HomeScreen() {
     updateProgress,
     getUserProgressById,
     participants,
-  } = useProgressStore();
+  } = useProgressStore(
+    useShallow((s) => ({
+      loadChallengeProgress: s.loadChallengeProgress,
+      updateProgress: s.updateProgress,
+      getUserProgressById: s.getUserProgressById,
+      participants: s.participants,
+    })),
+  );
 
   const {
     secondaryGoal,
     history: goalHistory,
     loadActiveGoals,
     loadGoalHistory,
-  } = useGoalStore();
+  } = useGoalStore(
+    useShallow((s) => ({
+      secondaryGoal: s.secondaryGoal,
+      history: s.history,
+      loadActiveGoals: s.loadActiveGoals,
+      loadGoalHistory: s.loadGoalHistory,
+    })),
+  );
 
 
   // ===== État local =====
@@ -774,11 +798,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 5,
     borderRadius: 9999,
-    shadowColor: colors.black,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.12,
-    shadowRadius: 6,
-    elevation: 3,
+    boxShadow: dropShadow(2, 6, 0.12),
   },
   deltaToastText: {
     fontFamily: fonts.displayBold,

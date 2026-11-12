@@ -12,7 +12,7 @@
  */
 
 import { feel } from '../utils/feel';
-import { colors, fonts, spacing } from '../utils/constants';
+import { colors, fonts, spacing, dropShadow } from '../utils/constants';
 import Bevel from './ui/Bevel';
 import {
   CheckIcon,
@@ -247,18 +247,10 @@ const styles = StyleSheet.create({
   },
   // Ombre douce de la maquette : 0 2px 4px à 10 % (blur Figma 4 = rayon iOS 2)
   primaryShadow: {
-    shadowColor: colors.black,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
+    boxShadow: dropShadow(2, 2, 0.1),
   },
   secondaryShadow: {
-    shadowColor: colors.black,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
+    boxShadow: dropShadow(2, 2, 0.1),
   },
 
   // Le bouton (overflow hidden pour les gradients)

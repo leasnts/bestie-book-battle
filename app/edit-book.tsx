@@ -42,6 +42,7 @@ import { extractCoverPalette, type CoverPalette } from '../utils/coverPalette';
 import { CoverImage } from '../components/ui/BookCover';
 import { StitchBorder } from '../components/ui/Stitch';
 import { nudge, oops } from '../utils/notice';
+import { useShallow } from 'zustand/react/shallow';
 
 // Retire la barre « OK » native au-dessus du clavier numérique d'iOS
 const ACCESSORY_ID = 'editbook-pages-empty';
@@ -50,8 +51,16 @@ export default function EditBookRoute() {
   const router = useRouter();
   const { from } = useLocalSearchParams<{ from?: string }>();
   const user = useAuthStore((s) => s.user);
-  const { activeChallenge, updateActiveChallenge, loadUserChallenges } = useProjectStore();
-  const { participants, saveMyEdition } = useProgressStore();
+  const { activeChallenge, updateActiveChallenge, loadUserChallenges } = useProjectStore(
+    useShallow((s) => ({
+      activeChallenge: s.activeChallenge,
+      updateActiveChallenge: s.updateActiveChallenge,
+      loadUserChallenges: s.loadUserChallenges,
+    })),
+  );
+  const { participants, saveMyEdition } = useProgressStore(
+    useShallow((s) => ({ participants: s.participants, saveMyEdition: s.saveMyEdition })),
+  );
 
   const mine = useMemo(
     () => participants.find((p) => p.user.id === user?.id)?.progress,

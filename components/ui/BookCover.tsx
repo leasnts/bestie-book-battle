@@ -20,7 +20,7 @@ import React from 'react';
 import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { Challenge } from '../../types/supabase';
-import { colors, creamAlpha, inkAlpha, shadowAlpha } from '../../utils/constants';
+import { colors, creamAlpha, inkAlpha, shadowAlpha, dropShadow } from '../../utils/constants';
 
 /** Ratio d'une couverture : 50:70 (largeur:hauteur) */
 export const COVER_RATIO = 50 / 70;
@@ -141,11 +141,7 @@ export default function BookCover({ coverUrl, done = false, outlined = false }: 
 }
 
 const COVER_SHADOW = {
-  shadowColor: colors.black,
-  shadowOffset: { width: -2, height: 0 },
-  shadowOpacity: 0.12,
-  shadowRadius: 3,
-  elevation: 2,
+  boxShadow: dropShadow(0, 3, 0.12, -2),
 } as const;
 
 const styles = StyleSheet.create({

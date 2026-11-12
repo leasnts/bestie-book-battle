@@ -40,13 +40,23 @@ import { useFeelStore } from '../stores/feelStore';
 import { spacing } from '../utils/constants';
 import { buzz, feel } from '../utils/feel';
 import { oops } from '../utils/notice';
+import { useShallow } from 'zustand/react/shallow';
 
 const APP_VERSION = Constants.expoConfig?.version ?? '1.0';
 
 export default function SettingsRoute() {
   const router = useRouter();
-  const { logout, deleteAccount } = useAuthStore();
-  const { sounds, haptics, setSounds, setHaptics } = useFeelStore();
+  const { logout, deleteAccount } = useAuthStore(
+    useShallow((s) => ({ logout: s.logout, deleteAccount: s.deleteAccount })),
+  );
+  const { sounds, haptics, setSounds, setHaptics } = useFeelStore(
+    useShallow((s) => ({
+      sounds: s.sounds,
+      haptics: s.haptics,
+      setSounds: s.setSounds,
+      setHaptics: s.setHaptics,
+    })),
+  );
   const [busy, setBusy] = useState(false);
 
   // Ferme le sheet, puis ouvre l'écran (sinon il s'ouvre dans le sheet)

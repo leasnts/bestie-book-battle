@@ -21,8 +21,7 @@ import {
   creamAlpha,
   ROUND_BUTTON_ICON,
   ROUND_BUTTON_ICON_FILLED,
-  ROUND_BUTTON_SIZE,
-} from '../../utils/constants';
+  ROUND_BUTTON_SIZE, dropShadow } from '../../utils/constants';
 import Bevel from './Bevel';
 import PressableScale from './PressableScale';
 
@@ -82,10 +81,7 @@ const styles = StyleSheet.create({
   },
   dark: {
     backgroundColor: colors.dark950,
-    shadowColor: colors.black,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
+    boxShadow: dropShadow(2, 2, 0.1),
   },
   // Cerclé de crème : il se détache sur l'encre comme sur le verre
   badge: {

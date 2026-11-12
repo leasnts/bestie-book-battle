@@ -28,7 +28,7 @@ import Animated, {
 import Svg, { Circle, Defs, G, RadialGradient, Stop } from 'react-native-svg';
 import type { AnnotationCategory } from '../../types/supabase';
 import { ANNOTATION_CATEGORIES } from '../../utils/annotations';
-import { inkAlpha, motion } from '../../utils/constants';
+import { inkAlpha, motion, dropShadow } from '../../utils/constants';
 import GlassMaterial from './GlassMaterial';
 import { KNOT_R, KnotGradients, Seam } from './GoalTrack';
 
@@ -214,10 +214,7 @@ const styles = StyleSheet.create({
     width: DROP,
     height: DROP,
     transform: [{ rotate: '45deg' }],
-    shadowColor: '#000',
-    shadowOpacity: 0.18,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 2 },
+    boxShadow: dropShadow(2, 4, 0.18),
   },
   // Le même liseré que les épingles : blanc, et un filet d'encre autour
   dropShape: {

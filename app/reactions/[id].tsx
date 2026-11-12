@@ -16,11 +16,12 @@ import SheetPage from '../../components/ui/SheetPage';
 import { useAnnotationStore } from '../../stores/annotationStore';
 import { useAuthStore } from '../../stores/authStore';
 import { spacing } from '../../utils/constants';
+import { useShallow } from 'zustand/react/shallow';
 
 export default function ReactionsRoute() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const { user } = useAuthStore();
+  const { user } = useAuthStore(useShallow((s) => ({ user: s.user })));
   const note = useAnnotationStore((s) => s.notes.find((n) => n.id === id));
   const toggleReaction = useAnnotationStore((s) => s.toggleReaction);
   const markRead = useAnnotationStore((s) => s.markRead);

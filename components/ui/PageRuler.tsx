@@ -56,7 +56,7 @@ import Animated, {
   withTiming,
   type SharedValue,
 } from 'react-native-reanimated';
-import { accentGradient, colors, fonts, fontSize as textSize } from '../../utils/constants';
+import { accentGradient, colors, fonts, fontSize as textSize, dropShadow } from '../../utils/constants';
 import { ACCENT_SCALE } from './AccentWord';
 import { FOOTPRINT_EM, GhostTotal, INK, figureBox, figureWidth } from './InkFigure';
 
@@ -871,10 +871,7 @@ const styles = StyleSheet.create({
     width: LENS_R * 2,
     height: LENS_R * 2,
     borderRadius: LENS_R,
-    shadowColor: colors.black,
-    shadowOpacity: 0.16,
-    shadowRadius: 9,
-    shadowOffset: { width: 0, height: 6 },
+    boxShadow: dropShadow(6, 9, 0.16),
   },
   dropClip: {
     flex: 1,

@@ -57,7 +57,7 @@ import { isAvailable as canReadPages } from '../../modules/page-text/src';
 import type { VoiceClip } from '../../stores/annotationStore';
 import type { Annotation, AnnotationCategory } from '../../types/supabase';
 import { ANNOTATION_CATEGORIES, DEFAULT_CATEGORY } from '../../utils/annotations';
-import { colors, creamAlpha, fonts, glassControlVeil, motion, shadowAlpha, spacing } from '../../utils/constants';
+import { colors, creamAlpha, fonts, glassControlVeil, motion, shadowAlpha, spacing, dropShadow } from '../../utils/constants';
 import CategoryPicker, { tabStitchNotch } from './CategoryPicker';
 import GlassButton from './GlassButton';
 import GlassMaterial from './GlassMaterial';
@@ -445,10 +445,7 @@ const styles = StyleSheet.create({
     gap: 4,
     paddingHorizontal: spacing.md + 2,
     borderRadius: HEAD_BUTTON / 2,
-    shadowColor: colors.black,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.12,
-    shadowRadius: 12,
+    boxShadow: dropShadow(4, 12, 0.12),
   },
   pageLabel: {
     fontFamily: fonts.display,

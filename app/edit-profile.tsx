@@ -26,13 +26,16 @@ import { useAuthStore } from '../stores/authStore';
 import { borderRadius, colors, fonts, fontSize, shadowAlpha, shadows, spacing } from '../utils/constants';
 import { resolvePhotoSource } from '../utils/profilePhoto';
 import { nudge, oops } from '../utils/notice';
+import { useShallow } from 'zustand/react/shallow';
 
 // Retire la barre « OK » native au-dessus du clavier d'iOS
 const ACCESSORY_ID = 'edit-profile-no-done';
 
 export default function EditProfileRoute() {
   const router = useRouter();
-  const { user, updateProfile } = useAuthStore();
+  const { user, updateProfile } = useAuthStore(
+    useShallow((s) => ({ user: s.user, updateProfile: s.updateProfile })),
+  );
   const [firstName, setFirstName] = useState(user?.first_name || '');
   const [isSaving, setIsSaving] = useState(false);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
