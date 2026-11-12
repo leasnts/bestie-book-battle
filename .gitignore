@@ -49,3 +49,8 @@ storybook-static
 
 # Welcome Valentines : licence « usage personnel », ne pas la publier (#129)
 assets/fonts/WelcomeValentines*
+
+# Captures App Store : moteur et polices locales jamais dans git
+store-screenshots/engine/node_modules/
+store-screenshots/assets/brand/fonts/
+**/WelcomeValentines*.ttf
