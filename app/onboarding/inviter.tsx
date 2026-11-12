@@ -48,6 +48,8 @@ import { feel } from '../../utils/feel';
 import { FLIP_MS, useFinishOnboarding } from '../../utils/finishOnboarding';
 import { inviteMessage } from '../../utils/share';
 
+/** Les yeux de l'icône, en crème sur l'aquarelle rouge (comme « Bienvenue ») */
+const EYES_TINT = [colors.white, '#efe7da'] as const;
 const WASH = require('../../assets/images/watercolor/login-wash.png');
 
 export default function InviterScreen() {
@@ -173,7 +175,7 @@ export default function InviterScreen() {
           <View>
           {/* Les yeux de chapi sortent de derrière la carte retournée, et sautent au coup de tampon */}
           <Animated.View style={[styles.peek, peekStyle]} pointerEvents="none">
-            <PopEyes size="medium" />
+            <PopEyes vector size="medium" tint={EYES_TINT} />
           </Animated.View>
           <FlipCard
             turned={end.turned}
