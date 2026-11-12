@@ -56,7 +56,7 @@
       <true/>
     </dict>
     <key>NSCameraUsageDescription</key>
-    <string>chapi a besoin d'accéder à ton appareil photo pour photographier les couvertures de livres et les passages que tu veux citer.</string>
+    <string>chapi a besoin d'accéder à ton appareil photo pour scanner le code-barres d'un livre, photographier une couverture ou un passage à citer.</string>
     <key>NSMicrophoneUsageDescription</key>
     <string>chapi a besoin du micro pour enregistrer tes notes vocales.</string>
     <key>NSPhotoLibraryUsageDescription</key>

@@ -136,6 +136,10 @@ PODS:
     - ExpoModulesCore
   - ExpoBlur (58.0.5):
     - ExpoModulesCore
+  - ExpoCamera (58.0.12):
+    - ExpoModulesCore
+  - ExpoCameraBarcodeScanning (58.0.12):
+    - ExpoCamera
   - ExpoClipboard (58.0.4):
     - ExpoModulesCore
   - ExpoCrypto (58.0.7):
@@ -2518,6 +2522,8 @@ DEPENDENCIES:
   - ExpoAsset (from `../node_modules/expo-asset/ios`)
   - ExpoAudio (from `../node_modules/expo-audio/ios`)
   - ExpoBlur (from `../node_modules/expo-blur/ios`)
+  - ExpoCamera (from `../node_modules/expo-camera/ios/ExpoCamera.podspec`)
+  - ExpoCameraBarcodeScanning (from `../node_modules/expo-camera/ios/ExpoCameraBarcodeScanning.podspec`)
   - ExpoClipboard (from `../node_modules/expo-clipboard/ios`)
   - ExpoCrypto (from `../node_modules/expo-crypto/ios`)
   - ExpoDevice (from `../node_modules/expo-device/ios`)
@@ -2681,6 +2687,10 @@ EXTERNAL SOURCES:
     :path: "../node_modules/expo-audio/ios"
   ExpoBlur:
     :path: "../node_modules/expo-blur/ios"
+  ExpoCamera:
+    :podspec: "../node_modules/expo-camera/ios/ExpoCamera.podspec"
+  ExpoCameraBarcodeScanning:
+    :podspec: "../node_modules/expo-camera/ios/ExpoCameraBarcodeScanning.podspec"
   ExpoClipboard:
     :path: "../node_modules/expo-clipboard/ios"
   ExpoCrypto:
@@ -2948,6 +2958,8 @@ SPEC CHECKSUMS:
   ExpoAsset: 9548991f0332bd8ed8819299e0b413d713104a1a
   ExpoAudio: 7f919daf0ebf1b0e1cf8b7464b7c85be6664a412
   ExpoBlur: 68f7f85ae6584f0bec52a0a42ee5088b093d1473
+  ExpoCamera: baa3429b8e3609ffd9f17888978e1963ca1171e5
+  ExpoCameraBarcodeScanning: 64af648214637c7e6e16f3d7e8a50d9828fcefdd
   ExpoClipboard: 244adf0a38b60ec7105e217042dd266a722f5a5e
   ExpoCrypto: 33ede543a3747abbef071c3bd747135ccc4e4fd5
   ExpoDevice: 77a9816436a09a0bfc00f5ace649c6ccb219b96d
@@ -2963,7 +2975,7 @@ SPEC CHECKSUMS:
   ExpoLinearGradient: 0a669599d57e1421c4718d59eed8c96fe02c1467
   ExpoLinking: 0937be9faa1580dee244062cc4c5a77732dc2c4d
   ExpoLogBox: 624d64042d73abe0dc230a24b1a9f835adb2cec9
-  ExpoModulesCore: 8868a519015e3f6705b89e819c315f8fce74bcaf
+  ExpoModulesCore: e19d8b48cdded0fe38bd2e4cf7f224ced5181311
   ExpoModulesJSI: 744bbba28465e6fff44f48debe964b81b3ebebb1
   ExpoModulesWorklets: 1ffcd69fa7269a878dbc5ee7acd4e32af85c0406
   ExpoModulesWorkletsAdapter: fa45f4969290c7da2a5ad029104dac026f9e5eba

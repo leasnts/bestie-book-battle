@@ -10,7 +10,7 @@
  * - En pages par défaut.
  * - En pages, le total vient de l'édition choisie à « On lit quoi ? » (ou de la
  *   lecture qu'on rejoint) ; « Modifier le total » passe la règle sur le total. Total inconnu
- *   (livre ajouté à la main) : la règle commence par lui.
+ *   (édition sans pages connues) : la règle commence par lui, « Valider le total » passe à ma page.
  * - En rejoignant, papier : mon édition, le crayon rouvre la recherche.
  * - En %, la règle va de 0 à 100.
  */
@@ -50,8 +50,14 @@ export default function PageScreen() {
   // La règle sur le total de pages ; d'office quand on ne le connaît pas
   const [editingTotal, setEditingTotal] = useState(false);
   const totalUnknown = !!book && book.pages === 0;
+  // Total inconnu : la règle s'ouvre sur lui et y reste jusqu'à « Valider le total ».
+  // Pas juste « tant que le total vaut 0 » : dès la 1re page glissée, la règle
+  // basculait sur ma position en plein geste (#74).
+  useEffect(() => {
+    if (totalUnknown && !percent) setEditingTotal(true);
+  }, [totalUnknown, percent]);
   const onTotal = !percent && (editingTotal || totalUnknown);
-  const hasTotalButton = !percent && !totalUnknown;
+  const hasTotalButton = !percent;
 
   // En pages par défaut (Lea, 2026-10-30) : le compteur est là d'emblée
   useEffect(() => {
@@ -104,14 +110,19 @@ export default function PageScreen() {
       footer={
         <>
           {hasTotalButton && (
-            <Button3D variant="secondary" onPress={() => setEditingTotal(!editingTotal)} style={styles.wide}>
+            <Button3D
+              variant="secondary"
+              onPress={() => setEditingTotal(!editingTotal)}
+              disabled={editingTotal && book.pages === 0}
+              style={styles.wide}
+            >
               {editingTotal ? 'Valider le total' : 'Modifier le total'}
             </Button3D>
           )}
           <Button3D
             variant="primary"
             onPress={() => router.push(nextStep(flow, 'page'))}
-            disabled={!percent && book.pages === 0}
+            disabled={!percent && (book.pages === 0 || editingTotal)}
             style={styles.wide}
           >
             Continuer
