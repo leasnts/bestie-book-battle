@@ -410,25 +410,57 @@ export function isEdition(book: BookSearchResult): boolean {
 const OPEN_LIBRARY_BOOKS = 'https://openlibrary.org/api/books';
 
 /**
- * L'édition d'un ISBN-13 (voir utils/isbn) : Google Books d'abord (pages,
- * éditeur, couverture), Open Library si Google ne la connaît pas.
- * null si personne ne la connaît.
+ * L'édition d'un ISBN-13 (voir utils/isbn), avec son nombre de pages coûte
+ * que coûte : c'est tout l'intérêt du scan (Lea, 2026-11-12).
+ *
+ * 1. Google Books `isbn:` (titre, éditeur, couverture, souvent les pages) ;
+ * 2. sans pages : la fiche complète du même volume Google, plus fournie ;
+ * 3. Open Library par ISBN ;
+ * 4. en dernier recours, les éditions françaises du même titre : celle du même
+ *    éditeur, sinon la plus récente. Un total approché vaut mieux que rien,
+ *    on le corrige d'un geste (« Modifier le total »).
+ * null si personne ne connaît l'ISBN.
  */
 export async function findByIsbn(isbn: string, signal?: AbortSignal): Promise<BookSearchResult | null> {
-  const fromGoogle = await googleByIsbn(isbn, signal).catch((error) => {
-    if (signal?.aborted) throw error;
-    console.warn('[bookApi] ISBN Google indisponible', error);
-    return null;
-  });
+  const quiet = <T,>(source: string, request: Promise<T>) =>
+    request.catch((error) => {
+      if (signal?.aborted) throw error;
+      console.warn(`[bookApi] ISBN ${source} indisponible`, error);
+      return null;
+    });
+
+  const fromGoogle = await quiet('Google', googleByIsbn(isbn, signal));
   if (fromGoogle?.pageCount) return fromGoogle;
-  const fromOpenLibrary = await openLibraryByIsbn(isbn, signal).catch((error) => {
-    if (signal?.aborted) throw error;
-    console.warn('[bookApi] ISBN Open Library indisponible', error);
-    return null;
-  });
-  if (!fromGoogle) return fromOpenLibrary;
-  // Google sans pages : Open Library les a peut-être
-  return { ...fromGoogle, pageCount: fromOpenLibrary?.pageCount ?? null, coverUrl: fromGoogle.coverUrl ?? fromOpenLibrary?.coverUrl ?? null };
+
+  const [detailPages, fromOpenLibrary] = await Promise.all([
+    fromGoogle ? quiet('Google (fiche)', googlePageCount(fromGoogle.id.replace('google:', ''), signal)) : null,
+    quiet('Open Library', openLibraryByIsbn(isbn, signal)),
+  ]);
+  const found = fromGoogle ?? fromOpenLibrary;
+  if (!found) return null;
+  const book = { ...found, coverUrl: found.coverUrl ?? fromOpenLibrary?.coverUrl ?? null };
+  const pages = detailPages || fromOpenLibrary?.pageCount;
+  if (pages) return { ...book, pageCount: pages };
+
+  // Les éditions du même titre : on garde notre édition (ISBN, éditeur), on emprunte leurs pages
+  const editions = await quiet('éditions', fetchEditions(book));
+  const withPages = (editions ?? []).filter((edition) => edition.pageCount);
+  const samePublisher = book.publisher
+    ? withPages.find((edition) => compactText(edition.publisher ?? '') === compactText(book.publisher ?? ''))
+    : undefined;
+  const closest = samePublisher ?? withPages[0];
+  return closest ? { ...book, pageCount: closest.pageCount, publisher: book.publisher ?? closest.publisher } : book;
+}
+
+/** Le nombre de pages de la fiche complète d'un volume Google (la recherche en omet parfois) */
+async function googlePageCount(volumeId: string, signal?: AbortSignal): Promise<number | null> {
+  const params = new URLSearchParams();
+  if (GOOGLE_BOOKS_KEY) params.set('key', GOOGLE_BOOKS_KEY);
+  const headers: Record<string, string> = IOS_BUNDLE_ID ? { 'X-Ios-Bundle-Identifier': IOS_BUNDLE_ID } : {};
+  const response = await withTimeout(fetch(`${GOOGLE_BOOKS_API}/${volumeId}?${params}`, { headers, signal }), 8_000);
+  if (!response.ok) throw new Error(`Google Books API error: ${response.status}`);
+  const data: { volumeInfo?: { pageCount?: number; printedPageCount?: number } } = await response.json();
+  return data.volumeInfo?.pageCount || data.volumeInfo?.printedPageCount || null;
 }
 
 async function googleByIsbn(isbn: string, signal?: AbortSignal): Promise<BookSearchResult | null> {

@@ -14,7 +14,8 @@
  *   année, pages) : un toucher, et c'est la sienne. Coffrets et suites écartés.
  * - Un livre du moment (avant de taper) : la première édition avec un nombre de
  *   pages est prise d'office ; la couverture reste celle du livre touché.
- * - Pages ou %, et le total de pages : à « Où en est ta lecture ? ».
+ * - Pages ou %, et le total de pages : à « Où en est ta lecture ? ». Total
+ *   introuvable : « Combien de pages ? » avant (onboarding/total).
  * - Le code-barres se scanne (à droite du champ) ou l'ISBN se tape : son
  *   édition est prise d'office, avec ses pages (#74).
  * - Pas d'ajout à la main pour l'instant (Lea, 2026-10-30).
@@ -38,7 +39,7 @@ import type { BookSearchResult } from '../../types/bookSearch';
 import { parseIsbn } from '../../utils/isbn';
 import { borderRadius, colors, fonts, fontSize, shadows, spacing } from '../../utils/constants';
 import { feel } from '../../utils/feel';
-import { nextStep } from '../../utils/onboardingFlow';
+import { afterBook } from '../../utils/onboardingFlow';
 
 /** Combien de livres du moment ont leurs éditions demandées d'avance */
 const PREFETCH = 5;
@@ -112,7 +113,7 @@ export default function LivreScreen() {
       accent="quoi"
       scroll
       footer={
-        <Button3D variant="primary" disabled={!ready} onPress={() => router.push(nextStep(flow, 'livre'))} style={styles.wide}>
+        <Button3D variant="primary" disabled={!ready} onPress={() => router.push(afterBook(flow, book?.pages ?? 0))} style={styles.wide}>
           Continuer
         </Button3D>
       }

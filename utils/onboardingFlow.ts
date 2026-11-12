@@ -26,6 +26,7 @@ export type OnboardingStep =
   | 'rythme'
   | 'formats'
   | 'livre'
+  | 'total'
   | 'page'
   | 'objectif'
   | 'inviter'
@@ -50,6 +51,14 @@ export function nextStep(flow: OnboardingFlow, step: OnboardingStep): `/onboardi
   return `/onboarding/${next}`;
 }
 
+/**
+ * Après « On lit quoi ? » : « Combien de pages ? » si personne ne
+ * connaît le total de l'édition, sinon la suite du parcours.
+ */
+export function afterBook(flow: OnboardingFlow, pages: number): `/onboarding/${OnboardingStep}` {
+  return pages > 0 ? nextStep(flow, 'livre') : '/onboarding/total';
+}
+
 /** Le premier écran après la connexion */
 export function firstStep(flow: OnboardingFlow): `/onboarding/${OnboardingStep}` {
   return `/onboarding/${FLOWS[flow][0]}`;
@@ -57,6 +66,8 @@ export function firstStep(flow: OnboardingFlow): `/onboarding/${OnboardingStep}`
 
 /** La question en cours et leur nombre, dans ce parcours ; null hors des questions */
 export function stepPosition(flow: OnboardingFlow, step: OnboardingStep): { index: number; total: number } | null {
+  // « Combien de pages ? » (seulement sans total connu) : sur le même point que la page
+  if (step === 'total') step = 'page';
   if (!ASKING.includes(step)) return null;
   const asked = FLOWS[flow].filter((s) => ASKING.includes(s));
   const index = asked.indexOf(step);
