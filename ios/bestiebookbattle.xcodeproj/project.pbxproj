@@ -8,7 +8,6 @@
 
 /* Begin PBXBuildFile section */
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
-		C4A91C0E2E9F000100A1B2C3 /* AppIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = C4A91C0D2E9F000100A1B2C3 /* AppIcon.icon */; };
 		3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */; };
 		3E6C6A4D2F4F436D005A9186 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3E6C6A4C2F4F436D005A9186 /* WidgetKit.framework */; };
 		3E6C6A4F2F4F436D005A9186 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3E6C6A4E2F4F436D005A9186 /* SwiftUI.framework */; };
@@ -19,6 +18,7 @@
 		9B86F12CA47EE548687C14C2 /* libPods-bestiebookbattle.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 2D2B8D2833A276A64E1AAAE8 /* libPods-bestiebookbattle.a */; };
 		BB2F792D24A3F905000567C9 /* Expo.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB2F792C24A3F905000567C9 /* Expo.plist */; };
 		C34F8C85D3774DDE80AD1B68 /* WidgetRefreshModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13FCDADA4D804E4BA4E2301A /* WidgetRefreshModule.swift */; };
+		C4A91C0E2E9F000100A1B2C3 /* AppIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = C4A91C0D2E9F000100A1B2C3 /* AppIcon.icon */; };
 		C5A656E7AB53F87215F219A1 /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F5FDDED5CCAAF261B81D77C /* ExpoModulesProvider.swift */; };
 		F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11748412D0307B40044C1D9 /* AppDelegate.swift */; };
 /* End PBXBuildFile section */
@@ -49,7 +49,6 @@
 
 /* Begin PBXFileReference section */
 		13B07F961A680F5B00A75B9A /* bestiebookbattle.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = bestiebookbattle.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		C4A91C0D2E9F000100A1B2C3 /* AppIcon.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; name = AppIcon.icon; path = bestiebookbattle/AppIcon.icon; sourceTree = "<group>"; };
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = bestiebookbattle/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = bestiebookbattle/Info.plist; sourceTree = "<group>"; };
 		13FCDADA4D804E4BA4E2301A /* WidgetRefreshModule.swift */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = sourcecode.swift; name = WidgetRefreshModule.swift; path = bestiebookbattle/WidgetRefreshModule.swift; sourceTree = "<group>"; };
@@ -63,6 +62,7 @@
 		594B7B854E0446039A45F039 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xml; name = PrivacyInfo.xcprivacy; path = bestiebookbattle/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = SplashScreen.storyboard; path = bestiebookbattle/SplashScreen.storyboard; sourceTree = "<group>"; };
 		BB2F792C24A3F905000567C9 /* Expo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Expo.plist; sourceTree = "<group>"; };
+		C4A91C0D2E9F000100A1B2C3 /* AppIcon.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; name = AppIcon.icon; path = bestiebookbattle/AppIcon.icon; sourceTree = "<group>"; };
 		E64E9DF507E435D27B151E87 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = SceneDelegate.swift; path = bestiebookbattle/SceneDelegate.swift; sourceTree = "<group>"; };
 		EC43934E466524642753D9F1 /* Pods-bestiebookbattle.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-bestiebookbattle.debug.xcconfig"; path = "Target Support Files/Pods-bestiebookbattle/Pods-bestiebookbattle.debug.xcconfig"; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
@@ -437,6 +437,9 @@
 			);
 			inputPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-bestiebookbattle/Pods-bestiebookbattle-frameworks.sh",
+				"${PODS_XCFRAMEWORKS_BUILD_DIR}/ExpoCamera/ExpoCamera.framework/ExpoCamera",
+				"${PODS_XCFRAMEWORKS_BUILD_DIR}/ExpoCameraBarcodeScanning/ExpoCameraBarcodeScanning.framework/ExpoCameraBarcodeScanning",
+				"${PODS_XCFRAMEWORKS_BUILD_DIR}/ExpoCameraBarcodeScanning/ZXingObjC.framework/ZXingObjC",
 				"${PODS_XCFRAMEWORKS_BUILD_DIR}/ExpoFileSystem/ExpoFileSystem.framework/ExpoFileSystem",
 				"${PODS_XCFRAMEWORKS_BUILD_DIR}/ExpoFont/ExpoFont.framework/ExpoFont",
 				"${PODS_XCFRAMEWORKS_BUILD_DIR}/ExpoImage/ExpoImage.framework/ExpoImage",
@@ -455,6 +458,9 @@
 			);
 			name = "[CP] Embed Pods Frameworks";
 			outputPaths = (
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/ExpoCamera.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/ExpoCameraBarcodeScanning.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/ZXingObjC.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/ExpoFileSystem.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/ExpoFont.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/ExpoImage.framework",

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { fetchEditions, searchBooks, searchCatalog } from '../services/bookApi';
+import { fetchEditions, findByIsbn, isEdition, searchBooks, searchCatalog } from '../services/bookApi';
 import type { BookSearchResult } from '../types/bookSearch';
+import { parseIsbn } from '../utils/isbn';
 import { compactText } from '../utils/normalizeText';
 
 /** Assez court pour suivre la frappe, assez long pour ne pas chercher chaque lettre */
@@ -21,6 +22,7 @@ const EXPANDED = 5;
  * - `editions` : les premiers livres sont remplacés par leurs éditions
  *   (éditeur, année, pages) dès que Google les donne, pour choisir la sienne
  *   d'un seul toucher. Un livre sans édition connue reste tel quel.
+ * - Un ISBN (tapé ou scanné) : son édition seule, sans le catalogue ni Apple.
  */
 export function useBookSearch({ editions = false }: { editions?: boolean } = {}) {
   const [query, setQueryState] = useState('');
@@ -48,6 +50,28 @@ export function useBookSearch({ editions = false }: { editions?: boolean } = {})
       if (!text.trim()) {
         setResults([]);
         setIsSearching(false);
+        return;
+      }
+
+      // Un ISBN : son édition, et rien d'autre
+      const isbn = parseIsbn(text);
+      if (isbn) {
+        setResults([]);
+        setIsSearching(true);
+        const controller = new AbortController();
+        abortRef.current = controller;
+        findByIsbn(isbn, controller.signal)
+          .then((book) => {
+            if (!controller.signal.aborted) setResults(book ? [book] : []);
+          })
+          .catch((e) => {
+            if (controller.signal.aborted) return;
+            console.warn('ISBN search error:', e);
+            setError('Recherche indisponible');
+          })
+          .finally(() => {
+            if (!controller.signal.aborted) setIsSearching(false);
+          });
         return;
       }
 
@@ -89,7 +113,7 @@ export function useBookSearch({ editions = false }: { editions?: boolean } = {})
   useEffect(() => {
     if (!editions) return;
     let live = true;
-    results.slice(0, EXPANDED).forEach((book) =>
+    results.slice(0, EXPANDED).filter((book) => !isEdition(book)).forEach((book) =>
       fetchEditions(book).then((found) => {
         if (live && found.length > 0) setEditionsByBook((known) => ({ ...known, [bookKey(book)]: found }));
       }),
@@ -104,7 +128,7 @@ export function useBookSearch({ editions = false }: { editions?: boolean } = {})
     // Deux fiches Apple du même livre ont les mêmes éditions : chacune une seule fois
     const seen = new Set<string>();
     return results
-      .flatMap((book, index) => (index < EXPANDED && editionsByBook[bookKey(book)]) || [book])
+      .flatMap((book, index) => (index < EXPANDED && !isEdition(book) && editionsByBook[bookKey(book)]) || [book])
       .filter((book) => !seen.has(book.id) && !!seen.add(book.id));
   }, [editions, results, editionsByBook]);
 

@@ -399,3 +399,95 @@ function cleanGoogleCover(url: string, large: boolean): string {
   // Plus grande, seulement si Google l'a : sinon zoom=2 renvoie « image not available »
   return large ? clean.replace(/&zoom=\d/, '&zoom=2') : clean;
 }
+
+// ── Par ISBN : une édition précise (le code-barres scanné ou tapé) ──────────
+
+/** Un livre trouvé par son ISBN est déjà une édition : on la prend telle quelle */
+export function isEdition(book: BookSearchResult): boolean {
+  return book.id.startsWith('google:') || book.id.startsWith('isbn:');
+}
+
+const OPEN_LIBRARY_BOOKS = 'https://openlibrary.org/api/books';
+
+/**
+ * L'édition d'un ISBN-13 (voir utils/isbn) : Google Books d'abord (pages,
+ * éditeur, couverture), Open Library si Google ne la connaît pas.
+ * null si personne ne la connaît.
+ */
+export async function findByIsbn(isbn: string, signal?: AbortSignal): Promise<BookSearchResult | null> {
+  const fromGoogle = await googleByIsbn(isbn, signal).catch((error) => {
+    if (signal?.aborted) throw error;
+    console.warn('[bookApi] ISBN Google indisponible', error);
+    return null;
+  });
+  if (fromGoogle?.pageCount) return fromGoogle;
+  const fromOpenLibrary = await openLibraryByIsbn(isbn, signal).catch((error) => {
+    if (signal?.aborted) throw error;
+    console.warn('[bookApi] ISBN Open Library indisponible', error);
+    return null;
+  });
+  if (!fromGoogle) return fromOpenLibrary;
+  // Google sans pages : Open Library les a peut-être
+  return { ...fromGoogle, pageCount: fromOpenLibrary?.pageCount ?? null, coverUrl: fromGoogle.coverUrl ?? fromOpenLibrary?.coverUrl ?? null };
+}
+
+async function googleByIsbn(isbn: string, signal?: AbortSignal): Promise<BookSearchResult | null> {
+  const params = new URLSearchParams({ q: `isbn:${isbn}` });
+  if (GOOGLE_BOOKS_KEY) params.set('key', GOOGLE_BOOKS_KEY);
+  const headers: Record<string, string> = IOS_BUNDLE_ID ? { 'X-Ios-Bundle-Identifier': IOS_BUNDLE_ID } : {};
+  const response = await withTimeout(fetch(`${GOOGLE_BOOKS_API}?${params}`, { headers, signal }), 8_000);
+  if (!response.ok) throw new Error(`Google Books API error: ${response.status}`);
+  const data: GoogleBooksSearchResponse = await response.json();
+  const items = (data.items ?? []).filter((item) => item.volumeInfo.title);
+  const item = items.find((i) => i.volumeInfo.pageCount) ?? items[0];
+  if (!item) return null;
+  const v = item.volumeInfo;
+  const thumbnail = v.imageLinks?.thumbnail ?? v.imageLinks?.smallThumbnail;
+  return {
+    id: `google:${item.id}`,
+    title: tidyTitle(v.title),
+    author: v.authors?.join(', ') ?? '',
+    pageCount: v.pageCount ?? null,
+    coverUrl: thumbnail ? cleanGoogleCover(thumbnail, v.readingModes?.image !== false) : null,
+    publisher: v.publisher ?? null,
+    publishedDate: v.publishedDate ?? null,
+    isbn,
+  };
+}
+
+interface OpenLibraryEdition {
+  title?: string;
+  authors?: { name: string }[];
+  number_of_pages?: number;
+  publishers?: { name: string }[];
+  publish_date?: string;
+  cover?: { large?: string; medium?: string };
+}
+
+async function openLibraryByIsbn(isbn: string, signal?: AbortSignal): Promise<BookSearchResult | null> {
+  const params = new URLSearchParams({ bibkeys: `ISBN:${isbn}`, jscmd: 'data', format: 'json' });
+  const response = await withTimeout(fetch(`${OPEN_LIBRARY_BOOKS}?${params}`, { signal }), 8_000);
+  if (!response.ok) throw new Error(`Open Library API error: ${response.status}`);
+  const data: Record<string, OpenLibraryEdition> = await response.json();
+  const edition = data[`ISBN:${isbn}`];
+  if (!edition?.title) return null;
+  const cover = edition.cover?.large ?? edition.cover?.medium;
+  return {
+    id: `isbn:${isbn}`,
+    title: tidyTitle(edition.title),
+    author: edition.authors?.map((a) => a.name).join(', ') ?? '',
+    pageCount: edition.number_of_pages ?? null,
+    coverUrl: cover ? cover.replace('http://', 'https://') : null,
+    publisher: edition.publishers?.[0]?.name ?? null,
+    publishedDate: edition.publish_date ?? null,
+    isbn,
+  };
+}
+
+/** Le titre d'une fiche d'édition : sans « (French Edition) », et plus en MAJUSCULES */
+function tidyTitle(title: string): string {
+  const clean = cleanTitle(title);
+  if (clean !== clean.toUpperCase()) return clean;
+  const lower = clean.toLocaleLowerCase('fr');
+  return lower.charAt(0).toLocaleUpperCase('fr') + lower.slice(1);
+}

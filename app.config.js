@@ -59,7 +59,15 @@ export default {
           photosPermission:
             "chapi a besoin d'accéder à tes photos pour ta photo de profil et les couvertures de livres.",
           cameraPermission:
-            "chapi a besoin d'accéder à ton appareil photo pour photographier les couvertures de livres et les passages que tu veux citer.",
+            "chapi a besoin d'accéder à ton appareil photo pour scanner le code-barres d'un livre, photographier une couverture ou un passage à citer.",
+        },
+      ],
+      [
+        "expo-camera",
+        {
+          cameraPermission:
+            "chapi a besoin d'accéder à ton appareil photo pour scanner le code-barres d'un livre, photographier une couverture ou un passage à citer.",
+          microphonePermission: false,
         },
       ],
       "@react-native-community/datetimepicker",

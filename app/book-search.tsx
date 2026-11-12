@@ -9,6 +9,9 @@
  *    │ ▐██▌ L'Étranger  Gallimard, 2005  │   un toucher, et on a la sienne
  *    └───────────────────────────────────┘
  *
+ * Le code-barres se scanne (IsbnScanner, à droite du champ) ou l'ISBN se tape :
+ * son édition est prise d'office.
+ *
  * Recherche au fil de la frappe (useBookSearch), les premiers livres dépliés
  * en leurs éditions papier (Google Books) pour avoir les pages. Avant de taper,
  * les livres du moment : touché, l'un d'eux arrive avec sa première édition.
@@ -19,15 +22,18 @@
  */
 
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { CircleXIcon, SearchIcon } from 'lucide-react-native';
+import { CircleXIcon, ScanBarcodeIcon, SearchIcon } from 'lucide-react-native';
 import React, { useCallback, useEffect, useRef } from 'react';
 import { Keyboard, Pressable, StyleSheet, Text, TextInput, View, type TextInputInstance } from 'react-native';
 import BookResultRow, { BookResultSkeleton } from '../components/ui/BookResultRow';
 import SheetPage from '../components/ui/SheetPage';
+import IsbnScanner from '../components/ui/IsbnScanner';
 import { useBookSearch } from '../hooks/useBookSearch';
-import { fetchEditions, TRENDING_BOOKS } from '../services/bookApi';
+import { useIsbnScan } from '../hooks/useIsbnScan';
+import { fetchEditions, isEdition, TRENDING_BOOKS } from '../services/bookApi';
 import { useOnboardingStore, type BookPickTarget } from '../stores/onboardingStore';
 import type { BookSearchResult } from '../types/bookSearch';
+import { parseIsbn } from '../utils/isbn';
 import { borderRadius, colors, fonts, fontSize, shadows, spacing } from '../utils/constants';
 
 export default function BookSearchRoute() {
@@ -59,7 +65,7 @@ export default function BookSearchRoute() {
     async (book: BookSearchResult) => {
       Keyboard.dismiss();
       // Une édition : c'est la sienne
-      if (book.id.startsWith('google:')) return finish(book);
+      if (isEdition(book)) return finish(book);
       // Un livre sans édition affichée : sa première édition connue, s'il en a une
       pendingRef.current = book;
       const [first] = await fetchEditions(book);
@@ -68,6 +74,8 @@ export default function BookSearchRoute() {
     },
     [finish],
   );
+
+  const { openScanner, scanner } = useIsbnScan({ setQuery, results, isSearching, onFound: handlePick });
 
   const showTrending = query.trim().length === 0;
   const list = showTrending ? TRENDING_BOOKS : results;
@@ -88,7 +96,7 @@ export default function BookSearchRoute() {
           returnKeyType="search"
           accessibilityLabel="Chercher un livre"
         />
-        {query.length > 0 && (
+        {query.length > 0 ? (
           <Pressable
             onPress={clearResults}
             hitSlop={8}
@@ -96,6 +104,10 @@ export default function BookSearchRoute() {
             accessibilityLabel="Effacer la recherche"
           >
             <CircleXIcon size={18} color={colors.placeholder} />
+          </Pressable>
+        ) : (
+          <Pressable onPress={openScanner} hitSlop={8} accessibilityRole="button" accessibilityLabel="Scanner le code-barres">
+            <ScanBarcodeIcon size={20} color={colors.textSecondary} />
           </Pressable>
         )}
       </View>
@@ -114,8 +126,10 @@ export default function BookSearchRoute() {
             <BookResultSkeleton />
           </>
         ) : (
-          <Text style={styles.message}>{error ?? 'Aucun résultat'}</Text>
+          <Text style={styles.message}>{error ?? (parseIsbn(query) ? 'Édition inconnue, tape le titre' : 'Aucun résultat')}</Text>
         ))}
+
+      <IsbnScanner {...scanner} />
     </SheetPage>
   );
 }

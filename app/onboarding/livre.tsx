@@ -15,11 +15,13 @@
  * - Un livre du moment (avant de taper) : la première édition avec un nombre de
  *   pages est prise d'office ; la couverture reste celle du livre touché.
  * - Pages ou %, et le total de pages : à « Où en est ta lecture ? ».
+ * - Le code-barres se scanne (à droite du champ) ou l'ISBN se tape : son
+ *   édition est prise d'office, avec ses pages (#74).
  * - Pas d'ajout à la main pour l'instant (Lea, 2026-10-30).
  */
 
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { CircleXIcon, SearchIcon } from 'lucide-react-native';
+import { CircleXIcon, ScanBarcodeIcon, SearchIcon } from 'lucide-react-native';
 import React, { useEffect, useRef, useState } from 'react';
 import { Keyboard, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
@@ -27,10 +29,13 @@ import Button3D from '../../components/Button3D';
 import OnboardingScreen, { rise } from '../../components/onboarding/OnboardingScreen';
 import BookBanner from '../../components/onboarding/BookBanner';
 import BookResultRow, { BookResultSkeleton } from '../../components/ui/BookResultRow';
+import IsbnScanner from '../../components/ui/IsbnScanner';
 import { useBookSearch } from '../../hooks/useBookSearch';
-import { fetchEditions, TRENDING_BOOKS } from '../../services/bookApi';
+import { useIsbnScan } from '../../hooks/useIsbnScan';
+import { fetchEditions, isEdition, TRENDING_BOOKS } from '../../services/bookApi';
 import { useOnboardingStore } from '../../stores/onboardingStore';
 import type { BookSearchResult } from '../../types/bookSearch';
+import { parseIsbn } from '../../utils/isbn';
 import { borderRadius, colors, fonts, fontSize, shadows, spacing } from '../../utils/constants';
 import { feel } from '../../utils/feel';
 import { nextStep } from '../../utils/onboardingFlow';
@@ -85,7 +90,7 @@ export default function LivreScreen() {
     feel('tic');
     setBook(result);
     // Une édition touchée dans les résultats : c'est la sienne
-    if (result.id.startsWith('google:')) return;
+    if (isEdition(result)) return;
     pending.current = result;
     const found = await fetchEditions(result);
     if (pending.current !== result) return;
@@ -94,6 +99,8 @@ export default function LivreScreen() {
     const first = found.find((edition) => edition.pageCount);
     if (first) setBook(first, result.coverUrl ?? first.coverUrl);
   };
+
+  const { openScanner, scanner } = useIsbnScan({ setQuery, results, isSearching, onFound: pick });
 
   const ready = !!book && book.title.trim().length > 0;
   const editionLine = book ? [book.publisher, book.pages > 0 ? `${book.pages} p.` : null].filter(Boolean).join(' · ') : '';
@@ -123,9 +130,13 @@ export default function LivreScreen() {
           returnKeyType="search"
           accessibilityLabel="Chercher un livre"
         />
-        {searching && (
+        {searching ? (
           <Pressable onPress={clearResults} hitSlop={8} accessibilityRole="button" accessibilityLabel="Effacer la recherche">
             <CircleXIcon size={18} color={colors.placeholder} />
+          </Pressable>
+        ) : (
+          <Pressable onPress={openScanner} hitSlop={8} accessibilityRole="button" accessibilityLabel="Scanner le code-barres">
+            <ScanBarcodeIcon size={20} color={colors.textSecondary} />
           </Pressable>
         )}
       </Animated.View>
@@ -143,7 +154,7 @@ export default function LivreScreen() {
                 <BookResultSkeleton />
               </>
             ) : (
-              <Text style={styles.message}>{error ?? 'Aucun résultat'}</Text>
+              <Text style={styles.message}>{error ?? (parseIsbn(query) ? 'Édition inconnue, tape le titre' : 'Aucun résultat')}</Text>
             ))}
         </View>
 
@@ -162,6 +173,8 @@ export default function LivreScreen() {
           ))}
         </View>
       )}
+
+      <IsbnScanner {...scanner} />
     </OnboardingScreen>
   );
 }
