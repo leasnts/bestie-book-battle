@@ -1,32 +1,71 @@
 /**
- * Route /streak-goal — viser un palier de série (#236).
+ * Route /streak-goal — viser un palier de série (#236), à la Duolingo.
  *
  * Deux moments, le même sheet :
  * - ma série est finie (trop de jours manqués pour les marque-pages) : la
- *   flamme éteinte et son ancien total, puis relancer en visant 3, 7 ou 14
- *   jours. S'ouvre seul une fois par série finie.
- * - `?reached=7` : le palier est atteint, la flamme brûle ; on vise les trois
- *   paliers suivants. S'ouvre seul une fois par palier.
+ *   flamme éteinte et son ancien total, en sable. S'ouvre seul une fois par
+ *   série finie.
+ * - `?reached=7` : le palier est atteint, la flamme brûle. S'ouvre seul une
+ *   fois par palier.
+ *
+ *            🔥                  toucher un palier : la flamme se rallume
+ *            17                  et le grand chiffre devient le palier,
+ *          jours                 « jours à tenir »
+ *   ┌──────────────────────────┐
+ *   │ 3 jours       tranquille │  cartes de papier cousues ; choisie : le
+ *   └──────────────────────────┘  ruban rouge léger de la série, fil rouge
+ *   [ Relancer ma série ]
+ *   [ Plus tard ]
  *
  * Rien de pré-choisi : le bouton s'allume quand un palier est touché. « Plus
- * tard » retire le palier (il est fini, ou il appartenait à la série d'avant) :
- * la gélule redevient un simple nombre.
+ * tard » retire le palier : la gélule redevient un simple nombre.
  */
 
+import { Image } from 'expo-image';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useCallback, useState } from 'react';
-import { View } from 'react-native';
+import React, { useCallback, useEffect, useState } from 'react';
+import { StyleSheet, Text, View } from 'react-native';
+import Animated, {
+  Easing,
+  FadeInDown,
+  useAnimatedStyle,
+  useReducedMotion,
+  useSharedValue,
+  withSequence,
+  withTiming,
+} from 'react-native-reanimated';
 import Button3D from '../components/Button3D';
-import ChoiceRow from '../components/ui/ChoiceRow';
+import PressableScale from '../components/ui/PressableScale';
 import SheetPage, { SheetFooter } from '../components/ui/SheetPage';
-import StreakHero from '../components/ui/StreakHero';
+import { StitchBorder } from '../components/ui/Stitch';
+import { STREAK_FLAME } from '../components/ui/StreakPill';
 import { useMyStreak } from '../hooks/useMyStreak';
 import { setStreakGoal } from '../services/supabase/database';
 import { useProgressStore } from '../stores/progressStore';
-import { spacing } from '../utils/constants';
+import { borderRadius, colors, fonts, lowki, paperFrameGradient, spacing } from '../utils/constants';
 import { buzz } from '../utils/feel';
 import { oops } from '../utils/notice';
 import { nextStreakGoals } from '../utils/streak';
+
+/** Le petit mot de chaque palier, à droite de sa carte */
+const GOAL_WORDS: Record<number, string> = {
+  3: 'tranquille',
+  7: 'bon rythme',
+  14: 'gros mental',
+  30: 'légendaire',
+  60: 'inarrêtable',
+  100: 'mythique',
+  200: 'hors norme',
+  365: 'une année',
+};
+
+/** Le ruban de la série (StreakDays), pour la carte choisie */
+const PICKED = [`${lowki.red.light}24`, `${lowki.red.dark}24`] as const;
+
+const FLAME = 64;
+const CARD_RADIUS = borderRadius.xl;
+const EASE_OUT = Easing.out(Easing.cubic);
 
 export default function StreakGoalRoute() {
   const router = useRouter();
@@ -57,23 +96,26 @@ export default function StreakGoalRoute() {
     [userId, challengeId, saving, loadChallengeProgress, router],
   );
 
+  const pick = (goal: number) => {
+    if (goal === picked) return;
+    buzz('selection');
+    setPicked(goal);
+  };
+
   return (
     <SheetPage
       title={reached ? 'Palier atteint' : 'Ma série est finie'}
       accent={reached ? 'atteint' : 'finie'}
     >
-      <StreakHero days={reached ? days : lastDays} flame={reached ? 'lit' : 'off'} />
+      <GoalHero
+        number={picked ?? (reached ? days : lastDays)}
+        lit={!!reached || !!picked}
+        caption={picked ? 'jours à tenir' : undefined}
+      />
 
-      {/* L'air sous le chiffre, comme la semaine de /streak-save */}
-      <View style={{ marginTop: spacing.lg }}>
+      <View style={styles.cards}>
         {goals.map((goal) => (
-          <ChoiceRow
-            key={goal}
-            single
-            label={`${goal} jours`}
-            selected={picked === goal}
-            onPress={() => setPicked(goal)}
-          />
+          <GoalCard key={goal} goal={goal} selected={picked === goal} onPress={() => pick(goal)} />
         ))}
       </View>
 
@@ -93,3 +135,131 @@ export default function StreakGoalRoute() {
     </SheetPage>
   );
 }
+
+/**
+ * Le grand chiffre, au centre : la flamme, le nombre, « jours ». Éteinte, tout
+ * est en sable ; elle se rallume d'un petit gonflement, et le nombre change en
+ * montant (sans rebond, rien avec « Réduire les animations »).
+ */
+function GoalHero({ number, lit, caption }: { number: number; lit: boolean; caption?: string }) {
+  const reducedMotion = useReducedMotion();
+  const pop = useSharedValue(1);
+
+  useEffect(() => {
+    if (reducedMotion) return;
+    pop.value = withSequence(
+      withTiming(1.12, { duration: 140, easing: EASE_OUT }),
+      withTiming(1, { duration: 220, easing: EASE_OUT }),
+    );
+  }, [number, lit, reducedMotion, pop]);
+
+  const flameStyle = useAnimatedStyle(() => ({ transform: [{ scale: pop.value }] }));
+
+  return (
+    <View style={styles.hero} accessible accessibilityLabel={`${number} ${caption ?? 'jours'}`}>
+      <Animated.View style={flameStyle}>
+        <Image
+          source={STREAK_FLAME}
+          style={styles.flame}
+          tintColor={lit ? undefined : lowki.beige.light}
+        />
+      </Animated.View>
+      <Animated.Text
+        key={number}
+        entering={reducedMotion ? undefined : FadeInDown.duration(240).easing(EASE_OUT)}
+        style={[styles.number, !lit && styles.numberOff]}
+      >
+        {number}
+      </Animated.Text>
+      <Text style={[styles.caption, lit && styles.captionLit]}>
+        {caption ?? (number > 1 ? 'jours' : 'jour')}
+      </Text>
+    </View>
+  );
+}
+
+/** Un palier : une carte de papier cousue, « 7 jours » et son petit mot */
+function GoalCard({ goal, selected, onPress }: { goal: number; selected: boolean; onPress: () => void }) {
+  return (
+    <PressableScale
+      style={styles.card}
+      pressedScale={0.98}
+      onPress={onPress}
+      accessibilityRole="radio"
+      accessibilityState={{ selected }}
+      accessibilityLabel={`${goal} jours, ${GOAL_WORDS[goal] ?? ''}`}
+    >
+      <LinearGradient
+        colors={selected ? PICKED : paperFrameGradient}
+        style={[StyleSheet.absoluteFill, styles.cardFill]}
+      />
+      <StitchBorder radius={CARD_RADIUS} color={selected ? lowki.red.light : undefined} />
+      <Text style={[styles.cardLabel, selected && styles.cardLabelPicked]}>{goal} jours</Text>
+      {GOAL_WORDS[goal] && (
+        <Text style={[styles.cardWord, selected && styles.cardWordPicked]}>{GOAL_WORDS[goal]}</Text>
+      )}
+    </PressableScale>
+  );
+}
+
+const styles = StyleSheet.create({
+  hero: {
+    alignItems: 'center',
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.xl,
+  },
+  flame: {
+    width: FLAME,
+    height: FLAME,
+  },
+  number: {
+    fontFamily: fonts.display,
+    fontSize: 72,
+    lineHeight: 80,
+    marginTop: spacing.sm,
+    color: lowki.red.light,
+    fontVariant: ['tabular-nums'],
+  },
+  // Éteinte : beige foncé, ≥ 3:1 sur le papier à cette taille
+  numberOff: {
+    color: lowki.beige.dark,
+  },
+  caption: {
+    fontFamily: fonts.bodySemiBold,
+    fontSize: 17,
+    color: colors.textTertiary,
+  },
+  captionLit: {
+    color: lowki.red.light,
+  },
+  cards: {
+    gap: spacing.sm,
+  },
+  card: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    minHeight: 60,
+    paddingHorizontal: spacing.lg,
+    borderRadius: CARD_RADIUS,
+  },
+  cardFill: {
+    borderRadius: CARD_RADIUS,
+  },
+  cardLabel: {
+    fontFamily: fonts.bodyBold,
+    fontSize: 17,
+    color: colors.textPrimary,
+  },
+  cardLabelPicked: {
+    color: lowki.red.light,
+  },
+  cardWord: {
+    fontFamily: fonts.bodySemiBold,
+    fontSize: 15,
+    color: colors.textTertiary,
+  },
+  cardWordPicked: {
+    color: lowki.red.light,
+  },
+});
