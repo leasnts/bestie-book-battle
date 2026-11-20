@@ -439,6 +439,7 @@ export async function getChallengeParticipants(
         streak_count: item.streak_count,
         last_streak_date: item.last_streak_date,
         streak_bonus_dates: item.streak_bonus_dates ?? [],
+        streak_goal: item.streak_goal ?? null,
         last_updated_at: item.last_updated_at,
         created_at: item.created_at,
       },
@@ -750,6 +751,24 @@ export async function spendStreakBonus(challengeId: string): Promise<boolean> {
   const { data, error } = await supabase.rpc('use_streak_bonus', { p_challenge_id: challengeId });
   if (error) throw error;
   return Array.isArray(data) && data.length > 0;
+}
+
+/**
+ * Viser un palier de série sur ce livre (3, 7, 14 jours…), ou aucun (null)
+ *
+ * Ne touche pas last_updated_at : ce n'est pas une lecture.
+ */
+export async function setStreakGoal(
+  challengeId: string,
+  userId: string,
+  goal: number | null,
+): Promise<void> {
+  const { error } = await supabase
+    .from('user_progress')
+    .update({ streak_goal: goal })
+    .eq('challenge_id', challengeId)
+    .eq('user_id', userId);
+  if (error) throw error;
 }
 
 // =====================================================

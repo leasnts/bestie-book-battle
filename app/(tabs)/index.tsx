@@ -43,6 +43,7 @@ import PopEyes from '../../components/PopEyes';
 import BookSection from '../../components/ui/BookSection';
 import GlassButton from '../../components/ui/GlassButton';
 import StreakPill from '../../components/ui/StreakPill';
+import { addDays } from '../../components/ui/StreakDays';
 import NoteTile from '../../components/ui/NoteTile';
 import PageSection from '../../components/ui/PageSection';
 import { StitchLine } from '../../components/ui/Stitch';
@@ -298,6 +299,28 @@ export default function HomeScreen() {
       .catch(() => {});
   }, [myStreakInfo.state, myStreakInfo.challengeId]);
 
+  // Ma série est finie (trop de jours manqués pour les marque-pages) : on le dit
+  // et on propose de la relancer avec un palier, une fois par série finie (#236).
+  // Palier atteint : on propose le suivant, une fois par palier et par série.
+  useEffect(() => {
+    const { broken, challengeId, lastStreakDate, goal, days, state } = myStreakInfo;
+    if (!challengeId || !lastStreakDate) return;
+    const reached = !!goal && days >= goal && (state === 'active' || state === 'atRisk');
+    if (!broken && !reached) return;
+    // Une série se reconnaît à son premier jour
+    const key = `streakGoalShown:${challengeId}`;
+    const mark = broken
+      ? `broken:${lastStreakDate}`
+      : `reached:${goal}:${addDays(lastStreakDate.split('T')[0], 1 - days)}`;
+    AsyncStorage.getItem(key)
+      .then((shown) => {
+        if (shown === mark) return;
+        AsyncStorage.setItem(key, mark).catch(() => {});
+        router.push(reached ? `/streak-goal?reached=${goal}` : '/streak-goal');
+      })
+      .catch(() => {});
+  }, [myStreakInfo.broken, myStreakInfo.challengeId, myStreakInfo.lastStreakDate, myStreakInfo.goal, myStreakInfo.days, myStreakInfo.state]);
+
   // Progression moyenne du groupe (basée sur les pourcentages individuels)
   const averagePercentage = participantsMatchChallenge
     ? Math.round(
@@ -510,6 +533,7 @@ export default function HomeScreen() {
             <StreakPill
               days={myStreakInfo.days}
               state={myStreakInfo.state}
+              goal={myStreakInfo.goal}
               onPress={() => router.push('/streak')}
             />
           )}

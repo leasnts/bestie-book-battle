@@ -95,6 +95,29 @@ export function getStreakState(
   return { state: 'inactive', days: 0, missedDays: [] };
 }
 
+/**
+ * Les paliers de série, du plus court au plus long. Série finie : on relance
+ * en visant l'un des trois premiers ; palier atteint : les trois suivants.
+ */
+export const STREAK_GOALS = [3, 7, 14, 30, 60, 100, 200, 365] as const;
+
+/** Les trois paliers à proposer : au-delà de `reached` (0 = relancer) */
+export function nextStreakGoals(reached = 0): number[] {
+  return STREAK_GOALS.filter((g) => g > reached).slice(0, 3);
+}
+
+/**
+ * Ma série est finie : elle a existé, mais trop de jours manquent pour les
+ * marque-pages qui restent (`getStreakState` la dit `inactive`)
+ */
+export function isStreakBroken(
+  streakCount: number,
+  lastStreakDate: string | null | undefined,
+  state: StreakState,
+): boolean {
+  return state === 'inactive' && !!streakCount && !!lastStreakDate;
+}
+
 /** Marque-pages qu'il me reste sur ce livre */
 export function bonusesLeft(bonusDates: string[] = []): number {
   return Math.max(0, STREAK_BONUS_PER_BOOK - bonusDates.length);

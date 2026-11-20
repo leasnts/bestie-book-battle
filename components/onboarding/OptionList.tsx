@@ -49,6 +49,12 @@ interface Option<K extends string> {
   label: string;
   /** L'illustration de gauche (aquarelle, assets/images/onboarding) */
   illustration?: number;
+  /** La taille de l'illustration, si elle doit être plus petite que 40 pt (une flamme) */
+  illustrationSize?: number;
+  /** Une teinte pour l'illustration tant que la ligne n'est pas choisie (la flamme en sable) */
+  illustrationIdleTint?: string;
+  /** Un petit mot à droite, plus discret (les paliers de série : « bon rythme ») */
+  detail?: string;
 }
 
 interface OptionListProps<K extends string> {
@@ -56,6 +62,8 @@ interface OptionListProps<K extends string> {
   /** null = rien de choisi : c'est à la personne de toucher le premier choix */
   value: K | null;
   onChange: (key: K) => void;
+  /** La ligne choisie écrit en rouge (les paliers de série), en plus de se broder */
+  accent?: boolean;
 }
 
 interface ToggleOptionListProps<K extends string> {
@@ -83,9 +91,9 @@ export const STITCH_ON = lowki.chocolate.light;
 export const STITCH_WEIGHT = 2;
 export const STITCH_INSET = 3;
 /** L'opacité d'une ligne non choisie quand un seul choix est possible */
-const DIMMED = 0.45;
+const DIMMED = 0.7;
 
-export default function OptionList<K extends string>({ options, value, onChange }: OptionListProps<K>) {
+export default function OptionList<K extends string>({ options, value, onChange, accent = false }: OptionListProps<K>) {
   return (
     <View style={styles.list} accessibilityRole="radiogroup">
       {options.map((option) => (
@@ -94,6 +102,7 @@ export default function OptionList<K extends string>({ options, value, onChange 
           option={option}
           selected={option.key === value}
           dimmed={value !== null && option.key !== value}
+          accent={accent}
           single
           onPress={() => onChange(option.key)}
         />
@@ -124,12 +133,14 @@ function OptionRow<K extends string>({
   option,
   selected,
   dimmed = false,
+  accent = false,
   single = false,
   onPress,
 }: {
   option: Option<K>;
   selected: boolean;
   dimmed?: boolean;
+  accent?: boolean;
   single?: boolean;
   onPress: () => void;
 }) {
@@ -173,7 +184,7 @@ function OptionRow<K extends string>({
       }}
       accessibilityRole={single ? 'radio' : 'checkbox'}
       accessibilityState={single ? { selected } : { checked: selected }}
-      accessibilityLabel={option.label}
+      accessibilityLabel={option.detail ? `${option.label}, ${option.detail}` : option.label}
     >
       <Animated.View style={[styles.row, row]}>
         <View style={[StyleSheet.absoluteFill, styles.clip]} pointerEvents="none">
@@ -189,11 +200,23 @@ function OptionRow<K extends string>({
           </Animated.View>
         </View>
 
-        {option.illustration && <Image source={option.illustration} style={styles.illustration} contentFit="contain" />}
+        {option.illustration && (
+          <Image
+            source={option.illustration}
+            style={[styles.illustration, option.illustrationSize ? { width: option.illustrationSize, height: option.illustrationSize } : null]}
+            contentFit="contain"
+            tintColor={!selected ? option.illustrationIdleTint : undefined}
+          />
+        )}
 
-        <Animated.Text style={styles.label} numberOfLines={1}>
+        <Animated.Text style={[styles.label, accent && selected && styles.accent]} numberOfLines={1}>
           {option.label}
         </Animated.Text>
+        {option.detail && (
+          <Animated.Text style={[styles.detail, accent && selected && styles.accentSoft]} numberOfLines={1}>
+            {option.detail}
+          </Animated.Text>
+        )}
       </Animated.View>
     </PressableScale>
   );
@@ -236,5 +259,18 @@ const styles = StyleSheet.create({
     fontFamily: fonts.bodySemiBold,
     fontSize: 16,
     color: colors.textPrimary,
+  },
+  detail: {
+    fontFamily: fonts.bodySemiBold,
+    fontSize: 15,
+    color: colors.textTertiary,
+  },
+  accent: {
+    color: lowki.red.light,
+  },
+  // Le petit mot de la ligne choisie : rouge aussi, mais en retrait
+  accentSoft: {
+    color: lowki.red.light,
+    opacity: 0.6,
   },
 });
