@@ -24,7 +24,7 @@
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import Animated, {
   Easing,
@@ -32,6 +32,8 @@ import Animated, {
   useAnimatedStyle,
   useReducedMotion,
   useSharedValue,
+  withDelay,
+  withRepeat,
   withSequence,
   withTiming,
 } from 'react-native-reanimated';
@@ -67,6 +69,9 @@ const PICKED = [`${lowki.red.light}24`, `${lowki.red.dark}24`] as const;
 const FLAME = 180;
 const CARD_RADIUS = borderRadius.xl;
 const EASE_OUT = Easing.out(Easing.cubic);
+const EASE_IN_OUT = Easing.inOut(Easing.sin);
+/** Le temps que le sheet finisse de monter, avant que la flamme pousse */
+const SHEET_RISE = 380;
 
 export default function StreakGoalRoute() {
   const router = useRouter();
@@ -146,14 +151,20 @@ export default function StreakGoalRoute() {
 function GoalHero({ number, lit, caption }: { number: number; lit: boolean; caption?: string }) {
   const reducedMotion = useReducedMotion();
   const grow = useSharedValue(reducedMotion ? 1 : 0.3);
+  const first = useRef(true);
 
   useEffect(() => {
     if (reducedMotion) return;
-    // Elle part petite et pousse franchement jusqu'à sa taille : à l'ouverture,
-    // puis à chaque palier touché (repart de la moitié)
+    // Elle part petite et pousse franchement jusqu'à sa taille, puis respire
+    // doucement. À l'ouverture, elle attend que le sheet soit monté (sinon
+    // elle a fini de pousser avant qu'on la voie) ; à chaque palier touché,
+    // elle repart de la moitié.
+    const wait = first.current ? SHEET_RISE : 0;
+    first.current = false;
     grow.value = withSequence(
       withTiming(Math.min(grow.value, 0.5), { duration: 0 }),
-      withTiming(1, { duration: 900, easing: EASE_OUT }),
+      withDelay(wait, withTiming(1, { duration: 1100, easing: EASE_OUT })),
+      withRepeat(withTiming(1.06, { duration: 1600, easing: EASE_IN_OUT }), -1, true),
     );
   }, [number, lit, reducedMotion, grow]);
 
