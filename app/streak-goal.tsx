@@ -35,7 +35,7 @@ import { nextStreakGoals } from '../utils/streak';
 
 /** Le petit mot de chaque palier, à droite de sa ligne */
 const GOAL_WORDS: Record<number, string> = {
-  3: 'chill',
+  3: 'tranquille',
   7: 'bon rythme',
   14: 'gros mental',
   30: 'légendaire',

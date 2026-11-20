@@ -213,7 +213,7 @@ function OptionRow<K extends string>({
           {option.label}
         </Animated.Text>
         {option.detail && (
-          <Animated.Text style={[styles.detail, accent && selected && styles.accent]} numberOfLines={1}>
+          <Animated.Text style={[styles.detail, accent && selected && styles.accentSoft]} numberOfLines={1}>
             {option.detail}
           </Animated.Text>
         )}
@@ -267,5 +267,10 @@ const styles = StyleSheet.create({
   },
   accent: {
     color: lowki.red.light,
+  },
+  // Le petit mot de la ligne choisie : rouge aussi, mais en retrait
+  accentSoft: {
+    color: lowki.red.light,
+    opacity: 0.6,
   },
 });
