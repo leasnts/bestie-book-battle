@@ -172,6 +172,7 @@ export interface Database {
           streak_count: number;
           last_streak_date: string | null; // Date only (YYYY-MM-DD)
           streak_bonus_dates: string[]; // Jours couverts par un marque-page (YYYY-MM-DD)
+          streak_goal: number | null; // Palier de série visé (3, 7, 14…), null = aucun
           total_pages: number | null; // Nombre de pages de l'édition du participant
           cover_url: string | null; // Couverture de son édition, null = celle du bbb
           publisher: string | null; // Éditeur de son édition, si la recherche l'a donné
@@ -196,6 +197,7 @@ export interface Database {
           streak_count?: number;
           last_streak_date?: string | null;
           streak_bonus_dates?: string[];
+          streak_goal?: number | null;
           last_updated_at?: string;
           created_at?: string;
         };
@@ -214,6 +216,7 @@ export interface Database {
           streak_count?: number;
           last_streak_date?: string | null;
           streak_bonus_dates?: string[];
+          streak_goal?: number | null;
           last_updated_at?: string;
           created_at?: string;
         };

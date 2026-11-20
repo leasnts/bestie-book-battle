@@ -12,6 +12,9 @@
  *   nombre en rouge atténué ;
  * - éteinte (pas de série) : flamme et 0 grisés.
  *
+ * Un palier visé (#236) : « 2/7 », le palier en plus petit et pâli ; atteint,
+ * il s'efface.
+ *
  * Un toucher ouvre la semaine de ma série (/streak).
  */
 
@@ -29,6 +32,8 @@ interface StreakPillProps {
   /** Jours consécutifs de lecture */
   days: number;
   state: StreakState;
+  /** Le palier visé, null = aucun */
+  goal?: number | null;
   onPress: () => void;
 }
 
@@ -39,14 +44,15 @@ const LABELS: Record<StreakState, (days: number) => string> = {
   inactive: () => 'Pas de série',
 };
 
-export default function StreakPill({ days, state, onPress }: StreakPillProps) {
+export default function StreakPill({ days, state, goal, onPress }: StreakPillProps) {
   const dying = state === 'atRisk' || state === 'missed';
   const off = state === 'inactive';
+  const shownGoal = goal && days < goal ? goal : null;
 
   return (
     <GlassPill
       onPress={onPress}
-      accessibilityLabel={LABELS[state](days)}
+      accessibilityLabel={LABELS[state](days) + (shownGoal ? `, palier de ${shownGoal}` : '')}
       accessibilityHint="Ouvre ma série de la semaine"
     >
       <Image
@@ -56,6 +62,7 @@ export default function StreakPill({ days, state, onPress }: StreakPillProps) {
       />
       <Text style={[styles.days, dying && styles.dim, off && styles.daysOff, off && styles.off]} maxFontSizeMultiplier={1.3}>
         {days}
+        {shownGoal && <Text style={styles.goal}>/{shownGoal}</Text>}
       </Text>
     </GlassPill>
   );
@@ -73,6 +80,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: lowki.red.light,
     fontVariant: ['tabular-nums'],
+  },
+  // Le palier : plus petit et pâli, le nombre reste ce qu'on lit d'abord
+  goal: {
+    fontSize: 12,
+    opacity: 0.55,
   },
   // Va mourir : flamme et nombre atténués ensemble
   dim: {

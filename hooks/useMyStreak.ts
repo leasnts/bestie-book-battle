@@ -6,7 +6,7 @@
 import { useAuthStore } from '../stores/authStore';
 import { useProgressStore } from '../stores/progressStore';
 import { useProjectStore } from '../stores/projectStore';
-import { bonusesLeft, getStreakState } from '../utils/streak';
+import { bonusesLeft, getStreakState, isStreakBroken } from '../utils/streak';
 
 export function useMyStreak() {
   const userId = useAuthStore((s) => s.user?.id);
@@ -22,6 +22,8 @@ export function useMyStreak() {
     progress?.last_streak_date ?? null,
     bonusDates,
   );
+  const streakCount = progress?.streak_count ?? 0;
+  const lastStreakDate = progress?.last_streak_date ?? null;
   return {
     userId,
     challengeId,
@@ -31,5 +33,12 @@ export function useMyStreak() {
     missedDays,
     bonusDates,
     bonusesLeft: bonusesLeft(bonusDates),
+    /** Finie : trop de jours manqués pour les marque-pages */
+    broken: isStreakBroken(streakCount, lastStreakDate, state),
+    /** Les jours de la série finie (sa dernière valeur) */
+    lastDays: streakCount,
+    lastStreakDate,
+    /** Le palier visé, null = aucun */
+    goal: progress?.streak_goal ?? null,
   };
 }

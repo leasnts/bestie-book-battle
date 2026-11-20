@@ -29,7 +29,7 @@ import { STREAK_FLAME } from './StreakPill';
 
 interface StreakHeroProps {
   days: number;
-  /** `dim` : hier manqué, tout pâlit ; `off` : pas de série, flamme sable */
+  /** `dim` : hier manqué, tout pâlit ; `off` : série finie, flamme et chiffre en sable */
   flame?: 'lit' | 'dim' | 'off';
   /** Passe à true : la série reprend vie (après `delay` ms) */
   revive?: boolean;
@@ -125,7 +125,7 @@ export default function StreakHero({ days, flame = 'lit', revive = false, delay 
           />
         </Animated.View>
       </View>
-      <Animated.Text style={[styles.days, daysStyle]}>{days}</Animated.Text>
+      <Animated.Text style={[styles.days, flame === 'off' && styles.daysOff, daysStyle]}>{days}</Animated.Text>
       <Text style={styles.unit}>{days > 1 ? 'jours' : 'jour'}</Text>
     </View>
   );
@@ -205,6 +205,10 @@ const styles = StyleSheet.create({
     fontSize: 40,
     color: lowki.red.light,
     fontVariant: ['tabular-nums'],
+  },
+  // Éteinte : le chiffre en sable, avec sa flamme (beige foncé : 40 pt, ≥ 3:1 sur le papier)
+  daysOff: {
+    color: lowki.beige.dark,
   },
   unit: {
     fontFamily: fonts.bodySemiBold,
