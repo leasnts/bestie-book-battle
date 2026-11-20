@@ -45,13 +45,6 @@ const GLOW = 190;
 const EASE_OUT = Easing.out(Easing.cubic);
 const EASE_IN_OUT = Easing.inOut(Easing.cubic);
 
-/** Le détour blanc du chiffre : sa copie blanche, décalée tout autour */
-const OUTLINE_W = 4;
-const OUTLINE = Array.from({ length: 12 }, (_, i) => {
-  const a = (i / 12) * Math.PI * 2;
-  return [Math.cos(a) * OUTLINE_W, Math.sin(a) * OUTLINE_W] as const;
-});
-
 /** Les braises : décalage horizontal de départ, dérive, hauteur, retard, taille */
 const EMBERS = [
   { x: -9, drift: -12, rise: 50, delay: 40, size: 6 },
@@ -134,19 +127,7 @@ export default function StreakHero({ days, flame = 'lit', unit, revive = false, 
           />
         </Animated.View>
       </View>
-      {/* Le chiffre chevauche la flamme, détouré de blanc pour s'en détacher */}
-      <Animated.View style={[styles.daysBox, daysStyle]}>
-        {OUTLINE.map(([x, y], i) => (
-          <Text
-            key={i}
-            style={[styles.days, styles.outline, { transform: [{ translateX: x }, { translateY: y }] }]}
-            aria-hidden
-          >
-            {days}
-          </Text>
-        ))}
-        <Text style={[styles.days, flame === 'off' && styles.daysOff]}>{days}</Text>
-      </Animated.View>
+      <Animated.Text style={[styles.days, flame === 'off' && styles.daysOff, daysStyle]}>{days}</Animated.Text>
       <Text style={styles.unit}>{unit ?? (days > 1 ? 'jours' : 'jour')}</Text>
     </View>
   );
@@ -220,14 +201,6 @@ const styles = StyleSheet.create({
     left: FLAME / 2,
     top: FLAME * 0.45,
     overflow: 'hidden',
-  },
-  // Rapproché de la flamme jusqu'à la chevaucher
-  daysBox: {
-    marginLeft: -FLAME * 0.42,
-  },
-  outline: {
-    position: 'absolute',
-    color: colors.white,
   },
   days: {
     fontFamily: fonts.display,
