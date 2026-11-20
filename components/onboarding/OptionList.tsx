@@ -51,6 +51,8 @@ interface Option<K extends string> {
   illustration?: number;
   /** La taille de l'illustration, si elle doit être plus petite que 40 pt (une flamme) */
   illustrationSize?: number;
+  /** Une teinte pour l'illustration tant que la ligne n'est pas choisie (la flamme en sable) */
+  illustrationIdleTint?: string;
   /** Un petit mot à droite, plus discret (les paliers de série : « bon rythme ») */
   detail?: string;
 }
@@ -198,6 +200,7 @@ function OptionRow<K extends string>({
             source={option.illustration}
             style={[styles.illustration, option.illustrationSize ? { width: option.illustrationSize, height: option.illustrationSize } : null]}
             contentFit="contain"
+            tintColor={!selected ? option.illustrationIdleTint : undefined}
           />
         )}
 
