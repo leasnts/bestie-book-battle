@@ -49,6 +49,8 @@ interface Option<K extends string> {
   label: string;
   /** L'illustration de gauche (aquarelle, assets/images/onboarding) */
   illustration?: number;
+  /** Un petit mot à droite, plus discret (les paliers de série : « bon rythme ») */
+  detail?: string;
 }
 
 interface OptionListProps<K extends string> {
@@ -173,7 +175,7 @@ function OptionRow<K extends string>({
       }}
       accessibilityRole={single ? 'radio' : 'checkbox'}
       accessibilityState={single ? { selected } : { checked: selected }}
-      accessibilityLabel={option.label}
+      accessibilityLabel={option.detail ? `${option.label}, ${option.detail}` : option.label}
     >
       <Animated.View style={[styles.row, row]}>
         <View style={[StyleSheet.absoluteFill, styles.clip]} pointerEvents="none">
@@ -194,6 +196,11 @@ function OptionRow<K extends string>({
         <Animated.Text style={styles.label} numberOfLines={1}>
           {option.label}
         </Animated.Text>
+        {option.detail && (
+          <Animated.Text style={styles.detail} numberOfLines={1}>
+            {option.detail}
+          </Animated.Text>
+        )}
       </Animated.View>
     </PressableScale>
   );
@@ -236,5 +243,10 @@ const styles = StyleSheet.create({
     fontFamily: fonts.bodySemiBold,
     fontSize: 16,
     color: colors.textPrimary,
+  },
+  detail: {
+    fontFamily: fonts.bodySemiBold,
+    fontSize: 15,
+    color: colors.textTertiary,
   },
 });
