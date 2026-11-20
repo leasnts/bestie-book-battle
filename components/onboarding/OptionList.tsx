@@ -87,7 +87,7 @@ export const STITCH_ON = lowki.chocolate.light;
 export const STITCH_WEIGHT = 2;
 export const STITCH_INSET = 3;
 /** L'opacité d'une ligne non choisie quand un seul choix est possible */
-const DIMMED = 0.45;
+const DIMMED = 0.7;
 
 export default function OptionList<K extends string>({ options, value, onChange }: OptionListProps<K>) {
   return (
