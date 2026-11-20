@@ -63,7 +63,8 @@ const GOAL_WORDS: Record<number, string> = {
 /** Le ruban de la série (StreakDays), pour la carte choisie */
 const PICKED = [`${lowki.red.light}24`, `${lowki.red.dark}24`] as const;
 
-const FLAME = 64;
+/** La flamme derrière le chiffre : toute la hauteur du héros */
+const FLAME = 180;
 const CARD_RADIUS = borderRadius.xl;
 const EASE_OUT = Easing.out(Easing.cubic);
 
@@ -137,31 +138,36 @@ export default function StreakGoalRoute() {
 }
 
 /**
- * Le grand chiffre, au centre : la flamme, le nombre, « jours ». Éteinte, tout
- * est en sable ; elle se rallume d'un petit gonflement, et le nombre change en
- * montant (sans rebond, rien avec « Réduire les animations »).
+ * Le grand chiffre, au centre, la flamme derrière lui : grande, couchée en
+ * perspective, légèrement floutée et pâlie, comme le « p. » derrière Ma page.
+ * Elle grossit en arrivant, et encore un peu à chaque palier touché ; éteinte,
+ * tout est en sable. Rien de tout ça avec « Réduire les animations ».
  */
 function GoalHero({ number, lit, caption }: { number: number; lit: boolean; caption?: string }) {
   const reducedMotion = useReducedMotion();
-  const pop = useSharedValue(1);
+  const grow = useSharedValue(reducedMotion ? 1 : 0.55);
 
   useEffect(() => {
     if (reducedMotion) return;
-    pop.value = withSequence(
-      withTiming(1.12, { duration: 140, easing: EASE_OUT }),
-      withTiming(1, { duration: 220, easing: EASE_OUT }),
+    // Plus petite d'un cran, puis elle pousse jusqu'à sa taille
+    grow.value = withSequence(
+      withTiming(Math.min(grow.value, 0.8), { duration: 0 }),
+      withTiming(1, { duration: 620, easing: EASE_OUT }),
     );
-  }, [number, lit, reducedMotion, pop]);
+  }, [number, lit, reducedMotion, grow]);
 
-  const flameStyle = useAnimatedStyle(() => ({ transform: [{ scale: pop.value }] }));
+  const flameStyle = useAnimatedStyle(() => ({
+    transform: [{ perspective: 500 }, { rotateX: '28deg' }, { scale: grow.value }],
+  }));
 
   return (
     <View style={styles.hero} accessible accessibilityLabel={`${number} ${caption ?? 'jours'}`}>
-      <Animated.View style={flameStyle}>
+      <Animated.View style={[styles.flameBehind, flameStyle]} pointerEvents="none">
         <Image
           source={STREAK_FLAME}
-          style={styles.flame}
+          style={[styles.flame, !lit && styles.flameOff]}
           tintColor={lit ? undefined : lowki.beige.light}
+          blurRadius={3}
         />
       </Animated.View>
       <Animated.Text
@@ -205,18 +211,32 @@ function GoalCard({ goal, selected, onPress }: { goal: number; selected: boolean
 const styles = StyleSheet.create({
   hero: {
     alignItems: 'center',
-    paddingTop: spacing.sm,
-    paddingBottom: spacing.xl,
+    justifyContent: 'center',
+    height: FLAME,
+    marginBottom: spacing.md,
+  },
+  // La flamme, derrière tout le héros, posée un peu plus bas que le centre
+  flameBehind: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   flame: {
     width: FLAME,
     height: FLAME,
+    opacity: 0.35,
+  },
+  flameOff: {
+    opacity: 0.45,
   },
   number: {
     fontFamily: fonts.display,
     fontSize: 72,
     lineHeight: 80,
-    marginTop: spacing.sm,
     color: lowki.red.light,
     fontVariant: ['tabular-nums'],
   },
