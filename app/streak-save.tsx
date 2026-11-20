@@ -44,7 +44,7 @@ const CLOSE_AFTER = REVIVE_AT + 1300;
 
 export default function StreakSaveRoute() {
   const router = useRouter();
-  const { userId, challengeId, days, missedDays, bonusesLeft, bonusDates } = useMyStreak();
+  const { userId, challengeId, loaded, state, days, missedDays, bonusesLeft, bonusDates } = useMyStreak();
   const loadChallengeProgress = useProgressStore((s) => s.loadChallengeProgress);
   const [isSaving, setIsSaving] = useState(false);
   // Les jours manqués, gardés à l'instant (figés au moment de poser : le
@@ -77,6 +77,12 @@ export default function StreakSaveRoute() {
 
   // Les jours à garder, figés une fois posés (le rechargement vide missedDays)
   const toKeep = dropped ?? missedDays;
+
+  // Plus rien à garder (une lecture du jour enregistrée entre-temps, sheet
+  // resté ouvert d'un jour sur l'autre) : le sheet se ferme, jamais de bouton mort
+  useEffect(() => {
+    if (loaded && state !== 'missed' && !dropped && !isSaving) router.back();
+  }, [loaded, state, dropped, isSaving, router]);
 
   const [width, setWidth] = useState(0);
   const cellWidth = width / 7;
