@@ -222,15 +222,22 @@ export default function BookRoute() {
 
   /** Le menu « … » : ce qui se fait rarement sur un livre */
   const handleMenu = useCallback(() => {
-    const options = [isAdmin ? 'Modifier le livre' : 'Mon édition', 'Quitter le livre', 'Annuler'];
+    // Le club (#238) : sa page s'il y en a un ; sinon l'admin peut faire un club du groupe
+    const clubId = activeChallenge?.club_id ?? null;
+    const club = clubId ? 'Le club' : isAdmin ? 'Faire un club' : null;
+    const options = [isAdmin ? 'Modifier le livre' : 'Mon édition', ...(club ? [club] : []), 'Quitter le livre', 'Annuler'];
+    const leave = options.length - 2;
     ActionSheetIOS.showActionSheetWithOptions(
-      { options, destructiveButtonIndex: 1, cancelButtonIndex: 2 },
+      { options, destructiveButtonIndex: leave, cancelButtonIndex: options.length - 1 },
       (index) => {
         if (index === 0) router.push('/edit-book?from=book');
-        if (index === 1) handleLeave();
+        if (club && index === 1) {
+          router.push(clubId ? `/club?id=${clubId}&from=book` : `/club-edit?challengeId=${activeChallenge?.id}&from=book`);
+        }
+        if (index === leave) handleLeave();
       },
     );
-  }, [isAdmin, handleLeave, router]);
+  }, [isAdmin, activeChallenge?.club_id, activeChallenge?.id, handleLeave, router]);
 
   /** Comme la base : seule la personne qui a posé le cap, ou l'admin du livre */
   const canDeleteCap = (goal: ChallengeGoal) => goal.created_by === user?.id || isAdmin;

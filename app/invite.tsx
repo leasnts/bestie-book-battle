@@ -8,6 +8,7 @@
 
 import * as Clipboard from 'expo-clipboard';
 import { BookOpenIcon, CopyIcon, ShareIcon } from 'lucide-react-native';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useRef, useState } from 'react';
 import { Animated, Pressable, ScrollView, Share, StyleSheet, Text, View } from 'react-native';
 import Button3D from '../components/Button3D';
@@ -18,8 +19,11 @@ import { CoverImage } from '../components/ui/BookCover';
 import { inviteMessage } from '../utils/share';
 
 export default function InviteRoute() {
+  const router = useRouter();
+  // `?id=` : un livre précis (la lecture en cours d'un club), `?from=` : posé sur un autre sheet
+  const params = useLocalSearchParams<{ id?: string; from?: string }>();
   const challenges = useProjectStore((s) => s.challenges);
-  const [selectedId, setSelectedId] = useState<string | null>(challenges[0]?.id ?? null);
+  const [selectedId, setSelectedId] = useState<string | null>(params.id ?? challenges[0]?.id ?? null);
   const selected = challenges.find((c) => c.id === selectedId) ?? challenges[0] ?? null;
   const copyToastOpacity = useRef(new Animated.Value(0)).current;
 
@@ -43,10 +47,10 @@ export default function InviteRoute() {
     }
   };
 
-  const hasMultiple = challenges.length > 1;
+  const hasMultiple = !params.id && challenges.length > 1;
 
   return (
-    <SheetPage title="Inviter">
+    <SheetPage title="Inviter" onBack={params.from ? () => router.back() : undefined}>
       {!selected ? (
         <Text style={styles.emptyText}>Aucun livre en cours</Text>
       ) : (

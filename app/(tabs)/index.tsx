@@ -16,6 +16,9 @@
  * Données : tout vient de Supabase via les stores Zustand (authStore, projectStore, progressStore).
  */
 
+import { useClubStore } from '../../stores/clubStore';
+import ClubAvatar from '../../components/ui/ClubAvatar';
+import PressableScale from '../../components/ui/PressableScale';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -58,7 +61,7 @@ import { useGoalStore } from '../../stores/goalStore';
 import { useProgressStore } from '../../stores/progressStore';
 import { useAnnotationStore } from '../../stores/annotationStore';
 import { useProjectStore } from '../../stores/projectStore';
-import { colors, fonts, shadowAlpha, spacing, SPREAD_MIN_WIDTH, dropShadow } from '../../utils/constants';
+import { colors, fonts, ROUND_BUTTON_SIZE, shadowAlpha, spacing, SPREAD_MIN_WIDTH, dropShadow } from '../../utils/constants';
 import { feel, type FeelName } from '../../utils/feel';
 import { oops } from '../../utils/notice';
 import { dayString } from '../../utils/streak';
@@ -229,6 +232,7 @@ export default function HomeScreen() {
     const sub = AppState.addEventListener('change', (nextState) => {
       if (nextState === 'active' && user?.id) {
         loadUserChallenges(user.id);
+        useClubStore.getState().loadMyClubs(user.id);
         const challengeId = useProjectStore.getState().activeChallenge?.id;
         if (challengeId) {
           loadChallengeProgress(challengeId);
@@ -279,6 +283,9 @@ export default function HomeScreen() {
 
   // Savoir si l'utilisateur a bougé le scroll
   const hasChanged = currentPageInput !== lastSavedPage;
+
+  // Le club du livre affiché (#238)
+  const activeClub = useClubStore((s) => (activeChallenge?.club_id ? s.clubs[activeChallenge.club_id] : undefined));
 
   // Ma série : la gélule en haut à droite
   const myStreakInfo = useMyStreak();
@@ -515,12 +522,26 @@ export default function HomeScreen() {
       <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
         {/* Bibliothèque — toutes mes lectures, sur des étagères. Le même rond en
             verre que le « + » de la barre d'onglets */}
-        <View style={styles.headerSide}>
+        <View style={[styles.headerSide, styles.headerSideStart]}>
           <GlassButton
             icon={LibraryBigIcon}
             onPress={() => router.push('/library')}
             accessibilityLabel="Mes lectures"
           />
+          {/* Le club du livre affiché (#238) : sa photo, collée à la bibliothèque.
+              Toucher = mes clubs, pour changer de lecture. Hors club, rien. */}
+          {activeClub && (
+            <PressableScale
+              style={styles.clubButton}
+              pressedScale={0.92}
+              onPress={() => router.push('/clubs')}
+              accessibilityRole="button"
+              accessibilityLabel={`Club ${activeClub.name}`}
+              accessibilityHint="Change de club"
+            >
+              <ClubAvatar club={activeClub} size={ROUND_BUTTON_SIZE} />
+            </PressableScale>
+          )}
         </View>
 
         {/* PopEyes mascotte — décoratif */}
@@ -720,8 +741,20 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
   },
+  headerSideStart: {
+    gap: spacing.sm,
+  },
   headerSideEnd: {
     justifyContent: 'flex-end',
+  },
+  // Le rond du club : la taille des boutons ronds, un liseré crème et l'ombre du verre
+  clubButton: {
+    width: ROUND_BUTTON_SIZE,
+    height: ROUND_BUTTON_SIZE,
+    borderRadius: ROUND_BUTTON_SIZE / 2,
+    borderWidth: 2,
+    borderColor: colors.white,
+    overflow: 'hidden',
   },
   // La zone qui porte les trois cadres : la hauteur de l'écran, jamais plus
   frames: {

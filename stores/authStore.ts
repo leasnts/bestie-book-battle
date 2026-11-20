@@ -25,6 +25,7 @@ import {
 } from '../services/supabase/auth';
 import { supabase } from '../supabaseConfig';
 import { withTimeout } from '../utils/withTimeout';
+import { useClubStore } from './clubStore';
 import { useProjectStore } from './projectStore';
 import { useProgressStore } from './progressStore';
 
@@ -196,6 +197,7 @@ export const useAuthStore = create<AuthStore>()(
     set({ isLoading: true });
     const clearStateAndStores = () => {
       useProjectStore.getState().reset();
+      useClubStore.getState().reset();
       useProgressStore.getState().clearProgress();
       set({ user: null, pendingUserData: null, isLoading: false, error: null });
     };
@@ -229,6 +231,7 @@ export const useAuthStore = create<AuthStore>()(
     try {
       await deleteUserAccount(user.id);
       useProjectStore.getState().reset();
+      useClubStore.getState().reset();
       useProgressStore.getState().clearProgress();
       set({ user: null, pendingUserData: null, isLoading: false, error: null });
     } catch (error: any) {

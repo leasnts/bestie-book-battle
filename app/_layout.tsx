@@ -13,6 +13,7 @@
 const SHOW_STORYBOOK = false;
 
 import { Stack, useRouter, useSegments } from 'expo-router';
+import { useClubStore } from '../stores/clubStore';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
 import { Platform, StyleSheet, View, Linking } from 'react-native';
@@ -170,6 +171,7 @@ function RootLayoutNav() {
   useEffect(() => {
     if (user?.id && _hasHydrated) {
       loadUserChallenges(user.id);
+      useClubStore.getState().loadMyClubs(user.id);
     }
   }, [user?.id, _hasHydrated, loadUserChallenges]);
 
@@ -344,6 +346,11 @@ function RootLayoutNav() {
       <Stack.Screen name="streak" options={sheetScreenOptions()} />
       <Stack.Screen name="streak-save" options={sheetScreenOptions()} />
       <Stack.Screen name="streak-goal" options={sheetScreenOptions()} />
+
+      {/* Clubs (#238) : mes clubs (rond de l'accueil), la page d'un club, faire / modifier un club */}
+      <Stack.Screen name="clubs" options={sheetScreenOptions()} />
+      <Stack.Screen name="club" options={sheetScreenOptions()} />
+      <Stack.Screen name="club-edit" options={sheetScreenOptions()} />
 
       {/* Bibliothèque : toutes mes lectures, sur des étagères, à la hauteur des étagères */}
       <Stack.Screen name="library" options={sheetScreenOptions()} />
