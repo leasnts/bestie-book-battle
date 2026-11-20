@@ -145,19 +145,27 @@ export default function StreakGoalRoute() {
  */
 function GoalHero({ number, lit, caption }: { number: number; lit: boolean; caption?: string }) {
   const reducedMotion = useReducedMotion();
-  const grow = useSharedValue(reducedMotion ? 1 : 0.55);
+  const grow = useSharedValue(reducedMotion ? 1 : 0.3);
 
   useEffect(() => {
     if (reducedMotion) return;
-    // Plus petite d'un cran, puis elle pousse jusqu'à sa taille
+    // Elle part petite et pousse franchement jusqu'à sa taille : à l'ouverture,
+    // puis à chaque palier touché (repart de la moitié)
     grow.value = withSequence(
-      withTiming(Math.min(grow.value, 0.8), { duration: 0 }),
-      withTiming(1, { duration: 620, easing: EASE_OUT }),
+      withTiming(Math.min(grow.value, 0.5), { duration: 0 }),
+      withTiming(1, { duration: 900, easing: EASE_OUT }),
     );
   }, [number, lit, reducedMotion, grow]);
 
+  // Décalée en bas à gauche du chiffre, comme le « p. » de Ma page
   const flameStyle = useAnimatedStyle(() => ({
-    transform: [{ perspective: 500 }, { rotateX: '28deg' }, { scale: grow.value }],
+    transform: [
+      { translateX: -FLAME * 0.22 },
+      { translateY: FLAME * 0.08 },
+      { perspective: 500 },
+      { rotateX: '28deg' },
+      { scale: grow.value },
+    ],
   }));
 
   return (
