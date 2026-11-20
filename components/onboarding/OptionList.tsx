@@ -62,6 +62,8 @@ interface OptionListProps<K extends string> {
   /** null = rien de choisi : c'est à la personne de toucher le premier choix */
   value: K | null;
   onChange: (key: K) => void;
+  /** La ligne choisie écrit en rouge (les paliers de série), en plus de se broder */
+  accent?: boolean;
 }
 
 interface ToggleOptionListProps<K extends string> {
@@ -91,7 +93,7 @@ export const STITCH_INSET = 3;
 /** L'opacité d'une ligne non choisie quand un seul choix est possible */
 const DIMMED = 0.7;
 
-export default function OptionList<K extends string>({ options, value, onChange }: OptionListProps<K>) {
+export default function OptionList<K extends string>({ options, value, onChange, accent = false }: OptionListProps<K>) {
   return (
     <View style={styles.list} accessibilityRole="radiogroup">
       {options.map((option) => (
@@ -100,6 +102,7 @@ export default function OptionList<K extends string>({ options, value, onChange 
           option={option}
           selected={option.key === value}
           dimmed={value !== null && option.key !== value}
+          accent={accent}
           single
           onPress={() => onChange(option.key)}
         />
@@ -130,12 +133,14 @@ function OptionRow<K extends string>({
   option,
   selected,
   dimmed = false,
+  accent = false,
   single = false,
   onPress,
 }: {
   option: Option<K>;
   selected: boolean;
   dimmed?: boolean;
+  accent?: boolean;
   single?: boolean;
   onPress: () => void;
 }) {
@@ -204,11 +209,11 @@ function OptionRow<K extends string>({
           />
         )}
 
-        <Animated.Text style={styles.label} numberOfLines={1}>
+        <Animated.Text style={[styles.label, accent && selected && styles.accent]} numberOfLines={1}>
           {option.label}
         </Animated.Text>
         {option.detail && (
-          <Animated.Text style={styles.detail} numberOfLines={1}>
+          <Animated.Text style={[styles.detail, accent && selected && styles.accent]} numberOfLines={1}>
             {option.detail}
           </Animated.Text>
         )}
@@ -259,5 +264,8 @@ const styles = StyleSheet.create({
     fontFamily: fonts.bodySemiBold,
     fontSize: 15,
     color: colors.textTertiary,
+  },
+  accent: {
+    color: lowki.red.light,
   },
 });

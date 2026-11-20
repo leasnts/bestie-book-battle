@@ -28,7 +28,7 @@ import { STREAK_FLAME } from '../components/ui/StreakPill';
 import { useMyStreak } from '../hooks/useMyStreak';
 import { setStreakGoal } from '../services/supabase/database';
 import { useProgressStore } from '../stores/progressStore';
-import { lowki } from '../utils/constants';
+import { colors } from '../utils/constants';
 import { buzz } from '../utils/feel';
 import { oops } from '../utils/notice';
 import { nextStreakGoals } from '../utils/streak';
@@ -86,10 +86,11 @@ export default function StreakGoalRoute() {
           detail: GOAL_WORDS[goal],
           illustration: STREAK_FLAME,
           illustrationSize: 24,
-          illustrationIdleTint: lowki.beige.light,
+          illustrationIdleTint: colors.textPrimary,
         }))}
         value={picked ? String(picked) : null}
         onChange={(key) => setPicked(Number(key))}
+        accent
       />
 
       <SheetFooter>
