@@ -2,18 +2,18 @@
  * Route /streak-goal — viser un palier de série (#236), à la Duolingo.
  *
  * Deux moments, le même sheet :
- * - ma série est finie (trop de jours manqués pour les marque-pages) : la
- *   flamme éteinte et son ancien total, en sable. S'ouvre seul une fois par
- *   série finie.
- * - `?reached=7` : le palier est atteint, la flamme brûle. S'ouvre seul une
- *   fois par palier.
+ * - ma série est finie (trop de jours manqués pour les marque-pages) : on la
+ *   relance en visant 3, 7 ou 14 jours. S'ouvre seul une fois par série finie.
+ * - `?reached=7` : palier atteint, on vise les trois suivants. S'ouvre seul
+ *   une fois par palier.
  *
- *   🔥 17 jours                   le héros de /streak-save ; un palier touché :
- *   ┌──────────────────────────┐  la flamme se rallume, le chiffre devient le
- *   │ 3 jours       tranquille │  palier, « jours à tenir »
- *   └──────────────────────────┘  les lignes de l'onboarding (OptionList),
- *   [ Relancer ma série ]         brodées seulement une fois choisies
+ *   ┌──────────────────────────────┐
+ *   │ 🔥 3 jours        tranquille │  les lignes de l'onboarding (OptionList),
+ *   └──────────────────────────────┘  la flamme en illustration, brodées
+ *   [ Relancer ma série ]             seulement une fois choisies
  *   [ Plus tard ]
+ *
+ * Pas de grand chiffre en tête : les paliers disent déjà les jours (Lea).
  *
  * Rien de pré-choisi : le bouton s'allume quand un palier est touché. « Plus
  * tard » retire le palier : la gélule redevient un simple nombre.
@@ -21,15 +21,13 @@
 
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback, useState } from 'react';
-import { View } from 'react-native';
 import Button3D from '../components/Button3D';
 import OptionList from '../components/onboarding/OptionList';
 import SheetPage, { SheetFooter } from '../components/ui/SheetPage';
-import StreakHero from '../components/ui/StreakHero';
+import { STREAK_FLAME } from '../components/ui/StreakPill';
 import { useMyStreak } from '../hooks/useMyStreak';
 import { setStreakGoal } from '../services/supabase/database';
 import { useProgressStore } from '../stores/progressStore';
-import { spacing } from '../utils/constants';
 import { buzz } from '../utils/feel';
 import { oops } from '../utils/notice';
 import { nextStreakGoals } from '../utils/streak';
@@ -50,7 +48,7 @@ export default function StreakGoalRoute() {
   const router = useRouter();
   const { reached: reachedParam } = useLocalSearchParams<{ reached?: string }>();
   const reached = Number(reachedParam) || 0;
-  const { userId, challengeId, days, lastDays } = useMyStreak();
+  const { userId, challengeId } = useMyStreak();
   const loadChallengeProgress = useProgressStore((s) => s.loadChallengeProgress);
   const [picked, setPicked] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
@@ -80,23 +78,16 @@ export default function StreakGoalRoute() {
       title={reached ? 'Palier atteint' : 'Ma série est finie'}
       accent={reached ? 'atteint' : 'finie'}
     >
-      <StreakHero
-        days={picked ?? (reached ? days : lastDays)}
-        flame={reached || picked ? 'lit' : 'off'}
-        unit={picked ? 'jours à tenir' : undefined}
+      <OptionList
+        options={goals.map((goal) => ({
+          key: String(goal),
+          label: `${goal} jours`,
+          detail: GOAL_WORDS[goal],
+          illustration: STREAK_FLAME,
+        }))}
+        value={picked ? String(picked) : null}
+        onChange={(key) => setPicked(Number(key))}
       />
-
-      <View style={{ marginTop: spacing.lg }}>
-        <OptionList
-          options={goals.map((goal) => ({
-            key: String(goal),
-            label: `${goal} jours`,
-            detail: GOAL_WORDS[goal],
-          }))}
-          value={picked ? String(picked) : null}
-          onChange={(key) => setPicked(Number(key))}
-        />
-      </View>
 
       <SheetFooter>
         <Button3D

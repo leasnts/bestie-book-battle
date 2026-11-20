@@ -35,8 +35,6 @@ export function useMyStreak() {
     bonusesLeft: bonusesLeft(bonusDates),
     /** Finie : trop de jours manqués pour les marque-pages */
     broken: isStreakBroken(streakCount, lastStreakDate, state),
-    /** Les jours de la série finie (sa dernière valeur) */
-    lastDays: streakCount,
     lastStreakDate,
     /** Le palier visé, null = aucun */
     goal: progress?.streak_goal ?? null,

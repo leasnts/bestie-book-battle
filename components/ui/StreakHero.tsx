@@ -31,8 +31,6 @@ interface StreakHeroProps {
   days: number;
   /** `dim` : hier manqué, tout pâlit ; `off` : série finie, flamme et chiffre en sable */
   flame?: 'lit' | 'dim' | 'off';
-  /** À la place de « jours » (« jours à tenir », un palier visé) */
-  unit?: string;
   /** Passe à true : la série reprend vie (après `delay` ms) */
   revive?: boolean;
   delay?: number;
@@ -56,7 +54,7 @@ const EMBERS = [
   { x: 12, drift: 20, rise: 56, delay: 380, size: 4 },
 ];
 
-export default function StreakHero({ days, flame = 'lit', unit, revive = false, delay = 0 }: StreakHeroProps) {
+export default function StreakHero({ days, flame = 'lit', revive = false, delay = 0 }: StreakHeroProps) {
   const reducedMotion = useReducedMotion();
   const dimmed = flame === 'dim';
   // 0 = pâli, 1 = allumé
@@ -128,7 +126,7 @@ export default function StreakHero({ days, flame = 'lit', unit, revive = false, 
         </Animated.View>
       </View>
       <Animated.Text style={[styles.days, flame === 'off' && styles.daysOff, daysStyle]}>{days}</Animated.Text>
-      <Text style={styles.unit}>{unit ?? (days > 1 ? 'jours' : 'jour')}</Text>
+      <Text style={styles.unit}>{days > 1 ? 'jours' : 'jour'}</Text>
     </View>
   );
 }
