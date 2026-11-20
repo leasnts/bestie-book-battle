@@ -347,8 +347,7 @@ function RootLayoutNav() {
       <Stack.Screen name="streak-save" options={sheetScreenOptions()} />
       <Stack.Screen name="streak-goal" options={sheetScreenOptions()} />
 
-      {/* Clubs (#238) : mes clubs (rond de l'accueil), la page d'un club, faire / modifier un club */}
-      <Stack.Screen name="clubs" options={sheetScreenOptions()} />
+      {/* Clubs (#238) : la page d'un club (rond de l'accueil, on y change de club), faire / modifier un club */}
       <Stack.Screen name="club" options={sheetScreenOptions()} />
       <Stack.Screen name="club-edit" options={sheetScreenOptions()} />
 

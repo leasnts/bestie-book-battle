@@ -1,9 +1,12 @@
 /**
- * Route /club?id= — la page d'un club (#238).
+ * Route /club — la page d'un club (#238), où l'on change aussi de club.
  *
- * Ouverte depuis « Mes clubs » (la flèche d'une ligne) ou le « … » de la fiche
- * du livre (« Le club »).
+ * Ouverte par le rond du club sur l'accueil (le club du livre affiché), ou par
+ * « Le club » dans le « … » de la fiche du livre (`?id=`).
  *
+ *   (L)  (H)  (S)                       mes clubs, si j'en ai plusieurs : le
+ *   Liseuses Honey Soleil               club affiché brodé ; en toucher un autre
+ *                                       met sa lecture sur l'accueil
  *   Les Liseuses                    (+👤) (…)
  *   (L)(◐◐◐) 7 membres
  *   ┌──────────────────────────────┐
@@ -29,7 +32,9 @@ import GlassButton from '../components/ui/GlassButton';
 import GlassSection from '../components/ui/GlassSection';
 import PressableScale from '../components/ui/PressableScale';
 import SheetPage from '../components/ui/SheetPage';
-import { StitchLine } from '../components/ui/Stitch';
+import { StitchBorder, StitchLine } from '../components/ui/Stitch';
+import { STITCH_ON, STITCH_WEIGHT } from '../components/onboarding/OptionList';
+import { feel } from '../utils/feel';
 import { getClubMembers, removeClubMember } from '../services/supabase/clubs';
 import { useAuthStore } from '../stores/authStore';
 import { useClubStore } from '../stores/clubStore';
@@ -41,6 +46,8 @@ import { resolvePhotoSource } from '../utils/profilePhoto';
 import { clubReadings } from '../utils/clubs';
 
 const AVATAR = 34;
+/** Un rond de la rangée des clubs */
+const SWITCH = 52;
 
 /** « 11 déc. », comme la date de fin sur l'accueil */
 function formatShortDate(iso: string) {
@@ -49,9 +56,14 @@ function formatShortDate(iso: string) {
 
 export default function ClubRoute() {
   const router = useRouter();
-  const { id, from } = useLocalSearchParams<{ id: string; from?: string }>();
+  const params = useLocalSearchParams<{ id?: string; from?: string }>();
+  const from = params.from;
   const userId = useAuthStore((s) => s.user?.id);
-  const club = useClubStore((s) => s.clubs[id]);
+  const activeClubId = useProjectStore((s) => s.activeChallenge?.club_id ?? null);
+  // Le club affiché : celui demandé, sinon celui du livre de l'accueil
+  const [id, setId] = useState(params.id ?? activeClubId ?? '');
+  const clubs = useClubStore((s) => s.clubs);
+  const club = clubs[id];
   const loadMyClubs = useClubStore((s) => s.loadMyClubs);
   const challenges = useProjectStore((s) => s.challenges);
   const setActiveChallenge = useProjectStore((s) => s.setActiveChallenge);
@@ -71,6 +83,22 @@ export default function ClubRoute() {
   const openReading = (challenge: Challenge) => {
     setActiveChallenge(challenge);
     router.dismissAll();
+  };
+
+  // Mes clubs, le plus récent d'abord : la rangée du haut, pour changer de club
+  const myClubs = useMemo(
+    () => Object.values(clubs).sort((a, b) => b.created_at.localeCompare(a.created_at)),
+    [clubs],
+  );
+
+  // Changer de club : sa lecture en cours passe sur l'accueil, la page le montre
+  const switchClub = (clubId: string) => {
+    if (clubId === id) return;
+    feel('tic');
+    setMembers([]);
+    setId(clubId);
+    const reading = clubReadings(challenges, clubId).current;
+    if (reading) setActiveChallenge(reading);
   };
 
   const handleMenu = () => {
@@ -148,6 +176,34 @@ export default function ClubRoute() {
         </>
       }
     >
+      {myClubs.length > 1 && (
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.switcher}>
+          {myClubs.map((c) => {
+            const on = c.id === id;
+            return (
+              <PressableScale
+                key={c.id}
+                style={styles.switchItem}
+                pressedScale={0.92}
+                onPress={() => switchClub(c.id)}
+                accessibilityRole="button"
+                accessibilityState={{ selected: on }}
+                accessibilityLabel={c.name}
+                accessibilityHint={on ? undefined : "Met sa lecture sur l'accueil"}
+              >
+                <View style={[styles.switchRing, on && styles.switchRingOn]}>
+                  {on && <StitchBorder radius={SWITCH / 2 + 5} inset={1} color={STITCH_ON} weight={STITCH_WEIGHT} />}
+                  <ClubAvatar club={c} size={SWITCH} />
+                </View>
+                <Text style={[styles.switchName, on && styles.switchNameOn]} numberOfLines={2}>
+                  {c.name}
+                </Text>
+              </PressableScale>
+            );
+          })}
+        </ScrollView>
+      )}
+
       {current && (
         <GlassSection
           paper
@@ -239,6 +295,38 @@ function MemberLine({ member, me }: { member: ClubMember; me: boolean }) {
 }
 
 const styles = StyleSheet.create({
+  switcher: {
+    gap: spacing.md,
+    paddingBottom: spacing.lg,
+  },
+  switchItem: {
+    width: SWITCH + 28,
+    alignItems: 'center',
+    gap: 6,
+  },
+  // Le club affiché : brodé tout autour, comme le choix de l'onboarding
+  switchRing: {
+    width: SWITCH + 10,
+    height: SWITCH + 10,
+    borderRadius: (SWITCH + 10) / 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+    opacity: 0.7,
+  },
+  switchRingOn: {
+    opacity: 1,
+  },
+  // Un nom de 20 caractères tient sur deux lignes
+  switchName: {
+    fontFamily: fonts.bodySemiBold,
+    fontSize: 12,
+    lineHeight: 15,
+    textAlign: 'center',
+    color: colors.textTertiary,
+  },
+  switchNameOn: {
+    color: colors.textPrimary,
+  },
   sub: {
     flexDirection: 'row',
     alignItems: 'center',

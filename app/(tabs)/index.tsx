@@ -529,15 +529,15 @@ export default function HomeScreen() {
             accessibilityLabel="Mes lectures"
           />
           {/* Le club du livre affiché (#238) : sa photo, collée à la bibliothèque.
-              Toucher = mes clubs, pour changer de lecture. Hors club, rien. */}
+              Toucher = la page du club, où l'on change aussi de club. Hors club, rien. */}
           {activeClub && (
             <PressableScale
               style={styles.clubButton}
               pressedScale={0.92}
-              onPress={() => router.push('/clubs')}
+              onPress={() => router.push('/club')}
               accessibilityRole="button"
               accessibilityLabel={`Club ${activeClub.name}`}
-              accessibilityHint="Change de club"
+              accessibilityHint="Ouvre la page du club"
             >
               <ClubAvatar club={activeClub} size={ROUND_BUTTON_SIZE} />
             </PressableScale>
