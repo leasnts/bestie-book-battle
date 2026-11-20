@@ -84,6 +84,7 @@ export default function StreakGoalRoute() {
           label: `${goal} jours`,
           detail: GOAL_WORDS[goal],
           illustration: STREAK_FLAME,
+          illustrationSize: 24,
         }))}
         value={picked ? String(picked) : null}
         onChange={(key) => setPicked(Number(key))}

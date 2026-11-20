@@ -49,6 +49,8 @@ interface Option<K extends string> {
   label: string;
   /** L'illustration de gauche (aquarelle, assets/images/onboarding) */
   illustration?: number;
+  /** La taille de l'illustration, si elle doit être plus petite que 40 pt (une flamme) */
+  illustrationSize?: number;
   /** Un petit mot à droite, plus discret (les paliers de série : « bon rythme ») */
   detail?: string;
 }
@@ -191,7 +193,13 @@ function OptionRow<K extends string>({
           </Animated.View>
         </View>
 
-        {option.illustration && <Image source={option.illustration} style={styles.illustration} contentFit="contain" />}
+        {option.illustration && (
+          <Image
+            source={option.illustration}
+            style={[styles.illustration, option.illustrationSize ? { width: option.illustrationSize, height: option.illustrationSize } : null]}
+            contentFit="contain"
+          />
+        )}
 
         <Animated.Text style={styles.label} numberOfLines={1}>
           {option.label}
