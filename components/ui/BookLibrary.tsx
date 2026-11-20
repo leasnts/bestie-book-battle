@@ -35,8 +35,9 @@ import Animated, { Easing, FadeInDown, useReducedMotion } from 'react-native-rea
 import Svg, { Path } from 'react-native-svg';
 import { useFitSheet } from '../../hooks/useFitSheet';
 import type { BookSearchResult } from '../../types/bookSearch';
-import { Challenge } from '../../types/supabase';
-import { colors, creamAlpha, fonts, motion, spacing } from '../../utils/constants';
+import { Challenge, Club } from '../../types/supabase';
+import ClubAvatar from './ClubAvatar';
+import { colors, creamAlpha, dropShadow, fonts, motion, spacing } from '../../utils/constants';
 import { BookReading, LIBRARY_FILTERS, LibraryFilter, readingLabel } from '../../utils/library';
 import BookCover, { COVER_RATIO } from './BookCover';
 import RibbonBookmark, { RIBBON_ABOVE_COVER } from './RibbonBookmark';
@@ -68,13 +69,22 @@ interface BookLibraryProps {
   /** Mes envies (filtre « Envies ») : leur fiche s'ouvre au toucher */
   wishes: BookSearchResult[];
   onSelectWish: (book: BookSearchResult) => void;
-  filter: LibraryFilter;
-  onFilterChange: (filter: LibraryFilter) => void;
+  /** Le filtre choisi : un de LIBRARY_FILTERS, ou `club:<id>` (#238) */
+  filter: LibraryFilter | `club:${string}`;
+  onFilterChange: (filter: LibraryFilter | `club:${string}`) => void;
+  /** Mes clubs (#238) : leurs pastilles après les filtres, leur rond sur les couvertures */
+  clubs?: Record<string, Club>;
   /** Décor derrière l'en-tête du sheet (l'aquarelle du coin) */
   headerBackground?: React.ReactNode;
   /** À droite du titre : le « + » */
   actions?: React.ReactNode;
 }
+
+// ─── Clubs (#238) ──────────────────────────────────────────────────
+
+/** Le rond du club sur une couverture, et dans sa pastille de filtre */
+const CLUB_BADGE = 24;
+const CLUB_CHIP = 22;
 
 // ─── Constantes (reprises de l'ancienne étagère de l'accueil) ──────
 
@@ -194,7 +204,9 @@ function Shelf({
   onSelect,
   onSelectWish,
   animate,
+  clubs,
 }: {
+  clubs?: Record<string, Club>;
   books: ShelfItem[];
   index: number;
   readings: Record<string, BookReading>;
@@ -264,6 +276,13 @@ function Shelf({
                 accessibilityState={{ selected: isActive }}
               >
                 <BookCover coverUrl={covers[challenge.id] ?? challenge.cover_url} outlined />
+                {/* Lu en club (#238) : le rond du club, à cheval sur le coin haut gauche
+                    (le signet pend à droite) */}
+                {challenge.club_id && clubs?.[challenge.club_id] && (
+                  <View style={styles.clubBadge} pointerEvents="none">
+                    <ClubAvatar club={clubs[challenge.club_id]} size={CLUB_BADGE} />
+                  </View>
+                )}
                 {(isNew || reading.state !== 'unread') && (
                   <View style={styles.ribbon} pointerEvents="none">
                     {reading.state === 'reading' ? (
@@ -298,9 +317,22 @@ export default function BookLibrary({
   onSelectWish,
   filter,
   onFilterChange,
+  clubs,
   headerBackground,
   actions,
 }: BookLibraryProps) {
+  // Les filtres, puis un par club, avec sa photo
+  const filterOptions = useMemo(
+    () => [
+      ...LIBRARY_FILTERS,
+      ...Object.values(clubs ?? {}).map((club) => ({
+        key: `club:${club.id}` as const,
+        label: club.name,
+        leading: <ClubAvatar club={club} size={CLUB_CHIP} />,
+      })),
+    ],
+    [clubs],
+  );
   const reducedMotion = useReducedMotion();
   const { scrolled, onScroll } = useSheetScrolled();
   // Plafond commun des sheets à contenu : sous l'en-tête de l'accueil
@@ -346,6 +378,7 @@ export default function BookLibrary({
           onSelect={onSelect}
           onSelectWish={onSelectWish}
           animate={!reducedMotion}
+          clubs={clubs}
         />
       )}
       // L'en-tête du sheet, filtres compris, reste collé en haut
@@ -358,7 +391,7 @@ export default function BookLibrary({
             style={styles.chips}
             contentContainerStyle={styles.chipsContent}
           >
-            <FilterChips options={LIBRARY_FILTERS} value={filter} onChange={onFilterChange} />
+            <FilterChips options={filterOptions} value={filter} onChange={onFilterChange} />
           </ScrollView>
         </SheetPageHeader>
       }
@@ -431,6 +464,15 @@ const styles = StyleSheet.create({
   },
   /** Pastille d'état, à cheval sur le coin haut droit de la couverture */
   /** Signet : son pli dépasse au-dessus du bord, il pend près du bord droit */
+  clubBadge: {
+    position: 'absolute',
+    top: -CLUB_BADGE / 3,
+    left: -CLUB_BADGE / 3,
+    borderRadius: CLUB_BADGE / 2 + 2,
+    borderWidth: 2,
+    borderColor: colors.white,
+    boxShadow: dropShadow(2, 4, 0.25),
+  },
   ribbon: {
     position: 'absolute',
     top: -RIBBON_ABOVE_COVER,

@@ -18,6 +18,7 @@ import BookLibrary from '../components/ui/BookLibrary';
 import GlassButton from '../components/ui/GlassButton';
 import WatercolorCorner from '../components/ui/WatercolorCorner';
 import { useAuthStore } from '../stores/authStore';
+import { useClubStore } from '../stores/clubStore';
 import { useExploreStore } from '../stores/exploreStore';
 import { useProgressStore } from '../stores/progressStore';
 import { useProjectStore } from '../stores/projectStore';
@@ -41,7 +42,9 @@ export default function LibraryRoute() {
   // Filtre Tout / En cours / Non lus / Lus / Envies : pas retenu, chaque ouverture montre tout
   // (sauf `?filter=done`, le « Tout voir » de mes livres lus sur le profil)
   const params = useLocalSearchParams<{ filter?: LibraryFilter }>();
-  const [filter, setFilter] = useState<LibraryFilter>(params.filter ?? 'all');
+  const [filter, setFilter] = useState<LibraryFilter | `club:${string}`>(params.filter ?? 'all');
+  // Mes clubs (#238) : une pastille chacun, leur rond sur les couvertures
+  const clubs = useClubStore((state) => state.clubs);
 
   // Rafraîchit ma progression en arrière-plan ; le cache s'affiche tout de suite
   useEffect(() => {
@@ -69,7 +72,9 @@ export default function LibraryRoute() {
 
   const books = useMemo(() => {
     const sorted = sortBooks(challenges, progressById);
-    return filter === 'all' ? sorted : sorted.filter((book) => readings[book.id]?.state === filter);
+    if (filter === 'all') return sorted;
+    if (filter.startsWith('club:')) return sorted.filter((book) => `club:${book.club_id}` === filter);
+    return sorted.filter((book) => readings[book.id]?.state === filter);
   }, [challenges, progressById, readings, filter]);
 
   const newId = useMemo(() => newBookId(challenges, progressById), [challenges, progressById]);
@@ -111,6 +116,7 @@ export default function LibraryRoute() {
         onSelectWish={handleSelectWish}
         filter={filter}
         onFilterChange={setFilter}
+        clubs={clubs}
         actions={
           <GlassButton icon={PlusIcon} onPress={handleAdd} accessibilityLabel="Ajouter une lecture" />
         }

@@ -26,6 +26,8 @@ interface ChipOption<K extends string> {
   key: K;
   label: string;
   icon?: LucideIcon;
+  /** Devant le libellé : la photo d'un club (bibliothèque) */
+  leading?: React.ReactNode;
 }
 
 interface FilterChipsProps<K extends string> {
@@ -97,7 +99,7 @@ function Chip<K extends string>({
   const Icon = large ? option.icon : undefined;
   return (
     <PressableScale
-      style={[styles.chip, { height }, large && styles.chipLarge, !selected && styles.chipIdle]}
+      style={[styles.chip, { height }, large && styles.chipLarge, !!option.leading && styles.chipLeading, !selected && styles.chipIdle]}
       pressedScale={0.94}
       onPress={() => {
         if (large) feel('tic');
@@ -110,6 +112,7 @@ function Chip<K extends string>({
     >
       {selected && <LinearGradient colors={accentGradient} style={StyleSheet.absoluteFill} />}
       {Icon && <Icon size={18} color={selected ? colors.white : colors.textSecondary} strokeWidth={2} />}
+      {option.leading}
       <Text style={[styles.label, large && styles.labelLarge, selected && styles.labelSelected]}>{option.label}</Text>
     </PressableScale>
   );
@@ -130,6 +133,12 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  // Une photo devant : rangée, et moins de marge à gauche pour qu'elle colle au bord
+  chipLeading: {
+    flexDirection: 'row',
+    gap: 6,
+    paddingLeft: 6,
   },
   chipLarge: {
     flexDirection: 'row',
