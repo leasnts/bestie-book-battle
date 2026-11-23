@@ -19,9 +19,11 @@ interface CodeBoxesProps {
   accessibilityLabel: string;
   /** Code reçu par message : iOS le propose au-dessus du clavier */
   oneTimeCode?: boolean;
+  /** Lettres et chiffres (le code d'un club, en majuscules) au lieu de chiffres seuls */
+  letters?: boolean;
 }
 
-export default function CodeBoxes({ value, onChange, editable, accessibilityLabel, oneTimeCode = false }: CodeBoxesProps) {
+export default function CodeBoxes({ value, onChange, editable, accessibilityLabel, oneTimeCode = false, letters = false }: CodeBoxesProps) {
   const input = useRef<TextInputInstance>(null);
   const [focused, setFocused] = useState(true);
   return (
@@ -40,10 +42,12 @@ export default function CodeBoxes({ value, onChange, editable, accessibilityLabe
         ref={input}
         style={styles.hiddenInput}
         value={value}
-        onChangeText={(text) => onChange(text.replace(/[^0-9]/g, ''))}
+        onChangeText={(text) => onChange(letters ? text.toUpperCase().replace(/[^A-Z0-9]/g, '') : text.replace(/[^0-9]/g, ''))}
         onFocus={() => setFocused(true)}
         onBlur={() => setFocused(false)}
-        keyboardType="number-pad"
+        keyboardType={letters ? 'default' : 'number-pad'}
+        autoCapitalize={letters ? 'characters' : 'none'}
+        autoCorrect={false}
         textContentType={oneTimeCode ? 'oneTimeCode' : 'none'}
         autoComplete={oneTimeCode ? 'one-time-code' : 'off'}
         maxLength={CODE_LENGTH}

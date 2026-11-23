@@ -446,7 +446,21 @@ export interface Club {
   photo_url: string | null;
   admin_id: string;
   join_mode: 'open' | 'request';
+  invite_code: string; // 6 caractères : lien, code, QR
   created_at: string;
+}
+
+/** L'aperçu d'un club par son code, avant de le rejoindre */
+export interface ClubPreview {
+  id: string;
+  name: string;
+  photo_url: string | null;
+  join_mode: 'open' | 'request';
+  member_count: number;
+  book_title: string | null;
+  cover_url: string | null;
+  /** Ma place : déjà membre, en attente, ou rien */
+  my_status: 'active' | 'pending' | null;
 }
 
 /** Un membre d'un club, avec son profil */
@@ -454,6 +468,7 @@ export interface ClubMember {
   club_id: string;
   user_id: string;
   role: 'admin' | 'member';
+  status: 'active' | 'pending';
   joined_at: string;
   user: Pick<User, 'id' | 'first_name' | 'profile_photo_url'>;
 }

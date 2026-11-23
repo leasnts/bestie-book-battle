@@ -53,6 +53,8 @@ interface Option<K extends string> {
   illustrationSize?: number;
   /** Une teinte pour l'illustration tant que la ligne n'est pas choisie (la flamme en sable) */
   illustrationIdleTint?: string;
+  /** À la place de l'illustration : n'importe quelle vue (la photo d'un club) */
+  leading?: React.ReactNode;
   /** Un petit mot à droite, plus discret (les paliers de série : « bon rythme ») */
   detail?: string;
 }
@@ -64,6 +66,8 @@ interface OptionListProps<K extends string> {
   onChange: (key: K) => void;
   /** La ligne choisie écrit en rouge (les paliers de série), en plus de se broder */
   accent?: boolean;
+  /** Les autres lignes ne s'estompent pas (une liste où l'on va, pas un choix) */
+  keepUndimmed?: boolean;
 }
 
 interface ToggleOptionListProps<K extends string> {
@@ -93,7 +97,7 @@ export const STITCH_INSET = 3;
 /** L'opacité d'une ligne non choisie quand un seul choix est possible */
 const DIMMED = 0.7;
 
-export default function OptionList<K extends string>({ options, value, onChange, accent = false }: OptionListProps<K>) {
+export default function OptionList<K extends string>({ options, value, onChange, accent = false, keepUndimmed = false }: OptionListProps<K>) {
   return (
     <View style={styles.list} accessibilityRole="radiogroup">
       {options.map((option) => (
@@ -101,7 +105,7 @@ export default function OptionList<K extends string>({ options, value, onChange,
           key={option.key}
           option={option}
           selected={option.key === value}
-          dimmed={value !== null && option.key !== value}
+          dimmed={!keepUndimmed && value !== null && option.key !== value}
           accent={accent}
           single
           onPress={() => onChange(option.key)}
@@ -200,6 +204,7 @@ function OptionRow<K extends string>({
           </Animated.View>
         </View>
 
+        {option.leading}
         {option.illustration && (
           <Image
             source={option.illustration}

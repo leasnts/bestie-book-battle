@@ -286,6 +286,7 @@ export default function HomeScreen() {
 
   // Le club du livre affiché (#238)
   const activeClub = useClubStore((s) => (activeChallenge?.club_id ? s.clubs[activeChallenge.club_id] : undefined));
+  const clubCount = useClubStore((s) => Object.keys(s.clubs).length);
 
   // Ma série : la gélule en haut à droite
   const myStreakInfo = useMyStreak();
@@ -529,12 +530,12 @@ export default function HomeScreen() {
             accessibilityLabel="Mes lectures"
           />
           {/* Le club du livre affiché (#238) : sa photo, collée à la bibliothèque.
-              Toucher = la page du club, où l'on change aussi de club. Hors club, rien. */}
+              Toucher = sa page ; dans 2 clubs ou plus, d'abord choisir lequel. Hors club, rien. */}
           {activeClub && (
             <PressableScale
               style={styles.clubButton}
               pressedScale={0.92}
-              onPress={() => router.push('/club')}
+              onPress={() => router.push(clubCount > 1 ? '/club-pick' : '/club')}
               accessibilityRole="button"
               accessibilityLabel={`Club ${activeClub.name}`}
               accessibilityHint="Ouvre la page du club"

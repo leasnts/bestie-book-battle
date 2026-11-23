@@ -4,6 +4,8 @@
  * - `?challengeId=` : « Faire un club », depuis le « … » de la fiche du livre
  *   (admin d'une lecture sans club). Tout le groupe suit dans le club.
  * - `?id=` : modifier le nom ou la photo d'un club (admins), depuis sa page.
+ * - sans rien : créer un club de zéro, sans lecture (onglet Clubs) ; sa page
+ *   s'ouvre ensuite.
  *
  *          ( 📷 )          la photo, ronde, cousue tant qu'elle manque
  *   [ Les Liseuses   12/20 ]
@@ -24,7 +26,7 @@ import ClubAvatar from '../components/ui/ClubAvatar';
 import PressableScale from '../components/ui/PressableScale';
 import SheetPage, { SheetFooter } from '../components/ui/SheetPage';
 import { StitchBorder } from '../components/ui/Stitch';
-import { CLUB_NAME_MAX, createClubFromChallenge, updateClub, uploadClubPhoto } from '../services/supabase/clubs';
+import { CLUB_NAME_MAX, createClub, createClubFromChallenge, updateClub, uploadClubPhoto } from '../services/supabase/clubs';
 import { pickImage } from '../services/supabase/storage';
 import { useAuthStore } from '../stores/authStore';
 import { useClubStore } from '../stores/clubStore';
@@ -87,11 +89,17 @@ export default function ClubEditRoute() {
       } else if (club) {
         const photo_url = photoUri ? await uploadClubPhoto(club.id, photoUri) : club.photo_url;
         putClub(await updateClub(club.id, { name: trimmed, photo_url }));
+      } else {
+        const created = await createClub(trimmed, photoUri);
+        putClub(created);
+        buzz('success');
+        router.replace(`/club?id=${created.id}`);
+        return;
       }
       buzz('success');
       router.back();
     } catch (error) {
-      oops(challengeId ? 'Club pas créé' : 'Club pas modifié', error, { retry: () => save() });
+      oops(club ? 'Club pas modifié' : 'Club pas créé', error, { retry: () => save() });
     } finally {
       setSaving(false);
     }
@@ -101,7 +109,7 @@ export default function ClubEditRoute() {
 
   return (
     <SheetPage
-      title={challengeId ? 'Faire un club' : 'Modifier le club'}
+      title={club ? 'Modifier le club' : challengeId ? 'Faire un club' : 'Créer un club'}
       accent="club"
       onBack={from ? () => router.back() : undefined}
     >
@@ -167,7 +175,7 @@ export default function ClubEditRoute() {
 
       <SheetFooter>
         <Button3D variant="primary" onPress={save} loading={saving}>
-          {challengeId ? 'Créer le club' : 'Enregistrer'}
+          {club ? 'Enregistrer' : 'Créer le club'}
         </Button3D>
       </SheetFooter>
     </SheetPage>

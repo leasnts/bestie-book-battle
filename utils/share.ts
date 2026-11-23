@@ -21,6 +21,16 @@ export function inviteLink(code: string): string {
   return `${APP_SCHEME}://join/${code}`;
 }
 
+/** Le lien qui ouvre un club dans l'app (app/club-join/[code].tsx) */
+export function clubInviteLink(code: string): string {
+  return `${APP_SCHEME}://club-join/${code}`;
+}
+
+/** Le message d'invitation d'un club : son nom, le lien, et le code en secours */
+export function clubInviteMessage(clubName: string, code: string): string {
+  return `Rejoins « ${clubName} » sur chapi 📚\n${clubInviteLink(code)}\n\nCode : ${code}`;
+}
+
 /** Le message d'invitation : le livre, le lien, et le code en secours */
 export function inviteMessage(bookTitle: string, code: string): string {
   return `Lis « ${bookTitle} » avec moi sur chapi 📚\n${inviteLink(code)}\n\nCode : ${code}`;

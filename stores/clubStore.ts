@@ -14,6 +14,8 @@ interface ClubStore {
   loadMyClubs: (userId: string) => Promise<void>;
   /** Après une création ou une modification */
   putClub: (club: Club) => void;
+  /** Après un départ ou une suppression */
+  dropClub: (clubId: string) => void;
   reset: () => void;
 }
 
@@ -29,5 +31,10 @@ export const useClubStore = create<ClubStore>((set) => ({
     }
   },
   putClub: (club) => set((state) => ({ clubs: { ...state.clubs, [club.id]: club } })),
+  dropClub: (clubId) =>
+    set((state) => {
+      const { [clubId]: _gone, ...rest } = state.clubs;
+      return { clubs: rest };
+    }),
   reset: () => set({ clubs: {} }),
 }));

@@ -347,9 +347,14 @@ function RootLayoutNav() {
       <Stack.Screen name="streak-save" options={sheetScreenOptions()} />
       <Stack.Screen name="streak-goal" options={sheetScreenOptions()} />
 
-      {/* Clubs (#238) : la page d'un club (rond de l'accueil, on y change de club), faire / modifier un club */}
-      <Stack.Screen name="club" options={sheetScreenOptions()} />
+      {/* Clubs (#238) : la page d'un club en plein écran ; créer / modifier,
+          inviter, choisir un club, code, aperçu avant de rejoindre en sheets */}
+      <Stack.Screen name="club" options={{ headerShown: false }} />
       <Stack.Screen name="club-edit" options={sheetScreenOptions()} />
+      <Stack.Screen name="club-invite" options={sheetScreenOptions()} />
+      <Stack.Screen name="club-pick" options={sheetScreenOptions()} />
+      <Stack.Screen name="club-code" options={sheetScreenOptions()} />
+      <Stack.Screen name="club-join/[code]" options={sheetScreenOptions()} />
 
       {/* Bibliothèque : toutes mes lectures, sur des étagères, à la hauteur des étagères */}
       <Stack.Screen name="library" options={sheetScreenOptions()} />
