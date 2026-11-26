@@ -3,7 +3,7 @@
  *
  * La bibliothèque : une étagère par état, chacune défile de côté (#242).
  *
- *    En cours 2                 ›   ← toucher le titre : tous ses livres
+ *    Lus 21                     ›   ← dès 8 livres, toucher le titre : tous ses livres
  *    ▐██▌  ┏━━┓  ▛▀▀▜  ▐██▌ →
  *   ░░░░░░░░░░░░░░░░░░░░░░░░░░░░   ← barre en verre flouté, avec ses vis
  *    Pas commencés · Envies · Lus   ← même chose ; une étagère vide n'apparaît pas
@@ -121,6 +121,8 @@ const HEADER_H = SHEET_TOP_INSET + 36 + spacing.md;
 const RAIL_TITLE_H = 44;
 /** Une étagère qui défile ne montre que ses premiers livres : le titre ouvre le reste */
 const RAIL_MAX = 20;
+/** En dessous, tous les livres tiennent sur l'étagère : pas de page à ouvrir */
+const RAIL_OPEN_MIN = 8;
 /** Le fond de la liste (colors.white) à une opacité donnée : un fondu vers `transparent` grise */
 const listPaper = (alpha: number) => `rgba(253,252,250,${alpha})`;
 const FADE_COLORS = [listPaper(0.9), listPaper(0.55), listPaper(0.2), listPaper(0)] as const;
@@ -295,6 +297,7 @@ function Rail({
   animate: boolean;
 }) {
   const delay = Math.min(index * motion.stagger, 240);
+  const openable = items.length >= RAIL_OPEN_MIN;
   return (
     <Animated.View
       style={styles.rail}
@@ -306,19 +309,29 @@ function Rail({
           : undefined
       }
     >
-      <PressableScale
-        style={styles.railTitle}
-        onPress={onOpen}
-        accessibilityRole="button"
-        accessibilityLabel={`${label}, ${items.length}`}
-        accessibilityHint="Montre tous ses livres"
-      >
-        <Text style={styles.railLabel} accessibilityRole="header">
-          {label}
-        </Text>
-        <Text style={styles.railCount}>{items.length}</Text>
-        <ChevronRightIcon size={18} color={colors.textTertiary} strokeWidth={2} style={styles.railChevron} />
-      </PressableScale>
+      {/* Moins de 8 livres : tout est déjà sur l'étagère, le titre n'ouvre rien */}
+      {openable ? (
+        <PressableScale
+          style={styles.railTitle}
+          onPress={onOpen}
+          accessibilityRole="button"
+          accessibilityLabel={`${label}, ${items.length}`}
+          accessibilityHint="Montre tous ses livres"
+        >
+          <Text style={styles.railLabel} accessibilityRole="header">
+            {label}
+          </Text>
+          <Text style={styles.railCount}>{items.length}</Text>
+          <ChevronRightIcon size={18} color={colors.textTertiary} strokeWidth={2} style={styles.railChevron} />
+        </PressableScale>
+      ) : (
+        <View style={styles.railTitle}>
+          <Text style={styles.railLabel} accessibilityRole="header">
+            {label}
+          </Text>
+          <Text style={styles.railCount}>{items.length}</Text>
+        </View>
+      )}
 
       <View style={styles.shelf}>
         <ScrollView
