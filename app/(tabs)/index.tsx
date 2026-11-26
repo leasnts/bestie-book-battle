@@ -17,6 +17,7 @@
  */
 
 import { useClubStore } from '../../stores/clubStore';
+import { useExploreStore } from '../../stores/exploreStore';
 import ClubAvatar from '../../components/ui/ClubAvatar';
 import PressableScale from '../../components/ui/PressableScale';
 import { Image } from 'expo-image';
@@ -233,6 +234,7 @@ export default function HomeScreen() {
       if (nextState === 'active' && user?.id) {
         loadUserChallenges(user.id);
         useClubStore.getState().loadMyClubs(user.id);
+        useExploreStore.getState().loadWishes(user.id);
         const challengeId = useProjectStore.getState().activeChallenge?.id;
         if (challengeId) {
           loadChallengeProgress(challengeId);
