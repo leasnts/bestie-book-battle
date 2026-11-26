@@ -134,31 +134,59 @@ const READING_DOTS = 10;
 const READING_DOT = 5;
 const DOT_TRACK = ['#E2D8CB', '#D3C6B6'] as const; // sable clair, le fil pas encore cousu
 const DOT_FILL = [lowki.red.light, lowki.red.dark] as const;
-/** La punaise qui épingle un livre en cours, plantée dans son coin haut droit */
-const PIN = 16;
-const PIN_SHADOW = 3; // son ombre portée sur la couverture, vers le bas à droite
+/**
+ * La punaise qui épingle un livre en cours, plantée près du coin haut gauche,
+ * vue un peu de côté : la tête ronde penche vers la droite, on voit l'aiguille
+ * entrer dans la couverture, et l'ombre de l'ensemble tombe dessus.
+ */
+const PIN_W = 26;
+const PIN_H = 28;
+/** Le point où l'aiguille entre dans la couverture, dans le dessin */
+const PIN_TIP = { x: 6, y: 22 };
+/** Ce même point, sur la couverture (depuis son coin haut gauche) */
+const PIN_AT = { x: 12, y: 14 };
 
-/** Une punaise rouge vue de dessus : tête bombée (dégradé), reflet, ombre portée */
 function Pin() {
-  const r = PIN / 2;
-  const size = PIN + PIN_SHADOW;
+  const head = { x: 15, y: 9, r: 7 };
   return (
-    <Svg width={size} height={size}>
+    <Svg width={PIN_W} height={PIN_H}>
       <Defs>
         <SvgGradient id="pinHead" x1="0" y1="0" x2="0" y2="1">
           <Stop offset="0" stopColor={lowki.red.light} />
           <Stop offset="1" stopColor={lowki.red.dark} />
         </SvgGradient>
+        <SvgGradient id="pinNeedle" x1="0" y1="0" x2="1" y2="0">
+          <Stop offset="0" stopColor="#E6E1DA" />
+          <Stop offset="1" stopColor="#9A928A" />
+        </SvgGradient>
       </Defs>
-      {/* Ombre douce : deux disques pâles l'un sur l'autre, bord estompé */}
-      <Circle cx={r + PIN_SHADOW} cy={r + PIN_SHADOW} r={r + 1} fill="rgba(40,20,15,0.1)" />
-      <Circle cx={r + PIN_SHADOW - 1} cy={r + PIN_SHADOW - 1} r={r - 1} fill="rgba(40,20,15,0.16)" />
-      <Circle cx={r} cy={r} r={r} fill="url(#pinHead)" />
-      <Circle cx={r} cy={r} r={r - 0.5} fill="none" stroke={lowki.red.deep} strokeOpacity={0.5} strokeWidth={1} />
-      <Ellipse cx={r - 2.5} cy={r - 3} rx={2.6} ry={1.8} fill="rgba(255,255,255,0.55)" />
+      {/* Ombre portée sur la couverture : l'aiguille puis la tête, vers le bas à droite */}
+      <Path
+        d={`M${PIN_TIP.x} ${PIN_TIP.y} L${head.x + 6} ${PIN_TIP.y + 3}`}
+        stroke="rgba(40,20,15,0.22)"
+        strokeWidth={1.6}
+        strokeLinecap="round"
+      />
+      <Ellipse cx={head.x + 6} cy={PIN_TIP.y + 3} rx={5.5} ry={2.6} fill="rgba(40,20,15,0.12)" />
+      <Ellipse cx={head.x + 6} cy={PIN_TIP.y + 3} rx={3.8} ry={1.7} fill="rgba(40,20,15,0.14)" />
+      {/* Le trou dans le carton */}
+      <Ellipse cx={PIN_TIP.x} cy={PIN_TIP.y} rx={1.6} ry={0.9} fill="rgba(40,20,15,0.45)" />
+      {/* L'aiguille, du trou jusque sous la tête */}
+      <Path
+        d={`M${PIN_TIP.x} ${PIN_TIP.y} L${head.x - 2} ${head.y + 4}`}
+        stroke="url(#pinNeedle)"
+        strokeWidth={1.6}
+        strokeLinecap="round"
+      />
+      {/* La tête : collerette puis dôme, reflet en haut à gauche */}
+      <Ellipse cx={head.x - 2.5} cy={head.y + 4.5} rx={3.2} ry={1.8} fill={lowki.red.deep} />
+      <Circle cx={head.x} cy={head.y} r={head.r} fill="url(#pinHead)" />
+      <Circle cx={head.x} cy={head.y} r={head.r - 0.5} fill="none" stroke={lowki.red.deep} strokeOpacity={0.45} strokeWidth={1} />
+      <Ellipse cx={head.x - 2.4} cy={head.y - 2.8} rx={2.6} ry={1.7} fill="rgba(255,255,255,0.6)" />
     </Svg>
   );
 }
+
 /** Le fond de la liste (colors.white) à une opacité donnée : un fondu vers `transparent` grise */
 const listPaper = (alpha: number) => `rgba(253,252,250,${alpha})`;
 const FADE_COLORS = [listPaper(0.9), listPaper(0.55), listPaper(0.2), listPaper(0)] as const;
@@ -450,7 +478,7 @@ function ReadingDesk({ items, ...coverProps }: Omit<ShelfCoverProps, 'item'> & {
                 <Pin />
               </View>
               {challenge.club_id && clubs?.[challenge.club_id] && (
-                <View style={styles.clubBadge} pointerEvents="none">
+                <View style={[styles.clubBadge, styles.deskClubBadge]} pointerEvents="none">
                   <ClubAvatar club={clubs[challenge.club_id]} size={CLUB_BADGE} />
                 </View>
               )}
@@ -758,7 +786,8 @@ const styles = StyleSheet.create({
   },
   deskRow: {
     paddingHorizontal: LIST_SIDE,
-    paddingTop: spacing.xs,
+    // Place pour la tête de la punaise, qui dépasse au-dessus de la couverture
+    paddingTop: spacing.md,
     gap: spacing.xl,
   },
   deskBook: {
@@ -772,8 +801,13 @@ const styles = StyleSheet.create({
   },
   pin: {
     position: 'absolute',
-    top: spacing.sm,
-    right: spacing.sm,
+    top: PIN_AT.y - PIN_TIP.y,
+    left: PIN_AT.x - PIN_TIP.x,
+  },
+  // Sur une grande couverture, la punaise prend le coin gauche : le club passe à droite
+  deskClubBadge: {
+    left: undefined,
+    right: -CLUB_BADGE / 3,
   },
   deskDots: {
     flexDirection: 'row',
