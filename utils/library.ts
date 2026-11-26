@@ -46,8 +46,8 @@ export type LibraryFilter = 'all' | ReadingState | 'wish';
 export const LIBRARY_SHELVES: { key: Exclude<LibraryFilter, 'all'>; label: string }[] = [
   { key: 'reading', label: 'En cours' },
   { key: 'unread', label: 'Pas commencés' },
-  { key: 'wish', label: 'Envies' },
   { key: 'done', label: 'Lus' },
+  { key: 'wish', label: 'Envies' },
 ];
 
 // ─── Ordre ─────────────────────────────────────────────────────────

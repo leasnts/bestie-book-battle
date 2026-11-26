@@ -8,7 +8,7 @@
  *    Lus 21                     ›   ← dès 8 livres, toucher le titre : tous ses livres
  *    ▐██▌  ┏━━┓  ▛▀▀▜  ▐██▌ →
  *   ░░░░░░░░░░░░░░░░░░░░░░░░░░░░   ← barre en verre flouté, avec ses vis
- *    Pas commencés · Envies · Lus   ← même chose ; une étagère vide n'apparaît pas
+ *    Pas commencés · Lus · Envies   ← même chose ; une étagère vide n'apparaît pas
  *
  * Toucher le titre d'une étagère montre tous ses livres dans le même sheet, en
  * rangées de trois sous la même barre, avec un retour vers les étagères.
@@ -781,8 +781,10 @@ const styles = StyleSheet.create({
     right: 0,
   },
   // En cours : la rangée va de bord à bord, la première couverture sous le titre
+  // …et remonte près du titre : pas d'écart d'étagère sous « Mes lectures »
   desk: {
     marginHorizontal: -LIST_SIDE,
+    marginTop: -SHELF_GAP,
   },
   deskRow: {
     paddingHorizontal: LIST_SIDE,
