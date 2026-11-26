@@ -21,21 +21,17 @@ revoke all on schema showcase from public, anon, authenticated;
 
 create table if not exists showcase.meta (snap_date date not null);
 
--- Photographie les livres de lili (sauf celui lu avec Zoé, une vraie lectrice)
+-- Photographie le livre modèle de lili, Fourth Wing ; ses autres livres sont réels et jamais touchés
 create or replace function showcase.snapshot() returns void
 language plpgsql set search_path = '' as $$
 declare
-  me constant uuid := '9b8c837f-0755-4d7a-972f-37cbe51395c1';
-  keep constant uuid := '2490d493-c429-42d8-9d82-4de4e49894ca';
+  template constant uuid := '82d9ce6c-d7af-5d54-98b6-973b4e4cf9b7';  -- Fourth Wing
 begin
   drop table if exists showcase.challenges, showcase.challenge_participants, showcase.user_progress,
     showcase.progress_history, showcase.challenge_goals, showcase.annotations,
     showcase.annotation_reactions, showcase.annotation_reads;
 
-  create table showcase.challenges as
-    select * from public.challenges
-    where id in (select challenge_id from public.challenge_participants where user_id = me)
-      and id <> keep;
+  create table showcase.challenges as select * from public.challenges where id = template;
   create table showcase.challenge_participants as
     select * from public.challenge_participants where challenge_id in (select id from showcase.challenges);
   create table showcase.user_progress as
@@ -66,7 +62,10 @@ language sql stable set search_path = '' as $$
       else quote_ident(c.column_name)
     end, ', ' order by c.ordinal_position)
   from information_schema.columns c
-  where c.table_schema = 'public' and c.table_name = tbl;
+  -- Colonnes communes seulement : une colonne ajoutée après la photo garde sa valeur par défaut
+  where c.table_schema = 'public' and c.table_name = tbl
+    and exists (select 1 from information_schema.columns s
+                where s.table_schema = 'showcase' and s.table_name = tbl and s.column_name = c.column_name);
 $$;
 
 create or replace function showcase.restore() returns void
@@ -88,8 +87,11 @@ begin
   set local session_replication_role = replica;
   foreach t in array array['challenges', 'challenge_participants', 'user_progress', 'progress_history',
                            'challenge_goals', 'annotations', 'annotation_reactions', 'annotation_reads'] loop
-    select string_agg(quote_ident(column_name), ', ' order by ordinal_position) into cols
-    from information_schema.columns where table_schema = 'public' and table_name = t;
+    select string_agg(quote_ident(c.column_name), ', ' order by c.ordinal_position) into cols
+    from information_schema.columns c
+    where c.table_schema = 'public' and c.table_name = t
+      and exists (select 1 from information_schema.columns s
+                  where s.table_schema = 'showcase' and s.table_name = t and s.column_name = c.column_name);
     execute format('insert into public.%I (%s) select %s from showcase.%I', t, cols, showcase.shifted_cols(t, delta), t);
   end loop;
   set local session_replication_role = origin;
