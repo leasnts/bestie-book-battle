@@ -4,7 +4,7 @@
  * La bibliothèque : une étagère par état, chacune défile de côté (#242).
  *
  *    ▐████▌ ▐████▌              ← En cours : hors étagère, grandes couvertures
- *    ●●●○○○ 24 %                  debout, couture rouge jusqu'à mon %
+ *    24 %   54 %                  épinglées, signet rempli à mon %
  *    Lus 21                     ›   ← dès 8 livres, toucher le titre : tous ses livres
  *    ▐██▌  ┏━━┓  ▛▀▀▜  ▐██▌ →
  *   ░░░░░░░░░░░░░░░░░░░░░░░░░░░░   ← barre en verre flouté, avec ses vis
@@ -129,11 +129,6 @@ const RAIL_OPEN_MIN = 8;
 /** Mes livres en cours, hors étagère : de grandes couvertures debout */
 const READING_COVER_H = 136;
 const READING_COVER_W = Math.round(READING_COVER_H * COVER_RATIO);
-/** Leur couture de progression : 10 points, rouges jusqu'à mon % */
-const READING_DOTS = 10;
-const READING_DOT = 5;
-const DOT_TRACK = ['#E2D8CB', '#D3C6B6'] as const; // sable clair, le fil pas encore cousu
-const DOT_FILL = [lowki.red.light, lowki.red.dark] as const;
 /**
  * La punaise qui épingle un livre en cours, plantée près du coin haut gauche,
  * vue un peu de côté : la tête ronde penche vers la droite, on voit l'aiguille
@@ -442,7 +437,7 @@ function Rail({
 
 /**
  * Les livres que je lis sont sortis de l'étagère : grandes couvertures posées
- * sur le papier, la couture de ma progression et mon % dessous. On en lit 1 ou
+ * épinglées, le signet rempli à mon % et mon % dessous. On en lit 1 ou
  * 2 à la fois ; au-delà, la rangée défile de côté.
  */
 function ReadingDesk({ items, ...coverProps }: Omit<ShelfCoverProps, 'item'> & { items: ShelfItem[] }) {
@@ -459,7 +454,6 @@ function ReadingDesk({ items, ...coverProps }: Omit<ShelfCoverProps, 'item'> & {
         if (item.kind !== 'book') return null;
         const { challenge } = item;
         const reading = readings[challenge.id] ?? UNREAD;
-        const filled = Math.round((reading.percent / 100) * READING_DOTS);
         const isActive = challenge.id === activeChallengeId;
         return (
           <PressableScale
@@ -477,16 +471,15 @@ function ReadingDesk({ items, ...coverProps }: Omit<ShelfCoverProps, 'item'> & {
               <View style={styles.pin} pointerEvents="none">
                 <Pin />
               </View>
+              {/* Le même signet que sur les étagères, rempli de rouge à mon % */}
+              <View style={styles.ribbon} pointerEvents="none">
+                <RibbonBookmark kind="reading" percent={reading.percent} />
+              </View>
               {challenge.club_id && clubs?.[challenge.club_id] && (
                 <View style={[styles.clubBadge, styles.deskClubBadge]} pointerEvents="none">
                   <ClubAvatar club={clubs[challenge.club_id]} size={CLUB_BADGE} />
                 </View>
               )}
-            </View>
-            <View style={styles.deskDots} pointerEvents="none">
-              {Array.from({ length: READING_DOTS }, (_, i) => (
-                <LinearGradient key={i} colors={i < filled ? DOT_FILL : DOT_TRACK} style={styles.deskDot} />
-              ))}
             </View>
             <Text style={styles.deskPercent}>{reading.percent} %</Text>
           </PressableScale>
@@ -806,19 +799,10 @@ const styles = StyleSheet.create({
     top: PIN_AT.y - PIN_TIP.y,
     left: PIN_AT.x - PIN_TIP.x,
   },
-  // Sur une grande couverture, la punaise prend le coin gauche : le club passe à droite
+  // Punaise en haut à gauche, signet en haut à droite : le club passe en bas à gauche
   deskClubBadge: {
-    left: undefined,
-    right: -CLUB_BADGE / 3,
-  },
-  deskDots: {
-    flexDirection: 'row',
-    gap: 4,
-  },
-  deskDot: {
-    width: READING_DOT,
-    height: READING_DOT,
-    borderRadius: READING_DOT / 2,
+    top: undefined,
+    bottom: -CLUB_BADGE / 3,
   },
   deskPercent: {
     fontFamily: fonts.bodySemiBold,
