@@ -102,6 +102,7 @@ export interface Database {
           average_progress_percentage: number; // Decimal(5,2)
           participant_count: number;
           updated_at: string; // ISO timestamp
+          club_id: string | null; // Le club de cette lecture (#238), null = hors club
         };
         Insert: {
           id?: string;
@@ -121,6 +122,7 @@ export interface Database {
           average_progress_percentage?: number;
           participant_count?: number;
           updated_at?: string;
+          club_id?: string | null;
         };
         Update: {
           id?: string;
@@ -140,6 +142,7 @@ export interface Database {
           average_progress_percentage?: number;
           participant_count?: number;
           updated_at?: string;
+          club_id?: string | null;
         };
       };
       challenge_participants: {
@@ -435,6 +438,40 @@ export type ReadingMoment = 'matin' | 'trajets' | 'pause' | 'soir' | 'lit';
 
 export type User = Database['public']['Tables']['users']['Row'];
 export type Challenge = Database['public']['Tables']['challenges']['Row'];
+
+/** Un club de lecture (#238) : un groupe qui dure, lecture après lecture */
+export interface Club {
+  id: string;
+  name: string; // 20 caractères au plus
+  photo_url: string | null;
+  admin_id: string;
+  join_mode: 'open' | 'request';
+  invite_code: string; // 6 caractères : lien, code, QR
+  created_at: string;
+}
+
+/** L'aperçu d'un club par son code, avant de le rejoindre */
+export interface ClubPreview {
+  id: string;
+  name: string;
+  photo_url: string | null;
+  join_mode: 'open' | 'request';
+  member_count: number;
+  book_title: string | null;
+  cover_url: string | null;
+  /** Ma place : déjà membre, en attente, ou rien */
+  my_status: 'active' | 'pending' | null;
+}
+
+/** Un membre d'un club, avec son profil */
+export interface ClubMember {
+  club_id: string;
+  user_id: string;
+  role: 'admin' | 'member';
+  status: 'active' | 'pending';
+  joined_at: string;
+  user: Pick<User, 'id' | 'first_name' | 'profile_photo_url'>;
+}
 export type ChallengeParticipant = Database['public']['Tables']['challenge_participants']['Row'];
 export type UserProgress = Database['public']['Tables']['user_progress']['Row'];
 /** Ma progression sur un livre, réduite à ce dont la bibliothèque a besoin (état et tri) */

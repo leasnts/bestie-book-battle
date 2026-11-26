@@ -1,5 +1,5 @@
 /**
- * Onglets : lecture en cours, explorer, profil.
+ * Onglets : lecture en cours, explorer, clubs (#238), profil.
  *
  * Barre sur mesure (components/ui/GlassTabBar.tsx) : flottante, en verre iOS 26,
  * resserrée autour de ses 3 icônes. La barre native NativeTabs a été essayée puis
@@ -15,7 +15,7 @@
  */
 
 import { Tabs, useRouter } from 'expo-router';
-import { BookOpenIcon, CircleUserIcon, SearchIcon } from 'lucide-react-native';
+import { BookOpenIcon, CircleUserIcon, SearchIcon, UsersRoundIcon } from 'lucide-react-native';
 import React, { useCallback } from 'react';
 import GlassTabBar, { TabIcon } from '../../components/ui/GlassTabBar';
 import { colors } from '../../utils/constants';
@@ -48,6 +48,13 @@ export default function TabLayout() {
         options={{
           tabBarAccessibilityLabel: 'Explorer',
           tabBarIcon: ({ focused }) => <TabIcon icon={SearchIcon} focused={focused} />,
+        }}
+      />
+      <Tabs.Screen
+        name="clubs"
+        options={{
+          tabBarAccessibilityLabel: 'Clubs',
+          tabBarIcon: ({ focused }) => <TabIcon icon={UsersRoundIcon} focused={focused} />,
         }}
       />
       <Tabs.Screen

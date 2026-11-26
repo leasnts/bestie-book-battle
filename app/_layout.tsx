@@ -13,6 +13,7 @@
 const SHOW_STORYBOOK = false;
 
 import { Stack, useRouter, useSegments } from 'expo-router';
+import { useClubStore } from '../stores/clubStore';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
 import { Platform, StyleSheet, View, Linking } from 'react-native';
@@ -170,6 +171,7 @@ function RootLayoutNav() {
   useEffect(() => {
     if (user?.id && _hasHydrated) {
       loadUserChallenges(user.id);
+      useClubStore.getState().loadMyClubs(user.id);
     }
   }, [user?.id, _hasHydrated, loadUserChallenges]);
 
@@ -344,6 +346,15 @@ function RootLayoutNav() {
       <Stack.Screen name="streak" options={sheetScreenOptions()} />
       <Stack.Screen name="streak-save" options={sheetScreenOptions()} />
       <Stack.Screen name="streak-goal" options={sheetScreenOptions()} />
+
+      {/* Clubs (#238) : la page d'un club en plein écran ; créer / modifier,
+          inviter, choisir un club, code, aperçu avant de rejoindre en sheets */}
+      <Stack.Screen name="club" options={{ headerShown: false }} />
+      <Stack.Screen name="club-edit" options={sheetScreenOptions()} />
+      <Stack.Screen name="club-invite" options={sheetScreenOptions()} />
+      <Stack.Screen name="club-pick" options={sheetScreenOptions()} />
+      <Stack.Screen name="club-code" options={sheetScreenOptions()} />
+      <Stack.Screen name="club-join/[code]" options={sheetScreenOptions()} />
 
       {/* Bibliothèque : toutes mes lectures, sur des étagères, à la hauteur des étagères */}
       <Stack.Screen name="library" options={sheetScreenOptions()} />
