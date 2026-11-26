@@ -5,7 +5,12 @@
  * iOS natif (`presentation: 'formSheet'`, configuré dans app/_layout.tsx), avec
  * l'en-tête commun à tous les sheets (`SheetPageHeader`).
  *
- * Les données viennent directement des stores : aucun paramètre d'URL. Ma
+ * Ouverture : une étagère par état (En cours, Pas commencés, Envies, Lus), qui
+ * défile de côté. Toucher le titre d'une étagère y montre tous ses livres, avec
+ * un retour. `?filter=done|wish` (le « Tout voir » du profil) ouvre directement
+ * une étagère, sans retour : on ferme le sheet.
+ *
+ * Les données viennent directement des stores. Ma
  * progression par livre est en cache (projectStore.myProgress) et rafraîchie
  * à chaque ouverture ; pour le livre de l'accueil, on prend la version vivante
  * du progressStore, à jour dès que j'enregistre des pages.
@@ -39,11 +44,11 @@ export default function LibraryRoute() {
   const userId = useAuthStore((state) => state.user?.id);
   const wishes = useExploreStore((state) => state.favorites);
   const openBook = useExploreStore((state) => state.openBook);
-  // Filtre Tout / En cours / Non lus / Lus / Envies : pas retenu, chaque ouverture montre tout
-  // (sauf `?filter=done`, le « Tout voir » de mes livres lus sur le profil)
+  // L'étagère regardée : pas retenue, chaque ouverture montre toutes les étagères
+  // (sauf `?filter=`, le « Tout voir » du profil)
   const params = useLocalSearchParams<{ filter?: LibraryFilter }>();
-  const [filter, setFilter] = useState<LibraryFilter | `club:${string}`>(params.filter ?? 'all');
-  // Mes clubs (#238) : une pastille chacun, leur rond sur les couvertures
+  const [filter, setFilter] = useState<LibraryFilter>(params.filter ?? 'all');
+  // Mes clubs (#238) : leur rond sur les couvertures
   const clubs = useClubStore((state) => state.clubs);
 
   // Rafraîchit ma progression en arrière-plan ; le cache s'affiche tout de suite
@@ -70,12 +75,7 @@ export default function LibraryRoute() {
     return byId;
   }, [challenges, progressById]);
 
-  const books = useMemo(() => {
-    const sorted = sortBooks(challenges, progressById);
-    if (filter === 'all') return sorted;
-    if (filter.startsWith('club:')) return sorted.filter((book) => `club:${book.club_id}` === filter);
-    return sorted.filter((book) => readings[book.id]?.state === filter);
-  }, [challenges, progressById, readings, filter]);
+  const books = useMemo(() => sortBooks(challenges, progressById), [challenges, progressById]);
 
   const newId = useMemo(() => newBookId(challenges, progressById), [challenges, progressById]);
 
@@ -116,6 +116,8 @@ export default function LibraryRoute() {
         onSelectWish={handleSelectWish}
         filter={filter}
         onFilterChange={setFilter}
+        // Venu d'une étagère : retour vers toutes ; venu du profil : on ferme le sheet
+        onBack={params.filter ? undefined : () => setFilter('all')}
         clubs={clubs}
         actions={
           <GlassButton icon={PlusIcon} onPress={handleAdd} accessibilityLabel="Ajouter une lecture" />

@@ -36,15 +36,18 @@ export function readingLabel({ state, percent }: BookReading): string {
 
 // ─── Filtre ────────────────────────────────────────────────────────
 
-/** `wish` : mes envies d'Explorer, pas encore dans ma bibliothèque */
+/**
+ * Une étagère de la bibliothèque. `wish` : mes envies d'Explorer, pas encore dans
+ * ma bibliothèque. `all` : toutes les étagères à la suite (la vue d'ouverture).
+ */
 export type LibraryFilter = 'all' | ReadingState | 'wish';
 
-export const LIBRARY_FILTERS: { key: LibraryFilter; label: string }[] = [
-  { key: 'all', label: 'Tout' },
+/** Les étagères, dans l'ordre : ce que je lis, ce qui vient, puis ce qui est fini */
+export const LIBRARY_SHELVES: { key: Exclude<LibraryFilter, 'all'>; label: string }[] = [
   { key: 'reading', label: 'En cours' },
-  { key: 'unread', label: 'Non lus' },
-  { key: 'done', label: 'Lus' },
+  { key: 'unread', label: 'Pas commencés' },
   { key: 'wish', label: 'Envies' },
+  { key: 'done', label: 'Lus' },
 ];
 
 // ─── Ordre ─────────────────────────────────────────────────────────
