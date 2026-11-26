@@ -4,8 +4,8 @@ Compte vitrine : remplit le compte de Lea (« lili ») comme celui d'une lectric
 
     python3 scripts/seed-demo-account.py > /tmp/seed.sql   # puis exécuter le SQL
 
-- Retire lili de tous ses livres, sauf « Une vie comme une autre » (lu avec Zoé, vraie lectrice).
-- Recrée 7 livres sans doublon : 3 lus, 3 en cours (dont 1 en solo et 1 en duo), 1 pas commencé.
+- Depuis le 2026-11-26, la bibliothèque de lili est sa vraie bibliothèque : seul Fourth Wing
+  (le livre modèle, en cours avec les 4 amis de test) est recréé. Ses autres livres ne sont pas touchés.
 - Amis : les 4 comptes de test (Emma, Lucas, Chloé, Théo).
 - Tout est daté par rapport au jour où on lance le script : relançable n'importe quand,
   la série du livre principal reste allumée « aujourd'hui ».
@@ -97,6 +97,8 @@ BOOKS = [
          members={ME: (780, "papier", "Hugo Publishing", 0, 2, None),
                   EMMA: (812, "liseuse", None, 0, 2, None)}),
 ]
+# Seul le livre modèle est recréé (les autres restent en référence, jamais réinsérés)
+BOOKS = [b for b in BOOKS if b["key"] == "fourth"]
 # Le tuple d'un membre : (pages, format, éditeur, page actuelle | "done" | 0,
 #                        rejoint il y a N jours, dernière lecture il y a N jours)
 
@@ -106,12 +108,7 @@ emit("BEGIN;")
 
 # ─── Nettoyage ────────────────────────────────────────────────────
 emit(f"""
-DELETE FROM challenges WHERE id IN (
-  SELECT challenge_id FROM challenge_participants WHERE user_id = '{ME}' AND challenge_id <> '{KEEP}'
-);
 DELETE FROM challenges WHERE id IN ({",".join(q(uid('book', b['key'])) for b in BOOKS)});
-DELETE FROM annotation_reactions WHERE user_id = '{ME}' AND annotation_id NOT IN (SELECT id FROM annotations WHERE challenge_id = '{KEEP}');
-DELETE FROM annotation_reads WHERE user_id = '{ME}' AND annotation_id NOT IN (SELECT id FROM annotations WHERE challenge_id = '{KEEP}');
 """)
 # Après les DELETE seulement : en mode replica, les clés étrangères ne cascadent plus
 emit("SET LOCAL session_replication_role = replica;  -- triggers coupés : on pose tout à la main")
@@ -275,6 +272,7 @@ NOTES = [
     ("delicatesse", ME, 44, 52, "coup_de_coeur", "🫶", "Markus est trop mignon", None, None, "private"),
     ("delicatesse", ME, 79, 6, "a_retenir", "📌", "Le baiser au bureau, à relire", None, None, "private"),
 ]
+NOTES = [n for n in NOTES if n[0] in B]
 
 note_ids = {}
 rows = []
