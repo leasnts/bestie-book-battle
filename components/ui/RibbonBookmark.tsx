@@ -77,8 +77,13 @@ export const RIBBON_ABOVE_COVER = 9;
  */
 const MIN_FILL_PERCENT = 10;
 
+/** Le petit signet des étagères (livres lus, nouveau) : moins imposant sur une rangée */
+const SMALL = 0.7;
+/** Ce qu'il dépasse au-dessus de la couverture */
+export const SMALL_RIBBON_ABOVE_COVER = Math.round(RIBBON_ABOVE_COVER * SMALL);
+
 type RibbonBookmarkProps =
-  | { kind: 'done' | 'new' }
+  | { kind: 'done' | 'new'; /** Version réduite, pour les étagères */ small?: boolean }
   | { kind: 'reading'; /** Mon avancement, de 0 à 100 */ percent: number };
 
 /** Le front de teinture : une ondulation irrégulière (deux vagues), à la hauteur `y` */
@@ -111,12 +116,22 @@ export default function RibbonBookmark(props: RibbonBookmarkProps) {
 
   if (props.kind !== 'reading') {
     const { icon: Icon, color, filled } = ICONS[props.kind];
+    const k = props.small ? SMALL : 1;
+    const iconSize = ICON_SIZE * k;
     return (
-      <View style={styles.ribbon}>
+      <View style={{ width: WIDTH * k, height: HEIGHT * k }}>
         <Image source={RIBBONS[props.kind]} style={StyleSheet.absoluteFill} contentFit="contain" />
-        <View style={styles.icon}>
+        <View
+          style={[
+            styles.icon,
+            {
+              left: (RIBBON_LEFT + RIBBON_WIDTH / 2) * k - iconSize / 2,
+              top: ICON_CENTER_Y * k - iconSize / 2,
+            },
+          ]}
+        >
           <Icon
-            size={ICON_SIZE}
+            size={iconSize}
             color={color}
             fill={filled ? color : 'none'}
             // Pleine : un trait quasi nul garde les pointes fines (un trait plus épais
@@ -165,15 +180,9 @@ export default function RibbonBookmark(props: RibbonBookmarkProps) {
 }
 
 const styles = StyleSheet.create({
-  ribbon: {
-    width: WIDTH,
-    height: HEIGHT,
-  },
   // Légère ombre sous l'icône : elle semble posée sur le tissu, pas imprimée dessous
   icon: {
     position: 'absolute',
-    left: RIBBON_LEFT + (RIBBON_WIDTH - ICON_SIZE) / 2,
-    top: ICON_CENTER_Y - ICON_SIZE / 2,
     shadowColor: colors.black,
     shadowOffset: { width: 0, height: 0.5 },
     shadowOpacity: 0.3,
