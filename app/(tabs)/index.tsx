@@ -82,6 +82,11 @@ import { useShallow } from 'zustand/react/shallow';
  * Le cache busting (?v=timestamp) force expo-image à recharger l'image
  * au lieu d'afficher une version en cache quand la photo a changé.
  */
+/** Le sheet des paliers de série s'ouvre seul une fois par jour au plus, tous livres confondus */
+const STREAK_GOAL_DAY_KEY = 'streakGoalShownDay';
+/** Une série finie depuis plus longtemps ne propose plus rien */
+const BROKEN_RECENT_DAYS = 7;
+
 export default function HomeScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -310,22 +315,26 @@ export default function HomeScreen() {
   }, [myStreakInfo.state, myStreakInfo.challengeId]);
 
   // Ma série est finie (trop de jours manqués pour les marque-pages) : on le dit
-  // et on propose de la relancer avec un palier, une fois par série finie (#236).
-  // Palier atteint : on propose le suivant, une fois par palier et par série.
+  // et on propose de la relancer avec un palier (#236). Palier atteint : on
+  // propose le suivant. La série est par livre, mais le sheet ne s'ouvre seul
+  // qu'UNE fois par jour, tous livres confondus (sinon il revient à chaque
+  // changement de livre ou de club), et seulement pour une série finie depuis
+  // moins d'une semaine (un vieux livre abandonné n'a rien à relancer).
   useEffect(() => {
     const { broken, challengeId, lastStreakDate, goal, days, state } = myStreakInfo;
     if (!challengeId || !lastStreakDate) return;
+    const lastRead = lastStreakDate.split('T')[0];
     const reached = !!goal && days >= goal && (state === 'active' || state === 'atRisk');
-    if (!broken && !reached) return;
+    const recentlyBroken = broken && lastRead >= dayString(BROKEN_RECENT_DAYS);
+    if (!recentlyBroken && !reached) return;
     // Une série se reconnaît à son premier jour
     const key = `streakGoalShown:${challengeId}`;
-    const mark = broken
-      ? `broken:${lastStreakDate}`
-      : `reached:${goal}:${addDays(lastStreakDate.split('T')[0], 1 - days)}`;
-    AsyncStorage.getItem(key)
-      .then((shown) => {
-        if (shown === mark) return;
-        AsyncStorage.setItem(key, mark).catch(() => {});
+    const mark = broken ? `broken:${lastRead}` : `reached:${goal}:${addDays(lastRead, 1 - days)}`;
+    const today = dayString(0);
+    AsyncStorage.multiGet([key, STREAK_GOAL_DAY_KEY])
+      .then(([[, shown], [, shownDay]]) => {
+        if (shown === mark || shownDay === today) return;
+        AsyncStorage.multiSet([[key, mark], [STREAK_GOAL_DAY_KEY, today]]).catch(() => {});
         router.push(reached ? `/streak-goal?reached=${goal}` : '/streak-goal');
       })
       .catch(() => {});
@@ -557,7 +566,6 @@ export default function HomeScreen() {
             <StreakPill
               days={myStreakInfo.days}
               state={myStreakInfo.state}
-              goal={myStreakInfo.goal}
               onPress={() => router.push('/streak')}
             />
           )}
