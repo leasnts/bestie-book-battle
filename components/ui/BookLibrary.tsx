@@ -44,7 +44,7 @@ import { useFitSheet } from '../../hooks/useFitSheet';
 import type { BookSearchResult } from '../../types/bookSearch';
 import { Challenge, Club } from '../../types/supabase';
 import ClubAvatar from './ClubAvatar';
-import { colors, creamAlpha, dropShadow, fontSize, fonts, lowki, motion, spacing } from '../../utils/constants';
+import { colors, creamAlpha, dropShadow, fontSize, fonts, lowki, motion, paperFrameGradient, spacing } from '../../utils/constants';
 import { BookReading, LIBRARY_SHELVES, LibraryFilter, readingLabel } from '../../utils/library';
 import BookCover, { COVER_RATIO } from './BookCover';
 import RibbonBookmark, { RIBBON_ABOVE_COVER } from './RibbonBookmark';
@@ -127,10 +127,10 @@ const RAIL_MAX = 20;
 const RAIL_OPEN_MIN = 8;
 
 /** Mes livres en cours, hors étagère : de grandes couvertures debout */
-const READING_COVER_H = 168;
+const READING_COVER_H = 136;
 const READING_COVER_W = Math.round(READING_COVER_H * COVER_RATIO);
-/** Leur couture de progression : 12 points, rouges jusqu'à mon % */
-const READING_DOTS = 12;
+/** Leur couture de progression : 10 points, rouges jusqu'à mon % */
+const READING_DOTS = 10;
 const READING_DOT = 5;
 const DOT_TRACK = ['#E2D8CB', '#D3C6B6'] as const; // sable clair, le fil pas encore cousu
 const DOT_FILL = [lowki.red.light, lowki.red.dark] as const;
@@ -332,7 +332,11 @@ function Rail({
           <Text style={styles.railLabel} accessibilityRole="header">
             {label}
           </Text>
-          <Text style={styles.railCount}>{items.length}</Text>
+          <LinearGradient colors={paperFrameGradient} style={styles.railCount}>
+            <Text style={styles.railCountText} maxFontSizeMultiplier={1.3}>
+              {items.length}
+            </Text>
+          </LinearGradient>
           <ChevronRightIcon size={18} color={colors.textTertiary} strokeWidth={2} style={styles.railChevron} />
         </PressableScale>
       ) : (
@@ -340,7 +344,11 @@ function Rail({
           <Text style={styles.railLabel} accessibilityRole="header">
             {label}
           </Text>
-          <Text style={styles.railCount}>{items.length}</Text>
+          <LinearGradient colors={paperFrameGradient} style={styles.railCount}>
+            <Text style={styles.railCountText} maxFontSizeMultiplier={1.3}>
+              {items.length}
+            </Text>
+          </LinearGradient>
         </View>
       )}
 
@@ -678,10 +686,20 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     color: colors.textPrimary,
   },
+  // Le nombre de livres : une pastille papier, comme celle des nouvelles notes
   railCount: {
-    fontFamily: fonts.bodyMedium,
-    fontSize: fontSize.sm,
-    color: colors.textTertiary,
+    minWidth: 24,
+    height: 24,
+    paddingHorizontal: 7,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  railCountText: {
+    fontFamily: fonts.bodyExtraBold,
+    fontSize: 13,
+    color: colors.textSecondary,
+    fontVariant: ['tabular-nums'],
   },
   railChevron: {
     marginLeft: 'auto',
