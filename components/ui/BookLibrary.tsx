@@ -39,7 +39,7 @@ import React, { useMemo, useState } from 'react';
 import { ChevronRightIcon } from 'lucide-react-native';
 import { FlatList, ScrollView, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 import Animated, { Easing, FadeInDown, useReducedMotion } from 'react-native-reanimated';
-import Svg, { Path } from 'react-native-svg';
+import Svg, { Circle, Defs, Ellipse, LinearGradient as SvgGradient, Path, Stop } from 'react-native-svg';
 import { useFitSheet } from '../../hooks/useFitSheet';
 import type { BookSearchResult } from '../../types/bookSearch';
 import { Challenge, Club } from '../../types/supabase';
@@ -134,6 +134,31 @@ const READING_DOTS = 10;
 const READING_DOT = 5;
 const DOT_TRACK = ['#E2D8CB', '#D3C6B6'] as const; // sable clair, le fil pas encore cousu
 const DOT_FILL = [lowki.red.light, lowki.red.dark] as const;
+/** La punaise qui épingle un livre en cours, plantée dans son coin haut droit */
+const PIN = 16;
+const PIN_SHADOW = 3; // son ombre portée sur la couverture, vers le bas à droite
+
+/** Une punaise rouge vue de dessus : tête bombée (dégradé), reflet, ombre portée */
+function Pin() {
+  const r = PIN / 2;
+  const size = PIN + PIN_SHADOW;
+  return (
+    <Svg width={size} height={size}>
+      <Defs>
+        <SvgGradient id="pinHead" x1="0" y1="0" x2="0" y2="1">
+          <Stop offset="0" stopColor={lowki.red.light} />
+          <Stop offset="1" stopColor={lowki.red.dark} />
+        </SvgGradient>
+      </Defs>
+      {/* Ombre douce : deux disques pâles l'un sur l'autre, bord estompé */}
+      <Circle cx={r + PIN_SHADOW} cy={r + PIN_SHADOW} r={r + 1} fill="rgba(40,20,15,0.1)" />
+      <Circle cx={r + PIN_SHADOW - 1} cy={r + PIN_SHADOW - 1} r={r - 1} fill="rgba(40,20,15,0.16)" />
+      <Circle cx={r} cy={r} r={r} fill="url(#pinHead)" />
+      <Circle cx={r} cy={r} r={r - 0.5} fill="none" stroke={lowki.red.deep} strokeOpacity={0.5} strokeWidth={1} />
+      <Ellipse cx={r - 2.5} cy={r - 3} rx={2.6} ry={1.8} fill="rgba(255,255,255,0.55)" />
+    </Svg>
+  );
+}
 /** Le fond de la liste (colors.white) à une opacité donnée : un fondu vers `transparent` grise */
 const listPaper = (alpha: number) => `rgba(253,252,250,${alpha})`;
 const FADE_COLORS = [listPaper(0.9), listPaper(0.55), listPaper(0.2), listPaper(0)] as const;
@@ -420,6 +445,10 @@ function ReadingDesk({ items, ...coverProps }: Omit<ShelfCoverProps, 'item'> & {
           >
             <View style={styles.deskCover}>
               <BookCover coverUrl={covers[challenge.id] ?? challenge.cover_url} outlined />
+              {/* Épinglé : un livre en cours n'est pas rangé, il est accroché */}
+              <View style={styles.pin} pointerEvents="none">
+                <Pin />
+              </View>
               {challenge.club_id && clubs?.[challenge.club_id] && (
                 <View style={styles.clubBadge} pointerEvents="none">
                   <ClubAvatar club={clubs[challenge.club_id]} size={CLUB_BADGE} />
@@ -740,6 +769,11 @@ const styles = StyleSheet.create({
     width: READING_COVER_W,
     height: READING_COVER_H,
     marginBottom: spacing.xs,
+  },
+  pin: {
+    position: 'absolute',
+    top: spacing.sm,
+    right: spacing.sm,
   },
   deskDots: {
     flexDirection: 'row',
