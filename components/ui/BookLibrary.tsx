@@ -1,11 +1,17 @@
 /**
  * Composant BookLibrary
  *
- * La bibliothèque : tous mes livres, rangés sur des étagères empilées,
- * trois couvertures par étagère, sous des filtres Tout / En cours / Non lus / Lus.
+ * La bibliothèque : une étagère par état, chacune défile de côté (#242).
  *
- *    ▐██▌    ┏━━┓    ▛▀▀▜
- *   ░░░░░░░░░░░░░░░░░░░░░░   ← barre en verre flouté, avec ses vis
+ *    ▐████▌ ▐████▌              ← En cours : hors étagère, grandes couvertures
+ *    24 %   54 %                  épinglées, signet rempli à mon %
+ *    Lus 21                     ›   ← dès 8 livres, toucher le titre : tous ses livres
+ *    ▐██▌  ┏━━┓  ▛▀▀▜  ▐██▌ →
+ *   ░░░░░░░░░░░░░░░░░░░░░░░░░░░░   ← barre en verre flouté, avec ses vis
+ *    Pas commencés · Lus · Envies   ← même chose ; une étagère vide n'apparaît pas
+ *
+ * Toucher le titre d'une étagère montre tous ses livres dans le même sheet, en
+ * rangées de trois sous la même barre, avec un retour vers les étagères.
  *
  * L'étagère est celle de l'ancien accueil, à l'identique : une barre en verre
  * sombre (flou + noyer à 30 %) posée PAR-DESSUS le bas des couvertures, qui
@@ -30,19 +36,19 @@
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useMemo, useState } from 'react';
+import { ChevronRightIcon } from 'lucide-react-native';
 import { FlatList, ScrollView, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 import Animated, { Easing, FadeInDown, useReducedMotion } from 'react-native-reanimated';
-import Svg, { Path } from 'react-native-svg';
+import Svg, { Circle, Defs, Ellipse, LinearGradient as SvgGradient, Path, Stop } from 'react-native-svg';
 import { useFitSheet } from '../../hooks/useFitSheet';
 import type { BookSearchResult } from '../../types/bookSearch';
 import { Challenge, Club } from '../../types/supabase';
 import ClubAvatar from './ClubAvatar';
-import { colors, creamAlpha, dropShadow, fonts, motion, spacing } from '../../utils/constants';
-import { BookReading, LIBRARY_FILTERS, LibraryFilter, readingLabel } from '../../utils/library';
+import { colors, creamAlpha, dropShadow, fontSize, fonts, lowki, motion, paperFrameGradient, spacing } from '../../utils/constants';
+import { BookReading, LIBRARY_SHELVES, LibraryFilter, readingLabel } from '../../utils/library';
 import BookCover, { COVER_RATIO } from './BookCover';
 import RibbonBookmark, { RIBBON_ABOVE_COVER } from './RibbonBookmark';
 import PressableScale from './PressableScale';
-import FilterChips, { FILTER_CHIPS_H } from './FilterChips';
 import { SHEET_TOP_INSET, useSheetScrolled } from './SheetHeader';
 import { SHEET_GUTTER, SheetPageHeader } from './SheetPage';
 
@@ -54,7 +60,7 @@ type ShelfItem = { kind: 'book'; challenge: Challenge } | { kind: 'wish'; book: 
 const itemId = (item: ShelfItem) => (item.kind === 'book' ? item.challenge.id : `wish:${item.book.id}`);
 
 interface BookLibraryProps {
-  /** Mes livres, déjà triés et filtrés */
+  /** Mes livres, déjà triés (les étagères les répartissent selon `readings`) */
   challenges: Challenge[];
   /** Où j'en suis de chaque livre, par id */
   readings: Record<string, BookReading>;
@@ -66,13 +72,16 @@ interface BookLibraryProps {
   activeChallengeId: string | null;
   /** Toucher une couverture */
   onSelect: (challenge: Challenge) => void;
-  /** Mes envies (filtre « Envies ») : leur fiche s'ouvre au toucher */
+  /** Mes envies (étagère « Envies ») : leur fiche s'ouvre au toucher */
   wishes: BookSearchResult[];
   onSelectWish: (book: BookSearchResult) => void;
-  /** Le filtre choisi : un de LIBRARY_FILTERS, ou `club:<id>` (#238) */
-  filter: LibraryFilter | `club:${string}`;
-  onFilterChange: (filter: LibraryFilter | `club:${string}`) => void;
-  /** Mes clubs (#238) : leurs pastilles après les filtres, leur rond sur les couvertures */
+  /** `all` : toutes les étagères ; sinon tous les livres d'une seule */
+  filter: LibraryFilter;
+  /** Toucher le titre d'une étagère */
+  onFilterChange: (filter: LibraryFilter) => void;
+  /** Le retour vers les étagères, quand on regarde une seule étagère */
+  onBack?: () => void;
+  /** Mes clubs (#238) : leur rond sur les couvertures */
   clubs?: Record<string, Club>;
   /** Décor derrière l'en-tête du sheet (l'aquarelle du coin) */
   headerBackground?: React.ReactNode;
@@ -82,9 +91,8 @@ interface BookLibraryProps {
 
 // ─── Clubs (#238) ──────────────────────────────────────────────────
 
-/** Le rond du club sur une couverture, et dans sa pastille de filtre */
+/** Le rond du club sur une couverture */
 const CLUB_BADGE = 24;
-const CLUB_CHIP = 22;
 
 // ─── Constantes (reprises de l'ancienne étagère de l'accueil) ──────
 
@@ -109,13 +117,81 @@ export const LIST_SIDE = SHEET_GUTTER;
 /** Marge sous la dernière étagère */
 const LIST_BOTTOM = spacing['2xl'];
 
-/** L'en-tête du sheet (titre, puis les filtres), avant toute mesure */
-const HEADER_H = SHEET_TOP_INSET + 36 + spacing.sm + FILTER_CHIPS_H + spacing.md;
+/** L'en-tête du sheet (le titre), avant toute mesure */
+const HEADER_H = SHEET_TOP_INSET + 36 + spacing.md;
+/** Le titre d'une étagère qui défile, au-dessus de ses couvertures */
+const RAIL_TITLE_H = 44;
+/** Une étagère qui défile ne montre que ses premiers livres : le titre ouvre le reste */
+const RAIL_MAX = 20;
+/** En dessous, tous les livres tiennent sur l'étagère : pas de page à ouvrir */
+const RAIL_OPEN_MIN = 8;
 
-/** Hauteur du contenu pour `shelfCount` étagères, avant toute mesure */
-function estimateContentHeight(shelfCount: number): number {
-  if (shelfCount === 0) return HEADER_H + SHELF_GAP + EMPTY_H + LIST_BOTTOM;
-  return HEADER_H + shelfCount * (SHELF_GAP + SHELF_H) + LIST_BOTTOM;
+/** Mes livres en cours, hors étagère : de grandes couvertures debout */
+const READING_COVER_H = 136;
+const READING_COVER_W = Math.round(READING_COVER_H * COVER_RATIO);
+/**
+ * La punaise qui épingle un livre en cours, plantée près du coin haut gauche,
+ * vue un peu de côté : la tête ronde penche vers la droite, on voit l'aiguille
+ * entrer dans la couverture, et l'ombre de l'ensemble tombe dessus.
+ */
+const PIN_W = 26;
+const PIN_H = 28;
+/** Le point où l'aiguille entre dans la couverture, dans le dessin */
+const PIN_TIP = { x: 6, y: 22 };
+/** Ce même point, sur la couverture (depuis son coin haut gauche) */
+const PIN_AT = { x: 12, y: 14 };
+
+function Pin() {
+  const head = { x: 15, y: 9, r: 7 };
+  return (
+    <Svg width={PIN_W} height={PIN_H}>
+      <Defs>
+        <SvgGradient id="pinHead" x1="0" y1="0" x2="0" y2="1">
+          <Stop offset="0" stopColor={lowki.red.light} />
+          <Stop offset="1" stopColor={lowki.red.dark} />
+        </SvgGradient>
+        <SvgGradient id="pinNeedle" x1="0" y1="0" x2="1" y2="0">
+          <Stop offset="0" stopColor="#E6E1DA" />
+          <Stop offset="1" stopColor="#9A928A" />
+        </SvgGradient>
+      </Defs>
+      {/* Ombre portée sur la couverture : l'aiguille puis la tête, vers le bas à droite */}
+      <Path
+        d={`M${PIN_TIP.x} ${PIN_TIP.y} L${head.x + 6} ${PIN_TIP.y + 3}`}
+        stroke="rgba(40,20,15,0.22)"
+        strokeWidth={1.6}
+        strokeLinecap="round"
+      />
+      <Ellipse cx={head.x + 6} cy={PIN_TIP.y + 3} rx={5.5} ry={2.6} fill="rgba(40,20,15,0.12)" />
+      <Ellipse cx={head.x + 6} cy={PIN_TIP.y + 3} rx={3.8} ry={1.7} fill="rgba(40,20,15,0.14)" />
+      {/* Le trou dans le carton */}
+      <Ellipse cx={PIN_TIP.x} cy={PIN_TIP.y} rx={1.6} ry={0.9} fill="rgba(40,20,15,0.45)" />
+      {/* L'aiguille, du trou jusque sous la tête */}
+      <Path
+        d={`M${PIN_TIP.x} ${PIN_TIP.y} L${head.x - 2} ${head.y + 4}`}
+        stroke="url(#pinNeedle)"
+        strokeWidth={1.6}
+        strokeLinecap="round"
+      />
+      {/* La tête : collerette puis dôme, reflet en haut à gauche */}
+      <Ellipse cx={head.x - 2.5} cy={head.y + 4.5} rx={3.2} ry={1.8} fill={lowki.red.deep} />
+      <Circle cx={head.x} cy={head.y} r={head.r} fill="url(#pinHead)" />
+      <Circle cx={head.x} cy={head.y} r={head.r - 0.5} fill="none" stroke={lowki.red.deep} strokeOpacity={0.45} strokeWidth={1} />
+      <Ellipse cx={head.x - 2.4} cy={head.y - 2.8} rx={2.6} ry={1.7} fill="rgba(255,255,255,0.6)" />
+    </Svg>
+  );
+}
+
+/** Le fond de la liste (colors.white) à une opacité donnée : un fondu vers `transparent` grise */
+const listPaper = (alpha: number) => `rgba(253,252,250,${alpha})`;
+const FADE_COLORS = [listPaper(0.9), listPaper(0.55), listPaper(0.2), listPaper(0)] as const;
+const FADE_STOPS = [0, 0.35, 0.7, 1] as const;
+
+/** Hauteur du contenu pour `rowCount` étagères, avant toute mesure */
+function estimateContentHeight(rowCount: number, rails: boolean): number {
+  if (rowCount === 0) return HEADER_H + SHELF_GAP + EMPTY_H + LIST_BOTTOM;
+  const row = rails ? RAIL_TITLE_H + spacing.xs + SHELF_H : SHELF_H;
+  return HEADER_H + rowCount * (SHELF_GAP + row) + LIST_BOTTOM;
 }
 
 /** Pastille si le livre n'est pas encore dans `readings` (premier chargement) */
@@ -192,6 +268,227 @@ export function ShelfBar({ style }: { style?: StyleProp<ViewStyle> }) {
 /** Hauteur de la barre, et de combien elle chevauche le bas des couvertures */
 export { SHELF_BAR_H, SHELF_OVERLAP };
 
+// ─── Une couverture d'étagère ──────────────────────────────────────
+
+interface ShelfCoverProps {
+  item: ShelfItem;
+  readings: Record<string, BookReading>;
+  covers: Record<string, string | null>;
+  newBookId: string | null;
+  activeChallengeId: string | null;
+  onSelect: (challenge: Challenge) => void;
+  onSelectWish: (book: BookSearchResult) => void;
+  clubs?: Record<string, Club>;
+}
+
+/** Une couverture et ce qui s'y pose (signet, rond du club) ; la même dans les deux vues */
+function ShelfCover({ item, readings, covers, newBookId, activeChallengeId, onSelect, onSelectWish, clubs }: ShelfCoverProps) {
+  // Une envie : sa couverture seule, sans signet (pas encore commencée)
+  if (item.kind === 'wish') {
+    const { book } = item;
+    return (
+      <PressableScale
+        style={styles.coverSlot}
+        onPress={() => onSelectWish(book)}
+        accessibilityRole="button"
+        accessibilityLabel={`${book.title}${book.author ? `, ${book.author}` : ''}`}
+        accessibilityHint="Ouvre sa fiche"
+      >
+        <BookCover coverUrl={book.coverUrl} outlined />
+      </PressableScale>
+    );
+  }
+
+  const { challenge } = item;
+  const isActive = challenge.id === activeChallengeId;
+  const reading = readings[challenge.id] ?? UNREAD;
+  const isNew = challenge.id === newBookId;
+
+  return (
+    <PressableScale
+      style={styles.coverSlot}
+      onPress={() => onSelect(challenge)}
+      accessibilityRole="button"
+      accessibilityLabel={`${challenge.book_title}${challenge.book_author ? `, ${challenge.book_author}` : ''}, ${isNew ? 'nouveau, ' : ''}${readingLabel(reading)}`}
+      accessibilityHint={isActive ? undefined : 'L’affiche sur l’accueil'}
+      accessibilityState={{ selected: isActive }}
+    >
+      <BookCover coverUrl={covers[challenge.id] ?? challenge.cover_url} outlined />
+      {/* Lu en club (#238) : le rond du club, à cheval sur le coin haut gauche
+          (le signet pend à droite) */}
+      {challenge.club_id && clubs?.[challenge.club_id] && (
+        <View style={styles.clubBadge} pointerEvents="none">
+          <ClubAvatar club={clubs[challenge.club_id]} size={CLUB_BADGE} />
+        </View>
+      )}
+      {(isNew || reading.state !== 'unread') && (
+        <View style={styles.ribbon} pointerEvents="none">
+          {reading.state === 'reading' ? (
+            <RibbonBookmark kind="reading" percent={reading.percent} />
+          ) : (
+            <RibbonBookmark kind={isNew ? 'new' : 'done'} />
+          )}
+        </View>
+      )}
+    </PressableScale>
+  );
+}
+
+// ─── Une étagère qui défile (la vue d'ouverture) ───────────────────
+
+/**
+ * Un titre touchable (le nombre de livres, puis ›), puis une rangée qui défile
+ * de côté sous la barre en verre fixe, comme les étagères d'Explorer. Aux deux
+ * bords, les couvertures s'effacent en fondu dans le papier.
+ */
+function Rail({
+  label,
+  items,
+  onOpen,
+  index,
+  animate,
+  ...coverProps
+}: Omit<ShelfCoverProps, 'item'> & {
+  label: string;
+  items: ShelfItem[];
+  onOpen: () => void;
+  index: number;
+  animate: boolean;
+}) {
+  const delay = Math.min(index * motion.stagger, 240);
+  const openable = items.length >= RAIL_OPEN_MIN;
+  return (
+    <Animated.View
+      style={styles.rail}
+      entering={
+        animate
+          ? FadeInDown.duration(motion.duration.entrance)
+              .delay(delay)
+              .easing(Easing.bezier(...motion.easing.easeOutQuart).factory())
+          : undefined
+      }
+    >
+      {/* Moins de 8 livres : tout est déjà sur l'étagère, le titre n'ouvre rien */}
+      {openable ? (
+        <PressableScale
+          style={styles.railTitle}
+          onPress={onOpen}
+          accessibilityRole="button"
+          accessibilityLabel={`${label}, ${items.length}`}
+          accessibilityHint="Montre tous ses livres"
+        >
+          <Text style={styles.railLabel} accessibilityRole="header">
+            {label}
+          </Text>
+          <LinearGradient colors={paperFrameGradient} style={styles.railCount}>
+            <Text style={styles.railCountText} maxFontSizeMultiplier={1.3}>
+              {items.length}
+            </Text>
+          </LinearGradient>
+          <ChevronRightIcon size={18} color={colors.textTertiary} strokeWidth={2} style={styles.railChevron} />
+        </PressableScale>
+      ) : (
+        <View style={styles.railTitle}>
+          <Text style={styles.railLabel} accessibilityRole="header">
+            {label}
+          </Text>
+          <LinearGradient colors={paperFrameGradient} style={styles.railCount}>
+            <Text style={styles.railCountText} maxFontSizeMultiplier={1.3}>
+              {items.length}
+            </Text>
+          </LinearGradient>
+        </View>
+      )}
+
+      <View style={styles.shelf}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.railRow}
+          decelerationRate="fast"
+        >
+          {items.slice(0, RAIL_MAX).map((item) => (
+            <ShelfCover key={itemId(item)} item={item} {...coverProps} />
+          ))}
+        </ScrollView>
+        <LinearGradient
+          colors={FADE_COLORS}
+          locations={FADE_STOPS}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          style={[styles.railFade, styles.railFadeLeft]}
+          pointerEvents="none"
+        />
+        <LinearGradient
+          colors={FADE_COLORS}
+          locations={FADE_STOPS}
+          start={{ x: 1, y: 0 }}
+          end={{ x: 0, y: 0 }}
+          style={[styles.railFade, styles.railFadeRight]}
+          pointerEvents="none"
+        />
+        <ShelfBar style={styles.railBar} />
+      </View>
+    </Animated.View>
+  );
+}
+
+// ─── Mes livres en cours, hors étagère ─────────────────────────────
+
+/**
+ * Les livres que je lis sont sortis de l'étagère : grandes couvertures posées
+ * épinglées, le signet rempli à mon % et mon % dessous. On en lit 1 ou
+ * 2 à la fois ; au-delà, la rangée défile de côté.
+ */
+function ReadingDesk({ items, ...coverProps }: Omit<ShelfCoverProps, 'item'> & { items: ShelfItem[] }) {
+  const { readings, covers, onSelect, activeChallengeId, clubs } = coverProps;
+  return (
+    <ScrollView
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      style={styles.desk}
+      contentContainerStyle={styles.deskRow}
+      decelerationRate="fast"
+    >
+      {items.map((item) => {
+        if (item.kind !== 'book') return null;
+        const { challenge } = item;
+        const reading = readings[challenge.id] ?? UNREAD;
+        const isActive = challenge.id === activeChallengeId;
+        return (
+          <PressableScale
+            key={challenge.id}
+            style={styles.deskBook}
+            onPress={() => onSelect(challenge)}
+            accessibilityRole="button"
+            accessibilityLabel={`${challenge.book_title}${challenge.book_author ? `, ${challenge.book_author}` : ''}, ${readingLabel(reading)}`}
+            accessibilityHint={isActive ? undefined : 'L’affiche sur l’accueil'}
+            accessibilityState={{ selected: isActive }}
+          >
+            <View style={styles.deskCover}>
+              <BookCover coverUrl={covers[challenge.id] ?? challenge.cover_url} outlined />
+              {/* Épinglé : un livre en cours n'est pas rangé, il est accroché */}
+              <View style={styles.pin} pointerEvents="none">
+                <Pin />
+              </View>
+              {/* Le même signet que sur les étagères, rempli de rouge à mon % */}
+              <View style={styles.ribbon} pointerEvents="none">
+                <RibbonBookmark kind="reading" percent={reading.percent} />
+              </View>
+              {challenge.club_id && clubs?.[challenge.club_id] && (
+                <View style={[styles.clubBadge, styles.deskClubBadge]} pointerEvents="none">
+                  <ClubAvatar club={clubs[challenge.club_id]} size={CLUB_BADGE} />
+                </View>
+              )}
+            </View>
+            <Text style={styles.deskPercent}>{reading.percent} %</Text>
+          </PressableScale>
+        );
+      })}
+    </ScrollView>
+  );
+}
+
 // ─── Une étagère ───────────────────────────────────────────────────
 
 function Shelf({
@@ -241,58 +538,18 @@ function Shelf({
         {padded.map((item, i) => {
           if (!item) return <View key={i} style={styles.column} />;
 
-          // Une envie : sa couverture seule, sans signet (pas encore commencée)
-          if (item.kind === 'wish') {
-            const { book } = item;
-            return (
-              <View key={i} style={styles.column}>
-                <PressableScale
-                  style={styles.coverSlot}
-                  onPress={() => onSelectWish(book)}
-                  accessibilityRole="button"
-                  accessibilityLabel={`${book.title}${book.author ? `, ${book.author}` : ''}`}
-                  accessibilityHint="Ouvre sa fiche"
-                >
-                  <BookCover coverUrl={book.coverUrl} outlined />
-                </PressableScale>
-              </View>
-            );
-          }
-
-          const { challenge } = item;
-
-          const isActive = challenge.id === activeChallengeId;
-          const reading = readings[challenge.id] ?? UNREAD;
-          const isNew = challenge.id === newBookId;
-
           return (
             <View key={i} style={styles.column}>
-              <PressableScale
-                style={styles.coverSlot}
-                onPress={() => onSelect(challenge)}
-                accessibilityRole="button"
-                accessibilityLabel={`${challenge.book_title}${challenge.book_author ? `, ${challenge.book_author}` : ''}, ${isNew ? 'nouveau, ' : ''}${readingLabel(reading)}`}
-                accessibilityHint={isActive ? undefined : 'L’affiche sur l’accueil'}
-                accessibilityState={{ selected: isActive }}
-              >
-                <BookCover coverUrl={covers[challenge.id] ?? challenge.cover_url} outlined />
-                {/* Lu en club (#238) : le rond du club, à cheval sur le coin haut gauche
-                    (le signet pend à droite) */}
-                {challenge.club_id && clubs?.[challenge.club_id] && (
-                  <View style={styles.clubBadge} pointerEvents="none">
-                    <ClubAvatar club={clubs[challenge.club_id]} size={CLUB_BADGE} />
-                  </View>
-                )}
-                {(isNew || reading.state !== 'unread') && (
-                  <View style={styles.ribbon} pointerEvents="none">
-                    {reading.state === 'reading' ? (
-                      <RibbonBookmark kind="reading" percent={reading.percent} />
-                    ) : (
-                      <RibbonBookmark kind={isNew ? 'new' : 'done'} />
-                    )}
-                  </View>
-                )}
-              </PressableScale>
+              <ShelfCover
+                item={item}
+                readings={readings}
+                covers={covers}
+                newBookId={newBookId}
+                activeChallengeId={activeChallengeId}
+                onSelect={onSelect}
+                onSelectWish={onSelectWish}
+                clubs={clubs}
+              />
             </View>
           );
         })}
@@ -317,22 +574,11 @@ export default function BookLibrary({
   onSelectWish,
   filter,
   onFilterChange,
+  onBack,
   clubs,
   headerBackground,
   actions,
 }: BookLibraryProps) {
-  // Les filtres, puis un par club, avec sa photo
-  const filterOptions = useMemo(
-    () => [
-      ...LIBRARY_FILTERS,
-      ...Object.values(clubs ?? {}).map((club) => ({
-        key: `club:${club.id}` as const,
-        label: club.name,
-        leading: <ClubAvatar club={club} size={CLUB_CHIP} />,
-      })),
-    ],
-    [clubs],
-  );
   const reducedMotion = useReducedMotion();
   const { scrolled, onScroll } = useSheetScrolled();
   // Plafond commun des sheets à contenu : sous l'en-tête de l'accueil
@@ -340,23 +586,94 @@ export default function BookLibrary({
   // Hauteur réelle du contenu, mesurée après le premier rendu (texte agrandi, etc.)
   const [measuredHeight, setMeasuredHeight] = useState<number | null>(null);
 
-  // Livres découpés par étagères de 3
+  // Chaque livre sur l'étagère de son état ; les envies sur la leur
+  const byShelf = useMemo(() => {
+    const groups: Record<Exclude<LibraryFilter, 'all'>, ShelfItem[]> = { reading: [], unread: [], wish: [], done: [] };
+    for (const challenge of challenges) {
+      groups[(readings[challenge.id] ?? UNREAD).state].push({ kind: 'book', challenge });
+    }
+    groups.wish = wishes.map((book) => ({ kind: 'wish', book }));
+    return groups;
+  }, [challenges, readings, wishes]);
+
+  const showRails = filter === 'all';
+
+  // Vue d'ouverture : une étagère qui défile par état, sans les vides
+  const rails = useMemo(() => {
+    return LIBRARY_SHELVES.map((shelf) => ({ ...shelf, items: byShelf[shelf.key] })).filter(
+      (shelf) => shelf.items.length > 0,
+    );
+  }, [byShelf]);
+
+  // Une seule étagère : tous ses livres, par rangées de 3
   const shelves = useMemo(() => {
-    const items: ShelfItem[] =
-      filter === 'wish'
-        ? wishes.map((book) => ({ kind: 'wish', book }))
-        : challenges.map((challenge) => ({ kind: 'book', challenge }));
+    if (showRails) return [];
+    const items = byShelf[filter];
     const rows: ShelfItem[][] = [];
     for (let i = 0; i < items.length; i += BOOKS_PER_SHELF) {
       rows.push(items.slice(i, i + BOOKS_PER_SHELF));
     }
     return rows;
-  }, [challenges, wishes, filter]);
+  }, [byShelf, filter, showRails]);
 
+  const title = showRails ? 'Mes lectures' : (LIBRARY_SHELVES.find((shelf) => shelf.key === filter)?.label ?? 'Mes lectures');
   const listHeight = Math.min(
-    measuredHeight ?? estimateContentHeight(shelves.length),
+    measuredHeight ?? estimateContentHeight(showRails ? rails.length : shelves.length, showRails),
     maxHeight,
   );
+  const coverProps = { readings, covers, newBookId, activeChallengeId, onSelect, onSelectWish, clubs };
+  const header = (
+    <SheetPageHeader
+      title={title}
+      accent={showRails ? 'lectures' : undefined}
+      onBack={showRails ? undefined : onBack}
+      actions={actions}
+      background={headerBackground}
+      scrolled={scrolled}
+    />
+  );
+  const common = {
+    ListHeaderComponent: header,
+    stickyHeaderIndices: [0],
+    onScroll,
+    scrollEventThrottle: 16,
+    ListEmptyComponent: <Text style={styles.empty}>{filter === 'wish' ? 'Aucune envie' : 'Aucun livre'}</Text>,
+    style: [styles.list, { height: listHeight }],
+    contentContainerStyle: styles.listContent,
+    // On ne rétrécit jamais : changer de vue ne doit pas faire sauter le sheet
+    onContentSizeChange: (_width: number, height: number) =>
+      setMeasuredHeight((previous) => Math.max(previous ?? 0, height)),
+    showsVerticalScrollIndicator: false,
+    contentInsetAdjustmentBehavior: 'automatic' as const,
+    bounces: true,
+  };
+
+  if (showRails) {
+    return (
+      // FlatList enfant DIRECT de l'écran (condition des sheets natifs) : une étagère = une ligne
+      <FlatList
+        key="rails"
+        data={rails}
+        keyExtractor={(rail) => rail.key}
+        renderItem={({ item, index }) =>
+          // En cours : hors étagère, sans titre
+          item.key === 'reading' ? (
+            <ReadingDesk items={item.items} {...coverProps} />
+          ) : (
+            <Rail
+              label={item.label}
+              items={item.items}
+              onOpen={() => onFilterChange(item.key)}
+              index={index}
+              animate={!reducedMotion}
+              {...coverProps}
+            />
+          )
+        }
+        {...common}
+      />
+    );
+  }
 
   return (
     /*
@@ -381,33 +698,8 @@ export default function BookLibrary({
           clubs={clubs}
         />
       )}
-      // L'en-tête du sheet, filtres compris, reste collé en haut
-      ListHeaderComponent={
-        <SheetPageHeader title="Mes lectures" accent="lectures" actions={actions} background={headerBackground} scrolled={scrolled}>
-          {/* Cinq filtres ne tiennent pas en largeur : la rangée défile de bord à bord */}
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            style={styles.chips}
-            contentContainerStyle={styles.chipsContent}
-          >
-            <FilterChips options={filterOptions} value={filter} onChange={onFilterChange} />
-          </ScrollView>
-        </SheetPageHeader>
-      }
-      stickyHeaderIndices={[0]}
-      onScroll={onScroll}
-      scrollEventThrottle={16}
-      ListEmptyComponent={<Text style={styles.empty}>{filter === 'wish' ? 'Aucune envie' : 'Aucun livre'}</Text>}
-      style={[styles.list, { height: listHeight }]}
-      contentContainerStyle={styles.listContent}
-      // On ne rétrécit jamais : filtrer ne doit pas faire sauter le sheet
-      onContentSizeChange={(_width, height) =>
-        setMeasuredHeight((previous) => Math.max(previous ?? 0, height))
-      }
-      showsVerticalScrollIndicator={false}
-      contentInsetAdjustmentBehavior="automatic"
-      bounces
+      key={filter}
+      {...common}
     />
   );
 }
@@ -426,11 +718,100 @@ const styles = StyleSheet.create({
     gap: SHELF_GAP,
   },
 
-  chips: {
+  // Les étagères qui défilent vont de bord à bord, au-delà des marges de la liste
+  rail: {
+    gap: spacing.xs,
     marginHorizontal: -LIST_SIDE,
   },
-  chipsContent: {
+  railTitle: {
+    minHeight: RAIL_TITLE_H,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
     paddingHorizontal: LIST_SIDE,
+  },
+  railLabel: {
+    fontFamily: fonts.display,
+    fontSize: fontSize.md,
+    lineHeight: 20,
+    color: colors.textPrimary,
+  },
+  // Le nombre de livres : une pastille papier, comme celle des nouvelles notes
+  railCount: {
+    minWidth: 24,
+    height: 24,
+    paddingHorizontal: 7,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  railCountText: {
+    fontFamily: fonts.bodyExtraBold,
+    fontSize: 13,
+    color: colors.textSecondary,
+    fontVariant: ['tabular-nums'],
+  },
+  railChevron: {
+    marginLeft: 'auto',
+  },
+  railRow: {
+    paddingHorizontal: LIST_SIDE + spacing.md,
+    gap: spacing.xl,
+    // Place pour le signet qui dépasse en haut et l'ombre des couvertures
+    paddingTop: RIBBON_ABOVE_COVER,
+    alignItems: 'flex-end',
+  },
+  railFade: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    width: spacing['3xl'],
+  },
+  railFadeLeft: {
+    left: 0,
+  },
+  railFadeRight: {
+    right: 0,
+  },
+  // En cours : la rangée va de bord à bord, la première couverture sous le titre
+  // …et remonte près du titre : pas d'écart d'étagère sous « Mes lectures »
+  desk: {
+    marginHorizontal: -LIST_SIDE,
+    marginTop: -SHELF_GAP,
+  },
+  deskRow: {
+    paddingHorizontal: LIST_SIDE,
+    // Place pour la tête de la punaise, qui dépasse au-dessus de la couverture
+    paddingTop: spacing.md,
+    gap: spacing.xl,
+  },
+  deskBook: {
+    width: READING_COVER_W,
+    gap: spacing.sm,
+  },
+  deskCover: {
+    width: READING_COVER_W,
+    height: READING_COVER_H,
+    marginBottom: spacing.xs,
+  },
+  pin: {
+    position: 'absolute',
+    top: PIN_AT.y - PIN_TIP.y,
+    left: PIN_AT.x - PIN_TIP.x,
+  },
+  // Punaise en haut à gauche, signet en haut à droite : le club passe en bas à gauche
+  deskClubBadge: {
+    top: undefined,
+    bottom: -CLUB_BADGE / 3,
+  },
+  deskPercent: {
+    fontFamily: fonts.bodySemiBold,
+    fontSize: 13,
+    color: colors.textSecondary,
+  },
+  railBar: {
+    left: LIST_SIDE,
+    right: LIST_SIDE,
   },
 
   // Aucun livre pour ce filtre : un repère court, à la place des étagères
