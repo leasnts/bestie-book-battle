@@ -4,7 +4,7 @@
  * La bibliothèque : une étagère par état, chacune défile de côté (#242).
  *
  *    ▐████▌ ▐████▌              ← En cours : hors étagère, grandes couvertures
- *    24 %   54 %                  épinglées, signet rempli à mon %
+ *                                 épinglées, signet rempli à mon %
  *    Lus 21                     ›   ← dès 8 livres, toucher le titre : tous ses livres
  *    ▐██▌  ┏━━┓  ▛▀▀▜  ▐██▌ →
  *   ░░░░░░░░░░░░░░░░░░░░░░░░░░░░   ← barre en verre flouté, avec ses vis
@@ -47,7 +47,7 @@ import ClubAvatar from './ClubAvatar';
 import { colors, creamAlpha, dropShadow, fontSize, fonts, lowki, motion, paperFrameGradient, spacing } from '../../utils/constants';
 import { BookReading, LIBRARY_SHELVES, LibraryFilter, readingLabel } from '../../utils/library';
 import BookCover, { COVER_RATIO } from './BookCover';
-import RibbonBookmark, { RIBBON_ABOVE_COVER } from './RibbonBookmark';
+import RibbonBookmark, { RIBBON_ABOVE_COVER, SMALL_RIBBON_ABOVE_COVER } from './RibbonBookmark';
 import PressableScale from './PressableScale';
 import { SHEET_TOP_INSET, useSheetScrolled } from './SheetHeader';
 import { SHEET_GUTTER, SheetPageHeader } from './SheetPage';
@@ -322,11 +322,11 @@ function ShelfCover({ item, readings, covers, newBookId, activeChallengeId, onSe
         </View>
       )}
       {(isNew || reading.state !== 'unread') && (
-        <View style={styles.ribbon} pointerEvents="none">
+        <View style={reading.state === 'reading' ? styles.ribbon : styles.ribbonSmall} pointerEvents="none">
           {reading.state === 'reading' ? (
             <RibbonBookmark kind="reading" percent={reading.percent} />
           ) : (
-            <RibbonBookmark kind={isNew ? 'new' : 'done'} />
+            <RibbonBookmark kind={isNew ? 'new' : 'done'} small />
           )}
         </View>
       )}
@@ -437,7 +437,7 @@ function Rail({
 
 /**
  * Les livres que je lis sont sortis de l'étagère : grandes couvertures posées
- * épinglées, le signet rempli à mon % et mon % dessous. On en lit 1 ou
+ * épinglées, le signet rempli à mon %. On en lit 1 ou
  * 2 à la fois ; au-delà, la rangée défile de côté.
  */
 function ReadingDesk({ items, ...coverProps }: Omit<ShelfCoverProps, 'item'> & { items: ShelfItem[] }) {
@@ -481,7 +481,6 @@ function ReadingDesk({ items, ...coverProps }: Omit<ShelfCoverProps, 'item'> & {
                 </View>
               )}
             </View>
-            <Text style={styles.deskPercent}>{reading.percent} %</Text>
           </PressableScale>
         );
       })}
@@ -804,11 +803,6 @@ const styles = StyleSheet.create({
     top: undefined,
     bottom: -CLUB_BADGE / 3,
   },
-  deskPercent: {
-    fontFamily: fonts.bodySemiBold,
-    fontSize: 13,
-    color: colors.textSecondary,
-  },
   railBar: {
     left: LIST_SIDE,
     right: LIST_SIDE,
@@ -858,6 +852,11 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: -RIBBON_ABOVE_COVER,
     right: 2,
+  },
+  ribbonSmall: {
+    position: 'absolute',
+    top: -SMALL_RIBBON_ABOVE_COVER,
+    right: 4,
   },
   // Barre d'étagère — en absolute, AU PREMIER PLAN pour passer par-dessus le
   // bas des couvertures. overflow: 'hidden' pour que le flou respecte le rayon.
