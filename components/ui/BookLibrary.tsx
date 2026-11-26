@@ -3,6 +3,8 @@
  *
  * La bibliothèque : une étagère par état, chacune défile de côté (#242).
  *
+ *    ▐████▌ ▐████▌              ← En cours : hors étagère, grandes couvertures
+ *    ●●●○○○ 24 %                  debout, couture rouge jusqu'à mon %
  *    Lus 21                     ›   ← dès 8 livres, toucher le titre : tous ses livres
  *    ▐██▌  ┏━━┓  ▛▀▀▜  ▐██▌ →
  *   ░░░░░░░░░░░░░░░░░░░░░░░░░░░░   ← barre en verre flouté, avec ses vis
@@ -42,7 +44,7 @@ import { useFitSheet } from '../../hooks/useFitSheet';
 import type { BookSearchResult } from '../../types/bookSearch';
 import { Challenge, Club } from '../../types/supabase';
 import ClubAvatar from './ClubAvatar';
-import { colors, creamAlpha, dropShadow, fontSize, fonts, motion, spacing } from '../../utils/constants';
+import { colors, creamAlpha, dropShadow, fontSize, fonts, lowki, motion, spacing } from '../../utils/constants';
 import { BookReading, LIBRARY_SHELVES, LibraryFilter, readingLabel } from '../../utils/library';
 import BookCover, { COVER_RATIO } from './BookCover';
 import RibbonBookmark, { RIBBON_ABOVE_COVER } from './RibbonBookmark';
@@ -123,6 +125,15 @@ const RAIL_TITLE_H = 44;
 const RAIL_MAX = 20;
 /** En dessous, tous les livres tiennent sur l'étagère : pas de page à ouvrir */
 const RAIL_OPEN_MIN = 8;
+
+/** Mes livres en cours, hors étagère : de grandes couvertures debout */
+const READING_COVER_H = 168;
+const READING_COVER_W = Math.round(READING_COVER_H * COVER_RATIO);
+/** Leur couture de progression : 12 points, rouges jusqu'à mon % */
+const READING_DOTS = 12;
+const READING_DOT = 5;
+const DOT_TRACK = ['#E2D8CB', '#D3C6B6'] as const; // sable clair, le fil pas encore cousu
+const DOT_FILL = [lowki.red.light, lowki.red.dark] as const;
 /** Le fond de la liste (colors.white) à une opacité donnée : un fondu vers `transparent` grise */
 const listPaper = (alpha: number) => `rgba(253,252,250,${alpha})`;
 const FADE_COLORS = [listPaper(0.9), listPaper(0.55), listPaper(0.2), listPaper(0)] as const;
@@ -366,6 +377,60 @@ function Rail({
   );
 }
 
+// ─── Mes livres en cours, hors étagère ─────────────────────────────
+
+/**
+ * Les livres que je lis sont sortis de l'étagère : grandes couvertures posées
+ * sur le papier, la couture de ma progression et mon % dessous. On en lit 1 ou
+ * 2 à la fois ; au-delà, la rangée défile de côté.
+ */
+function ReadingDesk({ items, ...coverProps }: Omit<ShelfCoverProps, 'item'> & { items: ShelfItem[] }) {
+  const { readings, covers, onSelect, activeChallengeId, clubs } = coverProps;
+  return (
+    <ScrollView
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      style={styles.desk}
+      contentContainerStyle={styles.deskRow}
+      decelerationRate="fast"
+    >
+      {items.map((item) => {
+        if (item.kind !== 'book') return null;
+        const { challenge } = item;
+        const reading = readings[challenge.id] ?? UNREAD;
+        const filled = Math.round((reading.percent / 100) * READING_DOTS);
+        const isActive = challenge.id === activeChallengeId;
+        return (
+          <PressableScale
+            key={challenge.id}
+            style={styles.deskBook}
+            onPress={() => onSelect(challenge)}
+            accessibilityRole="button"
+            accessibilityLabel={`${challenge.book_title}${challenge.book_author ? `, ${challenge.book_author}` : ''}, ${readingLabel(reading)}`}
+            accessibilityHint={isActive ? undefined : 'L’affiche sur l’accueil'}
+            accessibilityState={{ selected: isActive }}
+          >
+            <View style={styles.deskCover}>
+              <BookCover coverUrl={covers[challenge.id] ?? challenge.cover_url} outlined />
+              {challenge.club_id && clubs?.[challenge.club_id] && (
+                <View style={styles.clubBadge} pointerEvents="none">
+                  <ClubAvatar club={clubs[challenge.club_id]} size={CLUB_BADGE} />
+                </View>
+              )}
+            </View>
+            <View style={styles.deskDots} pointerEvents="none">
+              {Array.from({ length: READING_DOTS }, (_, i) => (
+                <LinearGradient key={i} colors={i < filled ? DOT_FILL : DOT_TRACK} style={styles.deskDot} />
+              ))}
+            </View>
+            <Text style={styles.deskPercent}>{reading.percent} %</Text>
+          </PressableScale>
+        );
+      })}
+    </ScrollView>
+  );
+}
+
 // ─── Une étagère ───────────────────────────────────────────────────
 
 function Shelf({
@@ -476,10 +541,11 @@ export default function BookLibrary({
   const showRails = filter === 'all';
 
   // Vue d'ouverture : une étagère qui défile par état, sans les vides
-  const rails = useMemo(
-    () => LIBRARY_SHELVES.filter((shelf) => byShelf[shelf.key].length > 0).map((shelf) => ({ ...shelf, items: byShelf[shelf.key] })),
-    [byShelf],
-  );
+  const rails = useMemo(() => {
+    return LIBRARY_SHELVES.map((shelf) => ({ ...shelf, items: byShelf[shelf.key] })).filter(
+      (shelf) => shelf.items.length > 0,
+    );
+  }, [byShelf]);
 
   // Une seule étagère : tous ses livres, par rangées de 3
   const shelves = useMemo(() => {
@@ -531,16 +597,21 @@ export default function BookLibrary({
         key="rails"
         data={rails}
         keyExtractor={(rail) => rail.key}
-        renderItem={({ item, index }) => (
-          <Rail
-            label={item.label}
-            items={item.items}
-            onOpen={() => onFilterChange(item.key)}
-            index={index}
-            animate={!reducedMotion}
-            {...coverProps}
-          />
-        )}
+        renderItem={({ item, index }) =>
+          // En cours : hors étagère, sans titre
+          item.key === 'reading' ? (
+            <ReadingDesk items={item.items} {...coverProps} />
+          ) : (
+            <Rail
+              label={item.label}
+              items={item.items}
+              onOpen={() => onFilterChange(item.key)}
+              index={index}
+              animate={!reducedMotion}
+              {...coverProps}
+            />
+          )
+        }
         {...common}
       />
     );
@@ -633,6 +704,38 @@ const styles = StyleSheet.create({
   },
   railFadeRight: {
     right: 0,
+  },
+  // En cours : la rangée va de bord à bord, la première couverture sous le titre
+  desk: {
+    marginHorizontal: -LIST_SIDE,
+  },
+  deskRow: {
+    paddingHorizontal: LIST_SIDE,
+    paddingTop: spacing.xs,
+    gap: spacing.xl,
+  },
+  deskBook: {
+    width: READING_COVER_W,
+    gap: spacing.sm,
+  },
+  deskCover: {
+    width: READING_COVER_W,
+    height: READING_COVER_H,
+    marginBottom: spacing.xs,
+  },
+  deskDots: {
+    flexDirection: 'row',
+    gap: 4,
+  },
+  deskDot: {
+    width: READING_DOT,
+    height: READING_DOT,
+    borderRadius: READING_DOT / 2,
+  },
+  deskPercent: {
+    fontFamily: fonts.bodySemiBold,
+    fontSize: 13,
+    color: colors.textSecondary,
   },
   railBar: {
     left: LIST_SIDE,
