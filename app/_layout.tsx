@@ -14,6 +14,7 @@ const SHOW_STORYBOOK = false;
 
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { useClubStore } from '../stores/clubStore';
+import { useExploreStore } from '../stores/exploreStore';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
 import { Platform, StyleSheet, View, Linking } from 'react-native';
@@ -172,6 +173,7 @@ function RootLayoutNav() {
     if (user?.id && _hasHydrated) {
       loadUserChallenges(user.id);
       useClubStore.getState().loadMyClubs(user.id);
+      useExploreStore.getState().loadWishes(user.id);
     }
   }, [user?.id, _hasHydrated, loadUserChallenges]);
 
