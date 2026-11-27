@@ -16,7 +16,8 @@ import type { BookFormat, ReadingMoment } from '../types/supabase';
 import type { OnboardingFlow } from '../utils/onboardingFlow';
 
 /** L'écran qui attend un livre de la recherche */
-export type BookPickTarget = 'livre' | 'edition';
+/** `club` : un livre proposé à la PAL d'un book club (#238) */
+export type BookPickTarget = 'livre' | 'edition' | 'club';
 
 /** Le livre choisi (recherche ou à la main), dans SON édition */
 export interface BookDraft {
