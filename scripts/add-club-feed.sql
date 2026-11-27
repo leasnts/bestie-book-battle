@@ -160,3 +160,26 @@ $$;
 
 REVOKE ALL ON FUNCTION public.get_club_feed(uuid, int) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.get_club_feed(uuid, int) TO authenticated;
+
+-- La piste de la lecture en cours (onglet Clubs) : où en est chaque lecteur,
+-- en %, même pour un membre du club qui ne lit pas encore ce livre
+CREATE OR REPLACE FUNCTION public.get_club_reading_track(p_challenge_id uuid)
+RETURNS TABLE (user_id uuid, first_name text, profile_photo_url text, percent numeric)
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path TO 'public'
+AS $$
+  SELECT p.user_id, u.first_name, u.profile_photo_url,
+    LEAST(100, ROUND(100.0 * p.current_page / NULLIF(COALESCE(NULLIF(p.total_pages, 0), c.total_pages), 0), 1))
+  FROM user_progress p
+  JOIN challenges c ON c.id = p.challenge_id
+  JOIN users u ON u.id = p.user_id
+  WHERE p.challenge_id = p_challenge_id
+    AND (public.is_challenge_member(p_challenge_id)
+         OR (c.club_id IS NOT NULL AND public.is_club_member(c.club_id, auth.uid())))
+  ORDER BY 4 DESC;
+$$;
+
+REVOKE ALL ON FUNCTION public.get_club_reading_track(uuid) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.get_club_reading_track(uuid) TO authenticated;

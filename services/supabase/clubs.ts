@@ -190,3 +190,12 @@ export async function removeFeedReaction(clubId: string, eventKey: string, userI
     .eq('emoji', emoji);
   if (error) throw error;
 }
+
+/** La piste de la lecture en cours : chaque lecteur et son %, le plus avancé d'abord */
+export async function getClubReadingTrack(
+  challengeId: string,
+): Promise<{ user_id: string; first_name: string | null; profile_photo_url: string | null; percent: number }[]> {
+  const { data, error } = await supabase.rpc('get_club_reading_track', { p_challenge_id: challengeId });
+  if (error) throw error;
+  return ((data ?? []) as any[]).map((r) => ({ ...r, percent: Number(r.percent) || 0 }));
+}

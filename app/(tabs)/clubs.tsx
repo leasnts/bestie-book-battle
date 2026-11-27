@@ -17,7 +17,7 @@
 
 import { Image } from 'expo-image';
 import { useFocusEffect, useRouter } from 'expo-router';
-import { ChevronRightIcon, PlusIcon, UserPlusIcon } from 'lucide-react-native';
+import { ChevronRightIcon, MapPinIcon, PlusIcon, UserPlusIcon } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActionSheetIOS, ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -30,6 +30,7 @@ import ClubAvatar from '../../components/ui/ClubAvatar';
 import GlassButton from '../../components/ui/GlassButton';
 import { useTabBarInset } from '../../components/ui/GlassTabBar';
 import PressableScale from '../../components/ui/PressableScale';
+import { StitchLine } from '../../components/ui/Stitch';
 import {
   addReaction,
   getAnnotationsByIds,
@@ -41,19 +42,24 @@ import {
   getClubChallenges,
   getClubFeed,
   getClubMembers,
+  getClubReadingTrack,
   removeFeedReaction,
 } from '../../services/supabase/clubs';
 import { useAuthStore } from '../../stores/authStore';
 import { useClubStore } from '../../stores/clubStore';
 import { useProjectStore } from '../../stores/projectStore';
 import type { Challenge, ClubFeedItem, ClubMember } from '../../types/supabase';
-import { borderRadius, colors, fonts, spacing } from '../../utils/constants';
+import { borderRadius, colors, creamAlpha, fonts, spacing } from '../../utils/constants';
 import { extractCoverPalette, inkBandOf, type CoverPalette } from '../../utils/coverPalette';
 import { feel } from '../../utils/feel';
 import { oops } from '../../utils/notice';
 import { resolvePhotoSource } from '../../utils/profilePhoto';
 
 const ROUND = 56;
+const TRACK_AVATAR = 28;
+
+/** « 9 déc. » */
+const shortDate = (iso: string) => new Date(iso).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
 
 /** « J-12 » avant la fin de la lecture, rien sans date */
 function countdown(end: string | null): string | null {
@@ -93,13 +99,19 @@ export default function ClubsTab() {
   const [readings, setReadings] = useState<Challenge[]>([]);
   const [feed, setFeed] = useState<ClubFeedItem[]>([]);
   const [notes, setNotes] = useState<Record<string, AnnotationWithAuthor>>({});
+  const [track, setTrack] = useState<Awaited<ReturnType<typeof getClubReadingTrack>>>([]);
   const [loadedFor, setLoadedFor] = useState<string | null>(null);
 
   const load = useCallback(async (id: string) => {
     try {
       const [m, r, f] = await Promise.all([getClubMembers(id), getClubChallenges(id), getClubFeed(id)]);
       const open = f.filter((i) => i.kind === 'note' && !i.locked && i.annotation_id).map((i) => i.annotation_id!);
-      const list = await getAnnotationsByIds(open);
+      const reading = r.find((c) => c.status !== 'completed');
+      const [list, t] = await Promise.all([
+        getAnnotationsByIds(open),
+        reading ? getClubReadingTrack(reading.id) : Promise.resolve([]),
+      ]);
+      setTrack(t);
       setMembers(m);
       setReadings(r);
       setFeed(f);
@@ -200,7 +212,6 @@ export default function ClubsTab() {
   };
 
 
-  const myPagesFor = (challengeId: string) => readings.find((c) => c.id === challengeId)?.total_pages ?? 0;
 
   return (
     <PageTransition>
@@ -302,39 +313,77 @@ export default function ClubsTab() {
               )}
             </View>
 
-            {/* ── La lecture en cours : un bandeau à la couleur du livre ── */}
+            {/* ── La lecture en cours, en grand, à la couleur du livre ── */}
             {current && (
               <PressableScale
-                style={styles.band}
+                style={styles.reading}
                 pressedScale={mineCurrent ? 0.98 : 1}
                 onPress={mineCurrent ? openCurrent : undefined}
                 accessibilityRole={mineCurrent ? 'button' : undefined}
-                accessibilityLabel={`${current.book_title}, club à ${Math.round(current.average_progress_percentage ?? 0)} %`}
+                accessibilityLabel={`On lit ${current.book_title}, club à ${Math.round(current.average_progress_percentage ?? 0)} %`}
                 accessibilityHint={mineCurrent ? 'Le met sur l’accueil' : undefined}
               >
                 <LinearGradient colors={band} style={StyleSheet.absoluteFill} />
-                {current.cover_url ? (
-                  <CoverImage uri={current.cover_url} style={styles.bandCover} />
-                ) : (
-                  <View style={styles.bandCover} />
-                )}
-                <View style={styles.bandText}>
-                  <Text style={styles.bandTitle} numberOfLines={2}>
-                    {current.book_title}
-                  </Text>
-                  <Text style={styles.bandMeta} numberOfLines={1}>
-                    club à {Math.round(current.average_progress_percentage ?? 0)} %
-                    {countdown(current.target_end_date) ? ` · ${countdown(current.target_end_date)}` : ''}
-                  </Text>
-                  {/* Le bouton sous le titre : à côté, il le coupait */}
-                  {!mineCurrent && (
-                    <View style={styles.bandCta}>
-                      <Button3D variant="secondary" size="small" onPress={openCurrent}>
-                        Rejoindre la lecture
-                      </Button3D>
+                <View style={styles.readingTop}>
+                  {current.cover_url ? (
+                    <CoverImage uri={current.cover_url} style={styles.readingCover} />
+                  ) : (
+                    <View style={styles.readingCover} />
+                  )}
+                  <View style={styles.readingText}>
+                    <Text style={styles.onLit}>On lit</Text>
+                    <Text style={styles.readingTitle} numberOfLines={3}>
+                      {current.book_title}
+                    </Text>
+                    {current.book_author && (
+                      <Text style={styles.readingAuthor} numberOfLines={1}>
+                        {current.book_author}
+                      </Text>
+                    )}
+                    <View style={styles.spacer} />
+                    {current.target_end_date && (
+                      <View style={styles.meet}>
+                        <MapPinIcon size={15} color={colors.white} strokeWidth={2.2} />
+                        <Text style={styles.readingMeta}>Rencontre {shortDate(current.target_end_date)}</Text>
+                      </View>
+                    )}
+                  </View>
+                </View>
+
+                {/* La piste : chaque lecteur à son %, cousu jusqu'à la moyenne du club */}
+                {track.length > 0 && (
+                  <View style={styles.track}>
+                    <StitchLine color={creamAlpha(0.45)} style={styles.trackLine} />
+                    <View style={[styles.trackDone, { width: `${Math.min(100, current.average_progress_percentage ?? 0)}%` }]}>
+                      <StitchLine color={colors.white} />
                     </View>
+                    {track.map((p, i) => (
+                      <Image
+                        key={p.user_id}
+                        source={resolvePhotoSource(p.profile_photo_url)}
+                        style={[
+                          styles.trackAvatar,
+                          { left: `${Math.min(100, p.percent)}%`, top: i % 2 === 0 ? 0 : TRACK_AVATAR + 2 },
+                        ]}
+                        accessibilityLabel={`${p.first_name ?? ''} à ${Math.round(p.percent)} %`}
+                      />
+                    ))}
+                  </View>
+                )}
+                <View style={styles.trackLegend}>
+                  <Text style={styles.readingMeta}>Club à {Math.round(current.average_progress_percentage ?? 0)} %</Text>
+                  {countdown(current.target_end_date) && (
+                    <Text style={styles.readingMeta}>{countdown(current.target_end_date)}</Text>
                   )}
                 </View>
+
+                {!mineCurrent && (
+                  <View style={styles.readingCta}>
+                    <Button3D variant="secondary" onPress={openCurrent}>
+                      Rejoindre la lecture
+                    </Button3D>
+                  </View>
+                )}
               </PressableScale>
             )}
 
@@ -349,7 +398,6 @@ export default function ClubsTab() {
                   notes={notes}
                   myUserId={userId}
                   currentChallengeId={current?.id ?? null}
-                  myPagesFor={myPagesFor}
                   onToggleNoteReaction={toggleNoteReaction}
                   onToggleReaction={toggleReaction}
                 />
@@ -482,40 +530,89 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: colors.textTertiary,
   },
-  band: {
+  reading: {
     marginTop: spacing.xl,
-    borderRadius: borderRadius.lg,
+    borderRadius: borderRadius.xl,
     overflow: 'hidden',
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.lg,
-    paddingVertical: spacing.lg,
-    paddingLeft: spacing.lg,
-    paddingRight: spacing.md,
+    padding: spacing.xl,
   },
-  bandCover: {
-    width: 56,
-    height: 84,
+  readingTop: {
+    flexDirection: 'row',
+    gap: spacing.lg,
+  },
+  readingCover: {
+    width: 104,
+    height: 156,
     borderRadius: borderRadius.xs,
   },
-  bandText: {
+  readingText: {
     flex: 1,
     minWidth: 0,
-    gap: 3,
+    gap: spacing.xs,
   },
-  bandTitle: {
-    fontFamily: fonts.display,
-    fontSize: 15,
-    color: colors.white,
-  },
-  bandCta: {
-    alignSelf: 'flex-start',
-    marginTop: spacing.sm,
-  },
-  bandMeta: {
+  onLit: {
     fontFamily: fonts.bodySemiBold,
     fontSize: 13,
     color: colors.white,
+  },
+  readingTitle: {
+    fontFamily: fonts.display,
+    fontSize: 20,
+    lineHeight: 24,
+    color: colors.white,
+  },
+  readingAuthor: {
+    fontFamily: fonts.bodySemiBold,
+    fontSize: 14,
+    color: colors.white,
+  },
+  spacer: {
+    flex: 1,
+  },
+  meet: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  readingMeta: {
+    fontFamily: fonts.bodySemiBold,
+    fontSize: 13,
+    color: colors.white,
+  },
+  // Les ronds se posent sur le fil, un sur deux au-dessus et en dessous
+  track: {
+    height: TRACK_AVATAR * 2 + 2,
+    marginTop: spacing.lg,
+    marginHorizontal: TRACK_AVATAR / 2,
+  },
+  trackLine: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: TRACK_AVATAR,
+  },
+  trackDone: {
+    position: 'absolute',
+    left: 0,
+    top: TRACK_AVATAR,
+    overflow: 'hidden',
+  },
+  trackAvatar: {
+    position: 'absolute',
+    width: TRACK_AVATAR,
+    height: TRACK_AVATAR,
+    borderRadius: TRACK_AVATAR / 2,
+    marginLeft: -TRACK_AVATAR / 2,
+    borderWidth: 2,
+    borderColor: creamAlpha(0.9),
+  },
+  trackLegend: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: spacing.xs,
+  },
+  readingCta: {
+    marginTop: spacing.lg,
   },
   h2: {
     fontFamily: fonts.display,
