@@ -112,7 +112,8 @@ function FeedRow({
   note?: AnnotationWithAuthor;
 } & Omit<ClubFeedProps, 'items' | 'notes'>) {
   const name = item.first_name ?? 'Quelqu’un';
-  const otherBook = item.challenge_id !== currentChallengeId ? item.book_title : null;
+  // Un autre livre que celui en cours : son titre entre guillemets (« de « Les Sœurs Blue » », jamais « de Les »)
+  const otherBook = item.challenge_id !== currentChallengeId && item.book_title ? `« ${item.book_title} »` : null;
   const ofBook = otherBook ? ` de ${otherBook}` : '';
 
   /** La phrase de la ligne : le prénom en gras, puis ce qui s'est passé */

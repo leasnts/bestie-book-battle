@@ -355,6 +355,7 @@ function RootLayoutNav() {
       <Stack.Screen name="club-edit" options={sheetScreenOptions()} />
       <Stack.Screen name="club-invite" options={sheetScreenOptions()} />
       <Stack.Screen name="club-pick" options={sheetScreenOptions()} />
+      <Stack.Screen name="club-feed" options={sheetScreenOptions([0.95])} />
       <Stack.Screen name="club-code" options={sheetScreenOptions()} />
       <Stack.Screen name="club-join/[code]" options={sheetScreenOptions()} />
 
