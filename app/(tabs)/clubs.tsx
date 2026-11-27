@@ -22,7 +22,7 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { ChevronDownIcon, ChevronRightIcon, UserPlusIcon } from 'lucide-react-native';
 import React, { useCallback, useMemo, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Button3D from '../../components/Button3D';
 import BookClubEmpty from '../../components/club/BookClubEmpty';
@@ -51,6 +51,7 @@ export default function ClubsTab() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const tabBarInset = useTabBarInset();
+  const { height } = useWindowDimensions();
   // L'onglet affiché : la barre d'état claire ne vaut que pour lui
   const [focused, setFocused] = useState(false);
   useFocusEffect(
@@ -134,7 +135,8 @@ export default function ClubsTab() {
         showsVerticalScrollIndicator={false}
       >
         {!club ? (
-          <View style={{ paddingTop: insets.top + spacing.lg }}>
+          // Au milieu de l'écran, entre la barre d'état et la barre d'onglets
+          <View style={[styles.emptyWrap, { minHeight: height - tabBarInset, paddingTop: insets.top }]}>
             <BookClubEmpty onCreate={() => router.push('/club-edit')} onJoin={() => router.push('/club-code')} />
           </View>
         ) : (
@@ -269,6 +271,9 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingHorizontal: spacing.lg,
+  },
+  emptyWrap: {
+    justifyContent: 'center',
   },
   banner: {
     marginHorizontal: -spacing.lg,
