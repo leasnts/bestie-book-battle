@@ -18,7 +18,8 @@
 import { Image } from 'expo-image';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { ChevronRightIcon, PlusIcon, UserPlusIcon } from 'lucide-react-native';
-import React, { useCallback, useMemo, useState } from 'react';
+import { LinearGradient } from 'expo-linear-gradient';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActionSheetIOS, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Button3D from '../../components/Button3D';
@@ -27,7 +28,6 @@ import PageTransition from '../../components/PageTransition';
 import { CoverImage } from '../../components/ui/BookCover';
 import ClubAvatar from '../../components/ui/ClubAvatar';
 import GlassButton from '../../components/ui/GlassButton';
-import GlassSection from '../../components/ui/GlassSection';
 import { useTabBarInset } from '../../components/ui/GlassTabBar';
 import PressableScale from '../../components/ui/PressableScale';
 import {
@@ -48,6 +48,7 @@ import { useClubStore } from '../../stores/clubStore';
 import { useProjectStore } from '../../stores/projectStore';
 import type { Challenge, ClubFeedItem, ClubMember } from '../../types/supabase';
 import { borderRadius, colors, fonts, spacing } from '../../utils/constants';
+import { extractCoverPalette, inkBandOf, type CoverPalette } from '../../utils/coverPalette';
 import { feel } from '../../utils/feel';
 import { oops } from '../../utils/notice';
 import { resolvePhotoSource } from '../../utils/profilePhoto';
@@ -122,6 +123,19 @@ export default function ClubsTab() {
   const current = ready ? readings.find((c) => c.status !== 'completed') ?? null : null;
   const past = ready ? readings.filter((c) => c.status === 'completed') : [];
   const mineCurrent = current ? myChallenges.find((c) => c.id === current.id) ?? null : null;
+
+  // La couleur du livre en cours : sa palette, ou tirée de sa couverture si
+  // personne ne l'a encore calculée
+  const [extracted, setExtracted] = useState<{ url: string; palette: CoverPalette } | null>(null);
+  const coverUrl = current?.cover_url ?? null;
+  const stored = (current?.cover_palette as CoverPalette | null | undefined) ?? null;
+  useEffect(() => {
+    if (stored?.length || !coverUrl || extracted?.url === coverUrl) return;
+    extractCoverPalette(coverUrl)
+      .then((palette) => setExtracted({ url: coverUrl, palette }))
+      .catch(() => {});
+  }, [coverUrl, stored, extracted?.url]);
+  const band = inkBandOf(stored?.length ? stored : extracted?.url === coverUrl ? extracted.palette : null);
 
   const pickClub = (id: string) => {
     if (id === clubId) return;
@@ -288,38 +302,40 @@ export default function ClubsTab() {
               )}
             </View>
 
-            {/* ── La lecture en cours ── */}
+            {/* ── La lecture en cours : un bandeau à la couleur du livre ── */}
             {current && (
-              <GlassSection
-                paper
+              <PressableScale
+                style={styles.band}
+                pressedScale={mineCurrent ? 0.98 : 1}
                 onPress={mineCurrent ? openCurrent : undefined}
-                accessibilityLabel={mineCurrent ? `${current.book_title}, sur l'accueil` : undefined}
-                style={styles.section}
+                accessibilityRole={mineCurrent ? 'button' : undefined}
+                accessibilityLabel={`${current.book_title}, club à ${Math.round(current.average_progress_percentage ?? 0)} %`}
+                accessibilityHint={mineCurrent ? 'Le met sur l’accueil' : undefined}
               >
-                <View style={styles.current}>
-                  {current.cover_url ? (
-                    <CoverImage uri={current.cover_url} style={styles.currentCover} />
-                  ) : (
-                    <View style={styles.currentCover} />
-                  )}
-                  <View style={styles.currentText}>
-                    <Text style={styles.bookTitle} numberOfLines={2}>
-                      {current.book_title}
-                    </Text>
-                    <Text style={styles.metaText}>
-                      club à {Math.round(current.average_progress_percentage ?? 0)} %
-                      {countdown(current.target_end_date) ? ` · ${countdown(current.target_end_date)}` : ''}
-                    </Text>
-                  </View>
-                </View>
-                {!mineCurrent && (
-                  <View style={styles.joinCta}>
-                    <Button3D variant="primary" onPress={openCurrent}>
-                      Rejoindre la lecture
-                    </Button3D>
-                  </View>
+                <LinearGradient colors={band} style={StyleSheet.absoluteFill} />
+                {current.cover_url ? (
+                  <CoverImage uri={current.cover_url} style={styles.bandCover} />
+                ) : (
+                  <View style={styles.bandCover} />
                 )}
-              </GlassSection>
+                <View style={styles.bandText}>
+                  <Text style={styles.bandTitle} numberOfLines={2}>
+                    {current.book_title}
+                  </Text>
+                  <Text style={styles.bandMeta} numberOfLines={1}>
+                    club à {Math.round(current.average_progress_percentage ?? 0)} %
+                    {countdown(current.target_end_date) ? ` · ${countdown(current.target_end_date)}` : ''}
+                  </Text>
+                  {/* Le bouton sous le titre : à côté, il le coupait */}
+                  {!mineCurrent && (
+                    <View style={styles.bandCta}>
+                      <Button3D variant="secondary" size="small" onPress={openCurrent}>
+                        Rejoindre la lecture
+                      </Button3D>
+                    </View>
+                  )}
+                </View>
+              </PressableScale>
             )}
 
             {/* ── Ça bouge ── */}
@@ -466,31 +482,40 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: colors.textTertiary,
   },
-  section: {
+  band: {
     marginTop: spacing.xl,
-  },
-  current: {
+    borderRadius: borderRadius.lg,
+    overflow: 'hidden',
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.md,
+    gap: spacing.lg,
+    paddingVertical: spacing.lg,
+    paddingLeft: spacing.lg,
+    paddingRight: spacing.md,
   },
-  currentCover: {
-    width: 48,
-    height: 72,
+  bandCover: {
+    width: 56,
+    height: 84,
     borderRadius: borderRadius.xs,
   },
-  currentText: {
+  bandText: {
     flex: 1,
     minWidth: 0,
-    gap: spacing.xs,
+    gap: 3,
   },
-  bookTitle: {
-    fontFamily: fonts.bodyBold,
-    fontSize: 17,
-    color: colors.textPrimary,
+  bandTitle: {
+    fontFamily: fonts.display,
+    fontSize: 15,
+    color: colors.white,
   },
-  joinCta: {
-    marginTop: spacing.lg,
+  bandCta: {
+    alignSelf: 'flex-start',
+    marginTop: spacing.sm,
+  },
+  bandMeta: {
+    fontFamily: fonts.bodySemiBold,
+    fontSize: 13,
+    color: colors.white,
   },
   h2: {
     fontFamily: fonts.display,

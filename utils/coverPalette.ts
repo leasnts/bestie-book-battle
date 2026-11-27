@@ -174,3 +174,23 @@ function contrast(a: RGB, b: RGB) {
   const [light, dark] = [luminance(a), luminance(b)].sort((x, y) => y - x);
   return (light + 0.05) / (dark + 0.05);
 }
+
+// ─── Un bandeau à la couleur du livre ──────────────────────────────────────────
+
+/** Le texte crème posé sur le bandeau */
+const BAND_TEXT: RGB = [255, 255, 255];
+const BAND_CONTRAST = 4.5;
+
+/**
+ * Le dégradé d'un bandeau à la couleur d'une couverture, texte blanc dessus
+ * (le livre en cours du club) : la teinte dominante, assombrie jusqu'à ce que le
+ * blanc tienne 4,5:1 même en haut, le plus clair. Clair en haut → foncé en bas,
+ * jamais d'aplat (DESIGN.md).
+ */
+export function inkBandOf(palette: CoverPalette | null | undefined): [string, string] {
+  const base = hexToRgb((palette && palette[0]) || FALLBACK_PALETTE[1]);
+  const shade = (rgb: RGB, k: number) => rgb.map((v) => v * k) as RGB;
+  let k = 1;
+  while (contrast(BAND_TEXT, shade(base, k)) < BAND_CONTRAST && k > 0.2) k -= 0.04;
+  return [toHex(shade(base, k)), toHex(shade(base, k * 0.72))];
+}

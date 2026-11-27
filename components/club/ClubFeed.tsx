@@ -3,10 +3,11 @@
  *
  *   [note]        l'autocollant de la note, comme dans le carnet (une note =
  *                 NoteSticker partout)
- *   [verrouillée] (🔒 307) Chloé a écrit une note     la page est sur l'autocollant
- *   [cap]         [50 %] Lucas est à la moitié          tampon d'encre
- *   [fini]        [Fini] Chloé a fini le livre
- *   [arrivée]     (T) Théo arrive dans le club
+ *   [verrouillée] (E) Emma · p. 268                    le texte flou est dessiné :
+ *                 ░░░ 🔒 Rendez-vous p. 268 ░░░        la base ne l'envoie jamais
+ *   [cap]         (50 %) Lucas est à la moitié          disque rouge de travers
+ *   [fini]        (Fini) Chloé a fini le livre          disque chocolat
+ *   [arrivée]     (T) Théo arrive dans le club  [👋 Coucou]
  *   [club]        [couv.] Le club a fini Les heures fragiles
  *
  * On réagit à tout avec un emoji (le tampon des notes) ; pas de message libre,
@@ -14,19 +15,23 @@
  */
 
 import { Image } from 'expo-image';
+import { LinearGradient } from 'expo-linear-gradient';
+import { LockIcon } from 'lucide-react-native';
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import type { AnnotationWithAuthor } from '../../services/supabase/annotations';
 import type { ClubFeedItem } from '../../types/supabase';
-import { colors, fonts, spacing } from '../../utils/constants';
+import { colors, creamAlpha, fonts, inkAlpha, lowki, spacing } from '../../utils/constants';
+import Button3D from '../Button3D';
 import { resolvePhotoSource } from '../../utils/profilePhoto';
 import { CoverImage } from '../ui/BookCover';
 import GlassSection from '../ui/GlassSection';
-import NoteCard, { LockedNoteCard, NoteReactions } from '../ui/NoteCard';
-import { InkStamp } from '../ui/Stamp';
+import NoteCard, { NoteReactions } from '../ui/NoteCard';
 
 const AVATAR = 36;
-const STAMP_BOX = 72;
+const DISC = 64;
+/** Le coucou à quelqu'un qui arrive */
+const WAVE = '👋';
 
 /** « 2 h », « hier », « 3 j », « 25 oct. » : l'âge d'un post, court */
 export function feedAge(iso: string, now: Date = new Date()): string {
@@ -103,17 +108,30 @@ export default function ClubFeed({
         const otherBook = item.challenge_id !== currentChallengeId ? item.book_title : null;
 
         // ── Une note plus loin que ma page : qui et où, jamais le texte ──
+        // (la base ne l'envoie pas : les lignes floues sont dessinées)
         if (item.kind === 'note') {
           return (
             <GlassSection key={key} paper compact>
-              <View style={styles.row}>
-                <LockedNoteCard name={name} photo={item.profile_photo_url} page={item.page ?? 0} />
+              <View style={styles.head}>
+                <Image source={resolvePhotoSource(item.profile_photo_url)} style={styles.avatar} />
                 <View style={styles.text}>
-                  <Text style={styles.line}>
-                    <Text style={styles.name}>{name}</Text> a écrit une note
-                    {otherBook ? ` sur ${otherBook}` : ''}
+                  <Text style={styles.name} numberOfLines={1}>
+                    {name}
                   </Text>
-                  <Text style={styles.meta}>{age}</Text>
+                  <Text style={styles.meta} numberOfLines={1}>
+                    p. {item.page}
+                    {otherBook ? ` de ${otherBook}` : ''} · {age}
+                  </Text>
+                </View>
+              </View>
+              <View style={styles.hidden} accessible accessibilityLabel={`Note verrouillée, rendez-vous page ${item.page}`}>
+                <View style={[styles.hiddenLine, { width: '92%' }]} />
+                <View style={[styles.hiddenLine, { width: '64%' }]} />
+                <View style={styles.hiddenOver}>
+                  <View style={styles.hiddenPill}>
+                    <LockIcon size={15} color={colors.textPrimary} strokeWidth={2.4} />
+                    <Text style={styles.hiddenText}>Rendez-vous p. {item.page}</Text>
+                  </View>
                 </View>
               </View>
             </GlassSection>
@@ -126,9 +144,12 @@ export default function ClubFeed({
           return (
             <GlassSection key={key} paper compact>
               <View style={styles.row}>
-                <View style={styles.stampBox}>
-                  <InkStamp label={done ? 'Fini' : `${item.cap} %`} delay={0} angle={done ? 8 : -10} small />
-                </View>
+                <LinearGradient
+                  colors={done ? [lowki.chocolate.light, lowki.chocolate.dark] : [lowki.red.light, lowki.red.dark]}
+                  style={[styles.disc, { transform: [{ rotate: done ? '6deg' : '-8deg' }] }]}
+                >
+                  <Text style={[styles.discText, done && styles.discTextDone]}>{done ? 'Fini' : `${item.cap} %`}</Text>
+                </LinearGradient>
                 <View style={styles.text}>
                   <Text style={styles.line}>
                     <Text style={styles.name}>{name}</Text>{' '}
@@ -154,7 +175,16 @@ export default function ClubFeed({
                     <Text style={styles.name}>{name}</Text> arrive dans le club
                   </Text>
                   <Text style={styles.meta}>{age}</Text>
-                  {reactions}
+                  {(item.reactions?.length ?? 0) > 0 && reactions}
+                  {/* Sous le texte : à côté, « club » partait seul à la ligne */}
+                  {item.user_id !== myUserId &&
+                    !(item.reactions ?? []).some((r) => r.user_id === myUserId && r.emoji === WAVE) && (
+                      <View style={styles.wave}>
+                        <Button3D variant="secondary" size="small" onPress={() => onToggleReaction(item, WAVE)}>
+                          {`${WAVE} Coucou`}
+                        </Button3D>
+                      </View>
+                    )}
                 </View>
               </View>
             </GlassSection>
@@ -214,11 +244,66 @@ const styles = StyleSheet.create({
     height: AVATAR,
     borderRadius: AVATAR / 2,
   },
-  stampBox: {
-    width: STAMP_BOX,
-    height: 56,
+  head: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+  },
+  hidden: {
+    marginTop: spacing.md,
+    gap: spacing.sm,
+    paddingVertical: spacing.xs,
+  },
+  hiddenLine: {
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: inkAlpha(0.1),
+  },
+  hiddenOver: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  // Une étiquette de papier posée sur les lignes floues
+  hiddenPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 6,
+    borderRadius: 16,
+    backgroundColor: creamAlpha(0.95),
+    borderWidth: 1,
+    borderColor: inkAlpha(0.08),
+  },
+  hiddenText: {
+    fontFamily: fonts.bodyBold,
+    fontSize: 14,
+    color: colors.textPrimary,
+  },
+  wave: {
+    alignSelf: 'flex-start',
+    marginTop: spacing.sm,
+  },
+  disc: {
+    width: DISC,
+    height: DISC,
+    borderRadius: DISC / 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  discText: {
+    fontFamily: fonts.display,
+    fontSize: 16,
+    color: creamAlpha(1),
+  },
+  discTextDone: {
+    color: lowki.butter.light,
   },
   cover: {
     width: 40,
