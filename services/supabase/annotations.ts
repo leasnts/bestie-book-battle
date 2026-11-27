@@ -44,6 +44,14 @@ const WITH_AUTHOR = `
   reactions:annotation_reactions (annotation_id, user_id, emoji, created_at)
 `;
 
+/** Des notes précises (le fil du club) : seulement celles que j'ai le droit de lire */
+export async function getAnnotationsByIds(ids: string[]): Promise<AnnotationWithAuthor[]> {
+  if (ids.length === 0) return [];
+  const { data, error } = await supabase.from('annotations').select(WITH_AUTHOR).in('id', ids);
+  if (error) throw error;
+  return (data ?? []) as unknown as AnnotationWithAuthor[];
+}
+
 /** Les notes que j'ai le droit de lire, dans l'ordre du livre */
 export async function getAnnotations(challengeId: string): Promise<AnnotationWithAuthor[]> {
   const { data, error } = await supabase

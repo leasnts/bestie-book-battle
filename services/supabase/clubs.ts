@@ -11,7 +11,7 @@ import * as FileSystem from 'expo-file-system/legacy';
 import * as ImageManipulator from 'expo-image-manipulator';
 import { decode } from 'base64-arraybuffer';
 import { supabase } from '../../supabaseConfig';
-import type { Challenge, Club, ClubMember, ClubPreview } from '../../types/supabase';
+import type { Challenge, Club, ClubFeedItem, ClubMember, ClubPreview } from '../../types/supabase';
 
 const BUCKET = 'club-photos';
 
@@ -157,4 +157,45 @@ export async function makeClubAdmin(clubId: string, userId: string): Promise<voi
 export async function deleteClub(clubId: string): Promise<void> {
   const { error } = await supabase.from('clubs').delete().eq('id', clubId);
   if (error) throw error;
+}
+
+// ─── Le fil du club (#246) ──────────────────────────────────────────
+
+/**
+ * Les actus du club, la plus récente d'abord : notes, caps (25/50/75 %), livre
+ * fini, arrivées, lectures finies. Une note verrouillée ne dit que qui et à
+ * quelle page (scripts/add-club-feed.sql).
+ */
+export async function getClubFeed(clubId: string, limit = 40): Promise<ClubFeedItem[]> {
+  const { data, error } = await supabase.rpc('get_club_feed', { p_club_id: clubId, p_limit: limit });
+  if (error) throw error;
+  return (data ?? []) as ClubFeedItem[];
+}
+
+/** Réagir à un post qui n'est pas une note */
+export async function addFeedReaction(clubId: string, eventKey: string, userId: string, emoji: string) {
+  const { error } = await supabase
+    .from('club_feed_reactions')
+    .insert({ club_id: clubId, event_key: eventKey, user_id: userId, emoji });
+  if (error) throw error;
+}
+
+export async function removeFeedReaction(clubId: string, eventKey: string, userId: string, emoji: string) {
+  const { error } = await supabase
+    .from('club_feed_reactions')
+    .delete()
+    .eq('club_id', clubId)
+    .eq('event_key', eventKey)
+    .eq('user_id', userId)
+    .eq('emoji', emoji);
+  if (error) throw error;
+}
+
+/** La piste de la lecture en cours : chaque lecteur et son %, le plus avancé d'abord */
+export async function getClubReadingTrack(
+  challengeId: string,
+): Promise<{ user_id: string; first_name: string | null; profile_photo_url: string | null; percent: number }[]> {
+  const { data, error } = await supabase.rpc('get_club_reading_track', { p_challenge_id: challengeId });
+  if (error) throw error;
+  return ((data ?? []) as any[]).map((r) => ({ ...r, percent: Number(r.percent) || 0 }));
 }

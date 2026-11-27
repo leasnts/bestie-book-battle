@@ -326,7 +326,8 @@ export function NoteReactions({
   onPickingChange,
   tile = false,
 }: {
-  note: AnnotationWithAuthor;
+  /** Une note, ou tout post qui porte des réactions (le fil du club) */
+  note: { reactions: { user_id: string; emoji: string }[] };
   myUserId?: string;
   onToggle?: (emoji: string) => void;
   onMore?: () => void;
@@ -398,7 +399,7 @@ export function NoteReactions({
   if (tile && !canReact) return null;
   /** Des gélules : l'arrondi du verre suit la hauteur de la pastille */
   const pillRadius = (quick ? 44 : inside || tile ? 28 : 30) / 2;
-  const showMore = canReact && !tile && (quick || picking);
+  const showMore = canReact && !tile && !!onMore && (quick || picking);
   const showToggle = canReact && !quick;
 
   // Une seule ligne : ce qui tient, après la place des boutons de fin
