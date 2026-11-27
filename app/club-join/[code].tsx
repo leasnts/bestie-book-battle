@@ -9,7 +9,7 @@
  *   5 membres · Fourth Wing
  *   [ Rejoindre ]          club « sur demande » : « Demander à rejoindre »
  *
- * Club ouvert : on entre, puis « Je lis aussi » propose la lecture en cours
+ * Club ouvert : on entre, puis « Rejoindre la lecture » propose la lecture en cours
  * (le parcours court de l'onboarding). Sur demande : « Demande envoyée ».
  * Déjà membre : le bouton ouvre la page du club. Pas encore connecté·e :
  * l'onboarding d'abord (le lien se rouvre ensuite).
@@ -39,7 +39,7 @@ export default function ClubJoinRoute() {
   const [club, setClub] = useState<ClubPreview | null | undefined>(undefined);
   const [status, setStatus] = useState<'active' | 'pending' | null>(null);
   const [busy, setBusy] = useState(false);
-  // La lecture en cours du club, si je ne la lis pas encore (« Je lis aussi »)
+  // La lecture en cours du club, si je ne la lis pas encore (« Rejoindre la lecture »)
   const myChallenges = useProjectStore((s) => s.challenges);
   const [toRead, setToRead] = useState<Challenge | null>(null);
 
@@ -119,7 +119,7 @@ export default function ClubJoinRoute() {
           <>
             {toRead && (
               <Button3D variant="primary" onPress={readToo}>
-                Je lis aussi
+                Rejoindre la lecture
               </Button3D>
             )}
             <Button3D variant={toRead ? 'secondary' : 'primary'} onPress={() => router.replace(`/club?id=${club.id}`)}>

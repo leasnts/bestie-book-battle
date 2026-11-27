@@ -6,8 +6,9 @@
  *   (L)                                   le gros rond du club la chevauche
  *   Les Liseuses ⇅                        ⇅ : changer de club (si plusieurs)
  *   (◐◐◐) 5 membres · 3 lectures
- *   [ Inviter ]  [ Je lis aussi ]         « Je lis aussi » : si je ne lis pas
- *   Lecture   Étagère   Membres           encore la lecture en cours
+ *   [ Rejoindre la lecture ]              si je ne lis pas encore la lecture en cours
+ *   [ Inviter ]
+ *   Lecture   Étagère   Membres
  *
  * - Lecture : la lecture en cours du club ; la toucher la met sur l'accueil.
  * - Étagère : ses lectures passées, en grille, avec leur mois.
@@ -281,20 +282,26 @@ export default function ClubRoute() {
             </Text>
           </View>
 
-          <View style={styles.ctas}>
-            <View style={styles.cta}>
-              <Button3D variant="primary" onPress={() => router.push(`/club-invite?id=${id}`)}>
+          {/* « Rejoindre la lecture » est trop long pour une moitié de rangée :
+              s'il est là, il passe devant, en entier, et Inviter dessous */}
+          {current && !mineCurrent ? (
+            <View style={styles.ctasColumn}>
+              <Button3D variant="primary" onPress={() => router.push(`/join/${current.invite_code}`)}>
+                Rejoindre la lecture
+              </Button3D>
+              <Button3D variant="secondary" onPress={() => router.push(`/club-invite?id=${id}`)}>
                 Inviter
               </Button3D>
             </View>
-            {current && !mineCurrent && (
+          ) : (
+            <View style={styles.ctas}>
               <View style={styles.cta}>
-                <Button3D variant="secondary" onPress={() => router.push(`/join/${current.invite_code}`)}>
-                  Je lis aussi
+                <Button3D variant="primary" onPress={() => router.push(`/club-invite?id=${id}`)}>
+                  Inviter
                 </Button3D>
               </View>
-            )}
-          </View>
+            </View>
+          )}
 
           {/* ── Onglets ── */}
           <View style={styles.tabs} accessibilityRole="tablist">
@@ -519,6 +526,10 @@ const styles = StyleSheet.create({
   },
   cta: {
     flex: 1,
+  },
+  ctasColumn: {
+    gap: spacing.sm,
+    marginTop: spacing.lg,
   },
   tabs: {
     flexDirection: 'row',

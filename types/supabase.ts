@@ -463,6 +463,29 @@ export interface ClubPreview {
   my_status: 'active' | 'pending' | null;
 }
 
+/** Un post du fil du club (#246), tel que get_club_feed le donne */
+export interface ClubFeedItem {
+  kind: 'note' | 'cap' | 'finished' | 'joined' | 'club_done';
+  /** Clé stable de l'événement : ses réactions (hors notes) s'y accrochent */
+  event_key: string;
+  at: string;
+  user_id: string | null;
+  first_name: string | null;
+  profile_photo_url: string | null;
+  challenge_id: string | null;
+  book_title: string | null;
+  cover_url: string | null;
+  /** 25, 50, 75 (cap) ou 100 (finished) */
+  cap: number | null;
+  annotation_id: string | null;
+  /** La page d'une note, dans mon édition si je lis le livre */
+  page: number | null;
+  /** Une note plus loin que ma page, ou d'un livre que je ne lis pas */
+  locked: boolean;
+  /** Les réactions d'un post qui n'est pas une note (celles d'une note : la note) */
+  reactions: { user_id: string; emoji: string; created_at: string }[] | null;
+}
+
 /** Un membre d'un club, avec son profil */
 export interface ClubMember {
   club_id: string;

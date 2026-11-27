@@ -11,7 +11,7 @@ import * as FileSystem from 'expo-file-system/legacy';
 import * as ImageManipulator from 'expo-image-manipulator';
 import { decode } from 'base64-arraybuffer';
 import { supabase } from '../../supabaseConfig';
-import type { Challenge, Club, ClubMember, ClubPreview } from '../../types/supabase';
+import type { Challenge, Club, ClubFeedItem, ClubMember, ClubPreview } from '../../types/supabase';
 
 const BUCKET = 'club-photos';
 
@@ -156,5 +156,37 @@ export async function makeClubAdmin(clubId: string, userId: string): Promise<voi
 /** Supprimer le club (admins) : ses lectures restent, hors club */
 export async function deleteClub(clubId: string): Promise<void> {
   const { error } = await supabase.from('clubs').delete().eq('id', clubId);
+  if (error) throw error;
+}
+
+// ─── Le fil du club (#246) ──────────────────────────────────────────
+
+/**
+ * Les actus du club, la plus récente d'abord : notes, caps (25/50/75 %), livre
+ * fini, arrivées, lectures finies. Une note verrouillée ne dit que qui et à
+ * quelle page (scripts/add-club-feed.sql).
+ */
+export async function getClubFeed(clubId: string, limit = 40): Promise<ClubFeedItem[]> {
+  const { data, error } = await supabase.rpc('get_club_feed', { p_club_id: clubId, p_limit: limit });
+  if (error) throw error;
+  return (data ?? []) as ClubFeedItem[];
+}
+
+/** Réagir à un post qui n'est pas une note */
+export async function addFeedReaction(clubId: string, eventKey: string, userId: string, emoji: string) {
+  const { error } = await supabase
+    .from('club_feed_reactions')
+    .insert({ club_id: clubId, event_key: eventKey, user_id: userId, emoji });
+  if (error) throw error;
+}
+
+export async function removeFeedReaction(clubId: string, eventKey: string, userId: string, emoji: string) {
+  const { error } = await supabase
+    .from('club_feed_reactions')
+    .delete()
+    .eq('club_id', clubId)
+    .eq('event_key', eventKey)
+    .eq('user_id', userId)
+    .eq('emoji', emoji);
   if (error) throw error;
 }
