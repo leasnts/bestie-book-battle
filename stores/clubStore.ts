@@ -11,6 +11,9 @@ import type { Club } from '../types/supabase';
 
 interface ClubStore {
   clubs: Record<string, Club>;
+  /** Le book club affiché dans l'onglet Clubs (choisi dans « Mes book clubs ») */
+  selectedId: string | null;
+  selectClub: (clubId: string) => void;
   loadMyClubs: (userId: string) => Promise<void>;
   /** Après une création ou une modification */
   putClub: (club: Club) => void;
@@ -21,6 +24,8 @@ interface ClubStore {
 
 export const useClubStore = create<ClubStore>((set) => ({
   clubs: {},
+  selectedId: null,
+  selectClub: (clubId) => set({ selectedId: clubId }),
   loadMyClubs: async (userId) => {
     try {
       const list = await getMyClubs(userId);
@@ -36,5 +41,5 @@ export const useClubStore = create<ClubStore>((set) => ({
       const { [clubId]: _gone, ...rest } = state.clubs;
       return { clubs: rest };
     }),
-  reset: () => set({ clubs: {} }),
+  reset: () => set({ clubs: {}, selectedId: null }),
 }));

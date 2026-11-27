@@ -17,17 +17,20 @@
  */
 
 import { Image } from 'expo-image';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect, useRouter } from 'expo-router';
-import { ChevronRightIcon, UserPlusIcon } from 'lucide-react-native';
+import { StatusBar } from 'expo-status-bar';
+import { ChevronDownIcon, ChevronRightIcon, UserPlusIcon } from 'lucide-react-native';
 import React, { useCallback, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Button3D from '../../components/Button3D';
-import ClubCards from '../../components/club/ClubCards';
+import BookClubEmpty from '../../components/club/BookClubEmpty';
 import ClubFeed from '../../components/club/ClubFeed';
 import ClubShelf from '../../components/club/ClubShelf';
 import PageTransition from '../../components/PageTransition';
 import BookSection from '../../components/ui/BookSection';
+import ClubAvatar from '../../components/ui/ClubAvatar';
 import GlassButton from '../../components/ui/GlassButton';
 import { useTabBarInset } from '../../components/ui/GlassTabBar';
 import PressableScale from '../../components/ui/PressableScale';
@@ -37,17 +40,25 @@ import { useClubStore } from '../../stores/clubStore';
 import { useProjectStore } from '../../stores/projectStore';
 import type { Challenge, ClubMember } from '../../types/supabase';
 import { colors, fonts, spacing } from '../../utils/constants';
-import { feel } from '../../utils/feel';
-import { clubReadings } from '../../utils/clubs';
 import { resolvePhotoSource } from '../../utils/profilePhoto';
 
 /** L'onglet montre les dernières actus ; le reste est derrière « Tout voir » */
 const FEED_PREVIEW = 4;
+/** La bannière du book club, sous la barre d'état */
+const BANNER = 150;
 
 export default function ClubsTab() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const tabBarInset = useTabBarInset();
+  // L'onglet affiché : la barre d'état claire ne vaut que pour lui
+  const [focused, setFocused] = useState(false);
+  useFocusEffect(
+    useCallback(() => {
+      setFocused(true);
+      return () => setFocused(false);
+    }, []),
+  );
   const clubs = useClubStore((s) => s.clubs);
   const myChallenges = useProjectStore((s) => s.challenges);
   const activeClubId = useProjectStore((s) => s.activeChallenge?.club_id ?? null);
@@ -57,7 +68,7 @@ export default function ClubsTab() {
     () => Object.values(clubs).sort((a, b) => b.created_at.localeCompare(a.created_at)),
     [clubs],
   );
-  const [picked, setPicked] = useState<string | null>(null);
+  const picked = useClubStore((s) => s.selectedId);
   // Le club choisi ; sinon celui du livre de l'accueil ; sinon le plus récent
   const clubId =
     (picked && clubs[picked] ? picked : null) ??
@@ -98,11 +109,6 @@ export default function ClubsTab() {
   const past = ready ? readings.filter((c) => c.status === 'completed') : [];
   const mineCurrent = current ? myChallenges.find((c) => c.id === current.id) ?? null : null;
 
-  const pickClub = (id: string) => {
-    if (id === clubId) return;
-    feel('tic');
-    setPicked(id);
-  };
 
   /** Je la lis : sur l'accueil ; sinon, la rejoindre */
   const openCurrent = () => {
@@ -117,61 +123,75 @@ export default function ClubsTab() {
 
   return (
     <PageTransition>
+      {/* Sur la photo de la bannière, l'heure et la batterie en clair */}
+      {focused && club && <StatusBar style="light" />}
       <ScrollView
         style={styles.container}
         contentContainerStyle={[
           styles.content,
-          { paddingTop: insets.top + spacing.lg, paddingBottom: tabBarInset + spacing['2xl'] },
+          { paddingBottom: tabBarInset + spacing['2xl'] },
         ]}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.title} accessibilityRole="header">
-          Mes clubs
-        </Text>
-        <ClubCards
-          clubs={myClubs}
-          selectedId={clubId}
-          readingOf={(id) =>
-            (id === clubId ? current : null) ?? clubReadings(myChallenges, id).current ?? null
-          }
-          onSelect={pickClub}
-          onJoin={() => router.push('/club-code')}
-          onCreate={() => router.push('/club-edit')}
-          side={spacing.lg}
-        />
-
-        {club && (
+        {!club ? (
+          <View style={{ paddingTop: insets.top + spacing.lg }}>
+            <BookClubEmpty onCreate={() => router.push('/club-edit')} onJoin={() => router.push('/club-code')} />
+          </View>
+        ) : (
           <>
-            {/* ── Le club choisi : ses membres (→ sa page) et inviter ── */}
-            <View style={styles.header}>
-              <PressableScale
-                style={styles.identity}
-                pressedScale={0.98}
-                onPress={() => router.push(`/club?id=${club.id}`)}
-                accessibilityRole="button"
-                accessibilityLabel={`${active.length} membres`}
-                accessibilityHint="Ouvre la page du club"
-              >
-                <View style={styles.stack}>
-                  {active.slice(0, 5).map((m, i) => (
-                    <Image
-                      key={m.user_id}
-                      source={resolvePhotoSource(m.user.profile_photo_url)}
-                      style={[styles.mini, i > 0 && styles.miniOver]}
-                    />
-                  ))}
+            {/* ── La bannière du book club : sa photo, bord à bord ── */}
+            <View style={[styles.banner, { height: BANNER + insets.top }]}>
+              {club.photo_url ? (
+                <Image source={{ uri: club.photo_url }} style={StyleSheet.absoluteFill} contentFit="cover" />
+              ) : (
+                <ClubAvatar club={club} size={600} style={styles.bannerWash} />
+              )}
+              <LinearGradient colors={['rgba(46,27,22,0.15)', 'rgba(46,27,22,0.55)']} style={StyleSheet.absoluteFill} />
+              <View style={[styles.bannerBar, { top: insets.top + spacing.sm }]}>
+                <View style={styles.tag}>
+                  <Text style={styles.tagText}>Book club</Text>
                 </View>
-                <Text style={styles.metaText}>
-                  {active.length} membre{active.length > 1 ? 's' : ''}
-                </Text>
-                <ChevronRightIcon size={16} color={colors.textTertiary} strokeWidth={2.4} />
-              </PressableScale>
+                <GlassButton
+                  icon={UserPlusIcon}
+                  onPress={() => router.push(`/club-invite?id=${club.id}`)}
+                  accessibilityLabel="Inviter"
+                />
+              </View>
+            </View>
+
+            {/* ── Son nom, ⌄ pour changer ou en rejoindre un autre ; ses membres ── */}
+            <View style={styles.nameRow}>
+              <Text style={styles.clubName} numberOfLines={2} accessibilityRole="header">
+                {club.name}
+              </Text>
               <GlassButton
-                icon={UserPlusIcon}
-                onPress={() => router.push(`/club-invite?id=${club.id}`)}
-                accessibilityLabel="Inviter"
+                icon={ChevronDownIcon}
+                onPress={() => router.push(`/club-pick?current=${club.id}`)}
+                accessibilityLabel="Mes book clubs"
               />
             </View>
+            <PressableScale
+              style={styles.members}
+              pressedScale={0.98}
+              onPress={() => router.push(`/club?id=${club.id}`)}
+              accessibilityRole="button"
+              accessibilityLabel={`${active.length} membres`}
+              accessibilityHint="Ouvre la page du club"
+            >
+              <View style={styles.stack}>
+                {active.slice(0, 5).map((m, i) => (
+                  <Image
+                    key={m.user_id}
+                    source={resolvePhotoSource(m.user.profile_photo_url)}
+                    style={[styles.mini, i > 0 && styles.miniOver]}
+                  />
+                ))}
+              </View>
+              <Text style={styles.metaText}>
+                {active.length} membre{active.length > 1 ? 's' : ''}
+              </Text>
+              <ChevronRightIcon size={16} color={colors.textTertiary} strokeWidth={2.4} />
+            </PressableScale>
 
             {/* ── La lecture en cours : le cadre du livre de l'accueil ── */}
             {current && (
@@ -250,26 +270,54 @@ const styles = StyleSheet.create({
   content: {
     paddingHorizontal: spacing.lg,
   },
-  // Titre à gauche, comme partout
-  title: {
-    fontFamily: fonts.display,
-    fontSize: 24,
-    color: colors.textPrimary,
-    marginBottom: spacing.md,
+  banner: {
+    marginHorizontal: -spacing.lg,
+    overflow: 'hidden',
   },
-  header: {
+  bannerWash: {
+    position: 'absolute',
+    left: -100,
+    top: -225,
+    borderRadius: 0,
+  },
+  bannerBar: {
+    position: 'absolute',
+    left: spacing.lg,
+    right: spacing.lg,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  tag: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255,250,242,0.92)',
+  },
+  tagText: {
+    fontFamily: fonts.bodyBold,
+    fontSize: 12,
+    color: colors.textPrimary,
+  },
+  nameRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
     marginTop: spacing.lg,
   },
-  identity: {
-    flex: 1,
-    minWidth: 0,
-    minHeight: 44,
+  clubName: {
+    flexShrink: 1,
+    fontFamily: fonts.display,
+    fontSize: 26,
+    lineHeight: 30,
+    color: colors.textPrimary,
+  },
+  members: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
+    minHeight: 44,
+    alignSelf: 'flex-start',
   },
   stack: {
     flexDirection: 'row',
@@ -318,16 +366,5 @@ const styles = StyleSheet.create({
     fontFamily: fonts.bodySemiBold,
     fontSize: 14,
     color: colors.textTertiary,
-  },
-  empty: {
-    gap: spacing.md,
-    marginTop: spacing['3xl'],
-  },
-  emptyText: {
-    fontFamily: fonts.bodySemiBold,
-    fontSize: 16,
-    color: colors.textTertiary,
-    textAlign: 'center',
-    marginBottom: spacing.md,
   },
 });
