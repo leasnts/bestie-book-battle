@@ -27,25 +27,37 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Button3D from '../../components/Button3D';
 import BookClubEmpty from '../../components/club/BookClubEmpty';
 import ClubFeed from '../../components/club/ClubFeed';
+import ClubPalRow from '../../components/club/ClubPalRow';
 import ClubShelf from '../../components/club/ClubShelf';
 import PageTransition from '../../components/PageTransition';
+import { CoverImage } from '../../components/ui/BookCover';
 import BookSection from '../../components/ui/BookSection';
 import ClubAvatar from '../../components/ui/ClubAvatar';
 import GlassButton from '../../components/ui/GlassButton';
 import { useTabBarInset } from '../../components/ui/GlassTabBar';
 import PressableScale from '../../components/ui/PressableScale';
+import { StitchBorder } from '../../components/ui/Stitch';
 import { useClubFeed } from '../../hooks/useClubFeed';
+import { useClubPal } from '../../hooks/useClubPal';
 import { getClubChallenges, getClubMembers } from '../../services/supabase/clubs';
 import { useClubStore } from '../../stores/clubStore';
 import { useProjectStore } from '../../stores/projectStore';
 import type { Challenge, ClubMember } from '../../types/supabase';
-import { colors, fonts, spacing } from '../../utils/constants';
+import { colors, fonts, inkAlpha, paperFrameGradient, spacing } from '../../utils/constants';
+import { clubSchedule } from '../../utils/clubs';
 import { resolvePhotoSource } from '../../utils/profilePhoto';
 
 /** L'onglet montre les dernières actus ; le reste est derrière « Tout voir » */
 const FEED_PREVIEW = 4;
 /** La bannière du book club, sous la barre d'état */
 const BANNER = 150;
+
+/** « 10 déc. » pour un jour « 2026-12-10 » */
+function dayLabel(day: string | null): string {
+  if (!day) return '';
+  const [y, m, d] = day.split('-').map(Number);
+  return new Date(y, m - 1, d).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+}
 
 export default function ClubsTab() {
   const router = useRouter();
@@ -106,9 +118,15 @@ export default function ClubsTab() {
   // Changer de club : rien de l'autre club en attendant
   const ready = loadedFor === clubId;
   const active = ready ? members.filter((m) => m.status === 'active') : [];
-  const current = ready ? readings.find((c) => c.status !== 'completed') ?? null : null;
-  const past = ready ? readings.filter((c) => c.status === 'completed') : [];
+  const schedule = clubSchedule(ready ? readings : []);
+  const { current, next, past } = schedule;
   const mineCurrent = current ? myChallenges.find((c) => c.id === current.id) ?? null : null;
+  const isAdmin = active.some((m) => m.user_id === myUserId && m.role === 'admin');
+  // Le dernier livre fini (ou dont la date est passée) : « … c'est fait »
+  const lastDone = current && schedule.ended ? current : past[0] ?? null;
+  const { pal, toggleVote } = useClubPal(clubId);
+  const propose = () => router.push('/book-search?for=club');
+  const chooseNext = () => (pal.length > 0 ? router.push(`/club-next?id=${clubId}`) : propose());
 
 
   /** Je la lis : sur l'accueil ; sinon, la rejoindre */
@@ -216,6 +234,88 @@ export default function ClubsTab() {
               </View>
             )}
 
+            {/* ── Ensuite : le prochain livre, déjà choisi ── */}
+            {next && (
+              <PressableScale
+                style={styles.next}
+                pressedScale={0.98}
+                onPress={() => router.push(`/join/${next.invite_code}`)}
+                accessibilityRole="button"
+                accessibilityLabel={`Ensuite, ${next.book_title}, dès le ${dayLabel(next.starts_on)}`}
+                accessibilityHint="Rejoindre cette lecture"
+              >
+                <StitchBorder radius={20} inset={0} color={inkAlpha(0.3)} />
+                {next.cover_url ? <CoverImage uri={next.cover_url} style={styles.nextCover} /> : <View style={styles.nextCover} />}
+                <View style={styles.nextText}>
+                  <Text style={styles.metaText}>Ensuite</Text>
+                  <Text style={styles.nextTitle} numberOfLines={1}>
+                    {next.book_title}
+                  </Text>
+                </View>
+                <Text style={styles.metaText}>dès le {dayLabel(next.starts_on)}</Text>
+              </PressableScale>
+            )}
+
+            {/* ── Pas encore de livre : le premier ── */}
+            {ready && readings.length === 0 && (
+              <View style={styles.prompt}>
+                <Text style={styles.promptTitle}>Votre premier livre</Text>
+                <Text style={styles.metaText}>
+                  {isAdmin ? 'Choisis-le, ou laisse le club proposer et voter' : 'Propose un livre, l’admin choisira'}
+                </Text>
+                <View style={styles.promptCtas}>
+                  {isAdmin && (
+                    <View style={styles.half}>
+                      <Button3D variant="primary" onPress={chooseNext}>
+                        Choisir
+                      </Button3D>
+                    </View>
+                  )}
+                  <View style={styles.half}>
+                    <Button3D variant="secondary" onPress={propose}>
+                      Proposer
+                    </Button3D>
+                  </View>
+                </View>
+              </View>
+            )}
+
+            {/* ── Livre fini, rien d'Ensuite : et maintenant ? ── */}
+            {ready && schedule.ended && !next && lastDone && (
+              <View style={styles.prompt}>
+                <View style={styles.doneRow}>
+                  {lastDone.cover_url ? <CoverImage uri={lastDone.cover_url} style={styles.nextCover} /> : null}
+                  <Text style={styles.promptTitle} numberOfLines={2}>
+                    {lastDone.book_title}, c’est fait
+                  </Text>
+                </View>
+                {isAdmin ? (
+                  <View style={styles.promptCtas}>
+                    <View style={styles.half}>
+                      <Button3D variant="primary" onPress={chooseNext}>
+                        Et maintenant ?
+                      </Button3D>
+                    </View>
+                  </View>
+                ) : (
+                  <Text style={styles.metaText}>L’admin choisit la suite dans la PAL du club</Text>
+                )}
+              </View>
+            )}
+
+            {/* ── Seule pour l'instant : inviter ── */}
+            {ready && active.length === 1 && (
+              <View style={[styles.prompt, styles.alone]}>
+                <View style={styles.nextText}>
+                  <Text style={styles.nextTitle}>Seule pour l’instant</Text>
+                  <Text style={styles.metaText}>Envoie le code à tes potes</Text>
+                </View>
+                <Button3D variant="secondary" size="small" onPress={() => router.push(`/club-invite?id=${clubId}`)}>
+                  Inviter
+                </Button3D>
+              </View>
+            )}
+
             {/* ── Ça bouge : les dernières actus ── */}
             {ready && feed.length > 0 && (
               <>
@@ -243,6 +343,27 @@ export default function ClubsTab() {
                   onToggleNoteReaction={toggleNoteReaction}
                   onToggleReaction={toggleReaction}
                 />
+              </>
+            )}
+
+            {/* ── À lire ensuite : la PAL du club ── */}
+            {ready && (
+              <>
+                <View style={styles.sectionHead}>
+                  <Text style={styles.h2} accessibilityRole="header">
+                    À lire ensuite
+                  </Text>
+                  <PressableScale
+                    style={styles.seeAll}
+                    onPress={() => router.push(`/club-pal?id=${clubId}`)}
+                    accessibilityRole="button"
+                    accessibilityLabel="PAL du club"
+                  >
+                    <Text style={styles.seeAllText}>PAL du club</Text>
+                    <ChevronRightIcon size={16} color={colors.textTertiary} strokeWidth={2.4} />
+                  </PressableScale>
+                </View>
+                <ClubPalRow pal={pal} myUserId={myUserId} onVote={toggleVote} onPropose={propose} side={spacing.lg} />
               </>
             )}
 
@@ -347,6 +468,62 @@ const styles = StyleSheet.create({
   },
   joinCta: {
     marginTop: spacing.md,
+  },
+  next: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    marginTop: spacing.md,
+    padding: spacing.md,
+    borderRadius: 20,
+  },
+  nextCover: {
+    width: 32,
+    height: 48,
+    borderRadius: 2,
+  },
+  nextText: {
+    flex: 1,
+    minWidth: 0,
+    gap: 2,
+  },
+  nextTitle: {
+    fontFamily: fonts.bodyBold,
+    fontSize: 15,
+    color: colors.textPrimary,
+  },
+  prompt: {
+    marginTop: spacing.xl,
+    padding: spacing.lg,
+    borderRadius: 24,
+    gap: spacing.sm,
+    borderWidth: 1,
+    borderColor: inkAlpha(0.08),
+    experimental_backgroundImage: `linear-gradient(180deg, ${paperFrameGradient[0]}, ${paperFrameGradient[1]})`,
+  },
+  promptTitle: {
+    flexShrink: 1,
+    fontFamily: fonts.display,
+    fontSize: 18,
+    color: colors.textPrimary,
+  },
+  promptCtas: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    marginTop: spacing.sm,
+  },
+  half: {
+    flex: 1,
+  },
+  doneRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+  },
+  alone: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
   },
   sectionHead: {
     flexDirection: 'row',

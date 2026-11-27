@@ -103,6 +103,7 @@ export interface Database {
           participant_count: number;
           updated_at: string; // ISO timestamp
           club_id: string | null; // Le club de cette lecture (#238), null = hors club
+          starts_on: string | null; // Lecture de club « Ensuite » : le jour où elle commence (AAAA-MM-JJ)
         };
         Insert: {
           id?: string;
@@ -123,6 +124,7 @@ export interface Database {
           participant_count?: number;
           updated_at?: string;
           club_id?: string | null;
+          starts_on?: string | null;
         };
         Update: {
           id?: string;
