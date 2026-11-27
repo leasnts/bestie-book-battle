@@ -1,33 +1,33 @@
 /**
- * Onglet Clubs (#238, #246) : la maison du club, et ses actus.
+ * Onglet Clubs (#238, #246) : mes clubs, et la maison du club choisi.
  *
- *   (📷) (📷) (📷) (+)                     2 clubs ou plus : on change ici
- *   (📷) Test club ›            (👤+)      le club → sa page (membres, réglages)
- *        (◐◐◐) 5 membres                   👤+ : inviter
+ *   Mes clubs
+ *   [carte Test club][carte Liseuses][ · place vide · ]   les cartes défilent ;
+ *   (◐◐◐◐) 5 membres ›                         (👤+)       la vide : code / créer
  *   ┌[couv] Les Sœurs Blue ───────────┐
- *   │       Coco Mellors              │    le cadre « Le livre » de l'accueil,
- *   │       ·····●·········· 9 déc.   │    à l'identique (BookSection)
+ *   │       ·····●·········· 9 déc.   │    le cadre « Le livre » de l'accueil
  *   └─────────────────────────────────┘
  *   [ Rejoindre la lecture ]               si je ne la lis pas encore
  *   Ça bouge                    Tout voir  les 4 dernières actus
  *   Déjà lus ensemble                      l'étagère de la bibliothèque
  *
- * Un seul club : il s'ouvre tout de suite, pas une liste d'une ligne (Lea,
- * 2026-11-27). Sans club : de quoi en créer un ou en rejoindre un.
+ * Pas de rangée de ronds (Lea, 2026-11-27) : des cartes, et toujours une place
+ * vide au bout pour dire qu'un club peut venir s'y ranger. Proposer des clubs
+ * à rejoindre viendra plus tard (#250).
  */
 
 import { Image } from 'expo-image';
 import { useFocusEffect, useRouter } from 'expo-router';
-import { ChevronRightIcon, PlusIcon, UserPlusIcon } from 'lucide-react-native';
+import { ChevronRightIcon, UserPlusIcon } from 'lucide-react-native';
 import React, { useCallback, useMemo, useState } from 'react';
-import { ActionSheetIOS, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Button3D from '../../components/Button3D';
+import ClubCards from '../../components/club/ClubCards';
 import ClubFeed from '../../components/club/ClubFeed';
 import ClubShelf from '../../components/club/ClubShelf';
 import PageTransition from '../../components/PageTransition';
 import BookSection from '../../components/ui/BookSection';
-import ClubAvatar from '../../components/ui/ClubAvatar';
 import GlassButton from '../../components/ui/GlassButton';
 import { useTabBarInset } from '../../components/ui/GlassTabBar';
 import PressableScale from '../../components/ui/PressableScale';
@@ -38,9 +38,9 @@ import { useProjectStore } from '../../stores/projectStore';
 import type { Challenge, ClubMember } from '../../types/supabase';
 import { colors, fonts, spacing } from '../../utils/constants';
 import { feel } from '../../utils/feel';
+import { clubReadings } from '../../utils/clubs';
 import { resolvePhotoSource } from '../../utils/profilePhoto';
 
-const ROUND = 56;
 /** L'onglet montre les dernières actus ; le reste est derrière « Tout voir » */
 const FEED_PREVIEW = 4;
 
@@ -104,15 +104,6 @@ export default function ClubsTab() {
     setPicked(id);
   };
 
-  const addClub = () =>
-    ActionSheetIOS.showActionSheetWithOptions(
-      { options: ['Créer un club', 'Rejoindre avec un code', 'Annuler'], cancelButtonIndex: 2 },
-      (i) => {
-        if (i === 0) router.push('/club-edit');
-        if (i === 1) router.push('/club-code');
-      },
-    );
-
   /** Je la lis : sur l'accueil ; sinon, la rejoindre */
   const openCurrent = () => {
     if (!current) return;
@@ -134,94 +125,52 @@ export default function ClubsTab() {
         ]}
         showsVerticalScrollIndicator={false}
       >
-        {!club ? (
-          <View style={styles.empty}>
-            <Text style={styles.emptyText}>Lis à plusieurs, livre après livre</Text>
-            <Button3D variant="primary" onPress={() => router.push('/club-edit')}>
-              Créer un club
-            </Button3D>
-            <Button3D variant="secondary" onPress={() => router.push('/club-code')}>
-              J'ai un code
-            </Button3D>
-          </View>
-        ) : (
-          <>
-            {/* ── Mes clubs : une rangée de ronds pour changer (2 ou plus) ── */}
-            {myClubs.length > 1 && (
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                style={styles.roundsScroll}
-                contentContainerStyle={styles.rounds}
-              >
-                {myClubs.map((c) => {
-                  const on = c.id === clubId;
-                  return (
-                    <PressableScale
-                      key={c.id}
-                      style={styles.roundItem}
-                      pressedScale={0.94}
-                      onPress={() => pickClub(c.id)}
-                      accessibilityRole="tab"
-                      accessibilityState={{ selected: on }}
-                      accessibilityLabel={c.name}
-                    >
-                      <View style={[styles.ring, on && styles.ringOn]}>
-                        <ClubAvatar club={c} size={ROUND} />
-                      </View>
-                    </PressableScale>
-                  );
-                })}
-                <View style={styles.roundAdd}>
-                  <GlassButton icon={PlusIcon} onPress={addClub} accessibilityLabel="Créer ou rejoindre un club" />
-                </View>
-              </ScrollView>
-            )}
+        <Text style={styles.title} accessibilityRole="header">
+          Mes clubs
+        </Text>
+        <ClubCards
+          clubs={myClubs}
+          selectedId={clubId}
+          readingOf={(id) =>
+            (id === clubId ? current : null) ?? clubReadings(myChallenges, id).current ?? null
+          }
+          onSelect={pickClub}
+          onJoin={() => router.push('/club-code')}
+          onCreate={() => router.push('/club-edit')}
+          side={spacing.lg}
+        />
 
-            {/* ── Le club : toucher son nom ouvre sa page ── */}
+        {club && (
+          <>
+            {/* ── Le club choisi : ses membres (→ sa page) et inviter ── */}
             <View style={styles.header}>
               <PressableScale
                 style={styles.identity}
                 pressedScale={0.98}
                 onPress={() => router.push(`/club?id=${club.id}`)}
                 accessibilityRole="button"
-                accessibilityLabel={`${club.name}, ${active.length} membres`}
+                accessibilityLabel={`${active.length} membres`}
                 accessibilityHint="Ouvre la page du club"
               >
-                <ClubAvatar club={club} size={52} />
-                <View style={styles.identityText}>
-                  <View style={styles.nameRow}>
-                    <Text style={styles.clubName} numberOfLines={1}>
-                      {club.name}
-                    </Text>
-                    <ChevronRightIcon size={18} color={colors.textTertiary} strokeWidth={2.4} />
-                  </View>
-                  {active.length > 0 && (
-                    <View style={styles.meta}>
-                      <View style={styles.stack}>
-                        {active.slice(0, 4).map((m, i) => (
-                          <Image
-                            key={m.user_id}
-                            source={resolvePhotoSource(m.user.profile_photo_url)}
-                            style={[styles.mini, i > 0 && styles.miniOver]}
-                          />
-                        ))}
-                      </View>
-                      <Text style={styles.metaText}>
-                        {active.length} membre{active.length > 1 ? 's' : ''}
-                      </Text>
-                    </View>
-                  )}
+                <View style={styles.stack}>
+                  {active.slice(0, 5).map((m, i) => (
+                    <Image
+                      key={m.user_id}
+                      source={resolvePhotoSource(m.user.profile_photo_url)}
+                      style={[styles.mini, i > 0 && styles.miniOver]}
+                    />
+                  ))}
                 </View>
+                <Text style={styles.metaText}>
+                  {active.length} membre{active.length > 1 ? 's' : ''}
+                </Text>
+                <ChevronRightIcon size={16} color={colors.textTertiary} strokeWidth={2.4} />
               </PressableScale>
               <GlassButton
                 icon={UserPlusIcon}
                 onPress={() => router.push(`/club-invite?id=${club.id}`)}
                 accessibilityLabel="Inviter"
               />
-              {myClubs.length === 1 && (
-                <GlassButton icon={PlusIcon} onPress={addClub} accessibilityLabel="Créer ou rejoindre un club" />
-              )}
             </View>
 
             {/* ── La lecture en cours : le cadre du livre de l'accueil ── */}
@@ -301,60 +250,23 @@ const styles = StyleSheet.create({
   content: {
     paddingHorizontal: spacing.lg,
   },
-  // Les ronds débordent jusqu'aux bords de l'écran
-  roundsScroll: {
-    marginHorizontal: -spacing.lg,
-    marginBottom: spacing.lg,
-  },
-  rounds: {
-    paddingHorizontal: spacing.lg,
-    gap: spacing.sm,
-    alignItems: 'center',
-  },
-  roundItem: {
-    alignItems: 'center',
-  },
-  ring: {
-    padding: 2,
-    borderRadius: (ROUND + 8) / 2,
-    borderWidth: 2,
-    borderColor: 'transparent',
-  },
-  ringOn: {
-    borderColor: colors.accent,
-  },
-  roundAdd: {
-    marginLeft: spacing.xs,
+  // Titre à gauche, comme partout
+  title: {
+    fontFamily: fonts.display,
+    fontSize: 24,
+    color: colors.textPrimary,
+    marginBottom: spacing.md,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
+    marginTop: spacing.lg,
   },
   identity: {
     flex: 1,
     minWidth: 0,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-  },
-  identityText: {
-    flex: 1,
-    minWidth: 0,
-    gap: spacing.xs,
-  },
-  nameRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 2,
-  },
-  clubName: {
-    flexShrink: 1,
-    fontFamily: fonts.display,
-    fontSize: 22,
-    color: colors.textPrimary,
-  },
-  meta: {
+    minHeight: 44,
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
